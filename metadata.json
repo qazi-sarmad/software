@@ -1,0 +1,8 @@
+{
+  "name": "Provio - Enterprise Internal Audit Platform",
+  "description": "Cryptographically sealed enterprise internal-audit platform with deterministic testing math, verifiable populations, and immutable hash-chained ledger.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

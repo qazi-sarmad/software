@@ -1,0 +1,264 @@
+/* Provio Design Tokens: 3 Presets (Ledger [Default], Graphite, Ink) x (Light / Dark) */
+
+/* Default: PRESET "Ledger" (Spec Source of Truth) */
+:root, [data-preset="ledger"] {
+  --canvas: #F7F6F3;
+  --surface: #FFFFFF;
+  --surface-elevated: #FFFFFF;
+  --surface-sunken: #F1EFEA;
+  --surface-hover: rgba(18, 21, 28, 0.04);
+  --surface-active: rgba(18, 21, 28, 0.08);
+
+  --text-primary: #12151C;
+  --text-secondary: #5B6272;
+  --text-tertiary: #848B9E;
+
+  --border-hairline: rgba(18, 21, 28, 0.09);
+  --border-strong: rgba(18, 21, 28, 0.16);
+
+  --accent-primary: #4E8778; /* Verdigris as selection & focus accent in Ledger preset */
+  --accent-primary-subtle: rgba(78, 135, 120, 0.12);
+
+  --accent-verdigris: #4E8778;
+  --accent-verdigris-subtle: rgba(78, 135, 120, 0.12);
+
+  --accent-cinnabar: #C6521E;
+  --accent-cinnabar-subtle: rgba(198, 82, 30, 0.12);
+
+  --accent-amber: #D97706;
+  --accent-amber-subtle: rgba(217, 119, 6, 0.12);
+
+  --glass-bg: rgba(247, 246, 243, 0.85);
+  --glass-border: rgba(18, 21, 28, 0.08);
+
+  --shadow-soft: 0 4px 20px -2px rgba(18, 21, 28, 0.06), 0 2px 6px -1px rgba(18, 21, 28, 0.03);
+
+  --btn-primary-bg: #12151C;
+  --btn-primary-text: #FFFFFF;
+}
+
+.dark, [data-preset="ledger"].dark {
+  --canvas: #2A2622;
+  --surface: #332E29;
+  --surface-elevated: #3D3732;
+  --surface-sunken: #26221E;
+  --surface-hover: rgba(240, 238, 232, 0.05);
+  --surface-active: rgba(240, 238, 232, 0.09);
+
+  --text-primary: #F0EEE8;
+  --text-secondary: #9C9488;
+  --text-tertiary: #7D7569;
+
+  --border-hairline: rgba(240, 238, 232, 0.09);
+  --border-strong: rgba(240, 238, 232, 0.16);
+
+  --accent-primary: #6FA694;
+  --accent-primary-subtle: rgba(111, 166, 148, 0.16);
+
+  --accent-verdigris: #6FA694;
+  --accent-verdigris-subtle: rgba(111, 166, 148, 0.16);
+
+  --accent-cinnabar: #E07B49;
+  --accent-cinnabar-subtle: rgba(224, 123, 73, 0.16);
+
+  --accent-amber: #F59E0B;
+  --accent-amber-subtle: rgba(245, 158, 11, 0.16);
+
+  --glass-bg: rgba(51, 46, 41, 0.85);
+  --glass-border: rgba(240, 238, 232, 0.09);
+
+  --shadow-soft: 0 8px 30px -4px rgba(0, 0, 0, 0.4), 0 2px 8px -2px rgba(0, 0, 0, 0.25);
+
+  --btn-primary-bg: #F0EEE8;
+  --btn-primary-text: #2A2622;
+}
+
+/* PRESET "Graphite" */
+[data-preset="graphite"] {
+  --canvas: #F5F5F7;
+  --surface: #FFFFFF;
+  --surface-elevated: #FFFFFF;
+  --surface-sunken: #EBEBED;
+  --surface-hover: rgba(0, 0, 0, 0.035);
+  --surface-active: rgba(0, 0, 0, 0.06);
+
+  --text-primary: #1D1D1F;
+  --text-secondary: #6E6E73;
+  --text-tertiary: #8E8E93;
+
+  --border-hairline: rgba(0, 0, 0, 0.08);
+  --border-strong: rgba(0, 0, 0, 0.14);
+
+  --accent-primary: #0066CC;
+  --accent-primary-subtle: rgba(0, 102, 204, 0.10);
+
+  --accent-verdigris: #4E8778;
+  --accent-verdigris-subtle: rgba(78, 135, 120, 0.12);
+
+  --accent-cinnabar: #C6521E;
+  --accent-cinnabar-subtle: rgba(198, 82, 30, 0.12);
+
+  --accent-amber: #D97706;
+  --accent-amber-subtle: rgba(217, 119, 6, 0.12);
+
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(0, 0, 0, 0.08);
+
+  --shadow-soft: 0 4px 20px -2px rgba(0, 0, 0, 0.06), 0 2px 6px -1px rgba(0, 0, 0, 0.03);
+
+  --btn-primary-bg: #1D1D1F;
+  --btn-primary-text: #FFFFFF;
+}
+
+[data-preset="graphite"].dark {
+  --canvas: #0B0B0D;
+  --surface: #1C1C1E;
+  --surface-elevated: #2C2C2E;
+  --surface-sunken: #141416;
+  --surface-hover: rgba(255, 255, 255, 0.045);
+  --surface-active: rgba(255, 255, 255, 0.08);
+
+  --text-primary: #F5F5F7;
+  --text-secondary: #98989D;
+  --text-tertiary: #636366;
+
+  --border-hairline: rgba(255, 255, 255, 0.10);
+  --border-strong: rgba(255, 255, 255, 0.18);
+
+  --accent-primary: #0A84FF;
+  --accent-primary-subtle: rgba(10, 132, 255, 0.15);
+
+  --accent-verdigris: #6FA694;
+  --accent-verdigris-subtle: rgba(111, 166, 148, 0.16);
+
+  --accent-cinnabar: #E07B49;
+  --accent-cinnabar-subtle: rgba(224, 123, 73, 0.16);
+
+  --accent-amber: #FF9F0A;
+  --accent-amber-subtle: rgba(255, 159, 10, 0.15);
+
+  --glass-bg: rgba(28, 28, 30, 0.85);
+  --glass-border: rgba(255, 255, 255, 0.10);
+
+  --shadow-soft: 0 8px 30px -4px rgba(0, 0, 0, 0.5), 0 2px 8px -2px rgba(0, 0, 0, 0.3);
+
+  --btn-primary-bg: #F5F5F7;
+  --btn-primary-text: #0B0B0D;
+}
+
+/* PRESET "Ink" (Dark-First) */
+[data-preset="ink"], [data-preset="ink"].dark {
+  --canvas: #0E0F12;
+  --surface: #16181D;
+  --surface-elevated: #1F2229;
+  --surface-sunken: #121317;
+  --surface-hover: rgba(255, 255, 255, 0.05);
+  --surface-active: rgba(255, 255, 255, 0.09);
+
+  --text-primary: #ECEDEF;
+  --text-secondary: #8B90A0;
+  --text-tertiary: #606575;
+
+  --border-hairline: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.15);
+
+  --accent-primary: #6FA694;
+  --accent-primary-subtle: rgba(111, 166, 148, 0.16);
+
+  --accent-verdigris: #6FA694;
+  --accent-verdigris-subtle: rgba(111, 166, 148, 0.16);
+
+  --accent-cinnabar: #E07B49;
+  --accent-cinnabar-subtle: rgba(224, 123, 73, 0.16);
+
+  --accent-amber: #F59E0B;
+  --accent-amber-subtle: rgba(245, 158, 11, 0.16);
+
+  --glass-bg: rgba(22, 24, 29, 0.85);
+  --glass-border: rgba(255, 255, 255, 0.08);
+
+  --shadow-soft: 0 8px 32px -4px rgba(0, 0, 0, 0.6);
+
+  --btn-primary-bg: #ECEDEF;
+  --btn-primary-text: #0E0F12;
+}
+
+/* Utility classes mapping to design tokens */
+.bg-canvas { background-color: var(--canvas); }
+.bg-surface { background-color: var(--surface); }
+.bg-surface-elevated { background-color: var(--surface-elevated); }
+.bg-surface-sunken { background-color: var(--surface-sunken); }
+.bg-surface-hover:hover { background-color: var(--surface-hover); }
+
+.bg-glass {
+  background-color: var(--glass-bg);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+}
+
+.bg-accent-subtle { background-color: var(--accent-primary-subtle); }
+.bg-verdigris-subtle { background-color: var(--accent-verdigris-subtle); }
+.bg-cinnabar-subtle { background-color: var(--accent-cinnabar-subtle); }
+.bg-amber-subtle { background-color: var(--accent-amber-subtle); }
+
+.bg-accent { background-color: var(--accent-primary); }
+.bg-verdigris { background-color: var(--accent-verdigris); }
+.bg-cinnabar { background-color: var(--accent-cinnabar); }
+.bg-amber { background-color: var(--accent-amber); }
+
+.text-primary { color: var(--text-primary); }
+.text-secondary { color: var(--text-secondary); }
+.text-tertiary { color: var(--text-tertiary); }
+.text-accent { color: var(--accent-primary); }
+.text-verdigris { color: var(--accent-verdigris); }
+.text-cinnabar { color: var(--accent-cinnabar); }
+.text-amber { color: var(--accent-amber); }
+
+.border-hairline { border-color: var(--border-hairline); }
+.border-strong { border-color: var(--border-strong); }
+.border-accent { border-color: var(--accent-primary); }
+.border-verdigris { border-color: var(--accent-verdigris); }
+.border-cinnabar { border-color: var(--accent-cinnabar); }
+.border-amber { border-color: var(--accent-amber); }
+
+.shadow-apple { box-shadow: var(--shadow-soft); }
+
+/* Typography Scale */
+.text-apple-11 { font-size: 11px; line-height: 14px; }
+.text-apple-12 { font-size: 12px; line-height: 16px; }
+.text-apple-13 { font-size: 13px; line-height: 18px; }
+.text-apple-15 { font-size: 15px; line-height: 22px; }
+.text-apple-17 { font-size: 17px; line-height: 22px; font-weight: 600; letter-spacing: -0.01em; }
+.text-apple-20 { font-size: 20px; line-height: 26px; font-weight: 600; letter-spacing: -0.015em; }
+.text-apple-28 { font-size: 28px; line-height: 34px; font-weight: 600; letter-spacing: -0.02em; }
+.text-apple-32 { font-size: 32px; line-height: 38px; font-weight: 700; letter-spacing: -0.025em; }
+.text-apple-40 { font-size: 40px; line-height: 48px; font-weight: 700; letter-spacing: -0.03em; }
+
+.font-serif-title {
+  font-family: 'Source Serif 4', Georgia, serif;
+}
+.font-serif-numeral {
+  font-family: 'Source Serif 4', Georgia, serif;
+}
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Pulsing animations for Gantt and Overdue indicators */
+@keyframes pulse-cinnabar {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+@keyframes pulse-verdigris {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.animate-pulse-cinnabar {
+  animation: pulse-cinnabar 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-pulse-verdigris {
+  animation: pulse-verdigris 2.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
