@@ -4,73 +4,69 @@ export type ThemeMode = 'system' | 'light' | 'dark';
 export type ThemePreset = 'ledger' | 'graphite' | 'ink';
 
 interface ThemeContextType {
-  mode: ThemeMode;
-  setMode: (mode: ThemeMode) => void;
+  theme: ThemeMode;
+  resolvedTheme: 'light' | 'dark';
   preset: ThemePreset;
+  setTheme: (mode: ThemeMode) => void;
   setPreset: (preset: ThemePreset) => void;
-  isDark: boolean;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [mode, setMode] = useState<ThemeMode>('system');
-  const [preset, setPreset] = useState<ThemePreset>('ledger');
-  const [isDark, setIsDark] = useState(false);
+  const [theme, setThemeState] = useState<ThemeMode>(() => {
+    const saved = localStorage.getItem('provio-theme');
+    return (saved as ThemeMode) || 'system';
+  });
 
-  // Detect system preference on mount and listen for changes
+  const [preset, setPresetState] = useState<ThemePreset>(() => {
+    const saved = localStorage.getItem('provio-preset');
+    return (saved as ThemePreset) || 'ledger'; // Default to "Ledger" per § 4
+  });
+
+  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light');
+
   useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    
-    const updateDarkMode = () => {
-      if (mode === 'system') {
-        setIsDark(mediaQuery.matches);
+    const root = document.documentElement;
+    root.setAttribute('data-preset', preset);
+
+    const applyTheme = (isDark: boolean) => {
+      if (isDark || preset === 'ink') {
+        root.classList.add('dark');
+        setResolvedTheme('dark');
       } else {
-        setIsDark(mode === 'dark');
+        root.classList.remove('dark');
+        setResolvedTheme('light');
       }
     };
 
-    updateDarkMode();
-    mediaQuery.addEventListener('change', updateDarkMode);
-    return () => mediaQuery.removeEventListener('change', updateDarkMode);
-  }, [mode]);
-
-  // Apply theme to document
-  useEffect(() => {
-    const root = document.documentElement;
-    
-    // Set preset
-    root.setAttribute('data-preset', preset);
-    
-    // Set dark mode class
-    if (isDark) {
-      root.classList.add('dark');
+    if (theme === 'system') {
+      if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
+        const media = window.matchMedia('(prefers-color-scheme: dark)');
+        applyTheme(media.matches);
+        const listener = (e: MediaQueryListEvent) => applyTheme(e.matches);
+        media.addEventListener('change', listener);
+        return () => media.removeEventListener('change', listener);
+      } else {
+        applyTheme(false);
+      }
     } else {
-      root.classList.remove('dark');
+      applyTheme(theme === 'dark');
     }
-  }, [preset, isDark]);
+  }, [theme, preset]);
 
-  // Persist to localStorage
-  useEffect(() => {
-    localStorage.setItem('theme-mode', mode);
-    localStorage.setItem('theme-preset', preset);
-  }, [mode, preset]);
+  const setTheme = (mode: ThemeMode) => {
+    setThemeState(mode);
+    localStorage.setItem('provio-theme', mode);
+  };
 
-  // Restore from localStorage on mount
-  useEffect(() => {
-    const savedMode = localStorage.getItem('theme-mode') as ThemeMode | null;
-    const savedPreset = localStorage.getItem('theme-preset') as ThemePreset | null;
-    
-    if (savedMode && ['system', 'light', 'dark'].includes(savedMode)) {
-      setMode(savedMode);
-    }
-    if (savedPreset && ['ledger', 'graphite', 'ink'].includes(savedPreset)) {
-      setPreset(savedPreset);
-    }
-  }, []);
+  const setPreset = (p: ThemePreset) => {
+    setPresetState(p);
+    localStorage.setItem('provio-preset', p);
+  };
 
   return (
-    <ThemeContext.Provider value={{ mode, setMode, preset, setPreset, isDark }}>
+    <ThemeContext.Provider value={{ theme, resolvedTheme, preset, setTheme, setPreset }}>
       {children}
     </ThemeContext.Provider>
   );
