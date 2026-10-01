@@ -363,3 +363,5 @@ export function canPerformAction(
       return { allowed: false, reason: 'Action not permitted' };
   }
 }
+
+   export const canChangeCapDueDate = (role: Role) => role === 'audit_manager' || role === 'cia';
