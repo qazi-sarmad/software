@@ -15,6 +15,7 @@ describe('§ 3.4 CAP Radial Tracker & Legend Rail', () => {
       caps: [
         {
           id: 'CAP-001',
+          identifiedDate: '2026-08-01',
           title: 'Cash Pipeline STP',
           action: 'Deploy automated SWIFT parser',
           owner: 'David Miller',

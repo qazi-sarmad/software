@@ -110,21 +110,21 @@ export function validateEvidenceFile(
   tokenRecord: GlassBoxToken
 ): { allowed: boolean; error?: string } {
   const ext = '.' + filename.split('.').pop()?.toLowerCase();
-  const isAllowedExt = tokenRecord.allowedExtensions.some(
+  const isAllowedExt = (tokenRecord.allowedExtensions ?? DEFAULT_ALLOWED_EXTENSIONS).some(
     (allowed) => allowed.toLowerCase() === ext
   );
 
   if (!isAllowedExt) {
     return {
       allowed: false,
-      error: `File extension "${ext}" is not permitted. Allowed: ${tokenRecord.allowedExtensions.join(
+      error: `File extension "${ext}" is not permitted. Allowed: ${(tokenRecord.allowedExtensions ?? DEFAULT_ALLOWED_EXTENSIONS).join(
         ', '
       )}`,
     };
   }
 
-  if (sizeBytes > tokenRecord.maxSizeBytes) {
-    const maxMb = (tokenRecord.maxSizeBytes / (1024 * 1024)).toFixed(0);
+  if (sizeBytes > (tokenRecord.maxSizeBytes ?? DEFAULT_MAX_SIZE_BYTES)) {
+    const maxMb = ((tokenRecord.maxSizeBytes ?? DEFAULT_MAX_SIZE_BYTES) / (1024 * 1024)).toFixed(0);
     return {
       allowed: false,
       error: `File size exceeds the permitted cap of ${maxMb} MB`,

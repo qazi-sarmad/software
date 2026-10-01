@@ -3,6 +3,8 @@ import { useApp } from '../../context/AppContext';
 import {
   validateGlassBoxToken,
   validateEvidenceFile,
+  DEFAULT_ALLOWED_EXTENSIONS,
+  DEFAULT_MAX_SIZE_BYTES,
 } from '../../lib/glassbox';
 import { computeSha256 } from '../../lib/ledger';
 import { GlassBoxToken } from '../../types';
@@ -251,7 +253,7 @@ export const GlassBoxPublicRoute: React.FC<GlassBoxPublicRouteProps> = ({ tokenF
                         {uploading ? 'Calculating SHA-256 & Attesting...' : 'Drop file here or click to browse'}
                       </span>
                       <p className="text-apple-11 text-secondary mt-1">
-                        Allowed: {validationState.record.allowedExtensions.join(', ')} • Max {(validationState.record.maxSizeBytes / (1024 * 1024)).toFixed(0)} MB
+                        Allowed: {(validationState.record.allowedExtensions ?? DEFAULT_ALLOWED_EXTENSIONS).join(', ')} • Max {((validationState.record.maxSizeBytes ?? DEFAULT_MAX_SIZE_BYTES) / (1024 * 1024)).toFixed(0)} MB
                       </p>
                     </div>
                   </div>

@@ -291,7 +291,7 @@ export const HeaderCalendarPanel: React.FC<CalendarPanelProps> = ({
                   const isSigned = audit.status === 'signed_off';
                   const isReopened = audit.status === 'reopened';
                   const step1 = isSigned || audit.completionPercent > 50 ? 'check' : 'filled';
-                  const step2 = isSigned ? 'check' : isReopened ? 'red_dot' : audit.stage === 'review' ? 'filled' : 'empty';
+                  const step2 = isSigned ? 'check' : isReopened ? 'red_dot' : audit.stage === 'testing' ? 'filled' : 'empty';
                   const step3 = isSigned ? 'check' : 'empty';
 
                   const renderStepCircle = (type: string, label: string) => {

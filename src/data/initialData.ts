@@ -554,6 +554,7 @@ export const initialWorkpapers: WorkingPaper[] = [
   // 1. wp-treas-1 (ent-treasury, eng-treas-1) -> PREPARED BY usr-rev (FOUR-EYES TRAP!)
   {
     id: 'wp-treas-1',
+    refCode: 'WP-TREAS-1',
     engagementId: 'eng-treas-1',
     universeId: 'u-gbm',
     entityId: 'ent-treasury',
@@ -565,7 +566,7 @@ export const initialWorkpapers: WorkingPaper[] = [
     status: 'ready_for_review',
     isLocked: false,
     sealed: false,
-    procedureSteps: [
+    testSteps: [
       { id: 'step-1', description: 'Reconcile daily central bank reserves [CANARY-TREASURY]', completed: true },
       { id: 'step-2', description: 'Inspect haircut application on sovereign bonds', completed: true },
     ],
@@ -581,6 +582,7 @@ export const initialWorkpapers: WorkingPaper[] = [
   // 2. wp-treas-2 (ent-treasury, eng-treas-2) -> SEALED RECORD
   {
     id: 'wp-treas-2',
+    refCode: 'WP-TREAS-2',
     engagementId: 'eng-treas-2',
     universeId: 'u-gbm',
     entityId: 'ent-treasury',
@@ -595,7 +597,7 @@ export const initialWorkpapers: WorkingPaper[] = [
     signedOffAt: '2026-09-14T16:00:00Z',
     signedOffBy: 'Sarah Jenkins',
     signedHash: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
-    procedureSteps: [
+    testSteps: [
       { id: 'step-1', description: 'Validate 30-day stressed outflow parameters [CANARY-TREASURY]', completed: true },
       { id: 'step-2', description: 'Verify ALCO board approvals and meeting minutes', completed: true },
     ],
@@ -611,6 +613,7 @@ export const initialWorkpapers: WorkingPaper[] = [
   // 3. wp-trade-1 (ent-trading, eng-trade-1)
   {
     id: 'wp-trade-1',
+    refCode: 'WP-TRADE-1',
     engagementId: 'eng-trade-1',
     universeId: 'u-gbm',
     entityId: 'ent-trading',
@@ -622,7 +625,7 @@ export const initialWorkpapers: WorkingPaper[] = [
     status: 'draft',
     isLocked: false,
     sealed: false,
-    procedureSteps: [
+    testSteps: [
       { id: 'step-1', description: 'Verify threshold dispute logging [CANARY-TRADING]', completed: true },
       { id: 'step-2', description: 'Inspect clearinghouse call timeliness', completed: false },
     ],
@@ -636,6 +639,7 @@ export const initialWorkpapers: WorkingPaper[] = [
   // 4. wp-trade-2 (ent-trading, eng-trade-2)
   {
     id: 'wp-trade-2',
+    refCode: 'WP-TRADE-2',
     engagementId: 'eng-trade-2',
     universeId: 'u-gbm',
     entityId: 'ent-trading',
@@ -647,7 +651,7 @@ export const initialWorkpapers: WorkingPaper[] = [
     status: 'draft',
     isLocked: false,
     sealed: false,
-    procedureSteps: [
+    testSteps: [
       { id: 'step-1', description: 'Review high frequency order logs [CANARY-TRADING]', completed: false },
     ],
     populationCount: 12000,
@@ -660,6 +664,7 @@ export const initialWorkpapers: WorkingPaper[] = [
   // 5. wp-comp-1 (ent-compliance, eng-comp-1)
   {
     id: 'wp-comp-1',
+    refCode: 'WP-COMP-1',
     engagementId: 'eng-comp-1',
     universeId: 'u-gbm',
     entityId: 'ent-compliance',
@@ -671,7 +676,7 @@ export const initialWorkpapers: WorkingPaper[] = [
     status: 'draft',
     isLocked: false,
     sealed: false,
-    procedureSteps: [
+    testSteps: [
       { id: 'step-1', description: 'Review delta sync feeds from OFAC [CANARY-COMPLIANCE]', completed: true },
     ],
     populationCount: 65,
@@ -684,6 +689,7 @@ export const initialWorkpapers: WorkingPaper[] = [
   // 6. wp-comp-2 (ent-compliance, eng-comp-2)
   {
     id: 'wp-comp-2',
+    refCode: 'WP-COMP-2',
     engagementId: 'eng-comp-2',
     universeId: 'u-gbm',
     entityId: 'ent-compliance',
@@ -695,7 +701,7 @@ export const initialWorkpapers: WorkingPaper[] = [
     status: 'ready_for_review',
     isLocked: false,
     sealed: false,
-    procedureSteps: [
+    testSteps: [
       { id: 'step-1', description: 'Examine order cancellation frequency thresholds [CANARY-COMPLIANCE]', completed: true },
     ],
     populationCount: 3200,
@@ -708,6 +714,7 @@ export const initialWorkpapers: WorkingPaper[] = [
   // 7. wp-ret-1 (ent-retail, eng-ret-1)
   {
     id: 'wp-ret-1',
+    refCode: 'WP-RET-1',
     engagementId: 'eng-ret-1',
     universeId: 'u-rdb',
     entityId: 'ent-retail',
@@ -719,7 +726,7 @@ export const initialWorkpapers: WorkingPaper[] = [
     status: 'draft',
     isLocked: false,
     sealed: false,
-    procedureSteps: [
+    testSteps: [
       { id: 'step-1', description: 'Sample branch vault opening logs [CANARY-RETAIL]', completed: true },
     ],
     populationCount: 180,
@@ -732,6 +739,7 @@ export const initialWorkpapers: WorkingPaper[] = [
   // 8. wp-ret-2 (ent-retail, eng-ret-2)
   {
     id: 'wp-ret-2',
+    refCode: 'WP-RET-2',
     engagementId: 'eng-ret-2',
     universeId: 'u-rdb',
     entityId: 'ent-retail',
@@ -743,7 +751,7 @@ export const initialWorkpapers: WorkingPaper[] = [
     status: 'ready_for_review',
     isLocked: false,
     sealed: false,
-    procedureSteps: [
+    testSteps: [
       { id: 'step-1', description: 'Audit loan file income tax transcripts [CANARY-RETAIL]', completed: true },
     ],
     populationCount: 420,
@@ -756,6 +764,7 @@ export const initialWorkpapers: WorkingPaper[] = [
   // 9. wp-card-1 (ent-cards, eng-card-1)
   {
     id: 'wp-card-1',
+    refCode: 'WP-CARD-1',
     engagementId: 'eng-card-1',
     universeId: 'u-rdb',
     entityId: 'ent-cards',
@@ -767,7 +776,7 @@ export const initialWorkpapers: WorkingPaper[] = [
     status: 'draft',
     isLocked: false,
     sealed: false,
-    procedureSteps: [
+    testSteps: [
       { id: 'step-1', description: 'Test 30-day merchant dispute response times [CANARY-CARDS]', completed: true },
     ],
     populationCount: 940,
@@ -780,6 +789,7 @@ export const initialWorkpapers: WorkingPaper[] = [
   // 10. wp-card-2 (ent-cards, eng-card-2)
   {
     id: 'wp-card-2',
+    refCode: 'WP-CARD-2',
     engagementId: 'eng-card-2',
     universeId: 'u-rdb',
     entityId: 'ent-cards',
@@ -791,7 +801,7 @@ export const initialWorkpapers: WorkingPaper[] = [
     status: 'ready_for_review',
     isLocked: false,
     sealed: false,
-    procedureSteps: [
+    testSteps: [
       { id: 'step-1', description: 'Reconcile settlement clearing totals [CANARY-CARDS]', completed: true },
     ],
     populationCount: 280,
@@ -804,6 +814,7 @@ export const initialWorkpapers: WorkingPaper[] = [
   // 11. wp-dig-1 (ent-digital, eng-dig-1)
   {
     id: 'wp-dig-1',
+    refCode: 'WP-DIG-1',
     engagementId: 'eng-dig-1',
     universeId: 'u-rdb',
     entityId: 'ent-digital',
@@ -815,7 +826,7 @@ export const initialWorkpapers: WorkingPaper[] = [
     status: 'draft',
     isLocked: false,
     sealed: false,
-    procedureSteps: [
+    testSteps: [
       { id: 'step-1', description: 'Audit security enclave handshake logs [CANARY-DIGITAL]', completed: false },
     ],
     populationCount: 500,
@@ -828,6 +839,7 @@ export const initialWorkpapers: WorkingPaper[] = [
   // 12. wp-dig-2 (ent-digital, eng-dig-2)
   {
     id: 'wp-dig-2',
+    refCode: 'WP-DIG-2',
     engagementId: 'eng-dig-2',
     universeId: 'u-rdb',
     entityId: 'ent-digital',
@@ -839,7 +851,7 @@ export const initialWorkpapers: WorkingPaper[] = [
     status: 'ready_for_review',
     isLocked: false,
     sealed: false,
-    procedureSteps: [
+    testSteps: [
       { id: 'step-1', description: 'Inspect token revocation logs after 90 days [CANARY-DIGITAL]', completed: true },
     ],
     populationCount: 1500,
