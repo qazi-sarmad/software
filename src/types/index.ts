@@ -225,6 +225,8 @@ export type AuditCapItem = {
   entityId: string;
   engagementId: string;
   universeId?: string;
+  /** Append-only log of due-date changes (see lib/cap.ts). */
+  dueDateHistory?: ReadonlyArray<import('../lib/cap').CapDueDateHistoryEntry>;
 };
 
 export type ReviewComment = {

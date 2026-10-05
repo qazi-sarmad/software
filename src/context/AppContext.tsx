@@ -13,6 +13,7 @@ import {
   initialWorkpapers,
 } from '../data/initialData';
 import { canPerformAction } from '../lib/access';
+import { changeCapDueDate as changeCapDueDateFn, CapNotification, ChangeCapDueDateResult } from '../lib/cap';
 import { appendLedgerEntry, computePayloadHash, generateInitialLedger, verifyChain } from '../lib/ledger';
 import {
   AuditCapItem,
@@ -110,6 +111,8 @@ interface AppContextType {
     actorName: string
   ) => Promise<void>;
   updateCapStatus: (capId: string, status: CapStatus, retestStatus?: RetestStatus) => void;
+  capNotifications: CapNotification[];
+  changeCapDueDate: (capId: string, newDueDate: string, reason?: string) => ChangeCapDueDateResult;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -127,6 +130,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [rawIssues, setRawIssues] = useState<AuditIssue[]>(initialIssues);
   const [rawComments, setRawComments] = useState<ReviewComment[]>(initialComments);
   const [rawCapItems, setRawCapItems] = useState<AuditCapItem[]>(initialCapItems);
+  const [capNotifications, setCapNotifications] = useState<CapNotification[]>([]);
   const [ledger, setLedger] = useState<LedgerEntry[]>([]);
   const [glassBoxTokens, setGlassBoxTokens] = useState<GlassBoxToken[]>(initialGlassBoxTokens);
 
@@ -489,6 +493,24 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     );
   };
 
+  const changeCapDueDate = (capId: string, newDueDate: string, reason?: string): ChangeCapDueDateResult => {
+    const cap = rawCapItems.find((c) => c.id === capId);
+    if (!cap) {
+      return { ok: false, error: 'invalid_date', message: 'CAP not found.' };
+    }
+    const result = changeCapDueDateFn({
+      cap,
+      newDueDate,
+      reason,
+      actor: { id: currentUser.id, name: currentUser.name, role: currentUser.role },
+    });
+    if (result.ok) {
+      setRawCapItems((prev) => prev.map((c) => (c.id === capId ? result.cap : c)));
+      setCapNotifications((prev) => [result.notification, ...prev]);
+    }
+    return result;
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -533,6 +555,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         addReviewComment,
         attachEvidenceToWorkpaper,
         updateCapStatus,
+        capNotifications,
+        changeCapDueDate,
       }}
     >
       {children}

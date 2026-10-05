@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { AuditCapItem, CapStatus, RetestStatus, Severity } from '../../types';
 import { useApp } from '../../context/AppContext';
 import { useScopedData } from '../../hooks/useScopedData';
+import { isCapOverdue } from '../../lib/orgDate';
+import { canChangeCapDueDate } from '../../lib/access';
 import {
   AlertCircle,
   CheckCircle2,
@@ -24,24 +26,44 @@ interface CapInspectorProps {
 }
 
 export const CapInspector: React.FC<CapInspectorProps> = ({ data, onClose }) => {
-  const { updateCapStatus, openInspector, setActiveTab, setSelectedEngagementId } = useApp();
+  const { updateCapStatus, openInspector, setActiveTab, setSelectedEngagementId, currentUser, changeCapDueDate } = useApp();
   const { scopedCapItems, scopedEngagements } = useScopedData();
 
   // If a single CAP was clicked, show detail or list
   const activeDepartment = data?.department || (data?.cap ? data.cap.department : null);
-  const items = data?.caps
+  const baseItems = data?.caps
     ? data.caps
     : data?.cap
     ? [data.cap]
     : activeDepartment
     ? scopedCapItems.filter((c) => c.department === activeDepartment)
     : scopedCapItems;
+  // Always show the live CAP (the inspector payload can be a stale snapshot).
+  const items = baseItems.map((c) => scopedCapItems.find((s) => s.id === c.id) ?? c);
 
   const [selectedCapId, setSelectedCapId] = useState<string | null>(
     data?.cap ? data.cap.id : items[0]?.id || null
   );
 
   const activeCap = items.find((c) => c.id === selectedCapId) || items[0];
+
+  const [editingDue, setEditingDue] = useState(false);
+  const [dueDraft, setDueDraft] = useState('');
+  const [dueReason, setDueReason] = useState('');
+  const [dueError, setDueError] = useState<string | null>(null);
+  const canEditDue = canChangeCapDueDate(currentUser.role) && activeCap?.status !== 'Closed';
+
+  const saveDue = () => {
+    if (!activeCap) return;
+    const res = changeCapDueDate(activeCap.id, dueDraft, dueReason);
+    if (res.ok) {
+      setEditingDue(false);
+      setDueError(null);
+      setDueReason('');
+    } else {
+      setDueError(res.message);
+    }
+  };
 
   const getSeverityBadge = (sev: Severity) => {
     switch (sev) {
@@ -92,7 +114,7 @@ export const CapInspector: React.FC<CapInspectorProps> = ({ data, onClose }) => 
         <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
           {items.map((c) => {
             const isSelected = c.id === activeCap?.id;
-            const isOvd = c.status === 'Overdue' || c.dueDate < '2026-09-30';
+            const isOvd = isCapOverdue(c.status, c.dueDate);
             return (
               <button
                 key={c.id}
@@ -117,7 +139,7 @@ export const CapInspector: React.FC<CapInspectorProps> = ({ data, onClose }) => 
       {activeCap ? (
         <div className="space-y-6">
           {/* Overdue Pulsing Banner if overdue (§ 3.4 requirement) */}
-          {(activeCap.status === 'Overdue' || activeCap.dueDate < '2026-09-30') && (
+          {(isCapOverdue(activeCap.status, activeCap.dueDate)) && (
             <div className="p-3.5 rounded-xl bg-cinnabar-subtle border border-cinnabar flex items-center justify-between animate-pulse">
               <div className="flex items-center gap-2.5 text-cinnabar">
                 <AlertCircle className="w-4 h-4 stroke-[2]" />
@@ -172,6 +194,20 @@ export const CapInspector: React.FC<CapInspectorProps> = ({ data, onClose }) => 
                   <Calendar className="w-3.5 h-3.5 text-secondary stroke-[1.5]" />
                   <span>{activeCap.dueDate}</span>
                 </div>
+                {canEditDue && !editingDue && (
+                  <button
+                    type="button"
+                    data-testid="cap-due-edit"
+                    onClick={() => {
+                      setDueDraft(activeCap.dueDate);
+                      setDueError(null);
+                      setEditingDue(true);
+                    }}
+                    className="mt-1.5 text-apple-11 font-medium text-accent hover:underline"
+                  >
+                    Change due date
+                  </button>
+                )}
               </div>
               <div className="p-2.5 rounded-xl bg-surface border border-hairline">
                 <div className="text-apple-11 text-tertiary">Current Status</div>
@@ -186,6 +222,63 @@ export const CapInspector: React.FC<CapInspectorProps> = ({ data, onClose }) => 
                 </div>
               </div>
             </div>
+
+            {editingDue && canEditDue && (
+              <div className="p-3.5 rounded-xl bg-surface border border-hairline space-y-2" data-testid="cap-due-editor">
+                <label className="block text-apple-11 text-tertiary" htmlFor="cap-due-input">
+                  New target due date
+                </label>
+                <input
+                  id="cap-due-input"
+                  type="date"
+                  value={dueDraft}
+                  onChange={(e) => setDueDraft(e.target.value)}
+                  className="w-full px-2.5 py-1.5 rounded-lg bg-surface-elevated border border-hairline text-apple-13 text-primary"
+                />
+                <input
+                  type="text"
+                  value={dueReason}
+                  onChange={(e) => setDueReason(e.target.value)}
+                  placeholder="Reason (optional)"
+                  aria-label="Reason for due date change"
+                  className="w-full px-2.5 py-1.5 rounded-lg bg-surface-elevated border border-hairline text-apple-13 text-primary"
+                />
+                {dueError && (
+                  <div role="alert" className="text-apple-12 text-cinnabar">
+                    {dueError}
+                  </div>
+                )}
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    data-testid="cap-due-save"
+                    onClick={saveDue}
+                    className="px-3 py-1.5 rounded-xl bg-accent text-canvas text-apple-12 font-medium"
+                  >
+                    Save
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditingDue(false)}
+                    className="px-3 py-1.5 rounded-xl bg-surface-elevated border border-hairline text-apple-12 text-secondary"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {activeCap.dueDateHistory && activeCap.dueDateHistory.length > 0 && (
+              <div className="pt-2 border-t border-hairline space-y-1.5" data-testid="cap-due-history">
+                <div className="text-apple-11 font-semibold text-primary uppercase">Due-date history</div>
+                {[...activeCap.dueDateHistory].reverse().map((h) => (
+                  <div key={h.id} className="text-apple-12 text-secondary">
+                    {h.oldDueDate} → {h.newDueDate} · {h.changedByName} · {h.changedOnOrgLocal}
+                    {h.reason ? ` · ${h.reason}` : ''}
+                  </div>
+                ))}
+              </div>
+            )}
 
             {/* Link to originating report (§ 3.4 requirement) */}
             <div className="pt-2 border-t border-hairline flex items-center justify-between">
