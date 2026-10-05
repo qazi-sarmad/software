@@ -206,6 +206,20 @@ export type CapStatus = 'Open' | 'In progress' | 'Pending validation' | 'Overdue
 export type RetestStatus = 'Not tested' | 'Passed' | 'Failed' | 'In retest';
 export type CapApprovalStatus = 'Pending review' | 'Approved by CIA';
 
+export type CapStatusHistoryEntry = {
+  id: string;
+  at: string; // org-local or ISO timestamp
+  actorUserId: string;
+  actorName: string;
+  actorRole: Role;
+  designationLabel?: string;
+  fromStatus: CapStatus;
+  toStatus: CapStatus;
+  action: string;
+  note?: string;
+  evidenceRefs?: string[];
+};
+
 export type AuditCapItem = {
   id: string;
   action: string;
@@ -225,6 +239,9 @@ export type AuditCapItem = {
   entityId: string;
   engagementId: string;
   universeId?: string;
+  /** User id of last successful submit-for-validation (four-eyes). */
+  lastSubmittedByUserId?: string;
+  statusHistory?: CapStatusHistoryEntry[];
 };
 
 export type ReviewComment = {
@@ -336,7 +353,40 @@ export type ActionType =
   | 'view_audit_content'
   | 'view_executive_summary'
   | 'view_issues'
-  | 'view_reports';
+  | 'view_reports'
+  | 'cap_mark_in_progress'
+  | 'cap_submit_validation'
+  | 'cap_verify_close'
+  | 'cap_reject'
+  | 'cap_fail_retest'
+  | 'cap_change_due_date';
+
+/** Stable product capabilities (catalog is fixed; org assigns them to designations). */
+export type CapCapability =
+  | 'cap_mark_in_progress'
+  | 'cap_submit_validation'
+  | 'cap_verify_close'
+  | 'cap_reject'
+  | 'cap_fail_retest'
+  | 'cap_change_due_date';
+
+export type OrgDesignation = {
+  id: string;
+  label: string;
+  capabilities: CapCapability[];
+};
+
+/** Serializable org access config (future config-as-ledger). */
+export type OrgRoleConfig = {
+  orgId: string;
+  designations: OrgDesignation[];
+  /** userId → designation ids */
+  userDesignationIds?: Record<string, string[]>;
+  policy?: {
+    capJustificationMinChars?: number;
+    capRequireEvidenceOnSubmit?: boolean;
+  };
+};
 
 export interface ActionGateResult {
   allowed: boolean;
