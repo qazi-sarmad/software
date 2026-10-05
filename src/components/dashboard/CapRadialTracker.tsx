@@ -3,7 +3,7 @@ import * as d3 from 'd3';
 import { useFilterStore } from '../../context/FilterStore';
 import { useApp } from '../../context/AppContext';
 import { AuditCapItem, Severity } from '../../types';
-import { AlertCircle, Filter, RotateCcw } from '../common/Icons';
+import { AlertCircle, RotateCcw } from '../common/Icons';
 
 interface CapDeptData {
   department: string;
@@ -31,7 +31,6 @@ export const CapRadialTracker: React.FC<CapRadialTrackerProps> = ({
   const { openInspector } = useApp();
   const [hoveredDept, setHoveredDept] = useState<string | null>(null);
 
-  // Department colors mapped to harmonic palette tokens
   const deptColorPalette: Record<string, string> = {
     Treasury: 'var(--accent-primary)',
     Trading: 'var(--accent-verdigris)',
@@ -47,7 +46,6 @@ export const CapRadialTracker: React.FC<CapRadialTrackerProps> = ({
     return fallback[index % fallback.length];
   };
 
-  // Outer ring severity colors
   const severityColors: Record<Severity, string> = {
     critical: 'var(--accent-cinnabar)',
     high: 'var(--accent-amber)',
@@ -57,12 +55,18 @@ export const CapRadialTracker: React.FC<CapRadialTrackerProps> = ({
 
   const departments = Object.values(capDeptMap).filter((d) => d.total > 0);
 
+  const getDeptOpacity = (dept: string, isCapSlice = false) => {
+    if (hoveredDept && hoveredDept !== dept) return 0.35;
+    if (filter.department && filter.department !== dept) return 0.25;
+    if (hoveredDept === dept) return isCapSlice ? 0.98 : 0.9;
+    return isCapSlice ? 0.95 : 0.85;
+  };
+
   useEffect(() => {
     if (!svgRef.current || departments.length === 0) return;
 
     const width = 340;
     const height = 340;
-    const radius = Math.min(width, height) / 2;
 
     const svg = d3.select(svgRef.current);
     svg.selectAll('*').remove();
@@ -72,7 +76,6 @@ export const CapRadialTracker: React.FC<CapRadialTrackerProps> = ({
       .append('g')
       .attr('transform', `translate(${width / 2},${height / 2})`);
 
-    // Dimensions
     const innerRadiusHub = 62;
     const innerRadiusDept = 66;
     const outerRadiusDept = 104;
@@ -81,7 +84,6 @@ export const CapRadialTracker: React.FC<CapRadialTrackerProps> = ({
     const overdueArcInner = 149;
     const overdueArcOuter = 153;
 
-    // D3 Pie layout for inner ring (departments)
     const pie = d3
       .pie<CapDeptData>()
       .value((d) => d.total)
@@ -90,28 +92,24 @@ export const CapRadialTracker: React.FC<CapRadialTrackerProps> = ({
 
     const pieData = pie(departments);
 
-    // Inner Arc generator
     const arcDept = d3
       .arc<d3.PieArcDatum<CapDeptData>>()
       .innerRadius(innerRadiusDept)
       .outerRadius(outerRadiusDept)
       .cornerRadius(4);
 
-    // Outer Arc generator for CAP severities
     const arcCap = d3
       .arc<{ startAngle: number; endAngle: number; padAngle: number }>()
       .innerRadius(innerRadiusCap)
       .outerRadius(outerRadiusCap)
       .cornerRadius(2);
 
-    // Overdue outer rim arc generator
     const arcOverdue = d3
       .arc<{ startAngle: number; endAngle: number }>()
       .innerRadius(overdueArcInner)
       .outerRadius(overdueArcOuter)
       .cornerRadius(1.5);
 
-    // Draw Inner Ring (Departments) with draw-on animation and stagger
     const deptGroups = g
       .selectAll('.dept-slice')
       .data(pieData)
@@ -119,30 +117,28 @@ export const CapRadialTracker: React.FC<CapRadialTrackerProps> = ({
       .append('g')
       .attr('class', 'dept-slice cursor-pointer')
       .style('transition', 'transform 260ms cubic-bezier(0.16, 1, 0.3, 1), opacity 200ms ease')
-      .on('mouseenter', (event, d) => {
+      .on('mouseenter', (_, d) => {
         setHoveredDept(d.data.department);
       })
       .on('mouseleave', () => {
         setHoveredDept(null);
       })
-      .on('click', (event, d) => {
-        // Toggle department filter and open inspector
+      .on('click', (_, d) => {
         const nextDept = filter.department === d.data.department ? null : d.data.department;
         filter.setDepartment(nextDept);
         openInspector('cap_inspector', { department: d.data.department, caps: d.data.caps });
       });
 
-    // Inner slice paths
     deptGroups
       .append('path')
       .attr('fill', (d, i) => getDeptColor(d.data.department, i))
-      .attr('fill-opacity', (d) => {
-        if (filter.department && filter.department !== d.data.department) return 0.25;
-        if (hoveredDept && hoveredDept !== d.data.department) return 0.35;
-        return 0.85;
-      })
+      .attr('fill-opacity', (d) => getDeptOpacity(d.data.department))
       .attr('stroke', 'var(--canvas)')
       .attr('stroke-width', 2)
+      .each(function (d) {
+        const node = this as SVGPathElement & { __deptName?: string };
+        node.__deptName = d.data.department;
+      })
       .transition()
       .duration(750)
       .delay((d, i) => i * 90)
@@ -153,7 +149,6 @@ export const CapRadialTracker: React.FC<CapRadialTrackerProps> = ({
         };
       });
 
-    // Draw Outer Ring (CAPs grouped by severity within each department slice)
     pieData.forEach((deptArc, i) => {
       const dept = deptArc.data;
       const deptSpan = deptArc.endAngle - deptArc.startAngle;
@@ -174,13 +169,13 @@ export const CapRadialTracker: React.FC<CapRadialTrackerProps> = ({
           .append('path')
           .attr('class', 'cap-slice cursor-pointer')
           .attr('fill', severityColors[sev])
-          .attr('fill-opacity', () => {
-            if (filter.department && filter.department !== dept.department) return 0.25;
-            if (hoveredDept && hoveredDept !== dept.department) return 0.35;
-            return 0.95;
-          })
+          .attr('fill-opacity', () => getDeptOpacity(dept.department, true))
           .attr('stroke', 'var(--canvas)')
           .attr('stroke-width', 1.5)
+          .each(function () {
+            const node = this as SVGPathElement & { __deptName?: string };
+            node.__deptName = dept.department;
+          })
           .on('mouseenter', () => setHoveredDept(dept.department))
           .on('mouseleave', () => setHoveredDept(null))
           .on('click', () => {
@@ -204,7 +199,6 @@ export const CapRadialTracker: React.FC<CapRadialTrackerProps> = ({
           });
       });
 
-      // Overdue outer arc: thin cinnabar outer arc for departments with overdue items (§ 3.4)
       if (dept.overdueCount > 0) {
         g.append('path')
           .attr('class', 'overdue-arc')
@@ -225,16 +219,38 @@ export const CapRadialTracker: React.FC<CapRadialTrackerProps> = ({
       }
     });
 
-    // Center hub circle
     g.append('circle')
       .attr('r', innerRadiusHub)
       .attr('fill', 'var(--surface-elevated)')
       .attr('stroke', 'var(--border-hairline)')
       .attr('stroke-width', 1)
       .attr('class', 'shadow-xs');
+  }, [departments, filter.department, filter.setDepartment, filter.setSeverity, openInspector]);
+
+  useEffect(() => {
+    if (!svgRef.current || departments.length === 0) return;
+
+    const svg = d3.select(svgRef.current);
+
+    svg.selectAll<SVGPathElement>('.dept-slice path').each(function () {
+      const node = this as SVGPathElement & { __deptName?: string };
+      const deptName = node.__deptName ?? '';
+      d3.select(this)
+        .attr('fill-opacity', getDeptOpacity(deptName))
+        .attr('stroke-width', hoveredDept === deptName || filter.department === deptName ? 2.5 : 2)
+        .attr('stroke', hoveredDept === deptName || filter.department === deptName ? 'var(--surface-elevated)' : 'var(--canvas)');
+    });
+
+    svg.selectAll<SVGPathElement>('.cap-slice').each(function () {
+      const node = this as SVGPathElement & { __deptName?: string };
+      const deptName = node.__deptName ?? '';
+      d3.select(this)
+        .attr('fill-opacity', getDeptOpacity(deptName, true))
+        .attr('stroke-width', hoveredDept === deptName || filter.department === deptName ? 1.8 : 1.5)
+        .attr('stroke', hoveredDept === deptName || filter.department === deptName ? 'var(--surface-elevated)' : 'var(--canvas)');
+    });
   }, [departments, filter.department, hoveredDept]);
 
-  // Center display data
   const currentDeptData = hoveredDept
     ? capDeptMap[hoveredDept]
     : filter.department
@@ -245,13 +261,10 @@ export const CapRadialTracker: React.FC<CapRadialTrackerProps> = ({
   const displayOpen = currentDeptData
     ? currentDeptData.caps.filter((c) => c.status !== 'Closed').length
     : openCapCount;
-  const displayOverdue = currentDeptData
-    ? currentDeptData.overdueCount
-    : overdueCapCount;
+  const displayOverdue = currentDeptData ? currentDeptData.overdueCount : overdueCapCount;
 
   return (
     <div className="w-full bg-surface border border-hairline rounded-2xl p-6 shadow-apple space-y-6">
-      {/* Header and Filter Reset */}
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
@@ -275,7 +288,7 @@ export const CapRadialTracker: React.FC<CapRadialTrackerProps> = ({
         {filter.hasActiveFilters() && (
           <button
             onClick={() => filter.clearFilters()}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-elevated hover:bg-surface-hover border border-hairline text-apple-12 font-medium text-secondary hover:text-primary transition-colors shadow-xs"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-elevated hover:bg-surface-hover border border-hairline text-apple-12 font-medium text-secondary hover:text-primary"
           >
             <RotateCcw className="w-3.5 h-3.5 stroke-[1.5]" />
             <span>Clear filters</span>
@@ -283,9 +296,7 @@ export const CapRadialTracker: React.FC<CapRadialTrackerProps> = ({
         )}
       </div>
 
-      {/* Main Grid: D3 Radial Chart + Side Legend Rail */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
-        {/* Radial SVG Container with Center Hub */}
         <div className="md:col-span-7 flex justify-center relative select-none">
           <svg
             ref={svgRef}
@@ -294,7 +305,6 @@ export const CapRadialTracker: React.FC<CapRadialTrackerProps> = ({
             aria-label="CAP Radial Remediation Distribution"
           />
 
-          {/* HTML Overlay for Center Hub Typography (crisp text, never blurred SVG text) */}
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
             <span className="text-apple-11 font-medium text-secondary truncate max-w-[100px]">
               {currentDeptData ? currentDeptData.department : 'Total Portfolio'}
@@ -302,9 +312,7 @@ export const CapRadialTracker: React.FC<CapRadialTrackerProps> = ({
             <span className="font-serif-numeral text-apple-32 font-bold text-primary tabular-nums leading-none my-0.5">
               {displayCount}
             </span>
-            <span className="text-apple-11 text-secondary">
-              {displayOpen} open CAPs
-            </span>
+            <span className="text-apple-11 text-secondary">{displayOpen} open CAPs</span>
             {displayOverdue > 0 && (
               <span className="text-apple-11 font-bold text-cinnabar flex items-center gap-1 mt-0.5">
                 <AlertCircle className="w-3 h-3 stroke-[2]" />
@@ -314,7 +322,6 @@ export const CapRadialTracker: React.FC<CapRadialTrackerProps> = ({
           </div>
         </div>
 
-        {/* Legend Rail beside chart (§ 3.4 requirement) */}
         <div className="md:col-span-5 space-y-2 border-l border-hairline pl-4">
           <div className="text-apple-11 text-tertiary uppercase font-semibold tracking-wider pb-1">
             Remediation by Business Unit
@@ -348,9 +355,7 @@ export const CapRadialTracker: React.FC<CapRadialTrackerProps> = ({
                       className="w-3 h-3 rounded-full shrink-0 shadow-xs"
                       style={{ backgroundColor: color }}
                     />
-                    <span className="text-apple-12 font-medium truncate">
-                      {dept.department}
-                    </span>
+                    <span className="text-apple-12 font-medium truncate">{dept.department}</span>
                     {dept.overdueCount > 0 && (
                       <span
                         className="w-2 h-2 rounded-full bg-cinnabar shrink-0 animate-pulse"
@@ -373,7 +378,6 @@ export const CapRadialTracker: React.FC<CapRadialTrackerProps> = ({
             })}
           </div>
 
-          {/* Severity Swatches Guide */}
           <div className="pt-3 border-t border-hairline flex items-center justify-between text-apple-11 text-secondary">
             <span className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-sm bg-cinnabar" /> Critical
