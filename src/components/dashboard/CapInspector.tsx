@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { AuditCapItem, CapStatus, RetestStatus, Severity } from '../../types';
 import { useApp } from '../../context/AppContext';
 import { useScopedData } from '../../hooks/useScopedData';
+import { isCapOverdue } from '../../lib/orgDate';
 import {
   AlertCircle,
   CheckCircle2,
@@ -92,7 +93,7 @@ export const CapInspector: React.FC<CapInspectorProps> = ({ data, onClose }) => 
         <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
           {items.map((c) => {
             const isSelected = c.id === activeCap?.id;
-            const isOvd = c.status === 'Overdue' || c.dueDate < '2026-09-30';
+            const isOvd = isCapOverdue(c.status, c.dueDate);
             return (
               <button
                 key={c.id}
@@ -117,7 +118,7 @@ export const CapInspector: React.FC<CapInspectorProps> = ({ data, onClose }) => 
       {activeCap ? (
         <div className="space-y-6">
           {/* Overdue Pulsing Banner if overdue (§ 3.4 requirement) */}
-          {(activeCap.status === 'Overdue' || activeCap.dueDate < '2026-09-30') && (
+          {(isCapOverdue(activeCap.status, activeCap.dueDate)) && (
             <div className="p-3.5 rounded-xl bg-cinnabar-subtle border border-cinnabar flex items-center justify-between animate-pulse">
               <div className="flex items-center gap-2.5 text-cinnabar">
                 <AlertCircle className="w-4 h-4 stroke-[2]" />
