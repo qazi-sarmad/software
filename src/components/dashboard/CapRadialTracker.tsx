@@ -232,8 +232,8 @@ export const CapRadialTracker: React.FC<CapRadialTrackerProps> = ({
 
     const svg = d3.select(svgRef.current);
 
-    svg.selectAll<SVGPathElement>('.dept-slice path').each(function () {
-      const node = this as SVGPathElement & { __deptName?: string };
+    svg.selectAll('.dept-slice path').each(function () {
+      const node = this as unknown as SVGPathElement & { __deptName?: string };
       const deptName = node.__deptName ?? '';
       d3.select(this)
         .attr('fill-opacity', getDeptOpacity(deptName))
@@ -241,8 +241,8 @@ export const CapRadialTracker: React.FC<CapRadialTrackerProps> = ({
         .attr('stroke', hoveredDept === deptName || filter.department === deptName ? 'var(--surface-elevated)' : 'var(--canvas)');
     });
 
-    svg.selectAll<SVGPathElement>('.cap-slice').each(function () {
-      const node = this as SVGPathElement & { __deptName?: string };
+    svg.selectAll('.cap-slice').each(function () {
+      const node = this as unknown as SVGPathElement & { __deptName?: string };
       const deptName = node.__deptName ?? '';
       d3.select(this)
         .attr('fill-opacity', getDeptOpacity(deptName, true))
