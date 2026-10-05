@@ -14,6 +14,9 @@ import {
 } from '../data/initialData';
 import { canPerformAction } from '../lib/access';
 import { appendLedgerEntry, computePayloadHash, generateInitialLedger, verifyChain } from '../lib/ledger';
+import { transitionCapStatus, CapStatusAction, TransitionCapResult } from '../lib/cap';
+import { buildDefaultOrgRoleConfig } from '../lib/orgCapabilities';
+
 import {
   AuditCapItem,
   AuditControl,
@@ -109,7 +112,15 @@ interface AppContextType {
     file: { name: string; sizeBytes: number; sha256: string },
     actorName: string
   ) => Promise<void>;
+  /** @deprecated Prefer transitionCap */
   updateCapStatus: (capId: string, status: CapStatus, retestStatus?: RetestStatus) => void;
+  transitionCap: (
+    capId: string,
+    action: CapStatusAction,
+    payload?: { note?: string; evidenceRefs?: string[]; rejectTo?: 'Open' | 'In progress' }
+  ) => TransitionCapResult;
+  orgRoleConfig: ReturnType<typeof buildDefaultOrgRoleConfig>;
+
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -475,7 +486,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const orgRoleConfig = buildDefaultOrgRoleConfig();
+
   const updateCapStatus = (capId: string, status: CapStatus, retestStatus?: RetestStatus) => {
+    // Legacy ungated path retained only for non-workflow callers; CapInspector must use transitionCap.
     setRawCapItems((prev) =>
       prev.map((c) =>
         c.id === capId
@@ -487,6 +501,27 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           : c
       )
     );
+  };
+
+  const transitionCap = (
+    capId: string,
+    action: CapStatusAction,
+    payload?: { note?: string; evidenceRefs?: string[]; rejectTo?: 'Open' | 'In progress' }
+  ): TransitionCapResult => {
+    const cap = rawCapItems.find((c) => c.id === capId);
+    if (!cap) return { ok: false, reason: 'CAP not found' };
+    const result = transitionCapStatus({
+      cap,
+      action,
+      user: currentUser,
+      orgConfig: orgRoleConfig,
+      note: payload?.note,
+      evidenceRefs: payload?.evidenceRefs,
+      rejectTo: payload?.rejectTo,
+    });
+    if (!result.ok) return result;
+    setRawCapItems((prev) => prev.map((c) => (c.id === capId ? result.cap : c)));
+    return result;
   };
 
   return (
@@ -533,6 +568,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         addReviewComment,
         attachEvidenceToWorkpaper,
         updateCapStatus,
+        transitionCap,
+        orgRoleConfig,
       }}
     >
       {children}
