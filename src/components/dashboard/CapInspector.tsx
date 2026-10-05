@@ -24,7 +24,7 @@ interface CapInspectorProps {
 }
 
 export const CapInspector: React.FC<CapInspectorProps> = ({ data, onClose }) => {
-  const { updateCapStatus, openInspector, setActiveTab, setSelectedEngagementId } = useApp();
+  const { transitionCap, orgRoleConfig, openInspector, setActiveTab, setSelectedEngagementId, currentUser } = useApp();
   const { scopedCapItems, scopedEngagements } = useScopedData();
 
   // If a single CAP was clicked, show detail or list
@@ -41,7 +41,36 @@ export const CapInspector: React.FC<CapInspectorProps> = ({ data, onClose }) => 
     data?.cap ? data.cap.id : items[0]?.id || null
   );
 
-  const activeCap = items.find((c) => c.id === selectedCapId) || items[0];
+  const selectedId = selectedCapId || items[0]?.id;
+  const live = selectedId ? scopedCapItems.find((c) => c.id === selectedId) : undefined;
+  const activeCap = live || items.find((c) => c.id === selectedId) || items[0];
+
+  const [note, setNote] = useState('');
+  const [evidence, setEvidence] = useState('');
+  const [formError, setFormError] = useState<string | null>(null);
+  const [panel, setPanel] = useState<'none' | 'submit' | 'reject' | 'fail' | 'verify'>('none');
+
+  const run = (action: 'mark_in_progress' | 'submit_validation' | 'verify_close' | 'reject' | 'fail_retest') => {
+    if (!activeCap) return;
+    const evidenceRefs = evidence
+      .split(/[;\n]/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const result = transitionCap(activeCap.id, action, {
+      note: note || undefined,
+      evidenceRefs: evidenceRefs.length ? evidenceRefs : undefined,
+      rejectTo: 'In progress',
+    });
+    if (!result.ok) {
+      setFormError(result.reason);
+      return;
+    }
+    setFormError(null);
+    setNote('');
+    setEvidence('');
+    setPanel('none');
+  };
+
 
   const getSeverityBadge = (sev: Severity) => {
     switch (sev) {
@@ -211,39 +240,109 @@ export const CapInspector: React.FC<CapInspectorProps> = ({ data, onClose }) => 
             </div>
           </div>
 
+          {/* Status history */}
+          {(activeCap.statusHistory?.length ?? 0) > 0 && (
+            <div className="p-5 rounded-2xl bg-surface-sunken border border-hairline space-y-2">
+              <h5 className="text-apple-13 font-semibold text-primary">Status history</h5>
+              <ul className="space-y-2">
+                {activeCap.statusHistory!.map((h) => (
+                  <li key={h.id} className="text-apple-12 text-secondary border-b border-hairline pb-2 last:border-0">
+                    <span className="text-primary font-medium">{h.actorName}</span>
+                    {' '}({h.actorRole}): {h.fromStatus} → {h.toStatus}
+                    {h.note ? <div className="text-tertiary mt-0.5">{h.note}</div> : null}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           {/* Remediation Lifecycle Management Actions */}
           <div className="p-5 rounded-2xl bg-surface border border-hairline space-y-3">
             <h5 className="text-apple-13 font-semibold text-primary">
               Update Remediation Status &amp; Re-Test Protocol
             </h5>
+            {formError && (
+              <div className="text-apple-12 text-cinnabar" data-testid="cap-form-error">{formError}</div>
+            )}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               <button
-                onClick={() => updateCapStatus(activeCap.id, 'In progress', 'In retest')}
+                type="button"
+                onClick={() => { setPanel('none'); run('mark_in_progress'); }}
                 className="p-2 rounded-xl bg-surface-elevated hover:bg-surface-hover border border-hairline text-apple-12 font-medium text-secondary hover:text-primary transition-colors text-center"
               >
                 Mark In Progress
               </button>
               <button
-                onClick={() => updateCapStatus(activeCap.id, 'Pending validation', 'In retest')}
+                type="button"
+                onClick={() => { setFormError(null); setPanel('submit'); }}
                 className="p-2 rounded-xl bg-surface-elevated hover:bg-surface-hover border border-hairline text-apple-12 font-medium text-secondary hover:text-primary transition-colors text-center"
               >
                 Submit for Validation
               </button>
               <button
-                onClick={() => updateCapStatus(activeCap.id, 'Closed', 'Passed')}
+                type="button"
+                onClick={() => { setFormError(null); setPanel('verify'); }}
                 className="p-2 rounded-xl bg-verdigris-subtle hover:opacity-85 text-verdigris text-apple-12 font-semibold transition-opacity text-center flex items-center justify-center gap-1"
               >
                 <CheckCircle2 className="w-3.5 h-3.5 stroke-[2]" />
                 <span>Verify &amp; Close</span>
               </button>
               <button
-                onClick={() => updateCapStatus(activeCap.id, 'Overdue', 'Failed')}
+                type="button"
+                onClick={() => { setFormError(null); setPanel('fail'); }}
                 className="p-2 rounded-xl bg-cinnabar-subtle hover:opacity-85 text-cinnabar text-apple-12 font-semibold transition-opacity text-center flex items-center justify-center gap-1"
               >
                 <AlertCircle className="w-3.5 h-3.5 stroke-[2]" />
                 <span>Fail Re-Test</span>
               </button>
             </div>
+
+            {panel === 'submit' && (
+              <div className="space-y-2 pt-2 border-t border-hairline">
+                <label className="block text-apple-12 text-secondary">Justification (required)</label>
+                <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={3} className="w-full rounded-xl border border-hairline bg-surface-elevated p-2 text-apple-12 text-primary" />
+                <label className="block text-apple-12 text-secondary">Evidence refs (required, one per line)</label>
+                <textarea value={evidence} onChange={(e) => setEvidence(e.target.value)} rows={2} className="w-full rounded-xl border border-hairline bg-surface-elevated p-2 text-apple-12 text-primary" />
+                <div className="flex gap-2">
+                  <button type="button" onClick={() => run('submit_validation')} className="px-3 py-1.5 rounded-lg bg-accent text-canvas text-apple-12 font-semibold">Submit</button>
+                  <button type="button" onClick={() => setPanel('none')} className="px-3 py-1.5 rounded-lg border border-hairline text-apple-12">Cancel</button>
+                </div>
+              </div>
+            )}
+            {panel === 'verify' && (
+              <div className="space-y-2 pt-2 border-t border-hairline">
+                <label className="block text-apple-12 text-secondary">Verification note (optional)</label>
+                <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} className="w-full rounded-xl border border-hairline bg-surface-elevated p-2 text-apple-12 text-primary" />
+                <div className="flex gap-2">
+                  <button type="button" onClick={() => run('verify_close')} className="px-3 py-1.5 rounded-lg bg-verdigris-subtle text-verdigris text-apple-12 font-semibold">Confirm close</button>
+                  <button type="button" onClick={() => { setPanel('reject'); }} className="px-3 py-1.5 rounded-lg border border-cinnabar text-cinnabar text-apple-12 font-semibold">Reject instead</button>
+                  <button type="button" onClick={() => setPanel('none')} className="px-3 py-1.5 rounded-lg border border-hairline text-apple-12">Cancel</button>
+                </div>
+              </div>
+            )}
+            {panel === 'reject' && (
+              <div className="space-y-2 pt-2 border-t border-hairline">
+                <label className="block text-apple-12 text-secondary">Rejection reason (required)</label>
+                <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={3} className="w-full rounded-xl border border-hairline bg-surface-elevated p-2 text-apple-12 text-primary" />
+                <div className="flex gap-2">
+                  <button type="button" onClick={() => run('reject')} className="px-3 py-1.5 rounded-lg bg-cinnabar-subtle text-cinnabar text-apple-12 font-semibold">Reject to in progress</button>
+                  <button type="button" onClick={() => setPanel('none')} className="px-3 py-1.5 rounded-lg border border-hairline text-apple-12">Cancel</button>
+                </div>
+              </div>
+            )}
+            {panel === 'fail' && (
+              <div className="space-y-2 pt-2 border-t border-hairline">
+                <label className="block text-apple-12 text-secondary">Fail re-test note (required)</label>
+                <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={3} className="w-full rounded-xl border border-hairline bg-surface-elevated p-2 text-apple-12 text-primary" />
+                <div className="flex gap-2">
+                  <button type="button" onClick={() => run('fail_retest')} className="px-3 py-1.5 rounded-lg bg-cinnabar-subtle text-cinnabar text-apple-12 font-semibold">Confirm fail</button>
+                  <button type="button" onClick={() => setPanel('none')} className="px-3 py-1.5 rounded-lg border border-hairline text-apple-12">Cancel</button>
+                </div>
+              </div>
+            )}
+            <p className="text-apple-11 text-tertiary">
+              Actions are capability-gated for {currentUser.role}. Org designations can reassign powers without code changes.
+            </p>
           </div>
         </div>
       ) : (
