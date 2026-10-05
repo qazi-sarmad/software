@@ -1,36 +1,64 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useScopedData } from '../../hooks/useScopedData';
-import { ShieldCheck, Clock, FileText, ArrowRight, CheckCircle2, Lock } from '../common/Icons';
+import { ShieldCheck } from '../common/Icons';
+import {
+  AUDIT_FILE_TABS,
+  AuditFileTab,
+  buildPlanningCoverage,
+  getGateSummary,
+  getInitialAuditFileTab,
+  getSignOffState,
+} from '../../lib/auditFile';
+import { PlanningTab } from './file/PlanningTab';
+import { ExecutionTab } from './file/ExecutionTab';
+import { ReviewTab } from './file/ReviewTab';
 
+/**
+ * Audit File: one permanent workspace per engagement.
+ * Entry points (Gantt, CAP inspector, review comments) all call openInspector('audit_file', { engagement }).
+ * The engagement is always re-read through useScopedData(), so scope applies and status is never stale.
+ */
 export const AuditFileModal: React.FC = () => {
-  const { inspector, openInspector, closeInspector, signOffEngagement } = useApp();
-  const { scopedEngagements, scopedWorkpapers, scopedControls } = useScopedData();
+  const { inspector, openInspector, signOffEngagement, currentUser } = useApp();
+  const { scopedEngagements, scopedWorkpapers, scopedControls, scopedEntities } = useScopedData();
 
-  const engagement = inspector.data?.engagement || scopedEngagements[0];
-  const workpapers = engagement
-    ? scopedWorkpapers.filter((w) => w.engagementId === engagement.id)
-    : [];
-  const controls = engagement
-    ? scopedControls.filter((c) => c.engagementId === engagement.id)
-    : [];
+  const requestedId: string | undefined = inspector.data?.engagement?.id;
+  const engagement = requestedId ? scopedEngagements.find((e) => e.id === requestedId) : undefined;
+  const [tab, setTab] = useState<AuditFileTab>(() => getInitialAuditFileTab(inspector.data));
 
+  // Neutral state: does not reveal whether an out-of-scope engagement exists.
   if (!engagement) {
-    return <div className="p-6 text-center text-secondary">Engagement record not found.</div>;
+    return (
+      <div className="p-6 text-center text-secondary" data-testid="audit-file-unavailable">
+        Audit file not available.
+      </div>
+    );
   }
 
-  const allSealed = workpapers.length > 0 && workpapers.every((w) => w.sealed);
+  const workpapers = scopedWorkpapers.filter((w) => w.engagementId === engagement.id);
+  const entity = scopedEntities.find((e) => e.id === engagement.entityId);
+  const coverage = buildPlanningCoverage(engagement, scopedControls, workpapers);
+  const gate = getGateSummary(workpapers);
+  const signOff = getSignOffState(currentUser, engagement, gate);
+
+  const onTabKey = (e: React.KeyboardEvent) => {
+    const i = AUDIT_FILE_TABS.findIndex((t) => t.id === tab);
+    if (e.key === 'ArrowRight') setTab(AUDIT_FILE_TABS[(i + 1) % AUDIT_FILE_TABS.length].id);
+    if (e.key === 'ArrowLeft') setTab(AUDIT_FILE_TABS[(i + AUDIT_FILE_TABS.length - 1) % AUDIT_FILE_TABS.length].id);
+  };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-testid="audit-file">
+      {/* File chrome */}
       <div className="p-5 rounded-xl bg-surface-sunken border border-hairline space-y-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="font-mono text-apple-11 px-2 py-0.5 rounded bg-surface border border-hairline text-secondary">
               {engagement.id}
             </span>
-            <span className="text-apple-11 font-semibold text-secondary uppercase">
-              {engagement.stage} Stage
+            <span className="text-apple-11 font-semibold text-secondary uppercase" data-testid="audit-file-stage">
+              {engagement.stage}
             </span>
           </div>
           {engagement.status === 'signed_off' && (
@@ -40,77 +68,49 @@ export const AuditFileModal: React.FC = () => {
           )}
         </div>
         <h2 className="text-apple-17 font-bold text-primary">{engagement.title}</h2>
-        <div className="flex items-center gap-4 text-apple-11 text-secondary">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-apple-11 text-secondary">
+          <span className="capitalize">Status: {engagement.status.replace(/_/g, ' ')}</span>
+          <span>•</span>
           <span>Due: {engagement.dueDate}</span>
           <span>•</span>
-          <span>{workpapers.length} Working Papers</span>
-          <span>•</span>
-          <span>{controls.length} Controls Evaluated</span>
+          <span>{workpapers.length} working papers</span>
         </div>
       </div>
 
-      {/* Working Papers Roster */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h3 className="text-apple-13 font-semibold text-primary uppercase tracking-wider">
-            Assigned Working Papers
-          </h3>
-          <span className="text-apple-11 text-secondary">
-            {workpapers.filter((w) => w.sealed).length} of {workpapers.length} Sealed
-          </span>
-        </div>
-        <div className="divide-y divide-hairline border border-hairline rounded-xl overflow-hidden bg-surface">
-          {workpapers.map((wp) => (
-            <div
-              key={wp.id}
-              onClick={() => openInspector('workbench', { workpaperId: wp.id })}
-              className="p-4 flex items-center justify-between hover:bg-surface-hover transition-colors cursor-pointer"
-            >
-              <div className="min-w-0 space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="font-mono text-apple-11 font-bold text-secondary">{wp.refCode}</span>
-                  <span className="text-apple-13 font-medium text-primary truncate">{wp.title}</span>
-                  {wp.sealed && (
-                    <span className="px-2 py-0.5 rounded text-apple-11 font-semibold bg-verdigris-subtle text-verdigris border border-verdigris flex items-center gap-1">
-                      <ShieldCheck className="w-3 h-3" /> Sealed
-                    </span>
-                  )}
-                </div>
-                <div className="text-apple-11 text-secondary truncate">
-                  Objective: {wp.objective}
-                </div>
-              </div>
-              <div className="shrink-0 flex items-center gap-2 pl-3">
-                <span className="text-apple-11 text-secondary">Open Paper</span>
-                <ArrowRight className="w-3.5 h-3.5 text-secondary" />
-              </div>
-            </div>
-          ))}
-          {workpapers.length === 0 && (
-            <div className="p-6 text-center text-apple-12 text-secondary">
-              No working papers assigned to this engagement yet.
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Engagement Final Sign-off Gate */}
-      <div className="pt-4 border-t border-hairline flex items-center justify-between">
-        <div className="text-apple-11 text-secondary">
-          {allSealed
-            ? 'All papers sealed. Ready for engagement attestation.'
-            : 'All working papers must be cryptographically sealed before signing off.'}
-        </div>
-        {engagement.status !== 'signed_off' && (
+      {/* In-file tab strip */}
+      <div role="tablist" aria-label="Audit file sections" onKeyDown={onTabKey} className="grid grid-cols-3 border-b border-hairline">
+        {AUDIT_FILE_TABS.map((t) => (
           <button
+            key={t.id}
             type="button"
-            onClick={() => signOffEngagement(engagement.id)}
-            disabled={!allSealed}
-            className="px-4 py-2 rounded-lg bg-surface border border-hairline hover:bg-surface-hover text-apple-13 font-semibold text-primary disabled:opacity-50 transition-colors flex items-center gap-2"
+            role="tab"
+            id={`af-tab-${t.id}`}
+            aria-selected={tab === t.id}
+            aria-controls={`af-panel-${t.id}`}
+            tabIndex={tab === t.id ? 0 : -1}
+            data-testid={`audit-file-tab-${t.id}`}
+            onClick={() => setTab(t.id)}
+            className={`py-2.5 text-center border-b-2 transition-colors ${
+              tab === t.id ? 'border-accent text-primary' : 'border-transparent text-secondary hover:text-primary'
+            }`}
           >
-            <CheckCircle2 className="w-4 h-4 text-verdigris" />
-            <span>Sign-Off Engagement File</span>
+            <div className="text-apple-13 font-semibold">{t.label}</div>
+            <div className="text-apple-11 text-tertiary">{t.caption}</div>
           </button>
+        ))}
+      </div>
+
+      <div role="tabpanel" id={`af-panel-${tab}`} aria-labelledby={`af-tab-${tab}`}>
+        {tab === 'planning' && <PlanningTab engagement={engagement} entity={entity} coverage={coverage} />}
+        {tab === 'execution' && (
+          <ExecutionTab
+            workpapers={workpapers}
+            highlightId={inspector.data?.workpaper?.id}
+            onOpen={(id) => openInspector('workbench', { workpaperId: id })}
+          />
+        )}
+        {tab === 'review' && (
+          <ReviewTab engagement={engagement} gate={gate} signOff={signOff} onSignOff={() => signOffEngagement(engagement.id)} />
         )}
       </div>
     </div>
