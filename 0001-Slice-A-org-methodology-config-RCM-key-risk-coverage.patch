@@ -1,0 +1,762 @@
+From ce1676575f0a1d62f6f40150230d427d2809fe1b Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Thu, 1 Oct 2026 12:51:06 +0000
+Subject: [PATCH] Slice A: org methodology config, RCM key-risk coverage gate,
+ multi-WP links
+
+---
+ src/components/audit/WorkbenchHeader.tsx      | 22 ++++-
+ src/components/plan/AuditPlanTab.tsx          |  7 ++
+ src/components/plan/MethodologyPanel.tsx      | 77 +++++++++++++++++
+ src/components/plan/PlanningCoveragePanel.tsx | 60 +++++++++++++
+ src/context/AppContext.tsx                    | 85 +++++++++++++++++++
+ src/data/initialData.ts                       | 49 +++++++++++
+ src/lib/coverage.test.ts                      | 53 ++++++++++++
+ src/lib/coverage.ts                           | 75 ++++++++++++++++
+ src/lib/methodology.test.ts                   | 27 ++++++
+ src/lib/methodology.ts                        | 37 ++++++++
+ src/types/index.ts                            | 50 +++++++++++
+ 11 files changed, 541 insertions(+), 1 deletion(-)
+ create mode 100644 src/components/plan/MethodologyPanel.tsx
+ create mode 100644 src/components/plan/PlanningCoveragePanel.tsx
+ create mode 100644 src/lib/coverage.test.ts
+ create mode 100644 src/lib/coverage.ts
+ create mode 100644 src/lib/methodology.test.ts
+ create mode 100644 src/lib/methodology.ts
+
+diff --git a/src/components/audit/WorkbenchHeader.tsx b/src/components/audit/WorkbenchHeader.tsx
+index 7dceea4..1879f7d 100644
+--- a/src/components/audit/WorkbenchHeader.tsx
++++ b/src/components/audit/WorkbenchHeader.tsx
+@@ -1,6 +1,7 @@
+ import React from 'react';
+ import { WorkingPaper, AuditEngagement } from '../../types';
+ import { useApp } from '../../context/AppContext';
++import { workpaperPreflight } from '../../lib/coverage';
+ import { useScopedData } from '../../hooks/useScopedData';
+ import { ShieldCheck, Lock, Unlock, Share2, CheckCircle2, RotateCcw, AlertCircle } from '../common/Icons';
+ 
+@@ -10,7 +11,8 @@ interface WorkbenchHeaderProps {
+ }
+ 
+ export const WorkbenchHeader: React.FC<WorkbenchHeaderProps> = ({ workpaper, engagement }) => {
+-  const { signOffWorkpaper, reopenWorkpaper, openInspector, currentUser } = useApp();
++  const { signOffWorkpaper, reopenWorkpaper, openInspector, currentUser, planningLinks, planningRisks, rawControls, rawWorkpapers } = useApp();
++  const preflight = workpaperPreflight(workpaper, planningLinks, rawWorkpapers);
+   const { can } = useScopedData();
+ 
+   const handleSignOff = async () => {
+@@ -34,12 +36,30 @@ export const WorkbenchHeader: React.FC<WorkbenchHeaderProps> = ({ workpaper, eng
+             {workpaper.refCode}
+           </span>
+           <h1 className="text-apple-20 font-bold text-primary">{workpaper.title}</h1>
++          {workpaper.kind && <span className="text-apple-11 font-semibold uppercase px-2 py-0.5 rounded bg-surface-sunken border border-hairline text-secondary">{workpaper.kind}</span>}
+           {workpaper.sealed && (
+             <span className="px-2 py-0.5 rounded-full text-apple-11 font-semibold bg-verdigris-subtle text-verdigris border border-verdigris flex items-center gap-1">
+               <ShieldCheck className="w-3.5 h-3.5" /> Sealed &amp; Attested
+             </span>
+           )}
+         </div>
++        {((workpaper.linkedRiskIds?.length ?? 0) > 0 || (workpaper.linkedControlIds?.length ?? 0) > 0) && (
++          <div className="flex flex-wrap gap-1.5" aria-label="Linked risks and controls">
++            {(workpaper.linkedRiskIds ?? []).map((id) => {
++              const t = planningRisks.find((r) => r.id === id)?.title ?? id;
++              return <span key={id} className="text-apple-11 px-2 py-0.5 rounded-full border border-hairline bg-surface-sunken text-secondary">Risk: {t}</span>;
++            })}
++            {(workpaper.linkedControlIds ?? []).map((id) => {
++              const c = rawControls.find((x) => x.id === id);
++              return <span key={id} className="text-apple-11 px-2 py-0.5 rounded-full border border-hairline bg-surface-sunken text-secondary">Control: {c?.code ?? id}</span>;
++            })}
++          </div>
++        )}
++        {preflight.level !== 'none' && (
++          <div role="alert" className={`text-apple-12 px-2 py-1 rounded border border-hairline ${preflight.level === 'hard' ? 'text-amber font-semibold' : 'text-secondary'}`}>
++            {preflight.level === 'hard' ? 'Pre-flight (blocking): ' : 'Pre-flight warning: '}{preflight.message}
++          </div>
++        )}
+         <div className="text-apple-12 text-secondary flex items-center gap-3">
+           <span>Objective: {workpaper.objective}</span>
+           <span>•</span>
+diff --git a/src/components/plan/AuditPlanTab.tsx b/src/components/plan/AuditPlanTab.tsx
+index 68cd459..d7a04cd 100644
+--- a/src/components/plan/AuditPlanTab.tsx
++++ b/src/components/plan/AuditPlanTab.tsx
+@@ -1,6 +1,9 @@
+ import React, { useState } from 'react';
+ import { useScopedData } from '../../hooks/useScopedData';
+ import { useApp } from '../../context/AppContext';
++import { PlanningCoveragePanel } from './PlanningCoveragePanel';
++import { MethodologyPanel } from './MethodologyPanel';
++import { methodologySummary } from '../../lib/methodology';
+ import { HoverPreview } from '../common/HoverPreview';
+ import {
+   Folder,
+@@ -30,6 +33,7 @@ export const AuditPlanTab: React.FC = () => {
+     signOffEngagement,
+     reopenEngagement,
+     openInspector,
++    orgMethodology,
+   } = useApp();
+ 
+   const [reopenNote, setReopenNote] = useState('');
+@@ -72,6 +76,8 @@ export const AuditPlanTab: React.FC = () => {
+           </p>
+         </div>
+       </div>
++      <p className="text-apple-12 text-secondary">{methodologySummary(orgMethodology)}</p>
++      <MethodologyPanel />
+ 
+       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+         {/* Left: Engagement List */}
+@@ -133,6 +139,7 @@ export const AuditPlanTab: React.FC = () => {
+                     </div>
+ 
+                     <h3 className="text-apple-15 font-semibold text-primary">{eng.title}</h3>
++                    <PlanningCoveragePanel engagementId={eng.id} stage={eng.stage} />
+ 
+                     <div className="mt-4 pt-3 border-t border-hairline flex items-center justify-between text-apple-11 text-secondary">
+                       <span>Due {eng.dueDate}</span>
+diff --git a/src/components/plan/MethodologyPanel.tsx b/src/components/plan/MethodologyPanel.tsx
+new file mode 100644
+index 0000000..25d20fb
+--- /dev/null
++++ b/src/components/plan/MethodologyPanel.tsx
+@@ -0,0 +1,77 @@
++import React, { useState } from 'react';
++import { useApp } from '../../context/AppContext';
++import { SAMPLING_LABELS } from '../../lib/methodology';
++import { OrgMethodologyConfig, SamplingMethodId } from '../../types';
++
++const ROLES = ['cia', 'audit_manager', 'reviewer', 'org_admin'];
++const toggle = <T,>(arr: T[], v: T) => (arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
++
++export const MethodologyPanel: React.FC = () => {
++  const { currentUser, orgMethodology, saveOrgMethodology } = useApp();
++  const [open, setOpen] = useState(false);
++  const [cfg, setCfg] = useState<OrgMethodologyConfig>(orgMethodology);
++  const [errors, setErrors] = useState<string[]>([]);
++  const [saved, setSaved] = useState(false);
++  if (currentUser.role !== 'cia' && currentUser.role !== 'org_admin') return null;
++
++  const s = cfg.sampling;
++  const setS = (patch: Partial<typeof s>) => setCfg({ ...cfg, sampling: { ...s, ...patch } });
++  const num = (label: string, key: 'tolerableDeviationRate' | 'expectedDeviationRate' | 'minHighValue' | 'minLowValue' | 'minHaphazard') => (
++    <label className="text-apple-12 text-secondary flex flex-col gap-0.5">{label}
++      <input type="number" step="any" value={s[key]} onChange={(e) => setS({ [key]: Number(e.target.value) })}
++        className="border border-hairline rounded px-2 py-1 bg-surface text-primary" />
++    </label>
++  );
++
++  return (
++    <div className="border border-hairline rounded bg-surface">
++      <button className="w-full text-left px-4 py-2 text-apple-13 font-semibold text-primary" onClick={() => setOpen(!open)}>
++        Methodology {open ? '▾' : '▸'}
++      </button>
++      {open && (
++        <div className="p-4 space-y-4 border-t border-hairline">
++          <fieldset className="flex gap-4 text-apple-12">
++            <legend className="font-semibold text-primary">DEA/OET</legend>
++            {(['separate', 'consolidated'] as const).map((m) => (
++              <label key={m}><input type="radio" name="deaOet" checked={cfg.deaOetMode === m} onChange={() => setCfg({ ...cfg, deaOetMode: m })} /> {m}</label>
++            ))}
++          </fieldset>
++          <fieldset className="flex flex-wrap gap-3 text-apple-12">
++            <legend className="font-semibold text-primary">Allowed sampling methods</legend>
++            {(Object.keys(SAMPLING_LABELS) as SamplingMethodId[]).map((m) => (
++              <label key={m}><input type="checkbox" checked={s.allowedMethods.includes(m)} onChange={() => setS({ allowedMethods: toggle(s.allowedMethods, m) })} /> {SAMPLING_LABELS[m]}</label>
++            ))}
++          </fieldset>
++          <label className="text-apple-12 text-secondary flex flex-col gap-0.5 max-w-xs">Default method
++            <select value={s.defaultMethod} onChange={(e) => setS({ defaultMethod: e.target.value as SamplingMethodId })} className="border border-hairline rounded px-2 py-1 bg-surface text-primary">
++              {(Object.keys(SAMPLING_LABELS) as SamplingMethodId[]).map((m) => <option key={m} value={m}>{SAMPLING_LABELS[m]}</option>)}
++            </select>
++          </label>
++          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
++            {num('Tolerable dev. rate', 'tolerableDeviationRate')}
++            {num('Expected dev. rate', 'expectedDeviationRate')}
++            {num('Min high-value', 'minHighValue')}
++            {num('Min low-value', 'minLowValue')}
++            {num('Min haphazard', 'minHaphazard')}
++          </div>
++          <p className="text-apple-11 text-tertiary">Z-score fixed at {s.zScore} (not editable per workpaper).</p>
++          <fieldset className="space-y-2 text-apple-12">
++            <legend className="font-semibold text-primary">Deploy policy</legend>
++            <div className="flex flex-wrap gap-3">Can request:
++              {ROLES.map((r) => <label key={r}><input type="checkbox" checked={cfg.deploy.canRequestDeployRoleIds.includes(r)} onChange={() => setCfg({ ...cfg, deploy: { ...cfg.deploy, canRequestDeployRoleIds: toggle(cfg.deploy.canRequestDeployRoleIds, r) } })} /> {r}</label>)}
++            </div>
++            <label><input type="checkbox" checked={cfg.deploy.requiresApproval} onChange={() => setCfg({ ...cfg, deploy: { ...cfg.deploy, requiresApproval: !cfg.deploy.requiresApproval } })} /> Requires approval</label>
++            {cfg.deploy.requiresApproval && (
++              <div className="flex flex-wrap gap-3">Can approve:
++                {ROLES.map((r) => <label key={r}><input type="checkbox" checked={cfg.deploy.canApproveDeployRoleIds.includes(r)} onChange={() => setCfg({ ...cfg, deploy: { ...cfg.deploy, canApproveDeployRoleIds: toggle(cfg.deploy.canApproveDeployRoleIds, r) } })} /> {r}</label>)}
++              </div>
++            )}
++          </fieldset>
++          {errors.length > 0 && <ul role="alert" className="text-apple-12 text-amber list-disc pl-5">{errors.map((e) => <li key={e}>{e}</li>)}</ul>}
++          <button className="text-apple-12 font-semibold border border-hairline rounded px-3 py-1" onClick={() => { const r = saveOrgMethodology(cfg); setErrors(r.errors); setSaved(r.ok); }}>Save methodology</button>
++          {saved && <span className="ml-2 text-apple-12 text-verdigris">Saved</span>}
++        </div>
++      )}
++    </div>
++  );
++};
+diff --git a/src/components/plan/PlanningCoveragePanel.tsx b/src/components/plan/PlanningCoveragePanel.tsx
+new file mode 100644
+index 0000000..65a3d77
+--- /dev/null
++++ b/src/components/plan/PlanningCoveragePanel.tsx
+@@ -0,0 +1,60 @@
++import React, { useState } from 'react';
++import { useApp } from '../../context/AppContext';
++import { coverageGaps, gapLabel } from '../../lib/coverage';
++import { allowedWorkpaperKinds } from '../../lib/methodology';
++import { WorkpaperKind } from '../../types';
++
++export const PlanningCoveragePanel: React.FC<{ engagementId: string; stage: string }> = ({ engagementId, stage }) => {
++  const { planningLinks, planningRisks, rawControls, rawWorkpapers, orgMethodology, createWorkpaperForGap, advanceToTesting } = useApp();
++  const [msg, setMsg] = useState<string | null>(null);
++  const [kind, setKind] = useState<WorkpaperKind>(allowedWorkpaperKinds(orgMethodology.deaOetMode)[0]);
++
++  const links = planningLinks.filter((l) => l.engagementId === engagementId);
++  if (links.length === 0 && stage !== 'planning') return null;
++  const { missing } = coverageGaps(engagementId, planningLinks, rawWorkpapers);
++  const kinds = allowedWorkpaperKinds(orgMethodology.deaOetMode);
++  const riskTitle = (id: string) => planningRisks.find((r) => r.id === id)?.title ?? id;
++  const ctrl = (id: string) => rawControls.find((c) => c.id === id);
++
++  return (
++    <div className="mt-3 p-3 rounded border border-hairline bg-surface-sunken space-y-2" onClick={(e) => e.stopPropagation()}>
++      <div className="flex items-center justify-between gap-2">
++        <span className="text-apple-12 font-semibold text-primary">Risk–control coverage</span>
++        {kinds.length > 1 && (
++          <select value={kind} onChange={(e) => setKind(e.target.value as WorkpaperKind)}
++            className="text-apple-11 border border-hairline rounded px-1 bg-surface" aria-label="New workpaper kind">
++            {kinds.map((k) => <option key={k} value={k}>{k.toUpperCase()}</option>)}
++          </select>
++        )}
++      </div>
++      {links.length === 0 && <p className="text-apple-11 text-secondary">No risk–control links for this engagement.</p>}
++      <ul className="space-y-1">
++        {links.map((l) => {
++          const gap = missing.some((m) => m.id === l.id);
++          return (
++            <li key={l.id} className="flex items-center justify-between gap-2 text-apple-12">
++              <span className="text-secondary">
++                {l.isKey && <span className="font-semibold text-primary">Key · </span>}
++                {ctrl(l.controlId)?.code ?? l.controlId} ↔ {riskTitle(l.riskId)}
++                <span className="text-tertiary"> ({l.source})</span>
++              </span>
++              {l.isKey && (gap ? (
++                <button className="text-apple-11 font-semibold text-amber border border-hairline rounded px-2 py-0.5"
++                  onClick={() => { const r = createWorkpaperForGap(l.id, kind); setMsg(r.ok ? null : r.reason ?? 'Failed'); }}>
++                  Create workpaper for gap…
++                </button>
++              ) : <span className="text-apple-11 text-verdigris">Covered</span>)}
++            </li>
++          );
++        })}
++      </ul>
++      {stage === 'planning' && (
++        <button className="text-apple-12 font-semibold text-primary border border-hairline rounded px-3 py-1 bg-surface"
++          onClick={() => { const r = advanceToTesting(engagementId); setMsg(r.ok ? null : r.reason ?? 'Blocked'); }}>
++          Move to Testing
++        </button>
++      )}
++      {msg && <p role="alert" className="text-apple-11 text-amber">{msg}</p>}
++    </div>
++  );
++};
+diff --git a/src/context/AppContext.tsx b/src/context/AppContext.tsx
+index 87d0800..1f0ca93 100644
+--- a/src/context/AppContext.tsx
++++ b/src/context/AppContext.tsx
+@@ -8,11 +8,16 @@ import {
+   initialGlassBoxTokens,
+   initialIssues,
+   initialObservations,
++  initialOrgMethodology,
++  initialPlanningLinks,
++  initialRisks,
+   initialUniverses,
+   initialUsers,
+   initialWorkpapers,
+ } from '../data/initialData';
+ import { canPerformAction } from '../lib/access';
++import { canMoveToTesting } from '../lib/coverage';
++import { resolveWorkpaperKind, validateMethodology } from '../lib/methodology';
+ import { appendLedgerEntry, computePayloadHash, generateInitialLedger, verifyChain } from '../lib/ledger';
+ import {
+   AuditCapItem,
+@@ -25,6 +30,10 @@ import {
+   CapStatus,
+   GlassBoxToken,
+   LedgerEntry,
++  OrgMethodologyConfig,
++  PlanningRisk,
++  PlanningRiskControlLink,
++  WorkpaperKind,
+   RetestStatus,
+   ReviewComment,
+   User,
+@@ -110,6 +119,14 @@ interface AppContextType {
+     actorName: string
+   ) => Promise<void>;
+   updateCapStatus: (capId: string, status: CapStatus, retestStatus?: RetestStatus) => void;
++
++  // Slice A: methodology + coverage
++  orgMethodology: OrgMethodologyConfig;
++  saveOrgMethodology: (cfg: OrgMethodologyConfig) => { ok: boolean; errors: string[] };
++  planningRisks: PlanningRisk[];
++  planningLinks: PlanningRiskControlLink[];
++  advanceToTesting: (engagementId: string) => { ok: boolean; reason?: string };
++  createWorkpaperForGap: (linkId: string, kind?: WorkpaperKind) => { ok: boolean; reason?: string; workpaperId?: string };
+ }
+ 
+ const AppContext = createContext<AppContextType | undefined>(undefined);
+@@ -128,6 +145,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
+   const [rawComments, setRawComments] = useState<ReviewComment[]>(initialComments);
+   const [rawCapItems, setRawCapItems] = useState<AuditCapItem[]>(initialCapItems);
+   const [ledger, setLedger] = useState<LedgerEntry[]>([]);
++  const [orgMethodology, setOrgMethodology] = useState<OrgMethodologyConfig>(initialOrgMethodology);
++  const [planningRisks] = useState<PlanningRisk[]>(initialRisks);
++  const [planningLinks] = useState<PlanningRiskControlLink[]>(initialPlanningLinks);
+   const [glassBoxTokens, setGlassBoxTokens] = useState<GlassBoxToken[]>(initialGlassBoxTokens);
+ 
+   useEffect(() => {
+@@ -173,6 +193,65 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
+     return newEntry;
+   };
+ 
++  const saveOrgMethodology = (cfg: OrgMethodologyConfig) => {
++    if (currentUser.role !== 'cia' && currentUser.role !== 'org_admin') {
++      return { ok: false, errors: ['Only the CIA or an Org Admin can change methodology.'] };
++    }
++    const errors = validateMethodology(cfg);
++    if (errors.length) return { ok: false, errors };
++    setOrgMethodology(cfg); // in-memory; Supabase persistence later
++    return { ok: true, errors: [] };
++  };
++
++  const advanceToTesting = (engagementId: string) => {
++    const eng = rawEngagements.find((e) => e.id === engagementId);
++    if (!eng || eng.stage !== 'planning') return { ok: false, reason: 'Engagement is not in planning.' };
++    if (eng.isLocked) return { ok: false, reason: 'Engagement is locked.' };
++    if (currentUser.role === 'observer' || currentUser.role === 'auditee') {
++      return { ok: false, reason: 'Your role cannot change the engagement stage.' };
++    }
++    const gate = canMoveToTesting(engagementId, planningLinks, rawWorkpapers, planningRisks, rawControls);
++    if (!gate.allowed) return { ok: false, reason: gate.reason };
++    setRawEngagements((prev) => prev.map((e) => (e.id === engagementId ? { ...e, stage: 'testing' } : e)));
++    return { ok: true };
++  };
++
++  const createWorkpaperForGap = (linkId: string, kind?: WorkpaperKind) => {
++    const link = planningLinks.find((l) => l.id === linkId);
++    const eng = link && rawEngagements.find((e) => e.id === link.engagementId);
++    const ctrl = link && rawControls.find((c) => c.id === link.controlId);
++    if (!link || !eng || !ctrl) return { ok: false, reason: 'Link, engagement or control not found.' };
++    if (eng.isLocked) return { ok: false, reason: 'Engagement is locked.' };
++    if (currentUser.role === 'observer' || currentUser.role === 'auditee') {
++      return { ok: false, reason: 'Your role cannot create workpapers.' };
++    }
++    const n = rawWorkpapers.filter((w) => w.engagementId === eng.id).length + 1;
++    const id = `wp-${eng.id}-${Date.now()}`;
++    const wp: WorkingPaper = {
++      id,
++      engagementId: eng.id,
++      controlId: ctrl.id,
++      entityId: eng.entityId,
++      universeId: eng.universeId,
++      refCode: `WP-${eng.id.toUpperCase()}-${n}`,
++      title: `${ctrl.code} ${ctrl.title}`,
++      status: 'not_started',
++      preparerId: eng.leadAuditorId,
++      reviewerId: eng.reviewerId,
++      kind: resolveWorkpaperKind(orgMethodology.deaOetMode, kind),
++      linkedRiskIds: [link.riskId],
++      linkedControlIds: [link.controlId],
++      testSteps: [],
++      populationCount: 0,
++      sampleCount: 0,
++      exceptionsIdentified: 0,
++      conclusion: '',
++      evidenceItems: [],
++    };
++    setRawWorkpapers((prev) => [...prev, wp]);
++    return { ok: true, workpaperId: id };
++  };
++
+   const signOffEngagement = async (engagementId: string) => {
+     const eng = rawEngagements.find((e) => e.id === engagementId);
+     if (!eng) return;
+@@ -533,6 +612,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
+         addReviewComment,
+         attachEvidenceToWorkpaper,
+         updateCapStatus,
++        orgMethodology,
++        saveOrgMethodology,
++        planningRisks,
++        planningLinks,
++        advanceToTesting,
++        createWorkpaperForGap,
+       }}
+     >
+       {children}
+diff --git a/src/data/initialData.ts b/src/data/initialData.ts
+index 28889e6..dbaf6b6 100644
+--- a/src/data/initialData.ts
++++ b/src/data/initialData.ts
+@@ -1,4 +1,7 @@
+ import {
++  OrgMethodologyConfig,
++  PlanningRisk,
++  PlanningRiskControlLink,
+   AuditCapItem,
+   AuditControl,
+   AuditEngagement,
+@@ -669,6 +672,9 @@ export const initialWorkpapers: WorkingPaper[] = [
+     universeId: 'u-gbm',
+     entityId: 'ent-compliance',
+     controlId: 'ctrl-comp-01',
++    kind: 'consolidated',
++    linkedRiskIds: ['risk-comp-1'],
++    linkedControlIds: ['ctrl-comp-01'],
+     title: 'Sanctions List Real-Time Sync Testing [CANARY-COMPLIANCE]',
+     preparedBy: 'Elena Rostova',
+     preparerId: 'usr-prep-1',
+@@ -719,6 +725,9 @@ export const initialWorkpapers: WorkingPaper[] = [
+     universeId: 'u-rdb',
+     entityId: 'ent-retail',
+     controlId: 'ctrl-ret-01',
++    kind: 'consolidated',
++    linkedRiskIds: ['risk-ret-1', 'risk-ret-2'],
++    linkedControlIds: ['ctrl-ret-01', 'ctrl-ret-02'],
+     title: 'Branch Vault Key Dual Authorization Audit [CANARY-RETAIL]',
+     preparedBy: 'Kenji Sato',
+     preparerId: 'usr-prep-2',
+@@ -1372,3 +1381,43 @@ export const initialGlassBoxTokens: GlassBoxToken[] = [
+     status: 'active',
+   },
+ ];
++
++
++export const initialOrgMethodology: OrgMethodologyConfig = {
++  deaOetMode: 'separate',
++  sampling: {
++    allowedMethods: ['random', 'systematic', 'stratified', 'mus', 'high_value', 'low_value', 'haphazard'],
++    defaultMethod: 'random',
++    zScore: 1.96,
++    tolerableDeviationRate: 0.05,
++    expectedDeviationRate: 0.01,
++    minHighValue: 15,
++    minLowValue: 10,
++    minHaphazard: 25,
++  },
++  deploy: {
++    canRequestDeployRoleIds: ['audit_manager', 'cia'],
++    requiresApproval: true,
++    canApproveDeployRoleIds: ['cia'],
++    defaultLeadRoleId: 'audit_manager',
++  },
++};
++
++export const initialRisks: PlanningRisk[] = [
++  { id: 'risk-comp-1', title: 'Sanctioned party not screened in real time' },
++  { id: 'risk-comp-2', title: 'Screening list feed is stale or incomplete' },
++  { id: 'risk-comp-3', title: 'Alert backlog delays escalation' },
++  { id: 'risk-ret-1', title: 'Unauthorised access to branch vault' },
++  { id: 'risk-ret-2', title: 'Cash variance not detected at count' },
++];
++
++// eng-comp-1: 2 key links, only 1 covered by wp-comp-1 -> gap visible
++// eng-ret-1: 3 key links, all covered by wp-ret-1 -> no gap
++export const initialPlanningLinks: PlanningRiskControlLink[] = [
++  { id: 'lnk-comp-1', engagementId: 'eng-comp-1', riskId: 'risk-comp-1', controlId: 'ctrl-comp-01', isKey: true, source: 'rcm' },
++  { id: 'lnk-comp-2', engagementId: 'eng-comp-1', riskId: 'risk-comp-2', controlId: 'ctrl-comp-02', isKey: true, source: 'rcm' },
++  { id: 'lnk-comp-3', engagementId: 'eng-comp-1', riskId: 'risk-comp-3', controlId: 'ctrl-comp-02', isKey: false, source: 'manual' },
++  { id: 'lnk-ret-1', engagementId: 'eng-ret-1', riskId: 'risk-ret-1', controlId: 'ctrl-ret-01', isKey: true, source: 'rcm' },
++  { id: 'lnk-ret-2', engagementId: 'eng-ret-1', riskId: 'risk-ret-2', controlId: 'ctrl-ret-02', isKey: true, source: 'sira' },
++  { id: 'lnk-ret-3', engagementId: 'eng-ret-1', riskId: 'risk-ret-1', controlId: 'ctrl-ret-02', isKey: true, source: 'rcm' },
++];
+diff --git a/src/lib/coverage.test.ts b/src/lib/coverage.test.ts
+new file mode 100644
+index 0000000..b2a56bc
+--- /dev/null
++++ b/src/lib/coverage.test.ts
+@@ -0,0 +1,53 @@
++import { describe, it, expect } from 'vitest';
++import { coverageGaps, canMoveToTesting, workpaperPreflight } from './coverage';
++import type { PlanningRiskControlLink } from '../types';
++
++const L = (id: string, r: string, c: string, isKey = true): PlanningRiskControlLink =>
++  ({ id, engagementId: 'e1', riskId: r, controlId: c, isKey, source: 'rcm' });
++const links = [L('1', 'r1', 'c1'), L('2', 'r2', 'c2'), L('3', 'r3', 'c3', false)];
++const wp = (ids: { r?: string[]; c?: string[] }, eng = 'e1') =>
++  ({ id: 'w', engagementId: eng, linkedRiskIds: ids.r, linkedControlIds: ids.c });
++
++describe('coverageGaps', () => {
++  it('flags key links with no covering workpaper; ignores non-key', () => {
++    const g = coverageGaps('e1', links, [wp({ r: ['r1'], c: ['c1'] })]);
++    expect(g.missing.map((m) => m.id)).toEqual(['2']);
++  });
++  it('requires both control and risk on the same workpaper', () => {
++    const g = coverageGaps('e1', links, [wp({ r: ['r1'], c: ['c2'] }), wp({ r: ['r2'], c: ['c1'] })]);
++    expect(g.missing.map((m) => m.id)).toEqual(['1', '2']);
++  });
++  it('is covered when one WP links everything', () => {
++    expect(coverageGaps('e1', links, [wp({ r: ['r1', 'r2'], c: ['c1', 'c2'] })]).missing).toEqual([]);
++  });
++  it('ignores workpapers on other engagements', () => {
++    expect(coverageGaps('e1', links, [wp({ r: ['r1', 'r2'], c: ['c1', 'c2'] }, 'e2')]).missing).toHaveLength(2);
++  });
++});
++
++describe('canMoveToTesting', () => {
++  it('blocks with a message listing missing items', () => {
++    const r = canMoveToTesting('e1', links, [], [{ id: 'r1', title: 'Risk One' }], [{ id: 'c1', code: 'C-1', title: 'Ctl' }]);
++    expect(r.allowed).toBe(false);
++    expect(r.reason).toContain('C-1 Ctl');
++    expect(r.reason).toContain('Risk One');
++  });
++  it('allows when no gaps', () => {
++    expect(canMoveToTesting('e1', links, [wp({ r: ['r1', 'r2'], c: ['c1', 'c2'] })], [], []).allowed).toBe(true);
++  });
++});
++
++describe('workpaperPreflight', () => {
++  it('hard when the only WP links no key control', () => {
++    const w = wp({});
++    expect(workpaperPreflight(w, links, [w]).level).toBe('hard');
++  });
++  it('soft when other WPs exist', () => {
++    const w = wp({});
++    expect(workpaperPreflight(w, links, [w, wp({ c: ['c1'] })]).level).toBe('soft');
++  });
++  it('none when it links a key control or engagement has no key links', () => {
++    expect(workpaperPreflight(wp({ c: ['c1'] }), links, []).level).toBe('none');
++    expect(workpaperPreflight(wp({}), [L('9', 'r', 'c', false)], []).level).toBe('none');
++  });
++});
+diff --git a/src/lib/coverage.ts b/src/lib/coverage.ts
+new file mode 100644
+index 0000000..3c88d88
+--- /dev/null
++++ b/src/lib/coverage.ts
+@@ -0,0 +1,75 @@
++import type { PlanningRiskControlLink, PlanningRisk, AuditControl, WorkingPaper } from '../types';
++
++type WpLinks = Pick<WorkingPaper, 'id' | 'engagementId' | 'linkedRiskIds' | 'linkedControlIds'>;
++
++/**
++ * A key link is covered when at least one workpaper on the same engagement
++ * lists its controlId in linkedControlIds AND (if the link has a riskId)
++ * its riskId in linkedRiskIds.
++ */
++export function coverageGaps(
++  engagementId: string,
++  links: PlanningRiskControlLink[],
++  workpapers: WpLinks[],
++): { missing: PlanningRiskControlLink[] } {
++  const wps = workpapers.filter((w) => w.engagementId === engagementId);
++  const missing = links.filter((l) => {
++    if (l.engagementId !== engagementId || !l.isKey) return false;
++    return !wps.some(
++      (w) =>
++        (w.linkedControlIds ?? []).includes(l.controlId) &&
++        (!l.riskId || (w.linkedRiskIds ?? []).includes(l.riskId)),
++    );
++  });
++  return { missing };
++}
++
++export function gapLabel(
++  l: PlanningRiskControlLink,
++  risks: PlanningRisk[],
++  controls: Pick<AuditControl, 'id' | 'code' | 'title'>[],
++): string {
++  const risk = risks.find((r) => r.id === l.riskId)?.title ?? l.riskId;
++  const c = controls.find((x) => x.id === l.controlId);
++  return `${c ? `${c.code} ${c.title}` : l.controlId} (risk: ${risk})`;
++}
++
++/** Planning -> Testing gate. */
++export function canMoveToTesting(
++  engagementId: string,
++  links: PlanningRiskControlLink[],
++  workpapers: WpLinks[],
++  risks: PlanningRisk[],
++  controls: Pick<AuditControl, 'id' | 'code' | 'title'>[],
++): { allowed: boolean; reason?: string } {
++  const { missing } = coverageGaps(engagementId, links, workpapers);
++  if (missing.length === 0) return { allowed: true };
++  return {
++    allowed: false,
++    reason:
++      'Cannot move to testing. Key risks/controls without a workpaper: ' +
++      missing.map((m) => gapLabel(m, risks, controls)).join('; '),
++  };
++}
++
++/**
++ * WP pre-flight: warn if this WP links no key control while the engagement has key links.
++ * Hard when this WP is the only coverage vehicle (the only WP on the engagement).
++ */
++export function workpaperPreflight(
++  wp: WpLinks,
++  links: PlanningRiskControlLink[],
++  workpapers: WpLinks[],
++): { level: 'none' | 'soft' | 'hard'; message?: string } {
++  const key = links.filter((l) => l.engagementId === wp.engagementId && l.isKey);
++  if (key.length === 0) return { level: 'none' };
++  const keyControls = new Set(key.map((l) => l.controlId));
++  if ((wp.linkedControlIds ?? []).some((id) => keyControls.has(id))) return { level: 'none' };
++  const onlyWp = workpapers.filter((w) => w.engagementId === wp.engagementId).length <= 1;
++  return {
++    level: onlyWp ? 'hard' : 'soft',
++    message: onlyWp
++      ? 'This is the only workpaper on the engagement and it links no key control.'
++      : 'This workpaper links no key control, but the engagement has key controls to cover.',
++  };
++}
+diff --git a/src/lib/methodology.test.ts b/src/lib/methodology.test.ts
+new file mode 100644
+index 0000000..febb4d9
+--- /dev/null
++++ b/src/lib/methodology.test.ts
+@@ -0,0 +1,27 @@
++import { describe, it, expect } from 'vitest';
++import { validateMethodology, methodologySummary, resolveWorkpaperKind } from './methodology';
++import { initialOrgMethodology } from '../data/initialData';
++
++const clone = () => structuredClone(initialOrgMethodology);
++
++describe('methodology', () => {
++  it('seed config is valid', () => expect(validateMethodology(initialOrgMethodology)).toEqual([]));
++  it('rejects empty methods and default outside allowed', () => {
++    const c = clone(); c.sampling.allowedMethods = [];
++    expect(validateMethodology(c).length).toBeGreaterThan(0);
++    const d = clone(); d.sampling.allowedMethods = ['mus']; d.sampling.defaultMethod = 'random';
++    expect(validateMethodology(d)).toContain('Default method must be one of the allowed methods.');
++  });
++  it('rejects expected >= tolerable and missing approver', () => {
++    const c = clone(); c.sampling.expectedDeviationRate = 0.1;
++    expect(validateMethodology(c).join()).toContain('Expected deviation');
++    const d = clone(); d.deploy.canApproveDeployRoleIds = [];
++    expect(validateMethodology(d).join()).toContain('approver');
++  });
++  it('summary string', () => expect(methodologySummary(initialOrgMethodology)).toMatch(/^DEA\/OET: separate · Methods: Random/));
++  it('kind is always consolidated in consolidated mode', () => {
++    expect(resolveWorkpaperKind('consolidated', 'dea')).toBe('consolidated');
++    expect(resolveWorkpaperKind('separate', 'oet')).toBe('oet');
++    expect(resolveWorkpaperKind('separate')).toBe('dea');
++  });
++});
+diff --git a/src/lib/methodology.ts b/src/lib/methodology.ts
+new file mode 100644
+index 0000000..426f388
+--- /dev/null
++++ b/src/lib/methodology.ts
+@@ -0,0 +1,37 @@
++import type { OrgMethodologyConfig, SamplingMethodId, DeaOetMode, WorkpaperKind } from '../types';
++
++export const SAMPLING_LABELS: Record<SamplingMethodId, string> = {
++  random: 'Random', systematic: 'Systematic', stratified: 'Stratified', mus: 'MUS',
++  high_value: 'High-value', low_value: 'Low-value', haphazard: 'Haphazard',
++};
++
++export function validateMethodology(c: OrgMethodologyConfig): string[] {
++  const errs: string[] = [];
++  const s = c.sampling;
++  if (s.allowedMethods.length === 0) errs.push('Select at least one sampling method.');
++  if (!s.allowedMethods.includes(s.defaultMethod)) errs.push('Default method must be one of the allowed methods.');
++  for (const [k, v] of [['Tolerable deviation rate', s.tolerableDeviationRate], ['Expected deviation rate', s.expectedDeviationRate]] as const) {
++    if (!(v >= 0 && v <= 1)) errs.push(`${k} must be between 0 and 1.`);
++  }
++  if (s.expectedDeviationRate >= s.tolerableDeviationRate) errs.push('Expected deviation rate must be below tolerable rate.');
++  for (const [k, v] of [['High-value floor', s.minHighValue], ['Low-value floor', s.minLowValue], ['Haphazard floor', s.minHaphazard]] as const) {
++    if (!Number.isInteger(v) || v < 1) errs.push(`${k} must be a whole number of at least 1.`);
++  }
++  if (c.deploy.canRequestDeployRoleIds.length === 0) errs.push('Select at least one role that can request deployment.');
++  if (c.deploy.requiresApproval && c.deploy.canApproveDeployRoleIds.length === 0) errs.push('Select at least one approver role.');
++  return errs;
++}
++
++export function methodologySummary(c: OrgMethodologyConfig): string {
++  return `DEA/OET: ${c.deaOetMode} · Methods: ${c.sampling.allowedMethods.map((m) => SAMPLING_LABELS[m]).join(', ')}`;
++}
++
++/** Kinds a new WP may take under the org mode. */
++export function allowedWorkpaperKinds(mode: DeaOetMode): WorkpaperKind[] {
++  return mode === 'consolidated' ? ['consolidated'] : ['dea', 'oet'];
++}
++
++export function resolveWorkpaperKind(mode: DeaOetMode, requested?: WorkpaperKind): WorkpaperKind {
++  const ok = allowedWorkpaperKinds(mode);
++  return requested && ok.includes(requested) ? requested : ok[0];
++}
+diff --git a/src/types/index.ts b/src/types/index.ts
+index 5bfe355..ad44dba 100644
+--- a/src/types/index.ts
++++ b/src/types/index.ts
+@@ -134,6 +134,10 @@ export type WorkingPaper = {
+     completed: boolean;
+     resultNote?: string;
+   }[];
++  // Slice A: coverage links (A2)
++  kind?: WorkpaperKind;
++  linkedRiskIds?: string[];
++  linkedControlIds?: string[];
+   procedureSteps?: {
+     id: string;
+     description: string;
+@@ -342,3 +346,49 @@ export interface ActionGateResult {
+   allowed: boolean;
+   reason?: string;
+ }
++
++
++// ---- Slice A: org methodology (A1) ----
++export type DeaOetMode = 'separate' | 'consolidated';
++
++export type SamplingMethodId =
++  | 'random' | 'systematic' | 'stratified' | 'mus'
++  | 'high_value' | 'low_value' | 'haphazard';
++
++export type OrgSamplingConfig = {
++  allowedMethods: SamplingMethodId[]; // non-empty
++  defaultMethod: SamplingMethodId;    // must be in allowedMethods
++  zScore: number;                     // hard default 1.96; not a WP slider
++  tolerableDeviationRate: number;
++  expectedDeviationRate: number;
++  minHighValue: number;               // default 15
++  minLowValue: number;                // default 10
++  minHaphazard: number;               // default 25
++};
++
++export type DeployPolicy = {
++  canRequestDeployRoleIds: string[];
++  requiresApproval: boolean;
++  canApproveDeployRoleIds: string[];
++  defaultLeadRoleId: string;
++};
++
++export type OrgMethodologyConfig = {
++  deaOetMode: DeaOetMode;
++  sampling: OrgSamplingConfig;
++  deploy: DeployPolicy;
++};
++
++// ---- Slice A: RCM coverage (A2) ----
++export type PlanningRiskControlLink = {
++  id: string;
++  engagementId: string;
++  riskId: string;
++  controlId: string;
++  isKey: boolean;
++  source: 'rcm' | 'sira' | 'manual';
++};
++
++export type WorkpaperKind = 'dea' | 'oet' | 'consolidated';
++
++export type PlanningRisk = { id: string; title: string };
+-- 
+2.43.0

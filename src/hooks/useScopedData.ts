@@ -15,6 +15,7 @@ import {
   filterUniverses,
   filterWorkpapers,
 } from '../lib/access';
+import { isCapOverdue } from '../lib/orgDate';
 import {
   AuditCapItem,
   AuditControl,
@@ -196,7 +197,7 @@ export function useScopedData() {
     const totalCapCount = scopedCapItems.length;
     const openCapCount = scopedCapItems.filter((c) => c.status !== 'Closed').length;
     const overdueCapCount = scopedCapItems.filter(
-      (c) => c.status === 'Overdue' || (c.status !== 'Closed' && c.dueDate < '2026-09-30')
+      (c) => isCapOverdue(c.status, c.dueDate)
     ).length;
 
     // Greeting subtitle based strictly on scoped items
@@ -242,7 +243,7 @@ export function useScopedData() {
       const d = capDeptMap[cap.department];
       d.total += 1;
       d.caps.push(cap);
-      if (cap.status === 'Overdue' || (cap.status !== 'Closed' && cap.dueDate < '2026-09-30')) {
+      if (isCapOverdue(cap.status, cap.dueDate)) {
         d.overdueCount += 1;
       }
       d.severityCounts[cap.severity] = (d.severityCounts[cap.severity] || 0) + 1;

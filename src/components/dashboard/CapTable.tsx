@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { AuditCapItem, CapStatus, RetestStatus, Severity } from '../../types';
 import { useFilterStore } from '../../context/FilterStore';
 import { useApp } from '../../context/AppContext';
+import { isCapOverdue } from '../../lib/orgDate';
 import { HoverPreview } from '../common/HoverPreview';
 import {
   AlertCircle,
@@ -75,7 +76,7 @@ export const CapTable: React.FC<CapTableProps> = ({ capItems }) => {
   };
 
   const getStatusBadge = (status: CapStatus, dueDate: string) => {
-    const isOverdue = status === 'Overdue' || (status !== 'Closed' && dueDate < '2026-09-30');
+    const isOverdue = isCapOverdue(status, dueDate);
     if (isOverdue) {
       return (
         <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-apple-11 font-semibold bg-cinnabar-subtle text-cinnabar border border-cinnabar">
@@ -287,7 +288,7 @@ export const CapTable: React.FC<CapTableProps> = ({ capItems }) => {
                   subtitle: item.action,
                   status: item.status,
                   statusType:
-                    item.status === 'Overdue' || item.dueDate < '2026-09-30'
+                    isCapOverdue(item.status, item.dueDate)
                       ? ('cinnabar' as const)
                       : item.status === 'Closed'
                       ? ('verdigris' as const)
