@@ -364,4 +364,6 @@ export function canPerformAction(
   }
 }
 
-   export const canChangeCapDueDate = (role: Role) => role === 'audit_manager' || role === 'cia';
+/** @deprecated Prefer canPerformCapability(user, 'cap_change_due_date', orgConfig) */
+export const canChangeCapDueDate = (role: Role) => role === 'audit_manager' || role === 'cia';
+
