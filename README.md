@@ -6,8 +6,29 @@ Cryptographically sealed workpapers, deterministic testing, verifiable populatio
 
 ## Run locally
 
-**Prerequisite:** Node.js
+**Prerequisite:** Node.js 20+
 
-1. Install dependencies:
-   ```bash
-   npm install
+```bash
+npm install --legacy-peer-deps
+npm run dev          # http://localhost:3000 (or the port Vite prints)
+```
+
+## Checks
+
+```bash
+npx tsc --noEmit
+npx vitest run
+npx vite build
+node scripts/check-tokens.mjs
+node scripts/check-shrink.mjs
+npx playwright test   # e2e
+```
+
+## Rules of the codebase
+
+- Three lifecycle stages only: planning, testing, conclusion.
+- Colours come only from `src/styles/tokens.css`; icons only from `src/components/common/Icons.tsx`.
+- Components read data only through `useScopedData()`.
+- No `Math.random` in audit logic; no blocking modals.
+
+Spec: `docs/` and the project instruction guide (v7).

@@ -19,7 +19,7 @@ export type CapStatusAction =
   | 'reject'
   | 'fail_retest';
 
-const ACTION_CAPABILITY: Record<CapStatusAction, CapCapability> = {
+export const ACTION_CAPABILITY: Record<CapStatusAction, CapCapability> = {
   mark_in_progress: 'cap_mark_in_progress',
   submit_validation: 'cap_submit_validation',
   verify_close: 'cap_verify_close',

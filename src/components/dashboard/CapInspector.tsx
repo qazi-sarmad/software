@@ -3,6 +3,8 @@ import { AuditCapItem, CapStatus, RetestStatus, Severity } from '../../types';
 import { useApp } from '../../context/AppContext';
 import { useScopedData } from '../../hooks/useScopedData';
 import { isCapOverdue } from '../../lib/orgDate';
+import { ACTION_CAPABILITY } from '../../lib/cap';
+import { canPerformCapability } from '../../lib/orgCapabilities';
 import {
   AlertCircle,
   CheckCircle2,
@@ -50,6 +52,12 @@ export const CapInspector: React.FC<CapInspectorProps> = ({ data, onClose }) => 
   const [evidence, setEvidence] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
   const [panel, setPanel] = useState<'none' | 'submit' | 'reject' | 'fail' | 'verify'>('none');
+
+  // Show an action only to designations that hold its capability (four-eyes still enforced on click).
+  const allowed = (action: keyof typeof ACTION_CAPABILITY) =>
+    canPerformCapability(currentUser, ACTION_CAPABILITY[action], orgRoleConfig, {
+      submitterUserId: activeCap?.lastSubmittedByUserId,
+    }).allowed;
 
   const run = (action: 'mark_in_progress' | 'submit_validation' | 'verify_close' | 'reject' | 'fail_retest') => {
     if (!activeCap) return;
@@ -266,21 +274,26 @@ export const CapInspector: React.FC<CapInspectorProps> = ({ data, onClose }) => 
               <div className="text-apple-12 text-cinnabar" data-testid="cap-form-error">{formError}</div>
             )}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              <button
+              {allowed('mark_in_progress') && (
+<button
                 type="button"
                 onClick={() => { setPanel('none'); run('mark_in_progress'); }}
                 className="p-2 rounded-xl bg-surface-elevated hover:bg-surface-hover border border-hairline text-apple-12 font-medium text-secondary hover:text-primary transition-colors text-center"
               >
                 Mark In Progress
               </button>
-              <button
+)}
+              {allowed('submit_validation') && (
+<button
                 type="button"
                 onClick={() => { setFormError(null); setPanel('submit'); }}
                 className="p-2 rounded-xl bg-surface-elevated hover:bg-surface-hover border border-hairline text-apple-12 font-medium text-secondary hover:text-primary transition-colors text-center"
               >
                 Submit for Validation
               </button>
-              <button
+)}
+              {allowed('verify_close') && (
+<button
                 type="button"
                 onClick={() => { setFormError(null); setPanel('verify'); }}
                 className="p-2 rounded-xl bg-verdigris-subtle hover:opacity-85 text-verdigris text-apple-12 font-semibold transition-opacity text-center flex items-center justify-center gap-1"
@@ -288,7 +301,9 @@ export const CapInspector: React.FC<CapInspectorProps> = ({ data, onClose }) => 
                 <CheckCircle2 className="w-3.5 h-3.5 stroke-[2]" />
                 <span>Verify &amp; Close</span>
               </button>
-              <button
+)}
+              {allowed('fail_retest') && (
+<button
                 type="button"
                 onClick={() => { setFormError(null); setPanel('fail'); }}
                 className="p-2 rounded-xl bg-cinnabar-subtle hover:opacity-85 text-cinnabar text-apple-12 font-semibold transition-opacity text-center flex items-center justify-center gap-1"
@@ -296,6 +311,7 @@ export const CapInspector: React.FC<CapInspectorProps> = ({ data, onClose }) => 
                 <AlertCircle className="w-3.5 h-3.5 stroke-[2]" />
                 <span>Fail Re-Test</span>
               </button>
+)}
             </div>
 
             {panel === 'submit' && (
@@ -342,7 +358,7 @@ export const CapInspector: React.FC<CapInspectorProps> = ({ data, onClose }) => 
               </div>
             )}
             <p className="text-apple-11 text-tertiary">
-              Actions are capability-gated for {currentUser.role}. Org designations can reassign powers without code changes.
+              Actions shown are those your designation may perform ({currentUser.role}). Org designations can reassign powers without code changes.
             </p>
           </div>
         </div>

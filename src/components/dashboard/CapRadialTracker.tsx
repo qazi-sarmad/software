@@ -30,6 +30,11 @@ export const CapRadialTracker: React.FC<CapRadialTrackerProps> = ({
   const filter = useFilterStore();
   const { openInspector } = useApp();
   const [hoveredDept, setHoveredDept] = useState<string | null>(null);
+  // Keep latest callbacks in refs so the draw effect never re-runs (and re-animates) on hover.
+  const openInspectorRef = useRef(openInspector);
+  const filterRef = useRef(filter);
+  openInspectorRef.current = openInspector;
+  filterRef.current = filter;
 
   const deptColorPalette: Record<string, string> = {
     Treasury: 'var(--accent-primary)',
@@ -54,6 +59,8 @@ export const CapRadialTracker: React.FC<CapRadialTrackerProps> = ({
   };
 
   const departments = Object.values(capDeptMap).filter((d) => d.total > 0);
+  // Redraw only when the underlying data or the selected department changes.
+  const drawKey = JSON.stringify(departments.map((d) => [d.department, d.total, d.caps?.length ?? 0])) + '|' + (filter.department ?? '');
 
   const getDeptOpacity = (dept: string, isCapSlice = false) => {
     if (hoveredDept && hoveredDept !== dept) return 0.35;
@@ -125,8 +132,8 @@ export const CapRadialTracker: React.FC<CapRadialTrackerProps> = ({
       })
       .on('click', (_, d) => {
         const nextDept = filter.department === d.data.department ? null : d.data.department;
-        filter.setDepartment(nextDept);
-        openInspector('cap_inspector', { department: d.data.department, caps: d.data.caps });
+        filterRef.current.setDepartment(nextDept);
+        openInspectorRef.current('cap_inspector', { department: d.data.department, caps: d.data.caps });
       });
 
     deptGroups
@@ -179,9 +186,9 @@ export const CapRadialTracker: React.FC<CapRadialTrackerProps> = ({
           .on('mouseenter', () => setHoveredDept(dept.department))
           .on('mouseleave', () => setHoveredDept(null))
           .on('click', () => {
-            filter.setDepartment(dept.department);
-            filter.setSeverity(sev);
-            openInspector('cap_inspector', { department: dept.department, severity: sev, caps: dept.caps });
+            filterRef.current.setDepartment(dept.department);
+            filterRef.current.setSeverity(sev);
+            openInspectorRef.current('cap_inspector', { department: dept.department, severity: sev, caps: dept.caps });
           });
 
         capPath
@@ -225,7 +232,8 @@ export const CapRadialTracker: React.FC<CapRadialTrackerProps> = ({
       .attr('stroke', 'var(--border-hairline)')
       .attr('stroke-width', 1)
       .attr('class', 'shadow-xs');
-  }, [departments, filter.department, filter.setDepartment, filter.setSeverity, openInspector]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [drawKey]);
 
   useEffect(() => {
     if (!svgRef.current || departments.length === 0) return;
