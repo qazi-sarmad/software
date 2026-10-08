@@ -11,6 +11,8 @@ interface InspectorPanelProps {
   width?: string; // e.g. "max-w-2xl" or "max-w-4xl"
   children: React.ReactNode;
   footer?: React.ReactNode;
+  /** Fill most of the viewport height (Audit File, workbench). */
+  tall?: boolean;
 }
 
 export const InspectorPanel: React.FC<InspectorPanelProps> = ({
@@ -22,6 +24,7 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
   width = 'max-w-2xl',
   children,
   footer,
+  tall = false,
 }) => {
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -48,7 +51,7 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex justify-end overflow-hidden">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-8 overflow-hidden">
           {/* Backdrop Scrim */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -66,15 +69,15 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
             tabIndex={-1}
             role="dialog"
             aria-modal="true"
-            initial={{ x: '100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '100%' }}
+            initial={{ opacity: 0, scale: 0.96, y: 12 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.97, y: 8 }}
             transition={{
               type: 'spring',
               stiffness: 300,
               damping: 30,
             }}
-            className={`relative w-full ${width} h-full bg-surface border-l border-hairline shadow-apple flex flex-col z-10 outline-none`}
+            className={`relative w-full ${width} ${tall ? 'h-[min(90vh,60rem)]' : 'max-h-[88vh]'} bg-surface border border-hairline rounded-2xl overflow-hidden shadow-apple flex flex-col z-10 outline-none`}
           >
             {/* Header with frosted glass style */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-hairline bg-surface/90 backdrop-blur-md shrink-0">
@@ -94,7 +97,7 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
                   onClick={onClose}
                   className="p-1.5 rounded-lg text-secondary hover:text-primary bg-surface-hover transition-colors flex items-center gap-1.5"
                   title="Close (Esc)"
-                  aria-label="Close inspector panel"
+                  aria-label="Close panel"
                 >
                   <span className="text-apple-11 text-tertiary hidden sm:inline">Esc</span>
                   <X className="w-4 h-4 stroke-[1.5]" />

@@ -1,13 +1,16 @@
 import React, { useState, useMemo } from 'react';
 import { WorkingPaper } from '../../types';
 import { drawSeededSample } from '../../lib/auditEngines';
+import { WorkpaperLock } from '../../lib/workpaperLock';
 import { Hash, Check, Sliders, ShieldCheck } from '../common/Icons';
 
 interface SamplingTabProps {
   workpaper: WorkingPaper;
+  lock?: WorkpaperLock;
 }
 
-export const SamplingTab: React.FC<SamplingTabProps> = ({ workpaper }) => {
+export const SamplingTab: React.FC<SamplingTabProps> = ({ workpaper, lock }) => {
+  const locked = Boolean(workpaper.sealed || lock?.locked);
   const [seed, setSeed] = useState(workpaper.samplingSeed || 'PROVIO-AUDIT-2026-SEED');
   const [sampleSize, setSampleSize] = useState(workpaper.sampleCount || 25);
   const [confidenceLevel, setConfidenceLevel] = useState(95);
@@ -44,6 +47,12 @@ export const SamplingTab: React.FC<SamplingTabProps> = ({ workpaper }) => {
         </p>
       </div>
 
+      {locked && (
+        <div className="p-3 rounded-xl bg-surface-sunken border border-hairline text-apple-12 text-secondary" data-testid="sampling-locked">
+          {lock?.reason || 'Read-only.'} Seed, size and confidence are fixed and reproducible.
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="p-4 rounded-xl bg-surface border border-hairline space-y-1">
           <label className="text-apple-11 font-medium text-secondary uppercase tracking-wider">
@@ -53,7 +62,7 @@ export const SamplingTab: React.FC<SamplingTabProps> = ({ workpaper }) => {
             type="text"
             value={seed}
             onChange={(e) => setSeed(e.target.value)}
-            disabled={workpaper.sealed}
+            disabled={locked}
             className="w-full font-mono text-apple-12 p-2 rounded-lg bg-surface-sunken border border-hairline text-primary"
           />
         </div>
@@ -67,7 +76,7 @@ export const SamplingTab: React.FC<SamplingTabProps> = ({ workpaper }) => {
             max={dummyPopulation.length}
             value={sampleSize}
             onChange={(e) => setSampleSize(Math.max(1, Number(e.target.value)))}
-            disabled={workpaper.sealed}
+            disabled={locked}
             className="w-full text-apple-13 p-2 rounded-lg bg-surface-sunken border border-hairline text-primary"
           />
         </div>
@@ -78,7 +87,7 @@ export const SamplingTab: React.FC<SamplingTabProps> = ({ workpaper }) => {
           <select
             value={confidenceLevel}
             onChange={(e) => setConfidenceLevel(Number(e.target.value))}
-            disabled={workpaper.sealed}
+            disabled={locked}
             className="w-full text-apple-13 p-2 rounded-lg bg-surface-sunken border border-hairline text-primary"
           >
             <option value={90}>90% (Low Risk Tolerable Deviation)</option>

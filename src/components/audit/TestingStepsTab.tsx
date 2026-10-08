@@ -1,20 +1,23 @@
 import React, { useState } from 'react';
+import { WorkpaperLock } from '../../lib/workpaperLock';
 import { WorkingPaper } from '../../types';
 import { useApp } from '../../context/AppContext';
 import { CheckCircle2, ShieldCheck, AlertCircle, Lock, Hash } from '../common/Icons';
 
 interface TestingStepsTabProps {
   workpaper: WorkingPaper;
+  lock?: WorkpaperLock;
 }
 
-export const TestingStepsTab: React.FC<TestingStepsTabProps> = ({ workpaper }) => {
+export const TestingStepsTab: React.FC<TestingStepsTabProps> = ({ workpaper, lock }) => {
+  const locked = Boolean(workpaper.sealed || lock?.locked);
   const { finalizeTest } = useApp();
   const [steps, setSteps] = useState(workpaper.testSteps);
   const [isVerifying, setIsVerifying] = useState(false);
   const [verified, setVerified] = useState(Boolean(workpaper.populationSha256));
 
   const handleToggleStep = (stepId: string) => {
-    if (workpaper.sealed) return;
+    if (locked) return;
     setSteps((prev) =>
       prev.map((s) => (s.id === stepId ? { ...s, completed: !s.completed } : s))
     );
@@ -53,7 +56,7 @@ export const TestingStepsTab: React.FC<TestingStepsTabProps> = ({ workpaper }) =
         <button
           type="button"
           onClick={handleVerifyPopulation}
-          disabled={verified || isVerifying || workpaper.sealed}
+          disabled={verified || isVerifying || locked}
           className={`px-3 py-1.5 rounded-lg text-apple-12 font-semibold transition-colors flex items-center gap-1.5 ${
             verified
               ? 'bg-verdigris-subtle text-verdigris border border-verdigris cursor-default'
@@ -84,7 +87,7 @@ export const TestingStepsTab: React.FC<TestingStepsTabProps> = ({ workpaper }) =
               key={step.id}
               onClick={() => handleToggleStep(step.id)}
               className={`p-4 flex items-start gap-3 transition-colors ${
-                workpaper.sealed ? 'opacity-80' : 'cursor-pointer hover:bg-surface-hover'
+                locked ? 'opacity-80 cursor-not-allowed' : 'cursor-pointer hover:bg-surface-hover'
               }`}
             >
               <div className="pt-0.5 shrink-0">
@@ -92,7 +95,7 @@ export const TestingStepsTab: React.FC<TestingStepsTabProps> = ({ workpaper }) =
                   type="checkbox"
                   checked={step.completed}
                   onChange={() => {}}
-                  disabled={workpaper.sealed}
+                  disabled={locked}
                   className="rounded border-hairline text-verdigris focus:ring-0"
                 />
               </div>
@@ -124,7 +127,7 @@ export const TestingStepsTab: React.FC<TestingStepsTabProps> = ({ workpaper }) =
         <button
           type="button"
           onClick={handleFinalize}
-          disabled={!allCompleted || workpaper.sealed}
+          disabled={!allCompleted || locked}
           className="px-4 py-2 rounded-lg bg-surface border border-hairline hover:bg-surface-hover text-apple-13 font-semibold text-primary disabled:opacity-50 transition-colors"
         >
           Finalize Fieldwork Test

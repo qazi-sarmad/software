@@ -8,6 +8,7 @@ import { EvidenceTab } from './EvidenceTab';
 import { AnalyticsTab } from './AnalyticsTab';
 import { DocumentReviewTab } from './DocumentReviewTab';
 import { FindingsTab } from './FindingsTab';
+import { getWorkpaperLock } from '../../lib/workpaperLock';
 import { ClipboardList, Sliders, FileCheck, Activity, FileText, AlertTriangle } from '../common/Icons';
 
 type WorkbenchSubTab = 'testing' | 'sampling' | 'evidence' | 'analytics' | 'document_review' | 'findings';
@@ -28,6 +29,8 @@ export const PaperWorkbenchModal: React.FC = () => {
       </div>
     );
   }
+
+  const lock = getWorkpaperLock(workpaper, engagement);
 
   const tabs: { id: WorkbenchSubTab; label: string; icon: React.FC<any> }[] = [
     { id: 'testing', label: 'Test Program', icon: ClipboardList },
@@ -67,8 +70,8 @@ export const PaperWorkbenchModal: React.FC = () => {
 
       {/* Content Area */}
       <div className="flex-1 overflow-y-auto p-6 bg-canvas">
-        {activeSubTab === 'testing' && <TestingStepsTab workpaper={workpaper} />}
-        {activeSubTab === 'sampling' && <SamplingTab workpaper={workpaper} />}
+        {activeSubTab === 'testing' && <TestingStepsTab workpaper={workpaper} lock={lock} />}
+        {activeSubTab === 'sampling' && <SamplingTab workpaper={workpaper} lock={lock} />}
         {activeSubTab === 'evidence' && <EvidenceTab workpaper={workpaper} />}
         {activeSubTab === 'analytics' && <AnalyticsTab workpaper={workpaper} />}
         {activeSubTab === 'document_review' && <DocumentReviewTab workpaper={workpaper} />}

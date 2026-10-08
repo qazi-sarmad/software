@@ -182,7 +182,7 @@ const AppContent: React.FC = () => {
 
   const getInspectorWidth = () => {
     if (inspector.type === 'workbench' || inspector.type === 'audit_file') {
-      return 'max-w-5xl';
+      return 'max-w-6xl';
     }
     return 'max-w-2xl';
   };
@@ -226,6 +226,7 @@ const AppContent: React.FC = () => {
         onClose={closeInspector}
         title={getInspectorTitle()}
         width={getInspectorWidth()}
+        tall={inspector.type === 'workbench' || inspector.type === 'audit_file'}
       >
         {renderInspectorContent()}
       </InspectorPanel>
