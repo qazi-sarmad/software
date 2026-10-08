@@ -10,11 +10,12 @@ interface TestingStepsTabProps {
 }
 
 export const TestingStepsTab: React.FC<TestingStepsTabProps> = ({ workpaper, lock }) => {
-  const locked = Boolean(workpaper.sealed || lock?.locked);
+  const locked = true; // Legacy demo steps are read-only; authenticated results persist through commands.
   const { finalizeTest } = useApp();
   const [steps, setSteps] = useState(workpaper.testSteps);
   const [isVerifying, setIsVerifying] = useState(false);
-  const [verified, setVerified] = useState(Boolean(workpaper.populationSha256));
+  const verified = false; // Only server-committed manifests can attest verification.
+  const [verificationMessage, setVerificationMessage] = useState('Use authenticated Audit File to import and reconcile a population. Seeded demo hashes cannot verify source data.');
 
   const handleToggleStep = (stepId: string) => {
     if (locked) return;
@@ -24,11 +25,7 @@ export const TestingStepsTab: React.FC<TestingStepsTabProps> = ({ workpaper, loc
   };
 
   const handleVerifyPopulation = () => {
-    setIsVerifying(true);
-    setTimeout(() => {
-      setVerified(true);
-      setIsVerifying(false);
-    }, 400);
+    setVerificationMessage('Use authenticated Audit File to import and reconcile a population. Seeded demo hashes cannot verify source data.');
   };
 
   const allCompleted = steps.every((s) => s.completed) && verified;
@@ -76,6 +73,7 @@ export const TestingStepsTab: React.FC<TestingStepsTabProps> = ({ workpaper, loc
         </button>
       </div>
 
+      {verificationMessage && <p role="status">{verificationMessage}</p>}
       {/* Sequential Test Steps */}
       <div className="space-y-3">
         <h3 className="text-apple-13 font-semibold text-primary uppercase tracking-wider">

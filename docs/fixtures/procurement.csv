@@ -1,0 +1,3 @@
+id,invoice,vendor,date,amountMinor,createdBy,approvedBy,taxId
+p1,INV-001,Synthetic Vendor A,2026-10-01,980000,maker-a,maker-a,
+p2,INV-001,Synthetic Vendor A,2026-10-01,980000,maker-a,checker-b,TAX-A

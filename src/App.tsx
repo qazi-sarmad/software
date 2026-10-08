@@ -1,5 +1,7 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { motion } from 'motion/react';
+import { dataMode } from './lib/data/mode';
+const AuthenticatedApp = lazy(() => import('./components/procurement/AuthenticatedApp'));
 import { AppProvider, useApp } from './context/AppContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { HeaderBar } from './components/common/HeaderBar';
@@ -61,16 +63,16 @@ const DevAccessPage = lazy(() =>
 );
 
 // Inspector content
-import { ObservationDrilldown } from './components/issues/ObservationDrilldown';
-import { EntitySiraRcmModal } from './components/universe/EntitySiraRcmModal';
-import { PeopleAccessModal } from './components/common/PeopleAccessModal';
-import { AuditFileModal } from './components/audit/AuditFileModal';
-import { PaperWorkbenchModal } from './components/audit/PaperWorkbenchModal';
-import { RedThreadModal } from './components/common/RedThreadModal';
-import { GlassBoxShareModal } from './components/common/GlassBoxShareModal';
-import { AccountSettingsModal } from './components/common/AccountSettingsModal';
-import { CommentHistoryPanel } from './components/reviews/CommentHistoryPanel';
-import { CapInspector } from './components/dashboard/CapInspector';
+const ObservationDrilldown = lazy(() => import('./components/issues/ObservationDrilldown').then(m => ({default: m.ObservationDrilldown})));
+const EntitySiraRcmModal = lazy(() => import('./components/universe/EntitySiraRcmModal').then(m => ({default: m.EntitySiraRcmModal})));
+const PeopleAccessModal = lazy(() => import('./components/common/PeopleAccessModal').then(m => ({default: m.PeopleAccessModal})));
+const AuditFileModal = lazy(() => import('./components/audit/AuditFileModal').then(m => ({default: m.AuditFileModal})));
+const PaperWorkbenchModal = lazy(() => import('./components/audit/PaperWorkbenchModal').then(m => ({default: m.PaperWorkbenchModal})));
+const RedThreadModal = lazy(() => import('./components/common/RedThreadModal').then(m => ({default: m.RedThreadModal})));
+const GlassBoxShareModal = lazy(() => import('./components/common/GlassBoxShareModal').then(m => ({default: m.GlassBoxShareModal})));
+const AccountSettingsModal = lazy(() => import('./components/common/AccountSettingsModal').then(m => ({default: m.AccountSettingsModal})));
+const CommentHistoryPanel = lazy(() => import('./components/reviews/CommentHistoryPanel').then(m => ({default: m.CommentHistoryPanel})));
+const CapInspector = lazy(() => import('./components/dashboard/CapInspector').then(m => ({default: m.CapInspector})));
 
 const LoadingFallback: React.FC = () => (
   <div className="max-w-7xl mx-auto px-6 py-16 flex items-center justify-center text-secondary text-apple-13">
@@ -82,7 +84,7 @@ const LoadingFallback: React.FC = () => (
 );
 
 const AppContent: React.FC = () => {
-  const { activeTab, inspector, closeInspector } = useApp();
+  const { activeTab, inspector, closeInspector, commandError } = useApp();
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [currentPath, setCurrentPath] = useState(
     typeof window !== 'undefined' ? window.location.pathname : '/'
@@ -202,8 +204,10 @@ const AppContent: React.FC = () => {
         }}
         className="min-h-screen flex flex-col origin-center"
       >
+        <p role="status" className="px-6 py-2 bg-surface border-b border-hairline text-secondary text-apple-12">Synthetic demonstration · browser-only records · not an authenticated audit environment</p>
         <HeaderBar onOpenCommandPalette={() => setIsCommandPaletteOpen(true)} />
         <NavStrip />
+        {commandError && <p role="alert" className="px-6 py-3 text-cinnabar">{commandError}</p>}
 
         <main className="flex-1 pb-16">
           <Suspense fallback={<LoadingFallback />}>
@@ -228,7 +232,7 @@ const AppContent: React.FC = () => {
         width={getInspectorWidth()}
         tall={inspector.type === 'workbench' || inspector.type === 'audit_file'}
       >
-        {renderInspectorContent()}
+        <Suspense fallback={<LoadingFallback />}>{renderInspectorContent()}</Suspense>
       </InspectorPanel>
 
       {/* Command Palette */}
@@ -241,6 +245,8 @@ const AppContent: React.FC = () => {
 };
 
 export default function App() {
+  if (dataMode === 'supabase') return <Suspense fallback={<LoadingFallback />}><AuthenticatedApp /></Suspense>;
+  if (dataMode === 'unconfigured') return <main className="p-8"><h1>Provio configuration required</h1><p>Set VITE_DATA_MODE to supabase and configure authentication, or explicitly select demo for synthetic demonstrations.</p></main>;
   return (
     <ThemeProvider>
       <AppProvider>

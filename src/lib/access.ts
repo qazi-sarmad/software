@@ -23,7 +23,7 @@ export type { ActionType, ActionGateResult };
 export function canAccessUniverse(user: User, universeId: string): boolean {
   if (!user) return false;
   if (user.role === 'org_admin') return false;
-  if (user.role === 'cia' || user.role === 'observer') return true;
+  if (user.role === 'cia') return true;
   if (!user.universeIds || user.universeIds.length === 0 || user.universeIds.includes('*')) {
     return true;
   }
@@ -45,7 +45,7 @@ export function canAccessEntity(
   if (!canAccessUniverse(user, entity.universeId)) {
     return false;
   }
-  if (user.role === 'cia' || user.role === 'observer') return true;
+  if (user.role === 'cia') return true;
   if (!user.entityIds || user.entityIds.length === 0 || user.entityIds.includes('*')) {
     return true;
   }
@@ -155,7 +155,7 @@ export function filterIssues(
     if (i.universeId && !canAccessUniverse(user, i.universeId)) return false;
     if (!allowedEntityIds.has(i.entityId)) return false;
     if (user.role === 'observer') {
-      return i.isIssued === true || i.status === 'open' || i.status === 'action_plan_agreed' || i.status === 'identified';
+      return i.isIssued === true;
     }
     return true;
   });
@@ -223,6 +223,7 @@ export function canPerformAction(
     // --- WORKPAPERS: Create & Edit ---
     case 'create_workpaper':
     case 'edit_workpaper':
+      if (user.role === 'reviewer') return { allowed: false, reason: 'Reviewers cannot prepare working papers' };
       if (user.role === 'observer') {
         return { allowed: false, reason: 'Observers have read-only access' };
       }
@@ -234,6 +235,7 @@ export function canPerformAction(
     // --- TESTS: Run & Finalize ---
     case 'run_test':
     case 'finalize_test':
+      if (user.role === 'reviewer') return { allowed: false, reason: 'Reviewers cannot execute testing' };
       if (user.role === 'observer') {
         return { allowed: false, reason: 'Observers have read-only access' };
       }

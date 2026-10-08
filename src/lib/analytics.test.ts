@@ -121,3 +121,23 @@ describe('Task 2: Audit Analytics & Document Review Engine', () => {
     expect(sigCheck?.passed).toBe(false);
   });
 });
+
+describe('financial boundary regressions',()=>{
+  it('includes GL-only and TB-only accounts even when their net value is zero',()=>{
+    const result=runGlToTbReconciliation([{account:'GL-only',amount:0,rowRef:1}],[{account:'TB-only',balance:0,rowRef:2}]);
+    expect(result.map(r=>[r.account,r.flagged])).toEqual([['TB-only',true],['GL-only',true]]);
+  });
+  it('aggregates duplicate account totals on both sides',()=>{
+    expect(runGlToTbReconciliation([{account:'A',amount:3,rowRef:1}],[{account:'A',balance:1,rowRef:2},{account:'A',balance:2,rowRef:3}])).toMatchObject([{account:'A',flagged:false}]);
+  });
+  it('uses half-cent TB tolerance and an exclusive absolute variance threshold',()=>{
+    expect(runTrialBalanceCheck([{account:'A',debit:1,credit:.994,rowRef:1}]).balanced).toBe(false);
+    expect(runVarianceAnalysis([{account:'A',category:'test',priorPeriod:100,currentPeriod:200,rowRef:1}],10,100)[0].flagged).toBe(false);
+  });
+});
+
+it('compares an exact half-cent in decimal form, including accumulated GL entries',()=>{
+ expect(runTrialBalanceCheck([{account:'A',debit:1,credit:.995,rowRef:1}]).balanced).toBe(true);
+ expect(runTrialBalanceCheck([{account:'A',debit:1,credit:.99499,rowRef:1}]).balanced).toBe(false);
+ expect(runGlToTbReconciliation([{account:'A',amount:.1,rowRef:1},{account:'A',amount:.2,rowRef:2}],[{account:'A',balance:.295,rowRef:3}])[0].flagged).toBe(false);
+});

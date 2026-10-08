@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import {
   initialCapItems,
   initialComments,
@@ -12,7 +12,7 @@ import {
   initialUsers,
   initialWorkpapers,
 } from '../data/initialData';
-import { canPerformAction } from '../lib/access';
+import { canAccessEntity, canPerformAction } from '../lib/access';
 import { appendLedgerEntry, computePayloadHash, generateInitialLedger, verifyChain } from '../lib/ledger';
 import { transitionCapStatus, CapStatusAction, TransitionCapResult } from '../lib/cap';
 import { buildDefaultOrgRoleConfig } from '../lib/orgCapabilities';
@@ -96,6 +96,7 @@ interface AppContextType {
   isTwoStageOrg: boolean;
   setIsTwoStageOrg: (twoStage: boolean) => void;
 
+  commandError: string;
   // Actions
   appendLedger: (params: Parameters<typeof appendLedgerEntry>[1]) => Promise<LedgerEntry>;
   signOffEngagement: (engagementId: string) => Promise<void>;
@@ -139,15 +140,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [rawComments, setRawComments] = useState<ReviewComment[]>(initialComments);
   const [rawCapItems, setRawCapItems] = useState<AuditCapItem[]>(initialCapItems);
   const [ledger, setLedger] = useState<LedgerEntry[]>([]);
+  const [commandError, setCommandError] = useState('');
+  const ledgerRef = useRef<LedgerEntry[]>([]);
+  const ledgerQueue = useRef<Promise<unknown>>(Promise.resolve());
   const [glassBoxTokens, setGlassBoxTokens] = useState<GlassBoxToken[]>(initialGlassBoxTokens);
 
   useEffect(() => {
     let isMounted = true;
-    generateInitialLedger().then((initial) => {
+    const initialLedger = generateInitialLedger().then((initial) => {
       if (isMounted) {
+        ledgerRef.current = initial;
         setLedger(initial);
       }
     });
+    ledgerQueue.current = initialLedger.catch(() => { setCommandError('Secure ledger initialization failed.'); });
     return () => {
       isMounted = false;
     };
@@ -178,23 +184,36 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setInspector({ type: null });
   };
 
-  const appendLedger = async (params: Parameters<typeof appendLedgerEntry>[1]) => {
-    const newEntry = await appendLedgerEntry(ledger, params);
-    setLedger((prev) => [...prev, newEntry]);
-    return newEntry;
+  const requireMutableScope = (entityId: string, locked = false) => {
+    const entity = rawEntities.find(e => e.id === entityId);
+    if (ledgerAsOf !== null || locked || !entity || !canAccessEntity(currentUser, entity)) {
+      throw new Error('Record is sealed, historical, or outside your assigned scope.');
+    }
+  };
+
+  const appendLedger = (params: Parameters<typeof appendLedgerEntry>[1]) => {
+    const pending = ledgerQueue.current.then(async () => {
+      const newEntry = await appendLedgerEntry(ledgerRef.current, params);
+      ledgerRef.current = [...ledgerRef.current, newEntry];
+      setLedger(ledgerRef.current);
+      return newEntry;
+    });
+    ledgerQueue.current = pending.catch(() => undefined);
+    return pending;
   };
 
   const signOffEngagement = async (engagementId: string) => {
     const eng = rawEngagements.find((e) => e.id === engagementId);
     if (!eng) return;
+    try { requireMutableScope(eng.entityId); } catch(e) {setCommandError((e as Error).message);return;}
 
-    const gate = canPerformAction(currentUser, 'sign_off', {
+    const gate = canPerformAction(currentUser, 'audit_sign_off', {
       leadAuditorId: eng.leadAuditorId,
       preparerId: eng.leadAuditorId,
       isLocked: eng.isLocked,
     });
     if (!gate.allowed) {
-      alert(gate.reason || 'Action not permitted');
+      setCommandError(gate.reason || 'Action not permitted');
       return;
     }
 
@@ -232,12 +251,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const reopenEngagement = async (engagementId: string, justification: string) => {
     const eng = rawEngagements.find((e) => e.id === engagementId);
     if (!eng) return;
+    try { requireMutableScope(eng.entityId); } catch(e) {setCommandError((e as Error).message);return;}
 
     const gate = canPerformAction(currentUser, 'reopen', {
       reopenJustification: justification,
     });
     if (!gate.allowed) {
-      alert(gate.reason || 'Action not permitted');
+      setCommandError(gate.reason || 'Action not permitted');
       return;
     }
 
@@ -270,55 +290,27 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     );
   };
 
-  const finalizeTest = async (workpaperId: string) => {
-    const wp = rawWorkpapers.find((w) => w.id === workpaperId);
-    if (!wp) return;
-
-    const gate = canPerformAction(currentUser, 'finalize_test', { isLocked: wp.sealed });
-    if (!gate.allowed) {
-      alert(gate.reason || 'Action not permitted');
-      return;
-    }
-
-    const payloadHash = await computePayloadHash(wp);
-    await appendLedger({
-      actorId: currentUser.id,
-      actorName: currentUser.name,
-      actorRole: currentUser.role,
-      eventType: 'test_finalize',
-      entityId: wp.entityId,
-      recordId: wp.id,
-      recordType: 'workpaper',
-      payloadSummary: `Testing finalized for workpaper "${wp.refCode}" (${wp.sampleCount} samples tested)`,
-      payloadHash,
-    });
-
-    setRawWorkpapers((prev) =>
-      prev.map((w) =>
-        w.id === workpaperId
-          ? {
-              ...w,
-              status: 'completed',
-              preparedDate: new Date().toISOString().split('T')[0],
-            }
-          : w
-      )
-    );
+  const finalizeTest = async (_workpaperId: string) => {
+    // Seeded hashes are demonstration fixtures, not persisted population verification.
+    // Authenticated finalization uses audit_command's population and census gates.
+    setCommandError('Demo workpapers cannot be finalized. Use authenticated Audit File to import, reconcile and test a real population.');
   };
 
   const signOffWorkpaper = async (workpaperId: string) => {
     const wp = rawWorkpapers.find((w) => w.id === workpaperId);
     if (!wp) return;
+    try { requireMutableScope(wp.entityId, rawEngagements.find(e=>e.id===wp.engagementId)?.isLocked); } catch(e) {setCommandError((e as Error).message);return;}
 
     const gate = canPerformAction(currentUser, 'sign_off', {
       preparerId: wp.preparerId,
       isLocked: wp.sealed,
     });
     if (!gate.allowed) {
-      alert(gate.reason || 'Action not permitted');
+      setCommandError(gate.reason || 'Action not permitted');
       return;
     }
 
+    if (wp.status !== 'completed') { setCommandError('Complete verified fieldwork before review.'); return; }
     const payloadHash = await computePayloadHash(wp);
     await appendLedger({
       actorId: currentUser.id,
@@ -350,12 +342,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const reopenWorkpaper = async (workpaperId: string, justification: string) => {
     const wp = rawWorkpapers.find((w) => w.id === workpaperId);
     if (!wp) return;
+    try { requireMutableScope(wp.entityId, rawEngagements.find(e=>e.id===wp.engagementId)?.isLocked); } catch(e) {setCommandError((e as Error).message);return;}
 
     const gate = canPerformAction(currentUser, 'reopen', {
       reopenJustification: justification,
     });
     if (!gate.allowed) {
-      alert(gate.reason || 'Action not permitted');
+      setCommandError(gate.reason || 'Action not permitted');
       return;
     }
 
@@ -390,6 +383,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const addObservation = async (
     obs: Omit<AuditObservation, 'id' | 'createdAt' | 'raisedBy'>
   ) => {
+    const parent = rawWorkpapers.find(w=>w.id===obs.workpaperId);
+    if (!parent) throw new Error('Working paper not found');
+    if (obs.entityId !== parent.entityId || (obs.controlId && obs.controlId !== parent.controlId) || (obs.universeId && obs.universeId !== parent.universeId)) throw new Error('Observation scope must match its working paper.');
+    requireMutableScope(parent.entityId, parent.sealed || rawEngagements.find(e=>e.id===parent.engagementId)?.isLocked);
     const gate = canPerformAction(currentUser, 'raise_observation');
     if (!gate.allowed) {
       throw new Error(gate.reason || 'Not allowed to raise observation');
@@ -404,22 +401,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     setRawObservations((prev) => [newObs, ...prev]);
 
-    // Also auto-create tracking Issue
-    const newIssue: AuditIssue = {
-      id: `iss-${Date.now()}`,
-      observationId: newObs.id,
-      entityId: newObs.entityId,
-      universeId: newObs.universeId || rawEntities.find((e) => e.id === newObs.entityId)?.universeId || 'u-gbm',
-      department: rawEntities.find((e) => e.id === newObs.entityId)?.department || 'Audit',
-      title: newObs.title,
-      description: newObs.condition,
-      severity: newObs.severity,
-      status: 'identified',
-      ownerId: currentUser.id,
-      identifiedDate: new Date().toISOString().split('T')[0],
-      dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    };
-    setRawIssues((prev) => [newIssue, ...prev]);
+    // Findings remain drafts. The authenticated issuance transaction creates issues.
 
     // Ledger entry
     await appendLedger({
@@ -438,6 +420,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const addReviewComment = async (workpaperId: string, text: string) => {
+    const wp = rawWorkpapers.find(w=>w.id===workpaperId);
+    if (!wp) throw new Error('Working paper not found');
+    requireMutableScope(wp.entityId, wp.sealed || rawEngagements.find(e=>e.id===wp.engagementId)?.isLocked);
+    if (['observer','org_admin','auditee'].includes(currentUser.role) || !text.trim()) throw new Error('Comment not permitted');
     const newComment: ReviewComment = {
       id: `cmt-${Date.now()}`,
       workpaperId,
@@ -455,13 +441,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const attachEvidenceToWorkpaper = async (
     workpaperId: string,
     file: { name: string; sizeBytes: number; sha256: string },
-    actorName: string
+    _actorName: string
   ) => {
+    const parent = rawWorkpapers.find(w=>w.id===workpaperId);
+    if (!parent) throw new Error('Working paper not found');
+    requireMutableScope(parent.entityId, parent.sealed || rawEngagements.find(e=>e.id===parent.engagementId)?.isLocked);
+    if (!canPerformAction(currentUser,'edit_workpaper').allowed) throw new Error('Evidence not permitted');
     const item = {
       id: `ev-${Date.now()}`,
       name: file.name,
       uploadedAt: new Date().toISOString(),
-      uploadedBy: actorName,
+      uploadedBy: currentUser.name,
       sha256: file.sha256,
       sizeBytes: file.sizeBytes,
     };
@@ -474,13 +464,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (wp) {
       await appendLedger({
         actorId: currentUser.id,
-        actorName,
-        actorRole: 'auditee',
+        actorName: currentUser.name,
+        actorRole: currentUser.role,
         eventType: 'evidence_drop',
         entityId: wp.entityId,
         recordId: wp.id,
         recordType: 'evidence',
-        payloadSummary: `Auditee evidence uploaded: ${file.name} (SHA-256: ${file.sha256.substring(0, 16)}...)`,
+        payloadSummary: `Evidence attached by authorized user: ${file.name} (SHA-256: ${file.sha256.substring(0, 16)}...)`,
         payloadHash: file.sha256,
       });
     }
@@ -489,18 +479,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const orgRoleConfig = buildDefaultOrgRoleConfig();
 
   const updateCapStatus = (capId: string, status: CapStatus, retestStatus?: RetestStatus) => {
-    // Legacy ungated path retained only for non-workflow callers; CapInspector must use transitionCap.
-    setRawCapItems((prev) =>
-      prev.map((c) =>
-        c.id === capId
-          ? {
-              ...c,
-              status,
-              retestStatus: retestStatus !== undefined ? retestStatus : c.retestStatus,
-            }
-          : c
-      )
-    );
+    setCommandError('Direct CAP status changes are disabled. Submit evidence and use independent validation.');
   };
 
   const transitionCap = (
@@ -528,6 +507,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     <AppContext.Provider
       value={{
         currentUser,
+        commandError,
         setCurrentUser,
         availableUsers,
         rawUniverses,
