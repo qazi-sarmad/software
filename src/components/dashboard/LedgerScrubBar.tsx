@@ -34,7 +34,7 @@ export const LedgerScrubBar: React.FC = () => {
             Block {currentSeq} of {maxSeq}
           </span>
           {ledgerAsOf !== null && (
-            <span className="px-2 py-0.5 rounded text-apple-11 font-medium bg-amber-subtle text-amber">
+            <span className="px-2 py-0.5 rounded text-apple-11 font-medium bg-surface-sunken text-secondary">
               Historical As-Of Mode
             </span>
           )}

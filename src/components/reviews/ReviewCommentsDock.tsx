@@ -35,7 +35,7 @@ export const ReviewCommentsDock: React.FC = () => {
               category: `Workpaper ${wp?.refCode || cmt.workpaperId}`,
               subtitle: cmt.text,
               status: cmt.status === 'cleared' ? 'Cleared' : 'Pending Preparer Action',
-              statusType: cmt.status === 'cleared' ? ('verdigris' as const) : ('amber' as const),
+              statusType: cmt.status === 'cleared' ? ('verdigris' as const) : ('neutral' as const),
               dueDate: new Date(cmt.createdAt).toLocaleDateString(),
               hint: 'Click to open comment thread in inspector',
             };

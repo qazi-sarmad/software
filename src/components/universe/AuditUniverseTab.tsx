@@ -18,7 +18,7 @@ export const AuditUniverseTab: React.FC = () => {
       case 'critical':
         return 'text-cinnabar bg-cinnabar-subtle border-cinnabar';
       case 'medium':
-        return 'text-amber bg-amber-subtle border-amber';
+        return 'text-secondary bg-surface-sunken border-strong';
       default:
         return 'text-verdigris bg-verdigris-subtle border-verdigris';
     }
@@ -59,7 +59,7 @@ export const AuditUniverseTab: React.FC = () => {
               entity.siraScore >= 75
                 ? ('cinnabar' as const)
                 : entity.siraScore >= 50
-                ? ('amber' as const)
+                ? ('neutral' as const)
                 : ('verdigris' as const),
             metrics: [
               { label: 'Inherent Risk', value: entity.inherentRisk.toUpperCase() },

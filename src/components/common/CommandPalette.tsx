@@ -155,7 +155,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
                   key={wp.id}
                   onClick={() => {
                     setSelectedWorkpaperId(wp.id);
-                    setActiveTab('workbench');
+                    openInspector('workbench', { workpaperId: wp.id });
                     onClose();
                   }}
                   className="w-full text-left px-3 py-2 rounded-xl hover:bg-surface-hover transition-colors flex items-center justify-between group"

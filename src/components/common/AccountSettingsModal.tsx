@@ -14,20 +14,20 @@ export const AccountSettingsModal: React.FC<AccountSettingsProps> = ({ onClose }
   const presets: { id: ThemePreset; name: string; description: string; colors: string[] }[] = [
     {
       id: 'ledger',
-      name: 'Ledger (Original Spec Default)',
-      description: 'Warm paper light / Coffee graphite dark with authentic Verdigris and Cinnabar.',
+      name: 'Ledger (Default)',
+      description: 'Warm paper light / neutral charcoal dark with Verdigris and Cinnabar.',
       colors: ['var(--canvas)', 'var(--surface)', 'var(--accent-verdigris)', 'var(--accent-cinnabar)'],
     },
     {
-      id: 'graphite',
-      name: 'Graphite',
-      description: 'Cool crisp light / Deep graphite dark with precision hairline borders.',
-      colors: ['var(--canvas)', 'var(--surface)', 'var(--accent-primary)', 'var(--accent-verdigris)'],
+      id: 'porcelain',
+      name: 'Porcelain',
+      description: 'Cool, clean light / soft cool dark with precise hairline borders.',
+      colors: ['var(--canvas)', 'var(--surface)', 'var(--accent-verdigris)', 'var(--accent-cinnabar)'],
     },
     {
-      id: 'ink',
-      name: 'Ink (Dark-First)',
-      description: 'Pure dark-first canvas with elevated surface and Verdigris accents.',
+      id: 'bone',
+      name: 'Bone',
+      description: 'The only warm preset: bone paper light / deep warm-neutral dark.',
       colors: ['var(--canvas)', 'var(--surface)', 'var(--accent-verdigris)', 'var(--accent-cinnabar)'],
     },
   ];

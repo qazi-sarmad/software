@@ -85,7 +85,7 @@ export const GanttTimeWarp: React.FC<GanttProps> = ({
               category: `Stage: ${eng.stage.toUpperCase()}`,
               subtitle: `Progress: ${eng.completionPercent}% complete`,
               status: isSigned ? 'Signed-off & Sealed' : 'In Fieldwork',
-              statusType: isSigned ? ('verdigris' as const) : ('amber' as const),
+              statusType: isSigned ? ('verdigris' as const) : ('neutral' as const),
               dueDate: eng.dueDate,
               metrics: [
                 { label: 'Start', value: eng.periodStart },

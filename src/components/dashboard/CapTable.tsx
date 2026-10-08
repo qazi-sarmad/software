@@ -56,7 +56,7 @@ export const CapTable: React.FC<CapTableProps> = ({ capItems }) => {
         );
       case 'high':
         return (
-          <span className="px-2 py-0.5 rounded text-apple-11 font-semibold uppercase bg-amber-subtle text-amber border border-amber">
+          <span className="px-2 py-0.5 rounded text-apple-11 font-semibold uppercase bg-cinnabar-subtle text-cinnabar">
             High
           </span>
         );
@@ -102,7 +102,7 @@ export const CapTable: React.FC<CapTableProps> = ({ capItems }) => {
         );
       case 'In progress':
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-apple-11 font-medium bg-amber-subtle text-amber">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-apple-11 font-medium bg-surface-sunken text-secondary">
             In Progress
           </span>
         );
@@ -131,7 +131,7 @@ export const CapTable: React.FC<CapTableProps> = ({ capItems }) => {
         );
       case 'In retest':
         return (
-          <span className="px-2 py-0.5 rounded text-apple-11 font-medium bg-amber-subtle text-amber">
+          <span className="px-2 py-0.5 rounded text-apple-11 font-medium bg-surface-sunken text-secondary">
             In Retest
           </span>
         );
@@ -292,7 +292,7 @@ export const CapTable: React.FC<CapTableProps> = ({ capItems }) => {
                       ? ('cinnabar' as const)
                       : item.status === 'Closed'
                       ? ('verdigris' as const)
-                      : ('amber' as const),
+                      : ('neutral' as const),
                   owner: item.owner,
                   dueDate: item.dueDate,
                   hint: 'Click to open full remediation inspector',

@@ -5,8 +5,8 @@ import { NavStrip } from './NavStrip';
 import { AppProvider } from '../../context/AppContext';
 import { ThemeProvider } from '../../context/ThemeContext';
 
-describe('§ 3.2 NavStrip Component & Draggable Pill', () => {
-  it('renders all 6 canonical tabs without Workbench tab', () => {
+describe('Part 4.1 NavStrip Component & Draggable Pill', () => {
+  it('renders exactly the 7 canonical tabs, in order, without Reports, Calendar or Workbench', () => {
     render(
       <ThemeProvider>
         <AppProvider>
@@ -15,16 +15,24 @@ describe('§ 3.2 NavStrip Component & Draggable Pill', () => {
       </ThemeProvider>
     );
 
-    // Assert the 6 canonical tabs exist
-    expect(screen.getByText('Dashboard')).toBeDefined();
-    expect(screen.getByText('Calendar')).toBeDefined();
-    expect(screen.getByText('Audit Plan')).toBeDefined();
-    expect(screen.getByText('Audit Universe')).toBeDefined();
-    expect(screen.getByText('Issues Register')).toBeDefined();
-    expect(screen.getByText('Reports')).toBeDefined();
+    const expected = [
+      'Executive Summary',
+      'Pending Tasks',
+      'Audit Universe',
+      'Audit Plan',
+      'SIRA',
+      'Audit File',
+      'Issues Register',
+    ];
+    const buttons = screen.getAllByRole('button');
+    expect(buttons.map((b) => b.getAttribute('title'))).toEqual(expected);
+    expected.forEach((label) => expect(screen.getByText(label)).toBeDefined());
 
-    // Verify Workbench is NOT a navigation tab (§ 3.2 requirement)
+    // Discarded tabs must not exist (Guide v7 §1.4 / §4.1)
+    expect(screen.queryByText('Reports')).toBeNull();
+    expect(screen.queryByText('Calendar')).toBeNull();
     expect(screen.queryByText('Workbench')).toBeNull();
+    expect(screen.queryByText('Dashboard')).toBeNull();
   });
 
   it('renders draggable pill container with CSS grid layout and 2px accent underline', () => {
@@ -56,10 +64,10 @@ describe('§ 3.2 NavStrip Component & Draggable Pill', () => {
       </ThemeProvider>
     );
 
-    const calendarTabButton = screen.getByTitle('Calendar');
-    fireEvent.click(calendarTabButton);
+    const siraTabButton = screen.getByTitle('SIRA');
+    fireEvent.click(siraTabButton);
 
-    // Calendar button should now have active font class
-    expect(calendarTabButton.className).toContain('text-primary');
+    // SIRA button should now have active font class
+    expect(siraTabButton.className).toContain('font-semibold');
   });
 });

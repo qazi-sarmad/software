@@ -26,7 +26,6 @@ export const AuditPlanTab: React.FC = () => {
     selectedEngagementId,
     setSelectedEngagementId,
     setSelectedWorkpaperId,
-    setActiveTab,
     signOffEngagement,
     reopenEngagement,
     openInspector,
@@ -94,7 +93,7 @@ export const AuditPlanTab: React.FC = () => {
                 category: `Stage: ${eng.stage.toUpperCase()}`,
                 subtitle: `Progress: ${eng.completionPercent}% • Due: ${eng.dueDate}`,
                 status: isLocked ? 'Sealed ✓' : eng.status.replace('_', ' ').toUpperCase(),
-                statusType: isLocked ? ('verdigris' as const) : ('amber' as const),
+                statusType: isLocked ? ('verdigris' as const) : ('neutral' as const),
                 owner: eng.leadAuditorId,
                 dueDate: eng.dueDate,
                 metrics: [
@@ -125,7 +124,7 @@ export const AuditPlanTab: React.FC = () => {
                             <span>Sealed ✓</span>
                           </span>
                         ) : (
-                          <span className="text-apple-11 font-medium text-amber bg-amber-subtle px-2 py-0.5 rounded">
+                          <span className="text-apple-11 font-medium text-secondary bg-surface-sunken px-2 py-0.5 rounded">
                             {eng.status.replace('_', ' ')}
                           </span>
                         )}
@@ -243,7 +242,7 @@ export const AuditPlanTab: React.FC = () => {
                         className={`text-apple-11 font-medium px-2 py-0.5 rounded capitalize ${
                           ctrl.effectiveness === 'effective'
                             ? 'text-verdigris bg-verdigris-subtle'
-                            : 'text-amber bg-amber-subtle'
+                            : 'text-cinnabar bg-cinnabar-subtle'
                         }`}
                       >
                         {ctrl.effectiveness.replace('_', ' ')}
@@ -270,7 +269,7 @@ export const AuditPlanTab: React.FC = () => {
                     key={wp.id}
                     onClick={() => {
                       setSelectedWorkpaperId(wp.id);
-                      setActiveTab('workbench');
+                      openInspector('workbench', { workpaperId: wp.id });
                     }}
                     className="p-3.5 rounded-xl bg-surface-elevated hover:bg-surface-hover border border-hairline cursor-pointer transition-colors flex items-center justify-between"
                   >

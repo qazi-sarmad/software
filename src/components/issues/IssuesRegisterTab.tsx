@@ -24,7 +24,7 @@ export const IssuesRegisterTab: React.FC = () => {
       case 'critical':
         return 'text-cinnabar bg-cinnabar-subtle border-cinnabar';
       case 'high':
-        return 'text-amber bg-amber-subtle border-amber';
+        return 'text-cinnabar bg-cinnabar-subtle';
       case 'medium':
         return 'text-primary bg-surface-elevated';
       default:
@@ -127,7 +127,7 @@ export const IssuesRegisterTab: React.FC = () => {
                   issue.severity === 'critical'
                     ? ('cinnabar' as const)
                     : issue.severity === 'high'
-                    ? ('amber' as const)
+                    ? ('neutral' as const)
                     : ('neutral' as const),
                 dueDate: issue.dueDate,
                 owner: issue.ownerId,

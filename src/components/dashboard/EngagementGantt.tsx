@@ -392,7 +392,7 @@ export const EngagementGantt: React.FC<EngagementGanttProps> = ({
                     ? ('verdigris' as const)
                     : state.type === 'overdue'
                     ? ('cinnabar' as const)
-                    : ('amber' as const),
+                    : ('neutral' as const),
                 dueDate: eng.dueDate,
                 hint: 'Double-click to open permanent audit file • Click for focus card',
               };

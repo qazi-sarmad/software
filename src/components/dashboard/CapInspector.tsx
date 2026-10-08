@@ -83,7 +83,7 @@ export const CapInspector: React.FC<CapInspectorProps> = ({ data, onClose }) => 
         );
       case 'high':
         return (
-          <span className="px-2 py-0.5 rounded text-apple-11 font-semibold uppercase bg-amber-subtle text-amber border border-amber">
+          <span className="px-2 py-0.5 rounded text-apple-11 font-semibold uppercase bg-cinnabar-subtle text-cinnabar">
             High
           </span>
         );
@@ -230,7 +230,7 @@ export const CapInspector: React.FC<CapInspectorProps> = ({ data, onClose }) => 
                     setSelectedEngagementId(eng.id);
                     openInspector('audit_file', { engagement: eng });
                   } else {
-                    setActiveTab('reports');
+                    setActiveTab('issues');
                   }
                 }}
                 className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-accent-subtle hover:bg-accent-hover text-accent text-apple-12 font-medium transition-colors shrink-0"

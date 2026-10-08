@@ -154,7 +154,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const [selectedUniverseId, setSelectedUniverseId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<string>('dashboard');
+  const [activeTab, setActiveTab] = useState<string>('executive');
   const [selectedEngagementId, setSelectedEngagementId] = useState<string | null>(null);
   const [selectedWorkpaperId, setSelectedWorkpaperId] = useState<string | null>(null);
   const [selectedObservationId, setSelectedObservationId] = useState<string | null>(null);

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   createGlassBoxTokenRecord,
   validateEvidenceFile,
@@ -90,5 +90,31 @@ describe('Task 5: Auditee Glass Box Token Verification & Dropzone Security', () 
     const oversized = validateEvidenceFile('huge.pdf', 6 * 1024 * 1024, record);
     expect(oversized.allowed).toBe(false);
     expect(oversized.error).toContain('exceeds the permitted cap');
+  });
+  describe('secure randomness', () => {
+    afterEach(() => {
+      vi.unstubAllGlobals();
+      vi.restoreAllMocks();
+    });
+
+    it('throws "Secure random unavailable" and never uses Math.random when crypto is missing', async () => {
+      const mathSpy = vi.spyOn(Math, 'random');
+      vi.stubGlobal('crypto', undefined);
+      await expect(
+        createGlassBoxTokenRecord({ workpaperId: 'wp-x', entityId: 'ent-x', orgId: 'org-x' })
+      ).rejects.toThrow('Secure random unavailable');
+      expect(mathSpy).not.toHaveBeenCalled();
+    });
+
+    it('produces a 64-hex-character token without touching Math.random', async () => {
+      const mathSpy = vi.spyOn(Math, 'random');
+      const { rawToken } = await createGlassBoxTokenRecord({
+        workpaperId: 'wp-x',
+        entityId: 'ent-x',
+        orgId: 'org-x',
+      });
+      expect(rawToken).toMatch(/^[0-9a-f]{64}$/);
+      expect(mathSpy).not.toHaveBeenCalled();
+    });
   });
 });
