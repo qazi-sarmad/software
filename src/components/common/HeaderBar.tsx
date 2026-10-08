@@ -81,7 +81,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ onOpenCommandPalette }) =>
         {/* Left: Logo & Wordmark in Serif Font */}
         <div className="flex items-center gap-5 shrink-0">
           <button
-            onClick={() => setActiveTab('dashboard')}
+            onClick={() => setActiveTab('executive')}
             className="flex items-center gap-2.5 text-left group transition-opacity hover:opacity-85"
           >
             <div className="w-8 h-8 rounded-xl bg-primary text-canvas flex items-center justify-center font-bold text-apple-15 font-serif-title shadow-xs">

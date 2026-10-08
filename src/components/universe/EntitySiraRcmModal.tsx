@@ -81,7 +81,7 @@ export const EntitySiraRcmModal: React.FC<SiraRcmProps> = ({ entity, onClose }) 
                     className={`text-apple-11 font-semibold px-2 py-0.5 rounded capitalize ${
                       ctrl.effectiveness === 'effective'
                         ? 'text-verdigris bg-verdigris-subtle'
-                        : 'text-amber bg-amber-subtle'
+                        : 'text-cinnabar bg-cinnabar-subtle'
                     }`}
                   >
                     {ctrl.effectiveness.replace('_', ' ')}

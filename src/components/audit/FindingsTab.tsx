@@ -58,7 +58,7 @@ export const FindingsTab: React.FC<FindingsTabProps> = ({ workpaper }) => {
                       ? 'bg-cinnabar text-white'
                       : obs.severity === 'high'
                       ? 'bg-cinnabar-subtle text-cinnabar border border-cinnabar'
-                      : 'bg-amber-subtle text-amber border border-amber'
+                      : 'bg-surface-sunken text-secondary border border-strong'
                   }`}
                 >
                   {obs.severity.toUpperCase()}

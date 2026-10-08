@@ -103,7 +103,7 @@ export const ExecutiveDashboardTab: React.FC = () => {
             category: 'Fieldwork Status',
             subtitle: `${stats.completedEngagements} Completed and Signed-off`,
             status: 'Fieldwork Stage',
-            statusType: 'amber',
+            statusType: 'neutral',
             hint: 'Click to open Audit Plan',
           }}
           onClick={() => setActiveTab('plan')}

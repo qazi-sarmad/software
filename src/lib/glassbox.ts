@@ -18,13 +18,11 @@ export async function createGlassBoxTokenRecord(params: {
 }): Promise<{ rawToken: string; record: GlassBoxToken }> {
   // Generate 32 cryptographically secure random bytes
   const bytes = new Uint8Array(32);
-  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
-    crypto.getRandomValues(bytes);
-  } else {
-    for (let i = 0; i < 32; i++) {
-      bytes[i] = Math.floor(Math.random() * 256);
-    }
+  // Never fall back to a non-cryptographic source: fail loudly instead.
+  if (typeof crypto === 'undefined' || typeof crypto.getRandomValues !== 'function') {
+    throw new Error('Secure random unavailable');
   }
+  crypto.getRandomValues(bytes);
 
   const rawToken = Array.from(bytes)
     .map((b) => b.toString(16).padStart(2, '0'))

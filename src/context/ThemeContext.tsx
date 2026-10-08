@@ -1,7 +1,9 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
 export type ThemeMode = 'system' | 'light' | 'dark';
-export type ThemePreset = 'ledger' | 'graphite' | 'ink';
+export type ThemePreset = 'ledger' | 'porcelain' | 'bone';
+
+export const THEME_PRESETS: ThemePreset[] = ['ledger', 'porcelain', 'bone'];
 
 interface ThemeContextType {
   theme: ThemeMode;
@@ -21,7 +23,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   const [preset, setPresetState] = useState<ThemePreset>(() => {
     const saved = localStorage.getItem('provio-preset');
-    return (saved as ThemePreset) || 'ledger'; // Default to "Ledger" per § 4
+    // Old saved presets (graphite, ink) no longer exist: fall back to the Ledger default.
+    return THEME_PRESETS.includes(saved as ThemePreset) ? (saved as ThemePreset) : 'ledger';
   });
 
   const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light');
@@ -31,7 +34,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     root.setAttribute('data-preset', preset);
 
     const applyTheme = (isDark: boolean) => {
-      if (isDark || preset === 'ink') {
+      if (isDark) {
         root.classList.add('dark');
         setResolvedTheme('dark');
       } else {

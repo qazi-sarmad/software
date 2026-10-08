@@ -14,9 +14,19 @@ const ExecutiveDashboardTab = lazy(() =>
     default: m.ExecutiveDashboardTab,
   }))
 );
-const AuditCalendarTab = lazy(() =>
-  import('./components/calendar/AuditCalendarTab').then((m) => ({
-    default: m.AuditCalendarTab,
+const PendingTasksTab = lazy(() =>
+  import('./components/pending/PendingTasksTab').then((m) => ({
+    default: m.PendingTasksTab,
+  }))
+);
+const SiraTab = lazy(() =>
+  import('./components/sira/SiraTab').then((m) => ({
+    default: m.SiraTab,
+  }))
+);
+const AuditFileTab = lazy(() =>
+  import('./components/audit/AuditFileTab').then((m) => ({
+    default: m.AuditFileTab,
   }))
 );
 const AuditPlanTab = lazy(() =>
@@ -34,14 +44,14 @@ const IssuesRegisterTab = lazy(() =>
     default: m.IssuesRegisterTab,
   }))
 );
-const ReportsTab = lazy(() =>
-  import('./components/reports/ReportsTab').then((m) => ({
-    default: m.ReportsTab,
-  }))
-);
 const GlassBoxPublicRoute = lazy(() =>
   import('./components/glassbox/GlassBoxPublicRoute').then((m) => ({
     default: m.GlassBoxPublicRoute,
+  }))
+);
+const DevPalettePage = lazy(() =>
+  import('./components/dev/DevPalettePage').then((m) => ({
+    default: m.DevPalettePage,
   }))
 );
 const DevAccessPage = lazy(() =>
@@ -101,6 +111,15 @@ const AppContent: React.FC = () => {
     return (
       <Suspense fallback={<LoadingFallback />}>
         <DevAccessPage />
+      </Suspense>
+    );
+  }
+
+  // /dev/palette route: all presets side by side
+  if (currentPath === '/dev/palette') {
+    return (
+      <Suspense fallback={<LoadingFallback />}>
+        <DevPalettePage />
       </Suspense>
     );
   }
@@ -188,12 +207,13 @@ const AppContent: React.FC = () => {
 
         <main className="flex-1 pb-16">
           <Suspense fallback={<LoadingFallback />}>
-            {activeTab === 'dashboard' && <ExecutiveDashboardTab />}
-            {activeTab === 'calendar' && <AuditCalendarTab />}
-            {activeTab === 'plan' && <AuditPlanTab />}
+            {activeTab === 'executive' && <ExecutiveDashboardTab />}
+            {activeTab === 'pending' && <PendingTasksTab />}
             {activeTab === 'universe' && <AuditUniverseTab />}
+            {activeTab === 'plan' && <AuditPlanTab />}
+            {activeTab === 'sira' && <SiraTab />}
+            {activeTab === 'audit_file' && <AuditFileTab />}
             {activeTab === 'issues' && <IssuesRegisterTab />}
-            {activeTab === 'reports' && <ReportsTab />}
           </Suspense>
         </main>
 

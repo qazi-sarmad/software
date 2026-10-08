@@ -47,7 +47,7 @@ export const RedThreadModal: React.FC = () => {
       title: cap?.title || 'Deploy automated SWIFT MT900/910 parser',
       ref: cap?.id || 'CAP-2026-001',
       status: cap?.status || 'Open',
-      color: 'amber',
+      color: 'cinnabar',
     },
   ];
 

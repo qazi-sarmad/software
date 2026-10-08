@@ -7,7 +7,7 @@ export interface HoverPreviewContent {
   subtitle?: string;
   category?: string;
   status?: string;
-  statusType?: 'verdigris' | 'cinnabar' | 'amber' | 'neutral';
+  statusType?: 'verdigris' | 'cinnabar' | 'neutral';
   exceptionsCount?: number;
   owner?: string;
   dueDate?: string;
@@ -112,8 +112,6 @@ export const HoverPreview: React.FC<HoverPreviewProps> = ({
         return 'text-verdigris bg-verdigris-subtle border-verdigris';
       case 'cinnabar':
         return 'text-cinnabar bg-cinnabar-subtle border-cinnabar';
-      case 'amber':
-        return 'text-amber bg-amber-subtle';
       default:
         return 'text-secondary bg-surface-hover';
     }

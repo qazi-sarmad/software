@@ -4,11 +4,12 @@ import { useApp } from '../../context/AppContext';
 import { useScopedData } from '../../hooks/useScopedData';
 import {
   LayoutDashboard,
-  Calendar,
+  CheckCircle2,
   ClipboardList,
   Network,
+  Shield,
+  Folder,
   AlertTriangle,
-  FileBarChart,
 } from './Icons';
 
 export const NavStrip: React.FC = () => {
@@ -16,27 +17,29 @@ export const NavStrip: React.FC = () => {
   const { currentUser } = useScopedData();
   const trackRef = useRef<HTMLDivElement>(null);
 
-  // Tabs specified by § 3.2 (No Workbench tab; audit files open from everywhere)
+  // Guide v7 Part 4.1: exactly these seven tabs, in this order.
+  // No Reports, Workbench or Calendar tab; audit files open from everywhere.
   const allTabs = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'calendar', label: 'Calendar', icon: Calendar },
-    { id: 'plan', label: 'Audit Plan', icon: ClipboardList },
+    { id: 'executive', label: 'Executive Summary', icon: LayoutDashboard },
+    { id: 'pending', label: 'Pending Tasks', icon: CheckCircle2 },
     { id: 'universe', label: 'Audit Universe', icon: Network },
+    { id: 'plan', label: 'Audit Plan', icon: ClipboardList },
+    { id: 'sira', label: 'SIRA', icon: Shield },
+    { id: 'audit_file', label: 'Audit File', icon: Folder },
     { id: 'issues', label: 'Issues Register', icon: AlertTriangle },
-    { id: 'reports', label: 'Reports', icon: FileBarChart },
   ];
 
   // Filter tabs based on role capabilities (Part 2.B)
   const visibleTabs = allTabs.filter((tab) => {
     // Org Admin manages users/config and sees NO audit content
     if (currentUser.role === 'org_admin') return false;
-    // Observer: read-only; sees Executive Summary (Dashboard), Issues, issued reports only
+    // Observer: read-only; sees Executive Summary and Issues Register only
     if (currentUser.role === 'observer') {
-      return tab.id === 'dashboard' || tab.id === 'issues' || tab.id === 'reports';
+      return tab.id === 'executive' || tab.id === 'issues';
     }
-    // Auditee: sees Dashboard, Universe (own entity), and Issues
+    // Auditee: sees Executive Summary, Universe (own entity), and Issues
     if (currentUser.role === 'auditee') {
-      return tab.id === 'dashboard' || tab.id === 'universe' || tab.id === 'issues';
+      return tab.id === 'executive' || tab.id === 'universe' || tab.id === 'issues';
     }
     return true;
   });

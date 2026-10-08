@@ -34,7 +34,7 @@ export const CapRadialTracker: React.FC<CapRadialTrackerProps> = ({
   const deptColorPalette: Record<string, string> = {
     Treasury: 'var(--accent-primary)',
     Trading: 'var(--accent-verdigris)',
-    'Credit Risk': 'var(--accent-amber)',
+    'Credit Risk': 'var(--text-tertiary)',
     Operations: 'var(--text-secondary)',
     Technology: 'var(--accent-primary)',
     Compliance: 'var(--accent-verdigris)',
@@ -42,13 +42,13 @@ export const CapRadialTracker: React.FC<CapRadialTrackerProps> = ({
 
   const getDeptColor = (dept: string, index: number): string => {
     if (deptColorPalette[dept]) return deptColorPalette[dept];
-    const fallback = ['var(--accent-primary)', 'var(--accent-verdigris)', 'var(--accent-amber)'];
+    const fallback = ['var(--accent-primary)', 'var(--accent-verdigris)', 'var(--text-tertiary)'];
     return fallback[index % fallback.length];
   };
 
   const severityColors: Record<Severity, string> = {
     critical: 'var(--accent-cinnabar)',
-    high: 'var(--accent-amber)',
+    high: 'color-mix(in srgb, var(--accent-cinnabar) 70%, transparent)',
     medium: 'var(--accent-verdigris)',
     low: 'var(--text-tertiary)',
   };
@@ -383,7 +383,7 @@ export const CapRadialTracker: React.FC<CapRadialTrackerProps> = ({
               <span className="w-2.5 h-2.5 rounded-sm bg-cinnabar" /> Critical
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-sm bg-amber" /> High
+              <span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: 'color-mix(in srgb, var(--accent-cinnabar) 70%, transparent)' }} /> High
             </span>
             <span className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-sm bg-verdigris" /> Medium

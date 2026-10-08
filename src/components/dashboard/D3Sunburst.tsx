@@ -25,7 +25,7 @@ export const D3Sunburst: React.FC<SunburstProps> = ({ deptMap }) => {
     subtitle?: string;
     category?: string;
     status?: string;
-    statusType?: 'verdigris' | 'cinnabar' | 'amber' | 'neutral';
+    statusType?: 'verdigris' | 'cinnabar' | 'neutral';
     owner?: string;
     dueDate?: string;
     exceptionsCount?: number;
@@ -99,7 +99,7 @@ export const D3Sunburst: React.FC<SunburstProps> = ({ deptMap }) => {
       }
       // Outer ring: severity
       if (d.data.severity === 'critical') return 'var(--accent-cinnabar)';
-      if (d.data.severity === 'high') return 'var(--accent-amber)';
+      if (d.data.severity === 'high') return 'color-mix(in srgb, var(--accent-cinnabar) 70%, transparent)';
       if (d.data.severity === 'medium') return 'var(--text-secondary)';
       return 'var(--accent-verdigris)';
     };
@@ -149,7 +149,7 @@ export const D3Sunburst: React.FC<SunburstProps> = ({ deptMap }) => {
               d.data.severity === 'critical'
                 ? 'cinnabar'
                 : d.data.severity === 'high'
-                ? 'amber'
+                ? 'cinnabar'
                 : 'verdigris',
             exceptionsCount: d.value,
           });
@@ -218,7 +218,7 @@ export const D3Sunburst: React.FC<SunburstProps> = ({ deptMap }) => {
           <span className="w-2 h-2 rounded-full bg-cinnabar" /> Critical
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-amber" /> High
+          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: 'color-mix(in srgb, var(--accent-cinnabar) 70%, transparent)' }} /> High
         </span>
         <span className="flex items-center gap-1.5">
           <span className="w-2 h-2 rounded-full bg-surface-elevated border border-hairline" /> Inner: Department

@@ -19,7 +19,7 @@ describe('Task C: Universal Hover Previews Component Tests', () => {
       category: 'Stage: Fieldwork',
       subtitle: '68% complete',
       status: 'In Fieldwork',
-      statusType: 'amber' as const,
+      statusType: 'neutral' as const,
       dueDate: '2026-10-24',
       exceptionsCount: 2,
     };
@@ -165,7 +165,7 @@ describe('Task C: Universal Hover Previews Component Tests', () => {
       category: 'Workpaper WP-TREAS-LQ-01',
       subtitle: 'Please check July 14th tickmark statement',
       status: 'Pending Preparer Action',
-      statusType: 'amber' as const,
+      statusType: 'neutral' as const,
     };
 
     render(

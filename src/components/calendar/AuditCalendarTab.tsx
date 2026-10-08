@@ -162,7 +162,7 @@ export const AuditCalendarTab: React.FC = () => {
                         <CheckCircle2 className="w-3.5 h-3.5 text-verdigris stroke-[1.5]" />
                       )}
                       {events.dueEngagements.some((e) => e.status === 'in_progress') && (
-                        <span className="w-2 h-2 rounded-full bg-amber" />
+                        <span className="w-2 h-2 rounded-full bg-surface-sunken border border-strong" />
                       )}
                     </div>
                   </div>
