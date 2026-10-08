@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useScopedData } from '../../hooks/useScopedData';
 import { AuditObservation, Severity } from '../../types';
+import { departmentsOf, auditsForDepartment, workpapersForAudit } from '../../lib/findingTarget';
 import { AlertCircle, CheckCircle2, Zap } from '../common/Icons';
 
 interface ObservationDrilldownProps {
@@ -15,7 +16,7 @@ interface ObservationDrilldownProps {
 
 export const ObservationDrilldown: React.FC<ObservationDrilldownProps> = ({ data, onClose }) => {
   const { addObservation, closeInspector, openInspector } = useApp();
-  const { scopedWorkpapers, scopedEntities } = useScopedData();
+  const { scopedWorkpapers, scopedEntities, scopedEngagements } = useScopedData();
 
   const existingObs = data?.observation;
   const isEditingOrCreating = !existingObs;
@@ -27,9 +28,24 @@ export const ObservationDrilldown: React.FC<ObservationDrilldownProps> = ({ data
   const [consequence, setConsequence] = useState(existingObs?.consequence || '');
   const [recommendation, setRecommendation] = useState(existingObs?.recommendation || '');
   const [severity, setSeverity] = useState<Severity>(existingObs?.severity || 'high');
-  const [selectedWpId, setSelectedWpId] = useState(
-    data?.workpaper?.id || scopedWorkpapers[0]?.id || ''
+  const initialWp = data?.workpaper?.id
+    ? scopedWorkpapers.find((w) => w.id === data.workpaper.id)
+    : undefined;
+  const initialEng = initialWp ? scopedEngagements.find((g) => g.id === initialWp.engagementId) : undefined;
+  const initialEnt = initialEng ? scopedEntities.find((e) => e.id === initialEng.entityId) : undefined;
+
+  const departments = useMemo(() => departmentsOf(scopedEntities), [scopedEntities]);
+  const [department, setDepartment] = useState(initialEnt?.department || '');
+  const auditOptions = useMemo(
+    () => (department ? auditsForDepartment(department, scopedEntities, scopedEngagements) : []),
+    [department, scopedEntities, scopedEngagements]
   );
+  const [engagementId, setEngagementId] = useState(initialEng?.id || '');
+  const wpOptions = useMemo(
+    () => (engagementId ? workpapersForAudit(engagementId, scopedWorkpapers, scopedEngagements) : []),
+    [engagementId, scopedWorkpapers, scopedEngagements]
+  );
+  const [selectedWpId, setSelectedWpId] = useState(initialWp?.id || '');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,9 +54,13 @@ export const ObservationDrilldown: React.FC<ObservationDrilldownProps> = ({ data
       return;
     }
 
-    const targetWp = scopedWorkpapers.find((w) => w.id === selectedWpId) || scopedWorkpapers[0];
+    const targetWp = scopedWorkpapers.find((w) => w.id === selectedWpId);
     if (!targetWp) {
-      alert('No working paper available in current scope.');
+      alert('Choose a department, an audit and a working paper first.');
+      return;
+    }
+    if (wpOptions.find((o) => o.id === targetWp.id)?.locked) {
+      alert('That working paper is locked. Reopen it with a justification before raising a finding.');
       return;
     }
 
@@ -137,15 +157,49 @@ export const ObservationDrilldown: React.FC<ObservationDrilldownProps> = ({ data
       </div>
 
       <div className="space-y-1.5">
-        <label className="text-apple-12 font-medium text-secondary">Target Working Paper</label>
+        <label className="text-apple-12 font-medium text-secondary">1. Department</label>
+        <select
+          value={department}
+          onChange={(e) => { setDepartment(e.target.value); setEngagementId(''); setSelectedWpId(''); }}
+          data-testid="finding-department"
+          className="w-full p-2.5 rounded-xl bg-surface-elevated border border-hairline text-apple-13 text-primary outline-none disabled:opacity-50"
+        >
+          <option value="">Select department…</option>
+          {departments.map((d) => (
+            <option key={d} value={d}>{d}</option>
+          ))}
+        </select>
+      </div>
+
+      <div className="space-y-1.5">
+        <label className="text-apple-12 font-medium text-secondary">2. Audit (annual plan or special)</label>
+        <select
+          value={engagementId}
+          onChange={(e) => { setEngagementId(e.target.value); setSelectedWpId(''); }}
+          disabled={!department}
+          data-testid="finding-audit"
+          className="w-full p-2.5 rounded-xl bg-surface-elevated border border-hairline text-apple-13 text-primary outline-none disabled:opacity-50"
+        >
+          <option value="">{department ? 'Select audit…' : 'Choose a department first'}</option>
+          {auditOptions.map((a) => (
+            <option key={a.id} value={a.id}>{a.label}</option>
+          ))}
+        </select>
+      </div>
+
+      <div className="space-y-1.5">
+        <label className="text-apple-12 font-medium text-secondary">3. Target Working Paper</label>
         <select
           value={selectedWpId}
           onChange={(e) => setSelectedWpId(e.target.value)}
-          className="w-full p-2.5 rounded-xl bg-surface-elevated border border-hairline text-apple-13 text-primary outline-none"
+          disabled={!engagementId}
+          data-testid="finding-workpaper"
+          className="w-full p-2.5 rounded-xl bg-surface-elevated border border-hairline text-apple-13 text-primary outline-none disabled:opacity-50"
         >
-          {scopedWorkpapers.map((w) => (
-            <option key={w.id} value={w.id}>
-              {w.refCode} • {w.title}
+          <option value="">{engagementId ? 'Select working paper…' : 'Choose an audit first'}</option>
+          {wpOptions.map((w) => (
+            <option key={w.id} value={w.id} disabled={w.locked}>
+              {w.label}{w.locked ? ' (locked)' : ''}
             </option>
           ))}
         </select>

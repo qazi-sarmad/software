@@ -32,34 +32,53 @@ export const HoverPreview: React.FC<HoverPreviewProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [coords, setCoords] = useState<{ x: number; y: number; placeAbove: boolean }>({
-    x: 0,
-    y: 0,
+    x: 12,
+    y: 12,
     placeAbove: false,
   });
   const triggerRef = useRef<HTMLDivElement>(null);
   const openTimer = useRef<number | null>(null);
   const closeTimer = useRef<number | null>(null);
 
-  const calculatePosition = () => {
-    if (!triggerRef.current) return;
-    const rect = triggerRef.current.getBoundingClientRect();
-    const popoverWidth = 280;
-    const popoverHeight = 160;
+  const pointer = useRef<{ x: number; y: number } | null>(null);
+  const POP_W = 280;
+  const POP_H = 190;
 
-    // Center horizontally on trigger, clamp to viewport padding
-    let x = rect.left + rect.width / 2 - popoverWidth / 2;
-    x = Math.max(12, Math.min(x, window.innerWidth - popoverWidth - 12));
-
-    // Place below by default, or above if close to bottom
-    const spaceBelow = window.innerHeight - rect.bottom;
-    const placeAbove = spaceBelow < popoverHeight + 20 && rect.top > popoverHeight + 20;
-    const y = placeAbove ? rect.top - 8 : rect.bottom + 8;
-
+  /** Anchor to the cursor when we have one (mouse), else to the trigger box (keyboard/touch). */
+  const place = (px: number, py: number, byCursor: boolean) => {
+    const gap = byCursor ? 16 : 8;
+    let x = byCursor ? px + gap : px - POP_W / 2;
+    if (byCursor && x + POP_W > window.innerWidth - 12) x = px - gap - POP_W; // flip left of cursor
+    x = Math.max(12, Math.min(x, window.innerWidth - POP_W - 12));
+    let placeAbove = false;
+    let y = py + gap;
+    if (y + POP_H > window.innerHeight - 12) {
+      placeAbove = true;
+      y = Math.max(12, py - gap - POP_H);
+    }
     setCoords({ x, y, placeAbove });
   };
 
-  const handleMouseEnter = () => {
+  const calculatePosition = () => {
+    if (pointer.current) {
+      place(pointer.current.x, pointer.current.y, true);
+      return;
+    }
+    if (!triggerRef.current) return;
+    const rect = triggerRef.current.getBoundingClientRect();
+    // display:contents wrappers report an empty box; never anchor to (0,0)
+    if (rect.width === 0 && rect.height === 0) return;
+    place(rect.left + rect.width / 2, rect.bottom, false);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    pointer.current = { x: e.clientX, y: e.clientY };
+    if (isOpen) place(e.clientX, e.clientY, true);
+  };
+
+  const handleMouseEnter = (e?: React.MouseEvent) => {
     if (disabled || !content) return;
+    if (e) pointer.current = { x: e.clientX, y: e.clientY };
     if (closeTimer.current) clearTimeout(closeTimer.current);
     openTimer.current = window.setTimeout(() => {
       calculatePosition();
@@ -68,6 +87,7 @@ export const HoverPreview: React.FC<HoverPreviewProps> = ({
   };
 
   const handleMouseLeave = () => {
+    pointer.current = null;
     if (openTimer.current) clearTimeout(openTimer.current);
     closeTimer.current = window.setTimeout(() => {
       setIsOpen(false);
@@ -122,6 +142,7 @@ export const HoverPreview: React.FC<HoverPreviewProps> = ({
       ref={triggerRef}
       className={`inline-block ${className}`}
       onMouseEnter={handleMouseEnter}
+      onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       onFocus={handleFocus}
       onBlur={handleBlur}
@@ -161,8 +182,7 @@ export const HoverPreview: React.FC<HoverPreviewProps> = ({
                 }}
                 style={{
                   position: 'fixed',
-                  top: coords.placeAbove ? undefined : coords.y,
-                  bottom: coords.placeAbove ? window.innerHeight - coords.y : undefined,
+                  top: coords.y,
                   left: coords.x,
                   zIndex: 9999,
                   pointerEvents: 'none',
