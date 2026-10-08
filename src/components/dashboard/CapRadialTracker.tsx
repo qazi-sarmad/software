@@ -123,7 +123,6 @@ export const CapRadialTracker: React.FC<CapRadialTrackerProps> = ({
       .enter()
       .append('g')
       .attr('class', 'dept-slice cursor-pointer')
-      .style('transition', 'transform 260ms cubic-bezier(0.16, 1, 0.3, 1), opacity 200ms ease')
       .on('mouseenter', (_, d) => {
         setHoveredDept(d.data.department);
       })
@@ -147,8 +146,9 @@ export const CapRadialTracker: React.FC<CapRadialTrackerProps> = ({
         node.__deptName = d.data.department;
       })
       .transition()
-      .duration(750)
-      .delay((d, i) => i * 90)
+      .duration(1100)
+      .ease(d3.easeCubicOut)
+      .delay((d, i) => i * 130)
       .attrTween('d', function (d) {
         const interpolate = d3.interpolate({ startAngle: 0, endAngle: 0 }, d);
         return function (t) {
@@ -193,8 +193,9 @@ export const CapRadialTracker: React.FC<CapRadialTrackerProps> = ({
 
         capPath
           .transition()
-          .duration(750)
-          .delay(i * 90 + 150)
+          .duration(1100)
+          .ease(d3.easeCubicOut)
+          .delay(i * 130 + 260)
           .attrTween('d', function () {
             const interpolate = d3.interpolate(
               { startAngle: deptArc.startAngle, endAngle: deptArc.startAngle, padAngle: 0.02 },
@@ -211,9 +212,13 @@ export const CapRadialTracker: React.FC<CapRadialTrackerProps> = ({
           .attr('class', 'overdue-arc')
           .attr('fill', 'var(--accent-cinnabar)')
           .attr('fill-opacity', 0.9)
+          .each(function () {
+            (this as SVGPathElement & { __deptName?: string }).__deptName = dept.department;
+          })
           .transition()
-          .duration(800)
-          .delay(i * 90 + 300)
+          .duration(900)
+          .ease(d3.easeCubicOut)
+          .delay(i * 130 + 700)
           .attrTween('d', function () {
             const interpolate = d3.interpolate(
               { startAngle: deptArc.startAngle, endAngle: deptArc.startAngle },
@@ -240,22 +245,49 @@ export const CapRadialTracker: React.FC<CapRadialTrackerProps> = ({
 
     const svg = d3.select(svgRef.current);
 
-    svg.selectAll('.dept-slice path').each(function () {
-      const node = this as unknown as SVGPathElement & { __deptName?: string };
-      const deptName = node.__deptName ?? '';
-      d3.select(this)
-        .attr('fill-opacity', getDeptOpacity(deptName))
-        .attr('stroke-width', hoveredDept === deptName || filter.department === deptName ? 2.5 : 2)
-        .attr('stroke', hoveredDept === deptName || filter.department === deptName ? 'var(--surface-elevated)' : 'var(--canvas)');
+    // Mid-angle per department so the active slice can "explode" outward.
+    const mids: Record<string, number> = {};
+    d3.pie<CapDeptData>().value((d) => d.total).sort(null).padAngle(0.035)(departments).forEach((a) => {
+      mids[a.data.department] = (a.startAngle + a.endAngle) / 2;
     });
-
-    svg.selectAll('.cap-slice').each(function () {
+    const reduce = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    const dur = reduce ? 0 : 380;
+    const offsetFor = (deptName: string) => {
+      const active = hoveredDept === deptName || (!hoveredDept && filter.department === deptName);
+      const m = mids[deptName];
+      if (!active || m === undefined) return 'translate(0,0)';
+      return `translate(${Math.sin(m) * 9},${-Math.cos(m) * 9})`;
+    };
+    // String tween (jsdom-safe); remembers the last transform per node.
+    const tf = (to: string) =>
+      function (this: any) {
+        const from = this.__tf ?? 'translate(0,0)';
+        this.__tf = to;
+        return d3.interpolateString(from, to);
+      };
+    const apply = (sel: d3.Selection<any, unknown, SVGSVGElement, unknown>, isCap: boolean) => {
+      sel.each(function () {
+        const node = this as unknown as SVGPathElement & { __deptName?: string };
+        const deptName = node.__deptName ?? '';
+        const on = hoveredDept === deptName || filter.department === deptName;
+        d3.select(this)
+          .interrupt('hover')
+          .transition('hover')
+          .duration(dur)
+          .ease(d3.easeBackOut.overshoot(1.4))
+          .attrTween('transform', tf(offsetFor(deptName)))
+          .attr('fill-opacity', getDeptOpacity(deptName, isCap))
+          .attr('stroke-width', on ? 2.5 : isCap ? 1.5 : 2);
+        d3.select(this).attr('stroke', on ? 'var(--surface-elevated)' : 'var(--canvas)');
+      });
+    };
+    apply(svg.selectAll('.dept-slice path') as any, false);
+    apply(svg.selectAll('.cap-slice') as any, true);
+    // Overdue outer arcs travel with their slice.
+    svg.selectAll('.overdue-arc').each(function () {
       const node = this as unknown as SVGPathElement & { __deptName?: string };
-      const deptName = node.__deptName ?? '';
-      d3.select(this)
-        .attr('fill-opacity', getDeptOpacity(deptName, true))
-        .attr('stroke-width', hoveredDept === deptName || filter.department === deptName ? 1.8 : 1.5)
-        .attr('stroke', hoveredDept === deptName || filter.department === deptName ? 'var(--surface-elevated)' : 'var(--canvas)');
+      if (!node.__deptName) return;
+      d3.select(this).interrupt('hover').transition('hover').duration(dur).ease(d3.easeBackOut.overshoot(1.4)).attrTween('transform', tf(offsetFor(node.__deptName)));
     });
   }, [departments, filter.department, hoveredDept]);
 

@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useScopedData } from '../../hooks/useScopedData';
+import { Select } from './Select';
 import { HeaderCalendarPanel } from '../calendar/HeaderCalendarPanel';
 import {
   Calendar as CalendarIcon,
@@ -94,20 +95,14 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ onOpenCommandPalette }) =>
 
           {/* Universe Switcher: ONLY if user has access to multiple universes */}
           {hasMultipleUniverses && (
-            <div className="hidden lg:flex items-center gap-1.5 pl-3 border-l border-hairline">
-              <Building className="w-3.5 h-3.5 text-secondary stroke-[1.5]" />
-              <select
-                aria-label="Select audit universe"
-                value={selectedUniverseId || ''}
-                onChange={(e) => setSelectedUniverseId(e.target.value || null)}
-                className="bg-transparent text-apple-12 font-medium text-secondary hover:text-primary cursor-pointer outline-none border-none py-1 pr-2"
-              >
-                {scopedUniverses.map((u) => (
-                  <option key={u.id} value={u.id} className="bg-surface text-primary">
-                    {u.name} ({u.code})
-                  </option>
-                ))}
-              </select>
+            <div className="hidden md:flex items-center gap-1.5 pl-3 border-l border-hairline">
+              <Select
+                ariaLabel="Select audit universe"
+                value={selectedUniverseId}
+                onChange={(v) => setSelectedUniverseId(v || null)}
+                icon={<Building className="w-3.5 h-3.5 text-secondary stroke-[1.5]" />}
+                options={scopedUniverses.map((u) => ({ value: u.id, label: `${u.name} (${u.code})`, hint: `${u.totalEntities} entities` }))}
+              />
             </div>
           )}
         </div>

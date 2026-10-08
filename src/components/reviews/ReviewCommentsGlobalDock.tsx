@@ -1,3 +1,4 @@
+import { pendingComments } from '../../lib/comments';
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useApp } from '../../context/AppContext';
@@ -35,21 +36,9 @@ export const ReviewCommentsGlobalDock: React.FC = () => {
   const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // In-progress audits filter for dock (§ 3.5: "Dock lists current in-progress audits; history lists all")
-  const inProgressWorkpapers = scopedWorkpapers.filter((w) => {
-    const eng = scopedEngagements.find((e) => e.id === w.engagementId);
-    return eng?.status === 'in_progress' || w.status === 'in_progress';
-  });
-  const inProgressWpIds = new Set(inProgressWorkpapers.map((w) => w.id));
-
-  // Dock comments: comments on currently active audits
-  const activeDockComments = scopedComments.filter((c) =>
-    inProgressWpIds.has(c.workpaperId)
-  );
-
-  const awaitingResponseCount = activeDockComments.filter(
-    (c) => c.status === 'open'
-  ).length;
+  // Dock lists comments awaiting a response on live (unsealed) audits; history lists all.
+  const activeDockComments = pendingComments(scopedComments, scopedWorkpapers, scopedEngagements);
+  const awaitingResponseCount = activeDockComments.length;
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;

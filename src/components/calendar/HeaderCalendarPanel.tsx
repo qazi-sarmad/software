@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { useScopedData } from '../../hooks/useScopedData';
 import { AuditEngagement } from '../../types';
@@ -25,7 +26,22 @@ export const HeaderCalendarPanel: React.FC<CalendarPanelProps> = ({
   onSelectAudit,
 }) => {
   const { scopedEngagements } = useScopedData();
-  const panelRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const [panelEl, setPanelEl] = useState<HTMLDivElement | null>(null);
+  const [pos, setPos] = useState<{ top: number; right: number }>({ top: 64, right: 16 });
+  const setPanel = (el: HTMLDivElement | null) => { panelRef.current = el; setPanelEl(el); };
+
+  // Anchor directly under the trigger icon, right-aligned (fixed, so it never overlaps or clips)
+  useLayoutEffect(() => {
+    if (!isOpen) return;
+    const place = () => {
+      const r = triggerRef.current?.getBoundingClientRect();
+      if (r) setPos({ top: Math.round(r.bottom + 8), right: Math.max(8, Math.round(window.innerWidth - r.right)) });
+    };
+    place();
+    window.addEventListener('resize', place);
+    return () => window.removeEventListener('resize', place);
+  }, [isOpen, triggerRef]);
 
   // Month navigation: default to September 2026
   const [currentDate, setCurrentDate] = useState<Date>(new Date(2026, 8, 1));
@@ -54,6 +70,7 @@ export const HeaderCalendarPanel: React.FC<CalendarPanelProps> = ({
 
   const changeMonth = (delta: number) => {
     setSlideDirection(delta > 0 ? 'right' : 'left');
+    setHoveredDay(null);
     setCurrentDate((prev) => new Date(prev.getFullYear(), prev.getMonth() + delta, 1));
   };
 
@@ -64,7 +81,7 @@ export const HeaderCalendarPanel: React.FC<CalendarPanelProps> = ({
 
   // Native non-passive wheel listener with preventDefault and 260ms cooldown
   useEffect(() => {
-    if (!isOpen || !panelRef.current) return;
+    if (!isOpen || !panelEl) return;
     let lastWheelTime = 0;
     const cooldownMs = 260;
 
@@ -85,12 +102,11 @@ export const HeaderCalendarPanel: React.FC<CalendarPanelProps> = ({
       }
     };
 
-    const el = panelRef.current;
-    el.addEventListener('wheel', handleWheel, { passive: false });
+    panelEl.addEventListener('wheel', handleWheel, { passive: false });
     return () => {
-      el.removeEventListener('wheel', handleWheel);
+      panelEl.removeEventListener('wheel', handleWheel);
     };
-  }, [isOpen]);
+  }, [isOpen, panelEl]);
 
   // Close on outside click and Esc
   useEffect(() => {
@@ -134,19 +150,19 @@ export const HeaderCalendarPanel: React.FC<CalendarPanelProps> = ({
 
   const highlightedAudit = scopedEngagements.find((e) => e.id === highlightedAuditId);
 
-  return (
+  const node = (
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          ref={panelRef}
+          ref={setPanel}
           role="dialog"
           aria-label="Audit Calendar Panel"
           initial={{ opacity: 0, scale: 0.94, y: -8 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.94, y: -8 }}
           transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-          style={{ transformOrigin: 'top right' }}
-          className="absolute right-0 top-14 mt-2 w-[340px] bg-glass border border-hairline shadow-apple rounded-2xl p-4 z-50 select-none text-primary"
+          style={{ transformOrigin: 'top right', position: 'fixed', top: pos.top, right: pos.right }}
+          className="w-[340px] bg-surface/95 backdrop-blur-xl border border-hairline shadow-apple rounded-2xl p-4 z-[70] select-none text-primary"
         >
           {/* Header row: Month in serif font, prev/next, and Jump to today */}
           <div className="flex items-center justify-between pb-3 border-b border-hairline">
@@ -262,7 +278,6 @@ export const HeaderCalendarPanel: React.FC<CalendarPanelProps> = ({
                         });
                       }
                     }}
-                    onMouseLeave={() => setHoveredDay(null)}
                     className={`h-8 rounded-lg flex flex-col items-center justify-center text-apple-12 tabular-nums cursor-pointer relative transition-all ${cellClass}`}
                   >
                     <span>{day}</span>
@@ -279,8 +294,8 @@ export const HeaderCalendarPanel: React.FC<CalendarPanelProps> = ({
           {/* Hover Popover showing 3 step circles per audit (Fieldwork / Review / Sign-off) */}
           {hoveredDay && (
             <div
-              className="absolute left-4 right-4 bg-surface border border-hairline shadow-apple rounded-xl p-3 z-50 text-apple-11 space-y-2 pointer-events-auto"
-              style={{ bottom: 44 }}
+              data-testid="calendar-day-detail"
+              className="mt-3 bg-surface-sunken border border-hairline rounded-xl p-3 text-apple-11 space-y-2"
             >
               <div className="font-semibold text-primary border-b border-hairline pb-1.5 flex items-center justify-between">
                 <span>{hoveredDay.dateStr}</span>
@@ -365,4 +380,5 @@ export const HeaderCalendarPanel: React.FC<CalendarPanelProps> = ({
       )}
     </AnimatePresence>
   );
+  return typeof document === 'undefined' ? null : createPortal(node, document.body);
 };
