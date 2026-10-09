@@ -83,3 +83,20 @@ describe('getSignOffState', () => {
     expect(getSignOffState(userOf('cia'), fullEng({ isLocked: true }), sealedGate).enabled).toBe(false);
   });
 });
+
+import { getSignOffBlockers } from './auditFile';
+describe('getSignOffBlockers', () => {
+  const sealedWp = [{ id: 'w1', sealed: true }] as any;
+  const fullObs = { workpaperId: 'w1', condition: 'a', criteria: 'b', cause: 'c', consequence: 'd', recommendation: 'e' } as any;
+  it('is clear when papers sealed, findings complete, no open comments', () => {
+    expect(getSignOffBlockers(sealedWp, [fullObs], [])).toEqual([]);
+  });
+  it('blocks on incomplete finding, open comment, unsealed paper', () => {
+    expect(getSignOffBlockers(sealedWp, [{ ...fullObs, cause: ' ' }], [])).toHaveLength(1);
+    expect(getSignOffBlockers(sealedWp, [], [{ workpaperId: 'w1', resolved: false } as any])).toHaveLength(1);
+    expect(getSignOffBlockers([{ id: 'w1', sealed: false }] as any, [], [])).toHaveLength(1);
+  });
+  it('blocks when there are no papers', () => {
+    expect(getSignOffBlockers([], [], [])).toHaveLength(1);
+  });
+});

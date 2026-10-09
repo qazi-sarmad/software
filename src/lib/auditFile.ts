@@ -9,7 +9,7 @@
  *  - Sign-off state: mirrors the access gates (sign_off + audit_sign_off) so the UI never offers
  *    a button the context would refuse.
  */
-import { AuditControl, AuditEngagement, User, WorkingPaper } from '../types';
+import { AuditControl, AuditEngagement, AuditObservation, ReviewComment, User, WorkingPaper } from '../types';
 import { canPerformAction } from './access';
 
 export type AuditFileTab = 'planning' | 'execution' | 'review';
@@ -73,9 +73,33 @@ export function getGateSummary(workpapers: readonly WorkingPaper[]): GateSummary
   };
 }
 
+/**
+ * Everything underneath an audit must be finished before it can be signed off and sealed,
+ * regardless of who the signer is: every paper sealed, every finding complete (all five parts),
+ * and no review comment still waiting for a response.
+ */
+export function getSignOffBlockers(
+  workpapers: readonly WorkingPaper[],
+  observations: readonly AuditObservation[],
+  comments: readonly ReviewComment[]
+): string[] {
+  const out: string[] = [];
+  const g = getGateSummary(workpapers);
+  if (g.total === 0) out.push('No working papers exist yet.');
+  else if (g.unsealed > 0) out.push(`${g.unsealed} working paper${g.unsealed === 1 ? '' : 's'} not yet sealed.`);
+  const ids = new Set(workpapers.map((w) => w.id));
+  const incomplete = observations.filter(
+    (o) => ids.has(o.workpaperId) && !(o.condition?.trim() && o.criteria?.trim() && o.cause?.trim() && o.consequence?.trim() && o.recommendation?.trim())
+  );
+  if (incomplete.length) out.push(`${incomplete.length} finding${incomplete.length === 1 ? '' : 's'} missing one of the five parts (report not ready).`);
+  const open = comments.filter((c) => ids.has(c.workpaperId) && (c.status ? c.status === 'open' : !c.resolved));
+  if (open.length) out.push(`${open.length} review comment${open.length === 1 ? '' : 's'} still awaiting a response.`);
+  return out;
+}
+
 export type SignOffState = { visible: boolean; enabled: boolean; reason?: string };
 
-export function getSignOffState(user: User, engagement: AuditEngagement, gate: GateSummary): SignOffState {
+export function getSignOffState(user: User, engagement: AuditEngagement, gate: GateSummary, blockers: readonly string[] = []): SignOffState {
   if (engagement.status === 'signed_off') return { visible: false, enabled: false };
   const ctx = {
     leadAuditorId: engagement.leadAuditorId,
@@ -96,5 +120,6 @@ export function getSignOffState(user: User, engagement: AuditEngagement, gate: G
           : `${gate.unsealed} working paper${gate.unsealed === 1 ? '' : 's'} still need to be sealed.`,
     };
   }
+  if (blockers.length) return { visible: true, enabled: false, reason: blockers.join(' ') };
   return { visible: true, enabled: true };
 }

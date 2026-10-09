@@ -50,6 +50,37 @@ export const CapInspector: React.FC<CapInspectorProps> = ({ data, onClose }) => 
 
   const [note, setNote] = useState('');
   const [evidence, setEvidence] = useState('');
+  const [uploaded, setUploaded] = useState<string[]>([]);
+  const MAX_EVIDENCE_BYTES = 10 * 1024 * 1024;
+
+  // Hash the RAW bytes (no text re-encoding) and keep "name · sha256:…" as the evidence reference.
+  const onFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    e.target.value = '';
+    for (const f of files) {
+      if (f.size > MAX_EVIDENCE_BYTES) { setFormError(`${f.name} is over the 10 MB evidence limit.`); continue; }
+      if (!globalThis.crypto?.subtle) { setFormError('Secure hashing is unavailable in this browser; file not attached.'); continue; }
+      const digest = await globalThis.crypto.subtle.digest('SHA-256', await f.arrayBuffer());
+      const hex = Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, '0')).join('');
+      setUploaded((prev) => [...prev, `${f.name} · sha256:${hex.slice(0, 16)}…`]);
+    }
+  };
+  const uploader = (
+    <div className="space-y-1.5">
+      <label className="block text-apple-12 text-secondary">Upload evidence (optional, max 10 MB each)</label>
+      <input type="file" multiple data-testid="cap-evidence-file" onChange={onFiles} className="block w-full text-apple-12 text-secondary file:mr-3 file:px-3 file:py-1.5 file:rounded-lg file:border file:border-hairline file:bg-surface-elevated file:text-primary" />
+      {uploaded.length > 0 && (
+        <ul className="flex flex-wrap gap-1.5">
+          {uploaded.map((u, i) => (
+            <li key={u + i} className="px-2 py-0.5 rounded-full bg-surface-elevated border border-hairline text-apple-11 text-primary flex items-center gap-1">
+              {u}
+              <button type="button" aria-label={`Remove ${u}`} onClick={() => setUploaded((p) => p.filter((_, j) => j !== i))} className="text-tertiary hover:text-primary">×</button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
   const [formError, setFormError] = useState<string | null>(null);
   const [panel, setPanel] = useState<'none' | 'submit' | 'reject' | 'fail' | 'verify'>('none');
 
@@ -61,10 +92,10 @@ export const CapInspector: React.FC<CapInspectorProps> = ({ data, onClose }) => 
 
   const run = (action: 'mark_in_progress' | 'submit_validation' | 'verify_close' | 'reject' | 'fail_retest') => {
     if (!activeCap) return;
-    const evidenceRefs = evidence
-      .split(/[;\n]/)
-      .map((s) => s.trim())
-      .filter(Boolean);
+    const evidenceRefs = [
+      ...evidence.split(/[;\n]/).map((s) => s.trim()).filter(Boolean),
+      ...uploaded,
+    ];
     const result = transitionCap(activeCap.id, action, {
       note: note || undefined,
       evidenceRefs: evidenceRefs.length ? evidenceRefs : undefined,
@@ -77,6 +108,7 @@ export const CapInspector: React.FC<CapInspectorProps> = ({ data, onClose }) => 
     setFormError(null);
     setNote('');
     setEvidence('');
+    setUploaded([]);
     setPanel('none');
   };
 
@@ -320,6 +352,7 @@ export const CapInspector: React.FC<CapInspectorProps> = ({ data, onClose }) => 
                 <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={3} className="w-full rounded-xl border border-hairline bg-surface-elevated p-2 text-apple-12 text-primary" />
                 <label className="block text-apple-12 text-secondary">Evidence refs (required, one per line)</label>
                 <textarea value={evidence} onChange={(e) => setEvidence(e.target.value)} rows={2} className="w-full rounded-xl border border-hairline bg-surface-elevated p-2 text-apple-12 text-primary" />
+                {uploader}
                 <div className="flex gap-2">
                   <button type="button" onClick={() => run('submit_validation')} className="px-3 py-1.5 rounded-lg bg-accent text-canvas text-apple-12 font-semibold">Submit</button>
                   <button type="button" onClick={() => setPanel('none')} className="px-3 py-1.5 rounded-lg border border-hairline text-apple-12">Cancel</button>
@@ -330,6 +363,7 @@ export const CapInspector: React.FC<CapInspectorProps> = ({ data, onClose }) => 
               <div className="space-y-2 pt-2 border-t border-hairline">
                 <label className="block text-apple-12 text-secondary">Verification note (optional)</label>
                 <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} className="w-full rounded-xl border border-hairline bg-surface-elevated p-2 text-apple-12 text-primary" />
+                {uploader}
                 <div className="flex gap-2">
                   <button type="button" onClick={() => run('verify_close')} className="px-3 py-1.5 rounded-lg bg-verdigris-subtle text-verdigris text-apple-12 font-semibold">Confirm close</button>
                   <button type="button" onClick={() => { setPanel('reject'); }} className="px-3 py-1.5 rounded-lg border border-cinnabar text-cinnabar text-apple-12 font-semibold">Reject instead</button>

@@ -107,7 +107,7 @@ const AppContent: React.FC = () => {
   }
 
   // /dev/access route for RBAC testing table
-  if (currentPath === '/dev/access') {
+  if (import.meta.env.DEV && currentPath === '/dev/access') {
     return (
       <Suspense fallback={<LoadingFallback />}>
         <DevAccessPage />
@@ -116,7 +116,7 @@ const AppContent: React.FC = () => {
   }
 
   // /dev/palette route: all presets side by side
-  if (currentPath === '/dev/palette') {
+  if (import.meta.env.DEV && currentPath === '/dev/palette') {
     return (
       <Suspense fallback={<LoadingFallback />}>
         <DevPalettePage />

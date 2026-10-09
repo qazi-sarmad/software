@@ -39,7 +39,7 @@ describe('AuditFileModal', () => {
   it('renders chrome and three tabs for a seeded engagement; planning is first', async () => {
     renderAs('cia');
     await screen.findByTestId('audit-file');
-    expect(screen.getByText(engagement.title)).toBeTruthy();
+    expect(screen.getByText(engagement.title.replace(/\s?\[CANARY-[A-Z]+\]/g, ''))).toBeTruthy();
     expect(screen.getByTestId('audit-file-stage').textContent).toBe(engagement.stage);
     for (const id of ['planning', 'execution', 'review']) {
       expect(screen.getByTestId(`audit-file-tab-${id}`)).toBeTruthy();

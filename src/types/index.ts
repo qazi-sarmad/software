@@ -275,7 +275,8 @@ export type LedgerEventType =
   | 'reopen'
   | 'evidence_drop'
   | 'evidence_attach'
-  | 'cap_update';
+  | 'cap_update'
+  | 'config_changed';
 
 export type LedgerEntry = {
   seq: number;
@@ -288,7 +289,7 @@ export type LedgerEntry = {
   eventType: LedgerEventType;
   entityId: string;
   recordId: string;
-  recordType: 'engagement' | 'workpaper' | 'plan' | 'control' | 'observation' | 'evidence' | 'cap_item';
+  recordType: 'engagement' | 'workpaper' | 'plan' | 'control' | 'observation' | 'evidence' | 'cap_item' | 'entity';
   payloadSummary: string;
   payloadHash: string;
   justification?: string;

@@ -13,6 +13,7 @@ import {
   initialWorkpapers,
 } from '../data/initialData';
 import { canPerformAction } from '../lib/access';
+import { getSignOffBlockers } from '../lib/auditFile';
 import { appendLedgerEntry, computePayloadHash, generateInitialLedger, verifyChain } from '../lib/ledger';
 import { transitionCapStatus, CapStatusAction, TransitionCapResult } from '../lib/cap';
 import { buildDefaultOrgRoleConfig } from '../lib/orgCapabilities';
@@ -51,6 +52,26 @@ export interface InspectorState {
   type: InspectorType | null;
   data?: any;
 }
+
+/**
+ * Seed data carries [CANARY-*] markers used only by the /dev/access leak scanner.
+ * They are removed from everything users see unless the dev scanner explicitly asks for them.
+ */
+const KEEP_CANARIES =
+  import.meta.env.DEV && typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('canary');
+function cleanSeed<T>(rows: T): T {
+  if (KEEP_CANARIES) return rows;
+  return JSON.parse(JSON.stringify(rows).replace(/\s?\[CANARY-[A-Z]+\]/g, ''));
+}
+
+export type NewEntityInput = {
+  universeId: string;
+  name: string;
+  code: string;
+  department: string;
+  headOfDepartment: string;
+  inherentRisk: 'low' | 'medium' | 'high' | 'critical';
+};
 
 interface AppContextType {
   // Current authenticated user (and scope)
@@ -100,6 +121,7 @@ interface AppContextType {
   appendLedger: (params: Parameters<typeof appendLedgerEntry>[1]) => Promise<LedgerEntry>;
   signOffEngagement: (engagementId: string) => Promise<void>;
   reopenEngagement: (engagementId: string, justification: string) => Promise<void>;
+  addEntity: (input: NewEntityInput) => Promise<{ ok: true; id: string } | { ok: false; reason: string }>;
   finalizeTest: (workpaperId: string) => Promise<void>;
   signOffWorkpaper: (workpaperId: string) => Promise<void>;
   reopenWorkpaper: (workpaperId: string, justification: string) => Promise<void>;
@@ -129,15 +151,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [currentUser, setCurrentUser] = useState<User>(initialUsers[0]); // default to CIA
   const [availableUsers] = useState<User[]>(initialUsers);
 
-  const [rawUniverses, setRawUniverses] = useState<AuditUniverse[]>(initialUniverses);
-  const [rawEntities, setRawEntities] = useState<AuditEntity[]>(initialEntities);
-  const [rawEngagements, setRawEngagements] = useState<AuditEngagement[]>(initialEngagements);
-  const [rawControls, setRawControls] = useState<AuditControl[]>(initialControls);
-  const [rawWorkpapers, setRawWorkpapers] = useState<WorkingPaper[]>(initialWorkpapers);
-  const [rawObservations, setRawObservations] = useState<AuditObservation[]>(initialObservations);
-  const [rawIssues, setRawIssues] = useState<AuditIssue[]>(initialIssues);
-  const [rawComments, setRawComments] = useState<ReviewComment[]>(initialComments);
-  const [rawCapItems, setRawCapItems] = useState<AuditCapItem[]>(initialCapItems);
+  const [rawUniverses, setRawUniverses] = useState<AuditUniverse[]>(cleanSeed(initialUniverses));
+  const [rawEntities, setRawEntities] = useState<AuditEntity[]>(cleanSeed(initialEntities));
+  const [rawEngagements, setRawEngagements] = useState<AuditEngagement[]>(cleanSeed(initialEngagements));
+  const [rawControls, setRawControls] = useState<AuditControl[]>(cleanSeed(initialControls));
+  const [rawWorkpapers, setRawWorkpapers] = useState<WorkingPaper[]>(cleanSeed(initialWorkpapers));
+  const [rawObservations, setRawObservations] = useState<AuditObservation[]>(cleanSeed(initialObservations));
+  const [rawIssues, setRawIssues] = useState<AuditIssue[]>(cleanSeed(initialIssues));
+  const [rawComments, setRawComments] = useState<ReviewComment[]>(cleanSeed(initialComments));
+  const [rawCapItems, setRawCapItems] = useState<AuditCapItem[]>(cleanSeed(initialCapItems));
   const [ledger, setLedger] = useState<LedgerEntry[]>([]);
   const [glassBoxTokens, setGlassBoxTokens] = useState<GlassBoxToken[]>(initialGlassBoxTokens);
 
@@ -145,7 +167,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     let isMounted = true;
     generateInitialLedger().then((initial) => {
       if (isMounted) {
-        setLedger(initial);
+        setLedger(KEEP_CANARIES ? initial : initial.map((e) => ({ ...e, payloadSummary: e.payloadSummary.replace(/\s?\[CANARY-[A-Z]+\]/g, '') })));
       }
     });
     return () => {
@@ -188,13 +210,25 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const eng = rawEngagements.find((e) => e.id === engagementId);
     if (!eng) return;
 
-    const gate = canPerformAction(currentUser, 'sign_off', {
-      leadAuditorId: eng.leadAuditorId,
-      preparerId: eng.leadAuditorId,
-      isLocked: eng.isLocked,
-    });
+    const ctx = { leadAuditorId: eng.leadAuditorId, preparerId: eng.leadAuditorId, isLocked: eng.isLocked };
+    const gate = canPerformAction(currentUser, 'sign_off', ctx);
     if (!gate.allowed) {
       alert(gate.reason || 'Action not permitted');
+      return;
+    }
+    // Command-level enforcement (same rule for every entry point, not just the Audit File button).
+    const auditGate = canPerformAction(currentUser, 'audit_sign_off', ctx);
+    if (!auditGate.allowed) {
+      alert(auditGate.reason || 'Action not permitted');
+      return;
+    }
+    const blockers = getSignOffBlockers(
+      rawWorkpapers.filter((w) => w.engagementId === engagementId),
+      rawObservations,
+      rawComments
+    );
+    if (blockers.length) {
+      alert('Cannot sign off yet:\n' + blockers.join('\n'));
       return;
     }
 
@@ -227,6 +261,33 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           : item
       )
     );
+  };
+
+  const addEntity = async (input: NewEntityInput): Promise<{ ok: true; id: string } | { ok: false; reason: string }> => {
+    if (currentUser.role !== 'cia' && currentUser.role !== 'org_admin') {
+      return { ok: false, reason: 'Only the CIA or an Org Admin can add auditable entities.' };
+    }
+    const name = input.name.trim();
+    const code = input.code.trim().toUpperCase();
+    if (!name || !code || !input.department.trim()) return { ok: false, reason: 'Name, code and department are required.' };
+    if (!rawUniverses.some((u) => u.id === input.universeId)) return { ok: false, reason: 'Choose a valid universe.' };
+    if (rawEntities.some((e) => e.code.toUpperCase() === code)) return { ok: false, reason: `Code ${code} is already used.` };
+    const id = `ent-${code.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+    const entity: AuditEntity = {
+      id, universeId: input.universeId, name, code,
+      department: input.department.trim(), headOfDepartment: input.headOfDepartment.trim() || 'Unassigned',
+      inherentRisk: input.inherentRisk, residualRisk: input.inherentRisk,
+      siraScore: 0, controlsCount: 0, lastAuditDate: 'Never', status: 'active',
+    };
+    const payloadHash = await computePayloadHash({ id, universeId: input.universeId, name, code, timestamp: new Date().toISOString() });
+    await appendLedger({
+      actorId: currentUser.id, actorName: currentUser.name, actorRole: currentUser.role,
+      eventType: 'config_changed', entityId: id, recordId: id, recordType: 'entity',
+      payloadSummary: `Auditable entity "${name}" (${code}) added to universe ${input.universeId} by ${currentUser.name}`,
+      payloadHash,
+    });
+    setRawEntities((prev) => [...prev, entity]);
+    return { ok: true, id };
   };
 
   const reopenEngagement = async (engagementId: string, justification: string) => {
@@ -561,6 +622,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         appendLedger,
         signOffEngagement,
         reopenEngagement,
+        addEntity,
         finalizeTest,
         signOffWorkpaper,
         reopenWorkpaper,

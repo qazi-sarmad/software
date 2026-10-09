@@ -29,11 +29,12 @@ export const EngagementGantt: React.FC<EngagementGanttProps> = ({
   const { openInspector, currentUser } = useApp();
   const { can } = useScopedData();
 
-  // Timeline boundaries: 18 months spanning prior year, current year (2026), and forward plan (2027)
-  const timelineStart = new Date('2026-01-01').getTime();
-  const timelineEnd = new Date('2027-06-30').getTime();
+  // Timeline: 2022-2032 at fixed density. Wide enough to behave as continuous; true infinite extension is not built.
+  const timelineStart = new Date('2022-01-01').getTime();
+  const timelineEnd = new Date('2032-12-31').getTime();
   const totalDuration = timelineEnd - timelineStart;
-  const timelineWidth = 2600; // Total horizontal canvas width in pixels
+  const PX_PER_DAY = 4.77; // same density as before (2600px over ~545 days)
+  const timelineWidth = Math.round(((timelineEnd - timelineStart) / 86400000) * PX_PER_DAY);
 
   // Simulated today: Sept 30, 2026
   const todayDate = new Date('2026-09-30').getTime();
@@ -167,7 +168,7 @@ export const EngagementGantt: React.FC<EngagementGanttProps> = ({
         return {
           type: 'prior_year',
           label: 'Prior Year (Concluded)',
-          colorClass: 'bg-verdigris-subtle border border-verdigris text-verdigris',
+          colorClass: 'bg-surface-sunken border border-hairline text-secondary',
         };
       }
       return {
@@ -197,7 +198,7 @@ export const EngagementGantt: React.FC<EngagementGanttProps> = ({
       return {
         type: 'in_progress',
         label: 'In Progress (Active Fieldwork)',
-        colorClass: 'bg-verdigris text-canvas animate-pulse shadow-soft',
+        colorClass: 'bg-verdigris-subtle border-2 border-verdigris text-verdigris animate-pulse',
       };
     }
 
@@ -264,7 +265,7 @@ export const EngagementGantt: React.FC<EngagementGanttProps> = ({
               <span className="w-2.5 h-2.5 rounded-sm bg-verdigris" /> Concluded
             </span>
             <span className="flex items-center gap-1">
-              <span className="w-2.5 h-2.5 rounded-sm bg-verdigris animate-pulse" /> Active
+              <span className="w-2.5 h-2.5 rounded-sm border-2 border-verdigris bg-verdigris-subtle animate-pulse" /> Active
             </span>
             <span className="flex items-center gap-1">
               <span className="w-2.5 h-2.5 rounded-sm bg-cinnabar" /> Overdue

@@ -7,6 +7,7 @@ import {
   AuditFileTab,
   buildPlanningCoverage,
   getGateSummary,
+  getSignOffBlockers,
   getInitialAuditFileTab,
   getSignOffState,
 } from '../../lib/auditFile';
@@ -21,7 +22,7 @@ import { ReviewTab } from './file/ReviewTab';
  */
 export const AuditFileModal: React.FC = () => {
   const { inspector, openInspector, signOffEngagement, currentUser } = useApp();
-  const { scopedEngagements, scopedWorkpapers, scopedControls, scopedEntities } = useScopedData();
+  const { scopedEngagements, scopedWorkpapers, scopedControls, scopedEntities, scopedObservations, scopedComments } = useScopedData();
 
   const requestedId: string | undefined = inspector.data?.engagement?.id;
   const engagement = requestedId ? scopedEngagements.find((e) => e.id === requestedId) : undefined;
@@ -40,7 +41,8 @@ export const AuditFileModal: React.FC = () => {
   const entity = scopedEntities.find((e) => e.id === engagement.entityId);
   const coverage = buildPlanningCoverage(engagement, scopedControls, workpapers);
   const gate = getGateSummary(workpapers);
-  const signOff = getSignOffState(currentUser, engagement, gate);
+  const blockers = getSignOffBlockers(workpapers, scopedObservations, scopedComments);
+  const signOff = getSignOffState(currentUser, engagement, gate, blockers);
 
   const onTabKey = (e: React.KeyboardEvent) => {
     const i = AUDIT_FILE_TABS.findIndex((t) => t.id === tab);

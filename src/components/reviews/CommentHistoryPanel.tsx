@@ -228,7 +228,7 @@ export const CommentHistoryPanel: React.FC<CommentPanelProps> = ({ data, onClose
                 </div>
 
                 {/* Comment Text */}
-                <p className="text-apple-13 text-primary leading-relaxed bg-surface p-3 rounded-xl border border-hairline">
+                <p className={`text-apple-13 text-primary leading-relaxed p-3 rounded-2xl border max-w-[85%] ${cmt.authorId === currentUser.id ? 'ml-auto bg-accent-subtle border-accent rounded-br-md text-right' : 'mr-auto bg-surface border-hairline rounded-bl-md'}`}>
                   {cmt.text}
                 </p>
 
@@ -261,20 +261,24 @@ export const CommentHistoryPanel: React.FC<CommentPanelProps> = ({ data, onClose
                     <div className="text-apple-11 font-semibold text-secondary uppercase tracking-wider">
                       Thread Clearance Responses ({cmt.replies.length})
                     </div>
-                    {cmt.replies.map((rep) => (
+                    {cmt.replies.map((rep) => {
+                      const mine = rep.authorName === currentUser.name;
+                      return (
                       <div
                         key={rep.id}
-                        className="p-3 rounded-xl bg-surface border border-hairline ml-3 space-y-1"
+                        data-testid={mine ? 'bubble-mine' : 'bubble-other'}
+                        className={`p-3 rounded-2xl border max-w-[85%] space-y-1 ${mine ? 'ml-auto bg-accent-subtle border-accent rounded-br-md' : 'mr-auto bg-surface border-hairline rounded-bl-md'}`}
                       >
-                        <div className="flex items-center justify-between text-apple-11 text-secondary">
+                        <div className="flex items-center justify-between gap-3 text-apple-11 text-secondary">
                           <span className="font-semibold text-primary">{rep.authorName}</span>
                           <span className="tabular-nums">
                             {new Date(rep.createdAt).toLocaleString()}
                           </span>
                         </div>
-                        <p className="text-apple-12 text-primary">{rep.text}</p>
+                        <p className={`text-apple-12 text-primary ${mine ? 'text-right' : ''}`}>{rep.text}</p>
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
 

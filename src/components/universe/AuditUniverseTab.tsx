@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useScopedData } from '../../hooks/useScopedData';
 import { useApp } from '../../context/AppContext';
 import { HoverPreview } from '../common/HoverPreview';
@@ -7,7 +7,11 @@ import { Shield, AlertTriangle, Layers, ArrowRight, Activity } from '../common/I
 
 export const AuditUniverseTab: React.FC = () => {
   const { scopedUniverses, scopedEntities, selectedUniverseId } = useScopedData();
-  const { openInspector } = useApp();
+  const { openInspector, addEntity, currentUser } = useApp();
+  const canAdd = currentUser.role === 'cia' || currentUser.role === 'org_admin';
+  const [adding, setAdding] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const [form, setForm] = useState({ name: '', code: '', department: '', headOfDepartment: '', inherentRisk: 'medium' as 'low' | 'medium' | 'high' | 'critical' });
 
   const currentUniverse =
     scopedUniverses.find((u) => u.id === selectedUniverseId) || scopedUniverses[0];
@@ -46,6 +50,42 @@ export const AuditUniverseTab: React.FC = () => {
           )}
         </p>
       </div>
+
+      {canAdd && (
+        <div className="space-y-3">
+          {!adding ? (
+            <button type="button" data-testid="add-entity-open" onClick={() => setAdding(true)} className="px-4 py-2 rounded-xl bg-primary text-canvas text-apple-13 font-semibold hover:opacity-90">
+              + Add auditable entity
+            </button>
+          ) : (
+            <div data-testid="add-entity-form" className="p-5 rounded-2xl bg-surface border border-hairline shadow-apple space-y-3">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+                {([['name', 'Entity name'], ['code', 'Code (e.g. FXD)'], ['department', 'Department'], ['headOfDepartment', 'Head of department']] as const).map(([k, label]) => (
+                  <input key={k} aria-label={label} placeholder={label} value={form[k]} onChange={(e) => setForm({ ...form, [k]: e.target.value })} className="h-9 px-3 rounded-xl bg-surface-elevated border border-hairline text-apple-13 text-primary outline-none focus:border-accent" />
+                ))}
+                <select aria-label="Inherent risk" value={form.inherentRisk} onChange={(e) => setForm({ ...form, inherentRisk: e.target.value as typeof form.inherentRisk })} className="h-9 px-2 rounded-xl bg-surface-elevated border border-hairline text-apple-13 text-primary">
+                  {['low', 'medium', 'high', 'critical'].map((r) => (<option key={r} value={r}>{r} inherent risk</option>))}
+                </select>
+              </div>
+              {err && <p className="text-apple-12 text-cinnabar" role="alert">{err}</p>}
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!currentUniverse) { setErr('No universe selected.'); return; }
+                    const r = await addEntity({ ...form, universeId: currentUniverse.id });
+                    if (!r.ok) { setErr(r.reason); return; }
+                    setErr(null); setAdding(false);
+                    setForm({ name: '', code: '', department: '', headOfDepartment: '', inherentRisk: 'medium' });
+                  }}
+                  className="px-4 py-2 rounded-xl bg-verdigris-subtle text-verdigris text-apple-13 font-semibold"
+                >Add to {currentUniverse?.code ?? 'universe'}</button>
+                <button type="button" onClick={() => { setAdding(false); setErr(null); }} className="px-4 py-2 rounded-xl border border-hairline text-apple-13 text-secondary">Cancel</button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Entity Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
