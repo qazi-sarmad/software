@@ -142,6 +142,10 @@ export type WorkingPaper = {
   }[];
   populationCount: number;
   populationSha256?: string;
+  populationFileName?: string;
+  populationTotalCents?: number;
+  populationVerifiedAt?: string;
+  populationVerifiedBy?: string;
   sampleCount: number;
   samplingSeed?: string;
   exceptionsIdentified: number;
@@ -276,7 +280,8 @@ export type LedgerEventType =
   | 'evidence_drop'
   | 'evidence_attach'
   | 'cap_update'
-  | 'config_changed';
+  | 'config_changed'
+  | 'population_verified';
 
 export type LedgerEntry = {
   seq: number;
@@ -289,7 +294,7 @@ export type LedgerEntry = {
   eventType: LedgerEventType;
   entityId: string;
   recordId: string;
-  recordType: 'engagement' | 'workpaper' | 'plan' | 'control' | 'observation' | 'evidence' | 'cap_item' | 'entity';
+  recordType: 'engagement' | 'workpaper' | 'plan' | 'control' | 'observation' | 'evidence' | 'cap_item' | 'entity' | 'population';
   payloadSummary: string;
   payloadHash: string;
   justification?: string;

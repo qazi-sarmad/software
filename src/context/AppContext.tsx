@@ -12,7 +12,7 @@ import {
   initialUsers,
   initialWorkpapers,
 } from '../data/initialData';
-import { canPerformAction } from '../lib/access';
+import { canPerformAction, canAccessEntity } from '../lib/access';
 import { getSignOffBlockers } from '../lib/auditFile';
 import { appendLedgerEntry, computePayloadHash, generateInitialLedger, verifyChain } from '../lib/ledger';
 import { transitionCapStatus, CapStatusAction, TransitionCapResult } from '../lib/cap';
@@ -63,6 +63,9 @@ function cleanSeed<T>(rows: T): T {
   if (KEEP_CANARIES) return rows;
   return JSON.parse(JSON.stringify(rows).replace(/\s?\[CANARY-[A-Z]+\]/g, ''));
 }
+
+export type GateResult = { ok: true } | { ok: false; code: string; reason: string };
+export type PopulationSummary = { sha256: string; fileName: string; rowCount: number; totalCents: number };
 
 export type NewEntityInput = {
   universeId: string;
@@ -122,7 +125,9 @@ interface AppContextType {
   signOffEngagement: (engagementId: string) => Promise<void>;
   reopenEngagement: (engagementId: string, justification: string) => Promise<void>;
   addEntity: (input: NewEntityInput) => Promise<{ ok: true; id: string } | { ok: false; reason: string }>;
-  finalizeTest: (workpaperId: string) => Promise<void>;
+  finalizeTest: (workpaperId: string) => Promise<GateResult>;
+  registerPopulation: (workpaperId: string, summary: PopulationSummary) => Promise<GateResult>;
+  setTestStepCompleted: (workpaperId: string, stepId: string, completed: boolean) => GateResult;
   signOffWorkpaper: (workpaperId: string) => Promise<void>;
   reopenWorkpaper: (workpaperId: string, justification: string) => Promise<void>;
   addObservation: (
@@ -331,14 +336,79 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     );
   };
 
-  const finalizeTest = async (workpaperId: string) => {
-    const wp = rawWorkpapers.find((w) => w.id === workpaperId);
-    if (!wp) return;
+  /** One shared pre-check for every command that changes a paper: scope, history, seal, capability. */
+  const paperGuard = (
+    wp: WorkingPaper | undefined,
+    action: 'edit_workpaper' | 'finalize_test'
+  ): GateResult => {
+    if (!wp) return { ok: false, code: 'NOT_AVAILABLE', reason: 'Working paper not available.' };
+    const entity = rawEntities.find((e) => e.id === wp.entityId);
+    if (!entity || !canAccessEntity(currentUser, entity)) {
+      return { ok: false, code: 'NOT_AVAILABLE', reason: 'Working paper not available.' };
+    }
+    if (ledgerAsOf !== null) return { ok: false, code: 'READ_ONLY_HISTORY', reason: 'Historical view is read-only.' };
+    if (wp.sealed) return { ok: false, code: 'SEALED', reason: 'This working paper is sealed and read-only.' };
+    const gate = canPerformAction(currentUser, action, { isLocked: wp.sealed });
+    if (!gate.allowed) return { ok: false, code: 'FORBIDDEN', reason: gate.reason || 'Action not permitted' };
+    return { ok: true };
+  };
 
-    const gate = canPerformAction(currentUser, 'finalize_test', { isLocked: wp.sealed });
-    if (!gate.allowed) {
-      alert(gate.reason || 'Action not permitted');
-      return;
+  const setTestStepCompleted = (workpaperId: string, stepId: string, completed: boolean): GateResult => {
+    const wp = rawWorkpapers.find((w) => w.id === workpaperId);
+    const g = paperGuard(wp, 'edit_workpaper');
+    if (!g.ok) return g;
+    if (!wp!.populationSha256) {
+      return { ok: false, code: 'POPULATION_NOT_VERIFIED', reason: 'Verify the population before recording test steps.' };
+    }
+    setRawWorkpapers((prev) =>
+      prev.map((w) => (w.id === workpaperId ? { ...w, testSteps: w.testSteps.map((t) => (t.id === stepId ? { ...t, completed } : t)) } : w))
+    );
+    return { ok: true };
+  };
+
+  const registerPopulation = async (workpaperId: string, summary: PopulationSummary): Promise<GateResult> => {
+    const wp = rawWorkpapers.find((w) => w.id === workpaperId);
+    const g = paperGuard(wp, 'edit_workpaper');
+    if (!g.ok) return g;
+    if (!/^[0-9a-f]{64}$/.test(summary.sha256) || summary.rowCount < 1) {
+      return { ok: false, code: 'INVALID_POPULATION', reason: 'A verified population needs a SHA-256 and at least one row.' };
+    }
+    const payloadHash = await computePayloadHash({ workpaperId, ...summary });
+    await appendLedger({
+      actorId: currentUser.id, actorName: currentUser.name, actorRole: currentUser.role,
+      eventType: 'population_verified', entityId: wp!.entityId, recordId: wp!.id, recordType: 'population',
+      payloadSummary: `Population ${summary.fileName} verified for "${wp!.refCode}": ${summary.rowCount} rows, SHA-256 ${summary.sha256.slice(0, 12)}…`,
+      payloadHash,
+    });
+    setRawWorkpapers((prev) =>
+      prev.map((w) =>
+        w.id === workpaperId
+          ? {
+              ...w,
+              populationSha256: summary.sha256,
+              populationCount: summary.rowCount,
+              populationFileName: summary.fileName,
+              populationTotalCents: summary.totalCents,
+              populationVerifiedAt: new Date().toISOString(),
+              populationVerifiedBy: currentUser.name,
+            }
+          : w
+      )
+    );
+    return { ok: true };
+  };
+
+  const finalizeTest = async (workpaperId: string): Promise<GateResult> => {
+    const wp = rawWorkpapers.find((w) => w.id === workpaperId);
+    const g = paperGuard(wp, 'finalize_test');
+    if (!g.ok) return g;
+    // Law 3, enforced in the command (not just the button): no verified population, no finalization.
+    if (!wp!.populationSha256) {
+      return { ok: false, code: 'POPULATION_NOT_VERIFIED', reason: 'Population is not verified. Upload and reconcile it first.' };
+    }
+    const open = wp!.testSteps.filter((t) => !t.completed).length;
+    if (open > 0) {
+      return { ok: false, code: 'STEPS_INCOMPLETE', reason: `${open} test step${open === 1 ? '' : 's'} still not completed.` };
     }
 
     const payloadHash = await computePayloadHash(wp);
@@ -347,24 +417,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       actorName: currentUser.name,
       actorRole: currentUser.role,
       eventType: 'test_finalize',
-      entityId: wp.entityId,
-      recordId: wp.id,
+      entityId: wp!.entityId,
+      recordId: wp!.id,
       recordType: 'workpaper',
-      payloadSummary: `Testing finalized for workpaper "${wp.refCode}" (${wp.sampleCount} samples tested)`,
+      payloadSummary: `Testing finalized for workpaper "${wp!.refCode}" (${wp!.sampleCount} samples tested)`,
       payloadHash,
     });
 
     setRawWorkpapers((prev) =>
       prev.map((w) =>
         w.id === workpaperId
-          ? {
-              ...w,
-              status: 'completed',
-              preparedDate: new Date().toISOString().split('T')[0],
-            }
+          ? { ...w, status: 'completed', preparedDate: new Date().toISOString().split('T')[0] }
           : w
       )
     );
+    return { ok: true };
   };
 
   const signOffWorkpaper = async (workpaperId: string) => {
@@ -518,6 +585,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     file: { name: string; sizeBytes: number; sha256: string },
     actorName: string
   ) => {
+    // Sealed papers and historical views never accept new evidence, whatever the entry point.
+    const target = rawWorkpapers.find((w) => w.id === workpaperId);
+    if (!target || target.sealed || ledgerAsOf !== null) return;
     const item = {
       id: `ev-${Date.now()}`,
       name: file.name,
@@ -623,6 +693,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         signOffEngagement,
         reopenEngagement,
         addEntity,
+        registerPopulation,
+        setTestStepCompleted,
         finalizeTest,
         signOffWorkpaper,
         reopenWorkpaper,
