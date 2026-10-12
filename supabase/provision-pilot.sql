@@ -8,9 +8,9 @@ declare
   ent uuid := gen_random_uuid();
   prep uuid; rev uuid; cia uuid;
 begin
-  select id into prep from auth.users where email = 'preparer@example.com';
-  select id into rev  from auth.users where email = 'reviewer@example.com';
-  select id into cia  from auth.users where email = 'cia@example.com';
+  select id into prep from auth.users where email = 'preparer@provio.com';
+  select id into rev  from auth.users where email = 'reviewer@provio.com';
+  select id into cia  from auth.users where email = 'cia@provio.com';
   if prep is null or rev is null or cia is null then
     raise exception 'Create the three users in Authentication > Users first, and fix the emails above.';
   end if;
