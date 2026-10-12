@@ -15,22 +15,33 @@ export async function computeSha256(data: string): Promise<string> {
     return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
   }
 
-  // Fallback for test runner if needed
-  let hash = 0;
-  for (let i = 0; i < data.length; i++) {
-    const char = data.charCodeAt(i);
-    hash = (hash << 5) - hash + char;
-    hash |= 0;
-  }
-  return Math.abs(hash).toString(16).padStart(64, '0');
+  throw new Error('Secure SHA-256 is unavailable; ledger writes are disabled.');
+}
+
+/** Canonical JSON for demo events; rejects ambiguous/non-JSON values. */
+export function canonicalJson(value: unknown): string {
+  const seen = new Set<object>();
+  const encode = (v: unknown): string => {
+    if (v === null || typeof v === 'string' || typeof v === 'boolean') return JSON.stringify(v);
+    if (typeof v === 'number' && Number.isFinite(v)) return JSON.stringify(v);
+    if (typeof v !== 'object' || !v || seen.has(v)) throw new Error('Non-canonical JSON value');
+    if (!Array.isArray(v) && Object.getPrototypeOf(v) !== Object.prototype) throw new Error('Plain JSON objects required');
+    seen.add(v);
+    const result = Array.isArray(v) ? '[' + Array.from(v, encode).join(',') + ']' : '{' + Object.keys(v).sort().map(k => JSON.stringify(k) + ':' + encode((v as Record<string,unknown>)[k])).join(',') + '}';
+    seen.delete(v); return result;
+  };
+  return encode(value);
+}
+
+async function hashCommittedEntry(entry: Omit<LedgerEntry, 'hash'>): Promise<string> {
+  return computePayloadHash({ ...entry, justification: entry.justification ?? null });
 }
 
 /**
  * Computes payload hash for any structured data.
  */
 export async function computePayloadHash(payload: unknown): Promise<string> {
-  const jsonString = typeof payload === 'string' ? payload : JSON.stringify(payload);
-  return computeSha256(jsonString);
+  return computeSha256(canonicalJson(payload));
 }
 
 /**
@@ -96,22 +107,10 @@ export async function appendLedgerEntry(
     params.payloadHash ||
     (params.payloadData ? await computePayloadHash(params.payloadData) : await computeSha256(params.payloadSummary));
 
-  const hash = await computeEntryHash(
-    prevHash,
-    timestamp,
-    params.actorId,
-    params.actorRole,
-    params.eventType,
-    params.entityId,
-    params.recordId,
-    payloadHash,
-    params.justification
-  );
 
-  return {
+  const committed = {
     seq,
     prevHash,
-    hash,
     timestamp,
     actorId: params.actorId,
     actorName: params.actorName,
@@ -124,6 +123,7 @@ export async function appendLedgerEntry(
     payloadHash,
     justification: params.justification,
   };
+  return { ...committed, hash: await hashCommittedEntry(committed) };
 }
 
 export interface VerificationResult {
@@ -161,17 +161,8 @@ export async function verifyChain(entries: LedgerEntry[]): Promise<VerificationR
       };
     }
 
-    const calculatedHash = await computeEntryHash(
-      entry.prevHash,
-      entry.timestamp,
-      entry.actorId,
-      entry.actorRole,
-      entry.eventType,
-      entry.entityId,
-      entry.recordId,
-      entry.payloadHash,
-      entry.justification
-    );
+    const { hash: _hash, ...committed } = entry;
+    const calculatedHash = await hashCommittedEntry(committed);
 
     if (calculatedHash !== entry.hash) {
       return {

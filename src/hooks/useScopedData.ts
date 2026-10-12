@@ -110,7 +110,6 @@ export function useScopedData() {
   const scopedCapItems = useMemo(() => {
     if (currentUser.role === 'org_admin') return [];
     return rawCapItems.filter((cap) => {
-      if (currentUser.role === 'cia') return true;
       return allowedEntityIds.has(cap.entityId);
     });
   }, [rawCapItems, currentUser.role, allowedEntityIds]);
@@ -271,7 +270,6 @@ export function useScopedData() {
   const scopedLedger = useMemo(() => {
     if (currentUser.role === 'org_admin') return [];
     const accessible = ledger.filter((entry) => {
-      if (currentUser.role === 'cia') return true;
       return allowedEntityIds.has(entry.entityId);
     });
 
@@ -352,3 +350,6 @@ export function useScopedData() {
     can,
   };
 }
+
+// Supabase projections are already restricted by RLS. Keep the component read boundary here.
+export { useAuditData as useScopedAuditData } from '../context/AuditDataContext';

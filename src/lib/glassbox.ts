@@ -87,7 +87,7 @@ export async function validateGlassBoxToken(
 
   // Expiration check
   const expiryDate = new Date(record.expiresAt);
-  if (currentTime.getTime() > expiryDate.getTime()) {
+  if (!Number.isFinite(expiryDate.getTime()) || currentTime.getTime() >= expiryDate.getTime()) {
     return { valid: false, error: 'Evidence upload link has expired (7-day window passed)' };
   }
 

@@ -16,6 +16,20 @@ export interface VarianceInputItem {
   rowRef: number;
 }
 
+/** Compare the decimal values as supplied, without IEEE-754 boundary drift. */
+function exceedsHalfCent(left: number[], right: number[]): boolean {
+  const parts = (value: number) => {
+    if (!Number.isFinite(value)) throw new Error('Finite financial amounts required');
+    const [mantissa, exponent = '0'] = value.toString().split('e');
+    return { coefficient: BigInt(mantissa.replace('.', '')), scale: (mantissa.split('.')[1]?.length ?? 0) - Number(exponent) };
+  };
+  const lhs = left.map(parts), rhs = right.map(parts);
+  const scale = Math.max(3, ...lhs.map(x=>x.scale), ...rhs.map(x=>x.scale));
+  const sum = (values: ReturnType<typeof parts>[]) => values.reduce((total,x)=>total+x.coefficient*10n**BigInt(scale-x.scale),0n);
+  const difference = sum(lhs)-sum(rhs);
+  return (difference < 0n ? -difference : difference) > 5n*10n**BigInt(scale-3);
+}
+
 /**
  * Deterministic Variance Analysis.
  * Flags variances exceeding both absolute dollar threshold and percentage threshold.
@@ -30,7 +44,7 @@ export function runVarianceAnalysis(
     const priorAbs = Math.abs(item.priorPeriod);
     const variancePct = priorAbs > 0 ? (varianceVal / priorAbs) * 100 : (item.currentPeriod !== 0 ? 100 : 0);
 
-    const exceedsVal = Math.abs(varianceVal) >= thresholdVal;
+    const exceedsVal = Math.abs(varianceVal) > thresholdVal;
     const exceedsPct = Math.abs(variancePct) >= thresholdPct;
     const flagged = exceedsVal && exceedsPct;
 
@@ -77,7 +91,7 @@ export function runTrialBalanceCheck(items: TrialBalanceItem[]): {
   });
 
   const imbalance = Math.abs(totalDebits - totalCredits);
-  const balanced = imbalance < 0.01; // Allow 1 cent rounding tolerance
+  const balanced = !exceedsHalfCent(items.map(i=>i.debit),items.map(i=>i.credit));
 
   const rows: AnalysisResultRow[] = items.map((item, idx) => {
     const isUnusualNegative = item.debit < 0 || item.credit < 0;
@@ -181,10 +195,18 @@ export function runGlToTbReconciliation(
     glMap.set(entry.account, existing);
   });
 
-  return tbBalances.map((tb, idx) => {
+  const tbMap = new Map<string, { account: string; balance: number; rowRef: number }>();
+  tbBalances.forEach(tb => {
+    const existing = tbMap.get(tb.account);
+    tbMap.set(tb.account, { ...tb, balance: (existing?.balance ?? 0) + tb.balance });
+  });
+  const balances = [...tbMap.values(), ...[...glMap.entries()]
+    .filter(([account]) => !tbMap.has(account))
+    .map(([account, data]) => ({ account, balance: 0, rowRef: data.rowRefs[0] }))];
+  return balances.map((tb, idx) => {
     const glData = glMap.get(tb.account) || { total: 0, rowRefs: [] };
     const diff = Math.abs(glData.total - tb.balance);
-    const flagged = diff > 0.01;
+    const flagged = !tbMap.has(tb.account) || !glMap.has(tb.account) || exceedsHalfCent(glEntries.filter(e=>e.account===tb.account).map(e=>e.amount),tbBalances.filter(e=>e.account===tb.account).map(e=>e.balance));
 
     return {
       rowIndex: idx + 1,
