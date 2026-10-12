@@ -4,6 +4,7 @@ import { useScopedData } from '../../hooks/useScopedData';
 import { Folder, ShieldCheck } from '../common/Icons';
 import { Select } from '../common/Select';
 import { isCommentOpen } from '../../lib/comments';
+import { LiveAuditSection } from '../procurement/LiveSections';
 
 const STAGES = ['planning', 'testing', 'conclusion'] as const;
 
@@ -24,6 +25,7 @@ export const AuditFileTab: React.FC = () => {
 
   return (
     <section data-testid="tab-audit-file" className="max-w-7xl mx-auto px-6 py-8 min-h-[60vh] space-y-6">
+      <LiveAuditSection />
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-secondary text-apple-12 font-medium uppercase tracking-wider">

@@ -1,7 +1,9 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { motion } from 'motion/react';
 import { dataMode } from './lib/data/mode';
-const AuthenticatedApp = lazy(() => import('./components/procurement/AuthenticatedApp'));
+const IntegratedShell = lazy(() => import('./components/procurement/IntegratedShell'));
+import { LiveBanner, LiveSummary } from './components/procurement/LiveSections';
+import { useOptionalLive } from './context/liveContext';
 import { AppProvider, useApp } from './context/AppContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { HeaderBar } from './components/common/HeaderBar';
@@ -85,6 +87,7 @@ const LoadingFallback: React.FC = () => (
 
 const AppContent: React.FC = () => {
   const { activeTab, inspector, closeInspector, commandError } = useApp();
+  const live = useOptionalLive();
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [currentPath, setCurrentPath] = useState(
     typeof window !== 'undefined' ? window.location.pathname : '/'
@@ -204,14 +207,14 @@ const AppContent: React.FC = () => {
         }}
         className="min-h-screen flex flex-col origin-center"
       >
-        <p role="status" className="px-6 py-2 bg-surface border-b border-hairline text-secondary text-apple-12">Synthetic demonstration · browser-only records · not an authenticated audit environment</p>
+        {live ? <LiveBanner /> : <p role="status" className="px-6 py-2 bg-surface border-b border-hairline text-secondary text-apple-12">Synthetic demonstration · browser-only records · not an authenticated audit environment</p>}
         <HeaderBar onOpenCommandPalette={() => setIsCommandPaletteOpen(true)} />
         <NavStrip />
         {commandError && <p role="alert" className="px-6 py-3 text-cinnabar">{commandError}</p>}
 
         <main className="flex-1 pb-16">
           <Suspense fallback={<LoadingFallback />}>
-            {activeTab === 'executive' && <ExecutiveDashboardTab />}
+            {activeTab === 'executive' && <><LiveSummary /><ExecutiveDashboardTab /></>}
             {activeTab === 'pending' && <PendingTasksTab />}
             {activeTab === 'universe' && <AuditUniverseTab />}
             {activeTab === 'plan' && <AuditPlanTab />}
@@ -245,8 +248,19 @@ const AppContent: React.FC = () => {
 };
 
 export default function App() {
-  if (dataMode === 'supabase') return <Suspense fallback={<LoadingFallback />}><AuthenticatedApp /></Suspense>;
   if (dataMode === 'unconfigured') return <main className="p-8"><h1>Provio configuration required</h1><p>Set VITE_DATA_MODE to supabase and configure authentication, or explicitly select demo for synthetic demonstrations.</p></main>;
+  if (dataMode === 'supabase') {
+    // AND-mode: the full application plus the authenticated Supabase workspace, behind a real login.
+    return (
+      <Suspense fallback={<LoadingFallback />}>
+        <IntegratedShell>
+          <AppProvider>
+            <AppContent />
+          </AppProvider>
+        </IntegratedShell>
+      </Suspense>
+    );
+  }
   return (
     <ThemeProvider>
       <AppProvider>

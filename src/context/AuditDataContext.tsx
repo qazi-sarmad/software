@@ -1,6 +1,7 @@
 import React, {createContext,useCallback,useContext,useEffect,useRef,useState} from 'react';
 import {auditData,auth} from '../lib/data';
 import type {AuditCommand,AuditSnapshot} from '../lib/data/contracts';
+import {LiveContext,type LiveStore} from './liveContext';
 const empty: AuditSnapshot={cases:[],entities:[],memberships:[],issued:[]};
 function useAuditStore() {
   const [userId,setUserId]=useState<string|null>(null);
@@ -71,6 +72,6 @@ function useAuditStore() {
 }
 const AuditDataContext=createContext<ReturnType<typeof useAuditStore>|null>(null);
 export function AuditDataProvider({children}:{children:React.ReactNode}) {
-  const store=useAuditStore(); return <AuditDataContext.Provider value={store}>{children}</AuditDataContext.Provider>;
+  const store=useAuditStore(); return <AuditDataContext.Provider value={store}><LiveContext.Provider value={store as unknown as LiveStore}>{children}</LiveContext.Provider></AuditDataContext.Provider>;
 }
 export function useAuditData(){const value=useContext(AuditDataContext);if(!value)throw new Error('AuditDataProvider required');return value;}

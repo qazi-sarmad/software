@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useOptionalLive } from '../../context/liveContext';
 import { useScopedData } from '../../hooks/useScopedData';
 import { Select } from './Select';
 import { HeaderCalendarPanel } from '../calendar/HeaderCalendarPanel';
@@ -24,6 +25,7 @@ interface HeaderBarProps {
 }
 
 export const HeaderBar: React.FC<HeaderBarProps> = ({ onOpenCommandPalette }) => {
+  const live = useOptionalLive();
   const {
     currentUser,
     setCurrentUser,
@@ -316,6 +318,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ onOpenCommandPalette }) =>
                     <button
                       onClick={() => {
                         setIsProfileOpen(false);
+                        if (live) { void live.signOut(); return; }
                         setCurrentUser(availableUsers[0]);
                       }}
                       className="w-full text-left px-3 py-2 mt-1 rounded-xl text-cinnabar hover:bg-cinnabar-subtle transition-colors flex items-center gap-2.5"

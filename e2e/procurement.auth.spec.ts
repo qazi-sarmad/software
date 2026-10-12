@@ -17,7 +17,8 @@ test('authenticated population → independent review → issuance → retested 
   await page.getByLabel('Email',{exact:true}).fill(account(role).email);
   await page.getByLabel('Password',{exact:true}).fill(account(role).password);
   await page.getByRole('button',{name:'Sign in',exact:true}).click();
-  await expect(page.getByRole('heading',{name:'Audit File',exact:true})).toBeVisible();
+  await page.locator('nav button[title="Audit File"]').click();
+  await expect(page.getByRole('heading',{name:'Live procurement audits (Supabase)',exact:true})).toBeVisible();
   await page.getByText('Create procurement engagement',{exact:true}).click();
   await expect(page.locator('select[name=entity] option')).toHaveCount(2);
  }

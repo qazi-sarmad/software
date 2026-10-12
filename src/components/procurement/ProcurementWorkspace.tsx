@@ -15,8 +15,7 @@ export function ProcurementWorkspace(){
  const run=async(work:()=>Promise<void>)=>{setError('');try{await work();}catch(e){setError((e as Error).message);}};
  const current=store.snapshot.cases.find(c=>c.id===selected);
  return <section className="space-y-5" aria-label="Procurement audit workspace">
-  <h1 className="font-serif-title text-apple-28">Audit File</h1>
-  <p>Procurement and payments assurance · Every conclusion links to a committed population, results and evidence.</p>
+    <p>Procurement and payments assurance · Every conclusion links to a committed population, results and evidence.</p>
   {(error||store.error)&&<p role="alert" className="text-cinnabar">{error||store.error}</p>}
   <div className="flex flex-wrap gap-3"><label>Engagement<select className={field} value={selected} onChange={e=>setSelected(e.target.value)}><option value="">Select an engagement</option>{store.snapshot.cases.map(c=><option key={c.id} value={c.id}>{c.state.title} · v{c.version}</option>)}</select></label><button className={button} onClick={()=>void store.refresh()}>Refresh records</button></div>
   <details className="rounded-xl border border-hairline p-4"><summary>Create procurement engagement</summary>
