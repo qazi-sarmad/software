@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  gates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: 1. Type check
+        run: npx tsc --noEmit
+
+      - name: 2. Unit tests
+        run: npx vitest run
+
+      - name: 3. Build
+        run: npx vite build
+
+      - name: 4. Token check
+        run: node scripts/check-tokens.mjs
+
+      - name: 5. Shrink check
+        run: node scripts/check-shrink.mjs
+
+      - name: 6. Migrations and SQL tests (test project only)
+        if: ${{ hashFiles('supabase/migrations/**') != '' }}
+        env:
+          TEST_SUPABASE_DB_URL: ${{ secrets.TEST_SUPABASE_DB_URL }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+          for f in supabase/migrations/*.sql; do
+            psql "$TEST_SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f "$f"
+          done
+          for f in supabase/tests/*.sql; do
+            psql "$TEST_SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f "$f"
+          done
+
+      - name: 7. Playwright
+        run: |
+          npx playwright install --with-deps chromium
+          npx playwright test
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 14
