@@ -1,0 +1,19 @@
+name: Keep test project awake
+
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase test project
+        env:
+          TEST_SUPABASE_URL: ${{ secrets.TEST_SUPABASE_URL }}
+          TEST_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.TEST_SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          curl -sf "$TEST_SUPABASE_URL/rest/v1/" \
+            -H "apikey: $TEST_SUPABASE_PUBLISHABLE_KEY" \
+            -o /dev/null && echo "Ping OK"
