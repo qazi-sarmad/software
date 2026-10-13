@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, it, expect } from 'vitest';
 import { checkPopulationCsv, parseAmountCents, parseCsv, isValidIsoDate, sha256Hex, isSupportedPopulationFile } from './population';
 
