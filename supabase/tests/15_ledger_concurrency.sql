@@ -18,7 +18,10 @@ select set_config('provio_test.db_url', regexp_replace(:'db_url', '[[:space:]]',
 
 do $$
 declare
-  v_n int := 20;
+  -- Supabase's session-mode pooler caps concurrent clients (pool_size, 15 by default). The psql
+  -- session itself holds one, so stay well under the cap. The invariant under test (seq values are
+  -- unique and contiguous under concurrent appends) does not depend on the exact fan-out.
+  v_n int := 10;
   v_created boolean;
 begin
   begin
