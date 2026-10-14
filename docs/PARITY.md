@@ -100,8 +100,8 @@ Dist scan after `vite build` (all must be 0): `Simulate Viewpoint` 0, `Viewpoint
 
 ### CI on PR #5
 
-- Previous green run: **38524739214** on `6e73c7c` — all gate steps success, Playwright step success (7 tests).
-- Final green run on the new head: reported in the task hand-back after `git push` (run ID recorded there).
+- Run **38528804324** on head `f69ae93` — conclusion **success**. Steps: type check success, unit tests success (26 files / 205 tests), build success, token check success, shrink check success, SQL tests skipped (no `supabase/migrations/**`), **Playwright success (7 tests passed, 14.9s)**.
+- Previous green run 38524739214 on `6e73c7c` — same shape.
 
 ### Decisions (where the spec is silent)
 
