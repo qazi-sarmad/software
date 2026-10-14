@@ -25,7 +25,7 @@ select set_config('provio_test.db_url', regexp_replace(:'db_url', '[[:space:]]',
 
 do $$
 declare
-  -- The spec requires 50 concurrent appends (§26). v_conns keeps the number of simultaneously open
+  -- Concurrent appends in one tenant produce unique, contiguous seq values and a valid hash chain. This test uses 50 rows across 10 connections. v_conns keeps the number of simultaneously open
   -- dblink sessions under the pooler's cap; the 50 appends are batched across those connections.
   v_total int := 50;
   v_conns int := 10;

@@ -183,6 +183,6 @@ database (no data module yet); that is the next Phase 1 slice.
 - `TEST_SUPABASE_DB_URL` still carries a trailing newline. CI run 38551590080 proved it by failing
   test 15 with `FATAL: database "postgres\n" does not exist`. CI step 6 and test 15 strip whitespace
   until the secret is re-set without the newline, after which both strips can be removed.
-- The 50 concurrent appends (§26) are batched over 10 dblink connections (one multi-row INSERT each)
+- Concurrent appends in one tenant produce unique, contiguous seq values and a valid hash chain. This test uses 50 rows, batched over 10 dblink connections (one multi-row INSERT each)
   because Supabase's session pooler caps concurrent clients at 15. The assertion covers all 50 rows.
 
