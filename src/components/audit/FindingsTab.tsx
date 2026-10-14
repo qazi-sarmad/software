@@ -2,7 +2,7 @@ import React from 'react';
 import { WorkingPaper } from '../../types';
 import { useApp } from '../../context/AppContext';
 import { useScopedData } from '../../hooks/useScopedData';
-import { AlertCircle, AlertTriangle, Plus, ArrowRight, GitCommit } from '../common/Icons';
+import { AlertCircle, AlertTriangle, Plus, ArrowRight } from '../common/Icons';
 
 interface FindingsTabProps {
   workpaper: WorkingPaper;
@@ -65,14 +65,6 @@ export const FindingsTab: React.FC<FindingsTabProps> = ({ workpaper }) => {
                 </span>
                 <span className="font-mono text-apple-12 text-secondary">{obs.id}</span>
               </div>
-              <button
-                type="button"
-                onClick={() => openInspector('red_thread', { observation: obs })}
-                className="text-apple-12 text-secondary hover:text-primary flex items-center gap-1"
-              >
-                <GitCommit className="w-3.5 h-3.5 text-accent" />
-                <span>Lineage Trace</span>
-              </button>
             </div>
 
             <h4 className="text-apple-14 font-semibold text-primary">{obs.title}</h4>

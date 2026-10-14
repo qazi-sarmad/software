@@ -43,7 +43,6 @@ export function useScopedData() {
     selectedUniverseId,
     setSelectedUniverseId,
     ledger,
-    ledgerAsOf,
   } = useApp();
 
   const filter = useFilterStore();
@@ -275,11 +274,8 @@ export function useScopedData() {
       return allowedEntityIds.has(entry.entityId);
     });
 
-    if (ledgerAsOf !== null) {
-      return accessible.filter((entry) => entry.seq <= ledgerAsOf);
-    }
     return accessible;
-  }, [ledger, allowedEntityIds, currentUser.role, ledgerAsOf]);
+  }, [ledger, allowedEntityIds, currentUser.role]);
 
   // Deep-link safe resolver: resolves an ID or returns null if not accessible
   const resolveEntity = (id: string): AuditEntity | null => {

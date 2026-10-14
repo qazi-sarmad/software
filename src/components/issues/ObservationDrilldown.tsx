@@ -3,7 +3,8 @@ import { useApp } from '../../context/AppContext';
 import { useScopedData } from '../../hooks/useScopedData';
 import { AuditObservation, Severity } from '../../types';
 import { departmentsOf, auditsForDepartment, workpapersForAudit } from '../../lib/findingTarget';
-import { AlertCircle, CheckCircle2, Zap } from '../common/Icons';
+import { AlertCircle, CheckCircle2 } from '../common/Icons';
+import { InlineError } from '../common/InlineError';
 
 interface ObservationDrilldownProps {
   data?: {
@@ -15,7 +16,7 @@ interface ObservationDrilldownProps {
 }
 
 export const ObservationDrilldown: React.FC<ObservationDrilldownProps> = ({ data, onClose }) => {
-  const { addObservation, closeInspector, openInspector } = useApp();
+  const { addObservation, closeInspector } = useApp();
   const { scopedWorkpapers, scopedEntities, scopedEngagements } = useScopedData();
 
   const existingObs = data?.observation;
@@ -46,38 +47,45 @@ export const ObservationDrilldown: React.FC<ObservationDrilldownProps> = ({ data
     [engagementId, scopedWorkpapers, scopedEngagements]
   );
   const [selectedWpId, setSelectedWpId] = useState(initialWp?.id || '');
+  const [formError, setFormError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError(null);
     if (!title.trim() || !condition.trim()) {
-      alert('Please provide title and condition.');
+      setFormError('Please provide title and condition.');
       return;
     }
 
     const targetWp = scopedWorkpapers.find((w) => w.id === selectedWpId);
     if (!targetWp) {
-      alert('Choose a department, an audit and a working paper first.');
+      setFormError('Choose a department, an audit and a working paper first.');
       return;
     }
     if (wpOptions.find((o) => o.id === targetWp.id)?.locked) {
-      alert('That working paper is locked. Reopen it with a justification before raising a finding.');
+      setFormError('That working paper is locked. Reopen it with a justification before raising a finding.');
       return;
     }
 
-    await addObservation({
-      workpaperId: targetWp.id,
-      controlId: targetWp.controlId,
-      entityId: targetWp.entityId,
-      universeId: targetWp.universeId,
-      title,
-      condition,
-      criteria,
-      cause,
-      consequence,
-      recommendation,
-      severity,
-      status: 'open',
-    });
+    try {
+      await addObservation({
+        workpaperId: targetWp.id,
+        controlId: targetWp.controlId,
+        entityId: targetWp.entityId,
+        universeId: targetWp.universeId,
+        title,
+        condition,
+        criteria,
+        cause,
+        consequence,
+        recommendation,
+        severity,
+        status: 'open',
+      });
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : 'The finding could not be recorded.');
+      return;
+    }
 
     closeInspector();
   };
@@ -89,15 +97,6 @@ export const ObservationDrilldown: React.FC<ObservationDrilldownProps> = ({ data
           <span className="text-apple-11 font-semibold text-cinnabar bg-cinnabar-subtle px-2.5 py-1 rounded uppercase">
             {existingObs.severity} Severity Finding
           </span>
-          {existingObs.ruleId && (
-            <button
-              onClick={() => openInspector('red_thread')}
-              className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-apple-11 font-medium bg-accent-subtle text-accent hover:opacity-80 transition-opacity"
-            >
-              <Zap className="w-3.5 h-3.5 stroke-[1.5]" />
-              <span>Trace Red Thread</span>
-            </button>
-          )}
         </div>
 
         <div>
@@ -264,6 +263,8 @@ export const ObservationDrilldown: React.FC<ObservationDrilldownProps> = ({ data
           className="w-full p-2.5 rounded-xl bg-surface-elevated border border-hairline text-apple-13 text-primary outline-none"
         />
       </div>
+
+      <InlineError message={formError} testId="observation-form-error" />
 
       <div className="pt-4 flex justify-end gap-3">
         <button

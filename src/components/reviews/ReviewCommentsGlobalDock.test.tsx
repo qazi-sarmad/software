@@ -4,12 +4,13 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { ReviewCommentsGlobalDock } from './ReviewCommentsGlobalDock';
 import { AppProvider } from '../../context/AppContext';
 import { ThemeProvider } from '../../context/ThemeContext';
+import { testSeed, testUser } from '../../test/testUsers';
 
 describe('§ 3.5 Global Review Comments Dock', () => {
   it('renders floating launcher button and opens dock on click', () => {
     render(
       <ThemeProvider>
-        <AppProvider>
+        <AppProvider user={testUser()} seed={testSeed}>
           <ReviewCommentsGlobalDock />
         </AppProvider>
       </ThemeProvider>

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useScopedData } from '../../hooks/useScopedData';
 import { useApp } from '../../context/AppContext';
 import { HoverPreview } from '../common/HoverPreview';
+import { InlineError } from '../common/InlineError';
 import {
   Folder,
   FileText,
@@ -31,6 +32,7 @@ export const AuditPlanTab: React.FC = () => {
     openInspector,
   } = useApp();
 
+  const [actionError, setActionError] = useState<string | null>(null);
   const [reopenNote, setReopenNote] = useState('');
   const [reopeningId, setReopeningId] = useState<string | null>(null);
 
@@ -47,15 +49,22 @@ export const AuditPlanTab: React.FC = () => {
     : [];
 
   const handleSignOff = async (engId: string) => {
-    await signOffEngagement(engId);
+    setActionError(null);
+    const result = await signOffEngagement(engId);
+    if (!result.ok) setActionError(result.reason);
   };
 
   const handleReopenSubmit = async (engId: string) => {
+    setActionError(null);
     if (reopenNote.trim().length < 10) {
-      alert('Reopening justification must be at least 10 characters.');
+      setActionError('Reopening justification must be at least 10 characters.');
       return;
     }
-    await reopenEngagement(engId, reopenNote);
+    const result = await reopenEngagement(engId, reopenNote);
+    if (!result.ok) {
+      setActionError(result.reason);
+      return;
+    }
     setReopeningId(null);
     setReopenNote('');
   };
@@ -219,6 +228,8 @@ export const AuditPlanTab: React.FC = () => {
                 )}
               </div>
             </div>
+
+            <InlineError message={actionError} onDismiss={() => setActionError(null)} testId="plan-action-error" />
 
             {/* Controls in this engagement */}
             <div className="space-y-4">

@@ -3,20 +3,20 @@ import { describe, expect, it } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { AppProvider, useApp } from './AppContext';
 import { ThemeProvider } from './ThemeContext';
-import { initialUsers } from '../data/initialData';
+import { testSeed, testUser } from '../test/testUsers';
+import type { Role } from '../types';
 
-const wrapper = ({ children }: { children: React.ReactNode }) => (
+const wrapperFor = (role: Role) => ({ children }: { children: React.ReactNode }) => (
   <ThemeProvider>
-    <AppProvider>{children}</AppProvider>
+    <AppProvider user={testUser(role)} seed={testSeed}>{children}</AppProvider>
   </ThemeProvider>
 );
 const SUMMARY = { sha256: 'a'.repeat(64), fileName: 'pop.csv', rowCount: 10, totalCents: 1000 };
 const OPEN = 'wp-treas-1'; // unsealed, no population in the seed
 const SEALED = 'wp-treas-2';
 
-const boot = async (role = 'cia') => {
-  const h = renderHook(() => useApp(), { wrapper });
-  await act(async () => { h.result.current.setCurrentUser(initialUsers.find((u) => u.role === role)!); });
+const boot = async (role: Role = 'cia') => {
+  const h = renderHook(() => useApp(), { wrapper: wrapperFor(role) });
   await waitFor(() => expect(h.result.current.ledger.length).toBeGreaterThan(0));
   return h;
 };
@@ -63,16 +63,6 @@ describe('Law 3: population gate enforced in the commands', () => {
     let r: any;
     await act(async () => { r = await h.result.current.registerPopulation(SEALED, SUMMARY); });
     expect(r).toMatchObject({ ok: false, code: 'SEALED' });
-  });
-
-  it('historical (scrubbed) view is read-only', async () => {
-    const h = await boot();
-    await act(async () => { h.result.current.setLedgerAsOf(1); });
-    let r: any;
-    await act(async () => { r = await h.result.current.registerPopulation(OPEN, SUMMARY); });
-    expect(r).toMatchObject({ ok: false, code: 'READ_ONLY_HISTORY' });
-    await act(async () => { r = await h.result.current.finalizeTest(OPEN); });
-    expect(r).toMatchObject({ ok: false, code: 'READ_ONLY_HISTORY' });
   });
 
   it('a role without the capability cannot register a population', async () => {

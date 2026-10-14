@@ -4,6 +4,7 @@ import { render, screen } from '@testing-library/react';
 import { CapRadialTracker } from './CapRadialTracker';
 import { AppProvider } from '../../context/AppContext';
 import { ThemeProvider } from '../../context/ThemeContext';
+import { testSeed, testUser } from '../../test/testUsers';
 import { AuditCapItem } from '../../types';
 
 describe('§ 3.4 CAP Radial Tracker & Legend Rail', () => {
@@ -46,7 +47,7 @@ describe('§ 3.4 CAP Radial Tracker & Legend Rail', () => {
   it('renders radial tracker SVG and center hub statistics', () => {
     render(
       <ThemeProvider>
-        <AppProvider>
+        <AppProvider user={testUser()} seed={testSeed}>
           <CapRadialTracker
             capDeptMap={mockCapDeptMap}
             totalCapCount={8}

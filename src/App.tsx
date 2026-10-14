@@ -1,6 +1,12 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { motion } from 'motion/react';
 import { AppProvider, useApp } from './context/AppContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { SignInScreen } from './components/auth/SignInScreen';
+import { InlineError } from './components/common/InlineError';
+import type { User } from './types';
+import type { TenantSeed } from './types/seed';
+import { EMPTY_SEED } from './data/emptySeed';
 import { ThemeProvider } from './context/ThemeContext';
 import { HeaderBar } from './components/common/HeaderBar';
 import { NavStrip } from './components/common/NavStrip';
@@ -49,24 +55,28 @@ const GlassBoxPublicRoute = lazy(() =>
     default: m.GlassBoxPublicRoute,
   }))
 );
-const DevPalettePage = lazy(() =>
-  import('./components/dev/DevPalettePage').then((m) => ({
-    default: m.DevPalettePage,
-  }))
-);
-const DevAccessPage = lazy(() =>
-  import('./components/dev/DevAccessPage').then((m) => ({
-    default: m.DevAccessPage,
-  }))
-);
+// Dev-only pages. The conditional is a build-time constant: in a production build the branch and
+// the dynamic imports are removed, so these modules are not emitted into the bundle at all.
+const DevPalettePage = import.meta.env.DEV
+  ? lazy(() =>
+      import('./components/dev/DevPalettePage').then((m) => ({
+        default: m.DevPalettePage,
+      }))
+    )
+  : null;
+const DevAccessPage = import.meta.env.DEV
+  ? lazy(() =>
+      import('./components/dev/DevAccessPage').then((m) => ({
+        default: m.DevAccessPage,
+      }))
+    )
+  : null;
 
 // Inspector content
 const ObservationDrilldown = lazy(() => import('./components/issues/ObservationDrilldown').then((m) => ({ default: m.ObservationDrilldown })));
 const EntitySiraRcmModal = lazy(() => import('./components/universe/EntitySiraRcmModal').then((m) => ({ default: m.EntitySiraRcmModal })));
-const PeopleAccessModal = lazy(() => import('./components/common/PeopleAccessModal').then((m) => ({ default: m.PeopleAccessModal })));
 const AuditFileModal = lazy(() => import('./components/audit/AuditFileModal').then((m) => ({ default: m.AuditFileModal })));
 const PaperWorkbenchModal = lazy(() => import('./components/audit/PaperWorkbenchModal').then((m) => ({ default: m.PaperWorkbenchModal })));
-const RedThreadModal = lazy(() => import('./components/common/RedThreadModal').then((m) => ({ default: m.RedThreadModal })));
 const GlassBoxShareModal = lazy(() => import('./components/common/GlassBoxShareModal').then((m) => ({ default: m.GlassBoxShareModal })));
 const AccountSettingsModal = lazy(() => import('./components/common/AccountSettingsModal').then((m) => ({ default: m.AccountSettingsModal })));
 const CommentHistoryPanel = lazy(() => import('./components/reviews/CommentHistoryPanel').then((m) => ({ default: m.CommentHistoryPanel })));
@@ -82,47 +92,8 @@ const LoadingFallback: React.FC = () => (
 );
 
 const AppContent: React.FC = () => {
-  const { activeTab, inspector, closeInspector } = useApp();
+  const { activeTab, inspector, closeInspector, ledgerError } = useApp();
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
-  const [currentPath, setCurrentPath] = useState(
-    typeof window !== 'undefined' ? window.location.pathname : '/'
-  );
-
-  useEffect(() => {
-    const handlePopState = () => {
-      setCurrentPath(window.location.pathname);
-    };
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, []);
-
-  // Public route /e/:token (GlassBox public upload portal)
-  if (currentPath.startsWith('/e/')) {
-    const token = currentPath.replace('/e/', '').split('/')[0];
-    return (
-      <Suspense fallback={<LoadingFallback />}>
-        <GlassBoxPublicRoute tokenFromUrl={token} />
-      </Suspense>
-    );
-  }
-
-  // /dev/access route for RBAC testing table
-  if (import.meta.env.DEV && currentPath === '/dev/access') {
-    return (
-      <Suspense fallback={<LoadingFallback />}>
-        <DevAccessPage />
-      </Suspense>
-    );
-  }
-
-  // /dev/palette route: all presets side by side
-  if (import.meta.env.DEV && currentPath === '/dev/palette') {
-    return (
-      <Suspense fallback={<LoadingFallback />}>
-        <DevPalettePage />
-      </Suspense>
-    );
-  }
 
   const isInspectorOpen = Boolean(inspector.type);
 
@@ -132,14 +103,10 @@ const AppContent: React.FC = () => {
         return 'Audit Observation & 5C Analysis';
       case 'sira':
         return 'SIRA Risk & RCM Matrix';
-      case 'people':
-        return 'Personnel Directory & Scoped Access';
       case 'audit_file':
         return 'Engagement Audit File';
       case 'workbench':
         return 'Working Paper Audit Workbench';
-      case 'red_thread':
-        return 'Red Thread — Lineage Trace';
       case 'glassbox_share':
         return 'GlassBox — External Upload Portal';
       case 'account_settings':
@@ -159,14 +126,10 @@ const AppContent: React.FC = () => {
         return <ObservationDrilldown data={inspector.data} />;
       case 'sira':
         return <EntitySiraRcmModal entity={inspector.data?.entity} onClose={closeInspector} />;
-      case 'people':
-        return <PeopleAccessModal />;
       case 'audit_file':
         return <AuditFileModal />;
       case 'workbench':
         return <PaperWorkbenchModal />;
-      case 'red_thread':
-        return <RedThreadModal />;
       case 'glassbox_share':
         return <GlassBoxShareModal />;
       case 'account_settings':
@@ -205,6 +168,12 @@ const AppContent: React.FC = () => {
         <HeaderBar onOpenCommandPalette={() => setIsCommandPaletteOpen(true)} />
         <NavStrip />
 
+        {ledgerError && (
+          <div className="max-w-7xl mx-auto w-full px-6 pt-4">
+            <InlineError message={`Sealing is disabled. ${ledgerError}`} testId="ledger-error" />
+          </div>
+        )}
+
         <main className="flex-1 pb-16">
           <Suspense fallback={<LoadingFallback />}>
             {activeTab === 'executive' && <ExecutiveDashboardTab />}
@@ -240,12 +209,101 @@ const AppContent: React.FC = () => {
   );
 };
 
+/**
+ * The principal for the public /e/:token upload route. A token holder is not a signed-in user:
+ * this principal has no scope and no capabilities, and is never used for the application shell.
+ */
+const EXTERNAL_TOKEN_HOLDER: User = {
+  id: 'external-token-holder',
+  name: 'External token holder',
+  email: '',
+  avatar: 'EX',
+  role: 'auditee',
+  universeIds: [],
+  entityIds: [],
+};
+
+/** Everything behind this gate needs an authenticated session. With none, the sign-in screen shows and no data is mounted. */
+// Tenant data is not part of the application bundle. The only source today is the flagged demo tenant, loaded by a
+// development-only dynamic import: in a production build this is null and the module is not emitted.
+const loadDemoSeed = import.meta.env.DEV ? () => import('./data/demoSeed').then((m) => m.demoSeed) : null;
+
+const AuthGate: React.FC = () => {
+  const { user } = useAuth();
+  const [seed, setSeed] = useState<TenantSeed | null>(null);
+
+  useEffect(() => {
+    let live = true;
+    if (user && loadDemoSeed) {
+      loadDemoSeed().then((s) => {
+        if (live) setSeed(s);
+      });
+    }
+    return () => {
+      live = false;
+      setSeed(null);
+    };
+  }, [user]);
+
+  if (!user) return <SignInScreen />;
+  if (!seed) return <LoadingFallback />;
+  return (
+    <AppProvider key={user.id} user={user} seed={seed}>
+      <AppContent />
+    </AppProvider>
+  );
+};
+
+const AppRoutes: React.FC = () => {
+  const [currentPath, setCurrentPath] = useState(
+    typeof window !== 'undefined' ? window.location.pathname : '/'
+  );
+
+  useEffect(() => {
+    const handlePopState = () => {
+      setCurrentPath(window.location.pathname);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  // Public route /e/:token (GlassBox public upload portal). Needs no session.
+  if (currentPath.startsWith('/e/')) {
+    const token = currentPath.replace('/e/', '').split('/')[0];
+    return (
+      <Suspense fallback={<LoadingFallback />}>
+        <AppProvider user={EXTERNAL_TOKEN_HOLDER} seed={EMPTY_SEED}>
+          <GlassBoxPublicRoute tokenFromUrl={token} />
+        </AppProvider>
+      </Suspense>
+    );
+  }
+
+  // Development-only tooling routes. Absent from production builds (see src/guards/prodBundle.test.ts).
+  if (import.meta.env.DEV && DevAccessPage && currentPath === '/dev/access') {
+    return (
+      <Suspense fallback={<LoadingFallback />}>
+        <DevAccessPage />
+      </Suspense>
+    );
+  }
+  if (import.meta.env.DEV && DevPalettePage && currentPath === '/dev/palette') {
+    return (
+      <Suspense fallback={<LoadingFallback />}>
+        <DevPalettePage />
+      </Suspense>
+    );
+  }
+
+  return <AuthGate />;
+};
+
 export default function App() {
   return (
     <ThemeProvider>
-      <AppProvider>
-        <AppContent />
-      </AppProvider>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
     </ThemeProvider>
   );
 }

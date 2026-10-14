@@ -97,7 +97,7 @@ export const NavStrip: React.FC = () => {
         className="w-full bg-surface border-b border-hairline py-2.5 px-6 shadow-xs select-none"
       >
         <div className="max-w-7xl mx-auto flex items-center justify-between text-apple-12 text-secondary">
-          <span className="font-semibold text-primary">System Administration Viewpoint</span>
+          <span className="font-semibold text-primary">Organisation Administration</span>
           <span className="text-secondary italic">Audit workflow tabs are restricted for Organization Administrators</span>
         </div>
       </nav>

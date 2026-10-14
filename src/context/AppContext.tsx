@@ -1,20 +1,8 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import {
-  initialCapItems,
-  initialComments,
-  initialControls,
-  initialEngagements,
-  initialEntities,
-  initialGlassBoxTokens,
-  initialIssues,
-  initialObservations,
-  initialUniverses,
-  initialUsers,
-  initialWorkpapers,
-} from '../data/initialData';
+import type { TenantSeed } from '../types/seed';
 import { canPerformAction, canAccessEntity } from '../lib/access';
 import { getSignOffBlockers } from '../lib/auditFile';
-import { appendLedgerEntry, computePayloadHash, generateInitialLedger, verifyChain } from '../lib/ledger';
+import { appendLedgerEntry, computePayloadHash, HashUnavailableError } from '../lib/ledger';
 import { transitionCapStatus, CapStatusAction, TransitionCapResult } from '../lib/cap';
 import { buildDefaultOrgRoleConfig } from '../lib/orgCapabilities';
 
@@ -39,10 +27,8 @@ export type InspectorType =
   | 'observation'
   | 'comment'
   | 'sira'
-  | 'people'
   | 'audit_file'
   | 'workbench'
-  | 'red_thread'
   | 'glassbox_share'
   | 'account_settings'
   | 'comment_history'
@@ -51,17 +37,6 @@ export type InspectorType =
 export interface InspectorState {
   type: InspectorType | null;
   data?: any;
-}
-
-/**
- * Seed data carries [CANARY-*] markers used only by the /dev/access leak scanner.
- * They are removed from everything users see unless the dev scanner explicitly asks for them.
- */
-const KEEP_CANARIES =
-  import.meta.env.DEV && typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('canary');
-function cleanSeed<T>(rows: T): T {
-  if (KEEP_CANARIES) return rows;
-  return JSON.parse(JSON.stringify(rows).replace(/\s?\[CANARY-[A-Z]+\]/g, ''));
 }
 
 export type GateResult = { ok: true } | { ok: false; code: string; reason: string };
@@ -77,10 +52,16 @@ export type NewEntityInput = {
 };
 
 interface AppContextType {
-  // Current authenticated user (and scope)
+  /** The identity of the authenticated session. It is supplied by the sign-in boundary and never changed in-app. */
   currentUser: User;
-  setCurrentUser: (user: User) => void;
-  availableUsers: User[];
+  /** Set when secure hashing is unavailable. Sealing and ledger writes are refused while it is set. */
+  ledgerError: string | null;
+  /** Id of the tenant this session belongs to. */
+  tenantId: string;
+  /** Sample figures for the analytics tab, from the tenant seed. */
+  analyticsSample: TenantSeed['analyticsSample'];
+  /** Starting text for the document review tab, from the tenant seed. */
+  documentSample: string;
 
   // Raw State (internal to context and useScopedData)
   rawUniverses: AuditUniverse[];
@@ -112,24 +93,20 @@ interface AppContextType {
   openInspector: (type: InspectorType, data?: any) => void;
   closeInspector: () => void;
 
-  // 4D Ledger Scrub Bar (Task 6 differentiator)
-  ledgerAsOf: number | null; // null means live; number is max seq
-  setLedgerAsOf: (seq: number | null) => void;
-
   // 1-stage vs 2-stage Org Toggle (Task 6 differentiator)
   isTwoStageOrg: boolean;
   setIsTwoStageOrg: (twoStage: boolean) => void;
 
   // Actions
   appendLedger: (params: Parameters<typeof appendLedgerEntry>[1]) => Promise<LedgerEntry>;
-  signOffEngagement: (engagementId: string) => Promise<void>;
-  reopenEngagement: (engagementId: string, justification: string) => Promise<void>;
+  signOffEngagement: (engagementId: string) => Promise<GateResult>;
+  reopenEngagement: (engagementId: string, justification: string) => Promise<GateResult>;
   addEntity: (input: NewEntityInput) => Promise<{ ok: true; id: string } | { ok: false; reason: string }>;
   finalizeTest: (workpaperId: string) => Promise<GateResult>;
   registerPopulation: (workpaperId: string, summary: PopulationSummary) => Promise<GateResult>;
   setTestStepCompleted: (workpaperId: string, stepId: string, completed: boolean) => GateResult;
-  signOffWorkpaper: (workpaperId: string) => Promise<void>;
-  reopenWorkpaper: (workpaperId: string, justification: string) => Promise<void>;
+  signOffWorkpaper: (workpaperId: string) => Promise<GateResult>;
+  reopenWorkpaper: (workpaperId: string, justification: string) => Promise<GateResult>;
   addObservation: (
     obs: Omit<AuditObservation, 'id' | 'createdAt' | 'raisedBy'>
   ) => Promise<AuditObservation>;
@@ -152,29 +129,35 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-export function AppProvider({ children }: { children: React.ReactNode }) {
-  const [currentUser, setCurrentUser] = useState<User>(initialUsers[0]); // default to CIA
-  const [availableUsers] = useState<User[]>(initialUsers);
+export function AppProvider({ user, seed, children }: { user: User; seed: TenantSeed; children: React.ReactNode }) {
+  // Identity comes only from the authenticated session (see AuthContext). There is no default user and no in-app switching.
+  const currentUser = user;
+  const [ledgerError, setLedgerError] = useState<string | null>(null);
 
-  const [rawUniverses, setRawUniverses] = useState<AuditUniverse[]>(cleanSeed(initialUniverses));
-  const [rawEntities, setRawEntities] = useState<AuditEntity[]>(cleanSeed(initialEntities));
-  const [rawEngagements, setRawEngagements] = useState<AuditEngagement[]>(cleanSeed(initialEngagements));
-  const [rawControls, setRawControls] = useState<AuditControl[]>(cleanSeed(initialControls));
-  const [rawWorkpapers, setRawWorkpapers] = useState<WorkingPaper[]>(cleanSeed(initialWorkpapers));
-  const [rawObservations, setRawObservations] = useState<AuditObservation[]>(cleanSeed(initialObservations));
-  const [rawIssues, setRawIssues] = useState<AuditIssue[]>(cleanSeed(initialIssues));
-  const [rawComments, setRawComments] = useState<ReviewComment[]>(cleanSeed(initialComments));
-  const [rawCapItems, setRawCapItems] = useState<AuditCapItem[]>(cleanSeed(initialCapItems));
+  const [rawUniverses, setRawUniverses] = useState<AuditUniverse[]>(seed.universes);
+  const [rawEntities, setRawEntities] = useState<AuditEntity[]>(seed.entities);
+  const [rawEngagements, setRawEngagements] = useState<AuditEngagement[]>(seed.engagements);
+  const [rawControls, setRawControls] = useState<AuditControl[]>(seed.controls);
+  const [rawWorkpapers, setRawWorkpapers] = useState<WorkingPaper[]>(seed.workpapers);
+  const [rawObservations, setRawObservations] = useState<AuditObservation[]>(seed.observations);
+  const [rawIssues, setRawIssues] = useState<AuditIssue[]>(seed.issues);
+  const [rawComments, setRawComments] = useState<ReviewComment[]>(seed.comments);
+  const [rawCapItems, setRawCapItems] = useState<AuditCapItem[]>(seed.capItems);
   const [ledger, setLedger] = useState<LedgerEntry[]>([]);
-  const [glassBoxTokens, setGlassBoxTokens] = useState<GlassBoxToken[]>(initialGlassBoxTokens);
+  const [glassBoxTokens, setGlassBoxTokens] = useState<GlassBoxToken[]>(seed.glassBoxTokens);
 
   useEffect(() => {
     let isMounted = true;
-    generateInitialLedger().then((initial) => {
-      if (isMounted) {
-        setLedger(KEEP_CANARIES ? initial : initial.map((e) => ({ ...e, payloadSummary: e.payloadSummary.replace(/\s?\[CANARY-[A-Z]+\]/g, '') })));
-      }
-    });
+    seed
+      .buildLedger()
+      .then((initial) => {
+        if (isMounted) {
+          setLedger(initial);
+        }
+      })
+      .catch((err) => {
+        if (isMounted) setLedgerError(err instanceof Error ? err.message : 'The ledger could not be built.');
+      });
     return () => {
       isMounted = false;
     };
@@ -187,7 +170,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [selectedObservationId, setSelectedObservationId] = useState<string | null>(null);
 
   const [inspector, setInspector] = useState<InspectorState>({ type: null });
-  const [ledgerAsOf, setLedgerAsOf] = useState<number | null>(null);
   const [isTwoStageOrg, setIsTwoStageOrg] = useState<boolean>(true);
 
   // Auto-select universe if user is tagged to exactly one
@@ -205,27 +187,38 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setInspector({ type: null });
   };
 
+  /** Runs a sealing command. If secure hashing is unavailable it refuses, changes nothing and reports why. */
+  const withSealGuard = async (run: () => Promise<GateResult>): Promise<GateResult> => {
+    try {
+      return await run();
+    } catch (err) {
+      if (err instanceof HashUnavailableError) {
+        setLedgerError(err.message);
+        return { ok: false, code: 'HASH_UNAVAILABLE', reason: err.message };
+      }
+      throw err;
+    }
+  };
+
   const appendLedger = async (params: Parameters<typeof appendLedgerEntry>[1]) => {
     const newEntry = await appendLedgerEntry(ledger, params);
     setLedger((prev) => [...prev, newEntry]);
     return newEntry;
   };
 
-  const signOffEngagement = async (engagementId: string) => {
+  const signOffEngagement = (engagementId: string): Promise<GateResult> => withSealGuard(async () => {
     const eng = rawEngagements.find((e) => e.id === engagementId);
-    if (!eng) return;
+    if (!eng) return { ok: false, code: 'NOT_AVAILABLE', reason: 'Engagement not available.' };
 
     const ctx = { leadAuditorId: eng.leadAuditorId, preparerId: eng.leadAuditorId, isLocked: eng.isLocked };
     const gate = canPerformAction(currentUser, 'sign_off', ctx);
     if (!gate.allowed) {
-      alert(gate.reason || 'Action not permitted');
-      return;
+      return { ok: false, code: 'FORBIDDEN', reason: gate.reason || 'Action not permitted' };
     }
     // Command-level enforcement (same rule for every entry point, not just the Audit File button).
     const auditGate = canPerformAction(currentUser, 'audit_sign_off', ctx);
     if (!auditGate.allowed) {
-      alert(auditGate.reason || 'Action not permitted');
-      return;
+      return { ok: false, code: 'FORBIDDEN', reason: auditGate.reason || 'Action not permitted' };
     }
     const blockers = getSignOffBlockers(
       rawWorkpapers.filter((w) => w.engagementId === engagementId),
@@ -233,8 +226,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       rawComments
     );
     if (blockers.length) {
-      alert('Cannot sign off yet:\n' + blockers.join('\n'));
-      return;
+      return { ok: false, code: 'SIGN_OFF_BLOCKED', reason: 'Cannot sign off yet:\n' + blockers.join('\n') };
     }
 
     const payloadHash = await computePayloadHash({ engagementId, stage: 'signed_off', timestamp: new Date().toISOString() });
@@ -266,7 +258,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           : item
       )
     );
-  };
+    return { ok: true };
+  });
 
   const addEntity = async (input: NewEntityInput): Promise<{ ok: true; id: string } | { ok: false; reason: string }> => {
     if (currentUser.role !== 'cia' && currentUser.role !== 'org_admin') {
@@ -284,27 +277,34 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       inherentRisk: input.inherentRisk, residualRisk: input.inherentRisk,
       siraScore: 0, controlsCount: 0, lastAuditDate: 'Never', status: 'active',
     };
-    const payloadHash = await computePayloadHash({ id, universeId: input.universeId, name, code, timestamp: new Date().toISOString() });
-    await appendLedger({
-      actorId: currentUser.id, actorName: currentUser.name, actorRole: currentUser.role,
-      eventType: 'config_changed', entityId: id, recordId: id, recordType: 'entity',
-      payloadSummary: `Auditable entity "${name}" (${code}) added to universe ${input.universeId} by ${currentUser.name}`,
-      payloadHash,
-    });
+    try {
+      const payloadHash = await computePayloadHash({ id, universeId: input.universeId, name, code, timestamp: new Date().toISOString() });
+      await appendLedger({
+        actorId: currentUser.id, actorName: currentUser.name, actorRole: currentUser.role,
+        eventType: 'config_changed', entityId: id, recordId: id, recordType: 'entity',
+        payloadSummary: `Auditable entity "${name}" (${code}) added to universe ${input.universeId} by ${currentUser.name}`,
+        payloadHash,
+      });
+    } catch (err) {
+      if (err instanceof HashUnavailableError) {
+        setLedgerError(err.message);
+        return { ok: false, reason: err.message };
+      }
+      throw err;
+    }
     setRawEntities((prev) => [...prev, entity]);
     return { ok: true, id };
   };
 
-  const reopenEngagement = async (engagementId: string, justification: string) => {
+  const reopenEngagement = (engagementId: string, justification: string): Promise<GateResult> => withSealGuard(async () => {
     const eng = rawEngagements.find((e) => e.id === engagementId);
-    if (!eng) return;
+    if (!eng) return { ok: false, code: 'NOT_AVAILABLE', reason: 'Engagement not available.' };
 
     const gate = canPerformAction(currentUser, 'reopen', {
       reopenJustification: justification,
     });
     if (!gate.allowed) {
-      alert(gate.reason || 'Action not permitted');
-      return;
+      return { ok: false, code: 'FORBIDDEN', reason: gate.reason || 'Action not permitted' };
     }
 
     const payloadHash = await computePayloadHash({ engagementId, justification, timestamp: new Date().toISOString() });
@@ -334,7 +334,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           : item
       )
     );
-  };
+    return { ok: true };
+  });
 
   /** One shared pre-check for every command that changes a paper: scope, history, seal, capability. */
   const paperGuard = (
@@ -346,7 +347,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (!entity || !canAccessEntity(currentUser, entity)) {
       return { ok: false, code: 'NOT_AVAILABLE', reason: 'Working paper not available.' };
     }
-    if (ledgerAsOf !== null) return { ok: false, code: 'READ_ONLY_HISTORY', reason: 'Historical view is read-only.' };
     if (wp.sealed) return { ok: false, code: 'SEALED', reason: 'This working paper is sealed and read-only.' };
     const gate = canPerformAction(currentUser, action, { isLocked: wp.sealed });
     if (!gate.allowed) return { ok: false, code: 'FORBIDDEN', reason: gate.reason || 'Action not permitted' };
@@ -366,7 +366,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return { ok: true };
   };
 
-  const registerPopulation = async (workpaperId: string, summary: PopulationSummary): Promise<GateResult> => {
+  const registerPopulation = (workpaperId: string, summary: PopulationSummary): Promise<GateResult> => withSealGuard(async () => {
     const wp = rawWorkpapers.find((w) => w.id === workpaperId);
     const g = paperGuard(wp, 'edit_workpaper');
     if (!g.ok) return g;
@@ -396,9 +396,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       )
     );
     return { ok: true };
-  };
+  });
 
-  const finalizeTest = async (workpaperId: string): Promise<GateResult> => {
+  const finalizeTest = (workpaperId: string): Promise<GateResult> => withSealGuard(async () => {
     const wp = rawWorkpapers.find((w) => w.id === workpaperId);
     const g = paperGuard(wp, 'finalize_test');
     if (!g.ok) return g;
@@ -432,19 +432,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       )
     );
     return { ok: true };
-  };
+  });
 
-  const signOffWorkpaper = async (workpaperId: string) => {
+  const signOffWorkpaper = (workpaperId: string): Promise<GateResult> => withSealGuard(async () => {
     const wp = rawWorkpapers.find((w) => w.id === workpaperId);
-    if (!wp) return;
+    if (!wp) return { ok: false, code: 'NOT_AVAILABLE', reason: 'Working paper not available.' };
 
     const gate = canPerformAction(currentUser, 'sign_off', {
       preparerId: wp.preparerId,
       isLocked: wp.sealed,
     });
     if (!gate.allowed) {
-      alert(gate.reason || 'Action not permitted');
-      return;
+      return { ok: false, code: 'FORBIDDEN', reason: gate.reason || 'Action not permitted' };
     }
 
     const payloadHash = await computePayloadHash(wp);
@@ -473,18 +472,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           : w
       )
     );
-  };
+    return { ok: true };
+  });
 
-  const reopenWorkpaper = async (workpaperId: string, justification: string) => {
+  const reopenWorkpaper = (workpaperId: string, justification: string): Promise<GateResult> => withSealGuard(async () => {
     const wp = rawWorkpapers.find((w) => w.id === workpaperId);
-    if (!wp) return;
+    if (!wp) return { ok: false, code: 'NOT_AVAILABLE', reason: 'Working paper not available.' };
 
     const gate = canPerformAction(currentUser, 'reopen', {
       reopenJustification: justification,
     });
     if (!gate.allowed) {
-      alert(gate.reason || 'Action not permitted');
-      return;
+      return { ok: false, code: 'FORBIDDEN', reason: gate.reason || 'Action not permitted' };
     }
 
     const payloadHash = await computePayloadHash({ workpaperId, justification, timestamp: new Date().toISOString() });
@@ -513,7 +512,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           : w
       )
     );
-  };
+    return { ok: true };
+  });
 
   const addObservation = async (
     obs: Omit<AuditObservation, 'id' | 'createdAt' | 'raisedBy'>
@@ -529,6 +529,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       createdAt: new Date().toISOString(),
       raisedBy: currentUser.id,
     };
+
+    // Ledger first: if secure hashing is unavailable this throws HashUnavailableError and nothing below changes.
+    await appendLedger({
+      actorId: currentUser.id,
+      actorName: currentUser.name,
+      actorRole: currentUser.role,
+      eventType: 'test_finalize',
+      entityId: newObs.entityId,
+      recordId: newObs.id,
+      recordType: 'observation',
+      payloadSummary: `Audit Observation raised: "${newObs.title}" (${newObs.severity.toUpperCase()})`,
+      payloadData: newObs,
+    });
 
     setRawObservations((prev) => [newObs, ...prev]);
 
@@ -548,19 +561,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     };
     setRawIssues((prev) => [newIssue, ...prev]);
-
-    // Ledger entry
-    await appendLedger({
-      actorId: currentUser.id,
-      actorName: currentUser.name,
-      actorRole: currentUser.role,
-      eventType: 'test_finalize',
-      entityId: newObs.entityId,
-      recordId: newObs.id,
-      recordType: 'observation',
-      payloadSummary: `Audit Observation raised: "${newObs.title}" (${newObs.severity.toUpperCase()})`,
-      payloadData: newObs,
-    });
 
     return newObs;
   };
@@ -587,7 +587,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   ) => {
     // Sealed papers and historical views never accept new evidence, whatever the entry point.
     const target = rawWorkpapers.find((w) => w.id === workpaperId);
-    if (!target || target.sealed || ledgerAsOf !== null) return;
+    if (!target || target.sealed) return;
     const item = {
       id: `ev-${Date.now()}`,
       name: file.name,
@@ -659,8 +659,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     <AppContext.Provider
       value={{
         currentUser,
-        setCurrentUser,
-        availableUsers,
+        ledgerError,
+        tenantId: seed.tenantId,
+        analyticsSample: seed.analyticsSample,
+        documentSample: seed.documentSample,
         rawUniverses,
         rawEntities,
         rawEngagements,
@@ -685,8 +687,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         inspector,
         openInspector,
         closeInspector,
-        ledgerAsOf,
-        setLedgerAsOf,
         isTwoStageOrg,
         setIsTwoStageOrg,
         appendLedger,

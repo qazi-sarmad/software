@@ -5,7 +5,6 @@ import { useApp } from '../../context/AppContext';
 import { CapRadialTracker } from './CapRadialTracker';
 import { CapTable } from './CapTable';
 import { EngagementGantt } from './EngagementGantt';
-import { LedgerScrubBar } from './LedgerScrubBar';
 import { HoverPreview } from '../common/HoverPreview';
 import {
   Folder,
@@ -65,9 +64,6 @@ export const ExecutiveDashboardTab: React.FC = () => {
         )}
       </div>
 
-      {/* 4D Ledger Scrub Bar (Task 6 Differentiator & Task 1) */}
-      <LedgerScrubBar />
-
       {/* Metric Cards Row with Apple-tier Serif Numerals */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {/* Scoped Entities */}
@@ -76,7 +72,7 @@ export const ExecutiveDashboardTab: React.FC = () => {
             title: `${stats.totalEntities} Scoped Audit Entities`,
             category: 'Audit Universe Coverage',
             subtitle: `${stats.highRiskEntities} Rated High Inherent Risk`,
-            status: 'Scoped Viewpoint',
+            status: 'Scoped view',
             statusType: 'neutral',
             hint: 'Click to open Universe & SIRA',
           }}

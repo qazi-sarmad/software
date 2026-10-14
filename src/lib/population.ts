@@ -1,5 +1,5 @@
 /**
- * Population ingest (Guide v7 §8.2, Law 3). Pure and deterministic: no I/O, no Math.random, no AI.
+ * Population ingest (Guide v7 §8.2, Law 3). Pure and deterministic: no I/O, no unseeded randomness, no AI.
  * CSV only for now (xls/xlsx need a parser library and are NOT supported yet).
  * Money is summed in integer cents so totals never drift.
  */

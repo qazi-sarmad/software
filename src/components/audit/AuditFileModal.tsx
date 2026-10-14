@@ -27,6 +27,7 @@ export const AuditFileModal: React.FC = () => {
   const requestedId: string | undefined = inspector.data?.engagement?.id;
   const engagement = requestedId ? scopedEngagements.find((e) => e.id === requestedId) : undefined;
   const [tab, setTab] = useState<AuditFileTab>(() => getInitialAuditFileTab(inspector.data));
+  const [signOffError, setSignOffError] = useState<string | null>(null);
 
   // Neutral state: does not reveal whether an out-of-scope engagement exists.
   if (!engagement) {
@@ -112,7 +113,17 @@ export const AuditFileModal: React.FC = () => {
           />
         )}
         {tab === 'review' && (
-          <ReviewTab engagement={engagement} gate={gate} signOff={signOff} onSignOff={() => signOffEngagement(engagement.id)} />
+          <ReviewTab
+            engagement={engagement}
+            gate={gate}
+            signOff={signOff}
+            error={signOffError}
+            onSignOff={async () => {
+              setSignOffError(null);
+              const result = await signOffEngagement(engagement.id);
+              if (!result.ok) setSignOffError(result.reason);
+            }}
+          />
         )}
       </div>
     </div>

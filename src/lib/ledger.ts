@@ -3,26 +3,35 @@ import { LedgerEntry, LedgerEventType, Role } from '../types';
 export const GENESIS_PREV_HASH = '0000000000000000000000000000000000000000000000000000000000000000';
 
 /**
- * Deterministically computes SHA-256 hex string for a given text or JSON object.
+ * Thrown when a SHA-256 cannot be computed with a real cryptographic primitive.
+ * Callers that seal, sign off or append to the ledger must surface this to the user and abort:
+ * there is deliberately no weaker fallback hash (Law 5).
+ */
+export class HashUnavailableError extends Error {
+  readonly code = 'HASH_UNAVAILABLE' as const;
+  constructor() {
+    super('Secure hashing is unavailable in this environment (crypto.subtle is missing). Nothing was sealed or recorded.');
+    this.name = 'HashUnavailableError';
+  }
+}
+
+/** True only when the platform provides crypto.subtle.digest. */
+export function isSecureHashAvailable(): boolean {
+  return typeof crypto !== 'undefined' && !!crypto && !!crypto.subtle && typeof crypto.subtle.digest === 'function';
+}
+
+/**
+ * Computes the SHA-256 hex string of a text. Uses crypto.subtle only.
+ * Throws HashUnavailableError if it is not available; never degrades to a non-cryptographic hash.
  */
 export async function computeSha256(data: string): Promise<string> {
-  // Use crypto.subtle in browser / modern Node
-  if (typeof crypto !== 'undefined' && crypto.subtle) {
-    const encoder = new TextEncoder();
-    const dataBuffer = encoder.encode(data);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', dataBuffer);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+  if (!isSecureHashAvailable()) {
+    throw new HashUnavailableError();
   }
-
-  // Fallback for test runner if needed
-  let hash = 0;
-  for (let i = 0; i < data.length; i++) {
-    const char = data.charCodeAt(i);
-    hash = (hash << 5) - hash + char;
-    hash |= 0;
-  }
-  return Math.abs(hash).toString(16).padStart(64, '0');
+  const dataBuffer = new TextEncoder().encode(data);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', dataBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
 /**
@@ -161,17 +170,26 @@ export async function verifyChain(entries: LedgerEntry[]): Promise<VerificationR
       };
     }
 
-    const calculatedHash = await computeEntryHash(
-      entry.prevHash,
-      entry.timestamp,
-      entry.actorId,
-      entry.actorRole,
-      entry.eventType,
-      entry.entityId,
-      entry.recordId,
-      entry.payloadHash,
-      entry.justification
-    );
+    let calculatedHash: string;
+    try {
+      calculatedHash = await computeEntryHash(
+        entry.prevHash,
+        entry.timestamp,
+        entry.actorId,
+        entry.actorRole,
+        entry.eventType,
+        entry.entityId,
+        entry.recordId,
+        entry.payloadHash,
+        entry.justification
+      );
+    } catch (err) {
+      if (err instanceof HashUnavailableError) {
+        // Never report a chain as valid when it could not actually be checked.
+        return { valid: false, error: err.message };
+      }
+      throw err;
+    }
 
     if (calculatedHash !== entry.hash) {
       return {
@@ -193,55 +211,4 @@ export async function verifyChain(entries: LedgerEntry[]): Promise<VerificationR
 export function matchesSignedState(currentHash: string, signedHash?: string): boolean {
   if (!signedHash) return false;
   return currentHash === signedHash;
-}
-
-/**
- * Generates the seeded initial ledger with authentic cryptographic hashes.
- */
-export async function generateInitialLedger(): Promise<LedgerEntry[]> {
-  const chain: LedgerEntry[] = [];
-
-  const e1 = await appendLedgerEntry(chain, {
-    actorId: 'usr-prep-1',
-    actorName: 'Elena Rostova',
-    actorRole: 'preparer',
-    eventType: 'test_finalize',
-    entityId: 'ent-treasury',
-    recordId: 'wp-treas-2',
-    recordType: 'workpaper',
-    payloadSummary: 'Test steps completed and population verified (120 stress runoff assumptions) [CANARY-TREASURY]',
-    payloadHash: 'c3ab8ff13720e8ad9047dd39466b3c8974e592c2fa383d4a3960714caef0c4f2',
-    timestamp: '2026-09-10T14:30:00Z',
-  });
-  chain.push(e1);
-
-  const e2 = await appendLedgerEntry(chain, {
-    actorId: 'usr-rev',
-    actorName: 'Sarah Jenkins',
-    actorRole: 'reviewer',
-    eventType: 'reviewer_sign_off',
-    entityId: 'ent-treasury',
-    recordId: 'wp-treas-2',
-    recordType: 'workpaper',
-    payloadSummary: 'Workpaper wp-treas-2 sealed and approved by Reviewer Sarah Jenkins [CANARY-TREASURY]',
-    payloadHash: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
-    timestamp: '2026-09-14T16:00:00Z',
-  });
-  chain.push(e2);
-
-  const e3 = await appendLedgerEntry(chain, {
-    actorId: 'usr-mgr',
-    actorName: 'Marcus Vance',
-    actorRole: 'audit_manager',
-    eventType: 'audit_sign_off',
-    entityId: 'ent-treasury',
-    recordId: 'eng-treas-2',
-    recordType: 'engagement',
-    payloadSummary: 'Engagement eng-treas-2 ALM Liquidity formally signed-off and sealed [CANARY-TREASURY]',
-    payloadHash: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
-    timestamp: '2026-09-14T16:15:00Z',
-  });
-  chain.push(e3);
-
-  return chain;
 }
