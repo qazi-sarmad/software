@@ -1,4 +1,5 @@
 import { initialUsers } from '../data/initialData';
+import { demoSeed } from '../data/demoSeed';
 import type { Role, User } from '../types';
 
 /**
@@ -10,3 +11,6 @@ export function testUser(role: Role = 'cia'): User {
   if (!user) throw new Error(`No demo-tenant user with role ${role}`);
   return user;
 }
+
+/** Test-only: the demo tenant seed that AppProvider now requires. */
+export const testSeed = demoSeed;

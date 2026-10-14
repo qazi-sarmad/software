@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { AppProvider, useApp } from '../../context/AppContext';
 import { initialUsers } from '../../data/initialData';
+import { demoSeed } from '../../data/demoSeed';
 import { useScopedData } from '../../hooks/useScopedData';
 import { canPerformAction, ActionType } from '../../lib/access';
 import { User, Role } from '../../types';
@@ -54,7 +55,7 @@ const TEST_ACTIONS: { action: ActionType; label: string; group: string }[] = [
 export const DevAccessPage: React.FC = () => {
   const [viewer, setViewer] = useState<User>(initialUsers[0]);
   return (
-    <AppProvider key={viewer.id} user={viewer}>
+    <AppProvider key={viewer.id} user={viewer} seed={demoSeed}>
       <DevAccessInner onSelect={setViewer} />
     </AppProvider>
   );

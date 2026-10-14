@@ -5,6 +5,8 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { SignInScreen } from './components/auth/SignInScreen';
 import { InlineError } from './components/common/InlineError';
 import type { User } from './types';
+import type { TenantSeed } from './types/seed';
+import { EMPTY_SEED } from './data/emptySeed';
 import { ThemeProvider } from './context/ThemeContext';
 import { HeaderBar } from './components/common/HeaderBar';
 import { NavStrip } from './components/common/NavStrip';
@@ -222,11 +224,31 @@ const EXTERNAL_TOKEN_HOLDER: User = {
 };
 
 /** Everything behind this gate needs an authenticated session. With none, the sign-in screen shows and no data is mounted. */
+// Tenant data is not part of the application bundle. The only source today is the flagged demo tenant, loaded by a
+// development-only dynamic import: in a production build this is null and the module is not emitted.
+const loadDemoSeed = import.meta.env.DEV ? () => import('./data/demoSeed').then((m) => m.demoSeed) : null;
+
 const AuthGate: React.FC = () => {
   const { user } = useAuth();
+  const [seed, setSeed] = useState<TenantSeed | null>(null);
+
+  useEffect(() => {
+    let live = true;
+    if (user && loadDemoSeed) {
+      loadDemoSeed().then((s) => {
+        if (live) setSeed(s);
+      });
+    }
+    return () => {
+      live = false;
+      setSeed(null);
+    };
+  }, [user]);
+
   if (!user) return <SignInScreen />;
+  if (!seed) return <LoadingFallback />;
   return (
-    <AppProvider key={user.id} user={user}>
+    <AppProvider key={user.id} user={user} seed={seed}>
       <AppContent />
     </AppProvider>
   );
@@ -250,7 +272,7 @@ const AppRoutes: React.FC = () => {
     const token = currentPath.replace('/e/', '').split('/')[0];
     return (
       <Suspense fallback={<LoadingFallback />}>
-        <AppProvider user={EXTERNAL_TOKEN_HOLDER}>
+        <AppProvider user={EXTERNAL_TOKEN_HOLDER} seed={EMPTY_SEED}>
           <GlassBoxPublicRoute tokenFromUrl={token} />
         </AppProvider>
       </Suspense>

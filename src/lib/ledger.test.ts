@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { appendLedgerEntry, generateInitialLedger, matchesSignedState, verifyChain } from './ledger';
+import { appendLedgerEntry, matchesSignedState, verifyChain } from './ledger';
+import { buildDemoLedger as generateInitialLedger } from '../data/demoSeed';
 
 describe('Task 1: Audit Signatures Ledger Hash-Chain', () => {
   it('Appends entries and maintains cryptographic chain integrity', async () => {

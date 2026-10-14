@@ -8,12 +8,12 @@ import { ObservationDrilldown } from '../components/issues/ObservationDrilldown'
 import { ReviewTab } from '../components/audit/file/ReviewTab';
 import { InlineError } from '../components/common/InlineError';
 import { initialEngagements, initialWorkpapers } from '../data/initialData';
-import { testUser } from '../test/testUsers';
+import { testSeed, testUser } from '../test/testUsers';
 import type { Role } from '../types';
 
 const wrapperFor = (role: Role) => ({ children }: { children: React.ReactNode }) => (
   <ThemeProvider>
-    <AppProvider user={testUser(role)}>{children}</AppProvider>
+    <AppProvider user={testUser(role)} seed={testSeed}>{children}</AppProvider>
   </ThemeProvider>
 );
 
@@ -187,7 +187,7 @@ describe('components show errors in place', () => {
     const s = spies();
     render(
       <ThemeProvider>
-        <AppProvider user={testUser('preparer')}>
+        <AppProvider user={testUser('preparer')} seed={testSeed}>
           <ObservationDrilldown data={null} />
         </AppProvider>
       </ThemeProvider>
@@ -202,7 +202,7 @@ describe('components show errors in place', () => {
     const wp = initialWorkpapers.find((w) => w.id === SEALED_WP)!;
     render(
       <ThemeProvider>
-        <AppProvider user={testUser('cia')}>
+        <AppProvider user={testUser('cia')} seed={testSeed}>
           <WorkbenchHeader workpaper={wp} />
         </AppProvider>
       </ThemeProvider>

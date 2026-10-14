@@ -1,12 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import { WorkingPaper, AnalyticsRule } from '../../types';
+import { useApp } from '../../context/AppContext';
 import {
   runVarianceAnalysis,
   runTrialBalanceCheck,
   runAnomalyDetection,
   runGlToTbReconciliation,
-  VarianceInputItem,
-  TrialBalanceItem,
 } from '../../lib/analytics';
 import { Activity, AlertTriangle, CheckCircle2, TrendingUp, Sliders, ShieldCheck } from '../common/Icons';
 
@@ -19,36 +18,9 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({ workpaper }) => {
   const [thresholdPct, setThresholdPct] = useState(10);
   const [thresholdVal, setThresholdVal] = useState(100000);
 
-  // Synthetic deterministic testing data
-  const varianceItems: VarianceInputItem[] = useMemo(
-    () => [
-      { account: '4010 - Corporate Treasury Revenue', category: 'Revenue', currentPeriod: 14200000, priorPeriod: 12500000, rowRef: 1 },
-      { account: '5020 - FX Hedging Derivative Settlements', category: 'Expense', currentPeriod: 8900000, priorPeriod: 6200000, rowRef: 2 },
-      { account: '1010 - Central Bank Cash Reserves', category: 'Asset', currentPeriod: 450000000, priorPeriod: 480000000, rowRef: 3 },
-      { account: '2010 - Interbank Overnight Repo Borrowing', category: 'Liability', currentPeriod: 125000000, priorPeriod: 98000000, rowRef: 4 },
-      { account: '6010 - Clearing & Custody Fees', category: 'Expense', currentPeriod: 1450000, priorPeriod: 1420000, rowRef: 5 },
-    ],
-    []
-  );
-
-  const tbItems: TrialBalanceItem[] = useMemo(
-    () => [
-      { account: '1000 - Operating Cash', debit: 45200000, credit: 0, rowRef: 10 },
-      { account: '1200 - Prime Brokerage Receivables', debit: 18400000, credit: 0, rowRef: 11 },
-      { account: '2000 - Repo Repurchase Obligations', debit: 0, credit: 63600000, rowRef: 12 },
-    ],
-    []
-  );
-
-  const anomalyItems = useMemo(
-    () => [
-      { account: '4010 - Wire Postings', amount: 1540000, rowRef: 20 },
-      { account: '4010 - Wire Postings', amount: 1500000, rowRef: 21 },
-      { account: '4010 - Wire Postings', amount: 12800000, rowRef: 22 }, // Statistical outlier
-      { account: '4010 - Wire Postings', amount: 200000, rowRef: 23 }, // Exact round number anomaly
-    ],
-    []
-  );
+  // Sample data comes from the tenant seed (empty outside the demo tenant). No tenant figures live in this component.
+  const { analyticsSample } = useApp();
+  const { varianceItems, tbItems, anomalyItems } = analyticsSample;
 
   // Deterministic engine runs (LAW 1)
   const results = useMemo(() => {

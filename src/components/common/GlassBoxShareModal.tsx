@@ -4,7 +4,7 @@ import { createGlassBoxTokenRecord } from '../../lib/glassbox';
 import { Share2, Check, Clock, ShieldCheck, Lock } from './Icons';
 
 export const GlassBoxShareModal: React.FC = () => {
-  const { inspector, closeInspector, appendLedger, currentUser } = useApp();
+  const { inspector, closeInspector, appendLedger, currentUser, tenantId } = useApp();
   const workpaper = inspector.data?.workpaper;
 
   const [copied, setCopied] = useState(false);
@@ -17,7 +17,7 @@ export const GlassBoxShareModal: React.FC = () => {
     const { rawToken, record } = await createGlassBoxTokenRecord({
       workpaperId: workpaper.id,
       entityId: workpaper.entityId,
-      orgId: 'provio-corp-tenant',
+      orgId: tenantId,
       validityDays,
     });
 
@@ -63,7 +63,7 @@ export const GlassBoxShareModal: React.FC = () => {
             Target Working Paper
           </label>
           <div className="p-3 rounded-lg bg-surface border border-hairline text-apple-13 font-medium text-primary">
-            {workpaper?.refCode || 'WP-TREAS-01'} • {workpaper?.title || 'Treasury Intraday Liquidity'}
+            {workpaper ? `${workpaper.refCode} • ${workpaper.title}` : 'No working paper selected'}
           </div>
         </div>
 

@@ -4,10 +4,10 @@ import {
   appendLedgerEntry,
   computePayloadHash,
   computeSha256,
-  generateInitialLedger,
   isSecureHashAvailable,
   verifyChain,
 } from './ledger';
+import { buildDemoLedger } from '../data/demoSeed';
 
 const baseEntry = {
   actorId: 'usr-x',
@@ -70,9 +70,9 @@ describe('ledger hashing never falls back to a non-cryptographic hash (Law 5)', 
     expect(chain).toHaveLength(0);
   });
 
-  it('generateInitialLedger refuses to build a ledger without secure hashing', async () => {
+  it('buildDemoLedger refuses to build a ledger without secure hashing', async () => {
     vi.stubGlobal('crypto', undefined);
-    await expect(generateInitialLedger()).rejects.toBeInstanceOf(HashUnavailableError);
+    await expect(buildDemoLedger()).rejects.toBeInstanceOf(HashUnavailableError);
   });
 
   it('verifyChain never reports a chain as valid when it cannot be checked', async () => {

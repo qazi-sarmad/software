@@ -36,20 +36,14 @@ export const CapRadialTracker: React.FC<CapRadialTrackerProps> = ({
   openInspectorRef.current = openInspector;
   filterRef.current = filter;
 
-  const deptColorPalette: Record<string, string> = {
-    Treasury: 'var(--accent-primary)',
-    Trading: 'var(--accent-verdigris)',
-    'Credit Risk': 'var(--text-tertiary)',
-    Operations: 'var(--text-secondary)',
-    Technology: 'var(--accent-primary)',
-    Compliance: 'var(--accent-verdigris)',
-  };
-
-  const getDeptColor = (dept: string, index: number): string => {
-    if (deptColorPalette[dept]) return deptColorPalette[dept];
-    const fallback = ['var(--accent-primary)', 'var(--accent-verdigris)', 'var(--text-tertiary)'];
-    return fallback[index % fallback.length];
-  };
+  // Departments are tenant configuration, so colours are assigned by position, not by department name.
+  const deptPalette = [
+    'var(--accent-primary)',
+    'var(--accent-verdigris)',
+    'var(--text-tertiary)',
+    'var(--text-secondary)',
+  ];
+  const getDeptColor = (_dept: string, index: number): string => deptPalette[index % deptPalette.length];
 
   const severityColors: Record<Severity, string> = {
     critical: 'var(--accent-cinnabar)',

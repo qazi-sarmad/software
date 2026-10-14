@@ -24,7 +24,7 @@ interface GlassBoxPublicRouteProps {
 }
 
 export const GlassBoxPublicRoute: React.FC<GlassBoxPublicRouteProps> = ({ tokenFromUrl }) => {
-  const { glassBoxTokens, appendLedger, rawWorkpapers } = useApp();
+  const { glassBoxTokens, appendLedger, rawWorkpapers, tenantId } = useApp();
 
   // Extract token from prop or URL pathname (/e/:token) or query (?token=)
   const token = tokenFromUrl || (() => {
@@ -63,7 +63,7 @@ export const GlassBoxPublicRoute: React.FC<GlassBoxPublicRouteProps> = ({ tokenF
       return;
     }
 
-    validateGlassBoxToken(token, 'provio-corp-tenant', glassBoxTokens).then((res) => {
+    validateGlassBoxToken(token, tenantId, glassBoxTokens).then((res) => {
       if (!isMounted) return;
       if (res.valid && res.record) {
         setValidationState({
@@ -83,7 +83,7 @@ export const GlassBoxPublicRoute: React.FC<GlassBoxPublicRouteProps> = ({ tokenF
     return () => {
       isMounted = false;
     };
-  }, [token, glassBoxTokens]);
+  }, [token, glassBoxTokens, tenantId]);
 
   const handleFileDrop = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

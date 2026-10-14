@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { WorkingPaper } from '../../types';
+import { useApp } from '../../context/AppContext';
 import { runDocumentReview, DocumentReviewCheckResult } from '../../lib/analytics';
 import { FileText, CheckCircle2, AlertTriangle, ShieldCheck } from '../common/Icons';
 
@@ -8,16 +9,9 @@ interface DocumentReviewTabProps {
 }
 
 export const DocumentReviewTab: React.FC<DocumentReviewTabProps> = ({ workpaper }) => {
-  const [docText, setDocText] = useState(
-    `Section 1. Executive Policy Framework
-Global Liquidity Risk Management Policy mandates that all intraday settlements exceeding $10,000,000 USD be posted to the general ledger within 60 minutes of Fedwire notification.
-
-Section 2. Control Execution
-[TODO: Insert final operational walkthrough narrative from APAC regional branch]
-
-Approved by: Marcus Vance, Head of Assurance
-Date: September 15, 2026`
-  );
+  // Starting text comes from the tenant seed (empty outside the demo tenant).
+  const { documentSample } = useApp();
+  const [docText, setDocText] = useState(documentSample);
 
   const reviewResults = useMemo(() => {
     return runDocumentReview(docText);

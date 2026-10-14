@@ -4,13 +4,13 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { NavStrip } from './NavStrip';
 import { AppProvider } from '../../context/AppContext';
 import { ThemeProvider } from '../../context/ThemeContext';
-import { testUser } from '../../test/testUsers';
+import { testSeed, testUser } from '../../test/testUsers';
 
 describe('Part 4.1 NavStrip Component & Draggable Pill', () => {
   it('renders exactly the 7 canonical tabs, in order, without Reports, Calendar or Workbench', () => {
     render(
       <ThemeProvider>
-        <AppProvider user={testUser()}>
+        <AppProvider user={testUser()} seed={testSeed}>
           <NavStrip />
         </AppProvider>
       </ThemeProvider>
@@ -39,7 +39,7 @@ describe('Part 4.1 NavStrip Component & Draggable Pill', () => {
   it('renders draggable pill container with CSS grid layout and 2px accent underline', () => {
     const { container } = render(
       <ThemeProvider>
-        <AppProvider user={testUser()}>
+        <AppProvider user={testUser()} seed={testSeed}>
           <NavStrip />
         </AppProvider>
       </ThemeProvider>
@@ -59,7 +59,7 @@ describe('Part 4.1 NavStrip Component & Draggable Pill', () => {
   it('switches active tab when a tab button is clicked', () => {
     render(
       <ThemeProvider>
-        <AppProvider user={testUser()}>
+        <AppProvider user={testUser()} seed={testSeed}>
           <NavStrip />
         </AppProvider>
       </ThemeProvider>

@@ -1,19 +1,8 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import {
-  initialCapItems,
-  initialComments,
-  initialControls,
-  initialEngagements,
-  initialEntities,
-  initialGlassBoxTokens,
-  initialIssues,
-  initialObservations,
-  initialUniverses,
-  initialWorkpapers,
-} from '../data/initialData';
+import type { TenantSeed } from '../types/seed';
 import { canPerformAction, canAccessEntity } from '../lib/access';
 import { getSignOffBlockers } from '../lib/auditFile';
-import { appendLedgerEntry, computePayloadHash, generateInitialLedger, HashUnavailableError } from '../lib/ledger';
+import { appendLedgerEntry, computePayloadHash, HashUnavailableError } from '../lib/ledger';
 import { transitionCapStatus, CapStatusAction, TransitionCapResult } from '../lib/cap';
 import { buildDefaultOrgRoleConfig } from '../lib/orgCapabilities';
 
@@ -50,17 +39,6 @@ export interface InspectorState {
   data?: any;
 }
 
-/**
- * Seed data carries [CANARY-*] markers used only by the development-only access leak scanner.
- * They are removed from everything users see unless the dev scanner explicitly asks for them.
- */
-const KEEP_CANARIES =
-  import.meta.env.DEV && typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('canary');
-function cleanSeed<T>(rows: T): T {
-  if (KEEP_CANARIES) return rows;
-  return JSON.parse(JSON.stringify(rows).replace(/\s?\[CANARY-[A-Z]+\]/g, ''));
-}
-
 export type GateResult = { ok: true } | { ok: false; code: string; reason: string };
 export type PopulationSummary = { sha256: string; fileName: string; rowCount: number; totalCents: number };
 
@@ -78,6 +56,12 @@ interface AppContextType {
   currentUser: User;
   /** Set when secure hashing is unavailable. Sealing and ledger writes are refused while it is set. */
   ledgerError: string | null;
+  /** Id of the tenant this session belongs to. */
+  tenantId: string;
+  /** Sample figures for the analytics tab, from the tenant seed. */
+  analyticsSample: TenantSeed['analyticsSample'];
+  /** Starting text for the document review tab, from the tenant seed. */
+  documentSample: string;
 
   // Raw State (internal to context and useScopedData)
   rawUniverses: AuditUniverse[];
@@ -145,29 +129,30 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-export function AppProvider({ user, children }: { user: User; children: React.ReactNode }) {
+export function AppProvider({ user, seed, children }: { user: User; seed: TenantSeed; children: React.ReactNode }) {
   // Identity comes only from the authenticated session (see AuthContext). There is no default user and no in-app switching.
   const currentUser = user;
   const [ledgerError, setLedgerError] = useState<string | null>(null);
 
-  const [rawUniverses, setRawUniverses] = useState<AuditUniverse[]>(cleanSeed(initialUniverses));
-  const [rawEntities, setRawEntities] = useState<AuditEntity[]>(cleanSeed(initialEntities));
-  const [rawEngagements, setRawEngagements] = useState<AuditEngagement[]>(cleanSeed(initialEngagements));
-  const [rawControls, setRawControls] = useState<AuditControl[]>(cleanSeed(initialControls));
-  const [rawWorkpapers, setRawWorkpapers] = useState<WorkingPaper[]>(cleanSeed(initialWorkpapers));
-  const [rawObservations, setRawObservations] = useState<AuditObservation[]>(cleanSeed(initialObservations));
-  const [rawIssues, setRawIssues] = useState<AuditIssue[]>(cleanSeed(initialIssues));
-  const [rawComments, setRawComments] = useState<ReviewComment[]>(cleanSeed(initialComments));
-  const [rawCapItems, setRawCapItems] = useState<AuditCapItem[]>(cleanSeed(initialCapItems));
+  const [rawUniverses, setRawUniverses] = useState<AuditUniverse[]>(seed.universes);
+  const [rawEntities, setRawEntities] = useState<AuditEntity[]>(seed.entities);
+  const [rawEngagements, setRawEngagements] = useState<AuditEngagement[]>(seed.engagements);
+  const [rawControls, setRawControls] = useState<AuditControl[]>(seed.controls);
+  const [rawWorkpapers, setRawWorkpapers] = useState<WorkingPaper[]>(seed.workpapers);
+  const [rawObservations, setRawObservations] = useState<AuditObservation[]>(seed.observations);
+  const [rawIssues, setRawIssues] = useState<AuditIssue[]>(seed.issues);
+  const [rawComments, setRawComments] = useState<ReviewComment[]>(seed.comments);
+  const [rawCapItems, setRawCapItems] = useState<AuditCapItem[]>(seed.capItems);
   const [ledger, setLedger] = useState<LedgerEntry[]>([]);
-  const [glassBoxTokens, setGlassBoxTokens] = useState<GlassBoxToken[]>(initialGlassBoxTokens);
+  const [glassBoxTokens, setGlassBoxTokens] = useState<GlassBoxToken[]>(seed.glassBoxTokens);
 
   useEffect(() => {
     let isMounted = true;
-    generateInitialLedger()
+    seed
+      .buildLedger()
       .then((initial) => {
         if (isMounted) {
-          setLedger(KEEP_CANARIES ? initial : initial.map((e) => ({ ...e, payloadSummary: e.payloadSummary.replace(/\s?\[CANARY-[A-Z]+\]/g, '') })));
+          setLedger(initial);
         }
       })
       .catch((err) => {
@@ -675,6 +660,9 @@ export function AppProvider({ user, children }: { user: User; children: React.Re
       value={{
         currentUser,
         ledgerError,
+        tenantId: seed.tenantId,
+        analyticsSample: seed.analyticsSample,
+        documentSample: seed.documentSample,
         rawUniverses,
         rawEntities,
         rawEngagements,

@@ -11,10 +11,10 @@ Basis of the statuses: the repository is a front-end prototype with **no backend
 | Gate | Result |
 |---|---|
 | `npx tsc --noEmit` | exit 0 |
-| `npx vitest run` | 26 files, 188 tests passed |
+| `npx vitest run` | 26 files, 202 tests passed. (An earlier version of this file said 188; the guard tests in `src/guards/` were then ignored by `.gitignore` (`build/`) and missing from the commit. They live in `src/guards/` now and are tracked.) |
 | `npx vite build` | exit 0 |
 | `node scripts/check-tokens.mjs` | passed (53 files, 0 violations) |
-| `node scripts/check-shrink.mjs` | passed (60 files). HeaderBar and 5 deleted files were re-baselined on purpose, see Phase 0 notes. |
+| `node scripts/check-shrink.mjs` | passed (60 files). HeaderBar, `ledger.ts`, `AnalyticsTab.tsx` and 5 deleted files were re-baselined on purpose, see Phase 0 notes. |
 | `npx playwright test` | **Not run.** No browser can be installed in the build sandbox. The 5 `[E2E]` tests in `e2e/smoke.spec.ts` are written and listed (`playwright test --list`: 7 tests) but unexecuted. |
 
 ## Section status
@@ -22,14 +22,14 @@ Basis of the statuses: the repository is a front-end prototype with **no backend
 | Spec section | Status | Evidence / notes |
 |---|---|---|
 | 0 Product Summary | Partial | Front-end prototype only. |
-| 1 Laws | Partial | L1: engines are plain functions (`src/lib/auditEngines.ts`, `src/lib/population.ts`) with tests; no Math.random in production paths (`src/build/sourceGuards.test.ts`). L2: **Missing**, no tenant boundary exists. L3: client-side gate only (`src/lib/population.ts`, `src/context/populationGate.test.tsx`); **not enforced in a database**. L4: not audited. L5: hash chain exists in memory only (`src/lib/ledger.ts`, `src/lib/ledger.test.ts`); now refuses to seal without crypto.subtle (`src/lib/ledger.nohash.test.ts`). Nothing is persisted. |
+| 1 Laws | Partial | L1: engines are plain functions (`src/lib/auditEngines.ts`, `src/lib/population.ts`) with tests; no Math.random in production paths (`src/guards/sourceGuards.test.ts`). L2: **Missing**, no tenant boundary exists. L3: client-side gate only (`src/lib/population.ts`, `src/context/populationGate.test.tsx`); **not enforced in a database**. L4: not audited. L5: hash chain exists in memory only (`src/lib/ledger.ts`, `src/lib/ledger.test.ts`); now refuses to seal without crypto.subtle (`src/lib/ledger.nohash.test.ts`). Nothing is persisted. |
 | 2 Structure and Tenancy | Missing | No tenants; one demo tenant constant in `src/lib/tempAuth.ts` (`is_demo: true`). |
 | 3 Hosting and Client Access | Missing | No hosting model or client access layer. |
 | 4.1 Roles | Partial | Role model in `src/lib/access.ts`, `src/lib/access.test.ts`. |
 | 4.2 Audit Teams | Partial | Not audited in Phase 0. |
 | 4.3 Visibility and enforcement | Partial | Client-side scoping (`src/hooks/useScopedData.ts`). No RLS, no server enforcement. |
 | 4.4 Fixed invariants | Partial | Four-eyes and lock rules in `src/lib/access.ts`, `src/lib/workpaperLock.ts` (`workpaperLock.test.ts`). Client-side only. |
-| 4.5 Identity | Partial | Persona switcher, "Simulate Viewpoint" and the default CIA identity are **removed** (`src/App.auth.test.tsx`, `src/build/sourceGuards.test.ts`). Identity now comes only from a session (`src/context/AuthContext.tsx`). Real authentication is **Missing**: only the development-only TEMP_AUTH stub (`src/lib/tempAuth.ts`, `tempAuth.test.ts`) exists, and a production build cannot sign in. `src/components/dev/DevAccessPage.tsx` is still a role-switching harness, dev-only. |
+| 4.5 Identity | Partial | Persona switcher, "Simulate Viewpoint" and the default CIA identity are **removed** (`src/App.auth.test.tsx`, `src/guards/sourceGuards.test.ts`). Identity now comes only from a session (`src/context/AuthContext.tsx`). Real authentication is **Missing**: only the development-only TEMP_AUTH stub (`src/lib/tempAuth.ts`, `tempAuth.test.ts`) exists, and a production build cannot sign in. `src/components/dev/DevAccessPage.tsx` is still a role-switching harness, dev-only. |
 | 5 Navigation and Home | Partial | Seven tabs, no Reports or Calendar tab (`src/components/common/NavStrip.test.tsx`, `src/App.auth.test.tsx`). Home content not audited. |
 | 6 Universes and Entities | Partial | `src/components/universe/AuditUniverseTab.tsx`. Hardcoded seed data. |
 | 7 Deployment Gate | Missing | Not found. |
@@ -59,8 +59,8 @@ Basis of the statuses: the repository is a front-end prototype with **no backend
 | 27.3 Iconography | Partial | `src/components/common/Icons.tsx`; `sourceGuards.test.ts` forbids lucide-react. |
 | 27.4 Motion | Partial | Not audited (reduced-motion, easing). |
 | 27.5 Interaction | Partial | Native alert/prompt/confirm removed and guarded (`sourceGuards.test.ts`). `AccountSettingsModal.tsx` and `PaperWorkbenchModal.tsx` were **not audited** for blocking behaviour. |
-| 28 Out of Scope and Discarded | Partial | Removed and guarded by tests: persona login, Simulate Viewpoint, Reports tab, Red Thread, scrub bar, native dialogs, Math.random. Not removed or not audited: `src/components/dashboard/GanttTimeWarp.tsx` (may be scrub-like), `src/data/initialData.ts` seed data is still bundled in production. |
-| 29 Build and Verification | Partial | Gates 1-5 pass; gate 6 not run (see above). Production bundle test: `src/build/prodBundle.test.ts`. |
+| 28 Out of Scope and Discarded | Partial | Removed and guarded by tests: persona login, Simulate Viewpoint, Reports tab, Red Thread, scrub bar, native dialogs, Math.random. Not removed or not audited: `src/components/dashboard/GanttTimeWarp.tsx` (may be scrub-like), tenant seed data is no longer in the production bundle (see Phase 0 notes). A department-name colour map and hardcoded sample text/figures in components were moved out or removed. |
+| 29 Build and Verification | Partial | Gates 1-5 pass; gate 6 not run (see above). Production bundle test: `src/guards/prodBundle.test.ts`. |
 | 30 Changes from v9 | n/a | Informational. |
 | 31 Open Items | n/a | Informational. |
 
@@ -68,4 +68,8 @@ Basis of the statuses: the repository is a front-end prototype with **no backend
 
 - Removed: persona switcher, personnel panel, Reports tab, executive pack, Red Thread, ledger scrub bar, all native `alert()` and `prompt()` calls.
 - `docs/baseline-lines.json`: five deleted files removed from the baseline; `HeaderBar.tsx` re-baselined from 328 to 271 lines. The lost lines are the removed persona switcher, Admin Console entry, personnel link and dev link.
-- Dev routes `/dev/access` and `/dev/palette` exist only when `import.meta.env.DEV` is true. The production bundle contains neither (`src/build/prodBundle.test.ts`).
+- Tenant seed data: all demo data now lives behind a `TenantSeed` passed to `AppProvider` (`src/types/seed.ts`). The only assembler is `src/data/demoSeed.ts`, reached by a development-only dynamic import in `src/App.tsx`. Production bundle contains none of it: `src/guards/prodBundle.test.ts` greps `dist` for demo names, emails, account names, `CANARY` and the old tenant id. Moved into the seed: sample ledger events (out of `ledger.ts`), sample GL/variance/trial-balance rows (out of `AnalyticsTab.tsx`) and the sample policy text (out of `DocumentReviewTab.tsx`). `GlassBoxShareModal` placeholder text was removed.
+- Tenant id: the hardcoded `'provio-corp-tenant'` is gone. The tenant id comes from the session's seed (`useApp().tenantId`). The public `/e/:token` route now mounts an **empty** seed, so anonymous visitors have no engagements, entities or workpapers in memory and no token can validate. The public upload flow therefore cannot work until a backend validates tokens.
+- `docs/baseline-lines.json`: `ledger.ts` 248 -> 215 and `AnalyticsTab.tsx` 196 -> 168. The lost lines are the demo data moved to `demoSeed.ts`, not behaviour.
+- `CapRadialTracker.tsx`: colours were keyed by department names (`Treasury`, `Trading`, ...). They are now assigned by position, so chart colours for departments may differ from before. Not screenshot-checked.
+- Dev routes `/dev/access` and `/dev/palette` exist only when `import.meta.env.DEV` is true. The production bundle contains neither (`src/guards/prodBundle.test.ts`).

@@ -3,12 +3,12 @@ import { describe, expect, it } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { AppProvider, useApp } from './AppContext';
 import { ThemeProvider } from './ThemeContext';
-import { testUser } from '../test/testUsers';
+import { testSeed, testUser } from '../test/testUsers';
 import type { Role } from '../types';
 
 const wrapperFor = (role: Role) => ({ children }: { children: React.ReactNode }) => (
   <ThemeProvider>
-    <AppProvider user={testUser(role)}>{children}</AppProvider>
+    <AppProvider user={testUser(role)} seed={testSeed}>{children}</AppProvider>
   </ThemeProvider>
 );
 const SUMMARY = { sha256: 'a'.repeat(64), fileName: 'pop.csv', rowCount: 10, totalCents: 1000 };

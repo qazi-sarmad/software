@@ -5,7 +5,7 @@ import { AuditFileModal } from './AuditFileModal';
 import { AppProvider, useApp } from '../../context/AppContext';
 import { ThemeProvider } from '../../context/ThemeContext';
 import { initialEngagements, initialWorkpapers } from '../../data/initialData';
-import { testUser } from '../../test/testUsers';
+import { testSeed, testUser } from '../../test/testUsers';
 import type { Role } from '../../types';
 
 const engagement = initialEngagements.find((e) => initialWorkpapers.some((w) => w.engagementId === e.id))!;
@@ -23,7 +23,7 @@ const Boot: React.FC<{ data: any; children: React.ReactNode }> = ({ data, childr
 const renderAs = (role: string, data: any = { engagement }) =>
   render(
     <ThemeProvider>
-      <AppProvider user={testUser(role as Role)}>
+      <AppProvider user={testUser(role as Role)} seed={testSeed}>
         <Boot data={data}>
           <AuditFileModal />
         </Boot>
