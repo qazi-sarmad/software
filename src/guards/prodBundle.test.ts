@@ -10,6 +10,8 @@ import { join, resolve } from 'node:path';
  */
 const FORBIDDEN = [
   'Simulate Viewpoint',
+  'Viewpoint',
+  'viewpoint',
   '/dev/access',
   '/dev/palette',
   'TEMP_AUTH',

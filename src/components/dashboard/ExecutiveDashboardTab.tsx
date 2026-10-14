@@ -72,7 +72,7 @@ export const ExecutiveDashboardTab: React.FC = () => {
             title: `${stats.totalEntities} Scoped Audit Entities`,
             category: 'Audit Universe Coverage',
             subtitle: `${stats.highRiskEntities} Rated High Inherent Risk`,
-            status: 'Scoped Viewpoint',
+            status: 'Scoped view',
             statusType: 'neutral',
             hint: 'Click to open Universe & SIRA',
           }}

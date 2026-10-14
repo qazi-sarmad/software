@@ -246,7 +246,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ onOpenCommandPalette }) =>
                     </button>
                   </div>
 
-                  {/* Sign out ends the session. There is no account or viewpoint switching. */}
+                  {/* Sign out ends the session. There is no account or role switching. */}
                   <div className="pt-1 border-t border-hairline">
                     <button
                       onClick={() => {

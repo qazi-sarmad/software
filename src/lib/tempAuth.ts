@@ -8,7 +8,7 @@
  * Rules:
  *  - Development builds only. Nothing may import this module except behind an `import.meta.env.DEV` branch.
  *  - A production build must not contain it. This module throws at load time if it is ever evaluated
- *    when import.meta.env.PROD is true, and src/build/prodBundle.test.ts fails if "TEMP_AUTH" is found in dist.
+ *    when import.meta.env.PROD is true, and src/guards/prodBundle.test.ts fails if "TEMP_AUTH" is found in dist.
  *  - An email that is not listed gets no access and no default role.
  */
 import { initialUsers } from '../data/initialData';

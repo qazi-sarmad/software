@@ -279,7 +279,7 @@ const AppRoutes: React.FC = () => {
     );
   }
 
-  // Development-only tooling routes. Absent from production builds (see src/build/prodBundle.test.ts).
+  // Development-only tooling routes. Absent from production builds (see src/guards/prodBundle.test.ts).
   if (import.meta.env.DEV && DevAccessPage && currentPath === '/dev/access') {
     return (
       <Suspense fallback={<LoadingFallback />}>

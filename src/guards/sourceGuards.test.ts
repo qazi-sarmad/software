@@ -33,6 +33,10 @@ describe('source guards for production paths', () => {
     expect(offenders(/simulate viewpoint|persona|impersonat/i)).toEqual([]);
   });
 
+  it('never uses the word "viewpoint" anywhere in production paths', () => {
+    expect(offenders(/viewpoint/i)).toEqual([]);
+  });
+
   it('has no Math.random', () => {
     expect(offenders(/Math\.random/)).toEqual([]);
   });
