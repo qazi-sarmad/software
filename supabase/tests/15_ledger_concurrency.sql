@@ -12,7 +12,9 @@ select provio_test.seed();
 \endif
 
 -- psql variables are not substituted inside a dollar-quoted body, so pass the URL through a GUC.
-select set_config('provio_test.db_url', :'db_url', false);
+-- Strip whitespace first: a secret set with a trailing newline would otherwise be read as a database
+-- name with a newline in it (libpq then reports database "postgres\n" does not exist).
+select set_config('provio_test.db_url', regexp_replace(:'db_url', '[[:space:]]', '', 'g'), false);
 
 do $$
 declare
