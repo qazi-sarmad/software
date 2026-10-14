@@ -123,3 +123,59 @@ Dist scan after `vite build` (all must be 0): `Simulate Viewpoint` 0, `Viewpoint
 - Items 2, 4 and 6 of the Phase 0 task list were already complete at `6e73c7c` and were re-verified, not re-done.
 - No Phase 1 work started: no database, no login, no backend. The `/e/:token` public route still cannot validate tokens without a backend.
 
+
+## Phase 1 — Supabase backend
+
+Status: SQL layer complete and pre-validated. The application still has no live login and reads no
+database (no data module yet); that is the next Phase 1 slice.
+
+### What exists
+
+- `supabase/migrations/0001`–`0010`: schema, invariants, functions, RLS, JWT pinning and the
+  access-token hook. Idempotent (re-application is clean).
+- `supabase/tests/00`–`17`: 18 SQL test files. `00_lib.sql` seeds two orgs and switches identity
+  through `set role` + `request.jwt.claims`.
+- `supabase/README.md`: migration table, hook wiring and the decisions taken where the spec is silent.
+
+### Real SQL counts (run by hand on this head, local Postgres 17)
+
+| Step | Result |
+|---|---|
+| apply `0001`–`0010` to a fresh database | exit 0, 0 errors |
+| apply `0001`–`0010` a second time (idempotency) | exit 0, 0 errors |
+| `00`–`17` on the fresh database | **18/18 files pass, 204 assertions** |
+| `00`–`17` on a second consecutive run | **18/18 files pass** |
+
+### Spec rows now backed by a database test
+
+| Spec | Test | What it proves |
+|---|---|---|
+| §4.4 four-eyes | `11` | a sign-off with preparer = reviewer is refused by a CHECK constraint |
+| §4.4 sealed = read-only | `12` | every child of a sealed engagement rejects UPDATE/DELETE |
+| §4.4 append-only ledger | `08` | no app role holds UPDATE/DELETE, and the trigger refuses the owner |
+| §4.4, §10.4 reopen | `14` | requires the `can_reopen` right and a ≥10-char justification; writes activity + ledger |
+| §4.5 no default role | `16` | a user with no membership gets no `org_id` claim and no `user_role` |
+| §11.1 population gate | `06`, `07` | a sample or sample row without a verified matching population is refused |
+| §24, §25.2 platform blind | `03` | the platform role reads 0 rows from every tenant business table |
+| §25.1 no `USING (true)` | `13` | RLS on all 33 tables; no policy expression is literally `true` |
+| §25.2 org from JWT only | `05`, `16` | header/body org is ignored; a forged claim is stripped by the hook |
+| §25.2 tenant isolation | `01`, `02` | cross-org across tables is 0; a write into another org is refused |
+| §26 hash chain | `09`, `10`, `15` | genesis, exact hashes, tamper detection, 20 parallel appends stay contiguous |
+
+### Phase 1 decisions (where the spec is silent)
+
+- **`org_id` is the org claim**, set only by `public.custom_access_token_hook`. No policy reads an org
+  from a header or body; `org_id_from_header` always returns null and exists to prove it.
+- **Platform staff are not tenant members.** `platform_admins` holds a user id and no `org_id`; the
+  hook stamps `user_role = 'platform_admin'` with no org.
+- **Roles carry a `slug`** (machine name) beside the display `name`; the slug goes in the JWT and in
+  policies, so a rename cannot break enforcement.
+- **`supabase/config.toml` sets `major_version = 17`** to match local validation.
+
+### NOT DONE (Phase 1)
+
+- No application login: nothing calls Supabase Auth yet, and the front end reads no database
+  (no data module). TEMP_AUTH remains the development-only path.
+- Not run against a real Supabase project from this machine — the CI step 6 does that. Local
+  validation used Postgres 17 with an `auth` schema shim.
+
