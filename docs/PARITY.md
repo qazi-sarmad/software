@@ -143,9 +143,9 @@ database (no data module yet); that is the next Phase 1 slice.
 |---|---|
 | apply `0001`–`0010` to a fresh database | exit 0, 0 errors |
 | apply `0001`–`0010` a second time (idempotency) | exit 0, 0 errors |
-| `00`–`17` on the fresh database | **18/18 files pass, 204 assertions** |
+| `00`–`17` on the fresh database | **18/18 files pass, 205 assertions** |
 | `00`–`17` on a second consecutive run | **18/18 files pass** |
-| `00`–`17` on the real **provio-test** Supabase project (CI step 6, run 38549040141) | **18/18 files pass, 204 assertions, 0 errors** |
+| `00`–`17` on the real **provio-test** Supabase project (CI step 6, run 38551957604) | **18/18 files pass, 205 assertions, 0 errors; test 15 reports 50 concurrent appends** |
 
 ### Spec rows now backed by a database test
 
@@ -161,7 +161,7 @@ database (no data module yet); that is the next Phase 1 slice.
 | §25.1 no `USING (true)` | `13` | RLS on all 33 tables; no policy expression is literally `true` |
 | §25.2 org from JWT only | `05`, `16` | header/body org is ignored; a forged claim is stripped by the hook |
 | §25.2 tenant isolation | `01`, `02` | cross-org across tables is 0; a write into another org is refused |
-| §26 hash chain | `09`, `10`, `15` | genesis, exact hashes, tamper detection, 10 parallel appends stay contiguous |
+| §26 hash chain | `09`, `10`, `15` | genesis, exact hashes, tamper detection, **50** concurrent appends stay contiguous and every `prev_hash` links to the preceding row |
 
 ### Phase 1 decisions (where the spec is silent)
 
@@ -178,8 +178,11 @@ database (no data module yet); that is the next Phase 1 slice.
 - No application login: nothing calls Supabase Auth yet, and the front end reads no database
   (no data module). TEMP_AUTH remains the development-only path.
 - The SQL layer now runs green against the real **provio-test** Supabase project (CI step 6,
-  run 38549040141). Local validation used Postgres 17 with an `auth` schema shim; the real-project
+  run 38551957604). Local validation used Postgres 17 with an `auth` schema shim; the real-project
   run is the CI step, not a hand-run from this machine.
-- `TEST_SUPABASE_DB_URL` still carries a trailing newline; CI step 6 strips whitespace from it and
-  test 15 does the same for the `dblink` URL. The secret should be re-set without the newline.
+- `TEST_SUPABASE_DB_URL` still carries a trailing newline. CI run 38551590080 proved it by failing
+  test 15 with `FATAL: database "postgres\n" does not exist`. CI step 6 and test 15 strip whitespace
+  until the secret is re-set without the newline, after which both strips can be removed.
+- The 50 concurrent appends (§26) are batched over 10 dblink connections (one multi-row INSERT each)
+  because Supabase's session pooler caps concurrent clients at 15. The assertion covers all 50 rows.
 
