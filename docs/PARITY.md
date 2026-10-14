@@ -145,6 +145,7 @@ database (no data module yet); that is the next Phase 1 slice.
 | apply `0001`–`0010` a second time (idempotency) | exit 0, 0 errors |
 | `00`–`17` on the fresh database | **18/18 files pass, 204 assertions** |
 | `00`–`17` on a second consecutive run | **18/18 files pass** |
+| `00`–`17` on the real **provio-test** Supabase project (CI step 6, run 38549040141) | **18/18 files pass, 204 assertions, 0 errors** |
 
 ### Spec rows now backed by a database test
 
@@ -160,7 +161,7 @@ database (no data module yet); that is the next Phase 1 slice.
 | §25.1 no `USING (true)` | `13` | RLS on all 33 tables; no policy expression is literally `true` |
 | §25.2 org from JWT only | `05`, `16` | header/body org is ignored; a forged claim is stripped by the hook |
 | §25.2 tenant isolation | `01`, `02` | cross-org across tables is 0; a write into another org is refused |
-| §26 hash chain | `09`, `10`, `15` | genesis, exact hashes, tamper detection, 20 parallel appends stay contiguous |
+| §26 hash chain | `09`, `10`, `15` | genesis, exact hashes, tamper detection, 10 parallel appends stay contiguous |
 
 ### Phase 1 decisions (where the spec is silent)
 
@@ -176,6 +177,9 @@ database (no data module yet); that is the next Phase 1 slice.
 
 - No application login: nothing calls Supabase Auth yet, and the front end reads no database
   (no data module). TEMP_AUTH remains the development-only path.
-- Not run against a real Supabase project from this machine — the CI step 6 does that. Local
-  validation used Postgres 17 with an `auth` schema shim.
+- The SQL layer now runs green against the real **provio-test** Supabase project (CI step 6,
+  run 38549040141). Local validation used Postgres 17 with an `auth` schema shim; the real-project
+  run is the CI step, not a hand-run from this machine.
+- `TEST_SUPABASE_DB_URL` still carries a trailing newline; CI step 6 strips whitespace from it and
+  test 15 does the same for the `dblink` URL. The secret should be re-set without the newline.
 
