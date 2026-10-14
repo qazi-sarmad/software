@@ -18,7 +18,10 @@ select provio_test.seed();
 \endif
 
 -- psql variables are not substituted inside a dollar-quoted body, so pass the URL through a GUC.
-select set_config('provio_test.db_url', :'db_url', false);
+-- Strip whitespace first: TEST_SUPABASE_DB_URL still carries a trailing newline (the secret has not
+-- been re-set yet), and libpq reads it as a database name ending in a newline (database "postgres\n").
+-- Remove this once the secret is set without the newline.
+select set_config('provio_test.db_url', regexp_replace(:'db_url', '[[:space:]]', '', 'g'), false);
 
 do $$
 declare
