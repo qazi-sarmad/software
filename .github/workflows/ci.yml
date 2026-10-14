@@ -45,11 +45,15 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y postgresql-client
+          # Strip whitespace/newlines a secret may carry (a trailing newline makes libpq read a
+          # wrong database name). Never echo the URL. Fail loudly if the secret is empty.
+          DB_URL="$(printf '%s' "$TEST_SUPABASE_DB_URL" | tr -d '[:space:]')"
+          if [ -z "$DB_URL" ]; then echo "::error::TEST_SUPABASE_DB_URL is empty"; exit 1; fi
           for f in supabase/migrations/*.sql; do
-            psql "$TEST_SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f "$f"
+            psql "$DB_URL" -v ON_ERROR_STOP=1 -f "$f"
           done
           for f in supabase/tests/*.sql; do
-            psql "$TEST_SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f "$f"
+            psql "$DB_URL" -v ON_ERROR_STOP=1 -f "$f"
           done
 
       - name: 7. Playwright
