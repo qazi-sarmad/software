@@ -45,6 +45,15 @@ declare
   i int;
   cname text;
 begin
+  -- A pooled backend session may be reused (Supavisor session mode) and dblink connection names
+  -- survive DISCARD ALL, so clear any stale names before connecting.
+  for i in 1..n loop
+    cname := 'provio_conc_' || i;
+    begin
+      perform dblink_disconnect(cname);
+    exception when others then null;
+    end;
+  end loop;
   for i in 1..n loop
     cname := 'provio_conc_' || i;
     perform dblink_connect(cname, conn);
