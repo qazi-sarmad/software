@@ -90,6 +90,12 @@ These cannot be configured away:
 - A user without a provisioned role gets no access. There is no default role.
 - No persona simulation or persona switching exists anywhere in the product.
 
+### 4.6 Identity and test data decisions (owner, 2026-10-14)
+- Sign-in is real in production from Phase 1. The browser bundle contains only the Supabase project URL and the publishable key. The secret key is never in src/ or dist/.
+- After sign-in, the user's organisation, role, universe scopes and entity scopes are read through the data module from org_members and user_scopes, under row-level security. user_metadata is never used for authorisation.
+- Test data in provio-test is synthetic only, created by the end-to-end setup. It holds two test organisations, both flagged is_demo=true: one with a single universe, and one with two universes. It never holds client data.
+- One login belongs to one organisation. Users do not switch between organisations.
+
 ---
 
 ## 5. Navigation and Home
