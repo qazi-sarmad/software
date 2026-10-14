@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 
 const SEVEN_TABS = [
   'Executive Summary',
@@ -10,12 +10,45 @@ const SEVEN_TABS = [
   'Issues Register',
 ];
 
-test.describe('Provio smoke', () => {
-  test('nav shows exactly the 7 tabs in order, with no Reports or Calendar tab', async ({ page }) => {
-    await page.goto('/');
-    const nav = page.getByRole('navigation', { name: 'Navigation Strip' });
-    await expect(nav).toBeVisible();
+// TEMP_AUTH: a demo-tenant account. Used only while the development sign-in stub exists.
+const DEMO_EMAIL = 'a.wright@provio.internal';
 
+async function signIn(page: Page, email = DEMO_EMAIL) {
+  await page.goto('/');
+  await page.getByLabel('Email').fill(email);
+  await page.getByRole('button', { name: 'Sign in' }).click();
+  await expect(page.getByRole('navigation', { name: 'Navigation Strip' })).toBeVisible();
+}
+
+test.describe('Phase 0: honest prototype', () => {
+  test('[E2E] with no session the sign-in screen shows and no application data does', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.getByTestId('signin-screen')).toBeVisible();
+    await expect(page.locator('header')).toHaveCount(0);
+    await expect(page.locator('main')).toHaveCount(0);
+    await expect(page.getByRole('navigation', { name: 'Navigation Strip' })).toHaveCount(0);
+  });
+
+  test('[E2E] an account outside the demo tenant is refused and gets no default role', async ({ page }) => {
+    await page.goto('/');
+    await page.getByLabel('Email').fill('nobody@example.com');
+    await page.getByRole('button', { name: 'Sign in' }).click();
+    await expect(page.getByTestId('signin-error')).toContainText('not provisioned');
+    await expect(page.getByRole('navigation', { name: 'Navigation Strip' })).toHaveCount(0);
+  });
+
+  test('[E2E] there is no persona switcher in the header', async ({ page }) => {
+    await signIn(page);
+    await page.getByLabel('Open user profile menu').click();
+    await expect(page.getByText('Sign out')).toBeVisible();
+    await expect(page.getByText('Simulate Viewpoint')).toHaveCount(0);
+    await expect(page.getByText('Team & permissions')).toHaveCount(0);
+    await expect(page.getByText('/dev/access')).toHaveCount(0);
+  });
+
+  test('[E2E] nav shows exactly the 7 tabs in order, with no Reports or Calendar tab', async ({ page }) => {
+    await signIn(page);
+    const nav = page.getByRole('navigation', { name: 'Navigation Strip' });
     const titles = await nav.getByRole('button').evaluateAll((els) =>
       els.map((el) => el.getAttribute('title'))
     );
@@ -24,11 +57,19 @@ test.describe('Provio smoke', () => {
     await expect(nav.getByText('Calendar')).toHaveCount(0);
   });
 
-  test('app shell loads and the new tabs render without crashing', async ({ page }) => {
+  test('[E2E] sign out returns to the sign-in screen', async ({ page }) => {
+    await signIn(page);
+    await page.getByLabel('Open user profile menu').click();
+    await page.getByText('Sign out').click();
+    await expect(page.getByTestId('signin-screen')).toBeVisible();
+    await expect(page.locator('main')).toHaveCount(0);
+  });
+
+  test('app shell loads and the tabs render without crashing', async ({ page }) => {
     const errors: string[] = [];
     page.on('pageerror', (e) => errors.push(e.message));
 
-    await page.goto('/');
+    await signIn(page);
     await expect(page.locator('header')).toBeVisible();
     await expect(page.locator('main')).toBeVisible();
 
@@ -45,7 +86,7 @@ test.describe('Provio smoke', () => {
     expect(errors).toEqual([]);
   });
 
-  test('/dev/palette shows all 3 presets in light and dark', async ({ page }) => {
+  test('/dev/palette (development only) shows all 3 presets in light and dark', async ({ page }) => {
     await page.goto('/dev/palette');
     for (const preset of ['ledger', 'porcelain', 'bone']) {
       for (const mode of ['light', 'dark']) {

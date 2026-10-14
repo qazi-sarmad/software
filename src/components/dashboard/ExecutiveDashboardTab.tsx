@@ -5,7 +5,6 @@ import { useApp } from '../../context/AppContext';
 import { CapRadialTracker } from './CapRadialTracker';
 import { CapTable } from './CapTable';
 import { EngagementGantt } from './EngagementGantt';
-import { LedgerScrubBar } from './LedgerScrubBar';
 import { HoverPreview } from '../common/HoverPreview';
 import {
   Folder,
@@ -64,9 +63,6 @@ export const ExecutiveDashboardTab: React.FC = () => {
           </div>
         )}
       </div>
-
-      {/* 4D Ledger Scrub Bar (Task 6 Differentiator & Task 1) */}
-      <LedgerScrubBar />
 
       {/* Metric Cards Row with Apple-tier Serif Numerals */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

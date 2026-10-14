@@ -2,15 +2,18 @@ import React from 'react';
 import { AuditEngagement } from '../../../types';
 import { GateSummary, SignOffState } from '../../../lib/auditFile';
 import { CheckCircle2, FileText, ShieldCheck } from '../../common/Icons';
+import { InlineError } from '../../common/InlineError';
 
 interface ReviewTabProps {
   engagement: AuditEngagement;
   gate: GateSummary;
   signOff: SignOffState;
   onSignOff: () => void;
+  /** Result of the last failed sign-off attempt, shown in place. */
+  error?: string | null;
 }
 
-export const ReviewTab: React.FC<ReviewTabProps> = ({ engagement, gate, signOff, onSignOff }) => (
+export const ReviewTab: React.FC<ReviewTabProps> = ({ engagement, gate, signOff, onSignOff, error }) => (
   <div className="space-y-6" data-testid="audit-file-review">
     <div className="p-5 rounded-2xl bg-surface-elevated border border-hairline space-y-2">
       <div className="text-apple-11 font-semibold text-secondary uppercase tracking-wider">Seal gate</div>
@@ -51,6 +54,7 @@ export const ReviewTab: React.FC<ReviewTabProps> = ({ engagement, gate, signOff,
           {!signOff.enabled && signOff.reason && (
             <div className="text-apple-11 text-secondary" data-testid="signoff-reason">{signOff.reason}</div>
           )}
+          <InlineError message={error} testId="signoff-error" />
         </>
       )}
     </div>

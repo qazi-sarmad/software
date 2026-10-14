@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useAuth } from '../../context/AuthContext';
 import { useScopedData } from '../../hooks/useScopedData';
 import { Select } from './Select';
 import { HeaderCalendarPanel } from '../calendar/HeaderCalendarPanel';
@@ -11,8 +12,6 @@ import {
   Moon,
   Laptop,
   Settings,
-  Users,
-  ShieldAlert,
   LogOut,
   ChevronDown,
   Building,
@@ -26,8 +25,6 @@ interface HeaderBarProps {
 export const HeaderBar: React.FC<HeaderBarProps> = ({ onOpenCommandPalette }) => {
   const {
     currentUser,
-    setCurrentUser,
-    availableUsers,
     activeTab,
     setActiveTab,
     selectedUniverseId,
@@ -36,6 +33,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ onOpenCommandPalette }) =>
     setSelectedEngagementId,
   } = useApp();
   const { theme, setTheme } = useTheme();
+  const { signOut } = useAuth();
   const { scopedUniverses, hasMultipleUniverses } = useScopedData();
 
   // Floating header calendar panel state
@@ -74,7 +72,6 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ onOpenCommandPalette }) =>
     };
   }, [isProfileOpen]);
 
-  const canAccessAdmin = currentUser.role === 'org_admin' || currentUser.role === 'cia';
 
   return (
     <header className="sticky top-0 z-40 w-full h-14 bg-glass border-b border-hairline shadow-apple select-none">
@@ -247,76 +244,14 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ onOpenCommandPalette }) =>
                       <Settings className="w-4 h-4 text-secondary stroke-[1.5]" />
                       <span>Account settings</span>
                     </button>
-                    <button
-                      onClick={() => {
-                        openInspector('people');
-                        setIsProfileOpen(false);
-                      }}
-                      className="w-full text-left px-3 py-2 rounded-xl text-primary hover:bg-surface-hover transition-colors flex items-center gap-2.5"
-                    >
-                      <Users className="w-4 h-4 text-secondary stroke-[1.5]" />
-                      <span>Team & permissions</span>
-                    </button>
-
-                    {/* Admin item: LIVES ONLY in profile menu, gated by role per § 3.1 */}
-                    {canAccessAdmin && (
-                      <button
-                        onClick={() => {
-                          openInspector('people');
-                          setIsProfileOpen(false);
-                        }}
-                        className="w-full text-left px-3 py-2 rounded-xl text-primary hover:bg-surface-hover transition-colors flex items-center justify-between"
-                      >
-                        <div className="flex items-center gap-2.5">
-                          <ShieldAlert className="w-4 h-4 text-accent stroke-[1.5]" />
-                          <span>Admin Console</span>
-                        </div>
-                        <span className="text-apple-11 font-medium text-accent bg-accent-subtle px-1.5 py-0.5 rounded">
-                          Gated
-                        </span>
-                      </button>
-                    )}
-                    <a
-                      href="/dev/access"
-                      onClick={() => setIsProfileOpen(false)}
-                      className="w-full text-left px-3 py-2 rounded-xl text-primary hover:bg-surface-hover transition-colors flex items-center justify-between"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <Settings className="w-4 h-4 text-secondary stroke-[1.5]" />
-                        <span>/dev/access RBAC Matrix</span>
-                      </div>
-                      <span className="text-apple-11 font-medium text-secondary bg-surface-sunken px-1.5 py-0.5 rounded">
-                        Dev
-                      </span>
-                    </a>
                   </div>
 
-                  {/* Switch viewpoint / sign out */}
+                  {/* Sign out ends the session. There is no account or viewpoint switching. */}
                   <div className="pt-1 border-t border-hairline">
-                    <div className="px-3 py-1 text-apple-11 text-tertiary uppercase font-medium">
-                      Simulate Viewpoint
-                    </div>
-                    {availableUsers.map((u) => (
-                      <button
-                        key={u.id}
-                        onClick={() => {
-                          setCurrentUser(u);
-                          setIsProfileOpen(false);
-                        }}
-                        className={`w-full text-left px-3 py-1.5 rounded-lg text-apple-11 transition-colors flex items-center justify-between ${
-                          u.id === currentUser.id
-                            ? 'bg-accent-subtle text-accent font-semibold'
-                            : 'text-secondary hover:text-primary hover:bg-surface-hover'
-                        }`}
-                      >
-                        <span>{u.name} ({u.role})</span>
-                        {u.id === currentUser.id && <span>✓</span>}
-                      </button>
-                    ))}
                     <button
                       onClick={() => {
                         setIsProfileOpen(false);
-                        setCurrentUser(availableUsers[0]);
+                        signOut();
                       }}
                       className="w-full text-left px-3 py-2 mt-1 rounded-xl text-cinnabar hover:bg-cinnabar-subtle transition-colors flex items-center gap-2.5"
                     >

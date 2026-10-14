@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { WorkingPaper, AuditEngagement } from '../../types';
 import { useApp } from '../../context/AppContext';
 import { useScopedData } from '../../hooks/useScopedData';
 import { ShieldCheck, Lock, Unlock, Share2, CheckCircle2, RotateCcw, AlertCircle } from '../common/Icons';
+import { InlineError } from '../common/InlineError';
 
 interface WorkbenchHeaderProps {
   workpaper: WorkingPaper;
@@ -13,17 +14,29 @@ export const WorkbenchHeader: React.FC<WorkbenchHeaderProps> = ({ workpaper, eng
   const { signOffWorkpaper, reopenWorkpaper, openInspector, currentUser } = useApp();
   const { can } = useScopedData();
 
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [isReopening, setIsReopening] = useState(false);
+  const [reopenNote, setReopenNote] = useState('');
+
   const handleSignOff = async () => {
-    await signOffWorkpaper(workpaper.id);
+    setActionError(null);
+    const result = await signOffWorkpaper(workpaper.id);
+    if (!result.ok) setActionError(result.reason);
   };
 
-  const handleReopen = async () => {
-    const reason = prompt('Enter mandatory reopening justification (minimum 10 characters):');
-    if (!reason || reason.trim().length < 10) {
-      alert('Reopen requires at least 10 characters justification.');
+  const handleReopenSubmit = async () => {
+    setActionError(null);
+    if (reopenNote.trim().length < 10) {
+      setActionError('Reopen requires a justification of at least 10 characters.');
       return;
     }
-    await reopenWorkpaper(workpaper.id, reason);
+    const result = await reopenWorkpaper(workpaper.id, reopenNote);
+    if (!result.ok) {
+      setActionError(result.reason);
+      return;
+    }
+    setIsReopening(false);
+    setReopenNote('');
   };
 
   return (
@@ -66,10 +79,40 @@ export const WorkbenchHeader: React.FC<WorkbenchHeaderProps> = ({ workpaper, eng
           <span>GlassBox Link</span>
         </button>
 
-        {workpaper.sealed ? (
+        {workpaper.sealed && isReopening ? (
+          <div className="flex flex-col gap-2 p-3 bg-surface-elevated border border-hairline rounded-xl w-72">
+            <textarea
+              value={reopenNote}
+              onChange={(e) => setReopenNote(e.target.value)}
+              placeholder="Reopening justification (min 10 chars)..."
+              aria-label="Reopening justification"
+              className="w-full text-apple-12 p-2 bg-surface border border-hairline rounded-lg text-primary outline-none"
+              rows={2}
+            />
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsReopening(false);
+                  setActionError(null);
+                }}
+                className="px-2.5 py-1 text-apple-11 text-secondary hover:text-primary"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleReopenSubmit}
+                className="px-3 py-1 bg-cinnabar text-white font-medium text-apple-11 rounded-lg hover:opacity-90"
+              >
+                Confirm Reopen
+              </button>
+            </div>
+          </div>
+        ) : workpaper.sealed ? (
           <button
             type="button"
-            onClick={handleReopen}
+            onClick={() => setIsReopening(true)}
             className="px-3 py-1.5 rounded-lg bg-cinnabar-subtle border border-cinnabar text-apple-12 font-semibold text-cinnabar hover:bg-surface-hover transition-colors flex items-center gap-1.5"
           >
             <RotateCcw className="w-3.5 h-3.5" />
@@ -86,6 +129,9 @@ export const WorkbenchHeader: React.FC<WorkbenchHeaderProps> = ({ workpaper, eng
           </button>
         )}
       </div>
+      {actionError && (
+        <InlineError message={actionError} onDismiss={() => setActionError(null)} testId="workbench-action-error" className="md:basis-full" />
+      )}
     </div>
   );
 };

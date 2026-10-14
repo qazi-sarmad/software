@@ -2,7 +2,7 @@ import { computeSha256 } from './ledger';
 
 /**
  * Deterministic PRNG using Mulberry32 algorithm.
- * Guarantees zero Math.random() usage in all audit sampling and statistical calculations.
+ * Guarantees that no unseeded randomness is used in any audit sampling or statistical calculation.
  */
 export function createDeterministicPrng(seedStr: string): () => number {
   let h = 0;

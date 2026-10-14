@@ -3,26 +3,35 @@ import { LedgerEntry, LedgerEventType, Role } from '../types';
 export const GENESIS_PREV_HASH = '0000000000000000000000000000000000000000000000000000000000000000';
 
 /**
- * Deterministically computes SHA-256 hex string for a given text or JSON object.
+ * Thrown when a SHA-256 cannot be computed with a real cryptographic primitive.
+ * Callers that seal, sign off or append to the ledger must surface this to the user and abort:
+ * there is deliberately no weaker fallback hash (Law 5).
+ */
+export class HashUnavailableError extends Error {
+  readonly code = 'HASH_UNAVAILABLE' as const;
+  constructor() {
+    super('Secure hashing is unavailable in this environment (crypto.subtle is missing). Nothing was sealed or recorded.');
+    this.name = 'HashUnavailableError';
+  }
+}
+
+/** True only when the platform provides crypto.subtle.digest. */
+export function isSecureHashAvailable(): boolean {
+  return typeof crypto !== 'undefined' && !!crypto && !!crypto.subtle && typeof crypto.subtle.digest === 'function';
+}
+
+/**
+ * Computes the SHA-256 hex string of a text. Uses crypto.subtle only.
+ * Throws HashUnavailableError if it is not available; never degrades to a non-cryptographic hash.
  */
 export async function computeSha256(data: string): Promise<string> {
-  // Use crypto.subtle in browser / modern Node
-  if (typeof crypto !== 'undefined' && crypto.subtle) {
-    const encoder = new TextEncoder();
-    const dataBuffer = encoder.encode(data);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', dataBuffer);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+  if (!isSecureHashAvailable()) {
+    throw new HashUnavailableError();
   }
-
-  // Fallback for test runner if needed
-  let hash = 0;
-  for (let i = 0; i < data.length; i++) {
-    const char = data.charCodeAt(i);
-    hash = (hash << 5) - hash + char;
-    hash |= 0;
-  }
-  return Math.abs(hash).toString(16).padStart(64, '0');
+  const dataBuffer = new TextEncoder().encode(data);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', dataBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
 /**
@@ -161,17 +170,26 @@ export async function verifyChain(entries: LedgerEntry[]): Promise<VerificationR
       };
     }
 
-    const calculatedHash = await computeEntryHash(
-      entry.prevHash,
-      entry.timestamp,
-      entry.actorId,
-      entry.actorRole,
-      entry.eventType,
-      entry.entityId,
-      entry.recordId,
-      entry.payloadHash,
-      entry.justification
-    );
+    let calculatedHash: string;
+    try {
+      calculatedHash = await computeEntryHash(
+        entry.prevHash,
+        entry.timestamp,
+        entry.actorId,
+        entry.actorRole,
+        entry.eventType,
+        entry.entityId,
+        entry.recordId,
+        entry.payloadHash,
+        entry.justification
+      );
+    } catch (err) {
+      if (err instanceof HashUnavailableError) {
+        // Never report a chain as valid when it could not actually be checked.
+        return { valid: false, error: err.message };
+      }
+      throw err;
+    }
 
     if (calculatedHash !== entry.hash) {
       return {

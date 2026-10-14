@@ -4,31 +4,27 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { AuditFileModal } from './AuditFileModal';
 import { AppProvider, useApp } from '../../context/AppContext';
 import { ThemeProvider } from '../../context/ThemeContext';
-import { initialEngagements, initialUsers, initialWorkpapers } from '../../data/initialData';
+import { initialEngagements, initialWorkpapers } from '../../data/initialData';
+import { testUser } from '../../test/testUsers';
+import type { Role } from '../../types';
 
 const engagement = initialEngagements.find((e) => initialWorkpapers.some((w) => w.engagementId === e.id))!;
 
-const Boot: React.FC<{ role: string; data: any; children: React.ReactNode }> = ({ role, data, children }) => {
-  const { setCurrentUser, currentUser, openInspector } = useApp();
+const Boot: React.FC<{ data: any; children: React.ReactNode }> = ({ data, children }) => {
+  const { openInspector } = useApp();
   const [ready, setReady] = React.useState(false);
   useEffect(() => {
-    const u = initialUsers.find((x) => x.role === role);
-    if (u) setCurrentUser(u);
-  }, [role]);
-  useEffect(() => {
-    if (currentUser.role === role) {
-      openInspector('audit_file', data);
-      setReady(true);
-    }
-  }, [currentUser.role]);
+    openInspector('audit_file', data);
+    setReady(true);
+  }, []);
   return ready ? <>{children}</> : null;
 };
 
 const renderAs = (role: string, data: any = { engagement }) =>
   render(
     <ThemeProvider>
-      <AppProvider>
-        <Boot role={role} data={data}>
+      <AppProvider user={testUser(role as Role)}>
+        <Boot data={data}>
           <AuditFileModal />
         </Boot>
       </AppProvider>

@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { useApp } from '../../context/AppContext';
+import { AppProvider, useApp } from '../../context/AppContext';
+import { initialUsers } from '../../data/initialData';
 import { useScopedData } from '../../hooks/useScopedData';
 import { canPerformAction, ActionType } from '../../lib/access';
 import { User, Role } from '../../types';
@@ -45,8 +46,23 @@ const TEST_ACTIONS: { action: ActionType; label: string; group: string }[] = [
   { action: 'view_audit_content', label: 'View Audit Universe & Workpapers', group: 'Access' },
 ];
 
+/**
+ * DEVELOPMENT-ONLY RBAC test harness. It is loaded only behind import.meta.env.DEV (see App.tsx) and is absent
+ * from production builds. It runs its own AppProvider so the harness can evaluate each role, and it never
+ * changes the signed-in session. Delete it once the SQL isolation tests cover the same ground.
+ */
 export const DevAccessPage: React.FC = () => {
-  const { availableUsers, currentUser, setCurrentUser, rawWorkpapers } = useApp();
+  const [viewer, setViewer] = useState<User>(initialUsers[0]);
+  return (
+    <AppProvider key={viewer.id} user={viewer}>
+      <DevAccessInner onSelect={setViewer} />
+    </AppProvider>
+  );
+};
+
+const DevAccessInner: React.FC<{ onSelect: (user: User) => void }> = ({ onSelect }) => {
+  const availableUsers = initialUsers;
+  const { currentUser, rawWorkpapers } = useApp();
   const {
     scopedUniverses,
     scopedEntities,
@@ -209,7 +225,7 @@ export const DevAccessPage: React.FC = () => {
               return (
                 <button
                   key={user.id}
-                  onClick={() => setCurrentUser(user)}
+                  onClick={() => onSelect(user)}
                   className={`text-left p-3.5 rounded-xl border transition-all flex flex-col justify-between gap-2 ${
                     isSelected
                       ? 'bg-accent-subtle border-accent ring-1 ring-accent'
