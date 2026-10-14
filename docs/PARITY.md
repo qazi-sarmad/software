@@ -1,6 +1,6 @@
 # Provio Parity Report (against docs/SPEC-v10.md)
 
-Last updated: Phase 0 clean-up. This file replaces the earlier v1.7 report, whose claims (for example "persona switcher", "Reports", "Red Thread" as present features) described behaviour the spec discards.
+Last updated: Phase 0 close-out. This file replaces the earlier v1.7 report, whose claims (for example "persona switcher", "Reports", "Red Thread" as present features) described behaviour the spec discards.
 
 Status meanings: **Present** = built to the spec and covered by a test. **Partial** = some of it exists, or it exists only in the front-end prototype with hardcoded seed data. **Missing** = not built.
 
@@ -11,11 +11,11 @@ Basis of the statuses: the repository is a front-end prototype with **no backend
 | Gate | Result |
 |---|---|
 | `npx tsc --noEmit` | exit 0 |
-| `npx vitest run` | 26 files, 202 tests passed. (An earlier version of this file said 188; the guard tests in `src/guards/` were then ignored by `.gitignore` (`build/`) and missing from the commit. They live in `src/guards/` now and are tracked.) |
+| `npx vitest run` | 26 files, 205 tests passed. (An earlier version of this file said 188, then 202. The guard tests in `src/guards/` were once ignored by `.gitignore` (`build/`) and missing from the commit; they are tracked now and `.gitignore` is anchored to `/build/`.) |
 | `npx vite build` | exit 0 |
 | `node scripts/check-tokens.mjs` | passed (53 files, 0 violations) |
-| `node scripts/check-shrink.mjs` | passed (60 files). HeaderBar, `ledger.ts`, `AnalyticsTab.tsx` and 5 deleted files were re-baselined on purpose, see Phase 0 notes. |
-| `npx playwright test` | **Not run.** No browser can be installed in the build sandbox. The 5 `[E2E]` tests in `e2e/smoke.spec.ts` are written and listed (`playwright test --list`: 7 tests) but unexecuted. |
+| `node scripts/check-shrink.mjs` | passed (60 files, no >10% shrink). HeaderBar, `ledger.ts`, `AnalyticsTab.tsx` and 5 deleted files were re-baselined on purpose in Phase 0; the close-out changes below did not shrink any tracked file. |
+| `npx playwright test` | **7 passed** (7 tests in `e2e/smoke.spec.ts`). Ran locally on Chromium 153 and in CI (run 38524739214). |
 
 ## Section status
 
@@ -29,8 +29,8 @@ Basis of the statuses: the repository is a front-end prototype with **no backend
 | 4.2 Audit Teams | Partial | Not audited in Phase 0. |
 | 4.3 Visibility and enforcement | Partial | Client-side scoping (`src/hooks/useScopedData.ts`). No RLS, no server enforcement. |
 | 4.4 Fixed invariants | Partial | Four-eyes and lock rules in `src/lib/access.ts`, `src/lib/workpaperLock.ts` (`workpaperLock.test.ts`). Client-side only. |
-| 4.5 Identity | Partial | Persona switcher, "Simulate Viewpoint" and the default CIA identity are **removed** (`src/App.auth.test.tsx`, `src/guards/sourceGuards.test.ts`). Identity now comes only from a session (`src/context/AuthContext.tsx`). Real authentication is **Missing**: only the development-only TEMP_AUTH stub (`src/lib/tempAuth.ts`, `tempAuth.test.ts`) exists, and a production build cannot sign in. `src/components/dev/DevAccessPage.tsx` is still a role-switching harness, dev-only. |
-| 5 Navigation and Home | Partial | Seven tabs, no Reports or Calendar tab (`src/components/common/NavStrip.test.tsx`, `src/App.auth.test.tsx`). Home content not audited. |
+| 4.5 Identity | Partial | Persona switcher, "Simulate Viewpoint" and the default CIA identity are **removed** (`src/App.auth.test.tsx` → "the profile menu has no viewpoint simulation, no account list and no dev link"; `src/guards/sourceGuards.test.ts` → "has no \"Simulate Viewpoint\", persona or impersonation code" and "never uses the word \"viewpoint\" anywhere in production paths"). Identity now comes only from a session (`src/context/AuthContext.tsx`). Real authentication is **Missing**: only the development-only TEMP_AUTH stub (`src/lib/tempAuth.ts`, `src/lib/tempAuth.test.ts`) exists, and a production build cannot sign in. `src/components/dev/DevAccessPage.tsx` is still a role-switching harness, dev-only. |
+| 5 Navigation and Home | Partial | Seven tabs, no Reports or Calendar tab (`src/components/common/NavStrip.test.tsx` → "renders exactly the 7 canonical tabs, in order, without Reports, Calendar or Workbench"; `src/App.auth.test.tsx` → "admits a demo-tenant account and shows exactly the 7 tabs, with no Reports tab"). The admin placeholder wording "System Administration Viewpoint" was changed to "Organisation Administration" (`src/components/common/NavStrip.tsx`). Home content not audited. |
 | 6 Universes and Entities | Partial | `src/components/universe/AuditUniverseTab.tsx`. Hardcoded seed data. |
 | 7 Deployment Gate | Missing | Not found. |
 | 7.1 Combined approval | Missing | Not found. |
@@ -59,8 +59,8 @@ Basis of the statuses: the repository is a front-end prototype with **no backend
 | 27.3 Iconography | Partial | `src/components/common/Icons.tsx`; `sourceGuards.test.ts` forbids lucide-react. |
 | 27.4 Motion | Partial | Not audited (reduced-motion, easing). |
 | 27.5 Interaction | Partial | Native alert/prompt/confirm removed and guarded (`sourceGuards.test.ts`). `AccountSettingsModal.tsx` and `PaperWorkbenchModal.tsx` were **not audited** for blocking behaviour. |
-| 28 Out of Scope and Discarded | Partial | Removed and guarded by tests: persona login, Simulate Viewpoint, Reports tab, Red Thread, scrub bar, native dialogs, Math.random. Not removed or not audited: `src/components/dashboard/GanttTimeWarp.tsx` (may be scrub-like), tenant seed data is no longer in the production bundle (see Phase 0 notes). A department-name colour map and hardcoded sample text/figures in components were moved out or removed. |
-| 29 Build and Verification | Partial | Gates 1-5 pass; gate 6 not run (see above). Production bundle test: `src/guards/prodBundle.test.ts`. |
+| 28 Out of Scope and Discarded | Partial | Removed and guarded by tests: persona login, Simulate Viewpoint, the word "viewpoint", Reports tab, Red Thread, scrub bar, native dialogs, Math.random. `GanttTimeWarp.tsx` was read and is **kept**: it is a Gantt timeline/delivery view (month columns and engagement bars), not the ledger scrub bar; see Decisions. Tenant seed data is not in the production bundle (`src/guards/prodBundle.test.ts`, `src/guards/sourceGuards.test.ts`). A department-name colour map and hardcoded sample text/figures in components were moved out or removed. |
+| 29 Build and Verification | Partial | Gates 1-6 pass: `tsc --noEmit` exit 0; `vitest run` 26 files / 205 tests; `vite build` exit 0; `check-tokens` 53 files / 0 violations; `check-shrink` 60 files; `playwright test` 7 passed. Production bundle test: `src/guards/prodBundle.test.ts` (24 cases). Screenshots are **not** captured (owner-deferred). |
 | 30 Changes from v9 | n/a | Informational. |
 | 31 Open Items | n/a | Informational. |
 
@@ -73,3 +73,53 @@ Basis of the statuses: the repository is a front-end prototype with **no backend
 - `docs/baseline-lines.json`: `ledger.ts` 248 -> 215 and `AnalyticsTab.tsx` 196 -> 168. The lost lines are the demo data moved to `demoSeed.ts`, not behaviour.
 - `CapRadialTracker.tsx`: colours were keyed by department names (`Treasury`, `Trading`, ...). They are now assigned by position, so chart colours for departments may differ from before. Not screenshot-checked.
 - Dev routes `/dev/access` and `/dev/palette` exist only when `import.meta.env.DEV` is true. The production bundle contains neither (`src/guards/prodBundle.test.ts`).
+
+## Phase 0 close-out
+
+### Commits on `phase-0-cleanup` (PR #5 into `main`)
+
+| Commit | Message |
+|---|---|
+| `6e73c7c` | PHASE-0 (fix): track src/guards tests (build/ was gitignored), move tenant seed out of production bundle, remove hardcoded tenant id, correct PARITY counts |
+| `44d1472` | PHASE-0: anchor gitignore build/ to /build/ so src/build can never be ignored |
+| `e502878` | PHASE-0: remove the two viewpoint wording leftovers and guard against them |
+| _(this close-out commit)_ | PHASE-0: close-out — parity rows, adversarial QA suite, vitest exclude for tests/adversarial |
+
+### Real gate counts (run by hand on this head, in order)
+
+| Gate | Command | Result |
+|---|---|---|
+| 1 | `npx tsc --noEmit` | exit 0 |
+| 2 | `npx vitest run` | 26 test files, **205 tests passed** (0 failed, 0 skipped) |
+| 3 | `npx vite build` | exit 0, 1048 modules transformed |
+| 4 | `node scripts/check-tokens.mjs` | PASS — 53 files, 0 violations |
+| 5 | `node scripts/check-shrink.mjs` | PASS — 60 files, no >10% shrink |
+| 6 | `npx playwright test` | **7 passed** (7 tests, `e2e/smoke.spec.ts`, Chromium 153) |
+
+Dist scan after `vite build` (all must be 0): `Simulate Viewpoint` 0, `Viewpoint` 0, `viewpoint` 0, `/dev/access` 0, `/dev/palette` 0, `DevAccessPage` 0, `DevPalettePage` 0, `Global Banking` 0, `Marcus Vance` 0, `Treasury` 0, `provio.internal` 0, `CANARY` 0, `provio-corp-tenant` 0, `TEMP_AUTH` 0, `Red Thread` 0, `LedgerScrubBar` 0.
+
+### CI on PR #5
+
+- Previous green run: **38524739214** on `6e73c7c` — all gate steps success, Playwright step success (7 tests).
+- Final green run on the new head: reported in the task hand-back after `git push` (run ID recorded there).
+
+### Decisions (where the spec is silent)
+
+- **`GanttTimeWarp.tsx` is kept.** It is read, not guessed: it renders six month columns (Jul–Dec 2026) and one horizontal bar per engagement with a percentage, clicking through to the engagement. That is a Gantt timeline/delivery view, not the ledger scrub bar (no ledger state, no time-travel over the hash chain). Spec §28 forbids the "4D scrub bar" and the `LedgerScrubBar` symbol; neither is present. Recorded here so the keep is deliberate.
+- **The word "viewpoint" is removed from production paths, not only the two reported lines.** A third occurrence lived in a `HeaderBar.tsx` comment ("no account or viewpoint switching") and a fourth in `App.auth.test.tsx`/`sourceGuards.test.ts` assertions. The comment was reworded and a source guard now fails on `/viewpoint/i` anywhere under `src/` outside test files, so the wording cannot return.
+- **Stale `src/build/…` path references were corrected** in `App.tsx` and `tempAuth.ts` to `src/guards/…`. They pointed at a directory that does not exist and that `.gitignore` used to swallow.
+- **The adversarial QA suite lives in `tests/adversarial/`**, run with `npx playwright test --config playwright.adversarial.config.ts`. It is kept out of the builder gate so `e2e/` remains exactly the 7 smoke tests the task requires. `vitest.config.ts` excludes `tests/adversarial/**` so the 205-test count is unaffected.
+
+### Adversarial QA result (reviewer-run, not part of the gate)
+
+- `tests/adversarial/phase0.spec.ts` — 6 attacks, all pass on the fixed head. Two findings were found and are now fixed:
+  - **High** — the capitalised string `Viewpoint` was shipped in `dist/assets/index-*.js` and `dist/assets/ExecutiveDashboardTab-*.js` ("System Administration Viewpoint", "Scoped Viewpoint"). Fixed by the `e502878` commit; the dist scan is now 0 and `prodBundle.test.ts` guards it.
+  - **Medium** — `src/build/prodBundle.test.ts` was referenced from `App.tsx` and `tempAuth.ts` but does not exist. Fixed in `e502878`.
+- Verified clean: no tenant data without a session (production build: DOM, localStorage, sessionStorage, IndexedDB, network all clean); dev routes absent from production; `/superadmin`, `/dev/access`, `/dev/palette`, `/api/*` render only the sign-in screen in production; no third-party scripts beyond the declared Google Fonts; sealing refuses with an inline error and writes nothing when `crypto.subtle` is disabled; no native dialogs fire in the Work Queue or Audit Files screens.
+
+### NOT DONE (explicit)
+
+- **Screenshots: deferred by owner decision.** No screen was captured in the three presets, light and dark (§29).
+- Items 2, 4 and 6 of the Phase 0 task list were already complete at `6e73c7c` and were re-verified, not re-done.
+- No Phase 1 work started: no database, no login, no backend. The `/e/:token` public route still cannot validate tokens without a backend.
+
