@@ -285,6 +285,7 @@ end $$;
 do $$
 declare
   r text;
+  fn record;
 begin
   foreach r in array array['anon', 'authenticated'] loop
     if exists (select 1 from pg_roles where rolname = r) then
@@ -296,7 +297,20 @@ begin
       execute format('revoke insert, update, delete on reopen_grants from %I', r);
       execute format('revoke insert, update, delete on platform_admins from %I', r);
       execute format('revoke insert, update, delete on platform_trail from %I', r);
-      execute format('grant execute on all functions in schema public to %I', r);
+      -- Grant execute on the application's own functions only. A blanket
+      -- "all functions in schema public" also reaches extension functions (dblink
+      -- and the like) that may be installed in public, and the grantor cannot grant
+      -- on those, which aborts the migration. Extension members are those with an
+      -- 'e' dependency in pg_depend.
+      for fn in
+        select p.proname as name, pg_get_function_identity_arguments(p.oid) as args
+        from pg_proc p
+        join pg_namespace n on n.oid = p.pronamespace
+        left join pg_depend d on d.objid = p.oid and d.deptype = 'e'
+        where n.nspname = 'public' and d.objid is null
+      loop
+        execute format('grant execute on function public.%I(%s) to %I', fn.name, fn.args, r);
+      end loop;
       execute format('grant select on public.tenant_metadata to %I', r);
     end if;
   end loop;
