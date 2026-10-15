@@ -1,3 +1,7 @@
+-- 2D-CLEAN: remove objects left on persistent test projects by the failed first 2D run.
+drop trigger if exists roles_config_log on public.roles;
+drop function if exists public.roles_config_log() cascade;
+
 -- 2B: closed rights list. Only these keys may appear in roles.rights, each with a boolean value.
 create or replace function public.rights_keys_valid(p_rights jsonb) returns boolean
 language sql immutable as $$
