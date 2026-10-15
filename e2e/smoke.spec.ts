@@ -10,12 +10,14 @@ const SEVEN_TABS = [
   'Issues Register',
 ];
 
-// TEMP_AUTH: a demo-tenant account. Used only while the development sign-in stub exists.
-const DEMO_EMAIL = 'a.wright@provio.internal';
+// Preparer role: NavStrip shows all seven audit tabs to it.
+// org_admin (E2E_EMAIL) sees zero audit tabs by design (Part 2.B).
+const AUDIT_USER_EMAIL = 'bilal.ahmed@provio-test.invalid';
 
-async function signIn(page: Page, email = DEMO_EMAIL) {
+async function signIn(page: Page, email = process.env.E2E_EMAIL ?? '') {
   await page.goto('/');
   await page.getByLabel('Email').fill(email);
+  await page.getByLabel('Password').fill(process.env.E2E_PASSWORD ?? '');
   await page.getByRole('button', { name: 'Sign in' }).click();
   await expect(page.getByRole('navigation', { name: 'Navigation Strip' })).toBeVisible();
 }
@@ -29,11 +31,12 @@ test.describe('Phase 0: honest prototype', () => {
     await expect(page.getByRole('navigation', { name: 'Navigation Strip' })).toHaveCount(0);
   });
 
-  test('[E2E] an account outside the demo tenant is refused and gets no default role', async ({ page }) => {
+  test('[E2E] an unknown account is refused and gets no navigation', async ({ page }) => {
     await page.goto('/');
-    await page.getByLabel('Email').fill('nobody@example.com');
+    await page.getByLabel('Email').fill('nobody@provio-test.invalid');
+    await page.getByLabel('Password').fill('wrong-password-123');
     await page.getByRole('button', { name: 'Sign in' }).click();
-    await expect(page.getByTestId('signin-error')).toContainText('not provisioned');
+    await expect(page.getByTestId('signin-error')).toBeVisible();
     await expect(page.getByRole('navigation', { name: 'Navigation Strip' })).toHaveCount(0);
   });
 
@@ -46,8 +49,15 @@ test.describe('Phase 0: honest prototype', () => {
     await expect(page.getByText('/dev/access')).toHaveCount(0);
   });
 
+  test('[E2E] org admin sees no audit tabs', async ({ page }) => {
+    await signIn(page); // E2E_EMAIL is the org_admin account
+    const nav = page.getByRole('navigation', { name: 'Navigation Strip' });
+    await expect(nav.getByRole('button')).toHaveCount(0);
+    await expect(nav).toContainText('Audit workflow tabs are restricted');
+  });
+
   test('[E2E] nav shows exactly the 7 tabs in order, with no Reports or Calendar tab', async ({ page }) => {
-    await signIn(page);
+    await signIn(page, AUDIT_USER_EMAIL);
     const nav = page.getByRole('navigation', { name: 'Navigation Strip' });
     const titles = await nav.getByRole('button').evaluateAll((els) =>
       els.map((el) => el.getAttribute('title'))
@@ -69,7 +79,7 @@ test.describe('Phase 0: honest prototype', () => {
     const errors: string[] = [];
     page.on('pageerror', (e) => errors.push(e.message));
 
-    await signIn(page);
+    await signIn(page, AUDIT_USER_EMAIL);
     await expect(page.locator('header')).toBeVisible();
     await expect(page.locator('main')).toBeVisible();
 

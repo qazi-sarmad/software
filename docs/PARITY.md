@@ -23,13 +23,13 @@ Basis of the statuses: the repository is a front-end prototype with **no backend
 |---|---|---|
 | 0 Product Summary | Partial | Front-end prototype only. |
 | 1 Laws | Partial | L1: engines are plain functions (`src/lib/auditEngines.ts`, `src/lib/population.ts`) with tests; no Math.random in production paths (`src/guards/sourceGuards.test.ts`). L2: **Missing**, no tenant boundary exists. L3: client-side gate only (`src/lib/population.ts`, `src/context/populationGate.test.tsx`); **not enforced in a database**. L4: not audited. L5: hash chain exists in memory only (`src/lib/ledger.ts`, `src/lib/ledger.test.ts`); now refuses to seal without crypto.subtle (`src/lib/ledger.nohash.test.ts`). Nothing is persisted. |
-| 2 Structure and Tenancy | Missing | No tenants; one demo tenant constant in `src/lib/tempAuth.ts` (`is_demo: true`). |
+| 2 Structure and Tenancy | Partial | Two synthetic test organisations in `provio-test`, both `is_demo=true`, created by `e2e/global-setup.ts`. Tenant isolation under RLS is tested (`e2e/rls.spec.ts`). No platform tenant provisioning yet. |
 | 3 Hosting and Client Access | Missing | No hosting model or client access layer. |
 | 4.1 Roles | Partial | Role model in `src/lib/access.ts`, `src/lib/access.test.ts`. |
 | 4.2 Audit Teams | Partial | Not audited in Phase 0. |
 | 4.3 Visibility and enforcement | Partial | Client-side scoping (`src/hooks/useScopedData.ts`). No RLS, no server enforcement. |
 | 4.4 Fixed invariants | Partial | Four-eyes and lock rules in `src/lib/access.ts`, `src/lib/workpaperLock.ts` (`workpaperLock.test.ts`). Client-side only. |
-| 4.5 Identity | Partial | Persona switcher, "Simulate Viewpoint" and the default CIA identity are **removed** (`src/App.auth.test.tsx` → "the profile menu has no viewpoint simulation, no account list and no dev link"; `src/guards/sourceGuards.test.ts` → "has no \"Simulate Viewpoint\", persona or impersonation code" and "never uses the word \"viewpoint\" anywhere in production paths"). Identity now comes only from a session (`src/context/AuthContext.tsx`). Real authentication is **Missing**: only the development-only TEMP_AUTH stub (`src/lib/tempAuth.ts`, `src/lib/tempAuth.test.ts`) exists, and a production build cannot sign in. `src/components/dev/DevAccessPage.tsx` is still a role-switching harness, dev-only. |
+| 4.5 Identity | Partial | Persona switcher, "Simulate Viewpoint" and the default CIA identity are **removed** (`src/App.auth.test.tsx` → "the profile menu has no viewpoint simulation, no account list and no dev link"; `src/guards/sourceGuards.test.ts` → "has no \"Simulate Viewpoint\", persona or impersonation code" and "never uses the word \"viewpoint\" anywhere in production paths"). Identity now comes only from a session (`src/context/AuthContext.tsx`). Real authentication is in place: password sign-in through Supabase Auth (`src/data/client.ts`, `src/components/auth/SignInScreen.tsx`). Role and scopes are read from `org_members` and `user_scopes` under RLS (`e2e/smoke.spec.ts`, `e2e/rls.spec.ts`). The development-only TEMP_AUTH stub has been removed (`src/guards/sourceGuards.test.ts` → "TEMP_AUTH is removed: no references anywhere in src"). `src/components/dev/DevAccessPage.tsx` is still a role-switching harness, dev-only. |
 | 5 Navigation and Home | Partial | Seven tabs, no Reports or Calendar tab (`src/components/common/NavStrip.test.tsx` → "renders exactly the 7 canonical tabs, in order, without Reports, Calendar or Workbench"; `src/App.auth.test.tsx` → "admits a demo-tenant account and shows exactly the 7 tabs, with no Reports tab"). The admin placeholder wording "System Administration Viewpoint" was changed to "Organisation Administration" (`src/components/common/NavStrip.tsx`). Home content not audited. |
 | 6 Universes and Entities | Partial | `src/components/universe/AuditUniverseTab.tsx`. Hardcoded seed data. |
 | 7 Deployment Gate | Missing | Not found. |
@@ -122,4 +122,67 @@ Dist scan after `vite build` (all must be 0): `Simulate Viewpoint` 0, `Viewpoint
 - **Screenshots: deferred by owner decision.** No screen was captured in the three presets, light and dark (§29).
 - Items 2, 4 and 6 of the Phase 0 task list were already complete at `6e73c7c` and were re-verified, not re-done.
 - No Phase 1 work started: no database, no login, no backend. The `/e/:token` public route still cannot validate tokens without a backend.
+
+
+## Phase 1 — Supabase backend
+
+Status: SQL layer complete and pre-validated. The application still has no live login and reads no
+database (no data module yet); that is the next Phase 1 slice.
+
+### What exists
+
+- `supabase/migrations/0001`–`0010`: schema, invariants, functions, RLS, JWT pinning and the
+  access-token hook. Idempotent (re-application is clean).
+- `supabase/tests/00`–`17`: 18 SQL test files. `00_lib.sql` seeds two orgs and switches identity
+  through `set role` + `request.jwt.claims`.
+- `supabase/README.md`: migration table, hook wiring and the decisions taken where the spec is silent.
+
+### Real SQL counts (run by hand on this head, local Postgres 17)
+
+| Step | Result |
+|---|---|
+| apply `0001`–`0010` to a fresh database | exit 0, 0 errors |
+| apply `0001`–`0010` a second time (idempotency) | exit 0, 0 errors |
+| `00`–`17` on the fresh database | **18/18 files pass, 205 assertions** |
+| `00`–`17` on a second consecutive run | **18/18 files pass** |
+| `00`–`17` on the real **provio-test** Supabase project (CI step 6, run 38551957604) | **18/18 files pass, 205 assertions, 0 errors; test 15 reports 50 concurrent appends** |
+
+### Spec rows now backed by a database test
+
+| Spec | Test | What it proves |
+|---|---|---|
+| §4.4 four-eyes | `11` | a sign-off with preparer = reviewer is refused by a CHECK constraint |
+| §4.4 sealed = read-only | `12` | every child of a sealed engagement rejects UPDATE/DELETE |
+| §4.4 append-only ledger | `08` | no app role holds UPDATE/DELETE, and the trigger refuses the owner |
+| §4.4, §10.4 reopen | `14` | requires the `can_reopen` right and a ≥10-char justification; writes activity + ledger |
+| §4.5 no default role | `16` | a user with no membership gets no `org_id` claim and no `user_role` |
+| §11.1 population gate | `06`, `07` | a sample or sample row without a verified matching population is refused |
+| §24, §25.2 platform blind | `03` | the platform role reads 0 rows from every tenant business table |
+| §25.1 no `USING (true)` | `13` | RLS on all 33 tables; no policy expression is literally `true` |
+| §25.2 org from JWT only | `05`, `16` | header/body org is ignored; a forged claim is stripped by the hook |
+| §25.2 tenant isolation | `01`, `02` | cross-org across tables is 0; a write into another org is refused |
+| §26 hash chain | `09`, `10`, `15` | genesis, exact hashes, tamper detection, **50** concurrent appends stay contiguous and every `prev_hash` links to the preceding row |
+
+### Phase 1 decisions (where the spec is silent)
+
+- **`org_id` is the org claim**, set only by `public.custom_access_token_hook`. No policy reads an org
+  from a header or body; `org_id_from_header` always returns null and exists to prove it.
+- **Platform staff are not tenant members.** `platform_admins` holds a user id and no `org_id`; the
+  hook stamps `user_role = 'platform_admin'` with no org.
+- **Roles carry a `slug`** (machine name) beside the display `name`; the slug goes in the JWT and in
+  policies, so a rename cannot break enforcement.
+- **`supabase/config.toml` sets `major_version = 17`** to match local validation.
+
+### NOT DONE (Phase 1)
+
+- Phase 1 sign-in is implemented and CI-verified (Supabase Auth, data module, RLS end-to-end test).
+  Not done: roles as data and `has_right()` in the database (Phase 2); outstanding dependency advisories (see `docs/NOT-DONE.md`).
+- The SQL layer now runs green against the real **provio-test** Supabase project (CI step 6,
+  run 38551957604). Local validation used Postgres 17 with an `auth` schema shim; the real-project
+  run is the CI step, not a hand-run from this machine.
+- `TEST_SUPABASE_DB_URL` still carries a trailing newline. CI run 38551590080 proved it by failing
+  test 15 with `FATAL: database "postgres\n" does not exist`. CI step 6 and test 15 strip whitespace
+  until the secret is re-set without the newline, after which both strips can be removed.
+- Concurrent appends in one tenant produce unique, contiguous seq values and a valid hash chain. This test uses 50 rows, batched over 10 dblink connections (one multi-row INSERT each)
+  because Supabase's session pooler caps concurrent clients at 15. The assertion covers all 50 rows.
 

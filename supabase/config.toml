@@ -1,0 +1,35 @@
+# Provio Supabase configuration.
+# The CLI is pinned in package.json devDependencies; this file is read by `supabase` commands.
+# Two cloud projects are used: provio-dev and provio-test. No local Docker stack is used.
+project_id = "provio"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+major_version = 17
+
+[studio]
+enabled = false
+
+[auth]
+enabled = true
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["http://localhost:3000"]
+jwt_expiry = 3600
+enable_signup = false
+
+[auth.email]
+enable_signup = false
+enable_confirmations = false
+
+[storage]
+enabled = true
+
+[edge_runtime]
+enabled = false

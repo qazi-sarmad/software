@@ -59,7 +59,6 @@ describe('source guards for production paths', () => {
       'App.tsx',
       'components/dev/DevAccessPage.tsx',
       'data/demoSeed.ts',
-      'lib/tempAuth.ts',
     ]);
     const app = readFileSync(join(SRC, 'App.tsx'), 'utf-8');
     expect(app).toMatch(/import\.meta\.env\.DEV\s*\?\s*\(\)\s*=>\s*import\('\.\/data\/demoSeed'\)/);
@@ -84,17 +83,7 @@ describe('source guards for production paths', () => {
     }
   });
 
-  it('TEMP_AUTH is only referenced from the stub, the dev-only form and the DEV-gated sign-in path', () => {
-    expect(offenders(/TEMP_AUTH|tempAuth/).sort()).toEqual([
-      'components/auth/SignInScreen.tsx',
-      'components/auth/TempSignInForm.tsx',
-      'context/AuthContext.tsx',
-      'lib/tempAuth.ts',
-    ]);
-    const ctx = readFileSync(join(SRC, 'context/AuthContext.tsx'), 'utf-8');
-    expect(ctx.indexOf('import.meta.env.DEV')).toBeGreaterThan(-1);
-    expect(ctx.indexOf('import.meta.env.DEV')).toBeLessThan(ctx.indexOf("import('../lib/tempAuth')"));
-    const screen = readFileSync(join(SRC, 'components/auth/SignInScreen.tsx'), 'utf-8');
-    expect(screen).toMatch(/import\.meta\.env\.DEV\s*\?\s*lazy\(/);
+  it('TEMP_AUTH is removed: no references anywhere in src', () => {
+    expect(offenders(/TEMP_AUTH|tempAuth|TempSignInForm|resolveTempAccount/)).toEqual([]);
   });
 });

@@ -33,6 +33,7 @@ const FORBIDDEN = [
   'Elena Rostova',
   'Marcus Vance',
   'CANARY',
+  'service_role',
 ];
 
 let outDir = '';
@@ -86,8 +87,10 @@ describe('production bundle', () => {
     expect(names.filter((n) => /Dev(Access|Palette)/i.test(n))).toEqual([]);
   });
 
-  it('shows the sign-in screen as unavailable rather than offering any stub', () => {
+  it('shows the real sign-in screen in production', () => {
     const all = files.map((f) => f.text).join('\n');
-    expect(all).toContain('Authentication has not been configured');
+    expect(all).toContain('Sign in to your organisation workspace.');
+    // A real secret key is the prefix followed by a long body. The bare prefix is library code, not a key.
+    expect(all).not.toMatch(/sb_secret_[A-Za-z0-9_-]{20,}/);
   });
 });
