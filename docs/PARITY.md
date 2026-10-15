@@ -1,5 +1,8 @@
 # Provio Parity Report (against docs/SPEC-v10.md)
 
+> **Phase 2 (branch `phase-2-access`).** The parity rows below were written at the end of Phase 0 and Phase 1 and were **not** re-scored for Phase 2. Read them together with the Phase 2 close-out section at the foot of this file, which lists what Phase 2 changed and the real counts for this branch. Where a Phase 2 row below still says "Missing" for a section Phase 2 touched (notably 4.1 Roles, 4.2 Audit Teams, 4.3 Visibility and enforcement, 23 Administration, 25 Data/Security/Infrastructure, 26 Logging, 29 Build and Verification), the close-out section is authoritative.
+
+
 Last updated: Phase 0 close-out. This file replaces the earlier v1.7 report, whose claims (for example "persona switcher", "Reports", "Red Thread" as present features) described behaviour the spec discards.
 
 Status meanings: **Present** = built to the spec and covered by a test. **Partial** = some of it exists, or it exists only in the front-end prototype with hardcoded seed data. **Missing** = not built.
@@ -185,4 +188,83 @@ database (no data module yet); that is the next Phase 1 slice.
   until the secret is re-set without the newline, after which both strips can be removed.
 - Concurrent appends in one tenant produce unique, contiguous seq values and a valid hash chain. This test uses 50 rows, batched over 10 dblink connections (one multi-row INSERT each)
   because Supabase's session pooler caps concurrent clients at 15. The assertion covers all 50 rows.
+
+
+---
+
+# Phase 2 — access, rights and the administration portal
+
+Branch `phase-2-access`. Base `main` at the Phase 1 merge (`f374215`). Every commit below has a
+green CI run; the run id is the one for that commit's head.
+
+## Verification at the end of Phase 2 (branch `phase-2-access`, head `e75d524`)
+
+| Gate | Result |
+|---|---|
+| `npx tsc --noEmit -p .` | exit 0 |
+| `npx vitest run` | **30 files, 289 tests passed** (0 failed, 0 skipped) |
+| `npm run build` (`vite build`) | exit 0 |
+| `node scripts/check-tokens.mjs` | PASS — 52 files under `src/components`, 0 violations |
+| `node scripts/check-shrink.mjs` | PASS — 59 files, no >10% shrink |
+| SQL migrations applied twice (M6) | exit 0, 0 errors, both passes |
+| SQL tests, 25 files, two consecutive passes (M5) | **25/25 green both passes**, ~181 assertions in tests 01–24 |
+| `npx playwright test` | **24 passed** (`e2e/smoke.spec.ts`, `e2e/rls.spec.ts`, `e2e/admin.spec.ts`) |
+
+CI run **38818009464** on head `e75d524` — conclusion **success**, all 7 gate steps green
+(type check, unit tests, build, token check, shrink check, migrations + SQL tests on the real
+`provio-test` project, Playwright).
+
+## Tasks, commits and CI runs
+
+| Task | Commit | CI run | Result |
+|---|---|---|---|
+| 2A vitest upgrade (clear critical advisories) | `f73d86b` | 38696591808 | green |
+| 2B closed rights list and org role matrix | `49ef509` then fix `4bd4224` | 38701584190 | fixed, green |
+| 2C engagement team roles and assignment | `f347d5f` | 38719391185 | green |
+| 2D role config log and deletion guard | `7b4c04d`, fix `5a86a4b`, clean `f58cc8f` | 38726990574 | fixed, green |
+| 2E invitation cap per user and per org | `dd44220` | 38727701485 | green |
+| 2G Phase-2 adversarial coverage + full seed matrix | `34952b0` | 38737171258 | green |
+| 2F-1 remove `/dev/access` and `DevAccessPage` | `3fb44e0`, fix `4c01830` | 38756193478 | fixed, green |
+| 2F-2a role-name check inventory (docs) | `059733b` | 38743915833 | green |
+| 2F-2b replace role-name checks with rights | `55dd745` | 38810372842 | green |
+| 2H-DB administration RPCs | `c9b7204` | 38811861805 | green |
+| 2H-UI People & Roles panel | `005d8bb` | 38814194245 | red (Playwright), superseded by the fix |
+| 2H-UI-FIX align the seed rights matrix to SPEC 4.1 | `3ccf283` | 38816475214 | fixed, green |
+| 2J Phase 2 decisions in the specification | `e75d524` | 38818009464 | green |
+
+Run 38817847723 was a duplicate dispatch for head `3ccf283` and failed on an expired-token push
+race; the authoritative run for that head is 38816475214 (success).
+
+## What Phase 2 added, by spec section
+
+| Spec section | Before Phase 2 | After Phase 2 | Evidence |
+|---|---|---|---|
+| 4.1 Roles | role names compared in code | a role is a bag of eleven rights; every decision is a rights test | `supabase/migrations/0012_rights_closed.sql`, `0016_rights_rls.sql`, `src/lib/rights.ts`, `supabase/tests/19_rights_closed.sql`, `23_rights_rls.sql`, `src/lib/rightsMatrix.test.ts`, `src/guards/noRoleStrings.test.ts` |
+| 4.2 Audit Teams | not built | team roles are data; a team role maps to rights; assignment needs a right | `0013_engagement_team.sql`, `supabase/tests/20_engagement_team.sql` |
+| 4.3 Visibility and enforcement | client-side only | RLS is the enforcement; a rights check backs every policy | `0016_rights_rls.sql`, `23_rights_rls.sql`, `01`–`03` isolation tests |
+| 4.5 Identity | sign-in existed | unchanged; the rights of the session come from `roles.rights` | `src/data/client.ts` |
+| 23 Administration | missing | People & Roles portal: members, roles, rights, scopes, reporting lines, invite cap | `0017_admin_rpcs.sql`, `24_admin_rpcs.sql`, `src/data/admin.ts`, `src/components/admin/PeopleAdminPanel.tsx`, `e2e/admin.spec.ts` |
+| 25.2 Tenancy and isolation | partial | unchanged model; new tables carry `org_id` and a select policy | `13_rls_enabled.sql`, `0016`, `0017` |
+| 26 Logging | ledger in memory only | the database ledger is hash-chained; role changes are versioned and logged | `0014_roles_config.sql`, `21_roles_config.sql`, `09`–`15` |
+| 29 Build and Verification | partial | SQL tests, vitest and Playwright all run in CI; a drift test guards the rights matrix | CI run 38818009464 |
+
+## Phase 2 decisions
+
+See `docs/SPEC-v10.md` §30 (D1–D12). In short: rights not role names; the seed matrix implements
+§4.1 and is mirrored in `src/lib/rights.ts` with a drift test; identity is token-derived and
+permission is a rights lookup; every business table carries `org_id` and a select policy; team
+roles are data; a role change is guarded and versioned; the invite cap is data plus events; the
+administration portal is a rights-gated sliding inspector; test data is synthetic and carries the
+real matrix.
+
+## NOT DONE (Phase 2)
+
+- The hosted `TEST_SUPABASE_DB_URL` secret still carries a trailing newline; CI step 6 and test 15
+  strip whitespace until the secret is re-set. Owner action.
+- The `/e/:token` public route cannot validate tokens without a backend; unchanged from Phase 1.
+- The administration portal covers the People and Roles parts of §23. Organisation settings,
+  structure, controls, methodology, the risk model, workflow, SLA, finding structure, notifications,
+  BI parameters, templates and branding, export and retention, and AI remain not built; see
+  `docs/NOT-DONE.md`.
+- No screenshots were captured (owner-deferred, §29).
 
