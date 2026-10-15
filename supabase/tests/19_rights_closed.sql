@@ -26,7 +26,6 @@ select provio_test.as_owner();
 do $$
 declare
   org uuid := 'a0000000-0000-0000-0000-000000000001';
-  none_true jsonb := '{"manage_users":false,"manage_roles":false,"edit_config":false,"manage_engagements":false,"approve_plan":false,"review_and_approve":false,"perform_work":false,"can_reopen":false,"view_all_scopes":false,"read_only":false}'::jsonb;
 begin
   perform provio_test.assert_eq((select count(*) from roles where org_id = org and is_seed), 7,
     'org A holds exactly seven seed roles');
@@ -36,23 +35,26 @@ begin
     'org_admin holds manage_users, manage_roles, edit_config only');
 
   perform provio_test.assert_eq((select rights from roles where org_id = org and slug = 'cia'),
-    '{"manage_users":false,"manage_roles":true,"edit_config":true,"manage_engagements":true,"approve_plan":true,"review_and_approve":false,"perform_work":false,"can_reopen":true,"view_all_scopes":true,"read_only":false}'::jsonb,
-    'cia holds manage_roles, edit_config, manage_engagements, approve_plan, can_reopen, view_all_scopes');
+    '{"manage_users":false,"manage_roles":true,"edit_config":true,"manage_engagements":true,"approve_plan":true,"review_and_approve":true,"perform_work":true,"can_reopen":true,"view_all_scopes":true,"read_only":false}'::jsonb,
+    'cia holds manage_roles, edit_config, manage_engagements, approve_plan, review_and_approve, perform_work, can_reopen, view_all_scopes');
 
   perform provio_test.assert_eq((select rights from roles where org_id = org and slug = 'audit_manager'),
-    '{"manage_users":false,"manage_roles":false,"edit_config":false,"manage_engagements":true,"approve_plan":false,"review_and_approve":false,"perform_work":false,"can_reopen":false,"view_all_scopes":true,"read_only":false}'::jsonb,
-    'audit_manager holds manage_engagements and view_all_scopes only');
+    '{"manage_users":false,"manage_roles":false,"edit_config":false,"manage_engagements":true,"approve_plan":false,"review_and_approve":true,"perform_work":true,"can_reopen":false,"view_all_scopes":true,"read_only":false}'::jsonb,
+    'audit_manager manages engagements and teams, reviews and performs, and reads all scopes');
 
   perform provio_test.assert_eq((select rights from roles where org_id = org and slug = 'observer'),
-    '{"manage_users":false,"manage_roles":false,"edit_config":false,"manage_engagements":false,"approve_plan":false,"review_and_approve":false,"perform_work":false,"can_reopen":false,"view_all_scopes":false,"read_only":true}'::jsonb,
-    'observer holds read_only only');
+    '{"manage_users":false,"manage_roles":false,"edit_config":false,"manage_engagements":false,"approve_plan":false,"review_and_approve":false,"perform_work":false,"can_reopen":false,"view_all_scopes":true,"read_only":true}'::jsonb,
+    'observer is read-only across all scopes');
 
-  perform provio_test.assert_eq((select rights from roles where org_id = org and slug = 'reviewer'), none_true,
-    'reviewer holds no true right');
-  perform provio_test.assert_eq((select rights from roles where org_id = org and slug = 'preparer'), none_true,
-    'preparer holds no true right');
-  perform provio_test.assert_eq((select rights from roles where org_id = org and slug = 'auditee'), none_true,
-    'auditee holds no true right');
+  perform provio_test.assert_eq((select rights from roles where org_id = org and slug = 'reviewer'),
+    '{"manage_users":false,"manage_roles":false,"edit_config":false,"manage_engagements":false,"approve_plan":false,"review_and_approve":true,"perform_work":true,"can_reopen":false,"view_all_scopes":false,"read_only":false}'::jsonb,
+    'reviewer reviews, approves and performs work');
+  perform provio_test.assert_eq((select rights from roles where org_id = org and slug = 'preparer'),
+    '{"manage_users":false,"manage_roles":false,"edit_config":false,"manage_engagements":false,"approve_plan":false,"review_and_approve":false,"perform_work":true,"can_reopen":false,"view_all_scopes":false,"read_only":false}'::jsonb,
+    'preparer performs work');
+  perform provio_test.assert_eq((select rights from roles where org_id = org and slug = 'auditee'),
+    '{"manage_users":false,"manage_roles":false,"edit_config":false,"manage_engagements":false,"approve_plan":false,"review_and_approve":false,"perform_work":false,"can_reopen":false,"view_all_scopes":false,"read_only":true}'::jsonb,
+    'auditee is read-only with no view_all_scopes (link access to its own entity)');
 end $$;
 
 -- e: caller_has_right reads the caller's own role rights.

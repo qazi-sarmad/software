@@ -31,8 +31,14 @@ for each row execute function public.roles_rights_guard();
 
 
 -- Organisation role matrix for seed roles, in every organisation. Idempotent.
+-- The matrix implements SPEC §4.1: a role is a bag of rights. It is the single source of truth the
+-- app mirrors in src/lib/rights.ts (rightsForRole), and src/lib/rightsMatrix.test.ts fails if the
+-- two drift. Adding a working right to a role never changes is_cia()/is_org_admin()/can_read_all_scopes()
+-- (0016), which read only approve_plan, can_reopen, manage_users and view_all_scopes.
 update roles set rights = '{"manage_users":true,"manage_roles":true,"edit_config":true,"manage_engagements":false,"approve_plan":false,"review_and_approve":false,"perform_work":false,"can_reopen":false,"view_all_scopes":false,"read_only":false}'::jsonb where is_seed and slug = 'org_admin';
-update roles set rights = '{"manage_users":false,"manage_roles":true,"edit_config":true,"manage_engagements":true,"approve_plan":true,"review_and_approve":false,"perform_work":false,"can_reopen":true,"view_all_scopes":true,"read_only":false}'::jsonb where is_seed and slug = 'cia';
-update roles set rights = '{"manage_users":false,"manage_roles":false,"edit_config":false,"manage_engagements":true,"approve_plan":false,"review_and_approve":false,"perform_work":false,"can_reopen":false,"view_all_scopes":true,"read_only":false}'::jsonb where is_seed and slug = 'audit_manager';
-update roles set rights = '{"manage_users":false,"manage_roles":false,"edit_config":false,"manage_engagements":false,"approve_plan":false,"review_and_approve":false,"perform_work":false,"can_reopen":false,"view_all_scopes":false,"read_only":true}'::jsonb where is_seed and slug = 'observer';
-update roles set rights = '{"manage_users":false,"manage_roles":false,"edit_config":false,"manage_engagements":false,"approve_plan":false,"review_and_approve":false,"perform_work":false,"can_reopen":false,"view_all_scopes":false,"read_only":false}'::jsonb where is_seed and slug in ('reviewer','preparer','auditee');
+update roles set rights = '{"manage_users":false,"manage_roles":true,"edit_config":true,"manage_engagements":true,"approve_plan":true,"review_and_approve":true,"perform_work":true,"can_reopen":true,"view_all_scopes":true,"read_only":false}'::jsonb where is_seed and slug = 'cia';
+update roles set rights = '{"manage_users":false,"manage_roles":false,"edit_config":false,"manage_engagements":true,"approve_plan":false,"review_and_approve":true,"perform_work":true,"can_reopen":false,"view_all_scopes":true,"read_only":false}'::jsonb where is_seed and slug = 'audit_manager';
+update roles set rights = '{"manage_users":false,"manage_roles":false,"edit_config":false,"manage_engagements":false,"approve_plan":false,"review_and_approve":true,"perform_work":true,"can_reopen":false,"view_all_scopes":false,"read_only":false}'::jsonb where is_seed and slug = 'reviewer';
+update roles set rights = '{"manage_users":false,"manage_roles":false,"edit_config":false,"manage_engagements":false,"approve_plan":false,"review_and_approve":false,"perform_work":true,"can_reopen":false,"view_all_scopes":false,"read_only":false}'::jsonb where is_seed and slug = 'preparer';
+update roles set rights = '{"manage_users":false,"manage_roles":false,"edit_config":false,"manage_engagements":false,"approve_plan":false,"review_and_approve":false,"perform_work":false,"can_reopen":false,"view_all_scopes":true,"read_only":true}'::jsonb where is_seed and slug = 'observer';
+update roles set rights = '{"manage_users":false,"manage_roles":false,"edit_config":false,"manage_engagements":false,"approve_plan":false,"review_and_approve":false,"perform_work":false,"can_reopen":false,"view_all_scopes":false,"read_only":true}'::jsonb where is_seed and slug = 'auditee';

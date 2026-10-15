@@ -22,12 +22,12 @@ const ROLE_NAMES: [string, string][] = [
 // these rights (caller_has_right), so the synthetic roles must carry them, not an empty map.
 const RIGHTS_BY_ROLE: Record<string, Record<string, boolean>> = {
   org_admin: { manage_users: true, manage_roles: true, edit_config: true },
-  cia: { manage_roles: true, edit_config: true, manage_engagements: true, approve_plan: true, can_reopen: true, view_all_scopes: true },
-  audit_manager: { manage_engagements: true, view_all_scopes: true },
-  observer: { read_only: true },
-  reviewer: {},
-  preparer: {},
-  auditee: {},
+  cia: { manage_roles: true, edit_config: true, manage_engagements: true, approve_plan: true, review_and_approve: true, perform_work: true, can_reopen: true, view_all_scopes: true },
+  audit_manager: { manage_engagements: true, review_and_approve: true, perform_work: true, view_all_scopes: true },
+  observer: { read_only: true, view_all_scopes: true },
+  reviewer: { review_and_approve: true, perform_work: true },
+  preparer: { perform_work: true },
+  auditee: { read_only: true },
 };
 
 /** The full eleven-key matrix, false-filled, so every role row carries every key (as 0012 does). */
