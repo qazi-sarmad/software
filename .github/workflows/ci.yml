@@ -30,6 +30,9 @@ jobs:
         run: npx vitest run
 
       - name: 3. Build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.TEST_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.TEST_SUPABASE_PUBLISHABLE_KEY }}
         run: npx vite build
 
       - name: 4. Token check
@@ -55,6 +58,12 @@ jobs:
           done
 
       - name: 7. Playwright
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.TEST_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.TEST_SUPABASE_PUBLISHABLE_KEY }}
+          SUPABASE_URL: ${{ secrets.TEST_SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.TEST_SUPABASE_PUBLISHABLE_KEY }}
+          SUPABASE_SECRET_KEY: ${{ secrets.TEST_SUPABASE_SECRET_KEY }}
         run: |
           npx playwright install --with-deps chromium
           npx playwright test

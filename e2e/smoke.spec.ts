@@ -10,12 +10,10 @@ const SEVEN_TABS = [
   'Issues Register',
 ];
 
-// TEMP_AUTH: a demo-tenant account. Used only while the development sign-in stub exists.
-const DEMO_EMAIL = 'a.wright@provio.internal';
-
-async function signIn(page: Page, email = DEMO_EMAIL) {
+async function signIn(page: Page) {
   await page.goto('/');
-  await page.getByLabel('Email').fill(email);
+  await page.getByLabel('Email').fill(process.env.E2E_EMAIL ?? '');
+  await page.getByLabel('Password').fill(process.env.E2E_PASSWORD ?? '');
   await page.getByRole('button', { name: 'Sign in' }).click();
   await expect(page.getByRole('navigation', { name: 'Navigation Strip' })).toBeVisible();
 }
@@ -29,11 +27,12 @@ test.describe('Phase 0: honest prototype', () => {
     await expect(page.getByRole('navigation', { name: 'Navigation Strip' })).toHaveCount(0);
   });
 
-  test('[E2E] an account outside the demo tenant is refused and gets no default role', async ({ page }) => {
+  test('[E2E] an unknown account is refused and gets no navigation', async ({ page }) => {
     await page.goto('/');
-    await page.getByLabel('Email').fill('nobody@example.com');
+    await page.getByLabel('Email').fill('nobody@provio-test.invalid');
+    await page.getByLabel('Password').fill('wrong-password-123');
     await page.getByRole('button', { name: 'Sign in' }).click();
-    await expect(page.getByTestId('signin-error')).toContainText('not provisioned');
+    await expect(page.getByTestId('signin-error')).toBeVisible();
     await expect(page.getByRole('navigation', { name: 'Navigation Strip' })).toHaveCount(0);
   });
 
