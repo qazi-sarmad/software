@@ -3,6 +3,7 @@ import { useApp } from '../../context/AppContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { useScopedData } from '../../hooks/useScopedData';
+import { hasRight } from '../../lib/rights';
 import { Select } from './Select';
 import { HeaderCalendarPanel } from '../calendar/HeaderCalendarPanel';
 import {
@@ -15,6 +16,7 @@ import {
   LogOut,
   ChevronDown,
   Building,
+  Users,
 } from './Icons';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -234,6 +236,18 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ onOpenCommandPalette }) =>
 
                   {/* Menu items */}
                   <div className="py-1">
+                    {(hasRight(currentUser, 'manage_users') || hasRight(currentUser, 'manage_roles')) && (
+                      <button
+                        onClick={() => {
+                          openInspector('people_admin');
+                          setIsProfileOpen(false);
+                        }}
+                        className="w-full text-left px-3 py-2 rounded-xl text-primary hover:bg-surface-hover transition-colors flex items-center gap-2.5"
+                      >
+                        <Users className="w-4 h-4 text-secondary stroke-[1.5]" />
+                        <span>People &amp; Roles</span>
+                      </button>
+                    )}
                     <button
                       onClick={() => {
                         openInspector('account_settings');

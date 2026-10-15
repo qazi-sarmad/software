@@ -18,6 +18,25 @@ const ROLE_NAMES: [string, string][] = [
   ['Auditee', 'auditee'],
 ];
 
+// The seed rights matrix from migration 0012_rights_closed.sql. The database decides access from
+// these rights (caller_has_right), so the synthetic roles must carry them, not an empty map.
+const RIGHTS_BY_ROLE: Record<string, Record<string, boolean>> = {
+  org_admin: { manage_users: true, manage_roles: true, edit_config: true },
+  cia: { manage_roles: true, edit_config: true, manage_engagements: true, approve_plan: true, can_reopen: true, view_all_scopes: true },
+  audit_manager: { manage_engagements: true, view_all_scopes: true },
+  observer: { read_only: true },
+  reviewer: {},
+  preparer: {},
+  auditee: {},
+};
+
+/** The full eleven-key matrix, false-filled, so every role row carries every key (as 0012 does). */
+function rightsFor(slug: string): Record<string, boolean> {
+  const keys = ['manage_users', 'manage_roles', 'edit_config', 'manage_engagements', 'approve_plan', 'review_and_approve', 'perform_work', 'can_reopen', 'view_all_scopes', 'read_only', 'manage_team'];
+  const held = RIGHTS_BY_ROLE[slug] ?? {};
+  return Object.fromEntries(keys.map((k) => [k, held[k] === true]));
+}
+
 const ROLE_IDS_A: Record<string, string> = {
   cia: '954c1587-4b41-59de-8048-5f7437b3c8e1',
   audit_manager: 'a1f462bc-86c4-516a-a980-3087b287d5eb',
@@ -79,8 +98,8 @@ export default async function globalSetup() {
   ], { onConflict: 'id' }));
 
   const roles = [
-    ...ROLE_NAMES.map(([name, slug]) => ({ id: ROLE_IDS_A[slug], org_id: ORG_A, name, slug, is_seed: true, rights: {} })),
-    ...ROLE_NAMES.map(([name, slug]) => ({ id: ROLE_IDS_B[slug], org_id: ORG_B, name, slug, is_seed: true, rights: {} })),
+    ...ROLE_NAMES.map(([name, slug]) => ({ id: ROLE_IDS_A[slug], org_id: ORG_A, name, slug, is_seed: true, rights: rightsFor(slug) })),
+    ...ROLE_NAMES.map(([name, slug]) => ({ id: ROLE_IDS_B[slug], org_id: ORG_B, name, slug, is_seed: true, rights: rightsFor(slug) })),
   ];
   must('roles', await sb.from('roles').upsert(roles, { onConflict: 'id' }));
 
@@ -121,4 +140,8 @@ export default async function globalSetup() {
     u.universes.map((universe) => ({ org_id: u.org, user_id: authIdFor(u.email, u.org), universe_id: universe, entity_id: null, engagement_id: null })),
   );
   must('insert scopes', await sb.from('user_scopes').insert(scopes));
+
+  // Leave no residue (M5): the invite cap counts events per org and per user per day, so a run
+  // that created members would otherwise change the cap the next run observes.
+  must('delete invite_cap_events', await sb.from('invite_cap_events').delete().in('org_id', [ORG_A, ORG_B]));
 }

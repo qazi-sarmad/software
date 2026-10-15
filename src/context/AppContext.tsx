@@ -33,7 +33,8 @@ export type InspectorType =
   | 'glassbox_share'
   | 'account_settings'
   | 'comment_history'
-  | 'cap_inspector';
+  | 'cap_inspector'
+  | 'people_admin';
 
 export interface InspectorState {
   type: InspectorType | null;

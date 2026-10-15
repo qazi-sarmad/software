@@ -74,6 +74,7 @@ const GlassBoxShareModal = lazy(() => import('./components/common/GlassBoxShareM
 const AccountSettingsModal = lazy(() => import('./components/common/AccountSettingsModal').then((m) => ({ default: m.AccountSettingsModal })));
 const CommentHistoryPanel = lazy(() => import('./components/reviews/CommentHistoryPanel').then((m) => ({ default: m.CommentHistoryPanel })));
 const CapInspector = lazy(() => import('./components/dashboard/CapInspector').then((m) => ({ default: m.CapInspector })));
+const PeopleAdminPanel = lazy(() => import('./components/admin/PeopleAdminPanel').then((m) => ({ default: m.PeopleAdminPanel })));
 
 const LoadingFallback: React.FC = () => (
   <div className="max-w-7xl mx-auto px-6 py-16 flex items-center justify-center text-secondary text-apple-13">
@@ -108,6 +109,8 @@ const AppContent: React.FC = () => {
         return 'Review Notes & 4-Eyes Discussion';
       case 'cap_inspector':
         return 'Corrective Action Plan (CAP) Details';
+      case 'people_admin':
+        return 'People & Roles';
       default:
         return 'Audit Inspector';
     }
@@ -131,6 +134,8 @@ const AppContent: React.FC = () => {
         return <CommentHistoryPanel />;
       case 'cap_inspector':
         return <CapInspector />;
+      case 'people_admin':
+        return <PeopleAdminPanel />;
       default:
         return null;
     }
