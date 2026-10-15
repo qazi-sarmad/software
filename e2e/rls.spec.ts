@@ -4,8 +4,12 @@ import { test, expect, type APIRequestContext } from '@playwright/test';
 const ORG_A = '02af9314-9781-5bde-b8a7-d46bfee07783';
 const ORG_B = 'bb3f7e0e-c6db-5121-a9e0-2e102e1fa2ab';
 
-const SUPABASE_URL = process.env.SUPABASE_URL ?? '';
-const PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY ?? '';
+// Trimmed: a stray newline in a CI secret makes the header invalid.
+const SUPABASE_URL = (process.env.SUPABASE_URL ?? '').trim();
+const PUBLISHABLE_KEY = (process.env.SUPABASE_PUBLISHABLE_KEY ?? '').trim();
+if (!SUPABASE_URL || !PUBLISHABLE_KEY) {
+  throw new Error('RLS e2e needs SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY');
+}
 
 // [table, column holding the org id]
 const TENANT_TABLES: [string, string][] = [
