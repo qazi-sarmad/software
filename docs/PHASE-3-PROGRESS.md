@@ -7,8 +7,8 @@ Updated after every task and committed with it.
 | Task | Status | Commit | CI run | Notes |
 |---|---|---|---|---|
 | 3A plan (docs only) | done | bb55d24 | 38820041986 | green |
-| 3B universes and entities (DB) | in progress | — | — | 0018 + test 25 |
-| 3C SIRA model and engine (DB + unit) | todo | — | — | |
+| 3B universes and entities (DB) | done | a2e4ad6 | 38821318496 | green |
+| 3C SIRA model and engine (DB + unit) | in progress | — | — | 0019 + test 26, 22 parity fixtures |
 | 3D SIRA cycles and emergent risks (DB) | todo | — | — | |
 | 3E audit plan (DB) | todo | — | — | |
 | 3F deployment gate (DB) | todo | — | — | |
