@@ -17,7 +17,7 @@ create trigger roles_delete_guard before delete on roles
 for each row execute function public.roles_delete_guard();
 
 
-create table if not exists config_versions (
+create table if not exists role_config_log (
   id bigint generated always as identity primary key,
   org_id uuid not null references orgs(id),
   entity text not null,
@@ -31,21 +31,21 @@ create table if not exists config_versions (
 );
 
 
-alter table config_versions enable row level security;
-drop policy if exists cv_select on config_versions;
-create policy cv_select on config_versions for select using (org_id = public.jwt_org_id());
+alter table role_config_log enable row level security;
+drop policy if exists rcl_select on role_config_log;
+create policy rcl_select on role_config_log for select using (org_id = public.jwt_org_id());
 
 
-create or replace function public.config_versions_append_only() returns trigger
+create or replace function public.role_config_log_append_only() returns trigger
 language plpgsql as $$
 begin
-  raise exception 'config_versions is append-only';
+  raise exception 'role_config_log is append-only';
 end $$;
 
 
-drop trigger if exists config_versions_no_change on config_versions;
-create trigger config_versions_no_change before update or delete on config_versions
-for each row execute function public.config_versions_append_only();
+drop trigger if exists role_config_log_no_change on role_config_log;
+create trigger role_config_log_no_change before update or delete on role_config_log
+for each row execute function public.role_config_log_append_only();
 
 
 create or replace function public.roles_config_log() returns trigger
@@ -64,9 +64,9 @@ begin
     v_org := new.org_id; v_entity_id := new.id; v_payload := to_jsonb(new); v_action := lower(tg_op);
   end if;
   perform pg_advisory_xact_lock(hashtext(v_org::text));
-  select cv.row_hash into v_prev from config_versions cv where cv.org_id = v_org order by cv.id desc limit 1;
+  select rcl.row_hash into v_prev from role_config_log rcl where rcl.org_id = v_org order by rcl.id desc limit 1;
   v_body := coalesce(v_prev, '') || '|' || v_action || '|' || v_payload::text;
-  insert into config_versions (org_id, entity, entity_id, action, payload, actor, prev_hash, row_hash)
+  insert into role_config_log (org_id, entity, entity_id, action, payload, actor, prev_hash, row_hash)
   values (v_org, 'role', v_entity_id, v_action, v_payload, auth.uid(), v_prev,
           encode(sha256(convert_to(v_body, 'UTF8')), 'hex'));
   if tg_op = 'DELETE' then
