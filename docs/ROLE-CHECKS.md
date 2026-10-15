@@ -151,3 +151,22 @@ SCOPE or DISPLAY, or listed under "Test and seed occurrences".
   rights check (`manage_engagements` / `manage_team`), which the function already consults.
 - `platform_admin` is not a tenant role: it carries no `org_id` and reads no tenant table. Its
   detection stays a role-name check and is recorded as a decision.
+
+## Behaviour changes (2F-2b)
+
+Recorded as required. The rights defaults in `src/lib/rights.ts` and the predicates in
+`supabase/migrations/0016_rights_rls.sql` were chosen to reproduce the previous role-name
+behaviour exactly, so no observable behaviour changes. The one place a decision had to be made
+is noted below.
+
+| # | Where | Before | After | Observable change |
+|---|-------|--------|-------|-------------------|
+| B1 | `public.caller_has_right` (0016) | resolved rights by joining `org_members` on `auth.uid()` | resolves rights from the role named by the JWT claim (`jwt_user_role()`) in the caller's org | **None for a real session.** A real login carries a hook-stamped claim (0010). It matters only for a forged token: test 05 sets an `org_id` claim for a user who is not a member of that org and expects RLS to follow the claim (spec §25.2, §4.5). The membership join would have denied it. Identity stays token-derived; the permission decision is still a lookup of the right key. |
+| B2 | `assign_team_role` (0016) | lead branch compared `m.team_role = 'lead'` | lead branch joins `team_role_rights` and tests `manage_team` | None. The `lead` team role is the only one seeded with `manage_team` (0013). |
+| B3 | `filterIssues` / `filterControls` / `filterWorkpapers` / `filterObservations` / `filterComments` (app) | compared the role name `observer` | tests `read_only` **and** `view_all_scopes` | None. An auditee also holds `read_only` but not `view_all_scopes`, so it keeps seeing its own entity's records, exactly as before. |
+| B4 | `canPerformAction` audit-sign-off (app) | compared `reviewer`, `observer`, `auditee`, `preparer` | tests `review_and_approve` (a reviewer) then falls back to the audit-sign-off denial text | None. Only a reviewer holds `review_and_approve` among the roles that are not an audit manager or CIA. |
+| B5 | `AuditUniverseTab` "add entity" (app) | `role === 'cia' \|\| role === 'org_admin'` | `hasRight('edit_config')` | None. CIA and org_admin are the only roles seeded with `edit_config`. |
+
+`is_cia()` and `is_org_admin()` keep their names because the RLS policies reference them; their
+bodies now read rights. `jwt_user_role()` remains the identity source, not a permission decision.
+

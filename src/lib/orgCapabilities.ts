@@ -4,6 +4,7 @@
  */
 import { CapCapability, OrgRoleConfig, Role, User } from '../types';
 import type { ActionGateResult } from '../types';
+import { hasAnyAuditRight } from './rights';
 
 export const DEFAULT_ORG_ID = 'org-default';
 
@@ -97,7 +98,7 @@ export function canPerformCapability(
   context?: { submitterUserId?: string }
 ): ActionGateResult {
   if (!user) return { allowed: false, reason: 'Unauthenticated' };
-  if (user.role === 'org_admin') {
+  if (!hasAnyAuditRight(user)) {
     return {
       allowed: false,
       reason: 'Organization administrators manage configuration and have no access to audit content',

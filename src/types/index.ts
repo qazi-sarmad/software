@@ -20,6 +20,12 @@ export type User = {
   email: string;
   avatar: string;
   role: Role;
+  /**
+   * The rights this session holds, from `roles.rights` for the member's role. When absent the
+   * app falls back to the default rights for `role` (src/lib/rights.ts). All permission decisions
+   * read this, never the role name.
+   */
+  rights?: Record<string, boolean>;
   universeIds: string[];
   entityIds: string[];
   department?: string;

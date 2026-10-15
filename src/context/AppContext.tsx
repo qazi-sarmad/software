@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import type { TenantSeed } from '../types/seed';
 import { canPerformAction, canAccessEntity } from '../lib/access';
+import { hasRight } from '../lib/rights';
 import { getSignOffBlockers } from '../lib/auditFile';
 import { appendLedgerEntry, computePayloadHash, HashUnavailableError } from '../lib/ledger';
 import { transitionCapStatus, CapStatusAction, TransitionCapResult } from '../lib/cap';
@@ -262,8 +263,8 @@ export function AppProvider({ user, seed, children }: { user: User; seed: Tenant
   });
 
   const addEntity = async (input: NewEntityInput): Promise<{ ok: true; id: string } | { ok: false; reason: string }> => {
-    if (currentUser.role !== 'cia' && currentUser.role !== 'org_admin') {
-      return { ok: false, reason: 'Only the CIA or an Org Admin can add auditable entities.' };
+    if (!hasRight(currentUser, 'edit_config')) {
+      return { ok: false, reason: 'Only a principal with the edit_config right can add auditable entities.' };
     }
     const name = input.name.trim();
     const code = input.code.trim().toUpperCase();
