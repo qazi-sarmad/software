@@ -23,13 +23,13 @@ Basis of the statuses: the repository is a front-end prototype with **no backend
 |---|---|---|
 | 0 Product Summary | Partial | Front-end prototype only. |
 | 1 Laws | Partial | L1: engines are plain functions (`src/lib/auditEngines.ts`, `src/lib/population.ts`) with tests; no Math.random in production paths (`src/guards/sourceGuards.test.ts`). L2: **Missing**, no tenant boundary exists. L3: client-side gate only (`src/lib/population.ts`, `src/context/populationGate.test.tsx`); **not enforced in a database**. L4: not audited. L5: hash chain exists in memory only (`src/lib/ledger.ts`, `src/lib/ledger.test.ts`); now refuses to seal without crypto.subtle (`src/lib/ledger.nohash.test.ts`). Nothing is persisted. |
-| 2 Structure and Tenancy | Missing | No tenants; one demo tenant constant in `src/lib/tempAuth.ts` (`is_demo: true`). |
+| 2 Structure and Tenancy | Partial | Two synthetic test organisations in `provio-test`, both `is_demo=true`, created by `e2e/global-setup.ts`. Tenant isolation under RLS is tested (`e2e/rls.spec.ts`). No platform tenant provisioning yet. |
 | 3 Hosting and Client Access | Missing | No hosting model or client access layer. |
 | 4.1 Roles | Partial | Role model in `src/lib/access.ts`, `src/lib/access.test.ts`. |
 | 4.2 Audit Teams | Partial | Not audited in Phase 0. |
 | 4.3 Visibility and enforcement | Partial | Client-side scoping (`src/hooks/useScopedData.ts`). No RLS, no server enforcement. |
 | 4.4 Fixed invariants | Partial | Four-eyes and lock rules in `src/lib/access.ts`, `src/lib/workpaperLock.ts` (`workpaperLock.test.ts`). Client-side only. |
-| 4.5 Identity | Partial | Persona switcher, "Simulate Viewpoint" and the default CIA identity are **removed** (`src/App.auth.test.tsx` → "the profile menu has no viewpoint simulation, no account list and no dev link"; `src/guards/sourceGuards.test.ts` → "has no \"Simulate Viewpoint\", persona or impersonation code" and "never uses the word \"viewpoint\" anywhere in production paths"). Identity now comes only from a session (`src/context/AuthContext.tsx`). Real authentication is **Missing**: only the development-only TEMP_AUTH stub (`src/lib/tempAuth.ts`, `src/lib/tempAuth.test.ts`) exists, and a production build cannot sign in. `src/components/dev/DevAccessPage.tsx` is still a role-switching harness, dev-only. |
+| 4.5 Identity | Partial | Persona switcher, "Simulate Viewpoint" and the default CIA identity are **removed** (`src/App.auth.test.tsx` → "the profile menu has no viewpoint simulation, no account list and no dev link"; `src/guards/sourceGuards.test.ts` → "has no \"Simulate Viewpoint\", persona or impersonation code" and "never uses the word \"viewpoint\" anywhere in production paths"). Identity now comes only from a session (`src/context/AuthContext.tsx`). Real authentication is in place: password sign-in through Supabase Auth (`src/data/client.ts`, `src/components/auth/SignInScreen.tsx`). Role and scopes are read from `org_members` and `user_scopes` under RLS (`e2e/smoke.spec.ts`, `e2e/rls.spec.ts`). The development-only TEMP_AUTH stub has been removed (`src/guards/sourceGuards.test.ts` → "TEMP_AUTH is removed: no references anywhere in src"). `src/components/dev/DevAccessPage.tsx` is still a role-switching harness, dev-only. |
 | 5 Navigation and Home | Partial | Seven tabs, no Reports or Calendar tab (`src/components/common/NavStrip.test.tsx` → "renders exactly the 7 canonical tabs, in order, without Reports, Calendar or Workbench"; `src/App.auth.test.tsx` → "admits a demo-tenant account and shows exactly the 7 tabs, with no Reports tab"). The admin placeholder wording "System Administration Viewpoint" was changed to "Organisation Administration" (`src/components/common/NavStrip.tsx`). Home content not audited. |
 | 6 Universes and Entities | Partial | `src/components/universe/AuditUniverseTab.tsx`. Hardcoded seed data. |
 | 7 Deployment Gate | Missing | Not found. |
@@ -175,8 +175,8 @@ database (no data module yet); that is the next Phase 1 slice.
 
 ### NOT DONE (Phase 1)
 
-- No application login: nothing calls Supabase Auth yet, and the front end reads no database
-  (no data module). TEMP_AUTH remains the development-only path.
+- Phase 1 sign-in is implemented and CI-verified (Supabase Auth, data module, RLS end-to-end test).
+  Not done: roles as data and `has_right()` in the database (Phase 2); outstanding dependency advisories (see `docs/NOT-DONE.md`).
 - The SQL layer now runs green against the real **provio-test** Supabase project (CI step 6,
   run 38551957604). Local validation used Postgres 17 with an `auth` schema shim; the real-project
   run is the CI step, not a hand-run from this machine.
