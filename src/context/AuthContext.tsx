@@ -7,7 +7,6 @@ export type SignInResult = { ok: true } | { ok: false; reason: string };
 interface AuthContextType {
   /** The authenticated identity, or null when there is no session. There is no default user. */
   user: User | null;
-  signIn: (email: string) => Promise<SignInResult>;
   signInWithPassword: (email: string, password: string) => Promise<SignInResult>;
   signOut: () => void;
 }
@@ -29,18 +28,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .catch(() => undefined);
   }, []);
 
-  const signIn = useCallback(async (email: string): Promise<SignInResult> => {
-    // The stub is development-only. Production has no way to sign in through it.
-    if (!import.meta.env.DEV) {
-      return { ok: false, reason: 'Sign-in is not available: authentication is not configured in this build.' };
-    }
-    const { resolveTempAccount } = await import('../lib/tempAuth');
-    const result = resolveTempAccount(email);
-    if (!result.ok) return result;
-    setUser(result.user);
-    return { ok: true };
-  }, []);
-
   const signInWithPassword = useCallback(async (email: string, password: string): Promise<SignInResult> => {
     const result = await clientSignIn(email, password);
     if (!result.ok) return result;
@@ -59,7 +46,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await clientSignOut();
   }, []);
 
-  const value = useMemo(() => ({ user, signIn, signInWithPassword, signOut }), [user, signIn, signInWithPassword, signOut]);
+  const value = useMemo(() => ({ user, signInWithPassword, signOut }), [user, signInWithPassword, signOut]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
