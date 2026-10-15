@@ -539,6 +539,8 @@ Used by QSCorp only.
 - **Current Supabase free-tier limits** (database size, file storage, project inactivity pause) must be verified on Supabase's pricing page before any production use, since they change.
 - **Database:** activity-log rows are kept compact.
 - **Archival:** older activity is exported to Storage files in a defined format, and each archive is hashed and logged. The live database keeps a rolling window.
+- **Population archival:** six months after an engagement is finalised (the platform default; each organisation may set its own period), a population's working rows are removed from the live database. The original uploaded file is kept compressed in Storage. Its SHA-256 hash is recorded in the business ledger at archive time and re-checked in the background on each download. A mismatch raises an integrity alert and is never silently accepted.
+- **Archived access:** archived populations remain available at any time: viewable (paginated, on demand) and downloadable (the original file, streamed). Access does not re-run verification, analytics or sampling. Nothing is deleted without a hash record.
 - **Evidence:** size-capped (§20). Large files can be stored in an external bucket later without changing the product model.
 - **Full export** (§18) is always available, so clients are never locked in.
 
