@@ -64,13 +64,6 @@ const DevPalettePage = import.meta.env.DEV
       }))
     )
   : null;
-const DevAccessPage = import.meta.env.DEV
-  ? lazy(() =>
-      import('./components/dev/DevAccessPage').then((m) => ({
-        default: m.DevAccessPage,
-      }))
-    )
-  : null;
 
 // Inspector content
 const ObservationDrilldown = lazy(() => import('./components/issues/ObservationDrilldown').then((m) => ({ default: m.ObservationDrilldown })));
@@ -280,13 +273,6 @@ const AppRoutes: React.FC = () => {
   }
 
   // Development-only tooling routes. Absent from production builds (see src/guards/prodBundle.test.ts).
-  if (import.meta.env.DEV && DevAccessPage && currentPath === '/dev/access') {
-    return (
-      <Suspense fallback={<LoadingFallback />}>
-        <DevAccessPage />
-      </Suspense>
-    );
-  }
   if (import.meta.env.DEV && DevPalettePage && currentPath === '/dev/palette') {
     return (
       <Suspense fallback={<LoadingFallback />}>
