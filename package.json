@@ -40,5 +40,8 @@
     "tsx": "^4.21.0",
     "typescript": "^7.0.2",
     "vitest": "^3.0.8"
+  },
+  "overrides": {
+    "source-map-js": "1.2.2"
   }
 }
