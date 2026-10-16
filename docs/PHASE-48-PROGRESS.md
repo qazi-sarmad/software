@@ -20,8 +20,8 @@ Updated after every task and committed with it. Every line carries the CI run ID
 
 | Task | Status | Commit | CI run | Notes |
 |---|---|---|---|---|
-| H0 preflight + docs | done | _see commit_ | _see CI_ | branch created from main; numbering locked |
-| H1 Grok housekeeping | todo | | | |
+| H0 preflight + docs | done | 48a329a | (no CI: docs only, pushed with H1) | branch created from main; numbering locked |
+| H1 Grok housekeeping | done | _see commit_ | _see CI_ | Phase 3 PR #9 description retargeted to main; singleClient guard present and green (3 tests) |
 | H2 nav labels | todo | | | |
 | H3a preferences + guard skeleton | todo | | | |
 | H3b RecordView + routing | todo | | | |
