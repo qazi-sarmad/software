@@ -65,7 +65,8 @@ language sql immutable as $$
     'entity_approval_settings','entity_decision_grants','user_preferences',
     'planning_sections','planning_suggestion_decisions','planning_reconciliation_acks',
     'org_sampling_table',
-    'analysis_results'
+    'analysis_results',
+    'severity_levels'
   ]
 $$;
 
@@ -208,6 +209,14 @@ begin
   select 'a0000000-0000-0000-0000-000000000001', id, 'A cap' from issues where org_id = 'a0000000-0000-0000-0000-000000000001';
   insert into cap_items (org_id, issue_id, action)
   select 'b0000000-0000-0000-0000-000000000001', id, 'B cap' from issues where org_id = 'b0000000-0000-0000-0000-000000000001';
+
+  insert into severity_levels (org_id, name, color_token, rank) values
+    ('a0000000-0000-0000-0000-000000000001', 'High',   '--accent-cinnabar',  3),
+    ('a0000000-0000-0000-0000-000000000001', 'Medium', '--accent-brass',     2),
+    ('a0000000-0000-0000-0000-000000000001', 'Low',    '--accent-verdigris', 1),
+    ('b0000000-0000-0000-0000-000000000001', 'High',   '--accent-cinnabar',  3),
+    ('b0000000-0000-0000-0000-000000000001', 'Medium', '--accent-brass',     2),
+    ('b0000000-0000-0000-0000-000000000001', 'Low',    '--accent-verdigris', 1);
 
   insert into ledger_entries (org_id, prev_hash, hash, payload_hash, action, payload) values
     ('a0000000-0000-0000-0000-000000000001', '', '', '', 'seed', '{"org":"A"}'),

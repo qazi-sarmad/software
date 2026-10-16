@@ -47,7 +47,7 @@ begin
     $q$select public.compute_sample('60000000-0000-0000-0000-0000000000a1','system')$q$,
     null, '4G: anon cannot compute a sample');
   perform provio_test.assert_raises(
-    $q$select public.create_observation_stub('50000000-0000-0000-0000-0000000000a1','70000000-0000-0000-0000-0000000000c1','duplicates','{}'::jsonb,array[1])$q$,
+    $q$select public.record_analysis_result('50000000-0000-0000-0000-0000000000a1','70000000-0000-0000-0000-0000000000c1','duplicates','{}'::jsonb,array[1])$q$,
     null, '4G: anon cannot raise a finding');
   perform provio_test.assert_eq((select count(*) from planning_sections), 0::bigint,
     '4G: anon reads zero planning sections');
@@ -73,7 +73,7 @@ begin
     $q$select public.sign_off_workpaper('60000000-0000-0000-0000-0000000000a1')$q$,
     'review_and_approve', '4G: a no-right caller cannot sign a workpaper');
   perform provio_test.assert_raises(
-    $q$select public.create_observation_stub('50000000-0000-0000-0000-0000000000a1','70000000-0000-0000-0000-0000000000c1','duplicates','{}'::jsonb,array[1])$q$,
+    $q$select public.record_analysis_result('50000000-0000-0000-0000-0000000000a1','70000000-0000-0000-0000-0000000000c1','duplicates','{}'::jsonb,array[1])$q$,
     'perform_work', '4G: a no-right caller cannot raise a finding');
 end $$;
 select provio_test.as_owner();

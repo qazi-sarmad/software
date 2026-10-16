@@ -20,7 +20,7 @@ select provio_test.as_user('10000000-0000-0000-0000-0000000000a1', 'a0000000-000
 do $$
 declare v_id uuid;
 begin
-  v_id := public.create_observation_stub(
+  v_id := public.record_analysis_result(
     '50000000-0000-0000-0000-0000000000a1','70000000-0000-0000-0000-0000000000f1',
     'round_numbers', '{"multiples":["1000"]}'::jsonb, array[1,2]);
   perform provio_test.assert_true(v_id is not null, '4F: a valid check result is stored');
@@ -35,7 +35,7 @@ end $$;
 do $$
 begin
   perform provio_test.assert_raises(
-    $q$select public.create_observation_stub('50000000-0000-0000-0000-0000000000a1','70000000-0000-0000-0000-0000000000f1','duplicates','{}'::jsonb,array[99])$q$,
+    $q$select public.record_analysis_result('50000000-0000-0000-0000-0000000000a1','70000000-0000-0000-0000-0000000000f1','duplicates','{}'::jsonb,array[99])$q$,
     'row_ref_out_of_scope', '4F: a row reference outside the population is refused');
 end $$;
 
@@ -46,7 +46,7 @@ select provio_test.as_user('10000000-0000-0000-0000-0000000000b1', 'b0000000-000
 do $$
 begin
   perform provio_test.assert_raises(
-    $q$select public.create_observation_stub('50000000-0000-0000-0000-0000000000a1','70000000-0000-0000-0000-0000000000f1','duplicates','{}'::jsonb,array[1])$q$,
+    $q$select public.record_analysis_result('50000000-0000-0000-0000-0000000000a1','70000000-0000-0000-0000-0000000000f1','duplicates','{}'::jsonb,array[1])$q$,
     'not found in this organisation', '4F: an Org B caller cannot reference an Org A engagement');
 end $$;
 
@@ -74,7 +74,7 @@ select provio_test.as_user('10000000-0000-0000-0000-0000000000a5', 'a0000000-000
 do $$
 begin
   perform provio_test.assert_raises(
-    $q$select public.create_observation_stub('50000000-0000-0000-0000-0000000000a1','70000000-0000-0000-0000-0000000000f1','duplicates','{}'::jsonb,array[1])$q$,
+    $q$select public.record_analysis_result('50000000-0000-0000-0000-0000000000a1','70000000-0000-0000-0000-0000000000f1','duplicates','{}'::jsonb,array[1])$q$,
     'perform_work', '4F: a caller without perform_work cannot raise a finding');
 end $$;
 select provio_test.as_owner();

@@ -3,7 +3,8 @@
  *
  * The check maths lives in src/lib/analyticsEngine.ts (pure functions). This module is the only
  * database edge: it persists a check's result rows into analysis_results and raises a finding
- * observation via the create_observation_stub RPC, which 5A replaces with the real create_observation.
+ * observation via the raise_finding_from_result RPC. (4F used a temporary create_observation_stub;
+ * 5A retired it — decision D-5A-STUB.)
  * Components never import the Supabase client.
  */
 import { callRpc, getClient, type DataResult } from './db';
@@ -24,7 +25,7 @@ export function raiseFinding(
   engagementId: string, populationId: string, ruleId: string,
   params: Record<string, unknown>, rowRefs: number[]
 ): Promise<DataResult> {
-  return callRpc('create_observation_stub', {
+  return callRpc('raise_finding_from_result', {
     p_engagement_id: engagementId, p_population_id: populationId, p_rule_id: ruleId,
     p_params: params, p_row_refs: rowRefs,
   });

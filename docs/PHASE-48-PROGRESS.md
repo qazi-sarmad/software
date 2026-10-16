@@ -33,10 +33,10 @@ Updated after every task and committed with it. Every line carries the CI run ID
 | 4E row testing DB | done | e2dc0bf | 38897513403 | migration 0028, test 36 (D-4E-M1, D-4E-four-eyes, D-4E-exception-default, D-4E-status) |
 | 4F analyst engine | done | 81dadff | 38898749540 | green — migration 0029, test 37, src/lib/analyticsEngine.ts + test (D-4F-M1, D-4F-stub, D-4F-engine-scope) |
 | 4G Phase 4 tests | done | d1ed656 | 38899789331 | test 38 acceptance (cross-org, anon, no-right, L3, floor, four-eyes, chain, lock) + 4F unit tests |
-| 4H Phase 4 data module | done | _this commit_ | _see CI_ | src/data/{planning,population,sampling,rowTesting,analytics}.ts + phase4.test.ts (14 tests) |
+| 4H Phase 4 data module | done | 29d473b | 38900814033 | src/data/{planning,population,sampling,rowTesting,analytics}.ts + phase4.test.ts (14 tests). First run red on a 0009 deadlock (shared test-project race, D-4D-CI-RACE class); rerun of the same commit green. |
 | 4I Phase 4 UI | todo | | | |
 | 4J Phase 4 docs | todo | | | |
-| 5A findings DB | todo | | | |
+| 5A findings DB | done | _this commit_ | _see CI_ | migration 0030, test 39 (D-5A-STUB resolved, D-5A-M1, D-5A-status, D-5A-tokens, D-5A-optional-sections) |
 | 5B conclusion DB | todo | | | |
 | 5C floating window | todo | | | |
 | 5D document viewer DB | todo | | | |

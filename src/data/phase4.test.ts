@@ -147,7 +147,7 @@ describe('analytics data module (4H)', () => {
   it('raises a finding with the rule id, params and row refs', async () => {
     const m = await import('./analytics');
     await m.raiseFinding('e1', 'p1', 'duplicates', { window: 2 }, [3, 4]);
-    expect(rpcMock).toHaveBeenCalledWith('create_observation_stub', { p_engagement_id: 'e1', p_population_id: 'p1', p_rule_id: 'duplicates', p_params: { window: 2 }, p_row_refs: [3, 4] });
+    expect(rpcMock).toHaveBeenCalledWith('raise_finding_from_result', { p_engagement_id: 'e1', p_population_id: 'p1', p_rule_id: 'duplicates', p_params: { window: 2 }, p_row_refs: [3, 4] });
   });
 
   it('maps analysis results and is inert when not configured', async () => {
