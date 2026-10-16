@@ -36,8 +36,8 @@ Updated after every task and committed with it. Every line carries the CI run ID
 | 4H Phase 4 data module | done | 29d473b | 38900814033 | src/data/{planning,population,sampling,rowTesting,analytics}.ts + phase4.test.ts (14 tests). First run red on a 0009 deadlock (shared test-project race, D-4D-CI-RACE class); rerun of the same commit green. |
 | 4I Phase 4 UI | todo | | | |
 | 4J Phase 4 docs | todo | | | |
-| 5A findings DB | done | _this commit_ | _see CI_ | migration 0030, test 39 (D-5A-STUB resolved, D-5A-M1, D-5A-status, D-5A-tokens, D-5A-optional-sections) |
-| 5B conclusion DB | todo | | | |
+| 5A findings DB | done | b8a7dd3 | _see CI_ | migration 0030, test 39 (D-5A-STUB resolved, D-5A-M1, D-5A-status, D-5A-tokens, D-5A-optional-sections) |
+| 5B conclusion DB | done | _this commit_ | _see CI_ | migration 0034, test 43 (D-5B-M1, D-5B-testing-gate, D-5B-opinion-config, D-5B-files) |
 | 5C floating window | todo | | | |
 | 5D document viewer DB | todo | | | |
 | 5E Phase 5 tests | todo | | | |

@@ -35,6 +35,16 @@ Every line carries the commit hash and the CI run ID, not only "green".
 | C1 platform DB + RPCs | done | 45d705c | 38919258533 | `0031_platform_control_plane.sql`, test `40` |
 | C2 org settings DB | done | 639f1b7 | 38920609007 | `0032_org_admin_settings.sql`, test `41` |
 | C3 data modules | done | 5b201b7 | 38920982962 | `src/data/platform.ts`, `src/data/orgSettings.ts` (+ sampling writes) |
-| C4 Super Admin portal UI | done | _this commit_ | _see CI_ | `/superadmin` route, `src/components/superadmin/*`, migration `0033`, test `42` |
-| C5 Org Admin settings UI | done | _this commit_ | _see CI_ | `OrgSettingsPanel` (`org_settings` inspector), profile-menu entry gated by `edit_config` |
-| C6 docs + PR | todo | | | |
+| C4 Super Admin portal UI | done | 9653feb | 38938542085 | `/superadmin` route, `src/components/superadmin/*`, migration `0033`, test `42`; sign-in fix `12f9a31` |
+| C4-FIX platform sign-in | done | 12f9a31 | 38938542085 | platform staff carry no org, so `loadCurrentUser` throws; ask `platform_whoami()` instead |
+| C5 Org Admin settings UI | done | 8722e35 | 38938542085 | `OrgSettingsPanel` (`org_settings` inspector), profile-menu entry gated by `edit_config` |
+| C6 docs + PR | done | _this commit_ | _see CI_ | inventory, PARITY §24, NOT-DONE, report; PR opened |
+
+## CI notes
+
+- Run `38922600512` (C4+C5, `8722e35`) was **red** at step 7: the platform-staff Playwright test timed
+  out waiting for the tenant navigation strip. Root cause: `AuthContext.signInWithPassword` returned
+  `{ok:false}` for a platform account because `loadCurrentUser()` throws when there is no org member
+  row. Fix `61e36d8`/`12f9a31`. Run `38938542085` is green (all 7 steps).
+- Both `61e36d8` and `12f9a31` are the same fix; `61e36d8` still threw because the throw happened
+  inside the `try` before the platform probe. `12f9a31` wraps `loadCurrentUser()` in `.catch(() => null)`.

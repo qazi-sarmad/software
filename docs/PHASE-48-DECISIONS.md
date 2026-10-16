@@ -293,3 +293,31 @@ absent nothing extra is required. How to reverse: change the hard-coded array or
 - `src/data/analytics.ts`, `src/data/phase4.test.ts`: same rename.
 Reason: retire the temporary stub everywhere in one commit, as the 4F dependency rule requires.
 
+## D-5B-M1 - no conclusion table existed; created rather than extended
+
+Grep for `conclusion` in `supabase/migrations` found no table (only the `conclusion` text column on
+`sample_rows` and the `stage` enum value). `conclusion_records` is therefore created in `0034`, not
+extended. How to reverse: drop the table in a later migration.
+
+## D-5B-testing-gate - Testing sign-off is derived, not stored
+
+The task says `pull_exceptions` "can only run if Testing is signed off", but the task never defines a
+Testing sign-off record. Options: (a) add a `testing_signed_off_at` column to `engagements`; (b) derive
+it from the workpapers. Choice: (b) — `testing_signed_off(engagement)` is true when the engagement has
+at least one workpaper and every workpaper is `signed_off` (0028 already stores that status). Reason:
+one source of truth, no second flag to keep in step, and it matches §10.4 (a stage is signed off when
+its work is signed off). How to reverse: add an explicit flag and change the function body.
+
+## D-5B-opinion-config - overall opinion required or optional per org
+
+§10.3 makes the overall opinion "optional, and configurable as required or optional". Choice: read the
+org `config_versions` key `conclusion.opinion_required` (boolean); when absent the opinion is optional.
+`sign_conclusion` refuses an empty opinion only when the key is true. How to reverse: change the key
+name or the default.
+
+## D-5B-files - files touched beyond those the task named
+
+- `supabase/tests/00_lib.sql`: added `conclusion_records` to `org_tables()` so the cross-org isolation
+  tests (01/03/04) cover the new table. Reason: the guard that a new tenant table is invisible to other
+  orgs and to the platform role is only as strong as that list.
+

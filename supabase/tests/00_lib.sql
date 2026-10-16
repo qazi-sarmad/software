@@ -66,7 +66,8 @@ language sql immutable as $$
     'planning_sections','planning_suggestion_decisions','planning_reconciliation_acks',
     'org_sampling_table',
     'analysis_results',
-    'severity_levels'
+    'severity_levels',
+    'conclusion_records'
   ]
 $$;
 
