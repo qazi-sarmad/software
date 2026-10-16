@@ -9,8 +9,8 @@ Updated after every task and committed with it.
 | 3A plan (docs only) | done | bb55d24 | 38820041986 | green |
 | 3B universes and entities (DB) | done | a2e4ad6 | 38821318496 | green |
 | 3C SIRA model and engine (DB + unit) | done | ff20c3d / 8f285e3 | 38847291428 | green (fixed) |
-| 3D SIRA cycles and emergent risks (DB) | in progress | — | — | 0020 + test 27 |
-| 3E audit plan (DB) | todo | — | — | |
+| 3D SIRA cycles and emergent risks (DB) | done | 2bccbdb | 38848164526 | green |
+| 3E audit plan (DB) | in progress | — | — | 0021 + test 28 |
 | 3F deployment gate (DB) | todo | — | — | |
 | 3G combined approval (DB) | todo | — | — | |
 | 3H tests for 3B–3G | todo | — | — | |
