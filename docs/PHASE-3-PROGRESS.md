@@ -13,8 +13,8 @@ Updated after every task and committed with it.
 | 3E audit plan (DB) | done | c69e549 | 38848625680 | green |
 | 3F deployment gate (DB) | done | a71f2cf | 38849481615 | green |
 | 3G combined approval (DB) | done | 008be40 | 38850118794 | green |
-| 3H tests for 3B–3G | in progress | — | — | test 31 |
-| 3I data module (src/data) | todo | — | — | |
+| 3H tests for 3B–3G | done | 289b79e | 38850672810 | green |
+| 3I data module (src/data) | in progress | — | — | db/universe/sira/plan/deployment |
 | 3J UI | todo | — | — | |
 | 3K docs + PR | todo | — | — | |
 
