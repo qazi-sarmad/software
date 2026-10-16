@@ -192,3 +192,28 @@ The org sampling table holds a base size and a percentage per (control_type, fre
 minimum sample size is `least(pop_count, greatest(base_size, ceil(pop_count * pct)))`. Reason: it
 honours both a floor and a materiality percentage, and never asks for more rows than exist. How to
 reverse: change the expression in `get_sample_size`.
+
+## D-4E-M1 - a dedicated workpaper_rows table, test_rows left intact
+
+The 0004 `test_rows` table is a thinner shape (workpaper_id, sample_row_id, result) and is written by
+test 12 (sealed engagement). The task names a richer `workpaper_rows` table (row_ref, result,
+rationale, exception_flag, prepared/reviewed). Choice: create `workpaper_rows` as the row-testing table
+and leave `test_rows` untouched, because extending `test_rows` to the new shape would need every
+existing column redefined and would risk the sealed-engagement test. How to reverse: migrate the
+`test_rows` rows into `workpaper_rows` and drop `test_rows` (a later, owner-approved change).
+
+## D-4E-four-eyes - the signer must not have prepared every row
+
+Same pattern as 4B. `sign_off_workpaper` refuses when the signer prepared *every* row, mirroring the
+`sign_offs` CHECK (reviewer <> preparer) at the workpaper level.
+
+## D-4E-exception-default - a cross or unverifiable defaults to an exception
+
+`record_workpaper_row` flags `cross`/`unverifiable` as exceptions by default (the caller may override).
+Reason: §12 findings come from exceptions, and a non-tick result is by definition a departure. The
+sign-off gate refuses an un-flagged exception.
+
+## D-4E-status - workpaper status vocabulary
+
+Added `status` with the task's values (open/sampling/locked/prepared/reviewed/signed_off). The 0004
+`prepared` boolean is retained and set true on sign-off, so existing code that reads it keeps working.
