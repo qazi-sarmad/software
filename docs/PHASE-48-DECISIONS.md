@@ -321,6 +321,17 @@ name or the default.
   tests (01/03/04) cover the new table. Reason: the guard that a new tenant table is invisible to other
   orgs and to the platform role is only as strong as that list.
 
+## D-5B-signoff-config - stage sign-off role is configurable per org AND per engagement
+
+Owner clarification: which team role signs off each stage (Planning, Testing, Conclusion) is
+configurable per organisation **and per engagement** (audit deployed) — it is not a universal
+per-client setting. The task text for 5B only requires "four-eyes" plus the right. Implementation
+keeps the enforcement on the right (`review_and_approve`), which is the only safe gate today, and
+records the configuration as a follow-on: a per-engagement `stage_sign_off_roles` config that names
+the role allowed to sign each stage, layered on top of the right. How to reverse: no code change is
+needed to keep the current behaviour; adding the config narrows who may sign, never widens it.
+Status: recorded, not yet built (see PHASE-48-BLOCKERS.md).
+
 ## D-5D-M1 - no evidence-file table existed; created rather than extended
 
 Grep for `evidence`, `file_id` and `document` in `supabase/migrations` found no file table (evidence
