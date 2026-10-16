@@ -26,7 +26,7 @@ Updated after every task and committed with it. Every line carries the CI run ID
 | H3a preferences + guard skeleton | done | ae92f3b | _see CI_ | migration 0024, src/data/preferences.ts, guards; SQL test 32 (D-H3a) |
 | H3b RecordView + routing | done | 97b1c3e | _see CI_ | FloatingWindow/RecordView/RecordContent + /view route (D-H3b) |
 | H3c abolish InspectorPanel | in_progress | | | deleted panel; spec §27.5/§17.1 updated (D-H3/D-H3c) |
-| 4A plan docs | todo | | | |
+| 4A plan docs | done | _pending_ | _see CI_ | docs/PHASE-4-PLAN.md; migrations 0025+, tests 33+ |
 | 4B planning DB | todo | | | |
 | 4C population gate DB | todo | | | |
 | 4D sampling engine DB | todo | | | |
