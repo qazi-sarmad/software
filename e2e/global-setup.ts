@@ -8,6 +8,9 @@ const A_U1 = 'f011bd6c-12ce-5b8f-b945-a5f67d65482d';
 const B_U1 = '9da6011b-49ea-5779-ac15-170b23ec123a';
 const B_U2 = '3dd4b6f1-9f4b-57d9-a846-336993d97ec3';
 
+/** Platform staff login (spec §24). No org membership; the access-token hook stamps platform_admin. */
+const PLATFORM_EMAIL = 'platform.admin@provio-test.invalid';
+
 const ROLE_NAMES: [string, string][] = [
   ['CIA', 'cia'],
   ['Audit Manager', 'audit_manager'],
@@ -128,6 +131,11 @@ export default async function globalSetup() {
       display_name: u.name,
     }, { onConflict: 'org_id,user_id' }));
   }
+
+  // Platform staff (spec §24): no org membership, so the access-token hook stamps platform_admin.
+  const platformId = await findOrCreateUser(sb, PLATFORM_EMAIL);
+  must('setPassword ' + PLATFORM_EMAIL, await sb.auth.admin.updateUserById(platformId, { password }));
+  must('platform_admins', await sb.from('platform_admins').upsert({ user_id: platformId }, { onConflict: 'user_id' }));
 
   const members = must('members', await sb.from('org_members').select('org_id, user_id, display_name').in('org_id', [ORG_A, ORG_B]));
   const authIdFor = (email: string, org: string) => {

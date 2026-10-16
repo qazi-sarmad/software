@@ -27,6 +27,23 @@ export interface TrailRow {
   ts: string;
 }
 
+export interface InviteCapRow {
+  orgId: string;
+  perUserDaily: number;
+}
+
+export interface SupportGrantRow {
+  id: string;
+  orgId: string;
+  grantedBy: string | null;
+  grantedAt: string;
+  expiresAt: string;
+  scope: Record<string, unknown>;
+  revokedAt: string | null;
+  revokeReason: string | null;
+  platformActorId: string | null;
+}
+
 const NOT_CONFIGURED = 'The platform module is not configured.';
 
 /** List tenants with their control-plane state. Empty when the module is not configured. */
@@ -92,4 +109,46 @@ export function revokeSupportAccess(grantId: string, reason: string): Promise<Da
     { p_grant_id: grantId, p_reason: reason },
     NOT_CONFIGURED
   );
+}
+
+/** The signed-in session's platform identity, read from the JWT by the database. */
+export async function platformWhoami(): Promise<{ userId: string | null; isPlatformAdmin: boolean }> {
+  const sb = getClient();
+  if (!sb) return { userId: null, isPlatformAdmin: false };
+  const { data, error } = await sb.rpc('platform_whoami');
+  if (error) throw new Error(error.message);
+  const row = (data ?? [])[0] as Record<string, unknown> | undefined;
+  return {
+    userId: (row?.user_id as string | null) ?? null,
+    isPlatformAdmin: Boolean(row?.is_platform_admin),
+  };
+}
+
+export async function listInviteCaps(): Promise<InviteCapRow[]> {
+  const sb = getClient();
+  if (!sb) return [];
+  const { data, error } = await sb.rpc('platform_get_invite_caps');
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((r: Record<string, unknown>) => ({
+    orgId: r.org_id as string,
+    perUserDaily: r.per_user_daily as number,
+  }));
+}
+
+export async function listSupportGrants(): Promise<SupportGrantRow[]> {
+  const sb = getClient();
+  if (!sb) return [];
+  const { data, error } = await sb.rpc('platform_list_support_grants');
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((g: Record<string, unknown>) => ({
+    id: g.id as string,
+    orgId: g.org_id as string,
+    grantedBy: (g.granted_by as string | null) ?? null,
+    grantedAt: g.granted_at as string,
+    expiresAt: g.expires_at as string,
+    scope: (g.scope as Record<string, unknown>) ?? {},
+    revokedAt: (g.revoked_at as string | null) ?? null,
+    revokeReason: (g.revoke_reason as string | null) ?? null,
+    platformActorId: (g.platform_actor_id as string | null) ?? null,
+  }));
 }

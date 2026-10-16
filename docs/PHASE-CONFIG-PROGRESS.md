@@ -34,7 +34,7 @@ Every line carries the commit hash and the CI run ID, not only "green".
 | C0b ownership scrub | done | 23d915a | _with C1_ | stray agent-authored patch removed; provenance words stripped; `.openhands/` untracked |
 | C1 platform DB + RPCs | done | 45d705c | 38919258533 | `0031_platform_control_plane.sql`, test `40` |
 | C2 org settings DB | done | 639f1b7 | 38920609007 | `0032_org_admin_settings.sql`, test `41` |
-| C3 data modules | done | _this commit_ | _see CI_ | `src/data/platform.ts`, `src/data/orgSettings.ts` (+ sampling writes) |
-| C4 Super Admin portal UI | todo | | | |
-| C5 Org Admin settings UI | todo | | | |
+| C3 data modules | done | 5b201b7 | 38920982962 | `src/data/platform.ts`, `src/data/orgSettings.ts` (+ sampling writes) |
+| C4 Super Admin portal UI | done | _this commit_ | _see CI_ | `/superadmin` route, `src/components/superadmin/*`, migration `0033`, test `42` |
+| C5 Org Admin settings UI | done | _this commit_ | _see CI_ | `OrgSettingsPanel` (`org_settings` inspector), profile-menu entry gated by `edit_config` |
 | C6 docs + PR | todo | | | |

@@ -7,6 +7,7 @@ import { InlineError } from './components/common/InlineError';
 import type { User } from './types';
 import type { TenantSeed } from './types/seed';
 import { EMPTY_SEED } from './data/emptySeed';
+import { hasSession } from './data/client';
 import { ThemeProvider } from './context/ThemeContext';
 import { HeaderBar } from './components/common/HeaderBar';
 import { NavStrip } from './components/common/NavStrip';
@@ -227,6 +228,34 @@ const RecordPage: React.FC<{ target: ViewRecordTarget }> = ({ target }) => {
   );
 };
 
+const SuperAdminPortal = lazy(() =>
+  import('./components/superadmin/SuperAdminPortal').then((m) => ({ default: m.SuperAdminPortal }))
+);
+
+/** Shows the sign-in screen for an unauthenticated visitor, else the portal (which re-checks the role). */
+const PlatformGate: React.FC = () => {
+  const { user } = useAuth();
+  const [checked, setChecked] = useState(false);
+  const [signedIn, setSignedIn] = useState(false);
+
+  useEffect(() => {
+    let live = true;
+    hasSession().then((s) => {
+      if (live) {
+        setSignedIn(s);
+        setChecked(true);
+      }
+    });
+    return () => {
+      live = false;
+    };
+  }, [user]);
+
+  if (!checked) return <LoadingFallback />;
+  if (!signedIn) return <SignInScreen />;
+  return <SuperAdminPortal />;
+};
+
 const AppRoutes: React.FC = () => {
   const [currentPath, setCurrentPath] = useState(
     typeof window !== 'undefined' ? window.location.pathname : '/'
@@ -257,6 +286,17 @@ const AppRoutes: React.FC = () => {
     return (
       <Suspense fallback={<LoadingFallback />}>
         <DevPalettePage />
+      </Suspense>
+    );
+  }
+
+  // Super Admin portal (/superadmin, spec §24). A separate console for QSCorp platform staff. It
+  // renders the portal for an authenticated session and the sign-in screen otherwise; the portal
+  // itself re-checks the platform role in the database and shows a denial screen without it.
+  if (currentPath === '/superadmin') {
+    return (
+      <Suspense fallback={<LoadingFallback />}>
+        <PlatformGate />
       </Suspense>
     );
   }

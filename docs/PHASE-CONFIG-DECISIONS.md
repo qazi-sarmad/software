@@ -2,6 +2,36 @@
 
 Every entry: number, task, unclear point, options, choice, reason, how to reverse.
 
+## D-C4 — Super Admin portal route and identity probe
+
+Task C4. Unclear point: spec §24 says the portal is "separate login with mandatory MFA" and
+"data-blind", but the app has one sign-in and one `/` shell. Options: (a) build a second auth
+stack/MFA flow; (b) a `/superadmin` route that reuses the existing session, shows the sign-in
+screen for an unauthenticated visitor, and re-checks the platform role in the database.
+Choice: (b). Reason: MFA is an auth-provider setting (recorded as owner-deferred in
+PHASE-CONFIG-BLOCKERS.md); the security property that matters now — data-blindness and refusal of
+tenant sessions — is enforced by the platform RPCs (`require_platform_admin`), proven by SQL test 42
+and by the Playwright denial test. `platform_whoami()` is the one read that is safe for a tenant
+(it returns `false`, not an error). How to reverse: delete the `/superadmin` route and the
+`SuperAdminPortal` component; nothing else references them.
+
+## D-C5 — Org Admin settings entry point
+
+Task C5. Unclear point: the settings must be changeable from the Org Admin portal, but the existing
+admin surface is the People & Roles inspector. Options: (a) a new inspector type; (b) a new route.
+Choice: (a) `org_settings` inspector type, reached from the profile menu and gated by
+`hasRight(currentUser, 'edit_config')`. Reason: consistent with People & Roles (an InspectorType the
+record view already renders), and the record view is non-blocking. The DB re-checks `edit_config`.
+How to reverse: remove the `org_settings` InspectorType and the menu entry.
+
+## D-C5-SAMPLING-SIGNATURE
+
+Task C5. Unclear point: `listSamplingRules(orgId)` required an org id the caller does not know (RLS
+already scopes rows to the JWT org). Options: (a) pass the org from context; (b) make the argument
+optional. Choice: (b) — optional argument; when omitted the RLS policy scopes to `jwt_org_id()`.
+Reason: fewer ways to pass the wrong tenant. How to reverse: restore the required argument.
+
+
 ## D-C3 — AI provenance stripped; owner sole author
 
 The repository is the owner's work and property. All AI-agent authorship, co-author and session
