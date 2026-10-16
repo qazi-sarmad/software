@@ -42,3 +42,20 @@ it set. How to reverse: drop the `icap_settings_platform_select` policy.
 
 Choice: support-grant duration ceiling read from `platform_settings.support_grant_max_hours`
 (default 48). Reason: config-not-code. How to reverse: `update platform_settings ...`.
+
+## D-C2 — org settings surfaces
+
+Task C2. Unclear point: which org settings lacked a portal-editable path.
+Options: (a) leave sampling/severity/email to SQL; (b) add CRUD RPCs.
+Choice: (b). Added `admin_upsert_sampling_row`, `admin_delete_sampling_row`,
+`admin_upsert_severity_level`, `admin_delete_severity_level`, `admin_set_email_provider`. Reason: the
+product law — configuration in portals, not SQL. How to reverse: drop the functions.
+
+Choice: `email_settings` created here (it did not exist). `provider_config` is a secret: tenant roles
+read only the non-secret columns (`org_id, provider, from_address, updated_at`) via column grants,
+never `provider_config`; the platform admin reads the row for metadata. Reason: no secret in a tenant
+surface. How to reverse: drop the table.
+
+Choice: writes are logged to the org's hash-chained configuration log via `admin_log_change`; no
+direct INSERT/UPDATE/DELETE policy on `org_sampling_table`, `severity_levels` or `email_settings` for
+tenant roles. Reason: auditable, RPC-only writes. How to reverse: add a policy.
