@@ -45,18 +45,18 @@ Updated after every task and committed with it. Every line carries the CI run ID
 | 5G Phase 5 UI | todo | | | |
 | 5H Phase 5 docs | todo | | | |
 | 6A report drafting DB | done | 46ee36c | 38954769628 | migration 0036 (report_versions, report_blocks, compose_report, compute_report_summary), test 45 (D-6A-M1, D-6A-blocks, D-6A-summary) |
-| 6B management comments DB | done | a25cab4 | _see CI_ | migration 0037 (report_comments, add/resolve RPCs, open_report_comment_count), test 46 (D-6B-M1, D-6B-resolution, D-6B-open-count) |
-| 6C freeze/issuance DB | done | 3c55c7b | _see CI_ | migration 0040 (freeze_report, issue_report), test 49 (open-comment gate, CAP gate, ledger, queued email) |
-| 6D CAP register DB | done | 646c722 | _see CI_ | migration 0038 (caps, update_cap, close_cap, check_cap_reconciliation), test 47 (D-6D-M1, D-6D-CAP) |
-| 6E email queue DB | done | 838f935 | _see CI_ | migration 0039 (email_queue, queue_email), test 48 (org sees sent/failed only; provider_config hidden) |
+| 6B management comments DB | done | a25cab4 | 38956498574 | migration 0037 (report_comments, add/resolve RPCs, open_report_comment_count), test 46 (D-6B-M1, D-6B-resolution, D-6B-open-count) |
+| 6C freeze/issuance DB | done | 3c55c7b | 38956498574 | migration 0040 (freeze_report, issue_report), test 49 (open-comment gate, CAP gate, ledger, queued email) |
+| 6D CAP register DB | done | 646c722 | 38956498574 | migration 0038 (caps, update_cap, close_cap, check_cap_reconciliation), test 47 (D-6D-M1, D-6D-CAP) |
+| 6E email queue DB | done | 838f935 | 38956498574 | migration 0039 (email_queue, queue_email), test 48 (org sees sent/failed only; provider_config hidden) |
 | 6F Phase 6 tests | todo | | | |
 | 6G Phase 6 data module | todo | | | |
 | 6H Phase 6 UI | todo | | | |
 | 6I Phase 6 docs | todo | | | |
-| 7A exports DB | todo | | | |
-| 7B imports DB | todo | | | |
-| 7C activity archival DB | todo | | | |
-| 7D prior-year import DB | todo | | | |
+| 7A exports DB | done | 4f16408 | _see CI_ | migration 0041 (exports_log, log_export, export_*), test 50 (D-7A-M1/M1b/M1c) |
+| 7B imports DB | done | efc4073 | _see CI_ | migration 0042 (import_jobs, start/validate/commit_import), test 51 (D-7B-M1) |
+| 7C activity archival DB | done | fc08a1e | _see CI_ | migration 0043 (archive_jobs, archive_activity_period), test 52 (D-7C-M1, D-7C-append-only, D-7C-right, D-7C-storage) |
+| 7D prior-year import DB | done | _this commit_ | _see CI_ | migration 0044 (prior_year_imports, import/confirm/revert, sign_planning gate), test 53 (D-7D-M1/M1b/revert) |
 | 7E Phase 7 tests | todo | | | |
 | 7F Phase 7 data module | todo | | | |
 | 7G Phase 7 UI | todo | | | |

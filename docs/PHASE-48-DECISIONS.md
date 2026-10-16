@@ -1,4 +1,4 @@
-# Phases 4â€“8 â€” decisions
+# Phases 4–8 — decisions
 
 Decision order: (a) `docs/SPEC-v10.md`; (b) the Laws; (c) the simplest option that obeys the Laws;
 (d) best for multi-tenant, auditable, configuration-not-code, deterministic. Never an option that
@@ -15,7 +15,7 @@ The platform portal (Phase 8) is the sole place that may read `user_role` from t
 `caller_has_right` / `hasRight`. Platform checks must not leak into org RPCs.
 Reason: Â§24 requires a platform role with no tenant business access; the tenant boundary is rights,
 so the one exception is scoped to platform-only functions and platform-only tables.
-Reverse: remove the `platform_admin` branch from the Phase 8 functions; nothing in Phases 4â€“7 reads it.
+Reverse: remove the `platform_admin` branch from the Phase 8 functions; nothing in Phases 4–7 reads it.
 
 ## D-H0-USERS
 
@@ -24,11 +24,11 @@ Reverse: remove the `platform_admin` branch from the Phase 8 functions; nothing 
 Playwright tests use these two. Reason: they already exist and the setup is idempotent.
 Reverse: revert the `e2e/` changes of this build.
 
-## D-H2 â€” nav labels
+## D-H2 — nav labels
 
 Task H2. Unclear point: the code used freeze-spec tab labels that differ from SPEC-v10 Â§5.
 Options: keep the old labels; or adopt Â§5.
-Choice: Â§5 wins. Mapping applied â€” Executive Summary â†’ Dashboard; Pending Tasks â†’ Work Queue;
+Choice: Â§5 wins. Mapping applied — Executive Summary â†’ Dashboard; Pending Tasks â†’ Work Queue;
 Audit File (tab) â†’ Audit Files; Issues Register â†’ Issues & CAP Register. Audit Universe, Audit Plan
 and SIRA are unchanged.
 Reason: SPEC-v10 is the authoritative spec (Â§5 "Primary navigation"). Old freeze labels
@@ -40,7 +40,7 @@ text), `e2e/smoke.spec.ts` (SEVEN_TABS + click titles), `src/App.auth.test.tsx` 
 (hint text). Tab `id`s are unchanged, so routing and `data-testid`s are unaffected.
 How to reverse: restore the NavStrip strings and the test assertions from the pre-H2 commit `244bb3e`.
 
-## D-H3a â€” preferences table, RPCs and the no-blocking-modal guard scope
+## D-H3a — preferences table, RPCs and the no-blocking-modal guard scope
 
 Task H3a. Unclear point: the task predicts the guard offender set as `AuditFileModal.tsx` plus
 `ConfirmPanel.tsx`, but the repository has no `ConfirmPanel.tsx`, and the real full-viewport overlays
@@ -49,7 +49,7 @@ Options: (a) create a `ConfirmPanel.tsx` that is not used; (b) write the guard a
 with a justified allow-list.
 Choice: (b). `user_preferences` is a new table (grep found none; `config_versions` is org-level
 configuration, not per-user state). Guard allow-list: `AuditFileModal.tsx` (Â§17.1 window chrome,
-explicitly non-blocking), the global command palette (Â§5, Ctrl/âŒ˜ K â€” transient, Esc-dismissed),
+explicitly non-blocking), the global command palette (Â§5, Ctrl/âŒ˜ K — transient, Esc-dismissed),
 `HeaderCalendarPanel.tsx` (anchored popover, `role="dialog"` but no scrim, no focus trap; the page
 stays usable). `ConfirmPanel.tsx` remains an allowed name for when the hold-to-confirm panel lands
 (Â§27.5 names it). `InspectorPanel.tsx` is a genuine blocking modal and is in a TEMPORARY list that
@@ -61,12 +61,12 @@ Files touched beyond the task list: `supabase/tests/00_lib.sql` (`user_preferenc
 How to reverse: delete 0024 + test 32, drop `user_preferences` from `org_tables()`, delete
 `src/data/preferences.ts` and the guard; restore NavStrip etc. from `8500602`.
 
-## D-H3a-M1 â€” no collision
+## D-H3a-M1 — no collision
 
 Grep for `user_preferences`, `get_user_preference` and `set_user_preference` found no existing
 object, so 0024 creates rather than alters. No M1 collision.
 
-## D-H3b â€” record view wiring, `/view` route, and files touched
+## D-H3b — record view wiring, `/view` route, and files touched
 
 Task H3b. Unclear point: the app has no client router; the shell switches tabs by context state.
 Options: (a) pull in a router dependency; (b) reuse the existing pathname/popstate approach already
@@ -84,7 +84,7 @@ Reason: extracting the content renderer keeps both modes identical and lets the 
 overlay surfaces.
 How to reverse: restore `src/App.tsx` from `ae92f3b` and delete the four new files.
 
-## D-H3c â€” InspectorPanel abolished; Â§27.5 / Â§17.1 text updated
+## D-H3c — InspectorPanel abolished; Â§27.5 / Â§17.1 text updated
 
 Task H3c. `src/components/common/InspectorPanel.tsx` is deleted; grep confirms no remaining imports
 (only `RecordContent`/`FloatingWindow` remain). `docs/baseline-lines.json` records the deletion under
@@ -92,7 +92,7 @@ Task H3c. `src/components/common/InspectorPanel.tsx` is deleted; grep confirms n
 accidental shrink). SPEC-v10 Â§27.5 and Â§17.1 now describe the two-mode record view; the old wording
 ("sliding inspector panels", "inspector panels slide in") is superseded.
 
-## D-H3 â€” two-mode record view (freeze label superseded)
+## D-H3 — two-mode record view (freeze label superseded)
 
 Task H3. The freeze spec's "sliding inspector panel" is superseded by the two-mode record view per
 SPEC-v10 Â§27.5. MODE A full page (`/view/:recordType/:id`, breadcrumb, no overlay); MODE B floating
@@ -103,14 +103,14 @@ allow-list of non-blocking surfaces.
 How to reverse: restore `InspectorPanel.tsx`, the Â§27.5/Â§17.1 text and `App.tsx` from `8500602`;
 remove `FloatingWindow`/`RecordView`/`RecordContent` and the guard entries.
 
-## D-4B-M1 â€” no collision
+## D-4B-M1 — no collision
 
 Grep for `planning_sections`, `planning_suggestion_decisions`, `planning_reconciliation_acks`,
 `populate_planning_suggestions`, `check_planning_reconciliation`, `sign_planning` found no existing
 object, so 0025 creates rather than alters. `plans`/`plan_items`/`plan_versions` exist but are the
 universe audit plan (a different shape), so they are not extended. No M1 collision.
 
-## D-4B-scope â€” testing lock is a stage guard, not an edit guard
+## D-4B-scope — testing lock is a stage guard, not an edit guard
 
 Task 4B says "Testing is locked until planning_sections for that engagement are signed off". The
 existing fixtures (and the sealed-engagement tests) mark a testing workpaper `prepared` while no
@@ -121,7 +121,7 @@ in testing is governed by 4E (sign-off/reopen). Reason: it enforces the spec's i
 starts before Planning sign-off) without weakening the sealed-engagement tests. How to reverse: widen
 the trigger condition in `guard_testing_lock` to any UPDATE.
 
-## D-4B-four-eyes â€” signer must not have prepared every section
+## D-4B-four-eyes — signer must not have prepared every section
 
 The spec requires "review by a role configured for that stage" (Â§10.4) and four-eyes is the house
 pattern (D3). Choice: `sign_planning` requires `review_and_approve` and refuses when the signer is the
@@ -129,14 +129,14 @@ preparer of *every* section (they must not be the sole author). A signer who pre
 sections may sign; that mirrors the existing `sign_offs` four-eyes CHECK, which only forbids
 `reviewer = preparer`. How to reverse: change the `v_self = v_sections` test to `v_self > 0`.
 
-## D-4B-reconciliation â€” clean, or acknowledged with a reason
+## D-4B-reconciliation — clean, or acknowledged with a reason
 
 Â§10.1 blocks sign-off on a SIRA/Planning mismatch "until resolved". The task also says a discrepancy
 may be "acknowledged with a recorded reason". Choice: `check_planning_reconciliation` returns true
 only when every Planning risk is in the latest published SIRA; `sign_planning` proceeds when the gate
 is true OR a `planning_reconciliation_acks` row with a >=10-character reason exists. If no SIRA cycle
 is published, the Planning RCM risks cannot be reconciled, so the gate is false and an acknowledgement
-is required â€” the strict reading of "the current SIRA". How to reverse: treat a missing cycle as
+is required — the strict reading of "the current SIRA". How to reverse: treat a missing cycle as
 "nothing to reconcile" in `check_planning_reconciliation`.
 
 ## D-4C-M1 - existing objects extended, not duplicated
@@ -256,7 +256,7 @@ role to the real RPC `record_analysis_result(...)` (same signature, same org-sco
 references), drops `create_observation_stub` outright, and adds `raise_finding_from_result(...)`, which
 stores the result and opens an observation carrying the rule id, params and row refs (Â§12). The Phase 4
 data module and tests 37/38 now call the real names.
-How to reverse: re-create the stub in a new migration (do not â€” the dependency rule forbids it).
+How to reverse: re-create the stub in a new migration (do not — the dependency rule forbids it).
 
 ## D-5A-M1 - observations/findings/issues already existed in 0004
 
@@ -280,7 +280,7 @@ at the database (Â§14.4 "shown with its text label, never by colour alone"). H
 ## D-5A-optional-sections - the four mandatory tags are hard-coded, the rest are org config
 
 The four mandatory role tags (context, condition, effect, risk) are hard-coded in `check_readability`
-exactly as Â§14.3 states. Optional tags (criteria, cause, recommendation, â€¦) are read from the org's
+exactly as Â§14.3 states. Optional tags (criteria, cause, recommendation, …) are read from the org's
 `config_versions` key `methodology.required_sections` via `org_required_sections()`; when the key is
 absent nothing extra is required. How to reverse: change the hard-coded array or the config key name.
 
@@ -303,7 +303,7 @@ extended. How to reverse: drop the table in a later migration.
 
 The task says `pull_exceptions` "can only run if Testing is signed off", but the task never defines a
 Testing sign-off record. Options: (a) add a `testing_signed_off_at` column to `engagements`; (b) derive
-it from the workpapers. Choice: (b) â€” `testing_signed_off(engagement)` is true when the engagement has
+it from the workpapers. Choice: (b) — `testing_signed_off(engagement)` is true when the engagement has
 at least one workpaper and every workpaper is `signed_off` (0028 already stores that status). Reason:
 one source of truth, no second flag to keep in step, and it matches Â§10.4 (a stage is signed off when
 its work is signed off). How to reverse: add an explicit flag and change the function body.
@@ -402,7 +402,7 @@ pair means no divergent status set. How to reverse: delete the two functions and
 Grep for `exports_log`, `log_export` and `export_*` found nothing. 0041 creates `exports_log`, the
 `log_export` RPC and the per-object export functions (no collision). All export functions are
 `security definer` and org-scoped, so a caller cannot export another tenant's data; `export_full_tenant`
-additionally requires the `manage_users` right (�18, �26).
+additionally requires the `manage_users` right (§18, §26).
 
 ## D-7A-M1b - sign_offs keys on workpaper_id, not object_id
 
@@ -421,7 +421,7 @@ joining `samples -> workpapers` on `workpaper_id`.
 Grep for `import_jobs`, `start_import`, `validate_import`, `commit_import` found nothing. 0042 creates
 them (no collision). `commit_import` writes entities and RCM risks directly; a users import records the
 org membership only when the row carries a user id (invite delivery is out of scope, NOT-DONE
-�email-dispatch); a populations import stages rows without creating a population, because the �6 gate
+§email-dispatch); a populations import stages rows without creating a population, because the §6 gate
 still requires a verified sha256 and row_count.
 
 ## D-7C-M1 - no archive table or function existed
@@ -435,7 +435,7 @@ L5 makes `activity_log` append-only: the `activity_log_append_only` trigger (000
 raises `append_only_violation` on any DELETE for every role, and the Laws outrank a task step (never
 weaken an append-only invariant). The function therefore records the period, the row count, the content
 hash, the storage path and a hash-chained ledger entry, and leaves the rows in place. The physical purge
-is a separate owner-run maintenance step, recorded in NOT-DONE �activity-purge. How to reverse: add an
+is a separate owner-run maintenance step, recorded in NOT-DONE §activity-purge. How to reverse: add an
 owner-only maintenance function that drops and recreates the trigger around a scoped delete.
 
 ## D-7C-right - archival requires manage_engagements
@@ -448,7 +448,7 @@ platform-only right and swap the check in `archive_activity_period`.
 ## D-7C-storage - the archive upload is a stub
 
 `archive_activity_period` records a `storage_path` and a `content_hash` and sets the job to `done`; the
-Storage upload itself is deferred to an edge function (NOT-DONE �archival-storage). The ledger entry is
+Storage upload itself is deferred to an edge function (NOT-DONE §archival-storage). The ledger entry is
 written now so the hash is accountable before the upload.
 
 ## D-6C-6D-order - 6D (CAP register) is built before 6C (freeze/issuance)
@@ -477,8 +477,29 @@ in `search_documents`.
 
 ## D-5D-extraction-stub - extraction is a pending row, not real extraction
 
-The task says "Extraction is async (called by an edge function stub â€” the stub writes a pending row and
+The task says "Extraction is async (called by an edge function stub — the stub writes a pending row and
 returns; actual extraction is out of scope)". `request_extraction` writes a `pending` row and returns;
 it never writes text. Real extraction and the edge function are recorded in NOT-DONE. How to reverse:
 have the edge function write `extracted_text` and flip the status to `done`.
 
+
+
+## D-7D-M1 - no prior-year import table or function existed
+
+Grep for `prior_year_imports`, `import_prior_year_item`, `confirm_prior_year_item` found nothing. 0044
+creates them (no collision). `import_prior_year_item` refuses any `item_type` outside the four allowed
+values, so populations, samples, results, conclusions and evidence can never be imported (§19.2).
+
+## D-7D-M1b - sign_planning is overridden to add the §19.2 gate
+
+The task requires "sign_planning checks there are no imported_confirm items without confirmation". The
+existing `sign_planning` lives in the landed migration 0025. Rather than edit a landed migration, 0044
+re-issues it with `create or replace`, adding the `unconfirmed_prior_year_imports` gate. Reason: landed
+migrations stay frozen; the newest migration owns the current definition. How to reverse: drop the 0044
+definition and let 0025's version stand.
+
+## D-7D-revert - revert_prior_year_item was added beyond the task text
+
+The task names only `import_prior_year_item` and `confirm_prior_year_item`, but §19.2 UI needs a
+"confirm-or-revert action per item". 0044 adds `revert_prior_year_item` (sets status='reverted', logs it)
+so the UI has both actions. Recorded per the OVERNIGHT "may add steps" rule.
