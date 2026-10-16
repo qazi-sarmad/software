@@ -7,7 +7,7 @@ import { pendingComments } from '../../lib/comments';
 const TODAY = '2026-09-30'; // demo clock, same as the rest of the app until the injected clock lands
 
 /**
- * Pending Tasks (Guide v7 §5.2), first cut: my audits by state and review comments awaiting a response.
+ * Work Queue (SPEC-v10 §5), first cut: my audits by state and review comments awaiting a response.
  * Time-machine calendar and manager roll-up are NOT built yet.
  */
 export const PendingTasksTab: React.FC = () => {
@@ -27,7 +27,7 @@ export const PendingTasksTab: React.FC = () => {
     <section data-testid="tab-pending" className="max-w-7xl mx-auto px-6 py-8 min-h-[60vh] space-y-8">
       <div className="space-y-1">
         <div className="flex items-center gap-2 text-secondary text-apple-12 font-medium uppercase tracking-wider">
-          <CheckCircle2 className="w-4 h-4 stroke-[1.3]" /><span>Pending Tasks</span>
+          <CheckCircle2 className="w-4 h-4 stroke-[1.3]" /><span>Work Queue</span>
         </div>
         <h1 className="font-serif-title text-apple-28 font-bold text-primary tracking-tight">What needs you</h1>
         <p className="text-apple-13 text-secondary">{comments.length} review comments awaiting a response · {sections[1].rows.length} overdue audits</p>

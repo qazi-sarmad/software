@@ -18,23 +18,23 @@ export const NavStrip: React.FC = () => {
   const { currentUser } = useScopedData();
   const trackRef = useRef<HTMLDivElement>(null);
 
-  // Guide v7 Part 4.1: exactly these seven tabs, in this order.
+  // SPEC-v10 §5: exactly these seven tabs, in this order.
   // No Reports, Workbench or Calendar tab; audit files open from everywhere.
   const allTabs = [
-    { id: 'executive', label: 'Executive Summary', icon: LayoutDashboard },
-    { id: 'pending', label: 'Pending Tasks', icon: CheckCircle2 },
+    { id: 'executive', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'pending', label: 'Work Queue', icon: CheckCircle2 },
     { id: 'universe', label: 'Audit Universe', icon: Network },
     { id: 'plan', label: 'Audit Plan', icon: ClipboardList },
     { id: 'sira', label: 'SIRA', icon: Shield },
-    { id: 'audit_file', label: 'Audit File', icon: Folder },
-    { id: 'issues', label: 'Issues Register', icon: AlertTriangle },
+    { id: 'audit_file', label: 'Audit Files', icon: Folder },
+    { id: 'issues', label: 'Issues & CAP Register', icon: AlertTriangle },
   ];
 
   // Filter tabs by the rights the session holds (Part 2.B). No role name is compared.
   const visibleTabs = allTabs.filter((tab) => {
     // A principal with no audit right (configuration-only) sees no audit tabs.
     if (!hasAnyAuditRight(currentUser)) return false;
-    // A read-only principal: an all-scope reader (observer) sees Executive Summary and Issues;
+    // A read-only principal: an all-scope reader (observer) sees Dashboard and Issues;
     // a scoped reader (auditee) additionally sees the Audit Universe tab for its own entity.
     if (isReadOnly(currentUser)) {
       if (hasRight(currentUser, 'view_all_scopes')) {

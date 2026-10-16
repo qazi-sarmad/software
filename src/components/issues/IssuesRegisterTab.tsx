@@ -49,7 +49,7 @@ export const IssuesRegisterTab: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-hairline pb-4">
         <div>
-          <h1 className="text-apple-28 font-bold text-primary tracking-tight">Audit Findings &amp; Issues Register</h1>
+          <h1 className="text-apple-28 font-bold text-primary tracking-tight">Findings, Issues &amp; CAP Register</h1>
           <p className="text-apple-15 text-secondary mt-1">
             Tracking remedial commitments, management action plans, and regulatory observations
           </p>

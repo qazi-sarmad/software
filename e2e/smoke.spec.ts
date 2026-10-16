@@ -1,13 +1,13 @@
 import { test, expect, type Page } from '@playwright/test';
 
 const SEVEN_TABS = [
-  'Executive Summary',
-  'Pending Tasks',
+  'Dashboard',
+  'Work Queue',
   'Audit Universe',
   'Audit Plan',
   'SIRA',
-  'Audit File',
-  'Issues Register',
+  'Audit Files',
+  'Issues & CAP Register',
 ];
 
 // Preparer role: NavStrip shows all seven audit tabs to it.
@@ -84,13 +84,13 @@ test.describe('Phase 0: honest prototype', () => {
     await expect(page.locator('main')).toBeVisible();
 
     const nav = page.getByRole('navigation', { name: 'Navigation Strip' });
-    await nav.getByTitle('Pending Tasks').click();
+    await nav.getByTitle('Work Queue').click();
     await expect(page.getByTestId('tab-pending')).toBeVisible();
     await nav.getByTitle('SIRA').click();
     await expect(page.getByTestId('tab-sira')).toBeVisible();
-    await nav.getByTitle('Audit File').click();
+    await nav.getByTitle('Audit Files').click();
     await expect(page.getByTestId('tab-audit-file')).toBeVisible();
-    await nav.getByTitle('Executive Summary').click();
+    await nav.getByTitle('Dashboard').click();
     await expect(page.locator('main')).toBeVisible();
 
     expect(errors).toEqual([]);

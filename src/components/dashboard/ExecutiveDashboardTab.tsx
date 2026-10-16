@@ -126,7 +126,7 @@ export const ExecutiveDashboardTab: React.FC = () => {
             subtitle: `${stats.criticalIssues} High/Critical Severity Escalations`,
             status: stats.criticalIssues > 0 ? 'Action Required' : 'On Track',
             statusType: stats.criticalIssues > 0 ? 'cinnabar' : 'verdigris',
-            hint: 'Click to open Issues Register',
+            hint: 'Click to open Issues & CAP Register',
           }}
           onClick={() => setActiveTab('issues')}
         >

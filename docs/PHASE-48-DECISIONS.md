@@ -23,3 +23,19 @@ Reverse: remove the `platform_admin` branch from the Phase 8 functions; nothing 
 `bilal.ahmed@provio-test.invalid` (Org A `preparer`). No new users are created for this build; the
 Playwright tests use these two. Reason: they already exist and the setup is idempotent.
 Reverse: revert the `e2e/` changes of this build.
+
+## D-H2 — nav labels
+
+Task H2. Unclear point: the code used freeze-spec tab labels that differ from SPEC-v10 §5.
+Options: keep the old labels; or adopt §5.
+Choice: §5 wins. Mapping applied — Executive Summary → Dashboard; Pending Tasks → Work Queue;
+Audit File (tab) → Audit Files; Issues Register → Issues & CAP Register. Audit Universe, Audit Plan
+and SIRA are unchanged.
+Reason: SPEC-v10 is the authoritative spec (§5 "Primary navigation"). Old freeze labels
+(Executive Summary, Pending Tasks, Audit File, Issues Register) are superseded.
+Files touched beyond `NavStrip.tsx`: `src/components/common/NavStrip.test.tsx` (asserts exact label
+text), `e2e/smoke.spec.ts` (SEVEN_TABS + click titles), `src/App.auth.test.tsx` (negative assertion),
+`src/components/pending/PendingTasksTab.tsx` and `src/components/issues/IssuesRegisterTab.tsx`
+(visible headings using the old wording), `src/components/dashboard/ExecutiveDashboardTab.tsx`
+(hint text). Tab `id`s are unchanged, so routing and `data-testid`s are unaffected.
+How to reverse: restore the NavStrip strings and the test assertions from the pre-H2 commit `244bb3e`.
