@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useScopedData } from '../../hooks/useScopedData';
 import { useApp } from '../../context/AppContext';
 import { HoverPreview } from '../common/HoverPreview';
 import { AuditEntity } from '../../types';
-import { Shield, AlertTriangle, Layers, ArrowRight, Activity } from '../common/Icons';
+import { Shield, AlertTriangle, Layers, ArrowRight, Activity, CheckCircle2 } from '../common/Icons';
 import { hasRight } from '../../lib/rights';
+import { listEntities, type EntityRow } from '../../data/universe';
 
 /**
  * Audit Universe & entity heatmap (spec §6). Every entity card opens the entity-approval flow in the
@@ -17,9 +18,24 @@ export const AuditUniverseTab: React.FC = () => {
   const [adding, setAdding] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [form, setForm] = useState({ name: '', code: '', department: '', headOfDepartment: '', inherentRisk: 'medium' as 'low' | 'medium' | 'high' | 'critical' });
+  const [dbEntities, setDbEntities] = useState<EntityRow[]>([]);
 
   const currentUniverse =
     scopedUniverses.find((u) => u.id === selectedUniverseId) || scopedUniverses[0];
+
+  // The approval flow reads the entities the database actually holds for this session (RLS decides
+  // visibility). With no configured client the list is empty and the seeded cards are shown alone.
+  useEffect(() => {
+    let live = true;
+    listEntities()
+      .then((rows) => {
+        if (live) setDbEntities(rows);
+      })
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, [currentUniverse?.id]);
 
   const getRiskBadge = (risk: string) => {
     switch (risk) {
@@ -163,6 +179,39 @@ export const AuditUniverseTab: React.FC = () => {
           );
         })}
       </div>
+
+      {/* Entities the database holds for this session, with their approval status. */}
+      {dbEntities.length > 0 && (
+        <div className="space-y-3">
+          <h2 className="text-apple-12 font-semibold text-secondary uppercase tracking-wider">
+            Entities awaiting or holding approval ({dbEntities.length})
+          </h2>
+          <ul data-testid="db-entities" className="divide-y divide-hairline rounded-2xl bg-surface border border-hairline overflow-hidden">
+            {dbEntities.map((e) => (
+              <li key={e.id} className="flex items-center justify-between gap-3 px-4 py-3">
+                <span className="flex items-center gap-2 text-apple-13 text-primary">
+                  {e.status === 'approved' && <CheckCircle2 className="w-4 h-4 text-verdigris stroke-[1.5]" />}
+                  {e.name}
+                  <span
+                    data-testid={`db-entity-status-${e.id}`}
+                    className="px-2 py-0.5 rounded-full text-apple-11 font-semibold uppercase bg-surface-sunken text-secondary"
+                  >
+                    {e.status}
+                  </span>
+                </span>
+                <button
+                  type="button"
+                  data-testid={`entity-approval-open-${e.id}`}
+                  onClick={() => openInspector('entity_approval', { entity: e })}
+                  className="px-3 py-1 rounded-lg border border-hairline text-apple-12 text-primary hover:bg-surface-hover"
+                >
+                  Open approval
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 };
