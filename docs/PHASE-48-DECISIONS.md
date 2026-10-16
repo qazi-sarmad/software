@@ -321,3 +321,25 @@ name or the default.
   tests (01/03/04) cover the new table. Reason: the guard that a new tenant table is invisible to other
   orgs and to the platform role is only as strong as that list.
 
+## D-5D-M1 - no evidence-file table existed; created rather than extended
+
+Grep for `evidence`, `file_id` and `document` in `supabase/migrations` found no file table (evidence
+was only a UI concept in `src/components/audit/EvidenceTab.tsx`). `evidence_files` is created in `0035`
+as the minimal anchor for `document_extractions.file_id`. How to reverse: fold `evidence_files` into a
+richer evidence model in a later migration and repoint the FK.
+
+## D-5D-stage-filter - stage awareness is a cumulative set
+
+§17.2 says Planning shows Planning documents, Testing shows Planning and Testing, Conclusion shows all.
+Choice: `search_documents` maps the stage to a cumulative array (`planning` → {planning}, `testing` →
+{planning,testing}, `conclusion` → all three) and filters `evidence_files.stage` against it. Reason: it
+matches the spec sentence literally and keeps the filter in one place. How to reverse: change the CASE
+in `search_documents`.
+
+## D-5D-extraction-stub - extraction is a pending row, not real extraction
+
+The task says "Extraction is async (called by an edge function stub — the stub writes a pending row and
+returns; actual extraction is out of scope)". `request_extraction` writes a `pending` row and returns;
+it never writes text. Real extraction and the edge function are recorded in NOT-DONE. How to reverse:
+have the edge function write `extracted_text` and flip the status to `done`.
+

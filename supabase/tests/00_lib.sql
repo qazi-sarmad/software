@@ -67,7 +67,8 @@ language sql immutable as $$
     'org_sampling_table',
     'analysis_results',
     'severity_levels',
-    'conclusion_records'
+    'conclusion_records',
+    'evidence_files','document_extractions'
   ]
 $$;
 

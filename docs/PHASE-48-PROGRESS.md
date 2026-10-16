@@ -39,7 +39,7 @@ Updated after every task and committed with it. Every line carries the CI run ID
 | 5A findings DB | done | b8a7dd3 | _see CI_ | migration 0030, test 39 (D-5A-STUB resolved, D-5A-M1, D-5A-status, D-5A-tokens, D-5A-optional-sections) |
 | 5B conclusion DB | done | _this commit_ | _see CI_ | migration 0034, test 43 (D-5B-M1, D-5B-testing-gate, D-5B-opinion-config, D-5B-files) |
 | 5C floating window | todo | | | |
-| 5D document viewer DB | todo | | | |
+| 5D document viewer DB | done | _this commit_ | _see CI_ | migrations 0035 (evidence_files, document_extractions, FTS, search_documents), test 44 (D-5D-M1, D-5D-stage-filter, D-5D-extraction-stub) |
 | 5E Phase 5 tests | todo | | | |
 | 5F Phase 5 data module | todo | | | |
 | 5G Phase 5 UI | todo | | | |
