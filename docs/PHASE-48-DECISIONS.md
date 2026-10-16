@@ -397,6 +397,25 @@ Mapping:
 Reason: the database is authoritative for the register; the UI keeps its familiar labels; one function
 pair means no divergent status set. How to reverse: delete the two functions and the `caps` table.
 
+## D-7A-M1 - no exports table or export function existed
+
+Grep for `exports_log`, `log_export` and `export_*` found nothing. 0041 creates `exports_log`, the
+`log_export` RPC and the per-object export functions (no collision). All export functions are
+`security definer` and org-scoped, so a caller cannot export another tenant's data; `export_full_tenant`
+additionally requires the `manage_users` right (§18, §26).
+
+## D-7A-M1b - sign_offs keys on workpaper_id, not object_id
+
+The first draft of `export_workpaper` read `sign_offs.object_id`; the harness refused the migration
+(`column s.object_id does not exist`). 0004 defines `sign_offs.workpaper_id`. Fixed in 0041. Recorded
+because it is the kind of column-name mismatch that only the SQL harness catches.
+
+## D-7A-M1c - samples links to an engagement through workpaper_id, not engagement_id
+
+`export_engagement_bundle` first read `samples.engagement_id`; the harness refused it. 0004 defines
+`samples.population_id` and 0027 adds `samples.workpaper_id`; there is no `engagement_id`. Fixed by
+joining `samples -> workpapers` on `workpaper_id`.
+
 ## D-6C-6D-order - 6D (CAP register) is built before 6C (freeze/issuance)
 
 The task lists 6C before 6D, but 6C's `freeze_report` calls `check_cap_reconciliation`, and 6D states
