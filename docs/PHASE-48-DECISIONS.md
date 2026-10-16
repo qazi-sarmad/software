@@ -416,6 +416,41 @@ because it is the kind of column-name mismatch that only the SQL harness catches
 `samples.population_id` and 0027 adds `samples.workpaper_id`; there is no `engagement_id`. Fixed by
 joining `samples -> workpapers` on `workpaper_id`.
 
+## D-7B-M1 - no import table or function existed
+
+Grep for `import_jobs`, `start_import`, `validate_import`, `commit_import` found nothing. 0042 creates
+them (no collision). `commit_import` writes entities and RCM risks directly; a users import records the
+org membership only when the row carries a user id (invite delivery is out of scope, NOT-DONE
+§email-dispatch); a populations import stages rows without creating a population, because the §6 gate
+still requires a verified sha256 and row_count.
+
+## D-7C-M1 - no archive table or function existed
+
+Grep for `archive_jobs` and `archive_activity_period` found nothing. 0043 creates them (no collision).
+
+## D-7C-append-only - the archive does not physically delete activity rows (L5 outranks the task step)
+
+The task says `archive_activity_period` "deletes the archived rows from the live activity_log table".
+L5 makes `activity_log` append-only: the `activity_log_append_only` trigger (0006_invariants.sql:43)
+raises `append_only_violation` on any DELETE for every role, and the Laws outrank a task step (never
+weaken an append-only invariant). The function therefore records the period, the row count, the content
+hash, the storage path and a hash-chained ledger entry, and leaves the rows in place. The physical purge
+is a separate owner-run maintenance step, recorded in NOT-DONE §activity-purge. How to reverse: add an
+owner-only maintenance function that drops and recreates the trigger around a scoped delete.
+
+## D-7C-right - archival requires manage_engagements
+
+The task allows `manage_engagements` or a new platform-only right, and asks for the choice to be
+recorded. 0043 requires `manage_engagements`. Reason: archiving is an org-scoped housekeeping action on
+the org's own log; the platform role has no business deleting tenant rows. How to reverse: introduce a
+platform-only right and swap the check in `archive_activity_period`.
+
+## D-7C-storage - the archive upload is a stub
+
+`archive_activity_period` records a `storage_path` and a `content_hash` and sets the job to `done`; the
+Storage upload itself is deferred to an edge function (NOT-DONE §archival-storage). The ledger entry is
+written now so the hash is accountable before the upload.
+
 ## D-6C-6D-order - 6D (CAP register) is built before 6C (freeze/issuance)
 
 The task lists 6C before 6D, but 6C's `freeze_report` calls `check_cap_reconciliation`, and 6D states
