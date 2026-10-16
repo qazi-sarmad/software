@@ -44,11 +44,11 @@ Updated after every task and committed with it. Every line carries the CI run ID
 | 5F Phase 5 data module | todo | | | |
 | 5G Phase 5 UI | todo | | | |
 | 5H Phase 5 docs | todo | | | |
-| 6A report drafting DB | done | _this commit_ | _see CI_ | migration 0036 (report_versions, report_blocks, compose_report, compute_report_summary), test 45 (D-6A-M1, D-6A-blocks, D-6A-summary) |
-| 6B management comments DB | done | _this commit_ | _see CI_ | migration 0037 (report_comments, add/resolve RPCs, open_report_comment_count), test 46 (D-6B-M1, D-6B-resolution, D-6B-open-count) |
-| 6C freeze/issuance DB | todo | | | |
-| 6D CAP register DB | todo | | | |
-| 6E email queue DB | todo | | | |
+| 6A report drafting DB | done | 46ee36c | 38954769628 | migration 0036 (report_versions, report_blocks, compose_report, compute_report_summary), test 45 (D-6A-M1, D-6A-blocks, D-6A-summary) |
+| 6B management comments DB | done | a25cab4 | _see CI_ | migration 0037 (report_comments, add/resolve RPCs, open_report_comment_count), test 46 (D-6B-M1, D-6B-resolution, D-6B-open-count) |
+| 6C freeze/issuance DB | done | 3c55c7b | _see CI_ | migration 0040 (freeze_report, issue_report), test 49 (open-comment gate, CAP gate, ledger, queued email) |
+| 6D CAP register DB | done | 646c722 | _see CI_ | migration 0038 (caps, update_cap, close_cap, check_cap_reconciliation), test 47 (D-6D-M1, D-6D-CAP) |
+| 6E email queue DB | done | 838f935 | _see CI_ | migration 0039 (email_queue, queue_email), test 48 (org sees sent/failed only; provider_config hidden) |
 | 6F Phase 6 tests | todo | | | |
 | 6G Phase 6 data module | todo | | | |
 | 6H Phase 6 UI | todo | | | |
