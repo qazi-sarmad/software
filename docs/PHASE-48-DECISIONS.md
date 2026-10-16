@@ -159,3 +159,36 @@ Spec 11.1 says integrity checks precede VERIFIED. Choice: `verify_population` re
 unless `sha256` is non-empty and `row_count > 0`, and stamps `verified_at/by`. The seed fixtures and
 test 06 are strengthened to carry a row count (a fixture change, not an assertion change). How to
 reverse: drop the `row_count` clause from `verify_population`.
+
+## D-4D-M1 - existing samples table extended
+
+`samples` (0004) already exists with population_id, population_sha256, method, size_floor and a
+`locked` boolean, so 0027 ALTERs it (workpaper_id, mode, seed, sample_rows jsonb, locked_at/by)
+rather than creating a second samples table. `sample_rows` already exists as a TABLE.
+
+## D-4D-column-name - samples.sample_rows is a jsonb column beside the sample_rows table
+
+The task asks for a `sample_rows jsonb` column on the samples table, but `sample_rows` is already the
+name of the per-row table from 0004. Postgres keeps columns and tables in separate namespaces, so both
+coexist. The jsonb column stores the computed sample; the table holds the individual row conclusions
+(4E extends it). How to reverse: rename the column (a breaking change for the API, so not preferred).
+
+## D-4D-locked-immutability - a locked sample is never mutated
+
+A locked sample is immutable (trigger `guard_locked_sample` refuses any UPDATE for an app role).
+`replace_sample` never edits the locked row: it inserts a new sample and writes a ledger entry, exactly
+as `replace_locked_population` does in 4C. This avoids the transaction-grant pattern the SIRA publish
+needs, because nothing ever has to be edited in place.
+
+## D-4D-seed - deterministic seed
+
+System mode seeds from `sha256(population.sha256 || workpaper_id)` and orders population rows by
+`md5(seed || row_ref)`, so the same verified population and workpaper always yield the same sample
+(§11.2). A row's reported order is derived from the seed, never from `random()`.
+
+## D-4D-sample-size - base size vs percentage
+
+The org sampling table holds a base size and a percentage per (control_type, frequency, band). The
+minimum sample size is `least(pop_count, greatest(base_size, ceil(pop_count * pct)))`. Reason: it
+honours both a floor and a materiality percentage, and never asks for more rows than exist. How to
+reverse: change the expression in `get_sample_size`.
