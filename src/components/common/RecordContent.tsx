@@ -15,6 +15,7 @@ const AccountSettingsModal = lazy(() => import('../common/AccountSettingsModal')
 const CommentHistoryPanel = lazy(() => import('../reviews/CommentHistoryPanel').then((m) => ({ default: m.CommentHistoryPanel })));
 const CapInspector = lazy(() => import('../dashboard/CapInspector').then((m) => ({ default: m.CapInspector })));
 const PeopleAdminPanel = lazy(() => import('../admin/PeopleAdminPanel').then((m) => ({ default: m.PeopleAdminPanel })));
+const OrgSettingsPanel = lazy(() => import('../admin/OrgSettingsPanel').then((m) => ({ default: m.OrgSettingsPanel })));
 const EntityApprovalPanel = lazy(() => import('../universe/EntityApprovalPanel').then((m) => ({ default: m.EntityApprovalPanel })));
 const DeploymentGatePanel = lazy(() => import('../audit/DeploymentGatePanel').then((m) => ({ default: m.DeploymentGatePanel })));
 const EthicsPanel = lazy(() => import('../audit/EthicsPanel').then((m) => ({ default: m.EthicsPanel })));
@@ -34,6 +35,7 @@ export const INSPECTOR_TITLES: Record<InspectorType, string> = {
   comment_history: 'Review Notes & 4-Eyes Discussion',
   cap_inspector: 'Corrective Action Plan (CAP) Details',
   people_admin: 'People & Roles',
+  org_settings: 'Organisation Settings',
   entity_approval: 'Entity Approval',
   deployment_gate: 'Deployment Gate',
   ethics: 'Ethics Acknowledgement',
@@ -49,6 +51,7 @@ export const RECORD_TYPE_TO_INSPECTOR: Record<string, InspectorType> = {
   workpaper: 'workbench',
   observation: 'observation',
   cap: 'cap_inspector',
+  org_settings: 'org_settings',
 };
 
 export interface RecordContentProps {
@@ -79,6 +82,8 @@ export const RecordContent: React.FC<RecordContentProps> = ({ type, data, onClos
           return <CapInspector />;
         case 'people_admin':
           return <PeopleAdminPanel />;
+        case 'org_settings':
+          return <OrgSettingsPanel />;
         case 'entity_approval':
           return <EntityApprovalPanel entity={data?.entity} onDone={onClose} />;
         case 'deployment_gate':

@@ -63,14 +63,14 @@ export async function getSampleSize(
   return (data as number | null) ?? null;
 }
 
-export async function listSamplingRules(orgId: string): Promise<SamplingRuleRow[]> {
+export async function listSamplingRules(orgId?: string): Promise<SamplingRuleRow[]> {
   const sb = getClient();
   if (!sb) return [];
-  const { data, error } = await sb
+  let q = sb
     .from('org_sampling_table')
-    .select('id, control_type, frequency, pop_band, method, base_size, pct')
-    .eq('org_id', orgId)
-    .order('pop_band');
+    .select('id, control_type, frequency, pop_band, method, base_size, pct');
+  if (orgId) q = q.eq('org_id', orgId);
+  const { data, error } = await q.order('pop_band');
   if (error) throw new Error(error.message);
   return (data ?? []).map((r) => ({
     id: r.id as string,

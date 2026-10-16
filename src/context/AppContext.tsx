@@ -35,6 +35,7 @@ export type InspectorType =
   | 'comment_history'
   | 'cap_inspector'
   | 'people_admin'
+  | 'org_settings'
   | 'entity_approval'
   | 'deployment_gate'
   | 'ethics'

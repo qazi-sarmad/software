@@ -13,6 +13,7 @@ import {
   Moon,
   Laptop,
   Settings,
+  Sliders,
   LogOut,
   ChevronDown,
   Building,
@@ -246,6 +247,18 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ onOpenCommandPalette }) =>
                       >
                         <Users className="w-4 h-4 text-secondary stroke-[1.5]" />
                         <span>People &amp; Roles</span>
+                      </button>
+                    )}
+                    {hasRight(currentUser, 'edit_config') && (
+                      <button
+                        onClick={() => {
+                          openInspector('org_settings');
+                          setIsProfileOpen(false);
+                        }}
+                        className="w-full text-left px-3 py-2 rounded-xl text-primary hover:bg-surface-hover transition-colors flex items-center gap-2.5"
+                      >
+                        <Sliders className="w-4 h-4 text-secondary stroke-[1.5]" />
+                        <span>Organisation settings</span>
                       </button>
                     )}
                     <button
