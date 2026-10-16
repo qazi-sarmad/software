@@ -58,7 +58,6 @@
     "src/components/reviews/ReviewCommentsGlobalDock.tsx": 397,
     "src/components/reviews/ReviewCommentsGlobalDock.test.tsx": 30,
     "src/components/glassbox/GlassBoxPublicRoute.tsx": 283,
-    "src/components/dev/DevAccessPage.tsx": 11,
     "src/styles/tokens.css": 265
   },
   "moved": {}

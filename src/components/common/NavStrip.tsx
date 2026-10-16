@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { useApp } from '../../context/AppContext';
 import { useScopedData } from '../../hooks/useScopedData';
+import { hasAnyAuditRight, hasRight, isReadOnly } from '../../lib/rights';
 import {
   LayoutDashboard,
   CheckCircle2,
@@ -29,16 +30,16 @@ export const NavStrip: React.FC = () => {
     { id: 'issues', label: 'Issues Register', icon: AlertTriangle },
   ];
 
-  // Filter tabs based on role capabilities (Part 2.B)
+  // Filter tabs by the rights the session holds (Part 2.B). No role name is compared.
   const visibleTabs = allTabs.filter((tab) => {
-    // Org Admin manages users/config and sees NO audit content
-    if (currentUser.role === 'org_admin') return false;
-    // Observer: read-only; sees Executive Summary and Issues Register only
-    if (currentUser.role === 'observer') {
-      return tab.id === 'executive' || tab.id === 'issues';
-    }
-    // Auditee: sees Executive Summary, Universe (own entity), and Issues
-    if (currentUser.role === 'auditee') {
+    // A principal with no audit right (configuration-only) sees no audit tabs.
+    if (!hasAnyAuditRight(currentUser)) return false;
+    // A read-only principal: an all-scope reader (observer) sees Executive Summary and Issues;
+    // a scoped reader (auditee) additionally sees the Audit Universe tab for its own entity.
+    if (isReadOnly(currentUser)) {
+      if (hasRight(currentUser, 'view_all_scopes')) {
+        return tab.id === 'executive' || tab.id === 'issues';
+      }
       return tab.id === 'executive' || tab.id === 'universe' || tab.id === 'issues';
     }
     return true;

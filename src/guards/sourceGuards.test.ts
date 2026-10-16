@@ -57,7 +57,6 @@ describe('source guards for production paths', () => {
     const importers = offenders(/data\/(initialData|demoSeed)['"]|\.\/(initialData|demoSeed)['"]/).sort();
     expect(importers).toEqual([
       'App.tsx',
-      'components/dev/DevAccessPage.tsx',
       'data/demoSeed.ts',
     ]);
     const app = readFileSync(join(SRC, 'App.tsx'), 'utf-8');

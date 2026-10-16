@@ -642,9 +642,48 @@ Builds are carried out with AI builders. Each task closes only after the followi
 - **Per-gate report:** files changed, real test counts, parity status, screenshots, decisions made, and an explicit NOT DONE list.
 - **AI-builder caution:** generated code is verified through the tests above, not by reading it.
 
+## 30. Phase 2 decisions
+
+Phase 2 built the access layer: identity, rights, RLS, the audit team, the role configuration log, the invite cap, and the org administration portal. This section records the decisions taken, so the specification matches what was built. Each decision is dated and marked. Nothing in §§1–29 was rewritten; where a decision needed a change to the text, the change is listed here and applied in place.
+
+### 30.1 Rights, not role names
+
+- **D1 (2026-10-14). A role is a bag of rights.** Every permission decision, in the database and in the app, is a test of a right (`caller_has_right` / `hasRight`). No policy or component compares a role name. The closed vocabulary is eleven keys: `manage_users`, `manage_roles`, `edit_config`, `manage_engagements`, `approve_plan`, `review_and_approve`, `perform_work`, `can_reopen`, `view_all_scopes`, `read_only`, `manage_team`. Enforced by migration `0012_rights_closed.sql` (`rights_keys_valid`) and by the guard test `src/guards/noRoleStrings.test.ts`.
+- **D2 (2026-10-14). The seed matrix implements §4.1.** The matrix is declared in migration `0012_rights_closed.sql` and mirrored in `src/lib/rights.ts`. `src/lib/rightsMatrix.test.ts` fails if the two drift. `is_cia()`, `is_org_admin()` and `can_read_all_scopes()` keep their names because policies reference them; their bodies read rights.
+- **D3 (2026-10-14). The JWT carries identity, not permission.** The auth hook (`0010`) stamps `org_id` and `user_role`. A permission decision resolves the right from the role named by the claim, in the caller's organisation. This matters only for a forged token; a real login is membership-checked. Recorded as B1 in `docs/ROLE-CHECKS.md`.
+
+### 30.2 Tenancy, RLS and the team
+
+- **D4 (2026-10-14). Every business table carries `org_id` and a select policy `org_id = jwt_org_id()`.** There are no direct write policies: writes go through a function that re-checks the right. `roles` and `user_scopes` are the only tables a tenant writes directly, and each is guarded by a trigger and a rights check.
+- **D5 (2026-10-14). Team roles are data, separate from organisation roles.** An engagement has an audit team (§4.2). A team role maps to a set of rights in `team_role_rights` (`0013_engagement_team.sql`); the permission to assign a team role is the `manage_team` or `manage_engagements` right.
+- **D6 (2026-10-14). Scope is mirrored in `user_scopes`.** Scope is an id, never a role name. A read-only principal with `view_all_scopes` reads the whole tenant; without it, only its scoped universes, entities and engagements.
+
+### 30.3 Configuration, history and the ledger
+
+- **D7 (2026-10-14). A role change is guarded, versioned and logged.** `0014_roles_config.sql` adds `role_config_log` (append-only) and a guard that rejects a key outside the closed list. The business ledger (§26) stays the single hash-chained record: sign-offs, freezes, plan versions, issuances, SIRA publication, approvals, ethics acknowledgements and ledger verification.
+- **D8 (2026-10-14). The invite cap is data and events.** `0015_invite_cap.sql` adds `invite_cap_settings` and `invite_cap_events`; `invite_user_capped` counts events per user per day. A new organisation is seeded with a default cap.
+
+### 30.4 Administration portal (§23)
+
+- **D9 (2026-10-15). The Org Admin portal is visual and rights-gated.** `0017_admin_rpcs.sql` provides the administration functions (provision a member, set a role, set a reporting line, grant and revoke a scope, create and delete a role, edit rights, set the invite cap). Each function re-checks the right (`manage_users` / `manage_roles`) in the database. The UI (`src/components/admin/PeopleAdminPanel.tsx`) is a sliding inspector, reached from the profile menu, never a new tab (§28) and never a blocking modal (§27.5). The menu entry shows only when the session holds `manage_users` or `manage_roles`.
+- **D10 (2026-10-15). The rights matrix is editable in the portal.** A role's rights are edited against the same closed list the guard enforces. A change takes effect on the next request, because every decision reads the right at decision time.
+
+### 30.5 Test data and the harness
+
+- **D11 (2026-10-15). Test data is synthetic and carries the real matrix.** The end-to-end setup creates two demo organisations with the seed roles and the seed rights. It previously seeded an empty rights map, which made a live session rightless; this is fixed. The setup deletes `invite_cap_events` on each run, so a run leaves no residue (M5).
+- **D12 (2026-10-15). The local harness mirrors the hosted project.** The hosted test project has Supabase's `ensure_rls` event trigger, so any new public table without RLS fails `13_rls_enabled.sql`. The local harness reproduces `ensure_rls`, so a local red matches CI.
+
+### 30.6 Where a decision changed the text
+
+- **§4.1.** No change: the seed matrix now implements it.
+- **§4.4.** No change: four-eyes is an id comparison, not a role name; sealed means read-only; the ledger is append-only.
+- **§23.** The portal is now built; its scope is the list in §23. Items not yet built (organisation settings, structure, controls, methodology, risk model, workflow, notifications, BI, templates, export, AI) are recorded as not done in `docs/NOT-DONE.md`.
+- **§25.2.** No change: tenancy and scope are enforced by RLS, proven by SQL tests.
+- **§28.** No change: no blocking modal, no Reports tab, no Workbench tab. The admin panel is an inspector.
+
 ---
 
-## 30. Changes from v9
+## 31. Changes from v9
 
 | Change | Source |
 |---|---|
@@ -662,7 +701,7 @@ Builds are carried out with AI builders. Each task closes only after the followi
 
 ---
 
-## 31. Open Items
+## 32. Open Items
 
 1. **Supabase limits.** I have not checked the current free-tier figures. Verify them on Supabase's pricing page before the build starts, and update §25.4.
 2. **Microsoft status.** Confirm current Microsoft guidance on basic-auth SMTP retirement and the Graph consent process before Gate 5.

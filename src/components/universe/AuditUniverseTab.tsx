@@ -4,11 +4,12 @@ import { useApp } from '../../context/AppContext';
 import { HoverPreview } from '../common/HoverPreview';
 import { AuditEntity } from '../../types';
 import { Shield, AlertTriangle, Layers, ArrowRight, Activity } from '../common/Icons';
+import { hasRight } from '../../lib/rights';
 
 export const AuditUniverseTab: React.FC = () => {
   const { scopedUniverses, scopedEntities, selectedUniverseId } = useScopedData();
   const { openInspector, addEntity, currentUser } = useApp();
-  const canAdd = currentUser.role === 'cia' || currentUser.role === 'org_admin';
+  const canAdd = hasRight(currentUser, 'edit_config');
   const [adding, setAdding] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [form, setForm] = useState({ name: '', code: '', department: '', headOfDepartment: '', inherentRisk: 'medium' as 'low' | 'medium' | 'high' | 'critical' });

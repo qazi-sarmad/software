@@ -16,6 +16,7 @@ import {
   filterWorkpapers,
 } from '../lib/access';
 import { isCapOverdue } from '../lib/orgDate';
+import { hasAnyAuditRight, hasRight } from '../lib/rights';
 import {
   AuditCapItem,
   AuditControl,
@@ -107,12 +108,12 @@ export function useScopedData() {
 
   // 9. Scoped CAP Items (§ 3.4)
   const scopedCapItems = useMemo(() => {
-    if (currentUser.role === 'org_admin') return [];
+    if (!hasAnyAuditRight(currentUser)) return [];
     return rawCapItems.filter((cap) => {
-      if (currentUser.role === 'cia') return true;
+      if (hasRight(currentUser, 'view_all_scopes')) return true;
       return allowedEntityIds.has(cap.entityId);
     });
-  }, [rawCapItems, currentUser.role, allowedEntityIds]);
+  }, [rawCapItems, currentUser, allowedEntityIds]);
 
   // --- Cross-Filtered Data (applying reactive filters on top of scoped data) ---
   const filteredEngagements = useMemo(() => {
@@ -268,14 +269,14 @@ export function useScopedData() {
 
   // Scoped Ledger: only entries belonging to accessible entities
   const scopedLedger = useMemo(() => {
-    if (currentUser.role === 'org_admin') return [];
+    if (!hasAnyAuditRight(currentUser)) return [];
     const accessible = ledger.filter((entry) => {
-      if (currentUser.role === 'cia') return true;
+      if (hasRight(currentUser, 'view_all_scopes')) return true;
       return allowedEntityIds.has(entry.entityId);
     });
 
     return accessible;
-  }, [ledger, allowedEntityIds, currentUser.role]);
+  }, [ledger, allowedEntityIds, currentUser]);
 
   // Deep-link safe resolver: resolves an ID or returns null if not accessible
   const resolveEntity = (id: string): AuditEntity | null => {

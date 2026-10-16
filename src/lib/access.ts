@@ -8,22 +8,30 @@ import {
   AuditObservation,
   AuditUniverse,
   ReviewComment,
-  Role,
   User,
   WorkingPaper,
 } from '../types';
+import { hasAnyAuditRight, hasRight, isReadOnly } from './rights';
 
 export type { ActionType, ActionGateResult };
 
 /**
+ * Scoped visibility and permission gating.
+ *
+ * Every decision here is made against a *right* the session holds (src/lib/rights.ts), never
+ * against a role name. A role is only a bag of rights. Message strings are display text chosen
+ * from the same rights, so no branch compares a role name.
+ */
+
+/**
  * Checks if a user has access to a given universe.
  * If user.universeIds is empty or contains '*', user has access to all universes.
- * Note: org_admin manages system configuration only and has NO access to audit universes.
+ * A principal with no audit right (a configuration-only role) sees no audit universes.
  */
 export function canAccessUniverse(user: User, universeId: string): boolean {
   if (!user) return false;
-  if (user.role === 'org_admin') return false;
-  if (user.role === 'cia' || user.role === 'observer') return true;
+  if (!hasAnyAuditRight(user)) return false;
+  if (hasRight(user, 'view_all_scopes')) return true;
   if (!user.universeIds || user.universeIds.length === 0 || user.universeIds.includes('*')) {
     return true;
   }
@@ -34,18 +42,17 @@ export function canAccessUniverse(user: User, universeId: string): boolean {
  * Checks if a user has access to a given entity.
  * Must first have access to the entity's universe.
  * If user.entityIds is empty or contains '*', user has access to all entities in permitted universes.
- * Note: org_admin has NO access to audit entities.
  */
 export function canAccessEntity(
   user: User,
   entity: { id: string; universeId: string }
 ): boolean {
   if (!user || !entity) return false;
-  if (user.role === 'org_admin') return false;
+  if (!hasAnyAuditRight(user)) return false;
   if (!canAccessUniverse(user, entity.universeId)) {
     return false;
   }
-  if (user.role === 'cia' || user.role === 'observer') return true;
+  if (hasRight(user, 'view_all_scopes')) return true;
   if (!user.entityIds || user.entityIds.length === 0 || user.entityIds.includes('*')) {
     return true;
   }
@@ -54,23 +61,22 @@ export function canAccessEntity(
 
 /**
  * Filters universes list to only those accessible by the user.
- * org_admin sees 0 audit universes.
+ * A configuration-only principal (no audit right) sees 0 audit universes.
  */
 export function filterUniverses(universes: AuditUniverse[], user: User): AuditUniverse[] {
-  if (!user || user.role === 'org_admin') return [];
+  if (!user || !hasAnyAuditRight(user)) return [];
   return universes.filter((u) => canAccessUniverse(user, u.id));
 }
 
 /**
  * Filters entities to only those accessible by the user and within the selected universe (if specified).
- * org_admin sees 0 audit entities.
  */
 export function filterEntities(
   entities: AuditEntity[],
   user: User,
   selectedUniverseId?: string
 ): AuditEntity[] {
-  if (!user || user.role === 'org_admin') return [];
+  if (!user || !hasAnyAuditRight(user)) return [];
   return entities.filter((entity) => {
     if (selectedUniverseId && entity.universeId !== selectedUniverseId) {
       return false;
@@ -81,14 +87,13 @@ export function filterEntities(
 
 /**
  * Filters engagements to those belonging to accessible entities.
- * org_admin sees 0 audit engagements.
  */
 export function filterEngagements(
   engagements: AuditEngagement[],
   user: User,
   allowedEntityIds: Set<string>
 ): AuditEngagement[] {
-  if (!user || user.role === 'org_admin') return [];
+  if (!user || !hasAnyAuditRight(user)) return [];
   return engagements.filter((e) => {
     if (!canAccessUniverse(user, e.universeId)) return false;
     return allowedEntityIds.has(e.entityId);
@@ -96,28 +101,36 @@ export function filterEngagements(
 }
 
 /**
+ * A principal that sees no working-level records: a configuration-only principal, or a pure
+ * read-only observer (read-only and all-scope). A scoped read-only principal (an auditee
+ * responding to findings) still sees its own entity's records.
+ */
+function seesNoWorkingRecords(user: User): boolean {
+  return !hasAnyAuditRight(user) || (isReadOnly(user) && hasRight(user, 'view_all_scopes'));
+}
+
+/**
  * Filters controls to those belonging to accessible entities.
- * org_admin and observer see 0 controls.
+ * A configuration-only or pure observer principal sees 0 controls.
  */
 export function filterControls(
   controls: AuditControl[],
   user: User,
   allowedEntityIds: Set<string>
 ): AuditControl[] {
-  if (!user || user.role === 'org_admin' || user.role === 'observer') return [];
+  if (!user || seesNoWorkingRecords(user)) return [];
   return controls.filter((c) => allowedEntityIds.has(c.entityId));
 }
 
 /**
  * Filters working papers to those belonging to accessible entities.
- * org_admin and observer see 0 working papers.
  */
 export function filterWorkpapers(
   workpapers: WorkingPaper[],
   user: User,
   allowedEntityIds: Set<string>
 ): WorkingPaper[] {
-  if (!user || user.role === 'org_admin' || user.role === 'observer') return [];
+  if (!user || seesNoWorkingRecords(user)) return [];
   return workpapers.filter((w) => {
     if (w.universeId && !canAccessUniverse(user, w.universeId)) return false;
     return allowedEntityIds.has(w.entityId);
@@ -126,14 +139,13 @@ export function filterWorkpapers(
 
 /**
  * Filters observations to those belonging to accessible entities.
- * org_admin and observer see 0 observations.
  */
 export function filterObservations(
   observations: AuditObservation[],
   user: User,
   allowedEntityIds: Set<string>
 ): AuditObservation[] {
-  if (!user || user.role === 'org_admin' || user.role === 'observer') return [];
+  if (!user || seesNoWorkingRecords(user)) return [];
   return observations.filter((o) => {
     if (o.universeId && !canAccessUniverse(user, o.universeId)) return false;
     return allowedEntityIds.has(o.entityId);
@@ -142,19 +154,19 @@ export function filterObservations(
 
 /**
  * Filters issues to those belonging to accessible entities.
- * org_admin sees 0 issues.
- * observer sees ONLY issued issues (isIssued: true or status open/action_plan_agreed).
+ * A pure observer (read-only and all-scope) sees ONLY issued issues.
  */
 export function filterIssues(
   issues: AuditIssue[],
   user: User,
   allowedEntityIds: Set<string>
 ): AuditIssue[] {
-  if (!user || user.role === 'org_admin') return [];
+  if (!user || !hasAnyAuditRight(user)) return [];
+  const pureObserver = isReadOnly(user) && hasRight(user, 'view_all_scopes');
   return issues.filter((i) => {
     if (i.universeId && !canAccessUniverse(user, i.universeId)) return false;
     if (!allowedEntityIds.has(i.entityId)) return false;
-    if (user.role === 'observer') {
+    if (pureObserver) {
       return i.isIssued === true || i.status === 'open' || i.status === 'action_plan_agreed' || i.status === 'identified';
     }
     return true;
@@ -163,28 +175,93 @@ export function filterIssues(
 
 /**
  * Filters review comments to those associated with accessible workpapers.
- * org_admin and observer see 0 comments.
  */
 export function filterComments(
   comments: ReviewComment[],
   user: User,
   allowedWorkpaperIds: Set<string>
 ): ReviewComment[] {
-  if (!user || user.role === 'org_admin' || user.role === 'observer') return [];
+  if (!user || seesNoWorkingRecords(user)) return [];
   return comments.filter((c) => allowedWorkpaperIds.has(c.workpaperId));
 }
 
 /**
- * Role-based capability and ownership gating (Part 2.B).
- *
- * Rules:
- * - preparer: create/edit workpapers, run tests, raise findings; cannot approve anything
- * - reviewer: raise findings, review sign-off (NOT on work they prepared), close issues
- * - audit_manager: preparer + reviewer powers, audit sign-off, propose ad-hoc engagement
- * - cia: everything above + approve plan/ad-hoc, issue report, reopen sealed audit
- * - observer: read-only; sees Executive Summary, Issues, issued reports only
- * - org_admin: manages users/config; sees NO audit content
- * - auditee: read-only on workpapers; can respond to observations/issues
+ * The right each action requires. A single source of truth for both the decision and the message.
+ */
+const ACTION_RIGHT: Partial<Record<ActionType, 'manage_engagements' | 'approve_plan' | 'review_and_approve' | 'perform_work' | 'can_reopen' | 'edit_config'>> = {
+  create_workpaper: 'perform_work',
+  edit_workpaper: 'perform_work',
+  run_test: 'perform_work',
+  finalize_test: 'perform_work',
+  raise_finding: 'perform_work',
+  raise_observation: 'perform_work',
+  review_sign_off: 'review_and_approve',
+  sign_off: 'review_and_approve',
+  close_issue: 'review_and_approve',
+  audit_sign_off: 'manage_engagements',
+  propose_ad_hoc: 'manage_engagements',
+  approve_plan: 'approve_plan',
+  approve: 'review_and_approve',
+  issue_report: 'approve_plan',
+  reopen: 'can_reopen',
+};
+
+/**
+ * Display text for a denied action, chosen from the rights the session holds. No branch compares
+ * a role name: the wording is picked from read_only, view_all_scopes and the other rights.
+ */
+function denialReason(user: User, action: ActionType): string {
+  const readOnly = isReadOnly(user);
+  const seesAll = hasRight(user, 'view_all_scopes');
+  const reviews = hasRight(user, 'review_and_approve');
+
+  switch (action) {
+    case 'create_workpaper':
+    case 'edit_workpaper':
+    case 'run_test':
+    case 'finalize_test':
+    case 'raise_finding':
+    case 'raise_observation':
+      if (readOnly) return seesAll ? 'Observers have read-only access' : 'Auditees have read-only access';
+      if (action === 'run_test' || action === 'finalize_test') return 'This principal cannot run or finalize audit tests';
+      return 'This principal cannot create or edit working papers';
+
+    case 'review_sign_off':
+    case 'sign_off':
+      if (readOnly) return seesAll ? 'Observers cannot perform sign-offs' : 'Auditees cannot perform sign-offs';
+      return 'Preparers cannot perform sign-offs';
+
+    case 'close_issue':
+      if (readOnly) return seesAll ? 'Observers cannot close issues' : 'Auditees cannot close issues; management can only propose remediation';
+      return 'Preparers cannot close issues';
+
+    case 'audit_sign_off':
+      if (reviews) return 'Reviewers cannot perform audit sign-off; requires Audit Manager or CIA';
+      return 'Only Audit Managers or CIAs can perform audit sign-off';
+
+    case 'propose_ad_hoc':
+      return 'Only Audit Managers or CIAs can propose ad-hoc engagements';
+
+    case 'approve_plan':
+      return 'Only Chief Internal Auditor (CIA) can approve the audit plan or ad-hoc engagements';
+
+    case 'approve':
+      return 'Only Reviewers, CIAs, or Admins can approve';
+
+    case 'issue_report':
+      return 'Only Chief Internal Auditor (CIA) can issue final audit reports';
+
+    case 'reopen':
+      if (readOnly) return seesAll ? 'Preparers and observers cannot reopen signed records' : 'Auditees cannot reopen signed records';
+      return 'Only Chief Internal Auditor (CIA) can reopen sealed audit records';
+
+    default:
+      return 'Action not permitted';
+  }
+}
+
+/**
+ * Permission gating (Part 2.B). Every branch is a rights check; no branch reads a role name.
  *
  * Always: sealed = read-only; reopen needs a note of 10+ characters.
  * Every disallowed action returns an explicit reason string.
@@ -203,15 +280,15 @@ export function canPerformAction(
     return { allowed: false, reason: 'Unauthenticated' };
   }
 
-  // 1. org_admin manages system/users only and sees NO audit content
-  if (user.role === 'org_admin') {
+  // 1. A principal with no audit right manages configuration only and sees NO audit content.
+  if (!hasAnyAuditRight(user)) {
     return {
       allowed: false,
       reason: 'Organization administrators manage configuration and have no access to audit content',
     };
   }
 
-  // 2. Sealed / Locked records are immutable read-only; only reopen and ledger verification are permitted
+  // 2. Sealed / Locked records are immutable read-only; only reopen and ledger verification are permitted.
   if (context?.isLocked && action !== 'reopen' && action !== 'view_ledger') {
     return {
       allowed: false,
@@ -220,121 +297,37 @@ export function canPerformAction(
   }
 
   switch (action) {
-    // --- WORKPAPERS: Create & Edit ---
-    case 'create_workpaper':
-    case 'edit_workpaper':
-      if (user.role === 'observer') {
-        return { allowed: false, reason: 'Observers have read-only access' };
-      }
-      if (user.role === 'auditee') {
-        return { allowed: false, reason: 'Auditees have read-only access' };
-      }
+    case 'view_ledger':
+    case 'view_audit_content':
+    case 'view_executive_summary':
+    case 'view_issues':
+    case 'view_reports':
       return { allowed: true };
 
-    // --- TESTS: Run & Finalize ---
-    case 'run_test':
-    case 'finalize_test':
-      if (user.role === 'observer') {
-        return { allowed: false, reason: 'Observers have read-only access' };
-      }
-      if (user.role === 'auditee') {
-        return { allowed: false, reason: 'Auditees cannot run or finalize audit tests' };
-      }
-      return { allowed: true };
-
-    // --- FINDINGS & OBSERVATIONS: Raise ---
-    case 'raise_finding':
-    case 'raise_observation':
-      if (user.role === 'observer') {
-        return { allowed: false, reason: 'Observers have read-only access' };
-      }
-      if (user.role === 'auditee') {
-        return { allowed: false, reason: 'Auditees cannot raise audit observations or findings' };
-      }
-      return { allowed: true };
-
-    // --- REVIEW SIGN-OFF (Workpaper Level, Four-Eyes Principle) ---
     case 'review_sign_off':
-    case 'sign_off':
-      if (user.role === 'observer') {
-        return { allowed: false, reason: 'Observers cannot perform sign-offs' };
-      }
-      if (user.role === 'auditee') {
-        return { allowed: false, reason: 'Auditees cannot perform sign-offs' };
-      }
-      if (user.role === 'preparer') {
-        return { allowed: false, reason: 'Preparers cannot perform sign-offs' };
-      }
-      // Four-eyes policy: Reviewer cannot sign off on work they prepared themselves
+    case 'sign_off': {
+      // Four-eyes policy: a reviewer cannot sign off work they prepared themselves.
       if (context?.preparerId && context.preparerId === user.id) {
         return {
           allowed: false,
           reason: 'Four-eyes policy: Reviewers cannot sign off their own prepared workpapers',
         };
       }
-      return { allowed: true };
-
-    // --- CLOSE ISSUES ---
-    case 'close_issue':
-      if (user.role === 'observer') {
-        return { allowed: false, reason: 'Observers cannot close issues' };
-      }
-      if (user.role === 'auditee') {
-        return { allowed: false, reason: 'Auditees cannot close issues; management can only propose remediation' };
-      }
-      if (user.role === 'preparer') {
-        return { allowed: false, reason: 'Preparers cannot close issues' };
+      if (!hasRight(user, 'review_and_approve')) {
+        return { allowed: false, reason: denialReason(user, action) };
       }
       return { allowed: true };
-
-    // --- AUDIT SIGN-OFF (Engagement Level) ---
-    case 'audit_sign_off':
-      if (user.role === 'observer' || user.role === 'auditee' || user.role === 'preparer') {
-        return { allowed: false, reason: 'Only Audit Managers or CIAs can perform audit sign-off' };
-      }
-      if (user.role === 'reviewer') {
-        return { allowed: false, reason: 'Reviewers cannot perform audit sign-off; requires Audit Manager or CIA' };
-      }
-      return { allowed: true };
-
-    // --- PROPOSE AD-HOC ENGAGEMENT ---
-    case 'propose_ad_hoc':
-      if (user.role === 'observer' || user.role === 'auditee' || user.role === 'preparer' || user.role === 'reviewer') {
-        return { allowed: false, reason: 'Only Audit Managers or CIAs can propose ad-hoc engagements' };
-      }
-      return { allowed: true };
-
-    // --- APPROVE PLAN / AD-HOC (CIA Only) ---
-    case 'approve_plan':
-      if (user.role !== 'cia') {
-        return { allowed: false, reason: 'Only Chief Internal Auditor (CIA) can approve the audit plan or ad-hoc engagements' };
-      }
-      return { allowed: true };
+    }
 
     case 'approve':
-      // Backwards compatible approve check
-      if (user.role === 'preparer' || user.role === 'auditee' || user.role === 'observer') {
-        return { allowed: false, reason: 'Only Reviewers, CIAs, or Admins can approve' };
+      if (!hasRight(user, 'review_and_approve') && !hasRight(user, 'approve_plan')) {
+        return { allowed: false, reason: denialReason(user, action) };
       }
       return { allowed: true };
 
-    // --- ISSUE FINAL REPORT (CIA Only) ---
-    case 'issue_report':
-      if (user.role !== 'cia') {
-        return { allowed: false, reason: 'Only Chief Internal Auditor (CIA) can issue final audit reports' };
-      }
-      return { allowed: true };
-
-    // --- REOPEN SEALED AUDIT ---
-    case 'reopen':
-      if (user.role === 'auditee') {
-        return { allowed: false, reason: 'Auditees cannot reopen signed records' };
-      }
-      if (user.role === 'preparer' || user.role === 'observer') {
-        return { allowed: false, reason: 'Preparers and observers cannot reopen signed records' };
-      }
-      if (user.role !== 'cia') {
-        return { allowed: false, reason: 'Only Chief Internal Auditor (CIA) can reopen sealed audit records' };
+    case 'reopen': {
+      if (!hasRight(user, 'can_reopen')) {
+        return { allowed: false, reason: denialReason(user, action) };
       }
       if (
         context?.reopenJustification !== undefined &&
@@ -346,24 +339,20 @@ export function canPerformAction(
         };
       }
       return { allowed: true };
+    }
 
-    // --- VIEW LEDGER & VIEWS ---
-    case 'view_ledger':
+    default: {
+      const required = ACTION_RIGHT[action];
+      if (!required) {
+        return { allowed: false, reason: 'Action not permitted' };
+      }
+      if (!hasRight(user, required)) {
+        return { allowed: false, reason: denialReason(user, action) };
+      }
       return { allowed: true };
-
-    case 'view_audit_content':
-      return { allowed: true };
-
-    case 'view_executive_summary':
-    case 'view_issues':
-    case 'view_reports':
-      return { allowed: true };
-
-    default:
-      return { allowed: false, reason: 'Action not permitted' };
+    }
   }
 }
 
 /** @deprecated Prefer canPerformCapability(user, 'cap_change_due_date', orgConfig) */
-export const canChangeCapDueDate = (role: Role) => role === 'audit_manager' || role === 'cia';
-
+export const canChangeCapDueDate = (user: User) => hasRight(user, 'manage_engagements');

@@ -81,11 +81,22 @@ begin
     ('a0000000-0000-0000-0000-000000000001', 'Org A', false),
     ('b0000000-0000-0000-0000-000000000001', 'Org B', false);
 
+  -- Seven seed roles per organisation, with the rights matrix from migration 0012_rights_closed.sql.
   insert into roles (id, org_id, name, slug, is_seed, rights) values
-    ('20000000-0000-0000-0000-0000000000a1', 'a0000000-0000-0000-0000-000000000001', 'CIA', 'cia', true, '{"can_reopen":true}'),
-    ('20000000-0000-0000-0000-0000000000a2', 'a0000000-0000-0000-0000-000000000001', 'Preparer', 'preparer', true, '{}'),
-    ('20000000-0000-0000-0000-0000000000a3', 'a0000000-0000-0000-0000-000000000001', 'Org Admin', 'org_admin', true, '{}'),
-    ('20000000-0000-0000-0000-0000000000b1', 'b0000000-0000-0000-0000-000000000001', 'CIA', 'cia', true, '{"can_reopen":true}');
+    ('20000000-0000-0000-0000-0000000000a1', 'a0000000-0000-0000-0000-000000000001', 'CIA', 'cia', true, '{"manage_users":false,"manage_roles":true,"edit_config":true,"manage_engagements":true,"approve_plan":true,"review_and_approve":true,"perform_work":true,"can_reopen":true,"view_all_scopes":true,"read_only":false}'),
+    ('20000000-0000-0000-0000-0000000000a2', 'a0000000-0000-0000-0000-000000000001', 'Preparer', 'preparer', true, '{"manage_users":false,"manage_roles":false,"edit_config":false,"manage_engagements":false,"approve_plan":false,"review_and_approve":false,"perform_work":true,"can_reopen":false,"view_all_scopes":false,"read_only":false}'),
+    ('20000000-0000-0000-0000-0000000000a3', 'a0000000-0000-0000-0000-000000000001', 'Org Admin', 'org_admin', true, '{"manage_users":true,"manage_roles":true,"edit_config":true,"manage_engagements":false,"approve_plan":false,"review_and_approve":false,"perform_work":false,"can_reopen":false,"view_all_scopes":false,"read_only":false}'),
+    ('20000000-0000-0000-0000-0000000000a4', 'a0000000-0000-0000-0000-000000000001', 'Audit Manager', 'audit_manager', true, '{"manage_users":false,"manage_roles":false,"edit_config":false,"manage_engagements":true,"approve_plan":false,"review_and_approve":true,"perform_work":true,"can_reopen":false,"view_all_scopes":true,"read_only":false}'),
+    ('20000000-0000-0000-0000-0000000000a5', 'a0000000-0000-0000-0000-000000000001', 'Observer', 'observer', true, '{"manage_users":false,"manage_roles":false,"edit_config":false,"manage_engagements":false,"approve_plan":false,"review_and_approve":false,"perform_work":false,"can_reopen":false,"view_all_scopes":true,"read_only":true}'),
+    ('20000000-0000-0000-0000-0000000000a6', 'a0000000-0000-0000-0000-000000000001', 'Reviewer', 'reviewer', true, '{"manage_users":false,"manage_roles":false,"edit_config":false,"manage_engagements":false,"approve_plan":false,"review_and_approve":true,"perform_work":true,"can_reopen":false,"view_all_scopes":false,"read_only":false}'),
+    ('20000000-0000-0000-0000-0000000000a7', 'a0000000-0000-0000-0000-000000000001', 'Auditee', 'auditee', true, '{"manage_users":false,"manage_roles":false,"edit_config":false,"manage_engagements":false,"approve_plan":false,"review_and_approve":false,"perform_work":false,"can_reopen":false,"view_all_scopes":false,"read_only":true}'),
+    ('20000000-0000-0000-0000-0000000000b1', 'b0000000-0000-0000-0000-000000000001', 'CIA', 'cia', true, '{"manage_users":false,"manage_roles":true,"edit_config":true,"manage_engagements":true,"approve_plan":true,"review_and_approve":true,"perform_work":true,"can_reopen":true,"view_all_scopes":true,"read_only":false}'),
+    ('20000000-0000-0000-0000-0000000000b2', 'b0000000-0000-0000-0000-000000000001', 'Preparer', 'preparer', true, '{"manage_users":false,"manage_roles":false,"edit_config":false,"manage_engagements":false,"approve_plan":false,"review_and_approve":false,"perform_work":true,"can_reopen":false,"view_all_scopes":false,"read_only":false}'),
+    ('20000000-0000-0000-0000-0000000000b3', 'b0000000-0000-0000-0000-000000000001', 'Org Admin', 'org_admin', true, '{"manage_users":true,"manage_roles":true,"edit_config":true,"manage_engagements":false,"approve_plan":false,"review_and_approve":false,"perform_work":false,"can_reopen":false,"view_all_scopes":false,"read_only":false}'),
+    ('20000000-0000-0000-0000-0000000000b4', 'b0000000-0000-0000-0000-000000000001', 'Audit Manager', 'audit_manager', true, '{"manage_users":false,"manage_roles":false,"edit_config":false,"manage_engagements":true,"approve_plan":false,"review_and_approve":true,"perform_work":true,"can_reopen":false,"view_all_scopes":true,"read_only":false}'),
+    ('20000000-0000-0000-0000-0000000000b5', 'b0000000-0000-0000-0000-000000000001', 'Observer', 'observer', true, '{"manage_users":false,"manage_roles":false,"edit_config":false,"manage_engagements":false,"approve_plan":false,"review_and_approve":false,"perform_work":false,"can_reopen":false,"view_all_scopes":true,"read_only":true}'),
+    ('20000000-0000-0000-0000-0000000000b6', 'b0000000-0000-0000-0000-000000000001', 'Reviewer', 'reviewer', true, '{"manage_users":false,"manage_roles":false,"edit_config":false,"manage_engagements":false,"approve_plan":false,"review_and_approve":true,"perform_work":true,"can_reopen":false,"view_all_scopes":false,"read_only":false}'),
+    ('20000000-0000-0000-0000-0000000000b7', 'b0000000-0000-0000-0000-000000000001', 'Auditee', 'auditee', true, '{"manage_users":false,"manage_roles":false,"edit_config":false,"manage_engagements":false,"approve_plan":false,"review_and_approve":false,"perform_work":false,"can_reopen":false,"view_all_scopes":false,"read_only":true}');
 
   insert into platform_admins (user_id) values ('10000000-0000-0000-0000-0000000000f0');
 
@@ -93,7 +104,9 @@ begin
     ('a0000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-0000000000a1', '20000000-0000-0000-0000-0000000000a1', 1),
     ('a0000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-0000000000a2', '20000000-0000-0000-0000-0000000000a2', 3),
     ('a0000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-0000000000a3', '20000000-0000-0000-0000-0000000000a3', 1),
-    ('b0000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-0000000000b1', '20000000-0000-0000-0000-0000000000b1', 1);
+    ('a0000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-0000000000a4', '20000000-0000-0000-0000-0000000000a4', 2),
+    ('b0000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-0000000000b1', '20000000-0000-0000-0000-0000000000b1', 1),
+    ('b0000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-0000000000b4', '20000000-0000-0000-0000-0000000000b4', 2);
 
   -- scoped_a sees only universe u_a1
   insert into user_scopes (org_id, user_id, universe_id) values

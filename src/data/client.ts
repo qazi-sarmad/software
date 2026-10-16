@@ -55,13 +55,14 @@ export async function loadCurrentUser(): Promise<User | null> {
 
   const { data: member, error: memberErr } = await sb
     .from('org_members')
-    .select('org_id, display_name, roles(slug)')
+    .select('org_id, display_name, roles(slug, rights)')
     .eq('user_id', authUser.id)
     .maybeSingle();
   if (memberErr) throw new Error(memberErr.message);
   if (!member) throw new Error('This account is not provisioned in an organisation.');
 
-  const slug: string = (member.roles as unknown as { slug: string } | null)?.slug ?? '';
+  const roleRow = member.roles as unknown as { slug: string; rights: Record<string, boolean> | null } | null;
+  const slug: string = roleRow?.slug ?? '';
   if (!ROLE_SLUGS.includes(slug)) throw new Error('Unknown role slug: ' + slug);
 
   const { data: scopes, error: scopeErr } = await sb
@@ -80,6 +81,7 @@ export async function loadCurrentUser(): Promise<User | null> {
     email: authUser.email ?? '',
     avatar: initials(member.display_name as string),
     role: slug as Role,
+    rights: roleRow?.rights ?? undefined,
     universeIds,
     entityIds,
   };
