@@ -49,7 +49,7 @@ Updated after every task and committed with it. Every line carries the CI run ID
 | 6C freeze/issuance DB | done | 3c55c7b | 38956498574 | migration 0040 (freeze_report, issue_report), test 49 (open-comment gate, CAP gate, ledger, queued email) |
 | 6D CAP register DB | done | 646c722 | 38956498574 | migration 0038 (caps, update_cap, close_cap, check_cap_reconciliation), test 47 (D-6D-M1, D-6D-CAP) |
 | 6E email queue DB | done | 838f935 | 38956498574 | migration 0039 (email_queue, queue_email), test 48 (org sees sent/failed only; provider_config hidden) |
-| 6F Phase 6 tests | todo | | | |
+| 6F Phase 6 tests | done | _this commit_ | _see CI_ | test 55 phase-6 acceptance (cross-org, anon, no-right, queue visibility, platform L2) |
 | 6G Phase 6 data module | done | _this commit_ | _see CI_ | src/data/{reports,caps,email}.ts + phase6.test.ts |
 | 6H Phase 6 UI | todo | | | |
 | 6I Phase 6 docs | todo | | | |
