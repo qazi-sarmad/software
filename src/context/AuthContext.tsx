@@ -45,7 +45,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const result = await clientSignIn(email, password);
     if (!result.ok) return result;
     try {
-      const u = await loadCurrentUser();
+      const u = await loadCurrentUser().catch(() => null);
       if (u) {
         setUser(u);
         setIsPlatform(false);
