@@ -217,3 +217,35 @@ sign-off gate refuses an un-flagged exception.
 
 Added `status` with the task's values (open/sampling/locked/prepared/reviewed/signed_off). The 0004
 `prepared` boolean is retained and set true on sign-off, so existing code that reads it keeps working.
+
+## D-4D-CI-RACE - the 4D CI run was red because two runs shared the test project
+
+Run 38897205611 (commit d54165e, 4D) failed at test 11 with "new row violates row-level security policy
+for table sign_offs". Run 38897513403 (commit e2dc0bf, 4E) started while the 4D run was still going and
+ran the SAME persistent test project. Its `provio_test.seed()` truncates `orgs cascade` and re-inserts
+the fixtures; the two seeds interleaved, so `wp_a1` was briefly absent when the 4D run's test 11 ran.
+The identical 4D code and test 35 pass in run 38897513403 (test 11 ok at 12:03:53). The failure is a
+harness race, not a defect. Rule adopted: wait for the in-flight CI run to finish before dispatching the
+next one (the test project is shared state). How to reverse: nothing to reverse; this is an operational
+note.
+
+## D-4F-M1 - no existing analyst-engine table or function
+
+A grep for `analytics|analyst|check` found only TypeScript (`src/lib/analytics.ts`) and UI call sites.
+No `analysis_results` table or `create_observation_stub` existed, so 0029 creates them (no collision).
+
+## D-4F-stub - create_observation_stub is temporary (D-5A-STUB)
+
+The task's dependency rule: until 5A's real `create_observation` exists, 4F calls a stub. The stub is a
+SECURITY DEFINER RPC that stores the finding intent in `analysis_results` and validates that every row
+reference belongs to a population in the caller's own org (the §12 guarantee that a check result
+references only rows from the same org). 5A MUST replace it with the real `create_observation` and record
+D-5A-STUB. It must not survive 5A.
+
+## D-4F-engine-scope - checks are pure TypeScript
+
+Every §12 check is a pure function in `src/lib/analyticsEngine.ts` with unit tests (no Math.random, no
+AI, no I/O). Benford reports chi-square and MAD at the distribution level (rows are digits 1-9, not
+population rows) because Benford is a distribution test, not a row test. How to reverse: change the
+returned rows in `checkBenfordFirstDigit`.
+

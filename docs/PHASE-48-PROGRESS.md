@@ -28,10 +28,10 @@ Updated after every task and committed with it. Every line carries the CI run ID
 | H3c abolish InspectorPanel | done | 22f2d15 | 38895012166 | green — panel deleted; spec §27.5/§17.1 updated (D-H3/D-H3c) |
 | 4A plan docs | done | 0e5bfee | _see CI_ | docs/PHASE-4-PLAN.md; migrations 0025+, tests 33+ |
 | 4B planning DB | done | f772dba | 38895859440 | green — migration 0025, test 33 (D-4B-M1, D-4B-scope, D-4B-four-eyes, D-4B-reconciliation) |
-| 4C population gate DB | done | c0ebd01 | _see CI_ | migration 0026, test 34 (D-4C-M1, D-4C-status, D-4C-row-count) |
-| 4D sampling engine DB | done | d54165e | 38897205611 | migration 0027, test 35 (D-4D-M1, D-4D-column-name, D-4D-locked-immutability, D-4D-seed, D-4D-sample-size) |
-| 4E row testing DB | done | _pending_ | _see CI_ | migration 0028, test 36 (D-4E-M1, D-4E-four-eyes, D-4E-exception-default, D-4E-status) |
-| 4F analyst engine | todo | | | |
+| 4C population gate DB | done | c0ebd01 | 38896760916 | migration 0026, test 34 (D-4C-M1, D-4C-status, D-4C-row-count) |
+| 4D sampling engine DB | fixed | d54165e | 38897513403 | migration 0027, test 35 (D-4D-M1, D-4D-column-name, D-4D-locked-immutability, D-4D-seed, D-4D-sample-size). 38897205611 was a cross-run race on the shared test project (D-4D-CI-RACE); the same code is green in the 4E run. |
+| 4E row testing DB | done | e2dc0bf | 38897513403 | migration 0028, test 36 (D-4E-M1, D-4E-four-eyes, D-4E-exception-default, D-4E-status) |
+| 4F analyst engine | done | _this commit_ | _see CI_ | migration 0029, test 37, src/lib/analyticsEngine.ts + test (D-4F-M1, D-4F-stub, D-4F-engine-scope) |
 | 4G Phase 4 tests | todo | | | |
 | 4H Phase 4 data module | todo | | | |
 | 4I Phase 4 UI | todo | | | |

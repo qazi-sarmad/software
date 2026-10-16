@@ -64,7 +64,8 @@ language sql immutable as $$
     'workpaper_rows',
     'entity_approval_settings','entity_decision_grants','user_preferences',
     'planning_sections','planning_suggestion_decisions','planning_reconciliation_acks',
-    'org_sampling_table'
+    'org_sampling_table',
+    'analysis_results'
   ]
 $$;
 
