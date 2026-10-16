@@ -107,3 +107,28 @@ export async function getSample(workpaperId: string): Promise<SampleRow | null> 
     lockedBy: (data.locked_by as string | null) ?? null,
   };
 }
+
+/**
+ * Org sampling-table writes (C2/C3, spec §11.2). The Org Admin portal edits the rule set through
+ * these; the RPC requires edit_config and is logged in the org's configuration chain.
+ */
+export interface SamplingRuleInput {
+  controlType: string;
+  frequency: string;
+  popBand: string;
+  method: SamplingMethod;
+  baseSize: number;
+  pct: number;
+  id?: string | null;
+}
+
+export function upsertSamplingRule(input: SamplingRuleInput): Promise<DataResult> {
+  return callRpc('admin_upsert_sampling_row', {
+    p_control_type: input.controlType, p_frequency: input.frequency, p_pop_band: input.popBand,
+    p_method: input.method, p_base_size: input.baseSize, p_pct: input.pct, p_id: input.id ?? null,
+  });
+}
+
+export function deleteSamplingRule(id: string): Promise<DataResult> {
+  return callRpc('admin_delete_sampling_row', { p_id: id });
+}

@@ -33,8 +33,8 @@ Every line carries the commit hash and the CI run ID, not only "green".
 | C0 preflight + inventory | done | aae1b81 | 38917977436 | branch created; numbers locked; docs seeded; CI green |
 | C0b ownership scrub | done | 23d915a | _with C1_ | stray agent-authored patch removed; provenance words stripped; `.openhands/` untracked |
 | C1 platform DB + RPCs | done | 45d705c | 38919258533 | `0031_platform_control_plane.sql`, test `40` |
-| C2 org settings DB | done | _this commit_ | _see CI_ | `0032_org_admin_settings.sql`, test `41` |
-| C3 data modules | todo | | | |
+| C2 org settings DB | done | 639f1b7 | 38920609007 | `0032_org_admin_settings.sql`, test `41` |
+| C3 data modules | done | _this commit_ | _see CI_ | `src/data/platform.ts`, `src/data/orgSettings.ts` (+ sampling writes) |
 | C4 Super Admin portal UI | todo | | | |
 | C5 Org Admin settings UI | todo | | | |
 | C6 docs + PR | todo | | | |

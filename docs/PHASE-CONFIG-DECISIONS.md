@@ -59,3 +59,12 @@ surface. How to reverse: drop the table.
 Choice: writes are logged to the org's hash-chained configuration log via `admin_log_change`; no
 direct INSERT/UPDATE/DELETE policy on `org_sampling_table`, `severity_levels` or `email_settings` for
 tenant roles. Reason: auditable, RPC-only writes. How to reverse: add a policy.
+
+## D-C3 — data-module layout
+
+Task C3. Unclear point: `src/data/sampling.ts` already had `listSamplingRules`; C2 adds sampling
+writes. Options: (a) duplicate them in a new `orgSettings.ts`; (b) put the sampling writes in
+`sampling.ts` and keep `orgSettings.ts` for severity and email only.
+Choice: (b). Reason: one home per table; M1 in the app layer too. How to reverse: move the two
+functions. Modules are inert without Supabase env vars: reads return empty, writes report the
+module is not configured (tested in `src/data/*.test.ts`).
