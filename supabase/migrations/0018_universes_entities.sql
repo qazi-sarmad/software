@@ -12,6 +12,11 @@
 -- ---------------------------------------------------------------------------
 -- Entity approval status and audit columns.
 -- ---------------------------------------------------------------------------
+-- CI re-applies migrations to the same project on every run, so the guard trigger may already
+-- exist from a previous run when the backfill below runs. Drop it first; it is recreated at the end
+-- of this file.
+drop trigger if exists entities_status_guard on entities;
+
 alter table entities add column if not exists status text not null default 'draft';
 alter table entities add column if not exists submitted_by uuid null;
 alter table entities add column if not exists submitted_at timestamptz null;
