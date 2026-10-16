@@ -1,4 +1,4 @@
-# Phases 4–8 — decisions
+# Phases 4â€“8 â€” decisions
 
 Decision order: (a) `docs/SPEC-v10.md`; (b) the Laws; (c) the simplest option that obeys the Laws;
 (d) best for multi-tenant, auditable, configuration-not-code, deterministic. Never an option that
@@ -13,9 +13,9 @@ Entry format: number, task, unclear point, options, choice, reason, how to rever
 The platform portal (Phase 8) is the sole place that may read `user_role` from the JWT (for example
 `user_role = 'platform_admin'`). All org-product RPCs and application code continue to use only
 `caller_has_right` / `hasRight`. Platform checks must not leak into org RPCs.
-Reason: §24 requires a platform role with no tenant business access; the tenant boundary is rights,
+Reason: Â§24 requires a platform role with no tenant business access; the tenant boundary is rights,
 so the one exception is scoped to platform-only functions and platform-only tables.
-Reverse: remove the `platform_admin` branch from the Phase 8 functions; nothing in Phases 4–7 reads it.
+Reverse: remove the `platform_admin` branch from the Phase 8 functions; nothing in Phases 4â€“7 reads it.
 
 ## D-H0-USERS
 
@@ -24,14 +24,14 @@ Reverse: remove the `platform_admin` branch from the Phase 8 functions; nothing 
 Playwright tests use these two. Reason: they already exist and the setup is idempotent.
 Reverse: revert the `e2e/` changes of this build.
 
-## D-H2 — nav labels
+## D-H2 â€” nav labels
 
-Task H2. Unclear point: the code used freeze-spec tab labels that differ from SPEC-v10 §5.
-Options: keep the old labels; or adopt §5.
-Choice: §5 wins. Mapping applied — Executive Summary → Dashboard; Pending Tasks → Work Queue;
-Audit File (tab) → Audit Files; Issues Register → Issues & CAP Register. Audit Universe, Audit Plan
+Task H2. Unclear point: the code used freeze-spec tab labels that differ from SPEC-v10 Â§5.
+Options: keep the old labels; or adopt Â§5.
+Choice: Â§5 wins. Mapping applied â€” Executive Summary â†’ Dashboard; Pending Tasks â†’ Work Queue;
+Audit File (tab) â†’ Audit Files; Issues Register â†’ Issues & CAP Register. Audit Universe, Audit Plan
 and SIRA are unchanged.
-Reason: SPEC-v10 is the authoritative spec (§5 "Primary navigation"). Old freeze labels
+Reason: SPEC-v10 is the authoritative spec (Â§5 "Primary navigation"). Old freeze labels
 (Executive Summary, Pending Tasks, Audit File, Issues Register) are superseded.
 Files touched beyond `NavStrip.tsx`: `src/components/common/NavStrip.test.tsx` (asserts exact label
 text), `e2e/smoke.spec.ts` (SEVEN_TABS + click titles), `src/App.auth.test.tsx` (negative assertion),
@@ -40,7 +40,7 @@ text), `e2e/smoke.spec.ts` (SEVEN_TABS + click titles), `src/App.auth.test.tsx` 
 (hint text). Tab `id`s are unchanged, so routing and `data-testid`s are unaffected.
 How to reverse: restore the NavStrip strings and the test assertions from the pre-H2 commit `244bb3e`.
 
-## D-H3a — preferences table, RPCs and the no-blocking-modal guard scope
+## D-H3a â€” preferences table, RPCs and the no-blocking-modal guard scope
 
 Task H3a. Unclear point: the task predicts the guard offender set as `AuditFileModal.tsx` plus
 `ConfirmPanel.tsx`, but the repository has no `ConfirmPanel.tsx`, and the real full-viewport overlays
@@ -48,33 +48,33 @@ are `InspectorPanel.tsx`, `CommandPalette.tsx` and `HeaderCalendarPanel.tsx`.
 Options: (a) create a `ConfirmPanel.tsx` that is not used; (b) write the guard against the real files
 with a justified allow-list.
 Choice: (b). `user_preferences` is a new table (grep found none; `config_versions` is org-level
-configuration, not per-user state). Guard allow-list: `AuditFileModal.tsx` (§17.1 window chrome,
-explicitly non-blocking), the global command palette (§5, Ctrl/⌘ K — transient, Esc-dismissed),
+configuration, not per-user state). Guard allow-list: `AuditFileModal.tsx` (Â§17.1 window chrome,
+explicitly non-blocking), the global command palette (Â§5, Ctrl/âŒ˜ K â€” transient, Esc-dismissed),
 `HeaderCalendarPanel.tsx` (anchored popover, `role="dialog"` but no scrim, no focus trap; the page
 stays usable). `ConfirmPanel.tsx` remains an allowed name for when the hold-to-confirm panel lands
-(§27.5 names it). `InspectorPanel.tsx` is a genuine blocking modal and is in a TEMPORARY list that
+(Â§27.5 names it). `InspectorPanel.tsx` is a genuine blocking modal and is in a TEMPORARY list that
 H3c empties when the file is abolished.
 Reason: ascribing blocking-modal status to a file that does not exist would hide the real offenders;
-the guard must scan actual code while keeping the two surfaces §27.5 explicitly permits.
+the guard must scan actual code while keeping the two surfaces Â§27.5 explicitly permits.
 Files touched beyond the task list: `supabase/tests/00_lib.sql` (`user_preferences` added to
 `org_tables()`, so tests 1/4 keep covering it). New SQL test `32_user_preferences.sql`.
 How to reverse: delete 0024 + test 32, drop `user_preferences` from `org_tables()`, delete
 `src/data/preferences.ts` and the guard; restore NavStrip etc. from `8500602`.
 
-## D-H3a-M1 — no collision
+## D-H3a-M1 â€” no collision
 
 Grep for `user_preferences`, `get_user_preference` and `set_user_preference` found no existing
 object, so 0024 creates rather than alters. No M1 collision.
 
-## D-H3b — record view wiring, `/view` route, and files touched
+## D-H3b â€” record view wiring, `/view` route, and files touched
 
 Task H3b. Unclear point: the app has no client router; the shell switches tabs by context state.
 Options: (a) pull in a router dependency; (b) reuse the existing pathname/popstate approach already
 used by `AppRoutes` for `/e/:token`.
-Choice: (b). No new dependency (no major bump; §28 spirit). `AppRoutes` now recognises
+Choice: (b). No new dependency (no major bump; Â§28 spirit). `AppRoutes` now recognises
 `/view/:recordType/:id` and renders the record behind the auth gate through `RecordPage`, which
-reuses the shared `RecordContent`. `RECORD_TYPE_TO_INSPECTOR` maps `engagement→audit_file`,
-`workpaper→workbench`, `observation→observation`, `cap→cap_inspector`.
+reuses the shared `RecordContent`. `RECORD_TYPE_TO_INSPECTOR` maps `engagementâ†’audit_file`,
+`workpaperâ†’workbench`, `observationâ†’observation`, `capâ†’cap_inspector`.
 Files touched beyond the task list (D-H3b-files): `src/App.tsx` (inspector render switched from the
 blocking `InspectorPanel` to `FloatingWindow`; removed the shell scale-down that signalled a modal;
 added the `/view` route); new `src/components/common/RecordContent.tsx`,
@@ -84,33 +84,33 @@ Reason: extracting the content renderer keeps both modes identical and lets the 
 overlay surfaces.
 How to reverse: restore `src/App.tsx` from `ae92f3b` and delete the four new files.
 
-## D-H3c — InspectorPanel abolished; §27.5 / §17.1 text updated
+## D-H3c â€” InspectorPanel abolished; Â§27.5 / Â§17.1 text updated
 
 Task H3c. `src/components/common/InspectorPanel.tsx` is deleted; grep confirms no remaining imports
 (only `RecordContent`/`FloatingWindow` remain). `docs/baseline-lines.json` records the deletion under
 `removed` with the reason, so `check-shrink` stays meaningful (a deliberate deletion is not an
-accidental shrink). SPEC-v10 §27.5 and §17.1 now describe the two-mode record view; the old wording
+accidental shrink). SPEC-v10 Â§27.5 and Â§17.1 now describe the two-mode record view; the old wording
 ("sliding inspector panels", "inspector panels slide in") is superseded.
 
-## D-H3 — two-mode record view (freeze label superseded)
+## D-H3 â€” two-mode record view (freeze label superseded)
 
 Task H3. The freeze spec's "sliding inspector panel" is superseded by the two-mode record view per
-SPEC-v10 §27.5. MODE A full page (`/view/:recordType/:id`, breadcrumb, no overlay); MODE B floating
+SPEC-v10 Â§27.5. MODE A full page (`/view/:recordType/:id`, breadcrumb, no overlay); MODE B floating
 window (Audit File chrome: draggable, minimisable, pop-out, shared origin/session). The mode is the
 `record_view_mode` preference (default `full_page`). No blocking modal anywhere: the guard
 `noBlockingModal.test.ts` enforces no `aria-modal` / `role="dialog"` / `fixed inset-0` outside the
 allow-list of non-blocking surfaces.
-How to reverse: restore `InspectorPanel.tsx`, the §27.5/§17.1 text and `App.tsx` from `8500602`;
+How to reverse: restore `InspectorPanel.tsx`, the Â§27.5/Â§17.1 text and `App.tsx` from `8500602`;
 remove `FloatingWindow`/`RecordView`/`RecordContent` and the guard entries.
 
-## D-4B-M1 — no collision
+## D-4B-M1 â€” no collision
 
 Grep for `planning_sections`, `planning_suggestion_decisions`, `planning_reconciliation_acks`,
 `populate_planning_suggestions`, `check_planning_reconciliation`, `sign_planning` found no existing
 object, so 0025 creates rather than alters. `plans`/`plan_items`/`plan_versions` exist but are the
 universe audit plan (a different shape), so they are not extended. No M1 collision.
 
-## D-4B-scope — testing lock is a stage guard, not an edit guard
+## D-4B-scope â€” testing lock is a stage guard, not an edit guard
 
 Task 4B says "Testing is locked until planning_sections for that engagement are signed off". The
 existing fixtures (and the sealed-engagement tests) mark a testing workpaper `prepared` while no
@@ -121,22 +121,22 @@ in testing is governed by 4E (sign-off/reopen). Reason: it enforces the spec's i
 starts before Planning sign-off) without weakening the sealed-engagement tests. How to reverse: widen
 the trigger condition in `guard_testing_lock` to any UPDATE.
 
-## D-4B-four-eyes — signer must not have prepared every section
+## D-4B-four-eyes â€” signer must not have prepared every section
 
-The spec requires "review by a role configured for that stage" (§10.4) and four-eyes is the house
+The spec requires "review by a role configured for that stage" (Â§10.4) and four-eyes is the house
 pattern (D3). Choice: `sign_planning` requires `review_and_approve` and refuses when the signer is the
 preparer of *every* section (they must not be the sole author). A signer who prepared some but not all
 sections may sign; that mirrors the existing `sign_offs` four-eyes CHECK, which only forbids
 `reviewer = preparer`. How to reverse: change the `v_self = v_sections` test to `v_self > 0`.
 
-## D-4B-reconciliation — clean, or acknowledged with a reason
+## D-4B-reconciliation â€” clean, or acknowledged with a reason
 
-§10.1 blocks sign-off on a SIRA/Planning mismatch "until resolved". The task also says a discrepancy
+Â§10.1 blocks sign-off on a SIRA/Planning mismatch "until resolved". The task also says a discrepancy
 may be "acknowledged with a recorded reason". Choice: `check_planning_reconciliation` returns true
 only when every Planning risk is in the latest published SIRA; `sign_planning` proceeds when the gate
 is true OR a `planning_reconciliation_acks` row with a >=10-character reason exists. If no SIRA cycle
 is published, the Planning RCM risks cannot be reconciled, so the gate is false and an acknowledgement
-is required — the strict reading of "the current SIRA". How to reverse: treat a missing cycle as
+is required â€” the strict reading of "the current SIRA". How to reverse: treat a missing cycle as
 "nothing to reconcile" in `check_planning_reconciliation`.
 
 ## D-4C-M1 - existing objects extended, not duplicated
@@ -184,7 +184,7 @@ needs, because nothing ever has to be edited in place.
 
 System mode seeds from `sha256(population.sha256 || workpaper_id)` and orders population rows by
 `md5(seed || row_ref)`, so the same verified population and workpaper always yield the same sample
-(§11.2). A row's reported order is derived from the seed, never from `random()`.
+(Â§11.2). A row's reported order is derived from the seed, never from `random()`.
 
 ## D-4D-sample-size - base size vs percentage
 
@@ -210,7 +210,7 @@ Same pattern as 4B. `sign_off_workpaper` refuses when the signer prepared *every
 ## D-4E-exception-default - a cross or unverifiable defaults to an exception
 
 `record_workpaper_row` flags `cross`/`unverifiable` as exceptions by default (the caller may override).
-Reason: §12 findings come from exceptions, and a non-tick result is by definition a departure. The
+Reason: Â§12 findings come from exceptions, and a non-tick result is by definition a departure. The
 sign-off gate refuses an un-flagged exception.
 
 ## D-4E-status - workpaper status vocabulary
@@ -238,13 +238,13 @@ No `analysis_results` table or `create_observation_stub` existed, so 0029 create
 
 The task's dependency rule: until 5A's real `create_observation` exists, 4F calls a stub. The stub is a
 SECURITY DEFINER RPC that stores the finding intent in `analysis_results` and validates that every row
-reference belongs to a population in the caller's own org (the §12 guarantee that a check result
+reference belongs to a population in the caller's own org (the Â§12 guarantee that a check result
 references only rows from the same org). 5A MUST replace it with the real `create_observation` and record
 D-5A-STUB. It must not survive 5A.
 
 ## D-4F-engine-scope - checks are pure TypeScript
 
-Every §12 check is a pure function in `src/lib/analyticsEngine.ts` with unit tests (no Math.random, no
+Every Â§12 check is a pure function in `src/lib/analyticsEngine.ts` with unit tests (no Math.random, no
 AI, no I/O). Benford reports chi-square and MAD at the distribution level (rows are digits 1-9, not
 population rows) because Benford is a distribution test, not a row test. How to reverse: change the
 returned rows in `checkBenfordFirstDigit`.
@@ -254,9 +254,9 @@ returned rows in `checkBenfordFirstDigit`.
 4F's `create_observation_stub(uuid,uuid,text,jsonb,int[])` is gone. Migration 0030 renames its storage
 role to the real RPC `record_analysis_result(...)` (same signature, same org-scope guarantee for row
 references), drops `create_observation_stub` outright, and adds `raise_finding_from_result(...)`, which
-stores the result and opens an observation carrying the rule id, params and row refs (§12). The Phase 4
+stores the result and opens an observation carrying the rule id, params and row refs (Â§12). The Phase 4
 data module and tests 37/38 now call the real names.
-How to reverse: re-create the stub in a new migration (do not — the dependency rule forbids it).
+How to reverse: re-create the stub in a new migration (do not â€” the dependency rule forbids it).
 
 ## D-5A-M1 - observations/findings/issues already existed in 0004
 
@@ -274,13 +274,13 @@ status CHECK) rather than creating new tables, per Migration Safety Rule M1.
 
 `severity_levels.color_token` is constrained to the design system's accent tokens
 (--accent-cinnabar, --accent-brass, --accent-verdigris and their subtle variants). A hex value is refused
-at the database (§14.4 "shown with its text label, never by colour alone"). How to reverse: edit the
+at the database (Â§14.4 "shown with its text label, never by colour alone"). How to reverse: edit the
 `severity_levels_token_chk` CHECK if the design system gains tokens.
 
 ## D-5A-optional-sections - the four mandatory tags are hard-coded, the rest are org config
 
 The four mandatory role tags (context, condition, effect, risk) are hard-coded in `check_readability`
-exactly as §14.3 states. Optional tags (criteria, cause, recommendation, …) are read from the org's
+exactly as Â§14.3 states. Optional tags (criteria, cause, recommendation, â€¦) are read from the org's
 `config_versions` key `methodology.required_sections` via `org_required_sections()`; when the key is
 absent nothing extra is required. How to reverse: change the hard-coded array or the config key name.
 
@@ -303,14 +303,14 @@ extended. How to reverse: drop the table in a later migration.
 
 The task says `pull_exceptions` "can only run if Testing is signed off", but the task never defines a
 Testing sign-off record. Options: (a) add a `testing_signed_off_at` column to `engagements`; (b) derive
-it from the workpapers. Choice: (b) — `testing_signed_off(engagement)` is true when the engagement has
+it from the workpapers. Choice: (b) â€” `testing_signed_off(engagement)` is true when the engagement has
 at least one workpaper and every workpaper is `signed_off` (0028 already stores that status). Reason:
-one source of truth, no second flag to keep in step, and it matches §10.4 (a stage is signed off when
+one source of truth, no second flag to keep in step, and it matches Â§10.4 (a stage is signed off when
 its work is signed off). How to reverse: add an explicit flag and change the function body.
 
 ## D-5B-opinion-config - overall opinion required or optional per org
 
-§10.3 makes the overall opinion "optional, and configurable as required or optional". Choice: read the
+Â§10.3 makes the overall opinion "optional, and configurable as required or optional". Choice: read the
 org `config_versions` key `conclusion.opinion_required` (boolean); when absent the opinion is optional.
 `sign_conclusion` refuses an empty opinion only when the key is true. How to reverse: change the key
 name or the default.
@@ -324,7 +324,7 @@ name or the default.
 ## D-5B-signoff-config - stage sign-off role is configurable per org AND per engagement
 
 Owner clarification: which team role signs off each stage (Planning, Testing, Conclusion) is
-configurable per organisation **and per engagement** (audit deployed) � it is not a universal
+configurable per organisation **and per engagement** (audit deployed) — it is not a universal
 per-client setting. The task text for 5B only requires "four-eyes" plus the right. Implementation
 keeps the enforcement on the right (`review_and_approve`), which is the only safe gate today, and
 records the configuration as a follow-on: a per-engagement `stage_sign_off_roles` config that names
@@ -339,18 +339,18 @@ created in `0036`. How to reverse: drop the tables in a later migration.
 
 ## D-6A-blocks - the default template is a code-side constant, the sections are data
 
-�15.2 names the default sections (Executive Summary � Scope and Objectives � Findings and Issues �
-Overall Opinion � Appendices). Choice: `compose_report` writes one block per default section, pulling
+§15.2 names the default sections (Executive Summary · Scope and Objectives · Findings and Issues ·
+Overall Opinion · Appendices). Choice: `compose_report` writes one block per default section, pulling
 each from structured data (Planning scope, the entity's findings, the Conclusion opinion, the workpaper
 index). A missing value becomes `is_placeholder=true` with `{"missing": "<field>"}`. Reason: the spec
-requires the placeholder behaviour and computed figures; the per-tenant template table (�15.2
+requires the placeholder behaviour and computed figures; the per-tenant template table (§15.2
 "Templates: each tenant has 1-3 templates") is deferred to 6H/NOT-DONE. How to reverse: read the
 section list from a template row instead of the function body.
 
 ## D-6A-summary - the summary is computed, never stored
 
 `compute_report_summary` returns counts computed live from `findings`, `issues` and `workpaper_rows`
-(�15.2 step 2 "computed from the records, not typed"). Choice: a read function, not a materialised
+(§15.2 step 2 "computed from the records, not typed"). Choice: a read function, not a materialised
 column. Reason: a stored figure can drift from the records; the spec says compute. How to reverse:
 snapshot the JSON onto `report_versions` at freeze time if the frozen report must be immutable.
 
@@ -361,7 +361,7 @@ in `0037`. How to reverse: drop the table in a later migration.
 
 ## D-6B-resolution - a resolution carries a reason, a resolver and a four-eyes rule
 
-�15.2 step 5 says each comment is "resolved as incorporated or rejected with a reason". Choice: the
+§15.2 step 5 says each comment is "resolved as incorporated or rejected with a reason". Choice: the
 CHECK `report_comments_resolution_chk` requires `resolved_at`, `resolved_by` and a non-empty
 `resolution_reason` whenever the status is not `open`; `resolve_report_comment` adds four-eyes (the
 resolver is not the commenter) and requires `review_and_approve`. Reason: matches the spec and mirrors
@@ -369,10 +369,33 @@ the four-eyes pattern used elsewhere. How to reverse: drop the CHECK and the fou
 
 ## D-6B-open-count - the freeze gate reads a count function, not a stored flag
 
-�15.2 step 5 "The report cannot be frozen while any comment is unresolved." Choice:
+§15.2 step 5 "The report cannot be frozen while any comment is unresolved." Choice:
 `open_report_comment_count(version)` is a read function; `freeze_report` (6C) calls it. Reason: a stored
 open-comment flag can drift; a count cannot. How to reverse: change `freeze_report` to read another
 source.
+
+## D-6D-M1 - cap_items exists as a stub; the §16 register is created as `caps`
+
+Grep found `cap_items` (0004): `id, org_id, issue_id, action, due_date, status` — no finding link, no
+evidence, no reviewer, no §16.2 status set. Options: (a) extend `cap_items` with the missing columns;
+(b) create the §16 register as a new table. Choice: (b) — `caps` (0038). Reason: `cap_items` backs the
+legacy demo seed and has a nullable `status` with no CHECK; bolting the §16 vocabulary onto it would
+leave the old rows in an invalid state and mix two shapes. `caps` is the register the reconciliation
+reads; `cap_items` is untouched legacy data. How to reverse: migrate `cap_items` rows into `caps` and
+drop `cap_items`.
+
+## D-6D-CAP - one CAP status vocabulary: the §16.2 database set
+
+The mandatory decision the task requires. Earlier CAP work used Open → In progress → Pending validation
+→ Overdue / Closed (src/types/index.ts `CapStatus`, src/lib/cap.ts `transitionCapStatus`). The register
+uses the §16.2 set: open, unverified, verified_closed, verified_closed_delay, overdue_unverified.
+Choice: option (a) from the task — map the UI states onto the §16.2 set and route every read/write
+through one boundary, `capStatusToDb` / `capStatusFromDb` in src/lib/cap.ts (unit-tested).
+Mapping:
+  Open → open · In progress → open · Pending validation → unverified ·
+  Overdue → overdue_unverified · Closed → verified_closed
+Reason: the database is authoritative for the register; the UI keeps its familiar labels; one function
+pair means no divergent status set. How to reverse: delete the two functions and the `caps` table.
 
 ## D-6C-6D-order - 6D (CAP register) is built before 6C (freeze/issuance)
 
@@ -392,15 +415,15 @@ richer evidence model in a later migration and repoint the FK.
 
 ## D-5D-stage-filter - stage awareness is a cumulative set
 
-§17.2 says Planning shows Planning documents, Testing shows Planning and Testing, Conclusion shows all.
-Choice: `search_documents` maps the stage to a cumulative array (`planning` → {planning}, `testing` →
-{planning,testing}, `conclusion` → all three) and filters `evidence_files.stage` against it. Reason: it
+Â§17.2 says Planning shows Planning documents, Testing shows Planning and Testing, Conclusion shows all.
+Choice: `search_documents` maps the stage to a cumulative array (`planning` â†’ {planning}, `testing` â†’
+{planning,testing}, `conclusion` â†’ all three) and filters `evidence_files.stage` against it. Reason: it
 matches the spec sentence literally and keeps the filter in one place. How to reverse: change the CASE
 in `search_documents`.
 
 ## D-5D-extraction-stub - extraction is a pending row, not real extraction
 
-The task says "Extraction is async (called by an edge function stub — the stub writes a pending row and
+The task says "Extraction is async (called by an edge function stub â€” the stub writes a pending row and
 returns; actual extraction is out of scope)". `request_extraction` writes a `pending` row and returns;
 it never writes text. Real extraction and the edge function are recorded in NOT-DONE. How to reverse:
 have the edge function write `extracted_text` and flip the status to `done`.

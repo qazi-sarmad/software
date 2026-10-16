@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { transitionCapStatus } from './cap';
+import { capStatusFromDb, capStatusToDb, DbCapStatus, transitionCapStatus } from './cap';
 import { buildDefaultOrgRoleConfig, canPerformCapability } from './orgCapabilities';
-import { AuditCapItem, CapCapability, OrgRoleConfig, Role, User } from '../types';
+import { AuditCapItem, CapCapability, CapStatus, OrgRoleConfig, Role, User } from '../types';
 
 const user = (role: Role, id?: string): User => ({
   id: id ?? `u-${role}`,
@@ -179,5 +179,43 @@ describe('transitionCapStatus', () => {
     });
     expect(mgr.ok).toBe(true);
     if (mgr.ok) expect(mgr.cap.status).toBe('Overdue');
+  });
+});
+
+// D-6D-CAP: the single mapping between the UI vocabulary and the §16.2 database vocabulary.
+describe('cap status mapping (D-6D-CAP)', () => {
+  const pairs: Array<[CapStatus, DbCapStatus]> = [
+    ['Open', 'open'],
+    ['In progress', 'open'],
+    ['Pending validation', 'unverified'],
+    ['Overdue', 'overdue_unverified'],
+    ['Closed', 'verified_closed'],
+  ];
+
+  it('maps every UI status to the database vocabulary', () => {
+    for (const [ui, db] of pairs) {
+      expect(capStatusToDb(ui)).toBe(db);
+    }
+  });
+
+  it('maps every database status back to a UI status', () => {
+    expect(capStatusFromDb('open')).toBe('Open');
+    expect(capStatusFromDb('unverified')).toBe('Pending validation');
+    expect(capStatusFromDb('overdue_unverified')).toBe('Overdue');
+    expect(capStatusFromDb('verified_closed')).toBe('Closed');
+    expect(capStatusFromDb('verified_closed_delay')).toBe('Closed');
+  });
+
+  it('covers every database status exactly once (no divergent status set)', () => {
+    const dbStatuses: DbCapStatus[] = [
+      'open',
+      'verified_closed',
+      'verified_closed_delay',
+      'unverified',
+      'overdue_unverified',
+    ];
+    for (const db of dbStatuses) {
+      expect(capStatusFromDb(db)).toBeTruthy();
+    }
   });
 });

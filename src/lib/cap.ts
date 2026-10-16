@@ -174,3 +174,39 @@ export function transitionCapStatus(input: TransitionCapInput): TransitionCapRes
     },
   };
 }
+
+/**
+ * The single canonical mapping between the UI CAP vocabulary and the §16.2 database vocabulary.
+ * D-6D-CAP: the register table `caps` is authoritative; the UI keeps its labels but every read and
+ * write crosses this one boundary, so no second status set survives in the product.
+ */
+export type DbCapStatus =
+  | 'open'
+  | 'verified_closed'
+  | 'verified_closed_delay'
+  | 'unverified'
+  | 'overdue_unverified';
+
+const UI_TO_DB: Record<CapStatus, DbCapStatus> = {
+  Open: 'open',
+  'In progress': 'open',
+  'Pending validation': 'unverified',
+  Overdue: 'overdue_unverified',
+  Closed: 'verified_closed',
+};
+
+const DB_TO_UI: Record<DbCapStatus, CapStatus> = {
+  open: 'Open',
+  verified_closed: 'Closed',
+  verified_closed_delay: 'Closed',
+  unverified: 'Pending validation',
+  overdue_unverified: 'Overdue',
+};
+
+export function capStatusToDb(status: CapStatus): DbCapStatus {
+  return UI_TO_DB[status];
+}
+
+export function capStatusFromDb(status: DbCapStatus): CapStatus {
+  return DB_TO_UI[status];
+}
