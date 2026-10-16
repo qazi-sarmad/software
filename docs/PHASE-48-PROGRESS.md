@@ -23,9 +23,9 @@ Updated after every task and committed with it. Every line carries the CI run ID
 | H0 preflight + docs | done | 48a329a | (no CI: docs only, pushed with H1) | branch created from main; numbering locked |
 | H1 Grok housekeeping | done | 244bb3e | 38891659906 | green — PR #9 desc retargeted to main; singleClient guard green (3 tests) |
 | H2 nav labels | done | 8500602 | 38892526322 | green — labels aligned to SPEC-v10 §5 (D-H2) |
-| H3a preferences + guard skeleton | done | _see commit_ | _see CI_ | migration 0024, src/data/preferences.ts, guards; SQL test 32 (D-H3a) |
-| H3b RecordView + routing | todo | | | |
-| H3c abolish InspectorPanel | todo | | | |
+| H3a preferences + guard skeleton | done | ae92f3b | _see CI_ | migration 0024, src/data/preferences.ts, guards; SQL test 32 (D-H3a) |
+| H3b RecordView + routing | done | 97b1c3e | _see CI_ | FloatingWindow/RecordView/RecordContent + /view route (D-H3b) |
+| H3c abolish InspectorPanel | in_progress | | | deleted panel; spec §27.5/§17.1 updated (D-H3/D-H3c) |
 | 4A plan docs | todo | | | |
 | 4B planning DB | todo | | | |
 | 4C population gate DB | todo | | | |

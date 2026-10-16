@@ -65,3 +65,40 @@ How to reverse: delete 0024 + test 32, drop `user_preferences` from `org_tables(
 
 Grep for `user_preferences`, `get_user_preference` and `set_user_preference` found no existing
 object, so 0024 creates rather than alters. No M1 collision.
+
+## D-H3b — record view wiring, `/view` route, and files touched
+
+Task H3b. Unclear point: the app has no client router; the shell switches tabs by context state.
+Options: (a) pull in a router dependency; (b) reuse the existing pathname/popstate approach already
+used by `AppRoutes` for `/e/:token`.
+Choice: (b). No new dependency (no major bump; §28 spirit). `AppRoutes` now recognises
+`/view/:recordType/:id` and renders the record behind the auth gate through `RecordPage`, which
+reuses the shared `RecordContent`. `RECORD_TYPE_TO_INSPECTOR` maps `engagement→audit_file`,
+`workpaper→workbench`, `observation→observation`, `cap→cap_inspector`.
+Files touched beyond the task list (D-H3b-files): `src/App.tsx` (inspector render switched from the
+blocking `InspectorPanel` to `FloatingWindow`; removed the shell scale-down that signalled a modal;
+added the `/view` route); new `src/components/common/RecordContent.tsx`,
+`src/components/common/FloatingWindow.tsx`, `src/components/common/RecordView.tsx`,
+`src/hooks/useRecordViewMode.ts`; `src/guards/noBlockingModal.test.ts` (allow-list widened).
+Reason: extracting the content renderer keeps both modes identical and lets the guard scan the real
+overlay surfaces.
+How to reverse: restore `src/App.tsx` from `ae92f3b` and delete the four new files.
+
+## D-H3c — InspectorPanel abolished; §27.5 / §17.1 text updated
+
+Task H3c. `src/components/common/InspectorPanel.tsx` is deleted; grep confirms no remaining imports
+(only `RecordContent`/`FloatingWindow` remain). `docs/baseline-lines.json` records the deletion under
+`removed` with the reason, so `check-shrink` stays meaningful (a deliberate deletion is not an
+accidental shrink). SPEC-v10 §27.5 and §17.1 now describe the two-mode record view; the old wording
+("sliding inspector panels", "inspector panels slide in") is superseded.
+
+## D-H3 — two-mode record view (freeze label superseded)
+
+Task H3. The freeze spec's "sliding inspector panel" is superseded by the two-mode record view per
+SPEC-v10 §27.5. MODE A full page (`/view/:recordType/:id`, breadcrumb, no overlay); MODE B floating
+window (Audit File chrome: draggable, minimisable, pop-out, shared origin/session). The mode is the
+`record_view_mode` preference (default `full_page`). No blocking modal anywhere: the guard
+`noBlockingModal.test.ts` enforces no `aria-modal` / `role="dialog"` / `fixed inset-0` outside the
+allow-list of non-blocking surfaces.
+How to reverse: restore `InspectorPanel.tsx`, the §27.5/§17.1 text and `App.tsx` from `8500602`;
+remove `FloatingWindow`/`RecordView`/`RecordContent` and the guard entries.

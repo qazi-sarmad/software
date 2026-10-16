@@ -20,7 +20,6 @@
     "src/data/initialData.ts": 870,
     "src/hooks/useScopedData.ts": 352,
     "src/components/common/Icons.tsx": 549,
-    "src/components/common/InspectorPanel.tsx": 121,
     "src/components/common/HoverPreview.tsx": 254,
     "src/components/common/HoverPreview.test.tsx": 191,
     "src/components/common/CommandPalette.tsx": 225,
@@ -60,5 +59,8 @@
     "src/components/glassbox/GlassBoxPublicRoute.tsx": 283,
     "src/styles/tokens.css": 265
   },
-  "moved": {}
+  "moved": {},
+  "removed": {
+    "src/components/common/InspectorPanel.tsx": "deleted in H3c: the blocking inspector panel is replaced by the two-mode record view (FloatingWindow / RecordView). Recorded as D-H3."
+  }
 }

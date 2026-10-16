@@ -405,7 +405,7 @@ The CAP register and the issued report must match exactly (§15.5). Any mismatch
 - Each open engagement appears as an in-app **floating window** with distinct "Audit File" chrome, so it is clearly separate from the main application.
 - It can be **minimised** to a dock, **moved**, and **dragged out** as its own browser window. A pop-out window shares the origin and session, and stays in sync through Realtime.
 - It is opened by a click, so popup blockers do not interfere.
-- It is **non-blocking.** Inspector panels slide in inside the window.
+- It is **non-blocking.** Records open inside the window as a full-page view or a floating window (the two-mode record view, §27.5).
 
 ### 17.2 Document Viewer
 - Reachable from anywhere in the engagement, as a right-side slide-in or a popup.
@@ -601,7 +601,7 @@ Bespoke 17px inline SVG icons at stroke 1.3. No icon fonts. No third-party icon 
 - Respects `prefers-reduced-motion`.
 
 ### 27.5 Interaction
-- **No blocking modals.** Sliding inspector panels, the Audit File window and the confirmation panel are used instead.
+- **No blocking modals.** A **two-mode record view** replaces the old sliding inspector panel: a record opens either as a **full page** (its own `/view/:recordType/:id` route with a breadcrumb) or in a **floating window** (draggable, minimisable, pop-out — the Audit File window chrome). The mode is the user's stored `record_view_mode` preference. The Audit File window and the confirmation panel are also used. No surface renders a backdrop scrim or `aria-modal`.
 - Every screen has designed empty, loading and error states.
 - WCAG AA contrast is verified.
 

@@ -30,9 +30,9 @@ function walk(dir: string): string[] {
  *   - calendar/HeaderCalendarPanel.tsx  anchored calendar popover: role="dialog" but no scrim and
  *                                       no focus trap; the page behind it stays usable.
  *
- * InspectorPanel.tsx was a genuine blocking modal; H3c deleted it. The floating window chrome
- * (common/FloatingWindow.tsx) and the record-view wrapper (common/RecordView.tsx) are the
- * non-blocking MODE B surfaces (§17.1) and are allowed.
+ * InspectorPanel.tsx was a genuine blocking modal; H3c deleted it and grep confirms zero remaining
+ * imports. The floating window chrome (common/FloatingWindow.tsx) and the record-view wrapper
+ * (common/RecordView.tsx) are the non-blocking MODE B surfaces (§17.1) and are allowed.
  */
 const ALLOWED = new Set([
   'components/audit/AuditFileModal.tsx',
@@ -43,10 +43,9 @@ const ALLOWED = new Set([
   'components/common/RecordView.tsx',
 ]);
 
-// Files this build will remove or convert; the guard tolerates them only until H3c.
-const TEMPORARY = new Set([
-  'components/common/InspectorPanel.tsx',
-]);
+// Empty after H3c: the blocking InspectorPanel is gone. Kept as a guard so a regression that
+// reintroduces a temporary overlay file must be recorded here explicitly.
+const TEMPORARY = new Set<string>([]);
 
 const BANNED = [/aria-modal/, /role\s*=\s*["']dialog["']/, /fixed inset-0/];
 
@@ -71,7 +70,7 @@ describe('no blocking modals (spec §27.5)', () => {
     expect(offenders).toEqual([]);
   });
 
-  it('keeps the temporary allow-list small and shrinking (H3c removes InspectorPanel)', () => {
-    expect([...TEMPORARY].every((f) => f === 'components/common/InspectorPanel.tsx')).toBe(true);
+  it('has an empty temporary allow-list (H3c removed the blocking InspectorPanel)', () => {
+    expect([...TEMPORARY]).toEqual([]);
   });
 });
