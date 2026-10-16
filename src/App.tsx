@@ -7,7 +7,6 @@ import { InlineError } from './components/common/InlineError';
 import type { User } from './types';
 import type { TenantSeed } from './types/seed';
 import { EMPTY_SEED } from './data/emptySeed';
-import { hasSession } from './data/client';
 import { ThemeProvider } from './context/ThemeContext';
 import { HeaderBar } from './components/common/HeaderBar';
 import { NavStrip } from './components/common/NavStrip';
@@ -234,25 +233,10 @@ const SuperAdminPortal = lazy(() =>
 
 /** Shows the sign-in screen for an unauthenticated visitor, else the portal (which re-checks the role). */
 const PlatformGate: React.FC = () => {
-  const { user } = useAuth();
-  const [checked, setChecked] = useState(false);
-  const [signedIn, setSignedIn] = useState(false);
-
-  useEffect(() => {
-    let live = true;
-    hasSession().then((s) => {
-      if (live) {
-        setSignedIn(s);
-        setChecked(true);
-      }
-    });
-    return () => {
-      live = false;
-    };
-  }, [user]);
-
-  if (!checked) return <LoadingFallback />;
-  if (!signedIn) return <SignInScreen />;
+  const { user, isPlatform } = useAuth();
+  // An org member (user) is signed in but not platform staff: render the portal, which denies it in
+  // the database. Platform staff have no org identity, so `user` is null and `isPlatform` is true.
+  if (!user && !isPlatform) return <SignInScreen />;
   return <SuperAdminPortal />;
 };
 

@@ -1,12 +1,18 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { User } from '../types';
 import { signIn as clientSignIn, signOut as clientSignOut, loadCurrentUser } from '../data/client';
+import { platformWhoami } from '../data/platform';
 
 export type SignInResult = { ok: true } | { ok: false; reason: string };
 
 interface AuthContextType {
   /** The authenticated identity, or null when there is no session. There is no default user. */
   user: User | null;
+  /**
+   * True when the session belongs to platform staff (spec §24). Platform users are not provisioned
+   * in any org, so they have no tenant identity; only the /superadmin route acts on this.
+   */
+  isPlatform: boolean;
   signInWithPassword: (email: string, password: string) => Promise<SignInResult>;
   signOut: () => void;
 }
@@ -19,13 +25,20 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
  */
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [isPlatform, setIsPlatform] = useState(false);
 
   useEffect(() => {
+    // A platform account is not provisioned in any org, so loadCurrentUser throws for it; in that
+    // case ask the database whether the session is platform staff (spec §24).
     loadCurrentUser()
       .then((u) => {
         if (u) setUser(u);
       })
-      .catch(() => undefined);
+      .catch(() => {
+        platformWhoami()
+          .then((who) => setIsPlatform(who.isPlatformAdmin))
+          .catch(() => undefined);
+      });
   }, []);
 
   const signInWithPassword = useCallback(async (email: string, password: string): Promise<SignInResult> => {
@@ -33,9 +46,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!result.ok) return result;
     try {
       const u = await loadCurrentUser();
-      if (!u) return { ok: false, reason: 'Sign-in did not create a session.' };
-      setUser(u);
-      return { ok: true };
+      if (u) {
+        setUser(u);
+        setIsPlatform(false);
+        return { ok: true };
+      }
+      // No org membership: the account may be platform staff (spec §24). The platform RPC decides.
+      const who = await platformWhoami();
+      if (who.isPlatformAdmin) {
+        setIsPlatform(true);
+        return { ok: true };
+      }
+      return { ok: false, reason: 'This account is not provisioned in an organisation.' };
     } catch (err) {
       return { ok: false, reason: err instanceof Error ? err.message : 'Sign-in failed.' };
     }
@@ -43,10 +65,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = useCallback(async () => {
     setUser(null);
+    setIsPlatform(false);
     await clientSignOut();
   }, []);
 
-  const value = useMemo(() => ({ user, signInWithPassword, signOut }), [user, signInWithPassword, signOut]);
+  const value = useMemo(
+    () => ({ user, isPlatform, signInWithPassword, signOut }),
+    [user, isPlatform, signInWithPassword, signOut]
+  );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 

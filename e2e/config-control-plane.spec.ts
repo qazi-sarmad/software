@@ -17,6 +17,15 @@ async function signIn(page: Page, email: string) {
   await expect(page.getByRole('navigation', { name: 'Navigation Strip' })).toBeVisible();
 }
 
+/** Platform staff have no org, so the tenant navigation strip never appears; wait on the portal. */
+async function signInPlatform(page: Page) {
+  await page.goto('/superadmin');
+  await page.getByLabel('Email').fill(PLATFORM_EMAIL);
+  await page.getByLabel('Password').fill(process.env.E2E_PASSWORD ?? '');
+  await page.getByRole('button', { name: 'Sign in' }).click();
+  await expect(page.getByTestId('superadmin-portal')).toBeVisible();
+}
+
 test.describe('Config control plane', () => {
   test('[E2E] a tenant session is denied the platform portal', async ({ page }) => {
     await signIn(page, ORG_ADMIN_EMAIL);
@@ -26,9 +35,7 @@ test.describe('Config control plane', () => {
   });
 
   test('[E2E] platform staff reach the tenants panel', async ({ page }) => {
-    await signIn(page, PLATFORM_EMAIL);
-    await page.goto('/superadmin');
-    await expect(page.getByTestId('superadmin-portal')).toBeVisible();
+    await signInPlatform(page);
     await expect(page.getByTestId('superadmin-tabs')).toBeVisible();
     await expect(page.getByTestId('superadmin-tenants')).toBeVisible();
   });

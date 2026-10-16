@@ -86,11 +86,3 @@ export async function loadCurrentUser(): Promise<User | null> {
     entityIds,
   };
 }
-
-/** True when an authenticated session exists. Used to decide whether to show the sign-in screen. */
-export async function hasSession(): Promise<boolean> {
-  const sb = getClient();
-  if (!sb) return false;
-  const { data } = await sb.auth.getSession();
-  return Boolean(data.session);
-}
