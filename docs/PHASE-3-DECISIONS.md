@@ -66,3 +66,13 @@ class of bug. The guard `src/guards/singleClient.test.ts` fails if any file unde
 - **M8.** The browser has exactly ONE Supabase client. `src/data/client.ts` creates it and exports
   `getClient()`. Every data module imports `getClient` from there. No other file in `src` calls
   `createClient` or imports `@supabase/supabase-js`.
+
+## D10 — 3J panels are presentational, wired at the tab
+
+The Phase 3 inspector panels (`SiraModelEditor`, `SiraCyclePanel`, `PlanItemsPanel`,
+`DeploymentGatePanel`, `EthicsPanel`) render from the payload the tab passes to `openInspector`.
+The two interactive flows that write (`EntityApprovalPanel`, `CombinedApprovalPanel`) call the Phase 3
+data modules directly (`src/data/universe.ts`, `src/data/deployment.ts`), whose writes go through the
+RPCs. This keeps the panels unit-testable without a database and keeps the e2e run deterministic
+(nothing seeds a SIRA model, a cycle or a plan item yet). When tabs gain real reads they pass the
+loaded rows straight in; no panel needs to change.

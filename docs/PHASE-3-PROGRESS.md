@@ -15,8 +15,8 @@ Updated after every task and committed with it.
 | 3G combined approval (DB) | done | 008be40 | 38850118794 | green |
 | 3H tests for 3B–3G | done | 289b79e | 38850672810 | green |
 | 3I data module (src/data) | done | 4504399 | 38851378534 | green |
-| 3I-FIX1 one Supabase client (rule M8) | done | (see log) | (see log) | green |
-| 3J UI | todo | — | — | |
+| 3I-FIX1 one Supabase client (rule M8) | done | cb49b5f | 38854450279 | green |
+| 3J UI | done | (see log) | (see log) | green |
 | 3K docs + PR | todo | — | — | |
 
 ## Numbering

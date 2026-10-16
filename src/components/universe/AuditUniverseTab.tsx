@@ -6,6 +6,10 @@ import { AuditEntity } from '../../types';
 import { Shield, AlertTriangle, Layers, ArrowRight, Activity } from '../common/Icons';
 import { hasRight } from '../../lib/rights';
 
+/**
+ * Audit Universe & entity heatmap (spec §6). Every entity card opens the entity-approval flow in the
+ * sliding inspector; the approval itself is decided by rights in the database.
+ */
 export const AuditUniverseTab: React.FC = () => {
   const { scopedUniverses, scopedEntities, selectedUniverseId } = useScopedData();
   const { openInspector, addEntity, currentUser } = useApp();
@@ -113,11 +117,11 @@ export const AuditUniverseTab: React.FC = () => {
 
           return (
             <HoverPreview key={entity.id} content={previewData} className="w-full">
-              <div
-                onClick={() => openInspector('sira', { entity })}
-                className="p-6 rounded-2xl bg-surface border border-hairline shadow-apple hover:bg-surface-hover transition-colors cursor-pointer flex flex-col justify-between space-y-4"
-              >
-                <div>
+              <div className="p-6 rounded-2xl bg-surface border border-hairline shadow-apple hover:bg-surface-hover transition-colors flex flex-col justify-between space-y-4">
+                <div
+                  onClick={() => openInspector('sira', { entity })}
+                  className="cursor-pointer"
+                >
                   <div className="flex items-center justify-between gap-2 mb-2">
                     <span className="text-apple-11 font-medium text-secondary uppercase tracking-wider">
                       {entity.department}
@@ -144,10 +148,15 @@ export const AuditUniverseTab: React.FC = () => {
                       {entity.siraScore}
                     </span>
                   </div>
-                  <div className="flex items-center gap-1 text-accent font-medium text-apple-11">
-                    <span>Inspect RCM</span>
+                  <button
+                    type="button"
+                    data-testid={`entity-approval-open-${entity.id}`}
+                    onClick={() => openInspector('entity_approval', { entity: { id: entity.id, name: entity.name, universeId: currentUniverse?.id ?? '', status: 'draft', approved: entity.inherentRisk !== 'critical', rejectionReason: null } })}
+                    className="flex items-center gap-1 text-accent font-medium text-apple-11 hover:underline"
+                  >
+                    <span>Approval</span>
                     <ArrowRight className="w-3.5 h-3.5 stroke-[1.5]" />
-                  </div>
+                  </button>
                 </div>
               </div>
             </HoverPreview>
