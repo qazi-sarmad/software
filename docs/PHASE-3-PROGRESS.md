@@ -16,13 +16,13 @@ Updated after every task and committed with it.
 | 3H tests for 3B–3G | done | 289b79e | 38850672810 | green |
 | 3I data module (src/data) | done | 4504399 | 38851378534 | green |
 | 3I-FIX1 one Supabase client (rule M8) | done | cb49b5f | 38854450279 | green |
-| 3J UI | done | (see log) | (see log) | green |
-| 3K docs + PR | todo | — | — | |
+| 3J UI | done | 7295a99, fix 725b8fc | 38855410781 (red), 38856439388 (green) | fixed, green |
+| 3K docs + PR | done | 61fb320 (2K on 2-access) / this head | 38856439388 (latest green) | green |
 
 ## Numbering
 
-- Migrations: next free is `0018`.
-- SQL tests: next free is `25`.
+- Migrations used in Phase 3: `0018`–`0023`. Next free is `0024`.
+- SQL tests used in Phase 3: `25`–`31`. Next free is `32`.
 
 ## Gate baseline (Phase 2 close, head `61fb320`)
 

@@ -1,6 +1,6 @@
 # Provio Parity Report (against docs/SPEC-v10.md)
 
-> **Phase 2 (branch `phase-2-access`).** The parity rows below were written at the end of Phase 0 and Phase 1 and were **not** re-scored for Phase 2. Read them together with the Phase 2 close-out section at the foot of this file, which lists what Phase 2 changed and the real counts for this branch. Where a Phase 2 row below still says "Missing" for a section Phase 2 touched (notably 4.1 Roles, 4.2 Audit Teams, 4.3 Visibility and enforcement, 23 Administration, 25 Data/Security/Infrastructure, 26 Logging, 29 Build and Verification), the close-out section is authoritative.
+> **Phase 3 (branch `phase-3-universe-plan`).** The parity rows below were written at the end of Phase 0 and Phase 1 and were **not** re-scored for Phase 2 or Phase 3. Read them together with the Phase 2 and Phase 3 close-out sections at the foot of this file, which list what each phase changed and the real counts for its branch. Where a row below still says "Missing" for a section a later phase touched (notably 4.1 Roles, 4.2 Audit Teams, 4.3 Visibility and enforcement, 6 Universes and Entities, 7 Deployment Gate, 7.1 Combined approval, 8 SIRA, 9 Audit Plan, 23 Administration, 25 Data/Security/Infrastructure, 26 Logging, 29 Build and Verification), the close-out sections are authoritative.
 
 
 Last updated: Phase 0 close-out. This file replaces the earlier v1.7 report, whose claims (for example "persona switcher", "Reports", "Red Thread" as present features) described behaviour the spec discards.
@@ -267,4 +267,43 @@ real matrix.
   BI parameters, templates and branding, export and retention, and AI remain not built; see
   `docs/NOT-DONE.md`.
 - No screenshots were captured (owner-deferred, §29).
+
+## Verification at the end of Phase 3 (branch `phase-3-universe-plan`, head `725b8fc`)
+
+| Gate | Result |
+|---|---|
+| `npx tsc --noEmit -p .` | exit 0 |
+| `npx vitest run` | **41 files, 371 tests passed** (0 failed, 0 skipped) |
+| `npm run build` (`vite build`) | exit 0 |
+| `node scripts/check-tokens.mjs` | PASS — 64 files under `src/components`, 0 violations |
+| `node scripts/check-shrink.mjs` | PASS — 59 files, no >10% shrink |
+| SQL migrations applied twice (M6) | exit 0, 0 errors, both passes |
+| SQL tests, 31 files, two consecutive passes (M5) | **31/31 green both passes**, 535 `ok` notices |
+| `npx playwright test` | **30 passed** (`e2e/smoke.spec.ts`, `e2e/rls.spec.ts`, `e2e/admin.spec.ts`, `e2e/phase3.spec.ts`) |
+
+CI run **38856439388** on head `725b8fc` — conclusion **success**, all 7 gate steps green
+(type check, unit tests, build, token check, shrink check, migrations + SQL tests on the real
+`provio-test` project, Playwright).
+
+## What Phase 3 added, by spec section
+
+| Spec section | Before Phase 3 | After Phase 3 | Evidence |
+|---|---|---|---|
+| 6 Universes and Entities | hardcoded seed, no approval | entities carry an approval status; `submit_entity` / `decide_entity`; history; scope RLS | `0018_universes_entities.sql`, `25_universes_entities.sql`, `src/data/universe.ts` |
+| 7 Deployment Gate | missing | `deploy_engagement` returns the structured §7 steps 1–5; ethics acknowledgements; testing locked until all ack | `0022_deployment_gate.sql`, `29_deployment_gate.sql`, `src/data/deployment.ts`, `src/components/audit/{DeploymentGatePanel,EthicsPanel}.tsx` |
+| 7.1 Combined approval | missing | one atomic function for plan change + deployment; revalidation; SLA; escalation | `0023_combined_approval.sql`, `30_combined_approval.sql`, `src/components/plan/CombinedApprovalPanel.tsx` |
+| 8 SIRA | partial, not audited | per-org risk model (factors/scales/weights/bands/aggregation), versioned history, deterministic `sira_compute`, cycles + publish freeze + emergent-risk queue | `0019_sira_model.sql`, `0020_sira_cycles.sql`, `26_sira_model.sql`, `27_sira_cycles.sql`, `src/lib/siraEngine.ts`, `src/components/sira/` |
+| 9 Audit Plan | partial | plan per universe/period, hash-chained versions, plan items with ad-hoc justification ≥10 chars | `0021_audit_plan.sql`, `28_audit_plan.sql`, `src/components/plan/PlanItemsPanel.tsx` |
+| 29 Build and Verification | SQL + vitest + Playwright in CI | unchanged; adversarial SQL for 3B–3G added | `31_adversarial_phase3.sql` |
+
+## NOT DONE (Phase 3)
+
+- `escalate_overdue_requests` exists as a function, but no scheduler calls it on a timer; the
+  scheduler is out of scope for this environment.
+- The `/e/:token` public route still cannot validate tokens without a backend.
+- No screenshots were captured (owner-deferred, §29).
+- The hosted `TEST_SUPABASE_DB_URL` secret still carries a trailing newline; CI step 6 and test 15
+  strip whitespace until the owner re-sets the secret.
+- The administration portal still covers only the People and Roles parts of §23; the rest is later
+  work.
 
