@@ -102,3 +102,40 @@ window (Audit File chrome: draggable, minimisable, pop-out, shared origin/sessio
 allow-list of non-blocking surfaces.
 How to reverse: restore `InspectorPanel.tsx`, the §27.5/§17.1 text and `App.tsx` from `8500602`;
 remove `FloatingWindow`/`RecordView`/`RecordContent` and the guard entries.
+
+## D-4B-M1 — no collision
+
+Grep for `planning_sections`, `planning_suggestion_decisions`, `planning_reconciliation_acks`,
+`populate_planning_suggestions`, `check_planning_reconciliation`, `sign_planning` found no existing
+object, so 0025 creates rather than alters. `plans`/`plan_items`/`plan_versions` exist but are the
+universe audit plan (a different shape), so they are not extended. No M1 collision.
+
+## D-4B-scope — testing lock is a stage guard, not an edit guard
+
+Task 4B says "Testing is locked until planning_sections for that engagement are signed off". The
+existing fixtures (and the sealed-engagement tests) mark a testing workpaper `prepared` while no
+planning is signed off, so a blanket guard on any UPDATE of a testing workpaper would break tests 12
+and 14. Choice: the guard fires only when a workpaper is created in the testing stage or moved into
+it (`tg_op = 'INSERT' or old.stage is distinct from 'testing'`). Editing a workpaper that is already
+in testing is governed by 4E (sign-off/reopen). Reason: it enforces the spec's intent (no testing work
+starts before Planning sign-off) without weakening the sealed-engagement tests. How to reverse: widen
+the trigger condition in `guard_testing_lock` to any UPDATE.
+
+## D-4B-four-eyes — signer must not have prepared every section
+
+The spec requires "review by a role configured for that stage" (§10.4) and four-eyes is the house
+pattern (D3). Choice: `sign_planning` requires `review_and_approve` and refuses when the signer is the
+preparer of *every* section (they must not be the sole author). A signer who prepared some but not all
+sections may sign; that mirrors the existing `sign_offs` four-eyes CHECK, which only forbids
+`reviewer = preparer`. How to reverse: change the `v_self = v_sections` test to `v_self > 0`.
+
+## D-4B-reconciliation — clean, or acknowledged with a reason
+
+§10.1 blocks sign-off on a SIRA/Planning mismatch "until resolved". The task also says a discrepancy
+may be "acknowledged with a recorded reason". Choice: `check_planning_reconciliation` returns true
+only when every Planning risk is in the latest published SIRA; `sign_planning` proceeds when the gate
+is true OR a `planning_reconciliation_acks` row with a >=10-character reason exists. If no SIRA cycle
+is published, the Planning RCM risks cannot be reconciled, so the gate is false and an acknowledgement
+is required — the strict reading of "the current SIRA". How to reverse: treat a missing cycle as
+"nothing to reconcile" in `check_planning_reconciliation`.
+

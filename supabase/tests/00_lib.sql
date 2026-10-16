@@ -61,7 +61,8 @@ language sql immutable as $$
     'risks_library','sira_cycles','sira_scores','plans','plan_versions','populations','population_rows',
     'samples','sample_rows','workpapers','sign_offs','test_rows','observations','findings','issues',
     'cap_items','ledger_entries','activity_log','config_versions','notifications','email_outbox',
-    'entity_approval_settings','entity_decision_grants','user_preferences'
+    'entity_approval_settings','entity_decision_grants','user_preferences',
+    'planning_sections','planning_suggestion_decisions','planning_reconciliation_acks'
   ]
 $$;
 
