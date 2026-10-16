@@ -39,3 +39,29 @@ text), `e2e/smoke.spec.ts` (SEVEN_TABS + click titles), `src/App.auth.test.tsx` 
 (visible headings using the old wording), `src/components/dashboard/ExecutiveDashboardTab.tsx`
 (hint text). Tab `id`s are unchanged, so routing and `data-testid`s are unaffected.
 How to reverse: restore the NavStrip strings and the test assertions from the pre-H2 commit `244bb3e`.
+
+## D-H3a — preferences table, RPCs and the no-blocking-modal guard scope
+
+Task H3a. Unclear point: the task predicts the guard offender set as `AuditFileModal.tsx` plus
+`ConfirmPanel.tsx`, but the repository has no `ConfirmPanel.tsx`, and the real full-viewport overlays
+are `InspectorPanel.tsx`, `CommandPalette.tsx` and `HeaderCalendarPanel.tsx`.
+Options: (a) create a `ConfirmPanel.tsx` that is not used; (b) write the guard against the real files
+with a justified allow-list.
+Choice: (b). `user_preferences` is a new table (grep found none; `config_versions` is org-level
+configuration, not per-user state). Guard allow-list: `AuditFileModal.tsx` (§17.1 window chrome,
+explicitly non-blocking), the global command palette (§5, Ctrl/⌘ K — transient, Esc-dismissed),
+`HeaderCalendarPanel.tsx` (anchored popover, `role="dialog"` but no scrim, no focus trap; the page
+stays usable). `ConfirmPanel.tsx` remains an allowed name for when the hold-to-confirm panel lands
+(§27.5 names it). `InspectorPanel.tsx` is a genuine blocking modal and is in a TEMPORARY list that
+H3c empties when the file is abolished.
+Reason: ascribing blocking-modal status to a file that does not exist would hide the real offenders;
+the guard must scan actual code while keeping the two surfaces §27.5 explicitly permits.
+Files touched beyond the task list: `supabase/tests/00_lib.sql` (`user_preferences` added to
+`org_tables()`, so tests 1/4 keep covering it). New SQL test `32_user_preferences.sql`.
+How to reverse: delete 0024 + test 32, drop `user_preferences` from `org_tables()`, delete
+`src/data/preferences.ts` and the guard; restore NavStrip etc. from `8500602`.
+
+## D-H3a-M1 — no collision
+
+Grep for `user_preferences`, `get_user_preference` and `set_user_preference` found no existing
+object, so 0024 creates rather than alters. No M1 collision.
