@@ -1,0 +1,70 @@
+# Phases 4–8 — progress
+
+Branch `phase-4-onwards`, base `origin/main` (Phase 3 PR #9 merged, merge commit `c7e9e7b`).
+
+Updated after every task and committed with it. Every line carries the CI run ID, not only "green".
+
+## Numbering LOCK (H0)
+
+- Migrations: last used in Phase 3 is `0023`. **Next free is `0024`.** Phases 4–8 use `0024` upward.
+- SQL tests: last used in Phase 3 is `31`. **Next free is `32`.** Phases 4–8 use `32` upward.
+- No parallel task may take a number without updating this line first.
+
+## Gate baseline (start of this build, main `c7e9e7b`)
+
+- tsc exit 0; vitest 41 files / 371 tests; build exit 0; tokens PASS (64 files); shrink PASS (59 files).
+- SQL: 31 test files (`00`–`31`) green, migrations and tests each applied/run twice.
+- Playwright: 30 passed.
+
+## Tasks
+
+| Task | Status | Commit | CI run | Notes |
+|---|---|---|---|---|
+| H0 preflight + docs | done | _see commit_ | _see CI_ | branch created from main; numbering locked |
+| H1 Grok housekeeping | todo | | | |
+| H2 nav labels | todo | | | |
+| H3a preferences + guard skeleton | todo | | | |
+| H3b RecordView + routing | todo | | | |
+| H3c abolish InspectorPanel | todo | | | |
+| 4A plan docs | todo | | | |
+| 4B planning DB | todo | | | |
+| 4C population gate DB | todo | | | |
+| 4D sampling engine DB | todo | | | |
+| 4E row testing DB | todo | | | |
+| 4F analyst engine | todo | | | |
+| 4G Phase 4 tests | todo | | | |
+| 4H Phase 4 data module | todo | | | |
+| 4I Phase 4 UI | todo | | | |
+| 4J Phase 4 docs | todo | | | |
+| 5A findings DB | todo | | | |
+| 5B conclusion DB | todo | | | |
+| 5C floating window | todo | | | |
+| 5D document viewer DB | todo | | | |
+| 5E Phase 5 tests | todo | | | |
+| 5F Phase 5 data module | todo | | | |
+| 5G Phase 5 UI | todo | | | |
+| 5H Phase 5 docs | todo | | | |
+| 6A report drafting DB | todo | | | |
+| 6B management comments DB | todo | | | |
+| 6C freeze/issuance DB | todo | | | |
+| 6D CAP register DB | todo | | | |
+| 6E email queue DB | todo | | | |
+| 6F Phase 6 tests | todo | | | |
+| 6G Phase 6 data module | todo | | | |
+| 6H Phase 6 UI | todo | | | |
+| 6I Phase 6 docs | todo | | | |
+| 7A exports DB | todo | | | |
+| 7B imports DB | todo | | | |
+| 7C activity archival DB | todo | | | |
+| 7D prior-year import DB | todo | | | |
+| 7E Phase 7 tests | todo | | | |
+| 7F Phase 7 data module | todo | | | |
+| 7G Phase 7 UI | todo | | | |
+| 7H Phase 7 docs | todo | | | |
+| 8A platform portal DB | todo | | | |
+| 8B support access DB | todo | | | |
+| 8C AI enablement DB | todo | | | |
+| 8D invite-cap control DB | todo | | | |
+| 8E Phase 8 tests | todo | | | |
+| 8F Phase 8 data module | todo | | | |
+| 8G Phase 8 docs | todo | | | |
