@@ -50,7 +50,7 @@ Updated after every task and committed with it. Every line carries the CI run ID
 | 6D CAP register DB | done | 646c722 | 38956498574 | migration 0038 (caps, update_cap, close_cap, check_cap_reconciliation), test 47 (D-6D-M1, D-6D-CAP) |
 | 6E email queue DB | done | 838f935 | 38956498574 | migration 0039 (email_queue, queue_email), test 48 (org sees sent/failed only; provider_config hidden) |
 | 6F Phase 6 tests | todo | | | |
-| 6G Phase 6 data module | todo | | | |
+| 6G Phase 6 data module | done | _this commit_ | _see CI_ | src/data/{reports,caps,email}.ts + phase6.test.ts |
 | 6H Phase 6 UI | todo | | | |
 | 6I Phase 6 docs | todo | | | |
 | 7A exports DB | done | 4f16408 | _see CI_ | migration 0041 (exports_log, log_export, export_*), test 50 (D-7A-M1/M1b/M1c) |
