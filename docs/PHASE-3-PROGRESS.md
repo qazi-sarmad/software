@@ -12,8 +12,8 @@ Updated after every task and committed with it.
 | 3D SIRA cycles and emergent risks (DB) | done | 2bccbdb | 38848164526 | green |
 | 3E audit plan (DB) | done | c69e549 | 38848625680 | green |
 | 3F deployment gate (DB) | done | a71f2cf | 38849481615 | green |
-| 3G combined approval (DB) | in progress | — | — | 0023 + test 30 |
-| 3H tests for 3B–3G | todo | — | — | |
+| 3G combined approval (DB) | done | 008be40 | 38850118794 | green |
+| 3H tests for 3B–3G | in progress | — | — | test 31 |
 | 3I data module (src/data) | todo | — | — | |
 | 3J UI | todo | — | — | |
 | 3K docs + PR | todo | — | — | |
