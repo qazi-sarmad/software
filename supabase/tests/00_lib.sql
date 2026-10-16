@@ -68,7 +68,8 @@ language sql immutable as $$
     'analysis_results',
     'severity_levels',
     'conclusion_records',
-    'evidence_files','document_extractions'
+    'evidence_files','document_extractions',
+    'report_versions','report_blocks'
   ]
 $$;
 

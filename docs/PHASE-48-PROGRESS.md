@@ -44,7 +44,7 @@ Updated after every task and committed with it. Every line carries the CI run ID
 | 5F Phase 5 data module | todo | | | |
 | 5G Phase 5 UI | todo | | | |
 | 5H Phase 5 docs | todo | | | |
-| 6A report drafting DB | todo | | | |
+| 6A report drafting DB | done | _this commit_ | _see CI_ | migration 0036 (report_versions, report_blocks, compose_report, compute_report_summary), test 45 (D-6A-M1, D-6A-blocks, D-6A-summary) |
 | 6B management comments DB | todo | | | |
 | 6C freeze/issuance DB | todo | | | |
 | 6D CAP register DB | todo | | | |

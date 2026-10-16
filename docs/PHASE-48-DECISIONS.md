@@ -332,6 +332,28 @@ the role allowed to sign each stage, layered on top of the right. How to reverse
 needed to keep the current behaviour; adding the config narrows who may sign, never widens it.
 Status: recorded, not yet built (see PHASE-48-BLOCKERS.md).
 
+## D-6A-M1 - no report table existed; created rather than extended
+
+Grep for `report` in `supabase/migrations` found no table. `report_versions` and `report_blocks` are
+created in `0036`. How to reverse: drop the tables in a later migration.
+
+## D-6A-blocks - the default template is a code-side constant, the sections are data
+
+§15.2 names the default sections (Executive Summary · Scope and Objectives · Findings and Issues ·
+Overall Opinion · Appendices). Choice: `compose_report` writes one block per default section, pulling
+each from structured data (Planning scope, the entity's findings, the Conclusion opinion, the workpaper
+index). A missing value becomes `is_placeholder=true` with `{"missing": "<field>"}`. Reason: the spec
+requires the placeholder behaviour and computed figures; the per-tenant template table (§15.2
+"Templates: each tenant has 1-3 templates") is deferred to 6H/NOT-DONE. How to reverse: read the
+section list from a template row instead of the function body.
+
+## D-6A-summary - the summary is computed, never stored
+
+`compute_report_summary` returns counts computed live from `findings`, `issues` and `workpaper_rows`
+(§15.2 step 2 "computed from the records, not typed"). Choice: a read function, not a materialised
+column. Reason: a stored figure can drift from the records; the spec says compute. How to reverse:
+snapshot the JSON onto `report_versions` at freeze time if the frozen report must be immutable.
+
 ## D-5D-M1 - no evidence-file table existed; created rather than extended
 
 Grep for `evidence`, `file_id` and `document` in `supabase/migrations` found no file table (evidence
