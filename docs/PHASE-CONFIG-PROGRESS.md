@@ -30,9 +30,9 @@ Every line carries the commit hash and the CI run ID, not only "green".
 
 | Task | Status | Commit | CI run | Notes |
 |---|---|---|---|---|
-| C0 preflight + inventory | in_progress | _this commit_ | _see CI_ | branch created; numbers locked; docs seeded |
-| C0b ownership scrub | todo | | | |
-| C1 platform DB + RPCs | todo | | | |
+| C0 preflight + inventory | done | aae1b81 | 38917977436 | branch created; numbers locked; docs seeded; CI green |
+| C0b ownership scrub | done | 23d915a | _with C1_ | stray agent-authored patch removed; provenance words stripped; `.openhands/` untracked |
+| C1 platform DB + RPCs | done | _this commit_ | _see CI_ | `0031_platform_control_plane.sql`, test `40` |
 | C2 org settings DB | todo | | | |
 | C3 data modules | todo | | | |
 | C4 Super Admin portal UI | todo | | | |
