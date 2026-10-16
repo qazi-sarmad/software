@@ -30,14 +30,17 @@ function walk(dir: string): string[] {
  *   - calendar/HeaderCalendarPanel.tsx  anchored calendar popover: role="dialog" but no scrim and
  *                                       no focus trap; the page behind it stays usable.
  *
- * InspectorPanel.tsx is NOT in the allow-list. It is a genuine blocking modal and H3c abolishes it.
- * Until then it is listed in TEMPORARY so this guard can be green at H3a.
+ * InspectorPanel.tsx was a genuine blocking modal; H3c deleted it. The floating window chrome
+ * (common/FloatingWindow.tsx) and the record-view wrapper (common/RecordView.tsx) are the
+ * non-blocking MODE B surfaces (§17.1) and are allowed.
  */
 const ALLOWED = new Set([
   'components/audit/AuditFileModal.tsx',
   'components/common/ConfirmPanel.tsx',
   'components/common/CommandPalette.tsx',
   'components/calendar/HeaderCalendarPanel.tsx',
+  'components/common/FloatingWindow.tsx',
+  'components/common/RecordView.tsx',
 ]);
 
 // Files this build will remove or convert; the guard tolerates them only until H3c.

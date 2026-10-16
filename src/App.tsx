@@ -11,7 +11,8 @@ import { ThemeProvider } from './context/ThemeContext';
 import { HeaderBar } from './components/common/HeaderBar';
 import { NavStrip } from './components/common/NavStrip';
 import { CommandPalette } from './components/common/CommandPalette';
-import { InspectorPanel } from './components/common/InspectorPanel';
+import { FloatingWindow } from './components/common/FloatingWindow';
+import { RecordContent, INSPECTOR_TITLES, RECORD_TYPE_TO_INSPECTOR } from './components/common/RecordContent';
 import { ReviewCommentsGlobalDock } from './components/reviews/ReviewCommentsGlobalDock';
 
 // React.lazy + Suspense code-splitting of tabs per Requirement 5(b)
@@ -65,24 +66,6 @@ const DevPalettePage = import.meta.env.DEV
     )
   : null;
 
-// Inspector content
-const ObservationDrilldown = lazy(() => import('./components/issues/ObservationDrilldown').then((m) => ({ default: m.ObservationDrilldown })));
-const EntitySiraRcmModal = lazy(() => import('./components/universe/EntitySiraRcmModal').then((m) => ({ default: m.EntitySiraRcmModal })));
-const AuditFileModal = lazy(() => import('./components/audit/AuditFileModal').then((m) => ({ default: m.AuditFileModal })));
-const PaperWorkbenchModal = lazy(() => import('./components/audit/PaperWorkbenchModal').then((m) => ({ default: m.PaperWorkbenchModal })));
-const GlassBoxShareModal = lazy(() => import('./components/common/GlassBoxShareModal').then((m) => ({ default: m.GlassBoxShareModal })));
-const AccountSettingsModal = lazy(() => import('./components/common/AccountSettingsModal').then((m) => ({ default: m.AccountSettingsModal })));
-const CommentHistoryPanel = lazy(() => import('./components/reviews/CommentHistoryPanel').then((m) => ({ default: m.CommentHistoryPanel })));
-const CapInspector = lazy(() => import('./components/dashboard/CapInspector').then((m) => ({ default: m.CapInspector })));
-const PeopleAdminPanel = lazy(() => import('./components/admin/PeopleAdminPanel').then((m) => ({ default: m.PeopleAdminPanel })));
-const EntityApprovalPanel = lazy(() => import('./components/universe/EntityApprovalPanel').then((m) => ({ default: m.EntityApprovalPanel })));
-const DeploymentGatePanel = lazy(() => import('./components/audit/DeploymentGatePanel').then((m) => ({ default: m.DeploymentGatePanel })));
-const EthicsPanel = lazy(() => import('./components/audit/EthicsPanel').then((m) => ({ default: m.EthicsPanel })));
-const CombinedApprovalPanel = lazy(() => import('./components/plan/CombinedApprovalPanel').then((m) => ({ default: m.CombinedApprovalPanel })));
-const SiraModelEditor = lazy(() => import('./components/sira/SiraModelEditor').then((m) => ({ default: m.SiraModelEditor })));
-const SiraCyclePanel = lazy(() => import('./components/sira/SiraCyclePanel').then((m) => ({ default: m.SiraCyclePanel })));
-const PlanItemsPanel = lazy(() => import('./components/plan/PlanItemsPanel').then((m) => ({ default: m.PlanItemsPanel })));
-
 const LoadingFallback: React.FC = () => (
   <div className="max-w-7xl mx-auto px-6 py-16 flex items-center justify-center text-secondary text-apple-13">
     <div className="flex items-center gap-2">
@@ -96,108 +79,13 @@ const AppContent: React.FC = () => {
   const { activeTab, inspector, closeInspector, ledgerError } = useApp();
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
 
-  const isInspectorOpen = Boolean(inspector.type);
-
-  const getInspectorTitle = () => {
-    switch (inspector.type) {
-      case 'observation':
-        return 'Audit Observation & 5C Analysis';
-      case 'sira':
-        return 'SIRA Risk & RCM Matrix';
-      case 'audit_file':
-        return 'Engagement Audit File';
-      case 'workbench':
-        return 'Working Paper Audit Workbench';
-      case 'glassbox_share':
-        return 'GlassBox — External Upload Portal';
-      case 'account_settings':
-        return 'Settings & Preferences';
-      case 'comment_history':
-        return 'Review Notes & 4-Eyes Discussion';
-      case 'cap_inspector':
-        return 'Corrective Action Plan (CAP) Details';
-      case 'people_admin':
-        return 'People & Roles';
-      case 'entity_approval':
-        return 'Entity Approval';
-      case 'deployment_gate':
-        return 'Deployment Gate';
-      case 'ethics':
-        return 'Ethics Acknowledgement';
-      case 'combined_approval':
-        return 'Combined Approval';
-      case 'sira_model':
-        return 'SIRA Model';
-      case 'sira_cycles':
-        return 'SIRA Cycles & Emergent Risks';
-      case 'plan_items':
-        return 'Audit Plan Items';
-      default:
-        return 'Audit Inspector';
-    }
-  };
-
-  const renderInspectorContent = () => {
-    switch (inspector.type) {
-      case 'observation':
-        return <ObservationDrilldown data={inspector.data} />;
-      case 'sira':
-        return <EntitySiraRcmModal entity={inspector.data?.entity} onClose={closeInspector} />;
-      case 'audit_file':
-        return <AuditFileModal />;
-      case 'workbench':
-        return <PaperWorkbenchModal />;
-      case 'glassbox_share':
-        return <GlassBoxShareModal />;
-      case 'account_settings':
-        return <AccountSettingsModal onClose={closeInspector} />;
-      case 'comment_history':
-        return <CommentHistoryPanel />;
-      case 'cap_inspector':
-        return <CapInspector />;
-      case 'people_admin':
-        return <PeopleAdminPanel />;
-      case 'entity_approval':
-        return <EntityApprovalPanel entity={inspector.data?.entity} onDone={closeInspector} />;
-      case 'deployment_gate':
-        return <DeploymentGatePanel result={inspector.data?.result ?? null} />;
-      case 'ethics':
-        return <EthicsPanel members={inspector.data?.members ?? []} />;
-      case 'combined_approval':
-        return <CombinedApprovalPanel request={inspector.data?.request ?? null} universeId={inspector.data?.universeId} entityId={inspector.data?.entityId} onRequested={closeInspector} />;
-      case 'sira_model':
-        return <SiraModelEditor model={inspector.data?.model ?? null} />;
-      case 'sira_cycles':
-        return <SiraCyclePanel cycles={inspector.data?.cycles ?? []} emergent={inspector.data?.emergent ?? []} />;
-      case 'plan_items':
-        return <PlanItemsPanel items={inspector.data?.items ?? []} versions={inspector.data?.versions ?? []} />;
-      default:
-        return null;
-    }
-  };
-
-  const getInspectorWidth = () => {
-    if (inspector.type === 'workbench' || inspector.type === 'audit_file') {
-      return 'max-w-6xl';
-    }
-    return 'max-w-2xl';
-  };
+  const getInspectorTitle = () =>
+    inspector.type ? INSPECTOR_TITLES[inspector.type] ?? 'Audit Inspector' : 'Audit Inspector';
 
   return (
     <div className="min-h-screen bg-canvas text-primary relative overflow-x-hidden">
-      {/* Shell scales to 0.98 when sliding inspector is open (⚖ Spec: NO BLOCKING MODALS) */}
-      <motion.div
-        animate={{
-          scale: isInspectorOpen ? 0.98 : 1,
-          opacity: isInspectorOpen ? 0.92 : 1,
-        }}
-        transition={{
-          type: 'spring',
-          stiffness: 300,
-          damping: 30,
-        }}
-        className="min-h-screen flex flex-col origin-center"
-      >
+      {/* The record view is non-blocking (§27.5): no scrim, no shell scaling, no modal attribute. */}
+      <div className="min-h-screen flex flex-col">
         <HeaderBar onOpenCommandPalette={() => setIsCommandPaletteOpen(true)} />
         <NavStrip />
 
@@ -220,18 +108,20 @@ const AppContent: React.FC = () => {
         </main>
 
         <ReviewCommentsGlobalDock />
-      </motion.div>
+      </div>
 
-      {/* Sliding Inspector Panel */}
-      <InspectorPanel
-        isOpen={isInspectorOpen}
-        onClose={closeInspector}
-        title={getInspectorTitle()}
-        width={getInspectorWidth()}
-        tall={inspector.type === 'workbench' || inspector.type === 'audit_file'}
-      >
-        <Suspense fallback={<div className="p-6 text-secondary text-apple-13">Loading…</div>}>{renderInspectorContent()}</Suspense>
-      </InspectorPanel>
+      {/* Record view: non-blocking floating window (§17.1, §27.5). MODE B. */}
+      {inspector.type && (
+        <FloatingWindow
+          windowId={inspector.type}
+          title={getInspectorTitle()}
+          width={inspector.type === 'workbench' || inspector.type === 'audit_file' ? 960 : 720}
+          onClose={closeInspector}
+          popOutUrl={inspector.data?.engagement?.id ? `/view/engagement/${inspector.data.engagement.id}` : undefined}
+        >
+          <RecordContent type={inspector.type} data={inspector.data} onClose={closeInspector} />
+        </FloatingWindow>
+      )}
 
       {/* Command Palette */}
       <CommandPalette
@@ -261,7 +151,12 @@ const EXTERNAL_TOKEN_HOLDER: User = {
 // development-only dynamic import: in a production build this is null and the module is not emitted.
 const loadDemoSeed = import.meta.env.DEV ? () => import('./data/demoSeed').then((m) => m.demoSeed) : null;
 
-const AuthGate: React.FC = () => {
+export interface ViewRecordTarget {
+  recordType: string;
+  recordId: string;
+}
+
+const AuthGate: React.FC<{ viewRecord?: ViewRecordTarget }> = ({ viewRecord }) => {
   const { user } = useAuth();
   const [seed, setSeed] = useState<TenantSeed | null>(null);
 
@@ -282,8 +177,53 @@ const AuthGate: React.FC = () => {
   if (!seed) return <LoadingFallback />;
   return (
     <AppProvider key={user.id} user={user} seed={seed}>
-      <AppContent />
+      {viewRecord ? <RecordPage target={viewRecord} /> : <AppContent />}
     </AppProvider>
+  );
+};
+
+/**
+ * Full-page record view (MODE A). A breadcrumb returns to the application; there is no overlay.
+ * The record is opened in the shared content renderer, so both modes show the same component.
+ */
+const RecordPage: React.FC<{ target: ViewRecordTarget }> = ({ target }) => {
+  const { openInspector, closeInspector } = useApp();
+  const type = RECORD_TYPE_TO_INSPECTOR[target.recordType];
+
+  useEffect(() => {
+    if (!type) return;
+    const data =
+      target.recordType === 'engagement' ? { engagement: { id: target.recordId } } : { id: target.recordId };
+    openInspector(type, data);
+    return () => closeInspector();
+  }, [type, target.recordId]);
+
+  return (
+    <div className="min-h-screen bg-canvas text-primary">
+      <HeaderBar onOpenCommandPalette={() => {}} />
+      <div className="max-w-6xl mx-auto px-6 py-6">
+        <nav aria-label="Breadcrumb" className="mb-4 text-apple-12 text-secondary flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              window.location.href = '/';
+            }}
+            className="hover:text-primary transition-colors"
+          >
+            Dashboard
+          </button>
+          <span aria-hidden>/</span>
+          <span className="text-primary">{INSPECTOR_TITLES[type] ?? 'Record'}</span>
+        </nav>
+        {type ? (
+          <div className="rounded-2xl border border-hairline bg-surface p-6" data-testid="record-page">
+            <RecordContent type={type} data={target.recordType === 'engagement' ? { engagement: { id: target.recordId } } : { id: target.recordId }} onClose={() => {}} />
+          </div>
+        ) : (
+          <InlineError message="That record type is not available." testId="record-page-unknown" />
+        )}
+      </div>
+    </div>
   );
 };
 
@@ -319,6 +259,13 @@ const AppRoutes: React.FC = () => {
         <DevPalettePage />
       </Suspense>
     );
+  }
+
+  // Full-page record view (/view/:recordType/:id), used by MODE A of the record view and by the
+  // pop-out window (§17.1, §27.5). It needs a session, so it renders behind the auth gate.
+  if (currentPath.startsWith('/view/')) {
+    const [, , recordType, recordId] = currentPath.split('/');
+    return <AuthGate viewRecord={{ recordType, recordId }} />;
   }
 
   return <AuthGate />;
