@@ -40,7 +40,7 @@ Updated after every task and committed with it. Every line carries the CI run ID
 | 5B conclusion DB | done | _this commit_ | _see CI_ | migration 0034, test 43 (D-5B-M1, D-5B-testing-gate, D-5B-opinion-config, D-5B-files) |
 | 5C floating window | todo | | | |
 | 5D document viewer DB | done | _this commit_ | _see CI_ | migrations 0035 (evidence_files, document_extractions, FTS, search_documents), test 44 (D-5D-M1, D-5D-stage-filter, D-5D-extraction-stub) |
-| 5E Phase 5 tests | todo | | | |
+| 5E Phase 5 tests | done | _this commit_ | _see CI_ | test 54 phase-5 acceptance (cross-org, anon, no-right, readability gate, testing gate, four-eyes, seal, stage-aware search) |
 | 5F Phase 5 data module | done | _this commit_ | _see CI_ | src/data/{observations,conclusion,documents}.ts + phase5.test.ts |
 | 5G Phase 5 UI | todo | | | |
 | 5H Phase 5 docs | todo | | | |
