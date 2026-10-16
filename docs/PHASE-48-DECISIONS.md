@@ -503,3 +503,24 @@ definition and let 0025's version stand.
 The task names only `import_prior_year_item` and `confirm_prior_year_item`, but §19.2 UI needs a
 "confirm-or-revert action per item". 0044 adds `revert_prior_year_item` (sets status='reverted', logs it)
 so the UI has both actions. Recorded per the OVERNIGHT "may add steps" rule.
+
+## D-8C-M1 - platform_enable_ai already existed (0031)
+
+Grep found `platform_enable_ai(uuid, boolean, text)` in `0031_platform_control_plane.sql`, which already
+sets `tenant_settings.ai_enabled` and `ai_model_endpoint` and writes `platform_trail`. It is extended with
+`create or replace` in 0045 rather than created again (no duplicate function; M1 honoured).
+
+## D-8C-ledger - the AI enablement also writes the org ledger
+
+Task 8C requires "writes to platform_trail; writes to the org's ledger". 0031 wrote only the trail. 0045
+extends the function to also call `append_ledger_entry(p_org, 'ai_enablement_changed', ...)`, which
+bypasses RLS by design and runs as the owner. Reason: a tenant must be able to see, in its own
+hash-chained ledger, that advisory features were switched on for it. How to reverse: drop 0045 and let
+0031's definition stand (the platform trail entry remains either way).
+
+## D-8E-coverage - Phase 8 DB was already present; 8E adds the acceptance suite
+
+8A-8D were implemented earlier as migrations 0031/0033 with tests 40-42 and `src/data/platform.ts`. This
+build verified the objects against the task text and added only what was missing (the 8C ledger write,
+D-8C-ledger). Test 57 (8E) is the consolidated Phase 8 acceptance suite. No platform UI is built (8F is
+data-only; the /superadmin UI is Phase 8.1, owner-designed - NOT-DONE).

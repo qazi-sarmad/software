@@ -61,10 +61,10 @@ Updated after every task and committed with it. Every line carries the CI run ID
 | 7F Phase 7 data module | done | _this commit_ | _see CI_ | src/data/{exports,imports,archival}.ts + phase7.test.ts |
 | 7G Phase 7 UI | todo | | | |
 | 7H Phase 7 docs | todo | | | |
-| 8A platform portal DB | todo | | | |
-| 8B support access DB | todo | | | |
-| 8C AI enablement DB | todo | | | |
-| 8D invite-cap control DB | todo | | | |
-| 8E Phase 8 tests | todo | | | |
-| 8F Phase 8 data module | todo | | | |
+| 8A platform portal DB | done | (0031, earlier) | 38956498574 | tenant_settings, platform_trail, platform_* RPCs; test 40 (D-PLATFORM-RIGHTS) |
+| 8B support access DB | done | (0031, earlier) | 38956498574 | support_access_grants, grant/revoke RPCs; test 40 |
+| 8C AI enablement DB | done | _this commit_ | _see CI_ | 0045 extends platform_enable_ai to write the org ledger (D-8C-M1, D-8C-ledger) |
+| 8D invite-cap control DB | done | (0031, earlier) | 38956498574 | platform_set_invite_cap; test 40 |
+| 8E Phase 8 tests | done | _this commit_ | _see CI_ | test 57 phase-8 acceptance |
+| 8F Phase 8 data module | done | (src/data/platform.ts, earlier) | 38956498574 | src/data/platform.ts + platform.test.ts |
 | 8G Phase 8 docs | todo | | | |
