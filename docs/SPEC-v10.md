@@ -631,7 +631,7 @@ Never reintroduce:
 
 ## 29. Build and Verification
 
-Builds are carried out with AI builders. Each task closes only after the following checks.
+Each task closes only after the following checks.
 
 - **Type check, unit tests and build:** `tsc --noEmit`, `vitest run` and `vite build` must pass. One commit per task. Stop at the first failed check.
 - **Engine logic:** every deterministic function has unit tests.
@@ -640,7 +640,7 @@ Builds are carried out with AI builders. Each task closes only after the followi
 - **Parity:** `docs/PARITY.md` maps every section of this specification to Present, Partial or Missing, with evidence.
 - **Screenshots:** every changed screen is captured in all three presets, in light and dark, on each task. A full sweep of every screen in every variant is run at each gate boundary.
 - **Per-gate report:** files changed, real test counts, parity status, screenshots, decisions made, and an explicit NOT DONE list.
-- **AI-builder caution:** generated code is verified through the tests above, not by reading it.
+- **Caution:** code is verified through the tests above, not by reading it alone.
 
 ## 30. Phase 2 decisions
 

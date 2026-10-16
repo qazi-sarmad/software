@@ -32,8 +32,8 @@ clear the first two before Phase 2 closes.
 
 ## 5. Hosted test secret carries a trailing newline (owner action)
 
-- `TEST_SUPABASE_DB_URL` still carries a trailing newline. The agent's token has no `secrets:write`
-  (403) and no Supabase token exists, so the secret cannot be re-set from the agent environment.
+- `TEST_SUPABASE_DB_URL` still carries a trailing newline. This environment's CI token has no `secrets:write`
+  (403) and no Supabase token exists, so the secret cannot be re-set from the CI environment.
 - Until it is re-set, CI step 6 and `supabase/tests/15_ledger_concurrency.sql` strip whitespace.
 - Owner: `printf '%s' "$URL" | gh secret set TEST_SUPABASE_DB_URL`, then remove both strips.
 
