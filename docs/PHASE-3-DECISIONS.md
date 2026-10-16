@@ -51,3 +51,18 @@ save (§23, §27.5). No blocking modal, no native dialog. Tokens only (no raw he
 ## D8 — Where the spec is silent
 
 Recorded as they arise in the tasks below and mirrored in the per-task commit message.
+
+## D9 — One Supabase client for the whole browser (rule M8)
+
+`src/data/client.ts` is the single place that calls `createClient(...)` and it exports `getClient()`.
+Every data module imports `getClient` from there (`src/data/db.ts` re-exports it for the Phase 3
+modules; `src/data/admin.ts` imports it directly). Three clients on one stored session each refresh
+the token independently, and refresh-token rotation can sign one of them out; one client removes that
+class of bug. The guard `src/guards/singleClient.test.ts` fails if any file under `src` other than
+`src/data/client.ts` (and the guard itself) imports `@supabase/supabase-js` or calls `createClient(`.
+
+## Migration Safety Rules — additions
+
+- **M8.** The browser has exactly ONE Supabase client. `src/data/client.ts` creates it and exports
+  `getClient()`. Every data module imports `getClient` from there. No other file in `src` calls
+  `createClient` or imports `@supabase/supabase-js`.
