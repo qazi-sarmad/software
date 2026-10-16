@@ -139,3 +139,23 @@ is published, the Planning RCM risks cannot be reconciled, so the gate is false 
 is required — the strict reading of "the current SIRA". How to reverse: treat a missing cycle as
 "nothing to reconcile" in `check_planning_reconciliation`.
 
+## D-4C-M1 - existing objects extended, not duplicated
+
+`populations` (0004) and the gate functions `enforce_population_gate` / `enforce_sample_row_gate`
+(0006) already exist, so 0026 ALTERs the table (adding workpaper_id, filename, row_count, verified_at,
+verified_by) and CREATE OR REPLACEs the two functions rather than adding parallel objects.
+
+## D-4C-status - the status vocabulary is widened, not replaced
+
+The task lists uploading/verifying/verified/locked/archived. The existing CHECK also allowed
+pending/rejected, and `06_unverified_population.sql` writes both, so dropping them would weaken a
+passing test. Choice: the CHECK is widened to `pending, uploading, verifying, verified, rejected,
+locked, archived`. A `locked` population is still treated as verified by the L3 gate, so locking never
+un-satisfies the population requirement.
+
+## D-4C-row-count - verification demands a positive row count
+
+Spec 11.1 says integrity checks precede VERIFIED. Choice: `verify_population` refuses `status='verified'`
+unless `sha256` is non-empty and `row_count > 0`, and stamps `verified_at/by`. The seed fixtures and
+test 06 are strengthened to carry a row count (a fixture change, not an assertion change). How to
+reverse: drop the `row_count` clause from `verify_population`.
