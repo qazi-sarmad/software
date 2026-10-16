@@ -5,7 +5,7 @@
  * Supabase client (spec §25.1). Every write goes through an RPC in migration 0017, so the
  * database decides the right the caller needs; this module only carries the request.
  */
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { getClient } from './client';
 import type { Right } from '../lib/rights';
 
 export interface MemberRow {
@@ -34,23 +34,6 @@ export interface ScopeRow {
 }
 
 export type AdminResult = { ok: true } | { ok: false; reason: string };
-
-function config(): { url: string; key: string } | null {
-  const url = import.meta.env.VITE_SUPABASE_URL;
-  const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-  if (!url || !key) return null;
-  return { url, key };
-}
-
-let client: SupabaseClient | null = null;
-
-/** Only the publishable key is used here. The secret key is never referenced in src/. */
-function getClient(): SupabaseClient | null {
-  const c = config();
-  if (!c) return null;
-  if (!client) client = createClient(c.url, c.key);
-  return client;
-}
 
 const NOT_CONFIGURED: AdminResult = { ok: false, reason: 'Administration is not configured.' };
 

@@ -22,6 +22,7 @@ export const AuditPlanTab: React.FC = () => {
     scopedWorkpapers,
     can,
     currentUser,
+    selectedUniverseId,
   } = useScopedData();
   const {
     selectedEngagementId,
@@ -78,6 +79,40 @@ export const AuditPlanTab: React.FC = () => {
           <p className="text-apple-15 text-secondary mt-1">
             Scoped audit portfolio, testing roadmaps, and reviewer attestation sign-offs
           </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            data-testid="plan-open-items"
+            onClick={() => openInspector('plan_items', { items: [], versions: [] })}
+            className="px-3 py-1.5 rounded-lg border border-hairline text-apple-12 text-primary hover:bg-surface-hover"
+          >
+            Plan items &amp; versions
+          </button>
+          <button
+            type="button"
+            data-testid="plan-open-combined"
+            onClick={() => openInspector('combined_approval', { request: null, universeId: selectedUniverseId ?? undefined, entityId: undefined })}
+            className="px-3 py-1.5 rounded-lg border border-hairline text-apple-12 text-primary hover:bg-surface-hover"
+          >
+            Combined approval
+          </button>
+          <button
+            type="button"
+            data-testid="plan-open-gate"
+            onClick={() => openInspector('deployment_gate', { result: null })}
+            className="px-3 py-1.5 rounded-lg border border-hairline text-apple-12 text-primary hover:bg-surface-hover"
+          >
+            Deployment gate
+          </button>
+          <button
+            type="button"
+            data-testid="plan-open-ethics"
+            onClick={() => openInspector('ethics', { members: [] })}
+            className="px-3 py-1.5 rounded-lg border border-hairline text-apple-12 text-primary hover:bg-surface-hover"
+          >
+            Ethics
+          </button>
         </div>
       </div>
 

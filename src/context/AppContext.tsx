@@ -34,7 +34,14 @@ export type InspectorType =
   | 'account_settings'
   | 'comment_history'
   | 'cap_inspector'
-  | 'people_admin';
+  | 'people_admin'
+  | 'entity_approval'
+  | 'deployment_gate'
+  | 'ethics'
+  | 'combined_approval'
+  | 'sira_model'
+  | 'sira_cycles'
+  | 'plan_items';
 
 export interface InspectorState {
   type: InspectorType | null;
