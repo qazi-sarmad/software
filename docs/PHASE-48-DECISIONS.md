@@ -249,3 +249,47 @@ AI, no I/O). Benford reports chi-square and MAD at the distribution level (rows 
 population rows) because Benford is a distribution test, not a row test. How to reverse: change the
 returned rows in `checkBenfordFirstDigit`.
 
+## D-5A-STUB - the temporary stub is replaced and retired
+
+4F's `create_observation_stub(uuid,uuid,text,jsonb,int[])` is gone. Migration 0030 renames its storage
+role to the real RPC `record_analysis_result(...)` (same signature, same org-scope guarantee for row
+references), drops `create_observation_stub` outright, and adds `raise_finding_from_result(...)`, which
+stores the result and opens an observation carrying the rule id, params and row refs (§12). The Phase 4
+data module and tests 37/38 now call the real names.
+How to reverse: re-create the stub in a new migration (do not — the dependency rule forbids it).
+
+## D-5A-M1 - observations/findings/issues already existed in 0004
+
+A grep found `observations`, `findings` and `issues` created by `0004_testing.sql`. Migration 0030
+ALTERs them (adds `workpaper_id`, `sections`, `status`, `severity_level_id`, `linked_*` columns and the
+status CHECK) rather than creating new tables, per Migration Safety Rule M1.
+
+## D-5A-status - the observation lifecycle vocabulary
+
+`observations.status` is one of draft | submitted | finding | issue. A row is a draft until
+`promote_to_finding` flips it to `finding`; the readability gate is what permits the flip.
+`findings.status` defaults to `concluded`. How to reverse: adjust the CHECK and `promote_to_finding`.
+
+## D-5A-tokens - severity colour is a design token, not a hex value
+
+`severity_levels.color_token` is constrained to the design system's accent tokens
+(--accent-cinnabar, --accent-brass, --accent-verdigris and their subtle variants). A hex value is refused
+at the database (§14.4 "shown with its text label, never by colour alone"). How to reverse: edit the
+`severity_levels_token_chk` CHECK if the design system gains tokens.
+
+## D-5A-optional-sections - the four mandatory tags are hard-coded, the rest are org config
+
+The four mandatory role tags (context, condition, effect, risk) are hard-coded in `check_readability`
+exactly as §14.3 states. Optional tags (criteria, cause, recommendation, …) are read from the org's
+`config_versions` key `methodology.required_sections` via `org_required_sections()`; when the key is
+absent nothing extra is required. How to reverse: change the hard-coded array or the config key name.
+
+## D-5A-files - files touched beyond those the task named
+
+- `supabase/tests/00_lib.sql`: added `severity_levels` to `org_tables()` and seeded A/B severity rows, so
+  the cross-org isolation tests (01/03/04) cover the new table.
+- `supabase/tests/37_analyst_engine.sql`, `supabase/tests/38_phase4_acceptance.sql`: point at the renamed
+  real RPC `record_analysis_result` (D-5A-STUB).
+- `src/data/analytics.ts`, `src/data/phase4.test.ts`: same rename.
+Reason: retire the temporary stub everywhere in one commit, as the 4F dependency rule requires.
+
