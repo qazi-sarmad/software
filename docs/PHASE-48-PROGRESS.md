@@ -41,7 +41,7 @@ Updated after every task and committed with it. Every line carries the CI run ID
 | 5C floating window | todo | | | |
 | 5D document viewer DB | done | _this commit_ | _see CI_ | migrations 0035 (evidence_files, document_extractions, FTS, search_documents), test 44 (D-5D-M1, D-5D-stage-filter, D-5D-extraction-stub) |
 | 5E Phase 5 tests | todo | | | |
-| 5F Phase 5 data module | todo | | | |
+| 5F Phase 5 data module | done | _this commit_ | _see CI_ | src/data/{observations,conclusion,documents}.ts + phase5.test.ts |
 | 5G Phase 5 UI | todo | | | |
 | 5H Phase 5 docs | todo | | | |
 | 6A report drafting DB | done | 46ee36c | 38954769628 | migration 0036 (report_versions, report_blocks, compose_report, compute_report_summary), test 45 (D-6A-M1, D-6A-blocks, D-6A-summary) |
