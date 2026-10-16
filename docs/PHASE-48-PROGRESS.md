@@ -57,7 +57,7 @@ Updated after every task and committed with it. Every line carries the CI run ID
 | 7B imports DB | done | efc4073 | _see CI_ | migration 0042 (import_jobs, start/validate/commit_import), test 51 (D-7B-M1) |
 | 7C activity archival DB | done | fc08a1e | _see CI_ | migration 0043 (archive_jobs, archive_activity_period), test 52 (D-7C-M1, D-7C-append-only, D-7C-right, D-7C-storage) |
 | 7D prior-year import DB | done | _this commit_ | _see CI_ | migration 0044 (prior_year_imports, import/confirm/revert, sign_planning gate), test 53 (D-7D-M1/M1b/revert) |
-| 7E Phase 7 tests | todo | | | |
+| 7E Phase 7 tests | done | _this commit_ | _see CI_ | test 56 phase-7 acceptance (cross-org, anon, no-right, export ledger, prior-year sign-off gate, import org scope) |
 | 7F Phase 7 data module | done | _this commit_ | _see CI_ | src/data/{exports,imports,archival}.ts + phase7.test.ts |
 | 7G Phase 7 UI | todo | | | |
 | 7H Phase 7 docs | todo | | | |
