@@ -45,7 +45,7 @@ Updated after every task and committed with it. Every line carries the CI run ID
 | 5G Phase 5 UI | todo | | | |
 | 5H Phase 5 docs | todo | | | |
 | 6A report drafting DB | done | _this commit_ | _see CI_ | migration 0036 (report_versions, report_blocks, compose_report, compute_report_summary), test 45 (D-6A-M1, D-6A-blocks, D-6A-summary) |
-| 6B management comments DB | todo | | | |
+| 6B management comments DB | done | _this commit_ | _see CI_ | migration 0037 (report_comments, add/resolve RPCs, open_report_comment_count), test 46 (D-6B-M1, D-6B-resolution, D-6B-open-count) |
 | 6C freeze/issuance DB | todo | | | |
 | 6D CAP register DB | todo | | | |
 | 6E email queue DB | todo | | | |

@@ -354,6 +354,35 @@ section list from a template row instead of the function body.
 column. Reason: a stored figure can drift from the records; the spec says compute. How to reverse:
 snapshot the JSON onto `report_versions` at freeze time if the frozen report must be immutable.
 
+## D-6B-M1 - no comment table existed; created rather than extended
+
+Grep for `comment` in `supabase/migrations` found no report-comment table. `report_comments` is created
+in `0037`. How to reverse: drop the table in a later migration.
+
+## D-6B-resolution - a resolution carries a reason, a resolver and a four-eyes rule
+
+§15.2 step 5 says each comment is "resolved as incorporated or rejected with a reason". Choice: the
+CHECK `report_comments_resolution_chk` requires `resolved_at`, `resolved_by` and a non-empty
+`resolution_reason` whenever the status is not `open`; `resolve_report_comment` adds four-eyes (the
+resolver is not the commenter) and requires `review_and_approve`. Reason: matches the spec and mirrors
+the four-eyes pattern used elsewhere. How to reverse: drop the CHECK and the four-eyes branch.
+
+## D-6B-open-count - the freeze gate reads a count function, not a stored flag
+
+§15.2 step 5 "The report cannot be frozen while any comment is unresolved." Choice:
+`open_report_comment_count(version)` is a read function; `freeze_report` (6C) calls it. Reason: a stored
+open-comment flag can drift; a count cannot. How to reverse: change `freeze_report` to read another
+source.
+
+## D-6C-6D-order - 6D (CAP register) is built before 6C (freeze/issuance)
+
+The task lists 6C before 6D, but 6C's `freeze_report` calls `check_cap_reconciliation`, and 6D states
+that function "reads from caps, not from the report blocks". `caps` does not exist until 6D, so a
+forward reference would be needed. Choice: build 6D first (migration 0038), then 6C (migration 0039).
+Reason: migrations apply in filename order and a function cannot read a table that does not yet exist;
+this is the dependency the task itself names. How to reverse: swap the two migrations if a future
+change removes the dependency.
+
 ## D-5D-M1 - no evidence-file table existed; created rather than extended
 
 Grep for `evidence`, `file_id` and `document` in `supabase/migrations` found no file table (evidence
