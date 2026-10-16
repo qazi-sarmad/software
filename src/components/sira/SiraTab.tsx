@@ -43,6 +43,24 @@ export const SiraTab: React.FC = () => {
         <p className="text-apple-13 text-secondary">
           {universe ? `${universe.name} (${universe.code})` : 'No universe in scope'} · {rows.length} entities ranked by risk index
         </p>
+        <div className="flex flex-wrap gap-2 pt-2">
+          <button
+            type="button"
+            data-testid="sira-open-model"
+            onClick={() => openInspector('sira_model', { model: null })}
+            className="px-3 py-1.5 rounded-lg border border-hairline text-apple-12 text-primary hover:bg-surface-hover"
+          >
+            SIRA model
+          </button>
+          <button
+            type="button"
+            data-testid="sira-open-cycles"
+            onClick={() => openInspector('sira_cycles', { cycles: [], emergent: [] })}
+            className="px-3 py-1.5 rounded-lg border border-hairline text-apple-12 text-primary hover:bg-surface-hover"
+          >
+            Cycles &amp; emergent risks
+          </button>
+        </div>
       </div>
 
       {rows.length === 0 ? (

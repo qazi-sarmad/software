@@ -60,7 +60,8 @@ language sql immutable as $$
     'roles','org_members','user_scopes','universes','entities','engagements','engagement_members',
     'risks_library','sira_cycles','sira_scores','plans','plan_versions','populations','population_rows',
     'samples','sample_rows','workpapers','sign_offs','test_rows','observations','findings','issues',
-    'cap_items','ledger_entries','activity_log','config_versions','notifications','email_outbox'
+    'cap_items','ledger_entries','activity_log','config_versions','notifications','email_outbox',
+    'entity_approval_settings','entity_decision_grants'
   ]
 $$;
 
@@ -76,6 +77,7 @@ begin
   truncate reopen_grants;
   truncate platform_trail;
   truncate platform_admins;
+  truncate entity_decision_grants;
 
   insert into orgs (id, name, is_demo) values
     ('a0000000-0000-0000-0000-000000000001', 'Org A', false),
@@ -117,10 +119,13 @@ begin
     ('30000000-0000-0000-0000-0000000000a2', 'a0000000-0000-0000-0000-000000000001', 'A-U2'),
     ('30000000-0000-0000-0000-0000000000b1', 'b0000000-0000-0000-0000-000000000001', 'B-U1');
 
-  insert into entities (id, org_id, universe_id, name, approved) values
-    ('40000000-0000-0000-0000-0000000000a1', 'a0000000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-0000000000a1', 'A-E1', true),
-    ('40000000-0000-0000-0000-0000000000a2', 'a0000000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-0000000000a2', 'A-E2', true),
-    ('40000000-0000-0000-0000-0000000000b1', 'b0000000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-0000000000b1', 'B-E1', true);
+  insert into entities (id, org_id, universe_id, name, approved, status) values
+    ('40000000-0000-0000-0000-0000000000a1', 'a0000000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-0000000000a1', 'A-E1', true, 'approved'),
+    ('40000000-0000-0000-0000-0000000000a2', 'a0000000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-0000000000a2', 'A-E2', true, 'approved'),
+    ('40000000-0000-0000-0000-0000000000b1', 'b0000000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-0000000000b1', 'B-E1', true, 'approved'),
+    -- Phase 3 (3B): a draft entity in the unscoped universe U2, so the submit/decide flow can be
+    -- exercised without changing what a U1-scoped user sees.
+    ('40000000-0000-0000-0000-0000000000a3', 'a0000000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-0000000000a2', 'A-E3-draft', false, 'draft');
 
   insert into engagements (id, org_id, universe_id, entity_id, title) values
     ('50000000-0000-0000-0000-0000000000a1', 'a0000000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-0000000000a1', '40000000-0000-0000-0000-0000000000a1', 'A-Eng1'),

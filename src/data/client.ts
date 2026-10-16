@@ -25,7 +25,7 @@ function config(): { url: string; key: string } | null {
 let client: SupabaseClient | null = null;
 
 /** Only the publishable key is used here. The secret key is never referenced in src/. */
-function getClient(): SupabaseClient | null {
+export function getClient(): SupabaseClient | null {
   const c = config();
   if (!c) return null;
   if (!client) client = createClient(c.url, c.key);

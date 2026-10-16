@@ -44,3 +44,24 @@ clear the first two before Phase 2 closes.
   methodology, the risk model, workflow, SLA and escalation, finding structure, notifications,
   BI parameters, templates and branding, export and retention, and AI remain not built.
 - Priority: medium. The remaining parts are Phase 3+ work; each is a separate task.
+
+## 7. Overdue-request escalation needs a scheduler (Phase 3 scope)
+
+- §7 and §22 require overdue plan-change/deployment requests to escalate on a timer.
+  `public.escalate_overdue_deployment_requests()` is built and tested, but nothing calls it on a
+  schedule: no scheduler (pg_cron or an external worker) exists in this environment.
+- Owner action: wire `escalate_overdue_deployment_requests()` to a scheduler when the deployment
+  provides one. Until then it must be invoked by hand.
+
+## 8. SIRA cycles, plan versions and gate outcomes are not yet read into the UI
+
+- The Phase 3 database objects (SIRA model/cycles, plan versions, deployment outcomes, ethics
+  acknowledgements) are exercised by SQL tests and the `src/data/*` modules, and the panels render
+  from the payload the tab passes in. No screen yet loads a persisted SIRA model, cycle or plan
+  version to display (the demo tenant still feeds the screen rows).
+- Priority: low. The reading screens are Phase 4+ work; the panels accept the loaded rows unchanged
+  when it lands.
+
+## 9. Browser coverage (unchanged from item 4)
+
+- CI runs Chromium only. Firefox and WebKit are Phase 4+ work.

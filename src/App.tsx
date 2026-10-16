@@ -75,6 +75,13 @@ const AccountSettingsModal = lazy(() => import('./components/common/AccountSetti
 const CommentHistoryPanel = lazy(() => import('./components/reviews/CommentHistoryPanel').then((m) => ({ default: m.CommentHistoryPanel })));
 const CapInspector = lazy(() => import('./components/dashboard/CapInspector').then((m) => ({ default: m.CapInspector })));
 const PeopleAdminPanel = lazy(() => import('./components/admin/PeopleAdminPanel').then((m) => ({ default: m.PeopleAdminPanel })));
+const EntityApprovalPanel = lazy(() => import('./components/universe/EntityApprovalPanel').then((m) => ({ default: m.EntityApprovalPanel })));
+const DeploymentGatePanel = lazy(() => import('./components/audit/DeploymentGatePanel').then((m) => ({ default: m.DeploymentGatePanel })));
+const EthicsPanel = lazy(() => import('./components/audit/EthicsPanel').then((m) => ({ default: m.EthicsPanel })));
+const CombinedApprovalPanel = lazy(() => import('./components/plan/CombinedApprovalPanel').then((m) => ({ default: m.CombinedApprovalPanel })));
+const SiraModelEditor = lazy(() => import('./components/sira/SiraModelEditor').then((m) => ({ default: m.SiraModelEditor })));
+const SiraCyclePanel = lazy(() => import('./components/sira/SiraCyclePanel').then((m) => ({ default: m.SiraCyclePanel })));
+const PlanItemsPanel = lazy(() => import('./components/plan/PlanItemsPanel').then((m) => ({ default: m.PlanItemsPanel })));
 
 const LoadingFallback: React.FC = () => (
   <div className="max-w-7xl mx-auto px-6 py-16 flex items-center justify-center text-secondary text-apple-13">
@@ -111,6 +118,20 @@ const AppContent: React.FC = () => {
         return 'Corrective Action Plan (CAP) Details';
       case 'people_admin':
         return 'People & Roles';
+      case 'entity_approval':
+        return 'Entity Approval';
+      case 'deployment_gate':
+        return 'Deployment Gate';
+      case 'ethics':
+        return 'Ethics Acknowledgement';
+      case 'combined_approval':
+        return 'Combined Approval';
+      case 'sira_model':
+        return 'SIRA Model';
+      case 'sira_cycles':
+        return 'SIRA Cycles & Emergent Risks';
+      case 'plan_items':
+        return 'Audit Plan Items';
       default:
         return 'Audit Inspector';
     }
@@ -136,6 +157,20 @@ const AppContent: React.FC = () => {
         return <CapInspector />;
       case 'people_admin':
         return <PeopleAdminPanel />;
+      case 'entity_approval':
+        return <EntityApprovalPanel entity={inspector.data?.entity} onDone={closeInspector} />;
+      case 'deployment_gate':
+        return <DeploymentGatePanel result={inspector.data?.result ?? null} />;
+      case 'ethics':
+        return <EthicsPanel members={inspector.data?.members ?? []} />;
+      case 'combined_approval':
+        return <CombinedApprovalPanel request={inspector.data?.request ?? null} universeId={inspector.data?.universeId} entityId={inspector.data?.entityId} onRequested={closeInspector} />;
+      case 'sira_model':
+        return <SiraModelEditor model={inspector.data?.model ?? null} />;
+      case 'sira_cycles':
+        return <SiraCyclePanel cycles={inspector.data?.cycles ?? []} emergent={inspector.data?.emergent ?? []} />;
+      case 'plan_items':
+        return <PlanItemsPanel items={inspector.data?.items ?? []} versions={inspector.data?.versions ?? []} />;
       default:
         return null;
     }
