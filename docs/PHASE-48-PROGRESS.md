@@ -32,8 +32,8 @@ Updated after every task and committed with it. Every line carries the CI run ID
 | 4D sampling engine DB | fixed | d54165e | 38897513403 | migration 0027, test 35 (D-4D-M1, D-4D-column-name, D-4D-locked-immutability, D-4D-seed, D-4D-sample-size). 38897205611 was a cross-run race on the shared test project (D-4D-CI-RACE); the same code is green in the 4E run. |
 | 4E row testing DB | done | e2dc0bf | 38897513403 | migration 0028, test 36 (D-4E-M1, D-4E-four-eyes, D-4E-exception-default, D-4E-status) |
 | 4F analyst engine | done | 81dadff | 38898749540 | green — migration 0029, test 37, src/lib/analyticsEngine.ts + test (D-4F-M1, D-4F-stub, D-4F-engine-scope) |
-| 4G Phase 4 tests | done | _this commit_ | _see CI_ | test 38 acceptance (cross-org, anon, no-right, L3, floor, four-eyes, chain, lock) + 4F unit tests |
-| 4H Phase 4 data module | todo | | | |
+| 4G Phase 4 tests | done | d1ed656 | 38899789331 | test 38 acceptance (cross-org, anon, no-right, L3, floor, four-eyes, chain, lock) + 4F unit tests |
+| 4H Phase 4 data module | done | _this commit_ | _see CI_ | src/data/{planning,population,sampling,rowTesting,analytics}.ts + phase4.test.ts (14 tests) |
 | 4I Phase 4 UI | todo | | | |
 | 4J Phase 4 docs | todo | | | |
 | 5A findings DB | todo | | | |
