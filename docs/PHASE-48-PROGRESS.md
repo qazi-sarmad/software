@@ -35,7 +35,7 @@ Updated after every task and committed with it. Every line carries the CI run ID
 | 4G Phase 4 tests | done | d1ed656 | 38899789331 | test 38 acceptance (cross-org, anon, no-right, L3, floor, four-eyes, chain, lock) + 4F unit tests |
 | 4H Phase 4 data module | done | 29d473b | 38900814033 | src/data/{planning,population,sampling,rowTesting,analytics}.ts + phase4.test.ts (14 tests). First run red on a 0009 deadlock (shared test-project race, D-4D-CI-RACE class); rerun of the same commit green. |
 | 4I Phase 4 UI | fixed | 811b2f1 | 39019375260 -> 39023767418 | Playwright was red because the audit-side e2e users carried a `user_scopes` row pointing at a synthetic universe that does not exist in the tenant seed, so `useScopedData` filtered every seeded engagement out; the Phase 5/6 specs also signed in as the org admin, which by design sees no audit tab (D-E2E-SCOPE, D-E2E-PRINCIPAL). Fixed in the E2E commit below. PlanningPanel, PopulationPanel, SamplingPanel, RowTestingPanel, AnalystEnginePanel in the Audit File testing workspace; panel tests + e2e/phase4.spec.ts; global-setup cleans Phase 4 residue (D-4I-workspace, D-4I-M1, D-4I-population-write) |
-| 4J Phase 4 docs | todo | | | |
+| 4J Phase 4 docs | done | (pending) | (pending) | PARITY §10/10.4/§11/§12; NOT-DONE items 14-15; docs/PHASE-4-REPORT.md |
 | 5A findings DB | done | b8a7dd3 | 38975709496 (cumulative) | migration 0030, test 39 (D-5A-STUB resolved, D-5A-M1, D-5A-status, D-5A-tokens, D-5A-optional-sections) |
 | 5B conclusion DB | done | ec4e96a | 38975709496 (cumulative) | migration 0034, test 43 (D-5B-M1, D-5B-testing-gate, D-5B-opinion-config, D-5B-files) |
 | 5C floating window | done | c818f00 | 39020135451 (cumulative) | src/components/common/FloatingWindowManager.tsx (dock, multi-window, pop-out); RecordView + App shell use it; FloatingWindowManager.test.tsx (5 tests) |
@@ -60,7 +60,7 @@ Updated after every task and committed with it. Every line carries the CI run ID
 | 7E Phase 7 tests | done | 502e838 | 38975709496 | test 56 phase-7 acceptance (cross-org, anon, no-right, export ledger, prior-year sign-off gate, import org scope) |
 | 7F Phase 7 data module | done | 18beb52 | 38975709496 (cumulative) | src/data/{exports,imports,archival}.ts + phase7.test.ts |
 | 7G Phase 7 UI | done | 1a2f70b | 39026062113 | ExportPanel (Audit File view), ImportWizardPanel + ActivityLogPanel (record views), PriorYearImportPanel (Planning tab); exportSerialise + phase7Panels.test.tsx (15) + e2e/phase7.spec.ts (5); global-setup adds zara.malik + clears Phase 7 residue (D-7G-workspace, D-7G-audit-manager, D-7G-residue, D-7G-guard) |
-| 7H Phase 7 docs | done | (pending) | (pending) | PARITY §9.1/§18/§19/§26 + Phase 7 verification block; NOT-DONE items 10-13 |
+| 7H Phase 7 docs | done | 3942da5 | 39027169825 | PARITY §9.1/§18/§19/§26 + Phase 7 verification block; NOT-DONE items 10-13 |
 | 8A platform portal DB | done | (0031, earlier) | 38956498574 | tenant_settings, platform_trail, platform_* RPCs; test 40 (D-PLATFORM-RIGHTS) |
 | 8B support access DB | done | (0031, earlier) | 38956498574 | support_access_grants, grant/revoke RPCs; test 40 |
 | 8C AI enablement DB | done | 92ba68f | 38975709496 | 0045 extends platform_enable_ai to write the org ledger (D-8C-M1, D-8C-ledger) |

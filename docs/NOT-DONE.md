@@ -99,3 +99,17 @@ clear the first two before Phase 2 closes.
 - No screenshots were captured for the Phase 7 surfaces (export panel, import wizard, activity log,
   prior-year import); this is owner-deferred as in Phases 0-3.
 
+
+## 14. One-stage vs two-stage testing selection UI deferred (Phase 4 scope)
+
+- §23 requires the organisation to choose one-stage or two-stage testing and to set sign-off roles
+  per stage. The org setting and the database gate exist; no screen sets the choice yet.
+- Owner action: add the control to the Org Admin portal.
+- Evidence: `docs/PHASE-4-REPORT.md`.
+
+## 15. Per-organisation BI parameter admin UI deferred (Phase 4 scope)
+
+- §23 lists BI parameters among the Methodology settings. The parameters are data; no admin screen
+  edits them yet.
+- Evidence: `docs/PHASE-4-REPORT.md`.
+
