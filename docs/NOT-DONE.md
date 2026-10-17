@@ -18,17 +18,19 @@ clear the first two before Phase 2 closes.
 - `source-map-js` 1.2.1 had a high-severity event-loop DoS. Pinned to 1.2.2 with an npm override.
   Production audit at high level is clean.
 
-## 3. Per-user passwords in end-to-end tests
+## 3. Per-user passwords in end-to-end tests (resolved in R6c)
 
-- Today the end-to-end setup generates one random password per CI run and sets it on all five
-  synthetic test users in `provio-test`. The password is held only in that run's environment
-  and is not written to the repo.
-- Improvement: give each test user its own random password per run, so one leaked value does not open all five accounts.
-- Priority: low. The accounts are synthetic and hold no client data.
+- Resolved: each synthetic user now gets its own random password per run. `e2e/global-setup.ts`
+  builds a per-address password map and writes it to the git-ignored `e2e/.auth/passwords.json`;
+  every spec reads its own account's password through `e2e/password.ts` `passwordFor(email)`.
+- Evidence: commit R6c, decision D-R6c-passwords.
 
-## 4. Browser coverage
+## 4. Browser coverage (resolved in R6d)
 
-- CI runs Chromium only. Phase 4 and Phase 9 require Firefox and WebKit in Playwright.
+- Resolved: `playwright.config.ts` declares `chromium`, `firefox` and `webkit`. Normal CI step 7 pins
+  `--project=chromium`; `.github/workflows/browsers.yml` runs Firefox and WebKit on
+  `workflow_dispatch` only.
+- Evidence: commit R6d, decisions D-R6d-browsers and D-R6d-nolocalrun.
 
 ## 5. Hosted test secret carries a trailing newline (owner action)
 
@@ -53,18 +55,16 @@ clear the first two before Phase 2 closes.
 - Owner action: wire `escalate_overdue_deployment_requests()` to a scheduler when the deployment
   provides one. Until then it must be invoked by hand.
 
-## 8. SIRA cycles, plan versions and gate outcomes are not yet read into the UI
+## 8. SIRA cycles, plan versions and gate outcomes are not yet read into the UI (resolved in R6a)
 
-- The Phase 3 database objects (SIRA model/cycles, plan versions, deployment outcomes, ethics
-  acknowledgements) are exercised by SQL tests and the `src/data/*` modules, and the panels render
-  from the payload the tab passes in. No screen yet loads a persisted SIRA model, cycle or plan
-  version to display (the demo tenant still feeds the screen rows).
-- Priority: low. The reading screens are Phase 4+ work; the panels accept the loaded rows unchanged
-  when it lands.
-
-## 9. Browser coverage (unchanged from item 4)
-
-- CI runs Chromium only. Firefox and WebKit are Phase 4+ work.
+- Resolved: the SIRA screen now loads the persisted SIRA model, cycles and emergent risks, and the
+  latest plan with its version history, for the selected universe through `src/data/sira.ts` and
+  `src/data/plan.ts` (new `latestPlanForUniverse`). The Audit Plan screen loads persisted plan items,
+  plan versions, deployment-gate outcomes (new `listGateOutcomes` reading the `engagement_deployed`
+  activity rows) and deployment requests. All reads go through `src/data`; no component touches the
+  client. A failed read shows an inline error.
+- Evidence: commit R6a, decisions D-R6a-users, D-R6a-gate-source; `src/components/sira/SiraTab.tsx`,
+  `src/components/plan/AuditPlanTab.tsx`, `e2e/r6.spec.ts`, `src/data/r6a.test.ts`.
 
 ## 10. Activity-log archival needs a Storage-upload edge function (Phase 7 scope)
 

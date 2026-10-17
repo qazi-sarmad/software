@@ -121,3 +121,30 @@ export async function planApprovalConfig(orgId: string): Promise<PlanApprovalCon
   if (!row) return null;
   return { createRight: row.create_right as string, approveRight: row.approve_right as string };
 }
+
+/**
+ * R6a: the most recent plan for a universe, or null when the universe has no plan yet. The SIRA
+ * screen reads this so it can show the persisted plan and its version history instead of nothing.
+ */
+export async function latestPlanForUniverse(universeId: string): Promise<PlanRow | null> {
+  const sb = getClient();
+  if (!sb) return null;
+  const { data, error } = await sb
+    .from('plans')
+    .select('id, universe_id, period, status, current_version, approved_at')
+    .eq('universe_id', universeId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  const p = data as Record<string, unknown> | null;
+  if (!p) return null;
+  return {
+    id: p.id as string,
+    universeId: p.universe_id as string,
+    period: (p.period as string | null) ?? null,
+    status: (p.status as 'draft' | 'approved') ?? 'draft',
+    currentVersion: p.current_version as number,
+    approvedAt: (p.approved_at as string | null) ?? null,
+  };
+}

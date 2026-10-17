@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useScopedData } from '../../hooks/useScopedData';
 import { useApp } from '../../context/AppContext';
 import { HoverPreview } from '../common/HoverPreview';
 import { InlineError } from '../common/InlineError';
+import { listDeploymentRequests, listGateOutcomes, type DeploymentRequestRow, type GateOutcomeRow } from '../../data/deployment';
+import { latestPlanForUniverse, listPlanItems, planHistory, type PlanItemRow, type PlanVersionRow } from '../../data/plan';
 import {
   Folder,
   FileText,
@@ -36,6 +38,46 @@ export const AuditPlanTab: React.FC = () => {
   const [actionError, setActionError] = useState<string | null>(null);
   const [reopenNote, setReopenNote] = useState('');
   const [reopeningId, setReopeningId] = useState<string | null>(null);
+
+  // R6a: persisted plan, items, versions and gate outcomes for the selected universe, via src/data.
+  const [planItems, setPlanItems] = useState<PlanItemRow[]>([]);
+  const [planVersions, setPlanVersions] = useState<PlanVersionRow[]>([]);
+  const [gateOutcomes, setGateOutcomes] = useState<GateOutcomeRow[]>([]);
+  const [requests, setRequests] = useState<DeploymentRequestRow[]>([]);
+  const [recordsError, setRecordsError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!selectedUniverseId) {
+      setPlanItems([]);
+      setPlanVersions([]);
+      setGateOutcomes([]);
+      setRequests([]);
+      return;
+    }
+    let cancelled = false;
+    setRecordsError(null);
+    (async () => {
+      try {
+        const plan = await latestPlanForUniverse(selectedUniverseId);
+        const [items, versions, gates, reqs] = await Promise.all([
+          plan ? listPlanItems(plan.id) : Promise.resolve([] as PlanItemRow[]),
+          plan ? planHistory(plan.id) : Promise.resolve([] as PlanVersionRow[]),
+          listGateOutcomes(selectedUniverseId),
+          listDeploymentRequests(),
+        ]);
+        if (cancelled) return;
+        setPlanItems(items);
+        setPlanVersions(versions);
+        setGateOutcomes(gates);
+        setRequests(reqs);
+      } catch (err) {
+        if (!cancelled) setRecordsError(err instanceof Error ? err.message : 'Could not load plan records.');
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedUniverseId]);
 
   const selectedEngagement =
     filteredEngagements.find((e) => e.id === selectedEngagementId) ||
@@ -84,7 +126,7 @@ export const AuditPlanTab: React.FC = () => {
           <button
             type="button"
             data-testid="plan-open-items"
-            onClick={() => openInspector('plan_items', { items: [], versions: [] })}
+            onClick={() => openInspector('plan_items', { items: planItems, versions: planVersions })}
             className="px-3 py-1.5 rounded-lg border border-hairline text-apple-12 text-primary hover:bg-surface-hover"
           >
             Plan items &amp; versions
@@ -113,6 +155,39 @@ export const AuditPlanTab: React.FC = () => {
           >
             Ethics
           </button>
+        </div>
+      </div>
+
+      <InlineError message={recordsError} testId="plan-records-error" />
+
+      {/* R6a: the persisted plan items, version history and gate outcomes for this universe. */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4" data-testid="plan-records">
+        <div className="rounded-2xl bg-surface border border-hairline p-4" data-testid="plan-records-items">
+          <div className="text-apple-11 uppercase tracking-wider text-secondary">Plan items</div>
+          {planItems.length > 0 ? (
+            <p className="mt-1 text-apple-13 text-primary">
+              {planItems.length} item{planItems.length === 1 ? '' : 's'} · {planItems.filter((i) => i.status === 'approved').length} approved
+            </p>
+          ) : (
+            <p className="mt-1 text-apple-13 text-tertiary">No plan items yet.</p>
+          )}
+        </div>
+        <div className="rounded-2xl bg-surface border border-hairline p-4" data-testid="plan-records-versions">
+          <div className="text-apple-11 uppercase tracking-wider text-secondary">Plan versions</div>
+          {planVersions.length > 0 ? (
+            <p className="mt-1 text-apple-13 text-primary">v{planVersions[0].version} latest · {planVersions.length} recorded</p>
+          ) : (
+            <p className="mt-1 text-apple-13 text-tertiary">No versions yet.</p>
+          )}
+        </div>
+        <div className="rounded-2xl bg-surface border border-hairline p-4" data-testid="plan-records-gates">
+          <div className="text-apple-11 uppercase tracking-wider text-secondary">Deployment gates</div>
+          {gateOutcomes.length > 0 ? (
+            <p className="mt-1 text-apple-13 text-primary">{gateOutcomes.length} deployment{gateOutcomes.length === 1 ? '' : 's'} recorded</p>
+          ) : (
+            <p className="mt-1 text-apple-13 text-tertiary">No deployments recorded.</p>
+          )}
+          {requests.length > 0 && <p className="text-apple-11 text-tertiary">{requests.length} deployment request{requests.length === 1 ? '' : 's'}</p>}
         </div>
       </div>
 

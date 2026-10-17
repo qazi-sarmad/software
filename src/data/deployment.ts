@@ -105,6 +105,42 @@ export function escalateOverdueDeploymentRequests(): Promise<DataResult> {
   return callRpc('escalate_overdue_deployment_requests', {});
 }
 
+export interface GateOutcomeRow {
+  engagementId: string;
+  entityId: string | null;
+  planId: string | null;
+  detail: Record<string, unknown>;
+  ts: string | null;
+}
+
+/**
+ * R6a: the recorded deployment-gate outcomes for a universe. A successful deployment writes an
+ * `engagement_deployed` activity row carrying the engagement, entity and plan ids, so the screen can
+ * show which gates have fired without a new table. RLS on activity_log scopes the read to the org.
+ */
+export async function listGateOutcomes(universeId: string): Promise<GateOutcomeRow[]> {
+  const sb = getClient();
+  if (!sb) return [];
+  const { data, error } = await sb
+    .from('activity_log')
+    .select('object_id, detail, ts')
+    .eq('action', 'engagement_deployed')
+    .eq('detail->>universe_id', universeId)
+    .order('ts', { ascending: false })
+    .limit(50);
+  if (error) throw new Error(error.message);
+  return ((data ?? []) as Record<string, unknown>[]).map((a) => {
+    const detail = (a.detail as Record<string, unknown> | null) ?? {};
+    return {
+      engagementId: (a.object_id as string | null) ?? '',
+      entityId: (detail.entity_id as string | undefined) ?? null,
+      planId: (detail.plan_id as string | undefined) ?? null,
+      detail,
+      ts: (a.ts as string | null) ?? null,
+    };
+  });
+}
+
 export async function listDeploymentRequests(): Promise<DeploymentRequestRow[]> {
   const sb = getClient();
   if (!sb) return [];

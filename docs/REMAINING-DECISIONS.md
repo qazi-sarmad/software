@@ -217,3 +217,30 @@ Choice: option 2. `e2e/global-setup.ts` already deletes, scoped to the two synth
 The cleanup runs at the start of each run, so the database is left clean between runs (M5).
 Reason: no new delete is needed; adding duplicates would be noise.
 How to reverse: n/a.
+
+## D-R6a-users — which account drives the R6a Playwright tests
+
+Task R6a. Unclear point: the task names `ayesha.khan`, but the SIRA and Audit Plan screens are gated
+by `hasAnyAuditRight`, and the `org_admin` account (`ayesha.khan`) holds no audit right, so it sees
+no audit tabs and cannot reach either screen. Options: (1) grant the org_admin an audit right (a
+rights change, out of scope); (2) drive the flows with the preparer account (`bilal.ahmed`), which
+holds `perform_work` and so sees the seven audit tabs.
+Choice: option 2. The R6a e2e tests sign in as `bilal.ahmed@provio-test.invalid`. This matches the
+Phase 3 e2e precedent (3J uses the preparer for the audit tabs).
+Reason: rights, never role names. Widening a role's rights to satisfy a test would weaken the rights
+model; the test should use the account that actually holds the right.
+How to reverse: change `PREPARER_EMAIL` in `e2e/r6.spec.ts` back to the org_admin and grant that role
+the relevant audit right in `src/lib/rights.ts` / the DB.
+
+## D-R6a-gate-source — where gate outcomes are read from
+
+Task R6a. Unclear point: "gate outcomes" could mean a dedicated table or the recorded activity. There
+is no `gate_outcomes` table; `deploy_engagement` writes an `engagement_deployed` row into
+`activity_log` carrying `{universe_id, entity_id, plan_id}`. Options: (1) add a new table; (2) read
+the existing activity rows.
+Choice: option 2. `listGateOutcomes(universeId)` in `src/data/deployment.ts` reads `activity_log`
+filtered by `action = 'engagement_deployed'` and `detail->>universe_id`, mapped to
+`{engagementId, entityId, planId, detail, ts}`. RLS on `activity_log` keeps the read org-scoped.
+Reason: configuration-not-code and no duplicate source of truth; the activity log is already the
+auditable record of a gate firing.
+How to reverse: add a `gate_outcomes` table and repoint `listGateOutcomes`; the UI shape is unchanged.
