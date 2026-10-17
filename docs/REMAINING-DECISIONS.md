@@ -119,3 +119,40 @@ that hide a future regression.
 Reason: a guard whose allow-list is wider than necessary stops being a guard.
 How to reverse: re-add any file to ALLOWED if a legitimate non-blocking surface reintroduces a
 banned token.
+
+## D-R5a-role-guard — widen the role guard, keep the same allow-list
+
+Task R5a. Unclear point: the task says "extend the role guard: comparisons such as `role === 'cia'`
+fail" and to list the DISPLAY/SCOPE files in the test. The existing guard already caught
+`role === '<slug>'` for the seven org roles. Options: (1) report it already complete and change
+nothing; (2) widen the pattern and add the platform and team-role cases, then verify empirically that
+no production file regresses.
+Choice: option 2. Added `platform_admin` to the role-name alternation, added a `teamRole` comparison
+pattern (`lead`, `preparer`, `reviewer`, `observer`), and widened the field matcher to
+`role|user_role|role_slug|slug`. Added a `team-role` self-check and a `platform_admin` self-check.
+Verified with a standalone grep over `src/**` that the broadened patterns return **zero** offenders,
+so the extension changes no behaviour and only ratchets future code.
+Reason: the guard is a prohibition, and the platform/team roles were genuine gaps. Widening a
+prohibition is always allowed; the task explicitly asks for it.
+How to reverse: `git checkout <pre-R5-commit> -- src/guards/noRoleStrings.test.ts`.
+
+## D-R5a-allowlist — DATA_FILES is the DISPLAY/SCOPE list from ROLE-CHECKS.md
+
+Task R5a. Unclear point: which files may legitimately contain role-name literals. Options: (1) list
+them loosely; (2) name exactly the DISPLAY/SCOPE files in `docs/ROLE-CHECKS.md`.
+Choice: option 2 — `types/index.ts`, `lib/rights.ts`, `data/client.ts`, `data/demoSeed.ts`,
+`data/initialData.ts`, `context/AppContext.tsx`, `App.tsx`,
+`components/glassbox/GlassBoxPublicRoute.tsx`, `test/testUsers.ts`. The last four were added to the
+previous four-file list because they carry role slugs as seed/label data (`initialData`, `demoSeed`,
+`AppContext` demo user, `App`, GlassBox `actorRole`) with no comparison.
+Reason: the task asks for the allowed files to be listed in the test, and ROLE-CHECKS.md already
+classifies them. An entry only exempts a file from the comparison scan; it does not permit a
+comparison to be added there unnoticed, because these files hold literals, not comparisons.
+How to reverse: remove the added entries and re-run; the guard will list any file that then fails.
+
+## D-R5b-singleClient — guard confirmed present and green, no change
+
+Task R5b. Unclear point: none. Ran `npx vitest run src/guards/singleClient.test.ts` on the head; it
+passes (3 tests). No edit made.
+Reason: the task says "confirm", not "create".
+How to reverse: n/a.
