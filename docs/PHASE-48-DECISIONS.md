@@ -595,3 +595,35 @@ text field to ConclusionPanel.
 The Playwright run writes findings, observations, issues, conclusion_records, evidence_files and
 document_extractions; global-setup now deletes them per org (M5), children before parents, so a run does
 not change what the next run observes.
+
+## D-6H-hold - HoldToConfirm is a new shared non-blocking control
+
+§27.5 allows hold-to-confirm as the alternative to a blocking modal but no such component existed
+(grep found none). 6H adds src/components/common/HoldToConfirm.tsx: an in-place button with a progress
+fill, no scrim and no dialog attribute. It is not added to the noBlockingModal allow-list because it
+contains none of the banned strings. How to reverse: delete the component and its uses.
+
+## D-6H-workspace - the report and CAP register are further Audit File views
+
+6H adds two more views to the Audit File window: "Report" (ReportEditorPanel) and "CAP register"
+(CapRegisterPanel), alongside the 4I/5G views. No new navigation tab (SPEC §5 locks seven). How to
+reverse: delete the two view branches and their imports from AuditFileModal.tsx.
+
+## D-6H-M1 - no new DB objects; the panels call the existing 6A-6E RPCs
+
+grep found every object the Phase 6 screens need already exists: report_versions/report_blocks and
+compose_report/compute_report_summary (0036), report_comments and the add/resolve RPCs (0037), caps and
+update_cap/close_cap/check_cap_reconciliation (0038), email_queue (0039), freeze_report/issue_report
+(0040). 6H is UI only: no migration, nothing duplicated (M1).
+
+## D-6H-preflight - the freeze pre-flight mirrors the database gate, it does not replace it
+
+The panel computes `canFreeze = openComments === 0 && capOk === true` and disables the hold-to-confirm
+button, but freeze_report still enforces both gates in the database. The UI is a courtesy check; the
+authority stays in SQL. How to reverse: delete the pre-flight block; the database would still refuse.
+
+## D-6H-residue - global-setup clears the Phase 6 tables
+
+The Playwright run composes reports and writes comments, blocks and CAP rows; global-setup now deletes
+report_comments, report_blocks, report_versions, caps and email_queue per org (M5), children before
+parents.

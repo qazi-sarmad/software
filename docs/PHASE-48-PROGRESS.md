@@ -51,7 +51,7 @@ Updated after every task and committed with it. Every line carries the CI run ID
 | 6E email queue DB | done | 838f935 | 38956498574 | migration 0039 (email_queue, queue_email), test 48 (org sees sent/failed only; provider_config hidden) |
 | 6F Phase 6 tests | done | cc18f65 | 38975709496 | test 55 phase-6 acceptance (cross-org, anon, no-right, queue visibility, platform L2) |
 | 6G Phase 6 data module | done | dd05ad3 | 38975709496 (cumulative) | src/data/{reports,caps,email}.ts + phase6.test.ts |
-| 6H Phase 6 UI | todo | | | |
+| 6H Phase 6 UI | done | _this_ | _CI_ | ReportEditorPanel (section tabs, placeholder blocks in cinnabar, version sidebar, comments thread, freeze/issue pre-flight) + CapRegisterPanel + common/HoldToConfirm; phase6Panels.test.tsx (11) + e2e/phase6.spec.ts (4); global-setup clears Phase 6 residue (D-6H-hold, D-6H-workspace, D-6H-M1, D-6H-preflight, D-6H-residue) |
 | 6I Phase 6 docs | todo | | | |
 | 7A exports DB | done | 4f16408 | 38975709496 (cumulative) | migration 0041 (exports_log, log_export, export_*), test 50 (D-7A-M1/M1b/M1c) |
 | 7B imports DB | done | efc4073 | 38975709496 (cumulative) | migration 0042 (import_jobs, start/validate/commit_import), test 51 (D-7B-M1) |

@@ -173,4 +173,12 @@ export default async function globalSetup() {
   must('delete conclusion_records', await sb.from('conclusion_records').delete().in('org_id', [ORG_A, ORG_B]));
   must('delete document_extractions', await sb.from('document_extractions').delete().in('org_id', [ORG_A, ORG_B]));
   must('delete evidence_files', await sb.from('evidence_files').delete().in('org_id', [ORG_A, ORG_B]));
+
+  // Phase 6 residue (6H). A run that composes a report writes report_versions/report_blocks, and a
+  // comment or CAP write leaves rows behind; clear them so the next run observes the same start (M5).
+  must('delete report_comments', await sb.from('report_comments').delete().in('org_id', [ORG_A, ORG_B]));
+  must('delete report_blocks', await sb.from('report_blocks').delete().in('org_id', [ORG_A, ORG_B]));
+  must('delete report_versions', await sb.from('report_versions').delete().in('org_id', [ORG_A, ORG_B]));
+  must('delete caps', await sb.from('caps').delete().in('org_id', [ORG_A, ORG_B]));
+  must('delete email_queue', await sb.from('email_queue').delete().in('org_id', [ORG_A, ORG_B]));
 }
