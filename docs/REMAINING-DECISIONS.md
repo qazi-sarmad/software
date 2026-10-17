@@ -37,3 +37,38 @@ Reason: the hosted project is a single shared database the owner controls; a scr
 not available (the secret points at one project). `cancel-in-progress: false` avoids killing a run
 half-way through migrations, which would leave partial DDL behind.
 How to reverse: remove the `concurrency` block from `.github/workflows/ci.yml`.
+
+## D-R3-patch — the root `.patch` file was already removed; nothing to `git rm`
+
+Task R3. Unclear point: the task says `git rm` the root file
+`0001-Slice-A-org-methodology-config-RCM-key-risk-coverage.patch`, but it is not in the working tree
+or in `HEAD`. Options: (1) treat the task as blocked; (2) confirm it was already removed and record
+that, removing nothing.
+Choice: option 2. `git log` shows the file was added in `9ea4a8b` and deleted in `23d915a`
+("ops: remove AI provenance from tracked files (C0b)"), before this run. `git ls-files` and
+`git cat-file -e HEAD:<path>` both confirm it is absent. A `git rm` of a non-existent path would fail.
+Reason: removing nothing is the correct action when the object is already gone; recreating and
+re-removing it would add noise.
+How to reverse: none needed. The file is not tracked at any point reachable from this branch.
+
+## D-R3-reference-v1 — remove `docs/reference/v1` (no source references)
+
+Task R3. Unclear point: whether the read-only v1.7 reference tree is safe to delete. Grepped `src`,
+`e2e`, `scripts`, `supabase`, `tsconfig.json`, `vite.config.ts`, `vitest.config.ts`,
+`playwright*.config.ts`, `package.json` and the CI workflows for `docs/reference` — the only
+reference anywhere was a prose mention in `docs/HANDOFF.md` (no import, no path in any config or
+script). Options: (1) keep the tree; (2) `git rm -r` it and update the prose.
+Choice: option 2. Removed the 60 tracked files under `docs/reference/v1/` and updated the HANDOFF
+"Reference Archive" note to say it was removed and why.
+Reason: it is dead weight (648K, 60 files) with zero code references; the v1.7 behaviour it mirrored
+already lives in `src/`. The build brief explicitly names it for removal.
+How to reverse: `git revert` this commit, or `git checkout <pre-R3-commit> -- docs/reference/v1`.
+
+## D-R3-HANDOFF — the prose reference is edited, not deleted
+
+Task R3. Unclear point: `docs/HANDOFF.md` still described the reference tree as present.
+Options: (1) leave the stale sentence; (2) update it.
+Choice: option 2 — the sentence now states the tree was removed in R3 and that `docs/` stays excluded
+from `tsconfig`/`vitest`/gate scripts.
+Reason: a handoff doc that points at a deleted path is worse than no sentence.
+How to reverse: `git checkout <pre-R3-commit> -- docs/HANDOFF.md`.

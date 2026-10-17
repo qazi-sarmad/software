@@ -27,8 +27,10 @@
    - Code-splitting with `React.lazy` and `Suspense` in `App.tsx`.
 
 5. **Reference Archive**:
-   - Created `docs/reference/v1/` with read-only v1.7 reference files.
-   - Excluded `docs/` from `tsconfig.json`, `vitest.config.ts`, and gate scripts.
+   - `docs/reference/v1/` (read-only v1.7 reference files) was removed in the remaining-build
+     hygiene pass (R3): it was never imported by src, e2e, scripts, supabase, tsconfig or the vite
+     config, and the v1.7 behaviour is already reproduced in `src/`.
+   - `docs/` remains excluded from `tsconfig.json`, `vitest.config.ts`, and gate scripts.
 
 6. **Shrink Guard**:
    - Created `docs/baseline-lines.json` and updated `scripts/check-shrink.mjs` to work without git.
