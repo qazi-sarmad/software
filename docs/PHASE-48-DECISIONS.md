@@ -564,3 +564,34 @@ No register_population RPC exists; 0026 creates populations through a direct ins
 src/data/population.ts performs that insert with the browser-computed SHA-256 and row count, which the
 `verify_population` trigger accepts only when both are present. Components never import the Supabase client
 (M8). How to reverse: add a `register_population` RPC in 0026 and call it from the data module.
+
+## D-5G-workspace - Phase 5 screens are further views inside the Audit File
+
+5G adds three more views to the Audit File window alongside 4I's testing workspace: "Findings & Issues"
+(FindingsPanel), "Conclusion" (ConclusionPanel) and "Documents" (DocumentViewerPanel). No new navigation
+tab is added (SPEC 5 locks seven tabs); the engagement card remains the single entry point. The document
+viewer is a right-side non-blocking panel with a toggleable list, not a modal (SPEC 17.2). How to reverse:
+delete the three view branches and their imports from AuditFileModal.tsx.
+
+## D-5G-M1 - no new objects; the panels call the existing 5A-5D RPCs
+
+grep found every object the Phase 5 screens need already exists: observations/findings/issues/severity_levels
+(0030), conclusion_records and pull_exceptions/sign_conclusion (0034), evidence_files/document_extractions
+and search_documents (0035). 5G is UI only: no migration is added and nothing is duplicated (M1). Every
+write goes through a right-checked RPC (promote_to_finding, create_issue, pull_exceptions, sign_conclusion,
+request_extraction) and every read through the RLS-scoped tables via src/data (5F).
+
+## D-5G-opinion - the conclusion opinion is set through the existing table, not a new RPC
+
+sign_conclusion reads overall_opinion from conclusion_records but no setter RPC exists (0034 exposes only
+pull_exceptions, remove_conclusion_exception and sign_conclusion). 5G does not add one: the opinion is
+optional unless the org config requires it, and the required value is written by the SQL path the tests use.
+A dedicated set_overall_opinion RPC is recorded as future work rather than invented here, so the UI keeps
+the sign button gated on the same preconditions the database enforces. How to reverse: add the RPC and a
+text field to ConclusionPanel.
+
+## D-5G-residue - global-setup clears the Phase 5 tables
+
+The Playwright run writes findings, observations, issues, conclusion_records, evidence_files and
+document_extractions; global-setup now deletes them per org (M5), children before parents, so a run does
+not change what the next run observes.

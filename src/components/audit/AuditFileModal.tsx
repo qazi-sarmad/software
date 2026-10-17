@@ -19,6 +19,9 @@ import { PopulationPanel } from '../audit/PopulationPanel';
 import { SamplingPanel } from '../audit/SamplingPanel';
 import { RowTestingPanel } from '../audit/RowTestingPanel';
 import { AnalystEnginePanel } from '../audit/AnalystEnginePanel';
+import { FindingsPanel } from '../audit/FindingsPanel';
+import { ConclusionPanel } from '../audit/ConclusionPanel';
+import { DocumentViewerPanel } from '../audit/DocumentViewerPanel';
 
 /**
  * Audit File: one permanent workspace per engagement.
@@ -32,7 +35,7 @@ export const AuditFileModal: React.FC = () => {
   const requestedId: string | undefined = inspector.data?.engagement?.id;
   const engagement = requestedId ? scopedEngagements.find((e) => e.id === requestedId) : undefined;
   const [tab, setTab] = useState<AuditFileTab>(() => getInitialAuditFileTab(inspector.data));
-  const [phaseView, setPhaseView] = useState<'overview' | 'workspace'>('overview');
+  const [phaseView, setPhaseView] = useState<'overview' | 'workspace' | 'findings' | 'conclusion' | 'documents'>('overview');
   const [signOffError, setSignOffError] = useState<string | null>(null);
 
   // Neutral state: does not reveal whether an out-of-scope engagement exists.
@@ -86,9 +89,15 @@ export const AuditFileModal: React.FC = () => {
         </div>
       </div>
 
-      {/* View switch: the seed-backed Overview, or the database-backed Phase 4 Workspace (4I). */}
-      <div className="flex items-center gap-1" role="tablist" aria-label="Audit file view">
-        {(['overview', 'workspace'] as const).map((v) => (
+      {/* View switch: the seed-backed Overview, or the database-backed phase workspaces (4I, 5G). */}
+      <div className="flex items-center gap-1 flex-wrap" role="tablist" aria-label="Audit file view">
+        {([
+          ['overview', 'Overview'],
+          ['workspace', 'Testing workspace'],
+          ['findings', 'Findings & Issues'],
+          ['conclusion', 'Conclusion'],
+          ['documents', 'Documents'],
+        ] as const).map(([v, label]) => (
           <button
             key={v}
             type="button"
@@ -100,7 +109,7 @@ export const AuditFileModal: React.FC = () => {
               phaseView === v ? 'bg-surface-hover border-accent text-primary' : 'bg-surface border-hairline text-secondary'
             }`}
           >
-            {v === 'overview' ? 'Overview' : 'Testing workspace'}
+            {label}
           </button>
         ))}
       </div>
@@ -116,6 +125,18 @@ export const AuditFileModal: React.FC = () => {
               <RowTestingPanel workpaperId={workpapers[0].id} />
             </>
           )}
+        </div>
+      ) : phaseView === 'findings' ? (
+        <div className="space-y-6" data-testid="audit-file-findings">
+          <FindingsPanel engagementId={engagement.id} />
+        </div>
+      ) : phaseView === 'conclusion' ? (
+        <div className="space-y-6" data-testid="audit-file-conclusion">
+          <ConclusionPanel engagementId={engagement.id} />
+        </div>
+      ) : phaseView === 'documents' ? (
+        <div className="space-y-6" data-testid="audit-file-documents">
+          <DocumentViewerPanel engagementId={engagement.id} />
         </div>
       ) : (
         <>

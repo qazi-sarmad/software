@@ -42,7 +42,7 @@ Updated after every task and committed with it. Every line carries the CI run ID
 | 5D document viewer DB | fixed | 135ebd2 | 38954437967 -> 38956498574 | migrations 0035 (evidence_files, document_extractions, FTS, search_documents), test 44 (D-5D-M1, D-5D-stage-filter, D-5D-extraction-stub) |
 | 5E Phase 5 tests | done | 882eb69 | 38975709496 | test 54 phase-5 acceptance (cross-org, anon, no-right, readability gate, testing gate, four-eyes, seal, stage-aware search) |
 | 5F Phase 5 data module | done | 13b8ce2 | 38975709496 (cumulative) | src/data/{observations,conclusion,documents}.ts + phase5.test.ts |
-| 5G Phase 5 UI | todo | | | |
+| 5G Phase 5 UI | done | _this_ | _CI_ | FindingsPanel, ConclusionPanel, DocumentViewerPanel as Audit File views; phase5Panels.test.tsx (12) + e2e/phase5.spec.ts (4); global-setup clears Phase 5 residue (D-5G-workspace, D-5G-M1, D-5G-opinion, D-5G-residue) |
 | 5H Phase 5 docs | todo | | | |
 | 6A report drafting DB | done | 46ee36c | 38954769628 | migration 0036 (report_versions, report_blocks, compose_report, compute_report_summary), test 45 (D-6A-M1, D-6A-blocks, D-6A-summary) |
 | 6B management comments DB | done | a25cab4 | 38956498574 | migration 0037 (report_comments, add/resolve RPCs, open_report_comment_count), test 46 (D-6B-M1, D-6B-resolution, D-6B-open-count) |

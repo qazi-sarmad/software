@@ -164,4 +164,13 @@ export default async function globalSetup() {
   must('delete analysis_results', await sb.from('analysis_results').delete().in('org_id', [ORG_A, ORG_B]));
   must('delete planning_sections', await sb.from('planning_sections').delete().in('org_id', [ORG_A, ORG_B]));
   must('delete planning_suggestion_decisions', await sb.from('planning_suggestion_decisions').delete().in('org_id', [ORG_A, ORG_B]));
+
+  // Phase 5 workspace residue (5G). Findings, observations, issues, the conclusion record and the
+  // document extractions written by a run must not change what the next run observes (M5).
+  must('delete findings', await sb.from('findings').delete().in('org_id', [ORG_A, ORG_B]));
+  must('delete observations', await sb.from('observations').delete().in('org_id', [ORG_A, ORG_B]));
+  must('delete issues', await sb.from('issues').delete().in('org_id', [ORG_A, ORG_B]));
+  must('delete conclusion_records', await sb.from('conclusion_records').delete().in('org_id', [ORG_A, ORG_B]));
+  must('delete document_extractions', await sb.from('document_extractions').delete().in('org_id', [ORG_A, ORG_B]));
+  must('delete evidence_files', await sb.from('evidence_files').delete().in('org_id', [ORG_A, ORG_B]));
 }
