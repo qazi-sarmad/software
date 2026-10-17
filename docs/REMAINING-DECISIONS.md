@@ -244,3 +244,31 @@ filtered by `action = 'engagement_deployed'` and `detail->>universe_id`, mapped 
 Reason: configuration-not-code and no duplicate source of truth; the activity log is already the
 auditable record of a gate firing.
 How to reverse: add a `gate_outcomes` table and repoint `listGateOutcomes`; the UI shape is unchanged.
+
+## D-R6b-xlsx — how XLSX parsing enters the import wizard
+
+Task R6b. Unclear point: the task says "add XLSX parsing (SheetJS)". Options: (1) static-import
+SheetJS into the wizard; (2) dynamically import it in a small parser module so it stays out of the
+main bundle; (3) use another parser.
+Choice: option 2. `src/lib/xlsx.ts` exposes `isSpreadsheet(filename)` and `parseSpreadsheet(buf)`; the
+wizard routes `.xlsx/.xls/.xlsm` files to it and everything else to the inline CSV parser. SheetJS CE
+`xlsx@0.18.5` is the dependency.
+Reason: SheetJS is ~420 kB; a dynamic import keeps the main bundle flat and loads it only when the
+operator actually uploads a spreadsheet. Both parsers return the same `{headers, rows}` shape, so the
+rest of the wizard (mapping, validation, commit) is unchanged.
+How to reverse: move `parseSpreadsheet` to a static import in `ImportWizardPanel.tsx`, or replace
+`src/lib/xlsx.ts` with another parser that returns the same shape.
+
+## D-R6b-sheetjs-advisory — accepting SheetJS's unfixed advisory
+
+Task R6b. Unclear point: `xlsx@0.18.5` (the last npm release) carries a high-severity advisory with no
+npm fix. Options: (1) do not add SheetJS; (2) add it and record the residual risk; (3) install from
+the SheetJS CDN tarball.
+Choice: option 2. `npm audit --audit-level=critical` still exits 0 (the advisory is high, not
+critical), so the gate is unaffected. The parser runs only on a file the operator picked in their own
+browser; it is never given data the tenant did not already hold, and it makes no network calls.
+Reason: the task explicitly names SheetJS; the risk is bounded and recorded. Switching to the CDN
+tarball is an owner decision (it changes the dependency source).
+How to reverse: install `https://cdn.sheetjs.com/xlsx-latest/xlsx-latest.tgz` or swap the parser, then
+remove the advisory note from NOT-DONE item 12.
+

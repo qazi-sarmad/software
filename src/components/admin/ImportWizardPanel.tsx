@@ -13,6 +13,7 @@ import {
 import { InlineError } from '../common/InlineError';
 import { Select } from '../common/Select';
 import { Upload, CheckCircle2, AlertTriangle, RefreshCw, ChevronRight } from '../common/Icons';
+import { isSpreadsheet, parseSpreadsheet } from '../../lib/xlsx';
 
 type Step = 'upload' | 'mapping' | 'confirm';
 
@@ -83,8 +84,9 @@ export const ImportWizardPanel: React.FC<ImportWizardPanelProps> = () => {
     setError(null);
     try {
       const buf = await file.arrayBuffer();
-      const text = new TextDecoder().decode(buf);
-      const { headers: h, rows: r } = parseCsv(text);
+      const { headers: h, rows: r } = isSpreadsheet(file.name)
+        ? await parseSpreadsheet(buf)
+        : parseCsv(new TextDecoder().decode(buf));
       if (h.length === 0) throw new Error('The file has no header row.');
       setFilename(file.name);
       setHeaders(h);
@@ -202,17 +204,17 @@ export const ImportWizardPanel: React.FC<ImportWizardPanelProps> = () => {
             className="px-3 py-2 rounded-xl text-apple-12 font-semibold bg-surface border border-hairline text-primary hover:bg-surface-hover transition-colors"
             data-testid="import-choose-file"
           >
-            Choose a CSV file
+            Choose a CSV or XLSX file
           </button>
           <input
             ref={inputRef}
             type="file"
-            accept=".csv,text/csv"
+            accept=".csv,text/csv,.xlsx,.xls,.xlsm"
             className="hidden"
             data-testid="import-file-input"
             onChange={(e) => { const f = e.target.files?.[0]; if (f) void onFile(f); }}
           />
-          <p className="text-apple-11 text-secondary">CSV only in this build. The parser per format and XLSX support are recorded in NOT-DONE.</p>
+          <p className="text-apple-11 text-secondary">CSV and XLSX are parsed in the browser. DOCX table import is recorded in NOT-DONE.</p>
         </section>
       )}
 
