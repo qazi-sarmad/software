@@ -665,5 +665,6 @@ How to reverse: restore the `ORG_ADMIN_EMAIL` / `APPROVER_EMAIL` constants in th
 
 The three UI tasks were committed with placeholder values in `docs/PHASE-48-PROGRESS.md` and their CI
 was in fact red, so "done" was never true for them. This commit corrects the rows to real commit hashes
-and CI run IDs (4I `811b2f1`, 5G `389a1e1`, 6H `bc08485`) and marks them `fixed` with this commit's run
-ID once the run completes. How to reverse: n/a (documentation correction).
+and CI run IDs (4I `811b2f1`, 5G `389a1e1`, 6H `bc08485`) and marks them `fixed` with run
+`39023767418` (all 7 gate steps green, Playwright included). How to reverse: n/a (documentation
+correction).
