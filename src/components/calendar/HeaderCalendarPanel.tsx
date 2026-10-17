@@ -155,7 +155,7 @@ export const HeaderCalendarPanel: React.FC<CalendarPanelProps> = ({
       {isOpen && (
         <motion.div
           ref={setPanel}
-          role="dialog"
+          role="region"
           aria-label="Audit Calendar Panel"
           initial={{ opacity: 0, scale: 0.94, y: -8 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}

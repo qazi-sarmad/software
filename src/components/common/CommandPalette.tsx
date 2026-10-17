@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Search, X, Folder, FileText, AlertCircle, ShieldAlert, ArrowRight } from './Icons';
 import { useScopedData } from '../../hooks/useScopedData';
@@ -11,6 +11,7 @@ interface CommandPaletteProps {
 
 export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose }) => {
   const [query, setQuery] = useState('');
+  const containerRef = useRef<HTMLDivElement>(null);
   const {
     scopedEntities,
     scopedEngagements,
@@ -37,6 +38,19 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
+  // Outside click dismisses the palette. It is a non-blocking dropdown, so the page behind it
+  // stays interactive; the listener only closes when the click lands outside the panel.
+  useEffect(() => {
+    if (!isOpen) return;
+    const handlePointerDown = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        onClose();
+      }
+    };
+    document.addEventListener('pointerdown', handlePointerDown);
+    return () => document.removeEventListener('pointerdown', handlePointerDown);
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
@@ -74,23 +88,16 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
     : scopedIssues.slice(0, 3);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 p-4">
-      {/* Backdrop */}
+    <div className="fixed top-14 left-0 right-0 z-50 flex items-start justify-center pt-4 px-4 pointer-events-none">
+      {/* Palette dropdown — non-blocking: no backdrop scrim, no modal semantics, no focus trap. The
+          page behind it stays reachable; Escape and an outside click dismiss it (§27.5). */}
       <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        onClick={onClose}
-        className="fixed inset-0 bg-black/40 backdrop-blur-xs"
-      />
-
-      {/* Palette Modal */}
-      <motion.div
+        ref={containerRef}
         initial={{ opacity: 0, scale: 0.96, y: -10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.96, y: -10 }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        className="relative w-full max-w-2xl bg-surface border border-hairline shadow-apple rounded-2xl overflow-hidden z-10"
+        className="relative w-full max-w-2xl bg-surface border border-hairline shadow-apple rounded-2xl overflow-hidden z-10 pointer-events-auto"
       >
         {/* Input Field */}
         <div className="flex items-center px-4 py-3.5 border-b border-hairline gap-3 bg-surface">

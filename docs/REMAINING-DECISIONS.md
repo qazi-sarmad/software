@@ -72,3 +72,50 @@ Choice: option 2 — the sentence now states the tree was removed in R3 and that
 from `tsconfig`/`vitest`/gate scripts.
 Reason: a handoff doc that points at a deleted path is worse than no sentence.
 How to reverse: `git checkout <pre-R3-commit> -- docs/HANDOFF.md`.
+
+## D-R4-palette — command palette becomes a non-blocking dropdown
+
+Task R4a. Unclear point: how to keep Ctrl/⌘+K and the existing search behaviour while removing the
+blocking scrim. Options: (1) keep the centred overlay with a scrim but drop `aria-modal`;
+(2) render the palette as a dropdown anchored under the header, no scrim.
+Choice: option 2. The palette is now `fixed top-14 left-0 right-0` with `pointer-events-none` on the
+wrapper and `pointer-events-auto` on the panel; the page behind stays reachable. Escape still closes
+(the existing keydown handler) and an outside click now also closes (a new `pointerdown` listener
+that ignores clicks inside the panel). Ctrl/⌘+K is unchanged.
+Reason: §27.5 bans blocking modals; an anchored dropdown is the documented non-blocking pattern and
+keeps the command palette usable while the user reads the page behind it.
+How to reverse: restore the previous render block (centred `fixed inset-0` wrapper + scrim
+`motion.div` with `onClick={onClose}`) and delete the outside-click effect. No test asserted the
+scrim, so no test change is required to reverse.
+No tests were updated: grep found no test that asserted the palette backdrop (the only `backdrop`
+assertion in the repo is `FloatingWindow.test.tsx`, which is unrelated). A new
+`CommandPalette.test.tsx` asserts the non-blocking contract.
+
+## D-R4-calendar — calendar panel keeps a popover, loses the modal role
+
+Task R4b. Unclear point: `HeaderCalendarPanel` used `role="dialog"` but rendered no scrim and no
+focus trap, so it never blocked the page. Options: (1) keep `role="dialog"` and allow-list it;
+(2) change the role to a non-modal one.
+Choice: option 2 — `role="region"` with the same `aria-label="Audit Calendar Panel"`. The panel
+already used `position: fixed` (not `fixed inset-0`), so it was never full-viewport and never had a
+backdrop.
+Reason: the task says to make it non-blocking if a dialog role or backdrop blocks the page, and to
+record why if it is kept. It does not block, so keeping a modal role would be a false claim in the
+accessibility tree. `region` is accurate for an anchored popover. It is therefore no longer in the
+allow-list, which now holds exactly the four non-blocking chrome files the task names.
+How to reverse: set `role="dialog"` again and re-add `calendar/HeaderCalendarPanel.tsx` to ALLOWED in
+`src/guards/noBlockingModal.test.ts`.
+
+## D-R4-guard — allow-list is exactly the four non-blocking chrome files
+
+Task R4c. Unclear point: the guard previously allow-listed `CommandPalette.tsx` and
+`HeaderCalendarPanel.tsx` (plus `AuditFileModal.tsx`). Options: (1) leave the wide list; (2) shrink it
+to the files that are non-blocking by construction.
+Choice: option 2 — ALLOWED is exactly `FloatingWindow.tsx`, `FloatingWindowManager.tsx`,
+`RecordView.tsx`, `ConfirmPanel.tsx` (the last may not exist yet; a Set entry for a missing file is
+harmless). `CommandPalette.tsx`, `HeaderCalendarPanel.tsx` and `AuditFileModal.tsx` are removed
+because none of them contains a banned token any more, so allow-listing them would be dead entries
+that hide a future regression.
+Reason: a guard whose allow-list is wider than necessary stops being a guard.
+How to reverse: re-add any file to ALLOWED if a legitimate non-blocking surface reintroduces a
+banned token.

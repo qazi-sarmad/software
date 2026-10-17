@@ -12,36 +12,32 @@ function walk(dir: string): string[] {
 }
 
 /**
- * Rule: no blocking modals (spec §27.5, §28). A blocking modal is a full-viewport scrim with an
- * aria-modal dialog or `role="dialog"` overlay that stops the user from reaching the application
- * behind it. This guard fails if any file under src (excluding tests) contains `aria-modal`,
- * `role="dialog"` or `fixed inset-0` outside the allow-list.
+ * Rule: no blocking modals (spec §27.5, §28). A blocking modal is a full-viewport scrim with a
+ * modal dialog overlay that stops the user from reaching the application behind it. This guard
+ * fails if any file under src (excluding tests) contains `aria-modal`, `role="dialog"` or
+ * `fixed inset-0` outside the allow-list.
  *
- * The allow-list holds only non-blocking surfaces plus the record-view / Audit File window chrome
- * that MODE B (H3b/H3c, §17.1) builds. Each entry is justified here so widening it is a deliberate
- * act, not an accident:
+ * The allow-list holds only non-blocking surfaces. Each entry is justified here so widening it is
+ * a deliberate act, not an accident:
  *
- *   - audit/AuditFileModal.tsx          the Audit File window chrome (§17.1): floating, minimisable,
- *                                       non-blocking; the template for MODE B.
- *   - common/ConfirmPanel.tsx           hold-to-confirm panel: consequential-action confirmation,
- *                                       explicitly named by §27.5 as allowed (may be added later).
- *   - common/CommandPalette.tsx         the global command palette (§5, Ctrl/⌘ K): transient,
- *                                       keyboard-driven, dismissed with Esc or a click.
- *   - calendar/HeaderCalendarPanel.tsx  anchored calendar popover: role="dialog" but no scrim and
- *                                       no focus trap; the page behind it stays usable.
+ *   - common/FloatingWindow.tsx          MODE B floating record window (§17.1): floating,
+ *                                        minimisable, draggable, pop-out; no scrim, non-blocking.
+ *   - common/FloatingWindowManager.tsx   the manager for those windows; the Audit File window uses
+ *                                        it (5C).
+ *   - common/RecordView.tsx              the record-view wrapper that chooses full page vs floating
+ *                                        window from the user preference (H3).
+ *   - common/ConfirmPanel.tsx            hold-to-confirm panel: explicitly allowed by §27.5
+ *                                        (may not exist yet).
  *
  * InspectorPanel.tsx was a genuine blocking modal; H3c deleted it and grep confirms zero remaining
- * imports. The floating window chrome (common/FloatingWindow.tsx) and the record-view wrapper
- * (common/RecordView.tsx) are the non-blocking MODE B surfaces (§17.1) and are allowed.
+ * imports. CommandPalette.tsx and HeaderCalendarPanel.tsx were non-blocking but used a full-screen
+ * wrapper / a modal role; R4 made both plain non-blocking dropdowns, so neither is allow-listed.
  */
 const ALLOWED = new Set([
-  'components/audit/AuditFileModal.tsx',
-  'components/common/ConfirmPanel.tsx',
-  'components/common/CommandPalette.tsx',
-  'components/calendar/HeaderCalendarPanel.tsx',
   'components/common/FloatingWindow.tsx',
-  'components/common/RecordView.tsx',
   'components/common/FloatingWindowManager.tsx',
+  'components/common/RecordView.tsx',
+  'components/common/ConfirmPanel.tsx',
 ]);
 
 // Empty after H3c: the blocking InspectorPanel is gone. Kept as a guard so a regression that
