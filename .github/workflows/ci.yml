@@ -6,6 +6,13 @@ on:
   pull_request:
   workflow_dispatch:
 
+# The hosted test project is shared. Two runs applying migrations at the same
+# time race on DDL (relation/policy already exists, tuple concurrently updated).
+# Serialise them; never cancel a run mid-migration.
+concurrency:
+  group: provio-test-db
+  cancel-in-progress: false
+
 jobs:
   gates:
     runs-on: ubuntu-24.04
