@@ -68,3 +68,5 @@ Updated after every task and committed with it. Every line carries the CI run ID
 | 8E Phase 8 tests | done | 92ba68f | 38975709496 | test 57 phase-8 acceptance |
 | 8F Phase 8 data module | done | (src/data/platform.ts, earlier) | 38956498574 | src/data/platform.ts + platform.test.ts |
 | 8G Phase 8 docs | done | 9f5b6ba | 39030963918 | PARITY §24; NOT-DONE items 23-27; docs/PHASE-8-REPORT.md |
+| final report | done | 654af61 | 39031928297 | docs/PHASE-48-REPORT.md; PR #10 opened against main |
+| consolidated job report | done | 1df1785 | 39042335625 | docs/PHASE-48-JOB-REPORT.md; per-task commits/CI run IDs, test counts, decisions, blockers, NOT-DONE, rule compliance |
