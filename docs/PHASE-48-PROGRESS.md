@@ -37,11 +37,11 @@ Updated after every task and committed with it. Every line carries the CI run ID
 | 4I Phase 4 UI | todo | | | |
 | 4J Phase 4 docs | todo | | | |
 | 5A findings DB | done | b8a7dd3 | _see CI_ | migration 0030, test 39 (D-5A-STUB resolved, D-5A-M1, D-5A-status, D-5A-tokens, D-5A-optional-sections) |
-| 5B conclusion DB | done | _this commit_ | _see CI_ | migration 0034, test 43 (D-5B-M1, D-5B-testing-gate, D-5B-opinion-config, D-5B-files) |
+| 5B conclusion DB | done | 92ba68f | _see CI_ | migration 0034, test 43 (D-5B-M1, D-5B-testing-gate, D-5B-opinion-config, D-5B-files) |
 | 5C floating window | todo | | | |
-| 5D document viewer DB | done | _this commit_ | _see CI_ | migrations 0035 (evidence_files, document_extractions, FTS, search_documents), test 44 (D-5D-M1, D-5D-stage-filter, D-5D-extraction-stub) |
-| 5E Phase 5 tests | done | _this commit_ | _see CI_ | test 54 phase-5 acceptance (cross-org, anon, no-right, readability gate, testing gate, four-eyes, seal, stage-aware search) |
-| 5F Phase 5 data module | done | _this commit_ | _see CI_ | src/data/{observations,conclusion,documents}.ts + phase5.test.ts |
+| 5D document viewer DB | done | 92ba68f | _see CI_ | migrations 0035 (evidence_files, document_extractions, FTS, search_documents), test 44 (D-5D-M1, D-5D-stage-filter, D-5D-extraction-stub) |
+| 5E Phase 5 tests | done | 882eb69 | 38975709496 | test 54 phase-5 acceptance (cross-org, anon, no-right, readability gate, testing gate, four-eyes, seal, stage-aware search) |
+| 5F Phase 5 data module | done | 92ba68f | _see CI_ | src/data/{observations,conclusion,documents}.ts + phase5.test.ts |
 | 5G Phase 5 UI | todo | | | |
 | 5H Phase 5 docs | todo | | | |
 | 6A report drafting DB | done | 46ee36c | 38954769628 | migration 0036 (report_versions, report_blocks, compose_report, compute_report_summary), test 45 (D-6A-M1, D-6A-blocks, D-6A-summary) |
@@ -49,22 +49,22 @@ Updated after every task and committed with it. Every line carries the CI run ID
 | 6C freeze/issuance DB | done | 3c55c7b | 38956498574 | migration 0040 (freeze_report, issue_report), test 49 (open-comment gate, CAP gate, ledger, queued email) |
 | 6D CAP register DB | done | 646c722 | 38956498574 | migration 0038 (caps, update_cap, close_cap, check_cap_reconciliation), test 47 (D-6D-M1, D-6D-CAP) |
 | 6E email queue DB | done | 838f935 | 38956498574 | migration 0039 (email_queue, queue_email), test 48 (org sees sent/failed only; provider_config hidden) |
-| 6F Phase 6 tests | done | _this commit_ | _see CI_ | test 55 phase-6 acceptance (cross-org, anon, no-right, queue visibility, platform L2) |
-| 6G Phase 6 data module | done | _this commit_ | _see CI_ | src/data/{reports,caps,email}.ts + phase6.test.ts |
+| 6F Phase 6 tests | done | cc18f65 | 38975709496 | test 55 phase-6 acceptance (cross-org, anon, no-right, queue visibility, platform L2) |
+| 6G Phase 6 data module | done | 92ba68f | _see CI_ | src/data/{reports,caps,email}.ts + phase6.test.ts |
 | 6H Phase 6 UI | todo | | | |
 | 6I Phase 6 docs | todo | | | |
 | 7A exports DB | done | 4f16408 | _see CI_ | migration 0041 (exports_log, log_export, export_*), test 50 (D-7A-M1/M1b/M1c) |
 | 7B imports DB | done | efc4073 | _see CI_ | migration 0042 (import_jobs, start/validate/commit_import), test 51 (D-7B-M1) |
 | 7C activity archival DB | done | fc08a1e | _see CI_ | migration 0043 (archive_jobs, archive_activity_period), test 52 (D-7C-M1, D-7C-append-only, D-7C-right, D-7C-storage) |
-| 7D prior-year import DB | done | _this commit_ | _see CI_ | migration 0044 (prior_year_imports, import/confirm/revert, sign_planning gate), test 53 (D-7D-M1/M1b/revert) |
-| 7E Phase 7 tests | done | _this commit_ | _see CI_ | test 56 phase-7 acceptance (cross-org, anon, no-right, export ledger, prior-year sign-off gate, import org scope) |
-| 7F Phase 7 data module | done | _this commit_ | _see CI_ | src/data/{exports,imports,archival}.ts + phase7.test.ts |
+| 7D prior-year import DB | done | 92ba68f | _see CI_ | migration 0044 (prior_year_imports, import/confirm/revert, sign_planning gate), test 53 (D-7D-M1/M1b/revert) |
+| 7E Phase 7 tests | done | 502e838 | 38975709496 | test 56 phase-7 acceptance (cross-org, anon, no-right, export ledger, prior-year sign-off gate, import org scope) |
+| 7F Phase 7 data module | done | 92ba68f | _see CI_ | src/data/{exports,imports,archival}.ts + phase7.test.ts |
 | 7G Phase 7 UI | todo | | | |
 | 7H Phase 7 docs | todo | | | |
 | 8A platform portal DB | done | (0031, earlier) | 38956498574 | tenant_settings, platform_trail, platform_* RPCs; test 40 (D-PLATFORM-RIGHTS) |
 | 8B support access DB | done | (0031, earlier) | 38956498574 | support_access_grants, grant/revoke RPCs; test 40 |
-| 8C AI enablement DB | done | _this commit_ | _see CI_ | 0045 extends platform_enable_ai to write the org ledger (D-8C-M1, D-8C-ledger) |
+| 8C AI enablement DB | done | 92ba68f | 38975709496 | 0045 extends platform_enable_ai to write the org ledger (D-8C-M1, D-8C-ledger) |
 | 8D invite-cap control DB | done | (0031, earlier) | 38956498574 | platform_set_invite_cap; test 40 |
-| 8E Phase 8 tests | done | _this commit_ | _see CI_ | test 57 phase-8 acceptance |
+| 8E Phase 8 tests | done | 92ba68f | 38975709496 | test 57 phase-8 acceptance |
 | 8F Phase 8 data module | done | (src/data/platform.ts, earlier) | 38956498574 | src/data/platform.ts + platform.test.ts |
 | 8G Phase 8 docs | todo | | | |
