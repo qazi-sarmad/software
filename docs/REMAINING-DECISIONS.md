@@ -156,3 +156,22 @@ Task R5b. Unclear point: none. Ran `npx vitest run src/guards/singleClient.test.
 passes (3 tests). No edit made.
 Reason: the task says "confirm", not "create".
 How to reverse: n/a.
+
+## D-R6c-passwords — one random password per synthetic user per run
+
+Task R6c (NOT-DONE #3). Unclear point: `global-setup.ts` generated **one** random password per run
+and set it on all five users; specs read it from `process.env.E2E_PASSWORD`. Options: (1) keep one
+shared password; (2) give each user its own random password and hand each spec the one it needs.
+Choice: option 2. `global-setup.ts` now builds a `passwords` map (`passwordFor(email)` memoises a
+fresh `generatePassword()` per address) and writes it to `e2e/.auth/passwords.json`, which is
+git-ignored (`e2e/.auth/` added to `.gitignore`). A new `e2e/password.ts` exports
+`passwordFor(email)`, which reads that file; every spec's `signIn` and the `rls.spec.ts` API sign-in
+now call `passwordFor(email)` instead of `process.env.E2E_PASSWORD`. `E2E_PASSWORD` and `E2E_EMAIL`
+are gone; `smoke.spec.ts`'s default email is now the literal org-admin address.
+Reason: the task requires one password per user per run so one leaked value opens only one account.
+A file is the only channel from `globalSetup` (its own process) to the workers; it is git-ignored so
+no secret is committed. The values are ephemeral (regenerated every run) and set on synthetic users
+only.
+How to reverse: delete `e2e/password.ts` and `e2e/.auth/` from `.gitignore`, restore the single
+`const password = generatePassword(); process.env.E2E_PASSWORD = password;`, and restore
+`process.env.E2E_PASSWORD` in each spec.

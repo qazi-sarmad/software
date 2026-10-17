@@ -1,5 +1,7 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { randomBytes } from 'node:crypto';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 // Synthetic test data only. Fixed ids make every run idempotent.
 const ORG_A = '02af9314-9781-5bde-b8a7-d46bfee07783';
@@ -97,9 +99,8 @@ export default async function globalSetup() {
   if (!url || !secret) throw new Error('E2E setup needs SUPABASE_URL and SUPABASE_SECRET_KEY');
   const sb = createClient(url, secret, { auth: { persistSession: false } });
 
-  const password = generatePassword();
-  process.env.E2E_PASSWORD = password;
-  process.env.E2E_EMAIL = 'ayesha.khan@provio-test.invalid';
+  const passwords: Record<string, string> = {};
+  const passwordFor = (email: string) => (passwords[email] ??= generatePassword());
 
   must('orgs', await sb.from('orgs').upsert([
     { id: ORG_A, name: 'Synthetic Org A (Lahore, single universe)', is_demo: true },
@@ -129,7 +130,7 @@ export default async function globalSetup() {
 
   for (const u of USERS) {
     const authId = await findOrCreateUser(sb, u.email);
-    must('setPassword ' + u.email, await sb.auth.admin.updateUserById(authId, { password }));
+    must('setPassword ' + u.email, await sb.auth.admin.updateUserById(authId, { password: passwordFor(u.email) }));
     must('org_members ' + u.email, await sb.from('org_members').upsert({
       org_id: u.org,
       user_id: authId,
@@ -140,8 +141,16 @@ export default async function globalSetup() {
 
   // Platform staff (spec §24): no org membership, so the access-token hook stamps platform_admin.
   const platformId = await findOrCreateUser(sb, PLATFORM_EMAIL);
-  must('setPassword ' + PLATFORM_EMAIL, await sb.auth.admin.updateUserById(platformId, { password }));
+  must('setPassword ' + PLATFORM_EMAIL, await sb.auth.admin.updateUserById(platformId, { password: passwordFor(PLATFORM_EMAIL) }));
   must('platform_admins', await sb.from('platform_admins').upsert({ user_id: platformId }, { onConflict: 'user_id' }));
+
+  // R6c: hand each spec the password for the account it signs in as. The file lives under the
+  // git-ignored e2e/.auth/ and is regenerated every run, so no password is ever committed.
+  mkdirSync(join(process.cwd(), 'e2e', '.auth'), { recursive: true });
+  writeFileSync(
+    join(process.cwd(), 'e2e', '.auth', 'passwords.json'),
+    JSON.stringify(passwords, null, 2)
+  );
 
   const members = must('members', await sb.from('org_members').select('org_id, user_id, display_name').in('org_id', [ORG_A, ORG_B]));
   const authIdFor = (email: string, org: string) => {

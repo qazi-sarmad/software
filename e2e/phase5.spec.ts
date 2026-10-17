@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { passwordFor } from './password';
 
 /**
  * Phase 5 UI (5G). The findings, conclusion and document-viewer workspaces are the database-backed
@@ -10,7 +11,7 @@ const PREPARER_EMAIL = 'bilal.ahmed@provio-test.invalid';
 async function signIn(page: Page, email: string) {
   await page.goto('/');
   await page.getByLabel('Email').fill(email);
-  await page.getByLabel('Password').fill(process.env.E2E_PASSWORD ?? '');
+  await page.getByLabel('Password').fill(passwordFor(email));
   await page.getByRole('button', { name: 'Sign in' }).click();
   await expect(page.getByRole('navigation', { name: 'Navigation Strip' })).toBeVisible();
 }

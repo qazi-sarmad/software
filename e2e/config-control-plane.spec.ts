@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { passwordFor } from './password';
 
 /**
  * Config control plane E2E (C4/C5). Configuration lives in portals, not SQL:
@@ -12,7 +13,7 @@ const PLATFORM_EMAIL = 'platform.admin@provio-test.invalid';
 async function signIn(page: Page, email: string) {
   await page.goto('/');
   await page.getByLabel('Email').fill(email);
-  await page.getByLabel('Password').fill(process.env.E2E_PASSWORD ?? '');
+  await page.getByLabel('Password').fill(passwordFor(email));
   await page.getByRole('button', { name: 'Sign in' }).click();
   await expect(page.getByRole('navigation', { name: 'Navigation Strip' })).toBeVisible();
 }
@@ -21,7 +22,7 @@ async function signIn(page: Page, email: string) {
 async function signInPlatform(page: Page) {
   await page.goto('/superadmin');
   await page.getByLabel('Email').fill(PLATFORM_EMAIL);
-  await page.getByLabel('Password').fill(process.env.E2E_PASSWORD ?? '');
+  await page.getByLabel('Password').fill(passwordFor(PLATFORM_EMAIL));
   await page.getByRole('button', { name: 'Sign in' }).click();
   await expect(page.getByTestId('superadmin-portal')).toBeVisible();
 }

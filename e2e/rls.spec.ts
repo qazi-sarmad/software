@@ -1,4 +1,5 @@
 import { test, expect, type APIRequestContext } from '@playwright/test';
+import { passwordFor } from './password';
 
 // Fixed synthetic test IDs from e2e/global-setup.ts.
 const ORG_A = '02af9314-9781-5bde-b8a7-d46bfee07783';
@@ -29,7 +30,7 @@ const USERS: { email: string; org: string }[] = [
 async function signIn(request: APIRequestContext, email: string): Promise<string> {
   const res = await request.post(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
     headers: { apikey: PUBLISHABLE_KEY, 'Content-Type': 'application/json' },
-    data: { email, password: process.env.E2E_PASSWORD ?? '' },
+    data: { email, password: passwordFor(email) },
   });
   expect(res.ok(), `sign-in as ${email}`).toBeTruthy();
   const body = (await res.json()) as { access_token: string };
