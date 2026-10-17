@@ -14,6 +14,9 @@ jobs:
           TEST_SUPABASE_URL: ${{ secrets.TEST_SUPABASE_URL }}
           TEST_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.TEST_SUPABASE_PUBLISHABLE_KEY }}
         run: |
-          curl -sf "$TEST_SUPABASE_URL/rest/v1/" \
-            -H "apikey: $TEST_SUPABASE_PUBLISHABLE_KEY" \
-            -o /dev/null && echo "Ping OK"
+          # /auth/v1/health is the GoTrue health endpoint; it wakes the project
+          # and returns 200 with the apikey header. Print the code, not just OK.
+          CODE=$(curl -s -o /dev/null -w '%{http_code}' "$TEST_SUPABASE_URL/auth/v1/health" \
+            -H "apikey: $TEST_SUPABASE_PUBLISHABLE_KEY")
+          echo "auth/v1/health HTTP $CODE"
+          if [ "$CODE" != "200" ]; then echo "::error::keepalive ping failed (HTTP $CODE)"; exit 1; fi
