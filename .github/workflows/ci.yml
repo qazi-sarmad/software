@@ -73,7 +73,7 @@ jobs:
           SUPABASE_SECRET_KEY: ${{ secrets.TEST_SUPABASE_SECRET_KEY }}
         run: |
           npx playwright install --with-deps chromium
-          npx playwright test
+          npx playwright test --project=chromium
 
       - name: Upload Playwright report on failure
         if: failure() && hashFiles('playwright-report/**') != ''
