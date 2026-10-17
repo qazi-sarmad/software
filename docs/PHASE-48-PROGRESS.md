@@ -38,7 +38,7 @@ Updated after every task and committed with it. Every line carries the CI run ID
 | 4J Phase 4 docs | todo | | | |
 | 5A findings DB | done | b8a7dd3 | 38975709496 (cumulative) | migration 0030, test 39 (D-5A-STUB resolved, D-5A-M1, D-5A-status, D-5A-tokens, D-5A-optional-sections) |
 | 5B conclusion DB | done | ec4e96a | 38975709496 (cumulative) | migration 0034, test 43 (D-5B-M1, D-5B-testing-gate, D-5B-opinion-config, D-5B-files) |
-| 5C floating window | todo | | | |
+| 5C floating window | done | _this_ | _CI_ | src/components/common/FloatingWindowManager.tsx (dock, multi-window, pop-out); RecordView + App shell use it; FloatingWindowManager.test.tsx (5 tests) |
 | 5D document viewer DB | fixed | 135ebd2 | 38954437967 -> 38956498574 | migrations 0035 (evidence_files, document_extractions, FTS, search_documents), test 44 (D-5D-M1, D-5D-stage-filter, D-5D-extraction-stub) |
 | 5E Phase 5 tests | done | 882eb69 | 38975709496 | test 54 phase-5 acceptance (cross-org, anon, no-right, readability gate, testing gate, four-eyes, seal, stage-aware search) |
 | 5F Phase 5 data module | done | 13b8ce2 | 38975709496 (cumulative) | src/data/{observations,conclusion,documents}.ts + phase5.test.ts |

@@ -11,7 +11,7 @@ import { ThemeProvider } from './context/ThemeContext';
 import { HeaderBar } from './components/common/HeaderBar';
 import { NavStrip } from './components/common/NavStrip';
 import { CommandPalette } from './components/common/CommandPalette';
-import { FloatingWindow } from './components/common/FloatingWindow';
+import { FloatingWindowManager, type OpenWindow } from './components/common/FloatingWindowManager';
 import { RecordContent, INSPECTOR_TITLES, RECORD_TYPE_TO_INSPECTOR } from './components/common/RecordContent';
 import { ReviewCommentsGlobalDock } from './components/reviews/ReviewCommentsGlobalDock';
 
@@ -79,8 +79,25 @@ const AppContent: React.FC = () => {
   const { activeTab, inspector, closeInspector, ledgerError } = useApp();
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
 
-  const getInspectorTitle = () =>
-    inspector.type ? INSPECTOR_TITLES[inspector.type] ?? 'Audit Inspector' : 'Audit Inspector';
+  // One floating window for the current inspector record. The window id is derived from the record
+  // so a re-opened record reuses the same window (and the dock restores it, not duplicates it).
+  const inspectorWindow: OpenWindow | null = inspector.type
+    ? {
+        windowId: inspector.data?.engagement?.id
+          ? `audit_file:${inspector.data.engagement.id}`
+          : inspector.data?.workpaperId || inspector.data?.workpaper?.id
+            ? `workbench:${inspector.data.workpaperId ?? inspector.data.workpaper.id}`
+            : `${inspector.type}`,
+        recordType: inspector.type,
+        recordId:
+          inspector.data?.engagement?.id ??
+          inspector.data?.workpaperId ??
+          inspector.data?.workpaper?.id ??
+          '',
+        title: inspector.type ? INSPECTOR_TITLES[inspector.type] ?? 'Audit Inspector' : 'Audit Inspector',
+        data: inspector.data,
+      }
+    : null;
 
   return (
     <div className="min-h-screen bg-canvas text-primary relative overflow-x-hidden">
@@ -110,17 +127,13 @@ const AppContent: React.FC = () => {
         <ReviewCommentsGlobalDock />
       </div>
 
-      {/* Record view: non-blocking floating window (§17.1, §27.5). MODE B. */}
+      {/* Record view: non-blocking floating windows (§17.1, §27.5). MODE B, managed by 5C. */}
       {inspector.type && (
-        <FloatingWindow
-          windowId={inspector.type}
-          title={getInspectorTitle()}
+        <FloatingWindowManager
+          windows={inspectorWindow ? [inspectorWindow] : []}
+          onCloseWindow={closeInspector}
           width={inspector.type === 'workbench' || inspector.type === 'audit_file' ? 960 : 720}
-          onClose={closeInspector}
-          popOutUrl={inspector.data?.engagement?.id ? `/view/engagement/${inspector.data.engagement.id}` : undefined}
-        >
-          <RecordContent type={inspector.type} data={inspector.data} onClose={closeInspector} />
-        </FloatingWindow>
+        />
       )}
 
       {/* Command Palette */}

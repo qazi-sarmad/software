@@ -1,6 +1,7 @@
 import React from 'react';
 import { useRecordViewMode } from '../../hooks/useRecordViewMode';
-import { FloatingWindow } from './FloatingWindow';
+import { FloatingWindowManager, type OpenWindow } from './FloatingWindowManager';
+import type { InspectorType } from '../../context/AppContext';
 
 /**
  * RecordView (H3b/H3c, spec §17.1, §27.5).
@@ -9,8 +10,10 @@ import { FloatingWindow } from './FloatingWindow';
  * preference:
  *   - full_page:        the caller navigates to the record's own route (/view/:recordType/:id).
  *                       This component renders null; there is no overlay.
- *   - floating_window:  the record opens in the shared FloatingWindow chrome (draggable,
- *                       minimisable, pop-out), the same window the Audit File uses.
+ *   - floating_window:  the record opens in the shared floating-window chrome, managed by
+ *                       FloatingWindowManager (5C) so several records can be open at once, each
+ *                       minimisable, draggable and pop-out. This is the same chrome the Audit File
+ *                       window uses.
  *
  * There is never a blocking modal: no backdrop scrim and no aria-modal.
  */
@@ -30,9 +33,7 @@ export const RecordView: React.FC<RecordViewProps> = ({
   recordType,
   recordId,
   title,
-  subtitle,
   children,
-  footer,
   onClose,
 }) => {
   const [mode] = useRecordViewMode();
@@ -43,16 +44,18 @@ export const RecordView: React.FC<RecordViewProps> = ({
   }
 
   const windowId = `${recordType}:${recordId}`;
+  const window: OpenWindow = {
+    windowId,
+    recordType: recordType as InspectorType,
+    recordId,
+    title,
+  };
+
   return (
-    <FloatingWindow
-      windowId={windowId}
-      title={title}
-      subtitle={subtitle}
-      onClose={onClose ?? (() => {})}
-      footer={footer}
-      popOutUrl={`/view/${recordType}/${recordId}`}
-    >
-      {children}
-    </FloatingWindow>
+    <FloatingWindowManager
+      windows={[window]}
+      onCloseWindow={onClose ?? (() => {})}
+      renderWindow={() => children}
+    />
   );
 };

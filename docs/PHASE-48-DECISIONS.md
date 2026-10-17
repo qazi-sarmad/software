@@ -524,3 +524,19 @@ hash-chained ledger, that advisory features were switched on for it. How to reve
 build verified the objects against the task text and added only what was missing (the 8C ledger write,
 D-8C-ledger). Test 57 (8E) is the consolidated Phase 8 acceptance suite. No platform UI is built (8F is
 data-only; the /superadmin UI is Phase 8.1, owner-designed - NOT-DONE).
+
+## D-5C-manager - FloatingWindowManager generalises the Audit File window chrome
+
+The Audit File window chrome is `common/FloatingWindow.tsx`. 5C wraps it in
+`common/FloatingWindowManager.tsx`, which owns the array of open windows, per-window minimise state and
+the bottom dock. `RecordView` (H3) and the App shell's inspector both render through the manager, so the
+Audit File window and every other record use one chrome and one code path. A `renderWindow` override lets
+`RecordView` supply its own children while the chrome stays identical. How to reverse: point `RecordView`
+and `App.tsx` back at `FloatingWindow` directly and delete the manager.
+
+## D-5C-allowlist - the noBlockingModal allow-list gains the manager
+
+`FloatingWindowManager.tsx` contains no `aria-modal`, no `role="dialog"` and no `fixed inset-0` itself;
+it renders `FloatingWindow`, which is already allow-listed. It was added to the allow-list pre-emptively
+so a future dock badge that uses a fixed position does not false-fail the guard. How to reverse: remove
+the entry if the manager never gains a fixed-position surface.

@@ -41,6 +41,7 @@ const ALLOWED = new Set([
   'components/calendar/HeaderCalendarPanel.tsx',
   'components/common/FloatingWindow.tsx',
   'components/common/RecordView.tsx',
+  'components/common/FloatingWindowManager.tsx',
 ]);
 
 // Empty after H3c: the blocking InspectorPanel is gone. Kept as a guard so a regression that
