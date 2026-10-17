@@ -562,3 +562,11 @@ export const Database = createIcon(
     <path d="M3 12a9 3 0 0 0 18 0" />
   </>
 );
+
+export const Archive = createIcon(
+  <>
+    <rect x="3" y="4" width="18" height="4" rx="1" />
+    <path d="M5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8" />
+    <path d="M10 12h4" />
+  </>
+);

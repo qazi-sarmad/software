@@ -668,3 +668,52 @@ was in fact red, so "done" was never true for them. This commit corrects the row
 and CI run IDs (4I `811b2f1`, 5G `389a1e1`, 6H `bc08485`) and marks them `fixed` with run
 `39023767418` (all 7 gate steps green, Playwright included). How to reverse: n/a (documentation
 correction).
+
+## D-7G-workspace - where each Phase 7 surface lives
+
+Task 7G. Unclear point: the task lists four surfaces (export panel, import wizard, activity log,
+prior-year import) without saying where they mount.
+Choice: the **export panel** is a new view inside the existing Audit File window
+(`AuditFileModal` phase view `export`, `data-testid="audit-file-view-export"`), because exports are
+per-object and the Audit File is the per-engagement workspace. The **import wizard** and the
+**activity log** are full record views (`import_wizard`, `activity_log`) reached from the profile menu,
+gated by `manage_engagements` (they are org-wide, not per-engagement). The **prior-year import** panel
+sits inside the Planning tab of the Audit File testing workspace, next to the 4B planning sign-off,
+because §9.1 ties prior-year material to planning.
+Reason: keeps the one-window-per-record model from H3/5C; no new blocking surface; each surface is
+gated by a right the database re-checks.
+Files touched beyond the task's named panels: `src/components/audit/AuditFileModal.tsx`,
+`src/components/common/RecordContent.tsx`, `src/components/common/HeaderBar.tsx`,
+`src/context/AppContext.tsx` (InspectorType union), `src/components/plan/PlanningPanel.tsx`.
+Reverse: remove the `export` phase view and the two menu items; the panels are standalone components.
+
+## D-7G-audit-manager - a synthetic user that holds manage_engagements
+
+Task 7G. Unclear point: `e2e/global-setup.ts` had no user holding `manage_engagements`, which the
+import wizard, activity log and prior-year import all require (`ayesha.khan` is `org_admin` and holds
+no such right - migration 0012 gives `org_admin` `manage_engagements: false`).
+Options: (a) grant `manage_engagements` to the existing `org_admin` seed - rejected, that weakens a
+right and the task forbids weakening rights; (b) add an `audit_manager` synthetic user.
+Choice: (b). Added `zara.malik@provio-test.invalid` (Org A, `audit_manager`, which holds
+`manage_engagements: true` in migration 0012). The `phase7.spec.ts` import/activity tests sign in as
+this user. D-H0-USERS is unchanged for the rest of the build.
+Reverse: delete the `zara.malik` row from `USERS` in `e2e/global-setup.ts`.
+
+## D-7G-residue - Phase 7 residue cleanup in global-setup
+
+Task 7G. Unclear point: the export panel writes `exports_log`, the import wizard writes
+`import_jobs`/`prior_year_imports`, and the activity-log view can write `archive_jobs`, so a second
+Playwright run would observe a different starting state (M5).
+Choice: `e2e/global-setup.ts` now deletes `exports_log`, `prior_year_imports`, `import_jobs` and
+`archive_jobs` for both orgs before seeding, the same pattern the Phase 4-6 tasks use.
+Reverse: remove the four `delete` lines from `e2e/global-setup.ts`.
+
+## D-7G-guard - the source guard forbids the word "confirm(" even inside a comment
+
+Task 7G. Unclear point: `src/guards/sourceGuards.test.ts` scans every source file (comments included)
+for `confirm(`, so the ImportWizardPanel doc comment that described the third step as "confirm
+(preview and commit)" failed the guard even though there is no blocking dialog.
+Choice: reword the comment to "a final preview-and-commit step". The code is unchanged; the guard is
+not weakened.
+Reverse: reword the comment back (it will fail the guard again).
+

@@ -84,5 +84,6 @@ export async function loadCurrentUser(): Promise<User | null> {
     rights: roleRow?.rights ?? undefined,
     universeIds,
     entityIds,
+    orgId: member.org_id as string,
   };
 }

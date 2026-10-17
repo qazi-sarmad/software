@@ -24,6 +24,7 @@ import { ConclusionPanel } from '../audit/ConclusionPanel';
 import { DocumentViewerPanel } from '../audit/DocumentViewerPanel';
 import { ReportEditorPanel } from '../audit/ReportEditorPanel';
 import { CapRegisterPanel } from '../audit/CapRegisterPanel';
+import { ExportPanel } from '../admin/ExportPanel';
 
 /**
  * Audit File: one permanent workspace per engagement.
@@ -37,7 +38,7 @@ export const AuditFileModal: React.FC = () => {
   const requestedId: string | undefined = inspector.data?.engagement?.id;
   const engagement = requestedId ? scopedEngagements.find((e) => e.id === requestedId) : undefined;
   const [tab, setTab] = useState<AuditFileTab>(() => getInitialAuditFileTab(inspector.data));
-  const [phaseView, setPhaseView] = useState<'overview' | 'workspace' | 'findings' | 'conclusion' | 'documents' | 'report' | 'caps'>('overview');
+  const [phaseView, setPhaseView] = useState<'overview' | 'workspace' | 'findings' | 'conclusion' | 'documents' | 'report' | 'caps' | 'export'>('overview');
   const [signOffError, setSignOffError] = useState<string | null>(null);
 
   // Neutral state: does not reveal whether an out-of-scope engagement exists.
@@ -101,6 +102,7 @@ export const AuditFileModal: React.FC = () => {
           ['documents', 'Documents'],
           ['report', 'Report'],
           ['caps', 'CAP register'],
+          ['export', 'Export'],
         ] as const).map(([v, label]) => (
           <button
             key={v}
@@ -149,6 +151,13 @@ export const AuditFileModal: React.FC = () => {
       ) : phaseView === 'caps' ? (
         <div className="space-y-6" data-testid="audit-file-caps">
           <CapRegisterPanel engagementId={engagement.id} />
+        </div>
+      ) : phaseView === 'export' ? (
+        <div className="space-y-6" data-testid="audit-file-export">
+          <ExportPanel
+            engagementId={engagement.id}
+            workpaperId={workpapers[0]?.id}
+          />
         </div>
       ) : (
         <>

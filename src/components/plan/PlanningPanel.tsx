@@ -11,6 +11,7 @@ import {
 } from '../../data/planning';
 import { hasRight } from '../../lib/rights';
 import { InlineError } from '../common/InlineError';
+import { PriorYearImportPanel } from './PriorYearImportPanel';
 import { AlertTriangle, CheckCircle2, ShieldCheck, Lock, RefreshCw } from '../common/Icons';
 
 /**
@@ -19,7 +20,7 @@ import { AlertTriangle, CheckCircle2, ShieldCheck, Lock, RefreshCw } from '../co
  * reconciliation gate is unmet. Every write goes through the 4B RPCs; the database decides the right.
  */
 export const PlanningPanel: React.FC<{ engagementId: string }> = ({ engagementId }) => {
-  const { currentUser } = useApp();
+  const { currentUser, rawEngagements } = useApp();
   const [suggestions, setSuggestions] = useState<PlanningSuggestion[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -207,6 +208,14 @@ export const PlanningPanel: React.FC<{ engagementId: string }> = ({ engagementId
           </div>
         )}
       </div>
+
+      {/* Prior-year material (7G, §9.1): imported items do not count toward sign-off until confirmed. */}
+      <PriorYearImportPanel
+        engagementId={engagementId}
+        sourceEngagements={rawEngagements
+          .filter((e) => e.id !== engagementId)
+          .map((e) => ({ id: e.id, label: `${e.title} (${e.periodEnd.slice(0, 4)})` }))}
+      />
 
       {/* Sign-off */}
       <div className="p-5 rounded-2xl bg-surface border border-hairline space-y-2">

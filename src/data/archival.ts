@@ -46,3 +46,40 @@ export async function listArchiveJobs(): Promise<ArchiveJobRow[]> {
     createdAt: (a.created_at as string | null) ?? null,
   }));
 }
+
+export interface ActivityLogRow {
+  id: string;
+  actorId: string | null;
+  action: string;
+  objectType: string | null;
+  objectId: string | null;
+  detail: Record<string, unknown>;
+  ts: string | null;
+}
+
+/**
+ * The tenant's own activity history (spec §25.4, §26). RLS restricts the read to cia / org_admin,
+ * so an ordinary member simply sees no rows. Optional since/until filter for the export range.
+ */
+export async function listActivityLog(since: string | null = null, until: string | null = null): Promise<ActivityLogRow[]> {
+  const sb = getClient();
+  if (!sb) return [];
+  let q = sb
+    .from('activity_log')
+    .select('id, actor_id, action, object_type, object_id, detail, ts')
+    .order('ts', { ascending: false })
+    .limit(500);
+  if (since) q = q.gte('ts', since);
+  if (until) q = q.lte('ts', until);
+  const { data, error } = await q;
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((a) => ({
+    id: a.id as string,
+    actorId: (a.actor_id as string | null) ?? null,
+    action: a.action as string,
+    objectType: (a.object_type as string | null) ?? null,
+    objectId: (a.object_id as string | null) ?? null,
+    detail: (a.detail as Record<string, unknown> | null) ?? {},
+    ts: (a.ts as string | null) ?? null,
+  }));
+}

@@ -66,6 +66,8 @@ const ROLE_IDS_B: Record<string, string> = {
 const USERS = [
   { email: 'ayesha.khan@provio-test.invalid', name: 'Ayesha Khan', org: ORG_A, role: 'org_admin', roleIds: ROLE_IDS_A, universes: [A_U1] },
   { email: 'bilal.ahmed@provio-test.invalid', name: 'Bilal Ahmed', org: ORG_A, role: 'preparer', roleIds: ROLE_IDS_A, universes: [] },
+  // Audit manager: holds manage_engagements, which the Phase 7 import/activity/prior-year flows need.
+  { email: 'zara.malik@provio-test.invalid', name: 'Zara Malik', org: ORG_A, role: 'audit_manager', roleIds: ROLE_IDS_A, universes: [] },
   { email: 'hamza.qureshi@provio-test.invalid', name: 'Hamza Qureshi', org: ORG_B, role: 'org_admin', roleIds: ROLE_IDS_B, universes: [B_U1, B_U2] },
   { email: 'sana.iqbal@provio-test.invalid', name: 'Sana Iqbal', org: ORG_B, role: 'reviewer', roleIds: ROLE_IDS_B, universes: [] },
   { email: 'fatima.rehman@provio-test.invalid', name: 'Fatima Rehman', org: ORG_B, role: 'preparer', roleIds: ROLE_IDS_B, universes: [] },
@@ -191,4 +193,12 @@ export default async function globalSetup() {
   must('delete report_versions', await sb.from('report_versions').delete().in('org_id', [ORG_A, ORG_B]));
   must('delete caps', await sb.from('caps').delete().in('org_id', [ORG_A, ORG_B]));
   must('delete email_queue', await sb.from('email_queue').delete().in('org_id', [ORG_A, ORG_B]));
+
+  // Phase 7 residue (7G). The export panel records exports_log rows, the import wizard writes
+  // import_jobs/prior_year_imports, and the activity-log view can archive a period. Clear them so
+  // the next run observes the same starting state (M5).
+  must('delete exports_log', await sb.from('exports_log').delete().in('org_id', [ORG_A, ORG_B]));
+  must('delete prior_year_imports', await sb.from('prior_year_imports').delete().in('org_id', [ORG_A, ORG_B]));
+  must('delete import_jobs', await sb.from('import_jobs').delete().in('org_id', [ORG_A, ORG_B]));
+  must('delete archive_jobs', await sb.from('archive_jobs').delete().in('org_id', [ORG_A, ORG_B]));
 }

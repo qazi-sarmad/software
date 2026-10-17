@@ -18,6 +18,8 @@ import {
   ChevronDown,
   Building,
   Users,
+  Upload,
+  Activity,
 } from './Icons';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -271,6 +273,32 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ onOpenCommandPalette }) =>
                       <Settings className="w-4 h-4 text-secondary stroke-[1.5]" />
                       <span>Account settings</span>
                     </button>
+                    {hasRight(currentUser, 'manage_engagements') && (
+                      <button
+                        onClick={() => {
+                          openInspector('import_wizard');
+                          setIsProfileOpen(false);
+                        }}
+                        data-testid="menu-import"
+                        className="w-full text-left px-3 py-2 rounded-xl text-primary hover:bg-surface-hover transition-colors flex items-center gap-2.5"
+                      >
+                        <Upload className="w-4 h-4 text-secondary stroke-[1.5]" />
+                        <span>Import</span>
+                      </button>
+                    )}
+                    {hasRight(currentUser, 'manage_engagements') && (
+                      <button
+                        onClick={() => {
+                          openInspector('activity_log');
+                          setIsProfileOpen(false);
+                        }}
+                        data-testid="menu-activity-log"
+                        className="w-full text-left px-3 py-2 rounded-xl text-primary hover:bg-surface-hover transition-colors flex items-center gap-2.5"
+                      >
+                        <Activity className="w-4 h-4 text-secondary stroke-[1.5]" />
+                        <span>Activity log</span>
+                      </button>
+                    )}
                   </div>
 
                   {/* Sign out ends the session. There is no account or role switching. */}

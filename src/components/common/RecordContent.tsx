@@ -23,6 +23,8 @@ const CombinedApprovalPanel = lazy(() => import('../plan/CombinedApprovalPanel')
 const SiraModelEditor = lazy(() => import('../sira/SiraModelEditor').then((m) => ({ default: m.SiraModelEditor })));
 const SiraCyclePanel = lazy(() => import('../sira/SiraCyclePanel').then((m) => ({ default: m.SiraCyclePanel })));
 const PlanItemsPanel = lazy(() => import('../plan/PlanItemsPanel').then((m) => ({ default: m.PlanItemsPanel })));
+const ImportWizardPanel = lazy(() => import('../admin/ImportWizardPanel').then((m) => ({ default: m.ImportWizardPanel })));
+const ActivityLogPanel = lazy(() => import('../admin/ActivityLogPanel').then((m) => ({ default: m.ActivityLogPanel })));
 
 export const INSPECTOR_TITLES: Record<InspectorType, string> = {
   observation: 'Audit Observation & 5C Analysis',
@@ -43,6 +45,8 @@ export const INSPECTOR_TITLES: Record<InspectorType, string> = {
   sira_model: 'SIRA Model',
   sira_cycles: 'SIRA Cycles & Emergent Risks',
   plan_items: 'Audit Plan Items',
+  import_wizard: 'Import',
+  activity_log: 'Activity Log',
 };
 
 /** Record type in a URL (/view/:recordType/:id) to the inspector content it shows. */
@@ -52,6 +56,8 @@ export const RECORD_TYPE_TO_INSPECTOR: Record<string, InspectorType> = {
   observation: 'observation',
   cap: 'cap_inspector',
   org_settings: 'org_settings',
+  import_wizard: 'import_wizard',
+  activity_log: 'activity_log',
 };
 
 export interface RecordContentProps {
@@ -98,6 +104,10 @@ export const RecordContent: React.FC<RecordContentProps> = ({ type, data, onClos
           return <SiraCyclePanel cycles={data?.cycles ?? []} emergent={data?.emergent ?? []} />;
         case 'plan_items':
           return <PlanItemsPanel items={data?.items ?? []} versions={data?.versions ?? []} />;
+        case 'import_wizard':
+          return <ImportWizardPanel />;
+        case 'activity_log':
+          return <ActivityLogPanel />;
         default:
           return null;
       }

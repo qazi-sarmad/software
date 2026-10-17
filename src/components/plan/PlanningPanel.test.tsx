@@ -19,7 +19,15 @@ vi.mock('../../data/planning', () => ({
 }));
 
 const userRef = { current: { role: 'cia', rights: { review_and_approve: true } } };
-vi.mock('../../context/AppContext', () => ({ useApp: () => ({ currentUser: userRef.current }) }));
+vi.mock('../../context/AppContext', () => ({ useApp: () => ({ currentUser: userRef.current, rawEngagements: [] }) }));
+
+vi.mock('../../data/imports', () => ({
+  listPriorYearImports: () => Promise.resolve([]),
+  unconfirmedPriorYearImports: () => Promise.resolve(0),
+  importPriorYearItem: () => Promise.resolve(),
+  confirmPriorYearItem: () => Promise.resolve(),
+  revertPriorYearItem: () => Promise.resolve(),
+}));
 
 import { PlanningPanel } from './PlanningPanel';
 

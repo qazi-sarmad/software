@@ -29,6 +29,12 @@ export type User = {
   universeIds: string[];
   entityIds: string[];
   department?: string;
+  /**
+   * The id of the organisation this session belongs to, from `org_members.org_id`. Set for a real
+   * session (src/data/client.ts); absent for the external token holder. Used only as a display /
+   * RPC argument: the database still decides the caller's org from the JWT, never from this value.
+   */
+  orgId?: string;
 };
 
 export type AuditUniverse = {

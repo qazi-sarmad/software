@@ -59,7 +59,7 @@ Updated after every task and committed with it. Every line carries the CI run ID
 | 7D prior-year import DB | done | 2c2b78b | 38975709496 (cumulative) | migration 0044 (prior_year_imports, import/confirm/revert, sign_planning gate), test 53 (D-7D-M1/M1b/revert) |
 | 7E Phase 7 tests | done | 502e838 | 38975709496 | test 56 phase-7 acceptance (cross-org, anon, no-right, export ledger, prior-year sign-off gate, import org scope) |
 | 7F Phase 7 data module | done | 18beb52 | 38975709496 (cumulative) | src/data/{exports,imports,archival}.ts + phase7.test.ts |
-| 7G Phase 7 UI | todo | | | |
+| 7G Phase 7 UI | done | (pending) | (pending) | ExportPanel (Audit File view), ImportWizardPanel + ActivityLogPanel (record views), PriorYearImportPanel (Planning tab); exportSerialise + phase7Panels.test.tsx (15) + e2e/phase7.spec.ts (5); global-setup adds zara.malik + clears Phase 7 residue (D-7G-workspace, D-7G-audit-manager, D-7G-residue, D-7G-guard) |
 | 7H Phase 7 docs | todo | | | |
 | 8A platform portal DB | done | (0031, earlier) | 38956498574 | tenant_settings, platform_trail, platform_* RPCs; test 40 (D-PLATFORM-RIGHTS) |
 | 8B support access DB | done | (0031, earlier) | 38956498574 | support_access_grants, grant/revoke RPCs; test 40 |

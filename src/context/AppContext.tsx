@@ -42,7 +42,9 @@ export type InspectorType =
   | 'combined_approval'
   | 'sira_model'
   | 'sira_cycles'
-  | 'plan_items';
+  | 'plan_items'
+  | 'import_wizard'
+  | 'activity_log';
 
 export interface InspectorState {
   type: InspectorType | null;
