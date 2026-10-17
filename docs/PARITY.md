@@ -38,7 +38,7 @@ Basis of the statuses: the repository is a front-end prototype with **no backend
 | 7 Deployment Gate | Missing | Not found. |
 | 7.1 Combined approval | Missing | Not found. |
 | 8 SIRA | Partial | `src/components/sira/SiraTab.tsx`. Not audited against §8.2 or §8.3. |
-| 9 Audit Plan | Partial | `src/components/plan/AuditPlanTab.tsx`. Errors are now inline, no native dialogs. |
+| 9 Audit Plan | Built | Plan per universe/period with hash-chained versions (`0021`, `0028`). Prior-year material (§9.1) imports per item from the Planning tab and does not count toward sign-off until reconfirmed (`0044_prior_year_import.sql`, `src/components/plan/PriorYearImportPanel.tsx`). |
 | 10 Engagement Lifecycle | Partial | Sign-off and reopen with justification exist (`src/context/AppContext.tsx`, `src/context/noAlerts.test.tsx`). Whether only three stages exist was not audited. |
 | 10.4 Sign-off and locking | Partial | Hash-chained sign-off in memory only; failures return results (`noAlerts.test.tsx`). |
 | 11 Testing | Partial | `src/lib/population.ts`, `src/lib/population.test.ts`, `src/components/audit/SamplingTab.tsx`. |
@@ -48,15 +48,15 @@ Basis of the statuses: the repository is a front-end prototype with **no backend
 | 15 Conclusion, Report, Drafting | Missing | The Reports tab and executive-pack modal were deleted in Phase 0. No drafting, issuance or freeze. |
 | 16 CAPs | Partial | `src/lib/cap.ts`, `src/lib/cap.test.ts`. |
 | 17 Audit File Window and Viewer | Partial | `src/components/audit/AuditFileModal.tsx`, `AuditFileModal.test.tsx`, `src/lib/auditFile.ts`. |
-| 18 Export | Missing | Fake exports that called a native dialog were removed from the Reports files. No real export. |
-| 19 Import | Missing | Not found. |
+| 18 Export | Built | Every export runs through `log_export` (writes an `exports_log` row and a ledger entry); the payload is serialised in the browser and its content hash recorded. Per-object export RPCs: `export_workpaper`, `export_engagement_bundle`, `export_sira_results`, `export_audit_plan`, `export_cap_register`, `export_ledger`, `export_activity_log`, `export_full_tenant` (needs `manage_users`). `src/components/admin/ExportPanel.tsx`, `src/data/exports.ts`, `src/lib/exportSerialise.ts`. PDF/DOCX generation deferred (`docs/NOT-DONE.md`). |
+| 19 Import | Built | `import_jobs` + `start_import` / `validate_import` / `commit_import` (types, required fields and org scope validated in the database, invalid rows returned with a field-level reason). Three-step wizard: upload, mapping, preview-and-commit. Prior-year material (§9.1) is `prior_year_imports` + `import_prior_year_item` / `confirm_prior_year_item` / `revert_prior_year_item`; populations, samples, results, conclusions and evidence are refused. `src/components/admin/ImportWizardPanel.tsx`, `src/components/plan/PriorYearImportPanel.tsx`, `src/data/imports.ts`. |
 | 20 Evidence and Uploads | Partial | `src/components/audit/EvidenceTab.tsx`, `src/lib/glassbox.ts`. Public route uses a zero-scope principal, no server token validation. |
 | 21 Change Control | Missing | Not found. |
 | 22 Notifications and Email | Missing | Not found. |
 | 23 Administration | Missing | The "Admin Console" entry opened the deleted personnel panel and was removed. |
 | 24 Platform Portal | Missing | Not found. |
 | 25 Data, Security, Infrastructure | Missing | No backend, database, RLS or storage. |
-| 26 Logging | Partial | `src/lib/ledger.ts`. In memory only. |
+| 26 Logging | Built | Business ledger is hash-chained and append-only (`0005_logging.sql`). Activity log is append-only; archival (`0043_activity_archival.sql`, `archive_activity_period`) writes an `archive_jobs` row, a ledger entry with the content hash, and never deletes without that record. The tenant exports its own history through `export_activity_log` and the Activity Log view. |
 | 27.1 Colour | Partial | `node scripts/check-tokens.mjs` passes. |
 | 27.2 Typography | Partial | Not audited. |
 | 27.3 Iconography | Partial | `src/components/common/Icons.tsx`; `sourceGuards.test.ts` forbids lucide-react. |
@@ -293,7 +293,7 @@ CI run **38856439388** on head `725b8fc` — conclusion **success**, all 7 gate 
 | 7 Deployment Gate | missing | `deploy_engagement` returns the structured §7 steps 1–5; ethics acknowledgements; testing locked until all ack | `0022_deployment_gate.sql`, `29_deployment_gate.sql`, `src/data/deployment.ts`, `src/components/audit/{DeploymentGatePanel,EthicsPanel}.tsx` |
 | 7.1 Combined approval | missing | one atomic function for plan change + deployment; revalidation; SLA; escalation | `0023_combined_approval.sql`, `30_combined_approval.sql`, `src/components/plan/CombinedApprovalPanel.tsx` |
 | 8 SIRA | partial, not audited | per-org risk model (factors/scales/weights/bands/aggregation), versioned history, deterministic `sira_compute`, cycles + publish freeze + emergent-risk queue | `0019_sira_model.sql`, `0020_sira_cycles.sql`, `26_sira_model.sql`, `27_sira_cycles.sql`, `src/lib/siraEngine.ts`, `src/components/sira/` |
-| 9 Audit Plan | partial | plan per universe/period, hash-chained versions, plan items with ad-hoc justification ≥10 chars | `0021_audit_plan.sql`, `28_audit_plan.sql`, `src/components/plan/PlanItemsPanel.tsx` |
+| 9 Audit Plan | partial | plan per universe/period, hash-chained versions, plan items with ad-hoc justification ≥10 chars | `0021_audit_plan.sql`, `0028_audit_plan.sql`, `src/components/plan/PlanItemsPanel.tsx` |
 | 29 Build and Verification | SQL + vitest + Playwright in CI | unchanged; adversarial SQL for 3B–3G added | `31_adversarial_phase3.sql` |
 
 ## NOT DONE (Phase 3)
@@ -306,4 +306,29 @@ CI run **38856439388** on head `725b8fc` — conclusion **success**, all 7 gate 
   strip whitespace until the owner re-sets the secret.
 - The administration portal still covers only the People and Roles parts of §23; the rest is later
   work.
+
+## Verification at the end of Phase 7 (branch `feature/config-control-plane`, head `1a2f70b`)
+
+| Gate | Result |
+|---|---|
+| `npx tsc --noEmit` | exit 0 |
+| `npx vitest run` | **61 files, 561 tests passed** |
+| `npm run build` (`vite build`) | exit 0 |
+| `node scripts/check-tokens.mjs` | PASS — 97 files under `src/components`, 0 violations |
+| `node scripts/check-shrink.mjs` | PASS — 58 files, no >10% shrink |
+| SQL migrations applied twice (M6) | exit 0, 0 errors, both passes (45 migration files) |
+| SQL tests, 58 files, two consecutive passes (M5) | **58/58 green both passes**, 1099 `ok` notices |
+| `npx playwright test` | **51 passed** (adds `e2e/phase7.spec.ts`, 5 tests) |
+
+CI run **39026062113** on head `1a2f70b` — conclusion **success**, all 7 gate steps green.
+
+## What Phase 7 added, by spec section
+
+| Spec section | Before Phase 7 | After Phase 7 | Evidence |
+|---|---|---|---|
+| 9.1 Prior-year material | not built | per-item import from the Planning tab; `Imported - confirm` items do not count toward sign-off until confirmed; populations, samples, results, conclusions and evidence are refused | `0044_prior_year_import.sql`, `53_prior_year_import.sql`, `src/components/plan/PriorYearImportPanel.tsx` |
+| 18 Export | missing | `log_export` records every export in `exports_log` and the ledger with a content hash; eight per-object export RPCs; browser-side serialisation and download; export history view | `0041_exports.sql`, `50_exports.sql`, `src/data/exports.ts`, `src/lib/exportSerialise.ts`, `src/components/admin/ExportPanel.tsx` |
+| 19 Import | missing | `import_jobs` with a three-step wizard (upload, mapping, preview-and-commit); database validation returns invalid rows with a field-level reason; every import logged | `0042_imports.sql`, `51_imports.sql`, `src/data/imports.ts`, `src/components/admin/ImportWizardPanel.tsx` |
+| 26 Logging | ledger in memory only | activity log is append-only; archival writes an `archive_jobs` row and a ledger entry with the content hash before any delete; the tenant views and exports its own history | `0043_activity_archival.sql`, `52_activity_archival.sql`, `src/components/admin/ActivityLogPanel.tsx` |
+| 56 Phase 7 acceptance | n/a | cross-org, anon, no-right, export-ledger, prior-year sign-off gate and import org-scope all covered | `56_phase7_acceptance.sql` |
 

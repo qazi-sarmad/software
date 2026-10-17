@@ -65,3 +65,37 @@ clear the first two before Phase 2 closes.
 ## 9. Browser coverage (unchanged from item 4)
 
 - CI runs Chromium only. Firefox and WebKit are Phase 4+ work.
+
+## 10. Activity-log archival needs a Storage-upload edge function (Phase 7 scope)
+
+- `archive_activity_period` builds the JSON in-database, writes an `archive_jobs` row, records a
+  hash-chained ledger entry with the content hash, and then removes the archived rows from the live
+  activity log. The actual upload to Storage is a placeholder: the function writes the archive job
+  and a signed-URL stub, but no edge function performs the upload yet.
+- Owner action: add an edge function that uploads the built JSON to the `archive_jobs.storage_path`
+  and marks the job `done`. Until then the ledger entry is the durable record.
+- Evidence: `0043_activity_archival.sql`, `52_activity_archival.sql`, decision D-7C-storage.
+
+## 11. PDF/DOCX generation for exports (Phase 7 scope)
+
+- The §18 export table lists PDF, XLSX and DOCX for several objects. The Phase 7 export panel
+  serialises CSV, JSON and a deterministic text payload in the browser and records the content hash;
+  it does not generate a PDF, XLSX or DOCX binary. The per-object RPCs return the data to be
+  serialised, as the task specifies.
+- Owner action: add a server-side (or in-browser) PDF/XLSX/DOCX renderer behind the same
+  `log_export` call so the recorded hash still covers the delivered file.
+- Evidence: `src/lib/exportSerialise.ts`, `src/components/admin/ExportPanel.tsx`.
+
+## 12. Import parsers cover CSV only (Phase 7 scope)
+
+- §19 lists CSV, XLSX and DOCX tables per source. The Phase 7 wizard parses CSV in the browser; the
+  database validation (`validate_import`) is format-agnostic and already handles mapped rows from any
+  parser. XLSX and DOCX parsing is deferred.
+- Owner action: add XLSX/DOCX parsers that produce the same mapped-rows shape.
+- Evidence: `src/components/admin/ImportWizardPanel.tsx` (`parseCsv`).
+
+## 13. Screenshots owner-deferred (Phase 7)
+
+- No screenshots were captured for the Phase 7 surfaces (export panel, import wizard, activity log,
+  prior-year import); this is owner-deferred as in Phases 0-3.
+
