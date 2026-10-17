@@ -14,6 +14,11 @@ import {
 import { PlanningTab } from './file/PlanningTab';
 import { ExecutionTab } from './file/ExecutionTab';
 import { ReviewTab } from './file/ReviewTab';
+import { PlanningPanel } from '../plan/PlanningPanel';
+import { PopulationPanel } from '../audit/PopulationPanel';
+import { SamplingPanel } from '../audit/SamplingPanel';
+import { RowTestingPanel } from '../audit/RowTestingPanel';
+import { AnalystEnginePanel } from '../audit/AnalystEnginePanel';
 
 /**
  * Audit File: one permanent workspace per engagement.
@@ -27,6 +32,7 @@ export const AuditFileModal: React.FC = () => {
   const requestedId: string | undefined = inspector.data?.engagement?.id;
   const engagement = requestedId ? scopedEngagements.find((e) => e.id === requestedId) : undefined;
   const [tab, setTab] = useState<AuditFileTab>(() => getInitialAuditFileTab(inspector.data));
+  const [phaseView, setPhaseView] = useState<'overview' | 'workspace'>('overview');
   const [signOffError, setSignOffError] = useState<string | null>(null);
 
   // Neutral state: does not reveal whether an out-of-scope engagement exists.
@@ -80,6 +86,39 @@ export const AuditFileModal: React.FC = () => {
         </div>
       </div>
 
+      {/* View switch: the seed-backed Overview, or the database-backed Phase 4 Workspace (4I). */}
+      <div className="flex items-center gap-1" role="tablist" aria-label="Audit file view">
+        {(['overview', 'workspace'] as const).map((v) => (
+          <button
+            key={v}
+            type="button"
+            role="tab"
+            aria-selected={phaseView === v}
+            data-testid={`audit-file-view-${v}`}
+            onClick={() => setPhaseView(v)}
+            className={`px-3 py-1.5 rounded-lg text-apple-12 font-semibold border transition-colors ${
+              phaseView === v ? 'bg-surface-hover border-accent text-primary' : 'bg-surface border-hairline text-secondary'
+            }`}
+          >
+            {v === 'overview' ? 'Overview' : 'Testing workspace'}
+          </button>
+        ))}
+      </div>
+
+      {phaseView === 'workspace' ? (
+        <div className="space-y-6" data-testid="audit-file-workspace">
+          <PlanningPanel engagementId={engagement.id} />
+          <PopulationPanel engagementId={engagement.id} />
+          <AnalystEnginePanel engagementId={engagement.id} />
+          {workpapers[0] && (
+            <>
+              <SamplingPanel workpaperId={workpapers[0].id} />
+              <RowTestingPanel workpaperId={workpapers[0].id} />
+            </>
+          )}
+        </div>
+      ) : (
+        <>
       {/* In-file tab strip */}
       <div role="tablist" aria-label="Audit file sections" onKeyDown={onTabKey} className="grid grid-cols-3 border-b border-hairline">
         {AUDIT_FILE_TABS.map((t) => (
@@ -126,6 +165,8 @@ export const AuditFileModal: React.FC = () => {
           />
         )}
       </div>
+        </>
+      )}
     </div>
   );
 };

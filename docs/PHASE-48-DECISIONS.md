@@ -540,3 +540,27 @@ and `App.tsx` back at `FloatingWindow` directly and delete the manager.
 it renders `FloatingWindow`, which is already allow-listed. It was added to the allow-list pre-emptively
 so a future dock badge that uses a fixed position does not false-fail the guard. How to reverse: remove
 the entry if the manager never gains a fixed-position surface.
+
+## D-4I-workspace - the Phase 4 workspace is a second view inside the Audit File
+
+The Audit File window already carried a seed-backed Overview (Planning / Execution / Review). 4I adds a
+"Testing workspace" view inside the same window (data-testid `audit-file-view-workspace`) that mounts the
+database-backed Phase 4 panels: PlanningPanel (plan/), PopulationPanel, SamplingPanel, RowTestingPanel and
+AnalystEnginePanel (audit/). This keeps the engagement card as the single entry point and does not add a
+tab to the navigation strip (SPEC 5 locks seven tabs). How to reverse: delete the view switch and the five
+panel mounts from AuditFileModal.tsx; the panels and their data modules remain.
+
+## D-4I-M1 - the workspace reuses existing tables, no new migration
+
+grep found populations (0004/0026), samples (0004/0027), workpaper_rows (0028), analysis_results and
+planning_sections/planning_suggestion_decisions (0025/0029/0030) all already exist with RLS. 4I is UI only;
+no migration is added and no object is duplicated (M1). Every write goes through the 4B-4F RPCs, except
+population registration (below).
+
+## D-4I-population-write - population registration inserts through the data module
+
+No register_population RPC exists; 0026 creates populations through a direct insert and the RLS policy
+`populations_write` allows an authenticated org member to insert. `registerPopulation` in
+src/data/population.ts performs that insert with the browser-computed SHA-256 and row count, which the
+`verify_population` trigger accepts only when both are present. Components never import the Supabase client
+(M8). How to reverse: add a `register_population` RPC in 0026 and call it from the data module.

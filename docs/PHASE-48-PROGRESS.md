@@ -34,7 +34,7 @@ Updated after every task and committed with it. Every line carries the CI run ID
 | 4F analyst engine | done | 81dadff | 38898749540 | green — migration 0029, test 37, src/lib/analyticsEngine.ts + test (D-4F-M1, D-4F-stub, D-4F-engine-scope) |
 | 4G Phase 4 tests | done | d1ed656 | 38899789331 | test 38 acceptance (cross-org, anon, no-right, L3, floor, four-eyes, chain, lock) + 4F unit tests |
 | 4H Phase 4 data module | done | 29d473b | 38900814033 | src/data/{planning,population,sampling,rowTesting,analytics}.ts + phase4.test.ts (14 tests). First run red on a 0009 deadlock (shared test-project race, D-4D-CI-RACE class); rerun of the same commit green. |
-| 4I Phase 4 UI | todo | | | |
+| 4I Phase 4 UI | done | _this_ | _CI_ | PlanningPanel, PopulationPanel, SamplingPanel, RowTestingPanel, AnalystEnginePanel in the Audit File testing workspace; panel tests + e2e/phase4.spec.ts; global-setup cleans Phase 4 residue (D-4I-workspace, D-4I-M1, D-4I-population-write) |
 | 4J Phase 4 docs | todo | | | |
 | 5A findings DB | done | b8a7dd3 | 38975709496 (cumulative) | migration 0030, test 39 (D-5A-STUB resolved, D-5A-M1, D-5A-status, D-5A-tokens, D-5A-optional-sections) |
 | 5B conclusion DB | done | ec4e96a | 38975709496 (cumulative) | migration 0034, test 43 (D-5B-M1, D-5B-testing-gate, D-5B-opinion-config, D-5B-files) |

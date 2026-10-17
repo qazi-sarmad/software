@@ -152,4 +152,16 @@ export default async function globalSetup() {
   // Leave no residue (M5): the invite cap counts events per org and per user per day, so a run
   // that created members would otherwise change the cap the next run observes.
   must('delete invite_cap_events', await sb.from('invite_cap_events').delete().in('org_id', [ORG_A, ORG_B]));
+
+  // Phase 4 workspace residue (4I). The testing workspace writes populations, samples, workpaper
+  // rows and analysis results; a run must not change what the next run observes. Ordered so children
+  // go before parents (sample rows -> samples -> populations).
+  must('delete workpaper_rows', await sb.from('workpaper_rows').delete().in('org_id', [ORG_A, ORG_B]));
+  must('delete sample_rows', await sb.from('sample_rows').delete().in('org_id', [ORG_A, ORG_B]));
+  must('delete samples', await sb.from('samples').delete().in('org_id', [ORG_A, ORG_B]));
+  must('delete population_rows', await sb.from('population_rows').delete().in('org_id', [ORG_A, ORG_B]));
+  must('delete populations', await sb.from('populations').delete().in('org_id', [ORG_A, ORG_B]));
+  must('delete analysis_results', await sb.from('analysis_results').delete().in('org_id', [ORG_A, ORG_B]));
+  must('delete planning_sections', await sb.from('planning_sections').delete().in('org_id', [ORG_A, ORG_B]));
+  must('delete planning_suggestion_decisions', await sb.from('planning_suggestion_decisions').delete().in('org_id', [ORG_A, ORG_B]));
 }

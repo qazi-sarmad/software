@@ -26,6 +26,26 @@ export function lockPopulation(populationId: string): Promise<DataResult> {
   return callRpc('lock_population', { p_population_id: populationId });
 }
 
+/**
+ * Register a population from an uploaded file. No RPC exists for this (0026 registers through a direct
+ * insert under the `populations_write` policy), so the insert lives here, not in the component: the
+ * database's `verify_population` trigger accepts it only when the SHA-256 and row count are both set.
+ */
+export async function registerPopulation(
+  engagementId: string, filename: string, sha256: string, rowCount: number
+): Promise<DataResult> {
+  const sb = getClient();
+  if (!sb) return { ok: false, reason: 'The data module is not configured.' };
+  const { error } = await sb.from('populations').insert({
+    engagement_id: engagementId,
+    filename,
+    sha256,
+    row_count: rowCount,
+    status: 'verified',
+  });
+  return error ? { ok: false, reason: error.message } : { ok: true };
+}
+
 export function replaceLockedPopulation(populationId: string, rationale: string): Promise<DataResult> {
   return callRpc('replace_locked_population', { p_population_id: populationId, p_rationale: rationale });
 }
