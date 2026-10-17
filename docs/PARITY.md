@@ -54,7 +54,7 @@ Basis of the statuses: the repository is a front-end prototype with **no backend
 | 21 Change Control | Missing | Not found. |
 | 22 Notifications and Email | Missing | Not found. |
 | 23 Administration | Missing | The "Admin Console" entry opened the deleted personnel panel and was removed. |
-| 24 Platform Portal | Missing | Not found. |
+| 24 Platform Portal | Built (DB + logic) | Platform-only, no tenant business access. `tenant_settings` (feature flags, usage quota, `ai_enabled`, `ai_model_endpoint`), `platform_trail` (append-only, no org policy) and the `platform_*` RPCs (`platform_set_feature_flag`, `platform_enable_ai`, `platform_set_invite_cap`) each require `user_role = 'platform_admin'` from the JWT and write a `platform_trail` entry. Support access is time-boxed: `support_access_grants` + `grant_support_access` (Org Admin, <= 48h ceiling) and `revoke_support_access` (Org Admin or platform), each writing an org ledger entry; a grant gives no access to tenant business tables (`0031`/`0045`, tests `40`–`42`, `57`, `src/data/platform.ts`). No UI: the `/superadmin` portal is Phase 8.1, owner-designed. |
 | 25 Data, Security, Infrastructure | Missing | No backend, database, RLS or storage. |
 | 26 Logging | Built | Business ledger is hash-chained and append-only (`0005_logging.sql`). Activity log is append-only; archival (`0043_activity_archival.sql`, `archive_activity_period`) writes an `archive_jobs` row, a ledger entry with the content hash, and never deletes without that record. The tenant exports its own history through `export_activity_log` and the Activity Log view. |
 | 27.1 Colour | Partial | `node scripts/check-tokens.mjs` passes. |

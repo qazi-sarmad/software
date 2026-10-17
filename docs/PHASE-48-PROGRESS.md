@@ -52,7 +52,7 @@ Updated after every task and committed with it. Every line carries the CI run ID
 | 6F Phase 6 tests | done | cc18f65 | 38975709496 | test 55 phase-6 acceptance (cross-org, anon, no-right, queue visibility, platform L2) |
 | 6G Phase 6 data module | done | dd05ad3 | 38975709496 (cumulative) | src/data/{reports,caps,email}.ts + phase6.test.ts |
 | 6H Phase 6 UI | fixed | bc08485 | 39020135451 -> 39023767418 | ReportEditorPanel (section tabs, placeholder blocks in cinnabar, version sidebar, comments thread, freeze/issue pre-flight) + CapRegisterPanel + common/HoldToConfirm; phase6Panels.test.tsx (11) + e2e/phase6.spec.ts (4); global-setup clears Phase 6 residue (D-6H-hold, D-6H-workspace, D-6H-M1, D-6H-preflight, D-6H-residue) |
-| 6I Phase 6 docs | done | (pending) | (pending) | PARITY §15/§16; NOT-DONE items 19-22; D-6E recorded; docs/PHASE-6-REPORT.md |
+| 6I Phase 6 docs | done | 6f7e59c | 39030135433 | PARITY §15/§16; NOT-DONE items 19-22; D-6E recorded; docs/PHASE-6-REPORT.md |
 | 7A exports DB | done | 4f16408 | 38975709496 (cumulative) | migration 0041 (exports_log, log_export, export_*), test 50 (D-7A-M1/M1b/M1c) |
 | 7B imports DB | done | efc4073 | 38975709496 (cumulative) | migration 0042 (import_jobs, start/validate/commit_import), test 51 (D-7B-M1) |
 | 7C activity archival DB | done | fc08a1e | 38975709496 (cumulative) | migration 0043 (archive_jobs, archive_activity_period), test 52 (D-7C-M1, D-7C-append-only, D-7C-right, D-7C-storage) |
@@ -67,4 +67,4 @@ Updated after every task and committed with it. Every line carries the CI run ID
 | 8D invite-cap control DB | done | (0031, earlier) | 38956498574 | platform_set_invite_cap; test 40 |
 | 8E Phase 8 tests | done | 92ba68f | 38975709496 | test 57 phase-8 acceptance |
 | 8F Phase 8 data module | done | (src/data/platform.ts, earlier) | 38956498574 | src/data/platform.ts + platform.test.ts |
-| 8G Phase 8 docs | todo | | | |
+| 8G Phase 8 docs | done | (pending) | (pending) | PARITY §24; NOT-DONE items 23-27; docs/PHASE-8-REPORT.md |

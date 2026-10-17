@@ -162,4 +162,35 @@ clear the first two before Phase 2 closes.
 - No screenshots were captured for the Phase 6 surfaces (report editor, comments, freeze panel, CAP
   register, issuance); owner-deferred as in Phases 0-5.
 
+## 23. Superadmin UI deferred to Phase 8.1 (owner-designed)
+
+- Phase 8 is DB and logic only. `src/data/platform.ts` exposes `platformSetFeatureFlag`,
+  `grantSupportAccess`, `revokeSupportAccess`, `platformEnableAI` and `platformSetInviteCap`, but no
+  `/superadmin` screen calls them.
+- Owner action: design and build the Phase 8.1 platform portal.
+- Evidence: `src/data/platform.ts`, `src/data/platform.test.ts`, decision D-8E-coverage.
+
+## 24. Support-session authentication (Phase 8 scope)
+
+- `support_access_grants` is metadata: a grant row with a scope, an expiry (<= 48h) and a revoke
+  reason. The platform admin still cannot read tenant business tables. An authenticated support
+  session that acts under a grant is Phase 9/10 work.
+- Evidence: `0031_platform_control_plane.sql`, test `40`, `src/data/platform.ts`.
+
+## 25. Tenant-side per-org email configuration UI (Phase 8 scope)
+
+- The provider is set through `admin_set_email_provider`; no Org Admin screen sets it, and the
+  provider choice itself is the owner's (D-6E, B-6E-provider).
+
+## 26. AI advisory summaries (Phase 8 scope)
+
+- `platform_enable_ai` turns AI on per org and records the model endpoint; no advisory summary is
+  generated. AI remains off by default (§13.2).
+- Evidence: `0045_platform_ai_ledger.sql`, decision D-8C-ledger.
+
+## 27. Screenshots owner-deferred (Phase 8)
+
+- No screenshots were captured; Phase 8 has no UI. Owner-deferred as in Phases 0-7.
+
+
 
