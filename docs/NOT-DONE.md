@@ -113,3 +113,24 @@ clear the first two before Phase 2 closes.
   edits them yet.
 - Evidence: `docs/PHASE-4-REPORT.md`.
 
+
+## 16. Document extraction edge function deferred (Phase 5 scope)
+
+- §13.1 requires full extraction and analysis of modern formats. `document_extractions` and the FTS
+  index exist and `search_documents` reads them, but no edge function performs the extraction: the
+  stub writes a `pending` row and returns.
+- Owner action: add an edge function that extracts text (PDF/DOCX/XLSX/CSV), fills `extracted_text`
+  and `page_count`, and sets `extraction_status` to `done` or `failed`.
+- Evidence: `0035_document_viewer.sql`, `44_document_viewer.sql`, decision D-5D-extraction-stub.
+
+## 17. One-stage vs two-stage testing mode UI deferred (Phase 5 scope)
+
+- The database supports both modes; no screen switches the mode or shows the two-stage reviewer
+  step. Same owner action as item 14.
+- Evidence: `docs/PHASE-5-REPORT.md`.
+
+## 18. Screenshots owner-deferred (Phase 5)
+
+- No screenshots were captured for the Phase 5 surfaces (findings, issues, conclusion, document
+  viewer); owner-deferred as in Phases 0-4.
+
