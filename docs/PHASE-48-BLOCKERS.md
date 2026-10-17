@@ -13,3 +13,13 @@ money-adjacent policy, so it is recorded and deferred rather than guessed. Recom
 `stage_sign_off_roles` jsonb on `engagements` (stage → role slug), defaulting to "any role holding
 `review_and_approve`", enforced in `sign_planning` / `sign_off_workpaper` / `sign_conclusion`.
 Reverse: the config only narrows signers, so leaving it absent preserves today's behaviour.
+
+## B-6E-provider (owner decision)
+
+Which email provider each tenant uses is pending the owner (decision D-6E). `email_settings.provider`
+supports `stub`, `resend` and `graph`; the default is `stub` and no message is dispatched. Both providers
+can send from a client's own domain: Graph uses a per-tenant OAuth consent flow (self-service), Resend
+requires QSCorp to verify each client's domain by hand. Recommendation: offer Graph first (self-service
+onboarding, no per-client manual step) and keep Resend for clients who prefer it. Reverse: nothing to
+reverse; the default stays `stub` until the owner decides.
+

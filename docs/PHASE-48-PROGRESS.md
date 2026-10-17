@@ -43,7 +43,7 @@ Updated after every task and committed with it. Every line carries the CI run ID
 | 5E Phase 5 tests | done | 882eb69 | 38975709496 | test 54 phase-5 acceptance (cross-org, anon, no-right, readability gate, testing gate, four-eyes, seal, stage-aware search) |
 | 5F Phase 5 data module | done | 13b8ce2 | 38975709496 (cumulative) | src/data/{observations,conclusion,documents}.ts + phase5.test.ts |
 | 5G Phase 5 UI | fixed | 389a1e1 | 39019926702 -> 39023767418 | FindingsPanel, ConclusionPanel, DocumentViewerPanel as Audit File views; phase5Panels.test.tsx (12) + e2e/phase5.spec.ts (4); global-setup clears Phase 5 residue (D-5G-workspace, D-5G-M1, D-5G-opinion, D-5G-residue) |
-| 5H Phase 5 docs | done | (pending) | (pending) | PARITY §14/§15/§17; NOT-DONE items 16-18; docs/PHASE-5-REPORT.md |
+| 5H Phase 5 docs | done | fec256e | 39029143063 | PARITY §14/§15/§17; NOT-DONE items 16-18; docs/PHASE-5-REPORT.md |
 | 6A report drafting DB | done | 46ee36c | 38954769628 | migration 0036 (report_versions, report_blocks, compose_report, compute_report_summary), test 45 (D-6A-M1, D-6A-blocks, D-6A-summary) |
 | 6B management comments DB | done | a25cab4 | 38956498574 | migration 0037 (report_comments, add/resolve RPCs, open_report_comment_count), test 46 (D-6B-M1, D-6B-resolution, D-6B-open-count) |
 | 6C freeze/issuance DB | done | 3c55c7b | 38956498574 | migration 0040 (freeze_report, issue_report), test 49 (open-comment gate, CAP gate, ledger, queued email) |
@@ -52,7 +52,7 @@ Updated after every task and committed with it. Every line carries the CI run ID
 | 6F Phase 6 tests | done | cc18f65 | 38975709496 | test 55 phase-6 acceptance (cross-org, anon, no-right, queue visibility, platform L2) |
 | 6G Phase 6 data module | done | dd05ad3 | 38975709496 (cumulative) | src/data/{reports,caps,email}.ts + phase6.test.ts |
 | 6H Phase 6 UI | fixed | bc08485 | 39020135451 -> 39023767418 | ReportEditorPanel (section tabs, placeholder blocks in cinnabar, version sidebar, comments thread, freeze/issue pre-flight) + CapRegisterPanel + common/HoldToConfirm; phase6Panels.test.tsx (11) + e2e/phase6.spec.ts (4); global-setup clears Phase 6 residue (D-6H-hold, D-6H-workspace, D-6H-M1, D-6H-preflight, D-6H-residue) |
-| 6I Phase 6 docs | todo | | | |
+| 6I Phase 6 docs | done | (pending) | (pending) | PARITY §15/§16; NOT-DONE items 19-22; D-6E recorded; docs/PHASE-6-REPORT.md |
 | 7A exports DB | done | 4f16408 | 38975709496 (cumulative) | migration 0041 (exports_log, log_export, export_*), test 50 (D-7A-M1/M1b/M1c) |
 | 7B imports DB | done | efc4073 | 38975709496 (cumulative) | migration 0042 (import_jobs, start/validate/commit_import), test 51 (D-7B-M1) |
 | 7C activity archival DB | done | fc08a1e | 38975709496 (cumulative) | migration 0043 (archive_jobs, archive_activity_period), test 52 (D-7C-M1, D-7C-append-only, D-7C-right, D-7C-storage) |

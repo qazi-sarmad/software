@@ -460,6 +460,23 @@ Reason: migrations apply in filename order and a function cannot read a table th
 this is the dependency the task itself names. How to reverse: swap the two migrations if a future
 change removes the dependency.
 
+## D-6E - email provider supports 'stub', 'resend', 'graph'; the provider choice is an owner decision
+
+Task 6E requires this decision to be recorded. `email_settings.provider` (0032_org_admin_settings.sql)
+is constrained to `('stub', 'resend', 'graph')` with `provider_config jsonb` (never granted to tenant
+roles) and `from_address`. When wired, a per-tenant `resend_domain` or a Graph delegated credential goes
+in `provider_config`. Both providers can send from a client's own domain; Graph uses an OAuth consent
+flow (self-service per tenant), Resend requires QSCorp to verify each client's domain manually. The
+choice of provider is pending the owner, so the default stays `stub` and no dispatch runs. Recorded in
+`docs/PHASE-48-BLOCKERS.md` as B-6E-provider. How to reverse: change the default and set the per-org
+provider through the admin RPC when the owner decides.
+
+## D-6I-D6E - D-6E was required by 6E but never written at the time; recorded in the 6I docs commit
+
+Task 6E asks for decision D-6E in `docs/PHASE-48-DECISIONS.md`. The 6E code (0039_email_queue.sql,
+`queue_email`, RLS) was built and is green, but the decision text was not committed with it. It is
+written here, in the 6I docs commit, rather than rewriting the 6E commit history (no force-push).
+
 ## D-5D-M1 - no evidence-file table existed; created rather than extended
 
 Grep for `evidence`, `file_id` and `document` in `supabase/migrations` found no file table (evidence

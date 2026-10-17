@@ -134,3 +134,32 @@ clear the first two before Phase 2 closes.
 - No screenshots were captured for the Phase 5 surfaces (findings, issues, conclusion, document
   viewer); owner-deferred as in Phases 0-4.
 
+## 19. Email dispatch edge function (Phase 6 scope)
+
+- §15.5 says the report email is queued at issuance. The queue row is written (`email_queue`,
+  `queue_email`), but nothing sends it: there is no edge function and no provider is wired (D-6E,
+  B-6E-provider).
+- Owner action: add an edge function that reads `pending` rows and dispatches through the chosen
+  provider, then sets `status` to `sent` or `failed` with `error_text`.
+- Evidence: `0039_email_queue.sql`, `48_email_queue.sql`, decision D-6E.
+
+## 20. Graph or Resend provider wiring (Phase 6 scope)
+
+- Per decision D-6E the provider choice is pending the owner. Neither a Resend domain nor a Graph
+  delegated credential is configured; `provider_config` is unset for every org.
+- Evidence: decision D-6E, blocker B-6E-provider.
+
+## 21. PDF/DOCX report generation and branding templates (Phase 6 scope)
+
+- §15.5 and §23 require the issued report as a branded PDF/DOCX. The report exists as blocks in the
+  database; no renderer produces a binary, and no branding template is applied.
+- Owner action: add a renderer behind `freeze_report`/`issue_report` so the issued artefact is the
+  branded document.
+- Evidence: `0036_report_drafting.sql`, `src/components/audit/ReportEditorPanel.tsx`.
+
+## 22. Screenshots owner-deferred (Phase 6)
+
+- No screenshots were captured for the Phase 6 surfaces (report editor, comments, freeze panel, CAP
+  register, issuance); owner-deferred as in Phases 0-5.
+
+
