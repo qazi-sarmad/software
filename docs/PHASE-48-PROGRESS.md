@@ -67,4 +67,4 @@ Updated after every task and committed with it. Every line carries the CI run ID
 | 8D invite-cap control DB | done | (0031, earlier) | 38956498574 | platform_set_invite_cap; test 40 |
 | 8E Phase 8 tests | done | 92ba68f | 38975709496 | test 57 phase-8 acceptance |
 | 8F Phase 8 data module | done | (src/data/platform.ts, earlier) | 38956498574 | src/data/platform.ts + platform.test.ts |
-| 8G Phase 8 docs | done | (pending) | (pending) | PARITY §24; NOT-DONE items 23-27; docs/PHASE-8-REPORT.md |
+| 8G Phase 8 docs | done | 9f5b6ba | 39030963918 | PARITY §24; NOT-DONE items 23-27; docs/PHASE-8-REPORT.md |
