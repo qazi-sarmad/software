@@ -5,7 +5,7 @@ import { test, expect, type Page } from '@playwright/test';
  * window. Freeze is gated on zero open comments and a passing CAP reconciliation; issuance shows a
  * "queued (pending dispatch)" notice, never a "sent" claim. Non-blocking throughout.
  */
-const APPROVER_EMAIL = 'ayesha.khan@provio-test.invalid';
+
 const PREPARER_EMAIL = 'bilal.ahmed@provio-test.invalid';
 
 async function signIn(page: Page, email: string) {
@@ -27,7 +27,7 @@ async function openFirstEngagement(page: Page) {
 
 test.describe('Phase 6 UI', () => {
   test('[E2E] the report view renders the section tabs and version sidebar', async ({ page }) => {
-    await signIn(page, APPROVER_EMAIL);
+    await signIn(page, PREPARER_EMAIL);
     await openFirstEngagement(page);
     await page.getByTestId('audit-file-view-report').click();
     await expect(page.getByTestId('report-editor')).toBeVisible();
@@ -43,7 +43,7 @@ test.describe('Phase 6 UI', () => {
   });
 
   test('[E2E] the CAP register view renders with status chips or a designed empty state', async ({ page }) => {
-    await signIn(page, APPROVER_EMAIL);
+    await signIn(page, PREPARER_EMAIL);
     await openFirstEngagement(page);
     await page.getByTestId('audit-file-view-caps').click();
     await expect(page.getByTestId('cap-register')).toBeVisible();
@@ -51,7 +51,7 @@ test.describe('Phase 6 UI', () => {
   });
 
   test('[E2E] the phase 6 views use no blocking modal', async ({ page }) => {
-    await signIn(page, APPROVER_EMAIL);
+    await signIn(page, PREPARER_EMAIL);
     await openFirstEngagement(page);
     await page.getByTestId('audit-file-view-report').click();
     await expect(page.getByTestId('report-editor')).toBeVisible();

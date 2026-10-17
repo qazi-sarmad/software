@@ -6,7 +6,6 @@ import { test, expect, type Page } from '@playwright/test';
  * name.
  */
 const PREPARER_EMAIL = 'bilal.ahmed@provio-test.invalid';
-const ORG_ADMIN_EMAIL = 'ayesha.khan@provio-test.invalid';
 
 async function signIn(page: Page, email: string) {
   await page.goto('/');
@@ -34,7 +33,7 @@ test.describe('Phase 5 UI', () => {
   });
 
   test('[E2E] the conclusion workspace shows the testing pre-flight banner', async ({ page }) => {
-    await signIn(page, ORG_ADMIN_EMAIL);
+    await signIn(page, PREPARER_EMAIL);
     await openFirstEngagement(page);
     await page.getByTestId('audit-file-view-conclusion').click();
     await expect(page.getByTestId('conclusion-panel')).toBeVisible();

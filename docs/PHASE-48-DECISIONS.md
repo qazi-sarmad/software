@@ -627,3 +627,43 @@ authority stays in SQL. How to reverse: delete the pre-flight block; the databas
 The Playwright run composes reports and writes comments, blocks and CAP rows; global-setup now deletes
 report_comments, report_blocks, report_versions, caps and email_queue per org (M5), children before
 parents.
+
+## D-E2E-SCOPE - the audit-side Playwright users are unscoped, so the tenant seed is reachable
+
+Root cause of the red CI on 811b2f1 (4I), 389a1e1 (5G) and bc08485 (6H): `useScopedData` filters the
+tenant seed through `src/lib/access.ts`, and `canAccessUniverse` returns false when the session's
+`universeIds` are non-empty and do not contain the seed universe id. The harness gave bilal.ahmed a
+`user_scopes` row pointing at the synthetic universe `A_U1` (`f011bd6c-…`), but the tenant seed's
+universes are `u-gbm` / `u-rdb`. Every seeded engagement was therefore filtered out, `AuditFileTab`
+rendered no `audit-card-*`, and each phase4/5/6 spec failed at `expect(card).toBeVisible()`.
+
+Decision: leave the audit-side users (bilal.ahmed, sana.iqbal, fatima.rehman) with **no** `user_scopes`
+row. An empty `universeIds` list is the documented "all universes in the organisation" path in
+`access.ts`, so the seed is reachable. ayesha.khan and hamza.qureshi keep a scope row so `rls.spec.ts`
+still observes non-empty `user_scopes` for its own org (that test asserts `rows.length > 0`).
+
+Options considered: (a) re-point `user_scopes` at the seed universe ids `u-gbm`/`u-rdb` - rejected,
+those ids are not valid uuids, the column is `uuid`, and the seed is app-side only; (b) leave the scope
+rows and seed real universes into the test project - rejected, outside a harness fix and it would change
+the product's seed contract. Chosen (c) unscoped audit users: smallest change, no product behaviour
+touched.
+
+How to reverse: restore `universes: [A_U1]` / `[B_U1, B_U2]` / `[B_U1]` in the `USERS` table of
+`e2e/global-setup.ts` and delete the `.filter((u) => u.universes.length > 0)` guard on the scope insert.
+
+## D-E2E-PRINCIPAL - the Phase 5 and 6 specs use an audit-rights principal, not the org admin
+
+`phase5.spec.ts` and `phase6.spec.ts` signed in as `ayesha.khan` (org_admin) and then opened the Audit
+Files tab. An org_admin holds no audit right, so `NavStrip` shows it zero audit tabs by design - asserted
+by `smoke.spec.ts` ("org admin sees no audit tabs"). Those specs could never pass. Decision: both specs
+now sign in as `bilal.ahmed` (preparer, holds `perform_work`), the same principal the other audit-side
+specs use.
+
+How to reverse: restore the `ORG_ADMIN_EMAIL` / `APPROVER_EMAIL` constants in the two specs.
+
+## D-E2E-PLACEHOLDER - the 4I/5G/6H progress rows carried `_this_`/`_CI_`
+
+The three UI tasks were committed with placeholder values in `docs/PHASE-48-PROGRESS.md` and their CI
+was in fact red, so "done" was never true for them. This commit corrects the rows to real commit hashes
+and CI run IDs (4I `811b2f1`, 5G `389a1e1`, 6H `bc08485`) and marks them `fixed` with this commit's run
+ID once the run completes. How to reverse: n/a (documentation correction).

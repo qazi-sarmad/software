@@ -59,12 +59,16 @@ const ROLE_IDS_B: Record<string, string> = {
   auditee: '28e2428f-e5be-551d-a7bf-7ccdde32445b',
 };
 
+// The `universes` list becomes the user's user_scopes rows. Audit-side accounts (bilal, sana,
+// fatima) intentionally carry no scope row: an empty scope list is the "all universes" path, which
+// is what lets them reach the seeded audit records the UI specs exercise. The two org admins keep
+// a scope row so the RLS spec still observes non-empty user_scopes for its own org.
 const USERS = [
   { email: 'ayesha.khan@provio-test.invalid', name: 'Ayesha Khan', org: ORG_A, role: 'org_admin', roleIds: ROLE_IDS_A, universes: [A_U1] },
-  { email: 'bilal.ahmed@provio-test.invalid', name: 'Bilal Ahmed', org: ORG_A, role: 'preparer', roleIds: ROLE_IDS_A, universes: [A_U1] },
+  { email: 'bilal.ahmed@provio-test.invalid', name: 'Bilal Ahmed', org: ORG_A, role: 'preparer', roleIds: ROLE_IDS_A, universes: [] },
   { email: 'hamza.qureshi@provio-test.invalid', name: 'Hamza Qureshi', org: ORG_B, role: 'org_admin', roleIds: ROLE_IDS_B, universes: [B_U1, B_U2] },
-  { email: 'sana.iqbal@provio-test.invalid', name: 'Sana Iqbal', org: ORG_B, role: 'reviewer', roleIds: ROLE_IDS_B, universes: [B_U1, B_U2] },
-  { email: 'fatima.rehman@provio-test.invalid', name: 'Fatima Rehman', org: ORG_B, role: 'preparer', roleIds: ROLE_IDS_B, universes: [B_U1] },
+  { email: 'sana.iqbal@provio-test.invalid', name: 'Sana Iqbal', org: ORG_B, role: 'reviewer', roleIds: ROLE_IDS_B, universes: [] },
+  { email: 'fatima.rehman@provio-test.invalid', name: 'Fatima Rehman', org: ORG_B, role: 'preparer', roleIds: ROLE_IDS_B, universes: [] },
 ];
 
 function must<T extends { error: { message: string } | null }>(label: string, result: T): T {
@@ -144,7 +148,13 @@ export default async function globalSetup() {
   };
 
   must('delete scopes', await sb.from('user_scopes').delete().in('org_id', [ORG_A, ORG_B]));
-  const scopes = USERS.flatMap((u) =>
+  // Scope rows are what RLS and the scope assertions observe. The audit-side e2e users (bilal,
+  // sana, fatima) are deliberately left UNscoped: an empty universeIds list is the documented
+  // "all universes in the org" path in src/lib/access.ts, which is how they reach the seeded
+  // audit records. Scoping them to a synthetic universe id (not present in the tenant seed data)
+  // would filter every seeded record out. ayesha and hamza keep a scope row so rls.spec's
+  // non-vacuous "own org rows" check still holds.
+  const scopes = USERS.filter((u) => u.universes.length > 0).flatMap((u) =>
     u.universes.map((universe) => ({ org_id: u.org, user_id: authIdFor(u.email, u.org), universe_id: universe, entity_id: null, engagement_id: null })),
   );
   must('insert scopes', await sb.from('user_scopes').insert(scopes));
