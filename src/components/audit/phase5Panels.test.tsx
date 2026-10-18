@@ -1,6 +1,7 @@
 import React from 'react';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { holdToConfirm } from '../../test/holdToConfirm';
 
 const listObs = vi.fn();
 const listIss = vi.fn();
@@ -151,7 +152,9 @@ describe('Phase 5 UI panels (5G)', () => {
       render(<ConclusionPanel engagementId="e1" />);
       const btn = await screen.findByTestId('conclusion-sign');
       expect((btn as HTMLButtonElement).disabled).toBe(false);
-      fireEvent.click(btn);
+      vi.useFakeTimers();
+      holdToConfirm(btn);
+      vi.useRealTimers();
       await waitFor(() => expect(signConc).toHaveBeenCalledWith('e1'));
     });
 

@@ -12,6 +12,7 @@ import {
 import { hasRight } from '../../lib/rights';
 import { rightReason, rightReasonFor } from '../../lib/rightLabels';
 import { InlineError } from '../common/InlineError';
+import { HoldToConfirm } from '../common/HoldToConfirm';
 import { Check, X, AlertTriangle, ShieldCheck, Lock, RotateCcw } from '../common/Icons';
 
 const RESULTS: { id: RowResult; label: string; icon: React.FC<{ className?: string }> }[] = [
@@ -226,16 +227,17 @@ export const RowTestingPanel: React.FC<{ workpaperId: string }> = ({ workpaperId
                 {incomplete.map((r) => r.rowRef).join(', ')}
               </div>
             )}
-            <button
-              type="button"
-              data-testid="rowtesting-signoff"
-              onClick={sign}
+            <HoldToConfirm
+              label="Sign off working paper"
+              testId="rowtesting-signoff"
+              durationMs={2000}
+              onConfirm={sign}
               disabled={busy || !canReview || rows.length === 0 || incomplete.length > 0}
               title={!canReview ? rightReason('review_and_approve') : undefined}
-              className="px-4 py-2 rounded-lg bg-surface border border-hairline hover:bg-surface-hover text-apple-13 font-semibold text-primary disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="relative overflow-hidden px-4 py-2 rounded-lg bg-surface border border-hairline hover:bg-surface-hover text-apple-13 font-semibold text-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               <Lock className="w-4 h-4" /> Sign off working paper
-            </button>
+            </HoldToConfirm>
             {!canReview && (
               <div className="text-apple-11 text-secondary" data-testid="rowtesting-signoff-reason">
                 {rightReason('review_and_approve')}

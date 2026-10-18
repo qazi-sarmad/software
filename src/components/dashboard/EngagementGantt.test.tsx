@@ -1,6 +1,7 @@
 import React from 'react';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { holdToConfirm } from '../../test/holdToConfirm';
 import { EngagementGantt } from './EngagementGantt';
 import { AppProvider } from '../../context/AppContext';
 import { ThemeProvider } from '../../context/ThemeContext';
@@ -70,7 +71,9 @@ describe('EngagementGantt reschedule persistence (D9)', () => {
     pointer(bar, 'pointerdown', 100);
     pointer(bar, 'pointermove', 148);
     pointer(bar, 'pointerup', 148);
-    fireEvent.click(screen.getByTestId('gantt-approve-shift'));
+    vi.useFakeTimers();
+    holdToConfirm(screen.getByTestId('gantt-approve-shift'));
+    vi.useRealTimers();
 
     await waitFor(() => expect(onRescheduled).toHaveBeenCalled());
     expect(planItemForEngagement).toHaveBeenCalledWith(engagement.id);
@@ -88,7 +91,9 @@ describe('EngagementGantt reschedule persistence (D9)', () => {
     pointer(bar, 'pointerdown', 100);
     pointer(bar, 'pointermove', 148);
     pointer(bar, 'pointerup', 148);
-    fireEvent.click(screen.getByTestId('gantt-approve-shift'));
+    vi.useFakeTimers();
+    holdToConfirm(screen.getByTestId('gantt-approve-shift'));
+    vi.useRealTimers();
 
     await waitFor(() => expect(screen.getByTestId('gantt-shift-error')).toBeTruthy());
     expect(screen.getByTestId('gantt-shift-error').textContent).toMatch(/approved plan cannot be changed/);

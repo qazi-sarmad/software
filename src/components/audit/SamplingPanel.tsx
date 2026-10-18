@@ -13,6 +13,7 @@ import {
 import { hasRight } from '../../lib/rights';
 import { rightReason, rightReasonFor } from '../../lib/rightLabels';
 import { InlineError } from '../common/InlineError';
+import { HoldToConfirm } from '../common/HoldToConfirm';
 import { Sliders, Lock, CheckCircle2, Hash, Layers } from '../common/Icons';
 
 /**
@@ -198,15 +199,16 @@ export const SamplingPanel: React.FC<{ workpaperId: string }> = ({ workpaperId }
                 <CheckCircle2 className="w-3.5 h-3.5" /> Locked
               </span>
             ) : (
-              <button
-                type="button"
-                data-testid="sampling-lock"
-                onClick={lock}
+              <HoldToConfirm
+                label="Lock sample"
+                testId="sampling-lock"
+                durationMs={2000}
+                onConfirm={lock}
                 disabled={busy || !canWrite}
-                className="px-3 py-1.5 rounded-lg bg-surface border border-hairline hover:bg-surface-hover text-apple-12 font-semibold text-primary disabled:opacity-50 flex items-center gap-1.5"
+                className="relative overflow-hidden px-3 py-1.5 rounded-lg bg-surface border border-hairline hover:bg-surface-hover text-apple-12 font-semibold text-primary disabled:opacity-50 transition-colors"
               >
                 <Lock className="w-3.5 h-3.5" /> Lock sample
-              </button>
+              </HoldToConfirm>
             )}
           </div>
           <div className="text-apple-11 text-tertiary font-mono break-all">seed: {sample.seed}</div>

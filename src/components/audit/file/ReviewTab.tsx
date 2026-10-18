@@ -3,6 +3,7 @@ import { AuditEngagement } from '../../../types';
 import { GateSummary, SignOffState } from '../../../lib/auditFile';
 import { CheckCircle2, FileText, ShieldCheck } from '../../common/Icons';
 import { InlineError } from '../../common/InlineError';
+import { HoldToConfirm } from '../../common/HoldToConfirm';
 
 interface ReviewTabProps {
   engagement: AuditEngagement;
@@ -40,17 +41,18 @@ export const ReviewTab: React.FC<ReviewTabProps> = ({ engagement, gate, signOff,
         </div>
       ) : (
         <>
-          <button
-            type="button"
-            data-testid="signoff-button"
-            onClick={onSignOff}
+          <HoldToConfirm
+            label="Sign-Off Engagement File"
+            testId="signoff-button"
+            durationMs={2000}
+            onConfirm={onSignOff}
             disabled={!signOff.enabled}
             title={signOff.enabled ? undefined : signOff.reason}
-            className="px-4 py-2 rounded-lg bg-surface border border-hairline hover:bg-surface-hover text-apple-13 font-semibold text-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+            className="relative overflow-hidden px-4 py-2 rounded-lg bg-surface border border-hairline hover:bg-surface-hover text-apple-13 font-semibold text-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <CheckCircle2 className="w-4 h-4 text-verdigris" />
             <span>Sign-Off Engagement File</span>
-          </button>
+          </HoldToConfirm>
           {!signOff.enabled && signOff.reason && (
             <div className="text-apple-11 text-secondary" data-testid="signoff-reason">{signOff.reason}</div>
           )}

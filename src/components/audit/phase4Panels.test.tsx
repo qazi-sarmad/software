@@ -1,6 +1,7 @@
 import React from 'react';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { holdToConfirm } from '../../test/holdToConfirm';
 
 const listPops = vi.fn();
 const lockPop = vi.fn();
@@ -83,7 +84,9 @@ describe('Phase 4 UI panels (4I)', () => {
     render(<PopulationPanel engagementId="e1" />);
     await waitFor(() => expect(screen.getByTestId('population-row-p1')).toBeTruthy());
     expect(screen.getByTestId('population-status-p1').textContent).toBe('verified');
-    fireEvent.click(screen.getByTestId('population-lock-p1'));
+    vi.useFakeTimers();
+    holdToConfirm(screen.getByTestId('population-lock-p1'));
+    vi.useRealTimers();
     await waitFor(() => expect(lockPop).toHaveBeenCalledWith('p1'));
   });
 

@@ -4,6 +4,7 @@ import { useApp } from '../../context/AppContext';
 import { useScopedData } from '../../hooks/useScopedData';
 import { ShieldCheck, Lock, Unlock, Share2, CheckCircle2, RotateCcw, AlertCircle } from '../common/Icons';
 import { InlineError } from '../common/InlineError';
+import { HoldToConfirm } from '../common/HoldToConfirm';
 
 interface WorkbenchHeaderProps {
   workpaper: WorkingPaper;
@@ -119,14 +120,16 @@ export const WorkbenchHeader: React.FC<WorkbenchHeaderProps> = ({ workpaper, eng
             <span>Reopen Paper</span>
           </button>
         ) : (
-          <button
-            type="button"
-            onClick={handleSignOff}
-            className="px-4 py-1.5 rounded-lg bg-verdigris text-white text-apple-12 font-semibold hover:opacity-90 transition-opacity flex items-center gap-1.5"
+          <HoldToConfirm
+            label="Seal & Attest (4-Eyes)"
+            testId="workbench-signoff"
+            durationMs={2000}
+            onConfirm={handleSignOff}
+            className="relative overflow-hidden px-4 py-1.5 rounded-lg bg-verdigris text-white text-apple-12 font-semibold hover:opacity-90 transition-opacity"
           >
             <CheckCircle2 className="w-3.5 h-3.5" />
             <span>Seal &amp; Attest (4-Eyes)</span>
-          </button>
+          </HoldToConfirm>
         )}
       </div>
       {actionError && (

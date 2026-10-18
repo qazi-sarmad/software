@@ -12,6 +12,7 @@ import {
 import { hasRight } from '../../lib/rights';
 import { rightReason, rightReasonFor } from '../../lib/rightLabels';
 import { InlineError } from '../common/InlineError';
+import { HoldToConfirm } from '../common/HoldToConfirm';
 import { PriorYearImportPanel } from './PriorYearImportPanel';
 import { AlertTriangle, CheckCircle2, ShieldCheck, Lock, RefreshCw } from '../common/Icons';
 
@@ -227,16 +228,17 @@ export const PlanningPanel: React.FC<{ engagementId: string }> = ({ engagementId
           </div>
         ) : (
           <>
-            <button
-              type="button"
-              data-testid="planning-signoff"
-              onClick={sign}
+            <HoldToConfirm
+              label="Sign off planning"
+              testId="planning-signoff"
+              durationMs={2000}
+              onConfirm={sign}
               disabled={!reconciled || !canSign || busy}
               title={!canSign ? rightReason('review_and_approve') : !reconciled ? 'Reconciliation gate is unmet.' : undefined}
-              className="px-4 py-2 rounded-lg bg-surface border border-hairline hover:bg-surface-hover text-apple-13 font-semibold text-primary disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="relative overflow-hidden px-4 py-2 rounded-lg bg-surface border border-hairline hover:bg-surface-hover text-apple-13 font-semibold text-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               <Lock className="w-4 h-4" /> Sign off planning
-            </button>
+            </HoldToConfirm>
             {!canSign && (
               <div className="text-apple-11 text-secondary" data-testid="planning-signoff-reason">
                 {rightReason('review_and_approve')}

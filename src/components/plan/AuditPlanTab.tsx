@@ -3,6 +3,7 @@ import { useScopedData } from '../../hooks/useScopedData';
 import { useApp } from '../../context/AppContext';
 import { HoverPreview } from '../common/HoverPreview';
 import { InlineError } from '../common/InlineError';
+import { HoldToConfirm } from '../common/HoldToConfirm';
 import { listDeploymentRequests, listGateOutcomes, type DeploymentRequestRow, type GateOutcomeRow } from '../../data/deployment';
 import { latestPlanForUniverse, listPlanItems, planHistory, type PlanItemRow, type PlanVersionRow } from '../../data/plan';
 import { isUuid } from '../../lib/ids';
@@ -331,12 +332,15 @@ export const AuditPlanTab: React.FC = () => {
                     leadAuditorId: selectedEngagement.leadAuditorId,
                     preparerId: selectedEngagement.leadAuditorId,
                   }).allowed && (
-                    <button
-                      onClick={() => handleSignOff(selectedEngagement.id)}
-                      className="px-4 py-2 bg-accent text-white font-medium text-apple-12 rounded-xl hover:opacity-90 transition-opacity shadow-xs"
+                    <HoldToConfirm
+                      label="Sign-off & Seal"
+                      testId="engagement-signoff"
+                      durationMs={2000}
+                      onConfirm={() => handleSignOff(selectedEngagement.id)}
+                      className="relative overflow-hidden px-4 py-2 bg-accent text-white font-medium text-apple-12 rounded-xl hover:opacity-90 transition-opacity shadow-xs"
                     >
                       Sign-off &amp; Seal
-                    </button>
+                    </HoldToConfirm>
                   )
                 ) : (
                   <div>

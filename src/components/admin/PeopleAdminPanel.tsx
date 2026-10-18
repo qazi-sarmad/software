@@ -21,6 +21,7 @@ import {
 } from '../../data/admin';
 import { Select } from '../common/Select';
 import { Check, Minus, Plus, User, Users, XCircle } from '../common/Icons';
+import { HoldToConfirm } from '../common/HoldToConfirm';
 
 type Tab = 'people' | 'roles';
 type LoadState = 'loading' | 'ready' | 'error';
@@ -399,13 +400,15 @@ export const PeopleAdminPanel: React.FC = () => {
                     .map((r) => (
                       <li key={r.id} className="flex items-center justify-between text-apple-12 text-primary">
                         <span>{r.name}</span>
-                        <button
-                          aria-label={`Delete role ${r.name}`}
-                          onClick={() => void run(() => deleteRole(r.slug))}
-                          className="text-cinnabar hover:opacity-80"
+                        <HoldToConfirm
+                          label={`Delete role ${r.name}`}
+                          testId={`admin-delete-role-${r.slug}`}
+                          durationMs={2000}
+                          onConfirm={() => void run(() => deleteRole(r.slug))}
+                          className="relative overflow-hidden text-cinnabar hover:opacity-80 transition-opacity"
                         >
                           <Minus className="w-3.5 h-3.5 stroke-[1.5]" />
-                        </button>
+                        </HoldToConfirm>
                       </li>
                     ))}
                 </ul>

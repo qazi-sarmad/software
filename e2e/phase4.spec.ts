@@ -48,12 +48,24 @@ test.describe('Phase 4 UI', () => {
     await expect(signoff).toBeVisible();
     // A preparer holds perform_work but not review_and_approve, so sign-off is refused in place.
     await expect(signoff).toBeDisabled();
-    await expect(page.getByTestId('planning-signoff-reason')).toContainText('review_and_approve');
+    // D14: the reason is plain language, never the internal right slug.
+    await expect(page.getByTestId('planning-signoff-reason')).toContainText('review and approve');
   });
 
   test('[E2E] the workspace uses no blocking modal', async ({ page }) => {
     await openFirstEngagementWorkspace(page);
     await expect(page.locator('[aria-modal="true"]')).toHaveCount(0);
+  });
+
+  test('[E2E] an irreversible sign-off needs a hold, not a single click', async ({ page }) => {
+    await openFirstEngagementWorkspace(page);
+    const signoff = page.getByTestId('planning-signoff');
+    await expect(signoff).toBeVisible();
+    // A preparer cannot sign off, so the control is disabled and the hold never arms.
+    await expect(signoff).toBeDisabled();
+    await signoff.click({ force: true });
+    // Nothing navigates away and the panel is still on screen: a stray click is inert.
+    await expect(page.getByTestId('planning-panel')).toBeVisible();
   });
 
   test('[E2E] the full-page record view renders a breadcrumb and no overlay', async ({ page }) => {

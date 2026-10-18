@@ -7,12 +7,19 @@ interface HoldToConfirmProps {
   testId?: string;
   /** How long the user must hold, in milliseconds. */
   durationMs?: number;
+  /** Optional class list; defaults to the standard bordered button. */
+  className?: string;
+  /** Optional native title, used to explain a disabled control. */
+  title?: string;
+  /** Optional content rendered in place of the label (e.g. an icon plus text). */
+  children?: React.ReactNode;
 }
 
 /**
  * Hold-to-confirm control for consequential actions (§27.5 names it as the allowed alternative to a
  * blocking modal). It is an in-place button: no scrim, no dialog attribute. The action fires only
- * when the pointer or key is held for the full duration.
+ * when the pointer or key is held for the full duration, so a stray single click can never trigger
+ * an irreversible action.
  */
 export const HoldToConfirm: React.FC<HoldToConfirmProps> = ({
   label,
@@ -20,6 +27,9 @@ export const HoldToConfirm: React.FC<HoldToConfirmProps> = ({
   disabled = false,
   testId = 'hold-to-confirm',
   durationMs = 1200,
+  className,
+  title,
+  children,
 }) => {
   const [progress, setProgress] = useState(0);
   const [holding, setHolding] = useState(false);
@@ -56,6 +66,7 @@ export const HoldToConfirm: React.FC<HoldToConfirmProps> = ({
       type="button"
       data-testid={testId}
       disabled={disabled}
+      title={title}
       onMouseDown={start}
       onMouseUp={stop}
       onMouseLeave={stop}
@@ -64,14 +75,17 @@ export const HoldToConfirm: React.FC<HoldToConfirmProps> = ({
       }}
       onKeyUp={stop}
       onBlur={stop}
-      className="relative overflow-hidden px-4 py-2 rounded-lg bg-surface border border-hairline hover:bg-surface-hover text-apple-13 font-semibold text-primary disabled:opacity-50 transition-colors"
+      className={
+        className ??
+        'relative overflow-hidden px-4 py-2 rounded-lg bg-surface border border-hairline hover:bg-surface-hover text-apple-13 font-semibold text-primary disabled:opacity-50 transition-colors'
+      }
     >
       <span
         aria-hidden
         className="absolute inset-y-0 left-0 bg-cinnabar-subtle transition-[width]"
         style={{ width: `${progress}%` }}
       />
-      <span className="relative">{holding ? 'Keep holding…' : label}</span>
+      <span className="relative flex items-center gap-2">{children ?? label}</span>
     </button>
   );
 };

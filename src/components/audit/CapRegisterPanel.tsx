@@ -4,6 +4,7 @@ import { listCaps, updateCap, closeCap, type CapRow, type CapStatus } from '../.
 import { hasRight } from '../../lib/rights';
 import { rightReason, rightReasonFor } from '../../lib/rightLabels';
 import { InlineError } from '../common/InlineError';
+import { HoldToConfirm } from '../common/HoldToConfirm';
 import { CheckCircle2, Clock, ShieldCheck } from '../common/Icons';
 
 const CAP_STATUS_CHIP: Record<CapStatus, string> = {
@@ -142,16 +143,17 @@ export const CapRegisterPanel: React.FC<{ engagementId: string }> = ({ engagemen
                       >
                         Record update
                       </button>
-                      <button
-                        type="button"
-                        data-testid={`cap-close-${c.id}`}
-                        onClick={() => close(c, true, false)}
+                      <HoldToConfirm
+                        label="Verify & close"
+                        testId={`cap-close-${c.id}`}
+                        durationMs={2000}
+                        onConfirm={() => close(c, true, false)}
                         disabled={busy || !canReview}
                         title={!canReview ? rightReason('review_and_approve') : undefined}
-                        className="px-3 py-1.5 rounded-lg bg-surface border border-hairline text-apple-12 font-semibold text-primary disabled:opacity-50 flex items-center gap-1.5"
+                        className="relative overflow-hidden px-3 py-1.5 rounded-lg bg-surface border border-hairline text-apple-12 font-semibold text-primary disabled:opacity-50 transition-colors"
                       >
                         <CheckCircle2 className="w-3.5 h-3.5" /> Verify &amp; close
-                      </button>
+                      </HoldToConfirm>
                     </div>
                   </div>
                 )}

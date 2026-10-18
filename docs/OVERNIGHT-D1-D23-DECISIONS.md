@@ -188,3 +188,26 @@ byte-identical (the `min()` selects the prop width whenever the viewport is wide
 375px usable, which is what "unhide and reflow" asks for.
 How to reverse: `git revert` the D15 commit; the header returns to hiding both entry points below
 their breakpoints and the window returns to a bare `width` style.
+
+## D-D16-hold — irreversible actions require a hold, not a click
+
+Task D16. Unclear point: the prompt says ~15 irreversible actions (sign-off, lock, publish, freeze,
+approve) are single-click and should "use hold-to-confirm", but it does not say which component or
+how existing tests that `fireEvent.click` these controls should adapt.
+Options: (1) wrap each button in a confirm panel (a blocking modal — banned by §27.5); (2) add a
+second click "Are you sure?" step; (3) reuse the existing `HoldToConfirm` control (press-and-hold,
+in place, no scrim) and migrate the affected call sites.
+Choice: option 3. `HoldToConfirm` was extended with optional `className`, `title` and `children` so
+it is a drop-in for each existing `<button>`; the hold duration is 2000 ms for these consequential
+actions (the component default stays 1200 ms). Call sites migrated: planning sign-off, population
+lock, sampling lock, row-testing sign-off, conclusion sign, CAP register close, CAP inspector
+confirm-close, report issue, workbench seal & attest, engagement-file sign-off, plan tab sign-off &
+seal, Gantt approve-shift, entity approve, SIRA cycle publish, admin delete-role. A shared test
+helper `src/test/holdToConfirm.ts` drives the control under fake timers; the six unit tests that
+previously single-clicked these controls were updated to hold, and a dedicated
+`HoldToConfirm.test.tsx` pins click-inert / early-release-inert / disabled-inert behaviour.
+Reason: a hold is the spec-named non-blocking alternative to a modal and needs no extra screen, so it
+satisfies the ban while still preventing a stray click from sealing a file. Reusing one component
+keeps one implementation and one test helper.
+How to reverse: `git revert` the D16 commit; every call site returns to its plain `<button>` and
+`src/test/holdToConfirm.ts` plus `HoldToConfirm.test.tsx` are removed.

@@ -10,6 +10,7 @@ import {
 import { hasRight } from '../../lib/rights';
 import { rightReason, rightReasonFor } from '../../lib/rightLabels';
 import { InlineError } from '../common/InlineError';
+import { HoldToConfirm } from '../common/HoldToConfirm';
 import { ArrowDown, ShieldCheck, XCircle } from '../common/Icons';
 
 interface ExceptionItem {
@@ -154,16 +155,17 @@ export const ConclusionPanel: React.FC<{ engagementId: string }> = ({ engagement
           </div>
         ) : (
           <>
-            <button
-              type="button"
-              data-testid="conclusion-sign"
-              onClick={sign}
+            <HoldToConfirm
+              label="Sign conclusion"
+              testId="conclusion-sign"
+              durationMs={2000}
+              onConfirm={sign}
               disabled={busy || !canReview || !testingOk || exceptions.length === 0}
               title={!canReview ? rightReason('review_and_approve') : undefined}
-              className="px-4 py-2 rounded-lg bg-surface border border-hairline hover:bg-surface-hover text-apple-13 font-semibold text-primary disabled:opacity-50 flex items-center gap-2"
+              className="relative overflow-hidden px-4 py-2 rounded-lg bg-surface border border-hairline hover:bg-surface-hover text-apple-13 font-semibold text-primary disabled:opacity-50 transition-colors"
             >
               <ShieldCheck className="w-4 h-4" /> Sign conclusion
-            </button>
+            </HoldToConfirm>
             {!canReview && (
               <div className="text-apple-11 text-secondary" data-testid="conclusion-sign-reason">
                 {rightReason('review_and_approve')}

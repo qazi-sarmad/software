@@ -2,6 +2,7 @@ import React from 'react';
 import { useApp } from '../../context/AppContext';
 import { hasRight } from '../../lib/rights';
 import { rightReason } from '../../lib/rightLabels';
+import { HoldToConfirm } from '../common/HoldToConfirm';
 import { CheckCircle2, Clock, Plus, XCircle } from '../common/Icons';
 
 export interface SiraCycleView {
@@ -67,14 +68,15 @@ export const SiraCyclePanel: React.FC<{
                   </span>
                 </span>
                 {c.status === 'draft' && canManage && (
-                  <button
-                    type="button"
-                    data-testid={`sira-publish-${c.id}`}
-                    onClick={() => onPublishCycle?.(c.id)}
-                    className="px-3 py-1 rounded-lg bg-primary text-canvas text-apple-12 font-semibold"
+                  <HoldToConfirm
+                    label="Publish"
+                    testId={`sira-publish-${c.id}`}
+                    durationMs={2000}
+                    onConfirm={() => onPublishCycle?.(c.id)}
+                    className="relative overflow-hidden px-3 py-1 rounded-lg bg-primary text-canvas text-apple-12 font-semibold transition-colors"
                   >
                     Publish
-                  </button>
+                  </HoldToConfirm>
                 )}
               </li>
             ))}

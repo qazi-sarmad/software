@@ -10,6 +10,7 @@ import {
   type EntityRow,
 } from '../../data/universe';
 import { InlineError } from '../common/InlineError';
+import { HoldToConfirm } from '../common/HoldToConfirm';
 import { CheckCircle2, Clock, History, XCircle } from '../common/Icons';
 
 type LoadState = 'loading' | 'ready' | 'error';
@@ -94,16 +95,17 @@ export const EntityApprovalPanel: React.FC<{ entity: EntityRow; onDone?: () => v
         )}
         {status === 'pending' && (
           <>
-            <button
-              type="button"
-              data-testid="entity-approve"
+            <HoldToConfirm
+              label="Approve"
+              testId="entity-approve"
+              durationMs={2000}
+              onConfirm={() => void run(() => decideEntity(entity.id, true), 'approved')}
               disabled={!canDecide}
               title={canDecide ? undefined : rightReason('approve_plan')}
-              onClick={() => void run(() => decideEntity(entity.id, true), 'approved')}
-              className="px-3 py-1.5 rounded-lg bg-verdigris-subtle text-verdigris text-apple-13 font-semibold disabled:opacity-40"
+              className="relative overflow-hidden px-3 py-1.5 rounded-lg bg-verdigris-subtle text-verdigris text-apple-13 font-semibold disabled:opacity-40 transition-colors"
             >
               Approve
-            </button>
+            </HoldToConfirm>
             <input
               aria-label="Rejection reason"
               placeholder="Rejection reason (min 10 chars)"

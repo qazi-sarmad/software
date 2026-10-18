@@ -1,6 +1,7 @@
 import React from 'react';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { holdToConfirm } from '../../test/holdToConfirm';
 
 const composeFn = vi.fn();
 const freezeFn = vi.fn();
@@ -104,7 +105,9 @@ describe('Phase 6 UI panels (6H)', () => {
       listVersions.mockResolvedValue([{ ...version, status: 'frozen' as const }]);
       render(<ReportEditorPanel engagementId="e1" />);
       const btn = await screen.findByTestId('report-issue');
-      fireEvent.click(btn);
+      vi.useFakeTimers();
+      holdToConfirm(btn);
+      vi.useRealTimers();
       await waitFor(() => expect(issueFn).toHaveBeenCalledWith('v1'));
       await waitFor(() => expect(screen.getByTestId('report-notice').textContent).toContain('Email queued'));
     });
@@ -163,7 +166,9 @@ describe('Phase 6 UI panels (6H)', () => {
       listCapsFn.mockResolvedValue([cap]);
       render(<CapRegisterPanel engagementId="e1" />);
       const btn = await screen.findByTestId('cap-close-cap1');
-      fireEvent.click(btn);
+      vi.useFakeTimers();
+      holdToConfirm(btn);
+      vi.useRealTimers();
       await waitFor(() => expect(closeCapFn).toHaveBeenCalledWith('cap1', true, false));
 
       userRef.current = preparer as never;

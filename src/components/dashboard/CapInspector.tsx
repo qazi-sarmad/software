@@ -15,6 +15,7 @@ import {
   User,
   Calendar,
 } from '../common/Icons';
+import { HoldToConfirm } from '../common/HoldToConfirm';
 
 interface CapInspectorProps {
   data?: {
@@ -349,7 +350,15 @@ export const CapInspector: React.FC<CapInspectorProps> = ({ data, onClose }) => 
                 <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} className="w-full rounded-xl border border-hairline bg-surface-elevated p-2 text-apple-12 text-primary" />
                 {uploader}
                 <div className="flex gap-2">
-                  <button type="button" onClick={() => run('verify_close')} className="px-3 py-1.5 rounded-lg bg-verdigris-subtle text-verdigris text-apple-12 font-semibold">Confirm close</button>
+                  <HoldToConfirm
+                    label="Confirm close"
+                    testId="cap-confirm-close"
+                    durationMs={2000}
+                    onConfirm={() => run('verify_close')}
+                    className="relative overflow-hidden px-3 py-1.5 rounded-lg bg-verdigris-subtle text-verdigris text-apple-12 font-semibold transition-colors"
+                  >
+                    Confirm close
+                  </HoldToConfirm>
                   <button type="button" onClick={() => { setPanel('reject'); }} className="px-3 py-1.5 rounded-lg border border-cinnabar text-cinnabar text-apple-12 font-semibold">Reject instead</button>
                   <button type="button" onClick={() => setPanel('none')} className="px-3 py-1.5 rounded-lg border border-hairline text-apple-12">Cancel</button>
                 </div>

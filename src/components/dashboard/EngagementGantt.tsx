@@ -16,6 +16,7 @@ import {
 } from '../common/Icons';
 import { getDemoNow } from '../../lib/demoTime';
 import { InlineError } from '../common/InlineError';
+import { HoldToConfirm } from '../common/HoldToConfirm';
 import { planItemForEngagement, updatePlanItemDates } from '../../data/plan';
 
 interface EngagementGanttProps {
@@ -396,14 +397,16 @@ export const EngagementGantt: React.FC<EngagementGanttProps> = ({
               >
                 Dismiss
               </button>
-              <button
-                onClick={() => void handleApproveShift()}
+              <HoldToConfirm
+                label="Approve Shift"
+                testId="gantt-approve-shift"
+                durationMs={2000}
+                onConfirm={() => void handleApproveShift()}
                 disabled={savingShift}
-                data-testid="gantt-approve-shift"
-                className="px-2.5 py-1 rounded-lg bg-accent text-canvas font-semibold text-apple-11 shadow-xs disabled:opacity-60"
+                className="relative overflow-hidden px-2.5 py-1 rounded-lg bg-accent text-canvas font-semibold text-apple-11 shadow-xs disabled:opacity-60 transition-colors"
               >
                 {savingShift ? 'Saving…' : 'Approve Shift'}
-              </button>
+              </HoldToConfirm>
             </div>
           </motion.div>
         )}

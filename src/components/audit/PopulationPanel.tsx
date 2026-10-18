@@ -10,6 +10,7 @@ import {
 import { hasRight } from '../../lib/rights';
 import { rightReason, rightReasonFor } from '../../lib/rightLabels';
 import { InlineError } from '../common/InlineError';
+import { HoldToConfirm } from '../common/HoldToConfirm';
 import { Upload, Hash, Lock, CheckCircle2, Database, RefreshCw } from '../common/Icons';
 
 /**
@@ -182,15 +183,16 @@ export const PopulationPanel: React.FC<{ engagementId: string }> = ({ engagement
                   <div className="text-apple-11 text-secondary tabular-nums">{p.rowCount ?? 0} rows</div>
                 </div>
                 {p.status === 'verified' && (
-                  <button
-                    type="button"
-                    data-testid={`population-lock-${p.id}`}
-                    onClick={() => lock(p.id)}
+                  <HoldToConfirm
+                    label="Lock"
+                    testId={`population-lock-${p.id}`}
+                    durationMs={2000}
+                    onConfirm={() => lock(p.id)}
                     disabled={busy || !canWrite}
-                    className="shrink-0 px-3 py-1.5 rounded-lg bg-surface border border-hairline hover:bg-surface-hover text-apple-12 font-semibold text-primary disabled:opacity-50 flex items-center gap-1.5"
+                    className="relative overflow-hidden shrink-0 px-3 py-1.5 rounded-lg bg-surface border border-hairline hover:bg-surface-hover text-apple-12 font-semibold text-primary disabled:opacity-50 transition-colors"
                   >
                     <Lock className="w-3.5 h-3.5" /> Lock
-                  </button>
+                  </HoldToConfirm>
                 )}
                 {p.status === 'locked' && (
                   <span className="shrink-0 text-apple-11 font-semibold text-verdigris flex items-center gap-1">

@@ -343,15 +343,16 @@ export const ReportEditorPanel: React.FC<{ engagementId: string }> = ({ engageme
                   disabled={busy || !canApprove || !canFreeze || frozen}
                   onConfirm={freeze}
                 />
-                <button
-                  type="button"
-                  data-testid="report-issue"
-                  onClick={issue}
+                <HoldToConfirm
+                  label="Issue report"
+                  testId="report-issue"
+                  durationMs={2000}
+                  onConfirm={issue}
                   disabled={busy || !canApprove || active?.status !== 'frozen'}
-                  className="px-4 py-2 rounded-lg bg-surface border border-hairline hover:bg-surface-hover text-apple-13 font-semibold text-primary disabled:opacity-50 flex items-center gap-1.5"
+                  className="relative overflow-hidden px-4 py-2 rounded-lg bg-surface border border-hairline hover:bg-surface-hover text-apple-13 font-semibold text-primary disabled:opacity-50 transition-colors"
                 >
                   <Send className="w-3.5 h-3.5" /> Issue report
-                </button>
+                </HoldToConfirm>
               </div>
               {!canApprove && (
                 <div className="text-apple-11 text-secondary" data-testid="report-rights-note">
