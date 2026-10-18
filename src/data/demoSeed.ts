@@ -60,7 +60,7 @@ export async function buildDemoLedger(): Promise<LedgerEntry[]> {
     entityId: 'ent-treasury',
     recordId: 'eng-treas-2',
     recordType: 'engagement',
-    payloadSummary: 'Engagement eng-treas-2 ALM Liquidity formally signed-off and sealed [CANARY-TREASURY]',
+    payloadSummary: 'Engagement eng-treas-2 ALM Liquidity sealed [CANARY-TREASURY]',
     payloadHash: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
     timestamp: '2026-09-14T16:15:00Z',
   });

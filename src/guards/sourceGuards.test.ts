@@ -122,6 +122,37 @@ describe('source guards for production paths', () => {
     expect(hits).toEqual([]);
   });
 
+  it('uses "sealed" for the final state in user-visible copy (D18, spec §10.4)', () => {
+    // "Sealed" names the final read-only state; "sign off" is the action that produces it. A
+    // user-visible string must not present "signed off" as a state or spell out "Formally
+    // Signed-Off". Only string literals and JSX text are user-visible; status slugs such as
+    // 'signed_off' and identifiers are not.
+    const visibleSegments = (line: string): string[] => {
+      const t = line.trim();
+      if (t.startsWith('*') || t.startsWith('//') || t.startsWith('/*')) return [];
+      const segments: string[] = [];
+      for (const m of line.matchAll(/'([^']*)'|"([^"]*)"|`([^`]*)`/g)) {
+        segments.push(m[1] ?? m[2] ?? m[3] ?? '');
+      }
+      for (const m of line.matchAll(/>([^<>{}]+)</g)) segments.push(m[1]);
+      return segments;
+    };
+    const sealedMisuse = /\bformally signed[- ]off\b|\bis signed off\b|\bsigned[- ]off and\b|\bsigned off\b|\bsigned-off\b/i;
+    // data-testid / id values are slugs, not prose, so skip any segment that is entirely
+    // lowercase letters, digits and hyphens.
+    const isSlug = (s: string) => /^[a-z0-9-]+$/.test(s.trim());
+    const hits = prodFiles
+      .filter((f) =>
+        readFileSync(f, 'utf-8')
+          .split('\n')
+          .some((line) =>
+            visibleSegments(line).some((s) => !isSlug(s) && sealedMisuse.test(s)),
+          ),
+      )
+      .map((f) => relative(SRC, f));
+    expect(hits).toEqual([]);
+  });
+
   it('never shows an internal right slug to the user (D14)', () => {
     // Disabled controls must explain themselves in plain language via src/lib/rightLabels.ts; a
     // user-visible string must never spell out perform_work, review_and_approve, etc. Only the

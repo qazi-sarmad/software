@@ -292,7 +292,7 @@ export function canPerformAction(
   if (context?.isLocked && action !== 'reopen' && action !== 'view_ledger') {
     return {
       allowed: false,
-      reason: 'This audit record is sealed and signed-off. Reopen with justification to make changes.',
+      reason: 'This audit record is sealed. Reopen with justification to make changes.',
     };
   }
 

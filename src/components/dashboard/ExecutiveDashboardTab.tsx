@@ -97,7 +97,7 @@ export const ExecutiveDashboardTab: React.FC = () => {
           content={{
             title: `${stats.inProgressEngagements} Engagements in Progress`,
             category: 'Fieldwork Status',
-            subtitle: `${stats.completedEngagements} Completed and Signed-off`,
+            subtitle: `${stats.completedEngagements} Completed and sealed`,
             status: 'Fieldwork Stage',
             statusType: 'neutral',
             hint: 'Click to open Audit Plan',

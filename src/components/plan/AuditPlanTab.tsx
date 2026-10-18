@@ -333,13 +333,13 @@ export const AuditPlanTab: React.FC = () => {
                     preparerId: selectedEngagement.leadAuditorId,
                   }).allowed && (
                     <HoldToConfirm
-                      label="Sign-off & Seal"
+                      label="Sign off and seal"
                       testId="engagement-signoff"
                       durationMs={2000}
                       onConfirm={() => handleSignOff(selectedEngagement.id)}
                       className="relative overflow-hidden px-4 py-2 bg-accent text-white font-medium text-apple-12 rounded-xl hover:opacity-90 transition-opacity shadow-xs"
                     >
-                      Sign-off &amp; Seal
+                      Sign off and seal
                     </HoldToConfirm>
                   )
                 ) : (

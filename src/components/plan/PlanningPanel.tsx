@@ -224,12 +224,12 @@ export const PlanningPanel: React.FC<{ engagementId: string }> = ({ engagementId
         <div className="text-apple-13 font-semibold text-primary">Planning sign-off</div>
         {signedOff ? (
           <div className="px-3 py-2 rounded-xl text-apple-12 font-semibold bg-verdigris-subtle text-verdigris border border-verdigris flex items-center gap-2" data-testid="planning-signed-off">
-            <ShieldCheck className="w-4 h-4" /> Planning is signed off. Testing is unlocked.
+            <ShieldCheck className="w-4 h-4" /> Planning is sealed. Testing is unlocked.
           </div>
         ) : (
           <>
             <HoldToConfirm
-              label="Sign off planning"
+              label="Sign off and seal planning"
               testId="planning-signoff"
               durationMs={2000}
               onConfirm={sign}
@@ -237,7 +237,7 @@ export const PlanningPanel: React.FC<{ engagementId: string }> = ({ engagementId
               title={!canSign ? rightReason('review_and_approve') : !reconciled ? 'Reconciliation gate is unmet.' : undefined}
               className="relative overflow-hidden px-4 py-2 rounded-lg bg-surface border border-hairline hover:bg-surface-hover text-apple-13 font-semibold text-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              <Lock className="w-4 h-4" /> Sign off planning
+              <Lock className="w-4 h-4" /> Sign off and seal planning
             </HoldToConfirm>
             {!canSign && (
               <div className="text-apple-11 text-secondary" data-testid="planning-signoff-reason">

@@ -78,7 +78,7 @@ export const AuditFileModal: React.FC = () => {
           </div>
           {engagement.status === 'signed_off' && (
             <span className="px-2 py-0.5 rounded-full text-apple-11 font-semibold bg-verdigris-subtle text-verdigris border border-verdigris flex items-center gap-1">
-              <ShieldCheck className="w-3.5 h-3.5" /> Formally Signed-Off
+              <ShieldCheck className="w-3.5 h-3.5" /> Sealed
             </span>
           )}
         </div>

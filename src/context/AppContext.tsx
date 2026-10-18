@@ -249,7 +249,7 @@ export function AppProvider({ user, seed, children }: { user: User; seed: Tenant
       entityId: eng.entityId,
       recordId: eng.id,
       recordType: 'engagement',
-      payloadSummary: `Audit engagement "${eng.title}" signed-off and sealed by ${currentUser.name}`,
+      payloadSummary: `Audit engagement "${eng.title}" sealed by ${currentUser.name}`,
       payloadHash,
     });
 
@@ -466,7 +466,7 @@ export function AppProvider({ user, seed, children }: { user: User; seed: Tenant
       entityId: wp.entityId,
       recordId: wp.id,
       recordType: 'workpaper',
-      payloadSummary: `Working paper "${wp.refCode}" sealed and signed-off by Reviewer ${currentUser.name}`,
+      payloadSummary: `Working paper "${wp.refCode}" sealed by Reviewer ${currentUser.name}`,
       payloadHash,
     });
 

@@ -37,12 +37,12 @@ export const ReviewTab: React.FC<ReviewTabProps> = ({ engagement, gate, signOff,
       <div className="text-apple-13 font-semibold text-primary">Engagement sign-off</div>
       {engagement.status === 'signed_off' ? (
         <div className="px-3 py-2 rounded-xl text-apple-12 font-semibold bg-verdigris-subtle text-verdigris border border-verdigris flex items-center gap-2" data-testid="signed-off-note">
-          <ShieldCheck className="w-4 h-4" /> Signed off{engagement.signedOffBy ? ` by ${engagement.signedOffBy}` : ''}. This file is read-only.
+          <ShieldCheck className="w-4 h-4" /> Sealed{engagement.signedOffBy ? ` by ${engagement.signedOffBy}` : ''}. This file is read-only.
         </div>
       ) : (
         <>
           <HoldToConfirm
-            label="Sign-Off Engagement File"
+            label="Sign off and seal engagement file"
             testId="signoff-button"
             durationMs={2000}
             onConfirm={onSignOff}
@@ -51,7 +51,7 @@ export const ReviewTab: React.FC<ReviewTabProps> = ({ engagement, gate, signOff,
             className="relative overflow-hidden px-4 py-2 rounded-lg bg-surface border border-hairline hover:bg-surface-hover text-apple-13 font-semibold text-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <CheckCircle2 className="w-4 h-4 text-verdigris" />
-            <span>Sign-Off Engagement File</span>
+            <span>Sign off and seal engagement file</span>
           </HoldToConfirm>
           {!signOff.enabled && signOff.reason && (
             <div className="text-apple-11 text-secondary" data-testid="signoff-reason">{signOff.reason}</div>

@@ -192,7 +192,7 @@ export const RowTestingPanel: React.FC<{ workpaperId: string }> = ({ workpaperId
         {signedOff ? (
           <div className="space-y-2">
             <div className="px-3 py-2 rounded-xl text-apple-12 font-semibold bg-verdigris-subtle text-verdigris border border-verdigris flex items-center gap-2" data-testid="rowtesting-signed-off">
-              <ShieldCheck className="w-4 h-4" /> This working paper is signed off and read-only.
+              <ShieldCheck className="w-4 h-4" /> This working paper is sealed and read-only.
             </div>
             {canReopen && (
               <div className="space-y-2">
@@ -228,7 +228,7 @@ export const RowTestingPanel: React.FC<{ workpaperId: string }> = ({ workpaperId
               </div>
             )}
             <HoldToConfirm
-              label="Sign off working paper"
+              label="Sign off and seal working paper"
               testId="rowtesting-signoff"
               durationMs={2000}
               onConfirm={sign}
@@ -236,7 +236,7 @@ export const RowTestingPanel: React.FC<{ workpaperId: string }> = ({ workpaperId
               title={!canReview ? rightReason('review_and_approve') : undefined}
               className="relative overflow-hidden px-4 py-2 rounded-lg bg-surface border border-hairline hover:bg-surface-hover text-apple-13 font-semibold text-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              <Lock className="w-4 h-4" /> Sign off working paper
+              <Lock className="w-4 h-4" /> Sign off and seal working paper
             </HoldToConfirm>
             {!canReview && (
               <div className="text-apple-11 text-secondary" data-testid="rowtesting-signoff-reason">

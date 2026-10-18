@@ -211,3 +211,46 @@ satisfies the ban while still preventing a stray click from sealing a file. Reus
 keeps one implementation and one test helper.
 How to reverse: `git revert` the D16 commit; every call site returns to its plain `<button>` and
 `src/test/holdToConfirm.ts` plus `HoldToConfirm.test.tsx` are removed.
+
+## D-D17-terms — "Observation", "Finding" and "Issue" are three different things
+
+Task D17. Unclear point: the prompt says the code "mixes observation_card, finding_status,
+issue_detail" and lists colours (blue/green/gold), but spec §11.2 forbids blue and orange and
+assigns verdigris (calm/pass/sealed), cinnabar (exception/flag/overdue) and brass (money only).
+Which wins, and how far does the rename go?
+Options: (1) rename every identifier to the three words, including DB columns and RPCs; (2) rename
+only user-visible copy and keep identifiers stable; (3) rename user-visible copy and the local
+variables that name the wrong concept, but leave the schema and RPC names.
+Choice: option 3, and the colour law wins over the brief's palette. An Observation is the draft
+working record raised from testing; a Finding is concluded once it passes readability; an Issue is a
+thematic group of findings. The draft action was mislabelled "Raise Formal Audit Finding" /
+"Commit Finding" and the issue register was headed as if it held findings; both were corrected to
+"Record Observation" and "Issues & CAP Register". Colours stay verdigris / cinnabar / brass — no
+blue, no gold-as-finding, no orange.
+Reason: option 1 would churn migrations and RPC signatures (`raise_finding`,
+`raise_finding_from_result`) for no user benefit and would risk the SQL suite; the spec's §28 rule is
+about language the user reads, so copy plus the misleading local names is the right scope. The colour
+law is an explicit law (§11.2) and outranks a colour hint in a task prompt.
+How to reverse: `git revert` the D17 commit; the labels return to the old wording. The guard test in
+`src/guards/sourceGuards.test.ts` pins the distinction going forward.
+
+## D-D18-sealed — "sealed" is the state, "sign off" is the action
+
+Task D18. Unclear point: the prompt says replace "Formally Signed-Off" with "Sealed" and "signed off"
+(adjective) with "sealed", but also says buttons become "Sign off and seal" — i.e. the verb "sign off"
+survives in the action while the state word becomes "sealed". It also says to keep `signed_off_at`.
+Options: (1) purge every occurrence of "sign off"/"signed off" including the action; (2) treat "sealed"
+as the state and "sign off" as the action, and only rewrite strings where "signed off" is used as a
+state/adjective; (3) also rename the `signed_off` status slug and `signed_off_at` column.
+Choice: option 2. State/adjective strings became "sealed" (AuditFileModal badge, ExecutiveDashboard
+subtitle, Gantt legend and status, ReviewTab note, RowTestingPanel note, ConclusionPanel preflight
+and locked note, PlanningPanel note, ReportEditorPanel empty state, `workpaperLock` and `access`
+reasons, AppContext ledger summaries, the demoSeed canary). Action buttons became "Sign off and seal
+…". The `signed_off` status slug, `signed_off_at` column and `signOff`/`SignOffState` identifiers are
+unchanged.
+Reason: option 1 leaves the product with no word for the action the user performs; option 3 breaks
+the database and the RPC contract for a cosmetic gain, and the prompt explicitly says to keep
+`signed_off_at`. Option 2 matches the spec's separation of state from action and keeps the SQL layer
+untouched.
+How to reverse: `git revert` the D18 commit; the guard in `src/guards/sourceGuards.test.ts` (which
+ignores slug-shaped `data-testid` values) must be reverted with it.

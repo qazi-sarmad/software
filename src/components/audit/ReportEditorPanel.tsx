@@ -201,7 +201,7 @@ export const ReportEditorPanel: React.FC<{ engagementId: string }> = ({ engageme
 
       {versions.length === 0 ? (
         <div className="p-6 text-center text-apple-12 text-secondary bg-surface-elevated rounded-xl" data-testid="report-empty">
-          No report version exists yet. Compose one once the conclusion is signed off.
+          No report version exists yet. Compose one once the conclusion is sealed.
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_220px] gap-4">

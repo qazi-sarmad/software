@@ -92,12 +92,12 @@ export const ConclusionPanel: React.FC<{ engagementId: string }> = ({ engagement
         {testingOk ? (
           <>
             <ShieldCheck className="w-4 h-4 mt-0.5 shrink-0" />
-            <span>Testing is signed off. Exceptions can be pulled and the conclusion can be signed.</span>
+            <span>Testing is sealed. Exceptions can be pulled and the conclusion can be signed.</span>
           </>
         ) : (
           <>
             <XCircle className="w-4 h-4 mt-0.5 shrink-0" />
-            <span>Testing must be signed off before the Conclusion stage. Pull and sign-off are blocked.</span>
+            <span>Testing must be sealed before the Conclusion stage. Pull and sign-off are blocked.</span>
           </>
         )}
       </div>
@@ -151,12 +151,12 @@ export const ConclusionPanel: React.FC<{ engagementId: string }> = ({ engagement
         <div className="text-apple-13 font-semibold text-primary">Sign the conclusion</div>
         {locked ? (
           <div className="px-3 py-2 rounded-xl text-apple-12 font-semibold bg-verdigris-subtle text-verdigris border border-verdigris flex items-center gap-2" data-testid="conclusion-locked">
-            <ShieldCheck className="w-4 h-4" /> The conclusion is signed off and the engagement is sealed.
+            <ShieldCheck className="w-4 h-4" /> The conclusion is sealed and the engagement file is read-only.
           </div>
         ) : (
           <>
             <HoldToConfirm
-              label="Sign conclusion"
+              label="Sign off and seal conclusion"
               testId="conclusion-sign"
               durationMs={2000}
               onConfirm={sign}
@@ -164,7 +164,7 @@ export const ConclusionPanel: React.FC<{ engagementId: string }> = ({ engagement
               title={!canReview ? rightReason('review_and_approve') : undefined}
               className="relative overflow-hidden px-4 py-2 rounded-lg bg-surface border border-hairline hover:bg-surface-hover text-apple-13 font-semibold text-primary disabled:opacity-50 transition-colors"
             >
-              <ShieldCheck className="w-4 h-4" /> Sign conclusion
+              <ShieldCheck className="w-4 h-4" /> Sign off and seal conclusion
             </HoldToConfirm>
             {!canReview && (
               <div className="text-apple-11 text-secondary" data-testid="conclusion-sign-reason">

@@ -457,7 +457,7 @@ describe('Task A: Scoped Visibility and Rights & Responsibilities', () => {
     // Attempting edit on locked item -> disallowed
     const editLocked = canPerformAction(ciaUser, 'edit_workpaper', { isLocked: true });
     expect(editLocked.allowed).toBe(false);
-    expect(editLocked.reason).toContain('sealed and signed-off');
+    expect(editLocked.reason).toContain('sealed');
 
     // Attempting reopen with short note (< 10 chars) -> disallowed
     const reopenShort = canPerformAction(ciaUser, 'reopen', {

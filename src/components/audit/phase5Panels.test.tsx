@@ -127,7 +127,7 @@ describe('Phase 5 UI panels (5G)', () => {
       testingOk.mockResolvedValue(false);
       render(<ConclusionPanel engagementId="e1" />);
       await waitFor(() => expect(screen.getByTestId('conclusion-panel')).toBeTruthy());
-      expect(screen.getByTestId('conclusion-preflight').textContent).toContain('Testing must be signed off');
+      expect(screen.getByTestId('conclusion-preflight').textContent).toContain('Testing must be sealed');
       expect((screen.getByTestId('conclusion-pull') as HTMLButtonElement).disabled).toBe(true);
     });
 
