@@ -63,10 +63,19 @@ test.describe('3J: Phase 3 flows in the inspector', () => {
   test('[E2E] the combined-approval panel refuses to raise without an entity and offers it otherwise', async ({ page }) => {
     await openTab(page, 'Audit Plan');
     await page.getByTestId('plan-open-combined').click();
-    const raise = page.getByRole('dialog').getByTestId('combined-raise');
+    const dialog = page.getByRole('dialog');
+    const raise = dialog.getByTestId('combined-raise');
     await expect(raise).toBeVisible();
-    // No entity id is passed from the tab, so raising stays disabled.
+
+    // D7 added an entity picker that defaults to the first entity in scope. Clearing it back to the
+    // placeholder leaves no entity, so raising stays refused.
+    const picker = dialog.getByTestId('combined-entity-picker');
+    await picker.selectOption('');
     await expect(raise).toBeDisabled();
+
+    // Choosing an entity offers the raise.
+    await picker.selectOption({ index: 1 });
+    await expect(raise).toBeEnabled();
   });
 
   test('[E2E] an entity card opens the approval flow, gated by rights', async ({ page }) => {
