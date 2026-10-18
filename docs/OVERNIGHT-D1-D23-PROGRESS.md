@@ -21,3 +21,7 @@ Baseline counts at start: 65 vitest files, 58 SQL tests, 11 Playwright spec file
 | D13 HoverPreview keyboard | 0329d18 | (pending) | green (local) | onKeyDown fires onClick on Enter/Space + aria-disabled; 4 new tests; 756 tests; D-D13-keyboard |
 | D14 readable disabled reasons | 4801e4e | (pending) | green (local) | src/lib/rightLabels.ts + replacements across 15 files; source guard; 6 new tests; 762 tests; D-D14-rights |
 | D15 mobile widths | (pending) | (pending) | green (local) | HeaderBar compact search + mobile universe switcher; FloatingWindow min() clamp; HeaderCalendarPanel clamp; 4 new unit tests + e2e/responsive.spec.ts; 766 tests; D-D15-responsive |
+| D16 hold-to-confirm | (see log) | (pending) | green (local) | src/test/holdToConfirm.ts + HoldToConfirm; irreversible actions require a hold; D-D16-hold |
+| D17 terminology | 2c8a394 | (pending) | green (local) | Observation / Finding / Issue kept distinct in copy; guard in sourceGuards.test.ts; 774 tests; D-D17-terms |
+| D18 sealed terminology | 5dc83a4 | (pending) | green (local) | "sealed" is the state, "sign off" is the action; guard added; 775 tests; D-D18-sealed |
+| D19 plain-language copy | (this commit) | (pending) | green (local) | removed Zero-Trust / Hash-Chain / 4-Eyes / Risk Governance OS from screen copy; D19 guard; 776 tests; D-D19-plain |

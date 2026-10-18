@@ -32,7 +32,7 @@ export const ExecutiveDashboardTab: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-hairline pb-6">
         <div>
           <span className="text-apple-12 font-medium tracking-wide uppercase text-accent">
-            Internal Audit &amp; Risk Governance OS
+            Audit Platform
           </span>
           <h1 className="text-apple-28 font-bold text-primary tracking-tight mt-1">
             Executive Assurance Cockpit
@@ -148,10 +148,10 @@ export const ExecutiveDashboardTab: React.FC = () => {
         {/* Sealed Working Papers */}
         <HoverPreview
           content={{
-            title: `${stats.sealedWorkpapers} Working Papers Cryptographically Sealed`,
-            category: 'Ledger Hash Attestation',
-            subtitle: 'Verified by reviewer four-eyes protocol',
-            status: 'Ledger Attested',
+            title: `${stats.sealedWorkpapers} Working Papers Sealed`,
+            category: 'Ledger Verification',
+            subtitle: 'Verified by a second reviewer',
+            status: 'Verified',
             statusType: 'verdigris',
             hint: 'Click to open Workbench',
           }}
@@ -167,7 +167,7 @@ export const ExecutiveDashboardTab: React.FC = () => {
             </div>
             <div className="text-apple-11 text-verdigris font-medium flex items-center gap-1">
               <ShieldCheck className="w-3.5 h-3.5 stroke-[1.5]" />
-              <span>Attested on Hash-Chain</span>
+              <span>Cryptographically verified</span>
             </div>
           </div>
         </HoverPreview>

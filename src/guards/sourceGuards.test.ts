@@ -153,6 +153,31 @@ describe('source guards for production paths', () => {
     expect(hits).toEqual([]);
   });
 
+  it('has no marketing jargon in user-visible copy (D19)', () => {
+    // Screen text must be plain English. "Zero-Trust", "Attested on Hash-Chain",
+    // "Internal Audit & Risk Governance OS", "4-Eyes" and friends are jargon; use the plain
+    // replacements instead. Only string literals and JSX text are user-visible.
+    const visibleSegments = (line: string): string[] => {
+      const t = line.trim();
+      if (t.startsWith('*') || t.startsWith('//') || t.startsWith('/*')) return [];
+      const segments: string[] = [];
+      for (const m of line.matchAll(/'([^']*)'|"([^"]*)"|`([^`]*)`/g)) {
+        segments.push(m[1] ?? m[2] ?? m[3] ?? '');
+      }
+      for (const m of line.matchAll(/>([^<>{}]+)</g)) segments.push(m[1]);
+      return segments;
+    };
+    const jargon = /zero[- ]trust|hash[- ]chain|risk governance os|attested on|4-eyes|four-eyes/i;
+    const hits = prodFiles
+      .filter((f) =>
+        readFileSync(f, 'utf-8')
+          .split('\n')
+          .some((line) => visibleSegments(line).some((s) => jargon.test(s))),
+      )
+      .map((f) => relative(SRC, f));
+    expect(hits).toEqual([]);
+  });
+
   it('never shows an internal right slug to the user (D14)', () => {
     // Disabled controls must explain themselves in plain language via src/lib/rightLabels.ts; a
     // user-visible string must never spell out perform_work, review_and_approve, etc. Only the

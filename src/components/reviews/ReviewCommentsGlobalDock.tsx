@@ -84,7 +84,7 @@ export const ReviewCommentsGlobalDock: React.FC = () => {
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
               onClick={() => setIsOpen(true)}
               className="w-14 h-14 rounded-full bg-primary text-canvas shadow-apple flex items-center justify-center hover:scale-105 active:scale-95 transition-transform relative focus:outline-none focus:ring-2 focus:ring-accent"
-              title="Four-eyes Review Comments Dock"
+              title="Review comments dock"
               aria-label="Open review comments dock"
             >
               <MessageSquare className="w-6 h-6 stroke-[1.5]" />

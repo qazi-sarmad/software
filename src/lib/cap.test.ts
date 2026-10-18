@@ -118,7 +118,7 @@ describe('transitionCapStatus', () => {
       orgConfig: defaults,
     });
     expect(r.ok).toBe(false);
-    if (!r.ok) expect(r.reason).toMatch(/Four-eyes/i);
+    if (!r.ok) expect(r.reason).toMatch(/Segregation of duties/i);
   });
 
   it('reviewer verifies close and appends history', () => {

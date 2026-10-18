@@ -34,7 +34,7 @@ export const INSPECTOR_TITLES: Record<InspectorType, string> = {
   workbench: 'Working Paper Audit Workbench',
   glassbox_share: 'GlassBox — External Upload Portal',
   account_settings: 'Settings & Preferences',
-  comment_history: 'Review Notes & 4-Eyes Discussion',
+  comment_history: 'Review Notes & Discussion',
   cap_inspector: 'Corrective Action Plan (CAP) Details',
   people_admin: 'People & Roles',
   org_settings: 'Organisation Settings',

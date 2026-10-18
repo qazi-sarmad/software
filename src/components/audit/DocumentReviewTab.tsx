@@ -22,10 +22,10 @@ export const DocumentReviewTab: React.FC<DocumentReviewTabProps> = ({ workpaper 
       <div className="p-4 rounded-xl bg-surface-sunken border border-hairline space-y-2">
         <div className="flex items-center gap-2 text-primary font-medium text-apple-13">
           <FileText className="w-4 h-4 text-verdigris" />
-          <span>Deterministic Document Review Engine (⚖ Law 1 &amp; Law 2)</span>
+          <span>Document Review</span>
         </div>
         <p className="text-apple-12 text-secondary">
-          Extracts and inspects policy text for incomplete placeholders, missing attestation signatures, invalid date ranges, and empty section bodies using deterministic AST token rules. No cloud LLM.
+          Checks policy text for incomplete placeholders, missing signatures, invalid date ranges and empty sections. Runs locally; no cloud AI.
         </p>
       </div>
 

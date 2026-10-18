@@ -154,7 +154,7 @@ export const GlassBoxPublicRoute: React.FC<GlassBoxPublicRouteProps> = ({ tokenF
             <div>
               <h1 className="font-serif-title text-apple-20 font-bold text-primary">Provio GlassBox</h1>
               <p className="text-apple-11 text-secondary uppercase tracking-wider font-semibold">
-                Zero-Trust Auditee Submission Portal
+                Secure Auditee Submission Portal
               </p>
             </div>
           </div>
@@ -167,7 +167,7 @@ export const GlassBoxPublicRoute: React.FC<GlassBoxPublicRouteProps> = ({ tokenF
         {validationState.loading && (
           <div className="py-12 text-center text-secondary text-apple-13 space-y-2">
             <div className="animate-spin w-6 h-6 border-2 border-accent border-t-transparent rounded-full mx-auto" />
-            <p>Verifying cryptographic upload credentials…</p>
+            <p>Checking upload credentials…</p>
           </div>
         )}
 
@@ -192,9 +192,9 @@ export const GlassBoxPublicRoute: React.FC<GlassBoxPublicRouteProps> = ({ tokenF
               <div className="p-6 rounded-2xl bg-verdigris-subtle border border-verdigris space-y-4 text-center">
                 <ShieldCheck className="w-12 h-12 text-verdigris mx-auto stroke-[1.5]" />
                 <div className="space-y-1">
-                  <h2 className="text-apple-17 font-bold text-verdigris">Evidence Attested &amp; Sealed</h2>
+                  <h2 className="text-apple-17 font-bold text-verdigris">Evidence Received</h2>
                   <p className="text-apple-13 text-secondary">
-                    Your evidence artifact was SHA-256 fingerprinted and committed to the immutable audit ledger.
+                    Your file was fingerprinted with SHA-256 and recorded in the audit ledger.
                   </p>
                 </div>
 
@@ -250,7 +250,7 @@ export const GlassBoxPublicRoute: React.FC<GlassBoxPublicRouteProps> = ({ tokenF
                     </div>
                     <div>
                       <span className="text-apple-14 font-semibold text-primary">
-                        {uploading ? 'Calculating SHA-256 & Attesting...' : 'Drop file here or click to browse'}
+                        {uploading ? 'Hashing file…' : 'Drop file here or click to browse'}
                       </span>
                       <p className="text-apple-11 text-secondary mt-1">
                         Allowed: {(validationState.record.allowedExtensions ?? DEFAULT_ALLOWED_EXTENSIONS).join(', ')} • Max {((validationState.record.maxSizeBytes ?? DEFAULT_MAX_SIZE_BYTES) / (1024 * 1024)).toFixed(0)} MB
@@ -271,7 +271,7 @@ export const GlassBoxPublicRoute: React.FC<GlassBoxPublicRouteProps> = ({ tokenF
                     <Clock className="w-3.5 h-3.5 text-accent" />
                     <span>Expires: {new Date(validationState.record.expiresAt).toLocaleDateString()}</span>
                   </span>
-                  <span>Single-use attested upload</span>
+                  <span>Single-use secure upload</span>
                 </div>
               </div>
             )}

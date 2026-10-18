@@ -26,7 +26,7 @@ export const ReviewTab: React.FC<ReviewTabProps> = ({ engagement, gate, signOff,
       </div>
       <div className="text-apple-12 text-secondary">
         {gate.allSealed
-          ? 'All papers are sealed. The engagement is ready for attestation.'
+          ? 'All papers are sealed. The engagement is ready to sign off and seal.'
           : gate.total === 0
           ? 'There are no working papers yet.'
           : `${gate.unsealed} paper${gate.unsealed === 1 ? '' : 's'} must be sealed before sign-off.`}

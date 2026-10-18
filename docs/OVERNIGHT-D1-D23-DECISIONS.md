@@ -254,3 +254,27 @@ the database and the RPC contract for a cosmetic gain, and the prompt explicitly
 untouched.
 How to reverse: `git revert` the D18 commit; the guard in `src/guards/sourceGuards.test.ts` (which
 ignores slug-shaped `data-testid` values) must be reverted with it.
+
+## D-D19-plain — screen copy says what it means, in words a new auditor knows
+
+Task D19. Unclear point: the brief says to remove jargon ("Zero-Trust", "Attested on Hash-Chain",
+"4-Eyes", "Internal Audit & Risk Governance OS") but some of those strings are also used in tests and
+in the product's own marketing surface (README, index.html meta). How far does the sweep go, and do
+internal identifiers move too?
+Options: (1) rewrite every occurrence including code comments, test names and the README/meta;
+(2) rewrite only user-visible screen copy and the plain reasons the UI shows, and leave comments,
+test names, identifiers and marketing metadata alone; (3) also rename the ledger/hash identifiers.
+Choice: option 2. Screen copy changed: the GlassBox portal subtitle, the Executive Cockpit eyebrow
+("Audit Platform"), the sealed-papers hover ("Verified", "Ledger Verification"), the evidence vault
+panel and its upload state, the sampling and analytics panel headings and badges, the workbench
+"Sealed" badge and "Sign off and seal (second reviewer)" action, the review-trail heading, the review
+dock tooltip, the record-content label and the "Segregation of duties" reasons in `access.ts` and
+`orgCapabilities.ts`. Comments, test titles and the `ledger`/hash identifiers are unchanged; the
+README and meta description still describe the hash-chained ledger for a technical audience.
+Reason: option 1 would rewrite prose that is not on a screen and would churn test names for no user
+benefit; option 3 breaks the ledger contract. The spec's plain-language rule is about what the user
+reads on a screen, so that is the scope. "Four-eyes" was replaced with "Segregation of duties"
+because that is the term the reasons already need to be defensible with, and it keeps the reason
+readable to a reviewer who has never heard the shorthand.
+How to reverse: `git revert` the D19 commit; the D19 guard in `src/guards/sourceGuards.test.ts` must
+be reverted with it.

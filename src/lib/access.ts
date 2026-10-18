@@ -310,7 +310,7 @@ export function canPerformAction(
       if (context?.preparerId && context.preparerId === user.id) {
         return {
           allowed: false,
-          reason: 'Four-eyes policy: Reviewers cannot sign off their own prepared workpapers',
+          reason: 'Segregation of duties: a reviewer cannot sign off work they prepared themselves',
         };
       }
       if (!hasRight(user, 'review_and_approve')) {

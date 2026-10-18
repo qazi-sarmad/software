@@ -58,10 +58,10 @@ export const EvidenceTab: React.FC<EvidenceTabProps> = ({ workpaper }) => {
       <div className="p-4 rounded-xl bg-surface-sunken border border-hairline space-y-2">
         <div className="flex items-center gap-2 text-primary font-medium text-apple-13">
           <FileCheck className="w-4 h-4 text-verdigris" />
-          <span>Cryptographic Evidence Vault &amp; Chain Attestation</span>
+          <span>Evidence Vault</span>
         </div>
         <p className="text-apple-12 text-secondary">
-          All uploaded evidence documents are fingerprinted with SHA-256 in memory before attachment. Every file drop creates an immutable hash-chained event.
+          Every uploaded file is given a SHA-256 fingerprint in memory before it is attached, and each upload is recorded in the audit ledger.
         </p>
       </div>
 
@@ -76,7 +76,7 @@ export const EvidenceTab: React.FC<EvidenceTabProps> = ({ workpaper }) => {
           <div className="flex flex-col items-center gap-2">
             <Upload className="w-6 h-6 text-secondary" />
             <span className="text-apple-13 font-semibold text-primary">
-              {isUploading ? 'Computing SHA-256 & Attesting...' : 'Drop evidence file or click to browse'}
+              {isUploading ? 'Hashing file…' : 'Drop evidence file or click to browse'}
             </span>
             <span className="text-apple-11 text-secondary">
               PDF, XLSX, CSV, PNG up to 25MB • Auto-hashed with SHA-256

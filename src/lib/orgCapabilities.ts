@@ -114,7 +114,7 @@ export function canPerformCapability(
   ) {
     return {
       allowed: false,
-      reason: 'Four-eyes policy: you cannot verify or reject a CAP you submitted',
+      reason: 'Segregation of duties: you cannot verify or reject a CAP you submitted',
     };
   }
   return { allowed: true };

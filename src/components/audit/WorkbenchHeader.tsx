@@ -50,7 +50,7 @@ export const WorkbenchHeader: React.FC<WorkbenchHeaderProps> = ({ workpaper, eng
           <h1 className="text-apple-20 font-bold text-primary">{workpaper.title}</h1>
           {workpaper.sealed && (
             <span className="px-2 py-0.5 rounded-full text-apple-11 font-semibold bg-verdigris-subtle text-verdigris border border-verdigris flex items-center gap-1">
-              <ShieldCheck className="w-3.5 h-3.5" /> Sealed &amp; Attested
+              <ShieldCheck className="w-3.5 h-3.5" /> Sealed
             </span>
           )}
         </div>
@@ -121,14 +121,14 @@ export const WorkbenchHeader: React.FC<WorkbenchHeaderProps> = ({ workpaper, eng
           </button>
         ) : (
           <HoldToConfirm
-            label="Seal & Attest (4-Eyes)"
+            label="Sign off and seal (second reviewer)"
             testId="workbench-signoff"
             durationMs={2000}
             onConfirm={handleSignOff}
             className="relative overflow-hidden px-4 py-1.5 rounded-lg bg-verdigris text-white text-apple-12 font-semibold hover:opacity-90 transition-opacity"
           >
             <CheckCircle2 className="w-3.5 h-3.5" />
-            <span>Seal &amp; Attest (4-Eyes)</span>
+            <span>Sign off and seal (second reviewer)</span>
           </HoldToConfirm>
         )}
       </div>
