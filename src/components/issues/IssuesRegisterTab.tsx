@@ -64,9 +64,9 @@ export const IssuesRegisterTab: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-hairline pb-4">
         <div>
-          <h1 className="text-apple-28 font-bold text-primary tracking-tight">Findings, Issues &amp; CAP Register</h1>
+          <h1 className="text-apple-28 font-bold text-primary tracking-tight">Issues &amp; CAP Register</h1>
           <p className="text-apple-15 text-secondary mt-1">
-            Tracking remedial commitments, management action plans, and regulatory observations
+            Tracking concluded findings, remedial commitments and management action plans
           </p>
         </div>
 
@@ -77,7 +77,7 @@ export const IssuesRegisterTab: React.FC = () => {
             className="flex items-center gap-2 px-4 py-2 bg-accent text-white font-medium text-apple-13 rounded-xl hover:opacity-90 transition-opacity shadow-xs"
           >
             <Plus className="w-4 h-4 stroke-[1.5]" />
-            <span>Raise Finding</span>
+            <span>Raise Observation</span>
           </button>
         )}
       </div>
@@ -119,7 +119,7 @@ export const IssuesRegisterTab: React.FC = () => {
       {/* Issues Table */}
       <div className="bg-surface border border-hairline rounded-2xl shadow-apple overflow-hidden">
         <div className="grid grid-cols-12 px-6 py-3 border-b border-hairline bg-surface-elevated text-apple-11 font-semibold text-secondary uppercase tracking-wider">
-          <div className="col-span-5">Issue / Finding</div>
+          <div className="col-span-5">Issue</div>
           <div className="col-span-2">Department</div>
           <div className="col-span-2">Severity</div>
           <div className="col-span-2">Status</div>
@@ -146,7 +146,7 @@ export const IssuesRegisterTab: React.FC = () => {
                     : ('neutral' as const),
                 dueDate: issue.dueDate,
                 owner: issue.ownerId,
-                hint: 'Click to inspect finding details',
+                hint: 'Click to inspect issue details',
               };
 
               return (

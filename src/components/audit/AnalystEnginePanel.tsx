@@ -8,8 +8,8 @@ import { Activity, AlertTriangle, ChevronDown, ChevronRight, Plus, RefreshCw } f
 
 /**
  * Analyst engine panel (4I, spec §12). Lists each check with its result count and expands to the
- * row-level results; every flagged row can raise a finding that carries the rule id, params and the
- * row references. The checks themselves are pure functions in src/lib/analyticsEngine.ts.
+ * row-level results; every flagged row can raise an observation that carries the rule id, params and
+ * the row references. The checks themselves are pure functions in src/lib/analyticsEngine.ts.
  */
 export const AnalystEnginePanel: React.FC<{ engagementId: string }> = ({ engagementId }) => {
   const { currentUser } = useApp();
@@ -127,7 +127,7 @@ export const AnalystEnginePanel: React.FC<{ engagementId: string }> = ({ engagem
                           title={!canRaise ? rightReason('perform_work') : undefined}
                           className="shrink-0 px-3 py-1.5 rounded-lg bg-surface border border-hairline hover:bg-surface-hover text-apple-12 font-semibold text-primary disabled:opacity-50 flex items-center gap-1.5"
                         >
-                          <Plus className="w-3.5 h-3.5" /> {raised[r.id] ? 'Finding raised' : 'Raise finding'}
+                          <Plus className="w-3.5 h-3.5" /> {raised[r.id] ? 'Observation raised' : 'Raise observation'}
                         </button>
                       </div>
                     ))}

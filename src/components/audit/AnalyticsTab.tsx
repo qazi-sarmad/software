@@ -120,7 +120,7 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({ workpaper }) => {
                 <th className="p-3 font-medium text-right">Current Period</th>
                 <th className="p-3 font-medium text-right">Prior / Benchmark</th>
                 <th className="p-3 font-medium text-right">Variance ($)</th>
-                <th className="p-3 font-medium">Flag / Finding</th>
+                <th className="p-3 font-medium">Flag / Observation</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-hairline">

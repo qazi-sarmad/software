@@ -192,7 +192,7 @@ describe('components show errors in place', () => {
         </AppProvider>
       </ThemeProvider>
     );
-    fireEvent.click(screen.getByText('Commit Finding'));
+    fireEvent.click(screen.getByText('Record Observation'));
     expect((await screen.findByTestId('observation-form-error')).textContent).toBe('Please provide title and condition.');
     expect(s.alert).not.toHaveBeenCalled();
   });

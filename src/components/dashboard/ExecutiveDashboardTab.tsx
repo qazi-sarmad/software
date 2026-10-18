@@ -122,7 +122,7 @@ export const ExecutiveDashboardTab: React.FC = () => {
         <HoverPreview
           content={{
             title: `${stats.openIssues} Open Audit Issues`,
-            category: 'Findings Register',
+            category: 'Issues Register',
             subtitle: `${stats.criticalIssues} High/Critical Severity Escalations`,
             status: stats.criticalIssues > 0 ? 'Action Required' : 'On Track',
             statusType: stats.criticalIssues > 0 ? 'cinnabar' : 'verdigris',
@@ -132,7 +132,7 @@ export const ExecutiveDashboardTab: React.FC = () => {
         >
           <div className="p-5 rounded-2xl bg-surface border border-hairline shadow-apple hover:bg-surface-hover transition-colors cursor-pointer space-y-1">
             <div className="flex items-center justify-between text-secondary text-apple-12 font-medium">
-              <span>Open Findings</span>
+              <span>Open Issues</span>
               <AlertTriangle className="w-4 h-4 stroke-[1.5] text-cinnabar" />
             </div>
             <div className="font-serif-numeral text-apple-40 font-bold text-primary tabular-nums">

@@ -1,4 +1,4 @@
-/** Cascade for "Raise Formal Audit Finding": Department → Audit (annual / special) → Working paper. Pure. */
+/** Cascade for "Raise Audit Observation": Department → Audit (annual / special) → Working paper. Pure. */
 import { AuditEngagement, AuditEntity, WorkingPaper } from '../types';
 import { getWorkpaperLock } from './workpaperLock';
 

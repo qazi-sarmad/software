@@ -93,6 +93,35 @@ describe('source guards for production paths', () => {
     expect(offenders(/fail_retest|retestStatus|RetestStatus|Re-?[Tt]est/i)).toEqual([]);
   });
 
+  it('keeps Observation, Finding and Issue distinct in user-visible copy (D17, spec §14.1)', () => {
+    // An Observation is the draft working record; a Finding is concluded (readability passed); an
+    // Issue is a thematic group of findings. The three words must not be used interchangeably, so
+    // the action that raises the *draft* must not be labelled a "finding", and the issue register
+    // must not be titled as if it held findings. Only string literals and JSX text are user-visible.
+    const visibleSegments = (line: string): string[] => {
+      const t = line.trim();
+      if (t.startsWith('*') || t.startsWith('//') || t.startsWith('/*')) return [];
+      const segments: string[] = [];
+      for (const m of line.matchAll(/'([^']*)'|"([^"]*)"|`([^`]*)`/g)) {
+        segments.push(m[1] ?? m[2] ?? m[3] ?? '');
+      }
+      for (const m of line.matchAll(/>([^<>{}]+)</g)) segments.push(m[1]);
+      return segments;
+    };
+    // Phrases that call the draft an observation's action a "finding". The separator must be a
+    // space, so RPC/identifier names such as raise_finding_from_result and raiseFinding do not match.
+    const draftCalledFinding =
+      /\b(raise|commit|record|new|create)\s+(formal\s+)?finding\b|\bfinding title\b|\bseverity finding\b/i;
+    const hits = prodFiles
+      .filter((f) =>
+        readFileSync(f, 'utf-8')
+          .split('\n')
+          .some((line) => visibleSegments(line).some((s) => draftCalledFinding.test(s))),
+      )
+      .map((f) => relative(SRC, f));
+    expect(hits).toEqual([]);
+  });
+
   it('never shows an internal right slug to the user (D14)', () => {
     // Disabled controls must explain themselves in plain language via src/lib/rightLabels.ts; a
     // user-visible string must never spell out perform_work, review_and_approve, etc. Only the

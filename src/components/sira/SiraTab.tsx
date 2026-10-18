@@ -156,7 +156,7 @@ export const SiraTab: React.FC = () => {
             <thead>
               <tr className="text-left text-apple-11 uppercase tracking-wider text-secondary border-b border-hairline">
                 <th className="p-3 w-10">#</th><th className="p-3">Entity</th><th className="p-3">Inherent</th><th className="p-3">Residual</th>
-                <th className="p-3">Controls weak / total</th><th className="p-3">Findings</th><th className="p-3">Last audit</th><th className="p-3">Index</th><th className="p-3 w-8" />
+                <th className="p-3">Controls weak / total</th><th className="p-3">Observations</th><th className="p-3">Last audit</th><th className="p-3">Index</th><th className="p-3 w-8" />
               </tr>
             </thead>
             <tbody>
@@ -189,8 +189,8 @@ export const SiraTab: React.FC = () => {
                             )}
                           </div>
                           <div>
-                            <h3 className="text-apple-12 font-semibold text-primary mb-2">Prior &amp; open findings ({findings.length})</h3>
-                            {findings.length === 0 ? <p className="text-apple-12 text-tertiary">No findings recorded.</p> : (
+                            <h3 className="text-apple-12 font-semibold text-primary mb-2">Prior &amp; open observations ({findings.length})</h3>
+                            {findings.length === 0 ? <p className="text-apple-12 text-tertiary">No observations recorded.</p> : (
                               <ul className="space-y-1">
                                 {findings.map((o) => (<li key={o.id} className="flex justify-between gap-3 text-apple-12"><span className="text-primary truncate">{o.title}</span><span className="shrink-0 capitalize text-secondary">{o.severity} · {o.status}</span></li>))}
                               </ul>
