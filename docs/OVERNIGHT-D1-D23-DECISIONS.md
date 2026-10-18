@@ -67,3 +67,16 @@ Reason: simplest option that obeys the Laws and the "every DB call through src/d
 loader to invent.
 How to reverse: drop the `onRescheduled`/`applyPlanItemDates` path and call a real engagement reload
 once an engagement data module exists.
+
+## D-D10-reuse — the CAP register is surfaced, not rebuilt
+
+Task D10. Unclear point: the prompt names `src/components/issues/IssuesAndCAPTab.tsx` and says to add a
+CAP section that loads `listCaps(orgId, engagementId)`. That file does not exist (the tab is
+`IssuesRegisterTab.tsx`), and `listCaps` takes only an engagement id.
+Choice: render the existing `src/components/audit/CapRegisterPanel.tsx` (built in 6H, already tested in
+`phase6Panels.test.tsx`) inside the Issues & CAP tab, with an engagement picker that defaults to the
+selected engagement or the first in scope. No second CAP UI is written.
+Reason: the register, its status vocabulary (D-6D-CAP) and its close action already exist and are
+tested; duplicating them would create the divergent second status set D-6D-CAP forbids.
+How to reverse: remove the section and the picker from `IssuesRegisterTab.tsx` and delete
+`IssuesRegisterTab.test.tsx`.

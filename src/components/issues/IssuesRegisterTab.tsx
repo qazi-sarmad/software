@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useScopedData } from '../../hooks/useScopedData';
 import { useFilterStore } from '../../context/FilterStore';
 import { useApp } from '../../context/AppContext';
 import { HoverPreview } from '../common/HoverPreview';
+import { CapRegisterPanel } from '../audit/CapRegisterPanel';
 import { AuditIssue, Severity } from '../../types';
 import {
   AlertTriangle,
@@ -15,9 +16,23 @@ import {
 } from '../common/Icons';
 
 export const IssuesRegisterTab: React.FC = () => {
-  const { filteredIssues, can, currentUser } = useScopedData();
+  const { filteredIssues, scopedEngagements, can, currentUser } = useScopedData();
   const filter = useFilterStore();
-  const { openInspector } = useApp();
+  const { openInspector, selectedEngagementId } = useApp();
+
+  // D10: the CAP register is per engagement (§16.1 "CAPs are created from the final report"). The
+  // tab is org-wide, so it offers the engagements in scope and renders the register for the chosen
+  // one. The register itself (listCaps, update_cap, close_cap) lives in src/data/caps.ts and is
+  // reused unchanged, so the CAP status vocabulary stays the single set from 0038 (D-6D-CAP).
+  const engagements = useMemo(
+    () => scopedEngagements.slice().sort((a, b) => a.title.localeCompare(b.title)),
+    [scopedEngagements]
+  );
+  const [capEngagementId, setCapEngagementId] = useState<string | null>(selectedEngagementId);
+  const activeCapEngagementId = useMemo(() => {
+    if (capEngagementId && engagements.some((e) => e.id === capEngagementId)) return capEngagementId;
+    return engagements[0]?.id ?? null;
+  }, [capEngagementId, engagements]);
 
   const getSeverityBadge = (severity: Severity) => {
     switch (severity) {
@@ -178,6 +193,44 @@ export const IssuesRegisterTab: React.FC = () => {
             })
           )}
         </div>
+      </div>
+
+      {/* D10: CAP register for the selected engagement (spec §16). Loaded from src/data/caps.ts. */}
+      <div className="bg-surface border border-hairline rounded-2xl shadow-apple p-6" data-testid="issues-cap-register-section">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <div>
+            <h2 className="text-apple-16 font-semibold text-primary">Corrective Action Plan register</h2>
+            <p className="text-apple-12 text-secondary mt-0.5">
+              Every finding or issue gets one CAP before the report can freeze (§16.1).
+            </p>
+          </div>
+          {engagements.length > 0 && (
+            <label className="flex items-center gap-2 text-apple-12 text-secondary">
+              <span>Engagement</span>
+              <select
+                data-testid="cap-engagement-picker"
+                value={activeCapEngagementId ?? ''}
+                onChange={(e) => setCapEngagementId(e.target.value || null)}
+                className="rounded-lg border border-hairline bg-surface px-3 py-1.5 text-apple-13 text-primary"
+              >
+                {engagements.map((e) => (
+                  <option key={e.id} value={e.id}>
+                    {e.title}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+        </div>
+
+        {activeCapEngagementId ? (
+          <CapRegisterPanel engagementId={activeCapEngagementId} />
+        ) : (
+          <div className="p-6 text-center text-apple-12 text-secondary bg-surface-elevated rounded-xl" data-testid="cap-no-engagement">
+            No engagements are in scope, so there is no CAP register to show. Create or deploy an
+            engagement first.
+          </div>
+        )}
       </div>
     </div>
   );
