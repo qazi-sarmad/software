@@ -9,3 +9,4 @@ Baseline counts at start: 65 vitest files, 58 SQL tests, 11 Playwright spec file
 | D1 XLSX security | 083d48e | 39150045854 | green | xlsx 0.20.3 from vendor CDN; npm audit 0 vulnerabilities; D-D1-xlsx |
 | D2 team_role_rights RLS | pending | pending | green (local) | migration 0046 + test 59; harness 1106 assertions x2 passes |
 | D3 superadmin blindness | pending | pending | green (local) | test 60; harness 1215 assertions x2 passes |
+| D4 no-tenant fallback | pending | pending | green (local) | AuthContext status + NoTenantScreen + EMPTY_SEED prod fallback; 715 tests |

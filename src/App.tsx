@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import { AppProvider, useApp } from './context/AppContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { SignInScreen } from './components/auth/SignInScreen';
+import { NoTenantScreen } from './components/auth/NoTenantScreen';
 import { InlineError } from './components/common/InlineError';
 import type { User } from './types';
 import type { TenantSeed } from './types/seed';
@@ -170,8 +171,10 @@ export interface ViewRecordTarget {
 }
 
 const AuthGate: React.FC<{ viewRecord?: ViewRecordTarget }> = ({ viewRecord }) => {
-  const { user } = useAuth();
-  const [seed, setSeed] = useState<TenantSeed | null>(null);
+  const { user, status } = useAuth();
+  // In a production build there is no demo tenant to load, so the shell renders from the empty seed
+  // and every screen shows its designed empty state. In development the flagged demo tenant loads.
+  const [seed, setSeed] = useState<TenantSeed | null>(loadDemoSeed ? null : EMPTY_SEED);
 
   useEffect(() => {
     let live = true;
@@ -182,11 +185,15 @@ const AuthGate: React.FC<{ viewRecord?: ViewRecordTarget }> = ({ viewRecord }) =
     }
     return () => {
       live = false;
-      setSeed(null);
+      setSeed(loadDemoSeed ? null : EMPTY_SEED);
     };
   }, [user]);
 
-  if (!user) return <SignInScreen />;
+  // Resolve the shell from the session lifecycle, so a signed-in account with no org sees the
+  // welcome screen rather than an indefinite spinner (D4).
+  if (status === 'loading') return <LoadingFallback />;
+  if (status === 'no_tenant') return <NoTenantScreen />;
+  if (status === 'signed_out' || status === 'platform' || !user) return <SignInScreen />;
   if (!seed) return <LoadingFallback />;
   return (
     <AppProvider key={user.id} user={user} seed={seed}>
