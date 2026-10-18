@@ -130,3 +130,20 @@ Options rejected: a `listMyWork(userId)` RPC — deferred until the app has a li
 since inventing one now would duplicate `useScopedData`.
 How to reverse: delete `src/lib/workQueue.ts` + its test and restore `PendingTasksTab` from the
 pre-D12 commit (the previous version grouped engagements by status, not by ownership).
+
+## D-D13-keyboard — activate HoverPreview on Enter/Space
+
+Task D13. Unclear point: the prompt says the trap is that "HoverPreview wraps a button but does not
+handle Enter/Space keys". In fact HoverPreview renders a `div` with `role="button"` and
+`tabIndex={0}` (not a real `<button>`), and its `onClick` prop carries the action. A div with
+`role="button"` is focusable but not keyboard-activatable, so a keyboard user could focus the trigger
+and never fire the action.
+Choice: keep the div (replacing it with a native `<button>` would nest interactive children inside a
+button in several call sites and change layout), add an `onKeyDown` handler that fires `onClick` on
+`Enter`, `Space` and the legacy `Spacebar` value, calling `preventDefault` to stop the page scroll
+that Space would otherwise cause, and set `aria-disabled` when `disabled` is set. `onClick` remains
+the single action path for mouse, touch and keyboard.
+Reason: smallest change that removes the trap without touching the 12 call sites; the pattern matches
+the WAI-ARIA button role.
+How to reverse: remove the `onKeyDown`/`handleKeyDown` wiring and the `aria-disabled` attribute and
+delete the four keyboard tests in `HoverPreview.test.tsx`.

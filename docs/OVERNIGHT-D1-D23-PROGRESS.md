@@ -17,4 +17,5 @@ Baseline counts at start: 65 vitest files, 58 SQL tests, 11 Playwright spec file
 | D9 persist plan date changes | a594058 | 39156011100 | green | migration 0047 `update_plan_item_dates`; test 61; Gantt drag→approve→persist; 741 tests; D-D9-rpc, D-D9-apply; D9-FIX aligned the phase3 e2e to the D7 picker |
 | D10 CAP register in Issues tab | 844c01c | 39159142589 | green | Issues & CAP tab renders the existing CapRegisterPanel per engagement + picker; 3 unit tests; 741 tests |
 | D11 remove retest workflow | bb7fe31 | 39159731923 | green (CI) | deleted RetestStatus axis, cap_fail_retest capability, fail_retest action, Re-Test column, Fail Re-Test panel; source guard added; 752 tests; D-D11-retest |
-| D12 Work Queue user-specific | (pending) | (pending) | green (local) | src/lib/workQueue.ts (pure) + PendingTasksTab rewired to My workpapers / Awaiting my sign-off / Awaiting my approval / My team's work; 8 new tests; 752 tests; D-D12-queue |
+| D12 Work Queue user-specific | 026a943 | 39161290344 | green (CI) | src/lib/workQueue.ts (pure) + PendingTasksTab rewired to My workpapers / Awaiting my sign-off / Awaiting my approval / My team's work; 8 new tests; 752 tests; D-D12-queue |
+| D13 HoverPreview keyboard | (pending) | (pending) | green (local) | onKeyDown fires onClick on Enter/Space + aria-disabled; 4 new tests; 756 tests; D-D13-keyboard |
