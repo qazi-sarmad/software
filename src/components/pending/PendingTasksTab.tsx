@@ -3,8 +3,7 @@ import { useApp } from '../../context/AppContext';
 import { useScopedData } from '../../hooks/useScopedData';
 import { CheckCircle2 } from '../common/Icons';
 import { pendingComments } from '../../lib/comments';
-
-const TODAY = '2026-09-30'; // demo clock, same as the rest of the app until the injected clock lands
+import { getOrgLocalToday } from '../../lib/orgDate';
 
 /**
  * Work Queue (SPEC-v10 §5), first cut: my audits by state and review comments awaiting a response.
@@ -14,6 +13,7 @@ export const PendingTasksTab: React.FC = () => {
   const { openInspector } = useApp();
   const { scopedEngagements, scopedWorkpapers, scopedComments } = useScopedData();
 
+  const TODAY = getOrgLocalToday();
   const mine = scopedEngagements; // already scoped by role and entity
   const sections = [
     { key: 'progress', title: 'In progress', rows: mine.filter((e) => e.status === 'in_progress' && e.dueDate >= TODAY) },

@@ -1,4 +1,4 @@
-import { it, expect, describe } from 'vitest';
+import { it, expect, describe, afterEach } from 'vitest';
 import {
   toOrgLocalIsoDate,
   getOrgLocalToday,
@@ -6,6 +6,10 @@ import {
   DEMO_TODAY_ISO,
   DEFAULT_ORG_TIME_ZONE,
 } from './orgDate';
+
+afterEach(() => {
+  delete (window as unknown as { __DEMO_NOW__?: unknown }).__DEMO_NOW__;
+});
 
 describe('toOrgLocalIsoDate', () => {
   it('uses the org time zone, not UTC', () => {
@@ -16,7 +20,8 @@ describe('toOrgLocalIsoDate', () => {
 });
 
 describe('getOrgLocalToday', () => {
-  it('returns the demo freeze day by default', () => {
+  it('returns the injected clock day by default', () => {
+    window.__DEMO_NOW__ = '2026-09-30T07:00:00Z'; // noon PKT
     expect(getOrgLocalToday()).toBe(DEMO_TODAY_ISO);
     expect(getOrgLocalToday(DEFAULT_ORG_TIME_ZONE)).toBe('2026-09-30');
   });
@@ -48,6 +53,7 @@ describe('isCapOverdue', () => {
   });
 
   it('uses getOrgLocalToday when todayIso is omitted', () => {
+    window.__DEMO_NOW__ = '2026-09-30T07:00:00Z'; // noon PKT
     expect(isCapOverdue('Open', '2026-09-29')).toBe(true);
     expect(isCapOverdue('Open', '2026-09-30')).toBe(false);
   });

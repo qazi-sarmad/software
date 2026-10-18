@@ -10,3 +10,4 @@ Baseline counts at start: 65 vitest files, 58 SQL tests, 11 Playwright spec file
 | D2 team_role_rights RLS | pending | pending | green (local) | migration 0046 + test 59; harness 1106 assertions x2 passes |
 | D3 superadmin blindness | pending | pending | green (local) | test 60; harness 1215 assertions x2 passes |
 | D4 no-tenant fallback | pending | pending | green (local) | AuthContext status + NoTenantScreen + EMPTY_SEED prod fallback; 715 tests |
+| D5 demo clock injection | pending | pending | green (local) | src/lib/demoTime.ts + 5 call sites; 722 tests |

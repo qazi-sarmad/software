@@ -14,6 +14,7 @@ import {
   AlertCircle,
   X,
 } from '../common/Icons';
+import { getDemoNow } from '../../lib/demoTime';
 
 interface EngagementGanttProps {
   engagements: AuditEngagement[];
@@ -36,9 +37,13 @@ export const EngagementGantt: React.FC<EngagementGanttProps> = ({
   const PX_PER_DAY = 4.77; // same density as before (2600px over ~545 days)
   const timelineWidth = Math.round(((timelineEnd - timelineStart) / 86400000) * PX_PER_DAY);
 
-  // Simulated today: Sept 30, 2026
-  const todayDate = new Date('2026-09-30').getTime();
+  // The today marker follows the application clock (D5): real time normally, injected in tests.
+  const now = getDemoNow();
+  const todayDate = now.getTime();
   const todayX = ((todayDate - timelineStart) / totalDuration) * timelineWidth;
+  const todayLabel = now
+    .toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    .toUpperCase();
 
   // Inertial drag-to-pan state (§ 3.4 requirement)
   const [isPanning, setIsPanning] = useState(false);
@@ -372,7 +377,7 @@ export const EngagementGantt: React.FC<EngagementGanttProps> = ({
             className="absolute top-0 bottom-0 w-[2px] bg-accent z-20 pointer-events-none"
           >
             <div className="absolute top-0 -translate-x-1/2 px-2 py-0.5 bg-accent text-canvas rounded-full text-apple-11 font-bold shadow-xs whitespace-nowrap">
-              TODAY (SEP 30)
+              TODAY ({todayLabel})
             </div>
           </div>
 
