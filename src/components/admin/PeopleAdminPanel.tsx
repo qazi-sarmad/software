@@ -5,6 +5,7 @@ import {
   createRole,
   deleteRole,
   grantScope,
+  inviteUser,
   listMembers,
   listRoles,
   listScopes,
@@ -78,6 +79,9 @@ export const PeopleAdminPanel: React.FC = () => {
   const [newName, setNewName] = useState('');
   const [newSlug, setNewSlug] = useState('');
   const [newUser, setNewUser] = useState('');
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteRole, setInviteRole] = useState('');
+  const [inviteSentTo, setInviteSentTo] = useState<string | null>(null);
   const [inviteCap, setInviteCapValue] = useState('');
 
   const load = useCallback(async () => {
@@ -107,6 +111,17 @@ export const PeopleAdminPanel: React.FC = () => {
     const r = await action();
     setResult(r);
     if (r.ok) await load();
+    return r;
+  };
+
+  const sendInvite = async () => {
+    const email = inviteEmail.trim();
+    const r = await run(() => inviteUser(email, inviteRole || null));
+    if (r.ok) {
+      setInviteSentTo(email);
+      setInviteEmail('');
+      setInviteRole('');
+    }
   };
 
   const toggleRight = (slug: string, right: Right, current: boolean) => {
@@ -225,11 +240,51 @@ export const PeopleAdminPanel: React.FC = () => {
           </div>
 
           <div className="rounded-xl border border-hairline p-4 space-y-3">
-            <h4 className="text-apple-13 font-semibold text-primary">Provision a member</h4>
+            <h4 className="text-apple-13 font-semibold text-primary">Invite a colleague</h4>
             <p className="text-apple-11 text-secondary">
-              The user must already have a sign-in. Enter the account id and the role to grant.
+              Enter the email address and the role to grant. They can sign in once their account is created.
             </p>
             <div className="flex flex-col sm:flex-row gap-2">
+              <input
+                aria-label="Enter email address"
+                type="email"
+                value={inviteEmail}
+                onChange={(e) => { setInviteEmail(e.target.value); setInviteSentTo(null); }}
+                placeholder="Enter email address"
+                className="flex-1 px-3 py-2 rounded-xl bg-surface border border-hairline text-apple-12 text-primary"
+              />
+              <Select
+                ariaLabel="Select role"
+                value={inviteRole}
+                options={[{ value: '', label: 'Select role' }, ...roleOptions]}
+                onChange={(v) => setInviteRole(v)}
+                className="sm:w-56"
+              />
+              <button
+                data-testid="admin-invite"
+                disabled={!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(inviteEmail.trim())}
+                onClick={() => void sendInvite()}
+                className="px-3 py-2 rounded-xl bg-accent text-white text-apple-12 font-semibold disabled:opacity-50"
+              >
+                <Plus className="w-3.5 h-3.5 inline mr-1 stroke-[1.5]" />
+                Send invite
+              </button>
+            </div>
+            {inviteSentTo && (
+              <p data-testid="admin-invite-sent" className="text-apple-12 text-verdigris">
+                Invitation sent to {inviteSentTo}
+              </p>
+            )}
+          </div>
+
+          <details className="rounded-xl border border-hairline p-4 space-y-3">
+            <summary className="text-apple-13 font-semibold text-primary cursor-pointer">
+              Provision an existing account
+            </summary>
+            <p className="text-apple-11 text-secondary mt-3">
+              Use this only when the user already has a sign-in. Enter the account id and the role to grant.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-2 mt-3">
               <input
                 aria-label="Account id"
                 value={newUser}
@@ -261,7 +316,7 @@ export const PeopleAdminPanel: React.FC = () => {
                 Provision
               </button>
             </div>
-          </div>
+          </details>
 
           <div className="rounded-xl border border-hairline p-4 space-y-3">
             <h4 className="text-apple-13 font-semibold text-primary">Scopes</h4>

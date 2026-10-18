@@ -112,6 +112,14 @@ export function provisionMember(
   });
 }
 
+/**
+ * Invite a colleague by email and role (D20). The database re-checks `manage_users`, counts the
+ * invitation against the cap and queues the invitation email; this module only carries the request.
+ */
+export function inviteUser(email: string, roleSlug: string | null): Promise<AdminResult> {
+  return callRpc('invite_user_capped', { p_email: email, p_role_slug: roleSlug });
+}
+
 export function setMemberRole(userId: string, roleSlug: string): Promise<AdminResult> {
   return callRpc('admin_set_member_role', { p_user: userId, p_role_slug: roleSlug });
 }

@@ -3,6 +3,7 @@ import {
   createRole,
   deleteRole,
   grantScope,
+  inviteUser,
   listMembers,
   listRoles,
   listScopes,
@@ -28,6 +29,7 @@ describe('admin data module (not configured)', () => {
   it('writes report that administration is not configured', async () => {
     const notConfigured = { ok: false, reason: 'Administration is not configured.' };
     expect(await provisionMember('u', 'N', 'cia')).toEqual(notConfigured);
+    expect(await inviteUser('a@b.test', 'cia')).toEqual(notConfigured);
     expect(await setMemberRole('u', 'cia')).toEqual(notConfigured);
     expect(await setMemberManager('u', null)).toEqual(notConfigured);
     expect(await grantScope('u', null, null, null)).toEqual(notConfigured);

@@ -278,3 +278,30 @@ because that is the term the reasons already need to be defensible with, and it 
 readable to a reviewer who has never heard the shorthand.
 How to reverse: `git revert` the D19 commit; the D19 guard in `src/guards/sourceGuards.test.ts` must
 be reverted with it.
+
+## D-D20-invite — the invite collects an email and a role, and queues the email itself
+
+Task D20. Unclear point: the brief says to call `invite_user_capped` with an email, but the function
+that exists (0015) takes only an email and writes only the cap ledger. The brief also wants a status
+line "Invitation sent to user@org.com (no actual email yet; recorded in email_queue)". Three ways to
+reach that: (1) change the RPC to take the email and the role, record both, and queue the email in
+the same transaction; (2) leave the RPC alone and have the UI call it and then call `queue_email`
+separately; (3) keep the UUID provisioning form and only relabel it.
+Choice: option 1. `0048_admin_invite_email.sql` replaces `invite_user_capped(text)` with
+`invite_user_capped(text, text default null)`; it validates the role against `roles` for the caller's
+organisation, records the email (lower-cased) and the role slug in `invite_cap_events`, and calls the
+one helper that may write the queue (`queue_email`, 6E / 0039) with the invitee copy. One nullable
+column `invite_cap_events.role_slug` is added. The panel gets an "Invite a colleague" card (email
+input, a `Select` of real role names, "Send invite", and the confirmation line); the old UUID form
+moves into a collapsed "Provision an existing account" disclosure, because it is still the only way
+to attach a role to an account that already exists.
+Reason: option 2 splits one logical action across two round-trips, so a failed queue write would
+leave an invite recorded but no email — a silent half-success. Option 3 does not solve the brief's
+complaint (a non-technical administrator cannot find a UUID). Doing it in the definer RPC keeps the
+cap check, the ledger write and the queue write atomic, and keeps every write behind the right
+check that already exists. The role argument is optional and the old one-argument call still works
+(tested), so 0015's own tests and any existing caller are untouched.
+How to reverse: `git revert` the D20 commit, then drop `invite_cap_events.role_slug` and restore the
+single-argument function if the ledger column is unwanted. The D20 test is
+`supabase/tests/62_admin_invite_email.sql`; the panel test is
+`src/components/admin/PeopleAdminPanel.test.tsx`.

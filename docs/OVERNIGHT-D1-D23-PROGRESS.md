@@ -24,4 +24,5 @@ Baseline counts at start: 65 vitest files, 58 SQL tests, 11 Playwright spec file
 | D16 hold-to-confirm | (see log) | (pending) | green (local) | src/test/holdToConfirm.ts + HoldToConfirm; irreversible actions require a hold; D-D16-hold |
 | D17 terminology | 2c8a394 | (pending) | green (local) | Observation / Finding / Issue kept distinct in copy; guard in sourceGuards.test.ts; 774 tests; D-D17-terms |
 | D18 sealed terminology | 5dc83a4 | (pending) | green (local) | "sealed" is the state, "sign off" is the action; guard added; 775 tests; D-D18-sealed |
-| D19 plain-language copy | (this commit) | (pending) | green (local) | removed Zero-Trust / Hash-Chain / 4-Eyes / Risk Governance OS from screen copy; D19 guard; 776 tests; D-D19-plain |
+| D19 plain-language copy | 2f0d0c5 | (pending) | green (local) | removed Zero-Trust / Hash-Chain / 4-Eyes / Risk Governance OS from screen copy; D19 guard; 776 tests; D-D19-plain |
+| D20 email-based admin invite | (this commit) | (pending) | green (local) | migration 0048 invite_user_capped(email, role) + role_slug column + queued invite email; invite card in PeopleAdminPanel; test 62; 779 tests; D-D20-invite |
