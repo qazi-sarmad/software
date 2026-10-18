@@ -160,7 +160,7 @@ export const AuditPlanTab: React.FC = () => {
           <button
             type="button"
             data-testid="plan-open-ethics"
-            onClick={() => openInspector('ethics', { members: [] })}
+            onClick={() => openInspector('ethics', { engagementId: selectedEngagement?.id })}
             className="px-3 py-1.5 rounded-lg border border-hairline text-apple-12 text-primary hover:bg-surface-hover"
           >
             Ethics

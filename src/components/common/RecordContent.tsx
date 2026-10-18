@@ -95,7 +95,7 @@ export const RecordContent: React.FC<RecordContentProps> = ({ type, data, onClos
         case 'deployment_gate':
           return <DeploymentGatePanel result={data?.result ?? null} />;
         case 'ethics':
-          return <EthicsPanel members={data?.members ?? []} />;
+          return <EthicsPanel members={data?.members} engagementId={data?.engagementId} />;
         case 'combined_approval':
           return <CombinedApprovalPanel request={data?.request ?? null} universeId={data?.universeId} entityId={data?.entityId} onRequested={onClose} />;
         case 'sira_model':
