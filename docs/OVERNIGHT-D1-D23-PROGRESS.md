@@ -6,4 +6,5 @@ Baseline counts at start: 65 vitest files, 58 SQL tests, 11 Playwright spec file
 
 | Task | Commit | CI run | Result | Notes |
 |---|---|---|---|---|
-| D1 XLSX security | pending | pending | green (local) | xlsx 0.20.3 from vendor CDN; 0 vulnerabilities; see D-D1-xlsx |
+| D1 XLSX security | 083d48e | 39150045854 | green | xlsx 0.20.3 from vendor CDN; npm audit 0 vulnerabilities; D-D1-xlsx |
+| D2 team_role_rights RLS | pending | pending | green (local) | migration 0046 + test 59; harness 1106 assertions x2 passes |
