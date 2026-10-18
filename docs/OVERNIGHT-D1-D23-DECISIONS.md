@@ -112,3 +112,21 @@ Baseline: `docs/baseline-lines.json` updated for `CapTable.tsx` (350 → 313 lin
 removal is not reported as an accidental shrink.
 How to reverse: `git revert` the D11 commit; restore `RetestStatus`, `retestStatus`, `cap_fail_retest`,
 the `fail_retest` action, the Re-Test column and the Fail Re-Test panel, and delete the retest guard.
+
+## D-D12-queue — the Work Queue is a pure selector over already-scoped data
+
+Task D12. Unclear point: the prompt says to load "the user's own tasks" from the database
+(`workpapers where preparer or reviewer is the signed-in user`), and to load approval queues (plan
+requests, deployment requests, CAPs needing verification). The app has no per-user workpaper loader
+in `src/data` and the pending requests are held in the in-memory `AppContext` seed, not a queryable
+table.
+Choice: build the queue as a pure function, `src/lib/workQueue.ts` (`buildWorkQueue`), over the rows
+`useScopedData` already holds, and gate the manager section on the `review_and_approve` right rather
+than a role name. `PendingTasksTab` becomes a thin renderer.
+Reason: (a) the Laws require rights-based gates, and the pure function is deterministic and testable
+(L1); (b) it adds no new DB object and no second loader, so it cannot drift from the scoped data the
+rest of the app shows; (c) it obeys "every DB call through src/data" because it makes no DB call.
+Options rejected: a `listMyWork(userId)` RPC — deferred until the app has a live workpaper loader,
+since inventing one now would duplicate `useScopedData`.
+How to reverse: delete `src/lib/workQueue.ts` + its test and restore `PendingTasksTab` from the
+pre-D12 commit (the previous version grouped engagements by status, not by ownership).

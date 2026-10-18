@@ -15,4 +15,6 @@ Baseline counts at start: 65 vitest files, 58 SQL tests, 11 Playwright spec file
 | D7 combined approval entity picker | f0564f1 | 39156011100 | green | scoped entity picker + empty state; 727 tests |
 | D8 deploy action in gate flow | ff1c9d1 | 39156011100 | green | hold-to-confirm deploy + entity picker; 730 tests |
 | D9 persist plan date changes | a594058 | 39156011100 | green | migration 0047 `update_plan_item_dates`; test 61; Gantt drag→approve→persist; 741 tests; D-D9-rpc, D-D9-apply; D9-FIX aligned the phase3 e2e to the D7 picker |
-| D10 CAP register in Issues tab | (pending) | (pending) | green (local) | Issues & CAP tab renders the existing CapRegisterPanel per engagement + picker; 3 unit tests; 741 tests |
+| D10 CAP register in Issues tab | 844c01c | 39159142589 | green | Issues & CAP tab renders the existing CapRegisterPanel per engagement + picker; 3 unit tests; 741 tests |
+| D11 remove retest workflow | bb7fe31 | 39159731923 | green (CI) | deleted RetestStatus axis, cap_fail_retest capability, fail_retest action, Re-Test column, Fail Re-Test panel; source guard added; 752 tests; D-D11-retest |
+| D12 Work Queue user-specific | (pending) | (pending) | green (local) | src/lib/workQueue.ts (pure) + PendingTasksTab rewired to My workpapers / Awaiting my sign-off / Awaiting my approval / My team's work; 8 new tests; 752 tests; D-D12-queue |
