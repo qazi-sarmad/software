@@ -14,3 +14,4 @@ Baseline counts at start: 65 vitest files, 58 SQL tests, 11 Playwright spec file
 | D6 ethics acknowledgement wiring | 5e0543c | pending | green (local) | EthicsPanel handler via acknowledge_ethics + ethics_status refetch; 724 tests |
 | D7 combined approval entity picker | pending | pending | green (local) | scoped entity picker + empty state; 727 tests |
 | D8 deploy action in gate flow | pending | pending | green (local) | hold-to-confirm deploy + entity picker; 730 tests |
+| D9 persist plan date changes | pending | pending | green (local) | migration 0047 `update_plan_item_dates`; test 61; Gantt drag→approve→persist; 738 tests; D-D9-rpc, D-D9-apply |

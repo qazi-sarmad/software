@@ -35,3 +35,35 @@ How to reverse: restore the literal `'2026-09-30'` in `orgDate.ts` and delete `d
 Established in Phase 8 and unchanged. The platform portal is the sole place that may read `user_role`
 from the JWT (for example `user_role = 'platform_admin'`). Every org-product RPC and all application
 code use only `caller_has_right`/`hasRight`. Platform checks never leak into org RPCs.
+
+## D-D9-rpc — `update_plan_item_dates` did not exist; added it in migration 0047
+
+Task D9. Unclear point: the prompt states "The update_plan_item_dates RPC exists in migration 0025
+(plan management)", but no such function exists anywhere in `supabase/` or `src/` (grep returns
+nothing), and migration 0025 is the Phase 4B Planning migration, not plan management. The plan RPCs
+live in `0021_audit_plan.sql` (`create_plan`, `add_plan_item`, `decide_adhoc_item`, `approve_plan`,
+`snapshot_plan_version`).
+Options: (1) stop and report; (2) build the RPC in a new migration.
+Choice: option 2. Added `public.update_plan_item_dates(p_item uuid, p_start date, p_end date)` in
+`supabase/migrations/0047_plan_item_dates.sql`.
+Reason: overnight mode replaces the stop rule; the missing object is the only blocker. The RPC follows
+the 0021 conventions: `security definer set search_path = public`, `jwt_org_id()` scope, the
+configured `plan_approval_settings.create_right` (the same right `add_plan_item` needs, because a
+reschedule is a plan change), an approved plan is refused with the same message `add_plan_item` uses,
+the date range is validated, and a new immutable version is written via `snapshot_plan_version` (L5).
+How to reverse: `drop function public.update_plan_item_dates(uuid, date, date)` and remove the Gantt
+handler plus `updatePlanItemDates`/`planItemForEngagement` from `src/data/plan.ts`.
+
+## D-D9-apply — reschedule is reflected in memory, not by a full refetch
+
+Task D9. Unclear point: the prompt's handler says "Refetch plan or update local state". The Gantt
+draws `AuditEngagement` rows from `useScopedData`/`AppContext`, and there is no engagement-list data
+module to refetch through (`src/data` has no engagement loader).
+Choice: the Gantt resolves the plan item behind the engagement (`planItemForEngagement`), persists the
+new dates (`updatePlanItemDates`), then reports the change to its caller via `onRescheduled`, which
+`ExecutiveDashboardTab` applies through a new `AppContext.applyPlanItemDates` setter. The plan item
+stays authoritative; the in-memory engagement mirrors it until the next load.
+Reason: simplest option that obeys the Laws and the "every DB call through src/data" rule, with no new
+loader to invent.
+How to reverse: drop the `onRescheduled`/`applyPlanItemDates` path and call a real engagement reload
+once an engagement data module exists.

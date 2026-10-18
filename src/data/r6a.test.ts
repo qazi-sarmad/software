@@ -90,3 +90,35 @@ describe('listGateOutcomes (R6a)', () => {
     expect(await m.listGateOutcomes('u1')).toEqual([]);
   });
 });
+
+describe('updatePlanItemDates and planItemForEngagement (D9)', () => {
+  it('calls the RPC with the item id and both dates', async () => {
+    const m = await import('./plan');
+    rpcMock.mockResolvedValue({ data: null, error: null });
+    expect(await m.updatePlanItemDates('item-1', '2026-02-01', '2026-02-28')).toEqual({ ok: true });
+    expect(rpcMock).toHaveBeenCalledWith('update_plan_item_dates', {
+      p_item: 'item-1', p_start: '2026-02-01', p_end: '2026-02-28',
+    });
+  });
+
+  it('reports the RPC error message', async () => {
+    const m = await import('./plan');
+    rpcMock.mockResolvedValue({ data: null, error: { message: 'an approved plan cannot be changed' } });
+    expect(await m.updatePlanItemDates('item-1', '2026-02-01', '2026-02-28'))
+      .toEqual({ ok: false, reason: 'an approved plan cannot be changed' });
+  });
+
+  it('resolves the plan item behind an engagement', async () => {
+    const m = await import('./plan');
+    queryResult = { data: { id: 'item-1' }, error: null };
+    expect(await m.planItemForEngagement('eng-1')).toEqual({ id: 'item-1' });
+    expect(lastQuery.table).toBe('plan_items');
+    expect(lastQuery.eqs).toContainEqual(['engagement_id', 'eng-1']);
+  });
+
+  it('returns null when the engagement has no plan item', async () => {
+    const m = await import('./plan');
+    queryResult = { data: null, error: null };
+    expect(await m.planItemForEngagement('eng-1')).toBeNull();
+  });
+});

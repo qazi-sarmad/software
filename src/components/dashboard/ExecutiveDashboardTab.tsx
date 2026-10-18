@@ -24,7 +24,7 @@ export const ExecutiveDashboardTab: React.FC = () => {
     filteredCapItems,
   } = useScopedData();
   const filter = useFilterStore();
-  const { setActiveTab, setSelectedEngagementId } = useApp();
+  const { setActiveTab, setSelectedEngagementId, applyPlanItemDates } = useApp();
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-8 space-y-8 animate-fade-in">
@@ -179,6 +179,9 @@ export const ExecutiveDashboardTab: React.FC = () => {
         onSelectEngagement={(id) => {
           setSelectedEngagementId(id);
         }}
+        onRescheduled={({ engagementId, newStart, newDue }) =>
+          applyPlanItemDates(engagementId, newStart, newDue)
+        }
       />
 
       {/* CAP Radial Tracker (§ 3.4: replaces Sunburst with D3 radial chart, outer ring severity, overdue arc) */}

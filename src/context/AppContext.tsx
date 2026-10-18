@@ -136,7 +136,8 @@ interface AppContextType {
     payload?: { note?: string; evidenceRefs?: string[]; rejectTo?: 'Open' | 'In progress' }
   ) => TransitionCapResult;
   orgRoleConfig: ReturnType<typeof buildDefaultOrgRoleConfig>;
-
+  /** D9: apply a persisted plan-item reschedule to the in-memory engagement so the Gantt moves. */
+  applyPlanItemDates: (engagementId: string, start: string, end: string) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -631,6 +632,14 @@ export function AppProvider({ user, seed, children }: { user: User; seed: Tenant
 
   const orgRoleConfig = buildDefaultOrgRoleConfig();
 
+  // D9: after a reschedule is persisted, reflect it on the engagement the Gantt draws. The plan
+  // item holds the authoritative dates; this keeps the dashboard consistent until the next load.
+  const applyPlanItemDates = (engagementId: string, start: string, end: string) => {
+    setRawEngagements((prev) =>
+      prev.map((e) => (e.id === engagementId ? { ...e, periodStart: start, dueDate: end } : e))
+    );
+  };
+
   const updateCapStatus = (capId: string, status: CapStatus, retestStatus?: RetestStatus) => {
     // Legacy ungated path retained only for non-workflow callers; CapInspector must use transitionCap.
     setRawCapItems((prev) =>
@@ -716,6 +725,7 @@ export function AppProvider({ user, seed, children }: { user: User; seed: Tenant
         updateCapStatus,
         transitionCap,
         orgRoleConfig,
+        applyPlanItemDates,
       }}
     >
       {children}
