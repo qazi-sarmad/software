@@ -272,3 +272,26 @@ tarball is an owner decision (it changes the dependency source).
 How to reverse: install `https://cdn.sheetjs.com/xlsx-latest/xlsx-latest.tgz` or swap the parser, then
 remove the advisory note from NOT-DONE item 12.
 
+
+## D-R6a-fix — the persisted reads must not receive a development seed id
+
+Task R6a (fix forward). Unclear point: the first R6a commit (`ab85434`) passed the *development demo
+seed's* universe id (`u-gbm`, from `src/data/initialData.ts`) straight into the new persisted reads.
+`universes.id` and the other target columns are `uuid`, so Postgres raised
+`invalid input syntax for type uuid: "u-gbm"`. Because the reads were wrapped in one `Promise.all`,
+that single rejection blanked the whole `sira-persisted` object and the model card rendered
+"No model loaded"; CI step 7 failed on `e2e/r6a.spec.ts:35`.
+Options: (1) leave it — the demo seed and the database are different worlds; (2) seed the DB and make
+the app read it in dev; (3) skip a read whose id is not a database id, and make each read independent.
+Choice: option 3. `src/lib/ids.ts` exposes `isUuid`; `SiraTab` and `AuditPlanTab` only issue a read
+when the id is a UUID, and each read is independent of the others.
+Reason: the demo seed is development-only data with readable ids; it is not a database id and never
+will be. Option 2 would put a tenant's live rows behind a dev flag and change what the product shows.
+Option 3 keeps every real read (all ids are UUIDs in production and in the SQL tests) while making a
+non-database id a no-op instead of an error. The org-scoped SIRA model read is keyed on `orgId`
+(a UUID from `org_members`), so it still runs in dev and the model card reports the seeded factors.
+The inspector payloads (`openInspector('sira_model', ...)`) were also restored to their pre-R6a
+placeholders, because `e2e/phase3.spec.ts` asserts the SIRA inspector's *empty* state
+(`sira-model-empty`, `sira-cycles-empty`) and that assertion is the point of that test.
+How to reverse: delete `src/lib/ids.ts` and the `isUuid` guards in `SiraTab.tsx` / `AuditPlanTab.tsx`,
+and feed `persisted` back into the two `openInspector` calls (this reverts to the red run 39080852579).

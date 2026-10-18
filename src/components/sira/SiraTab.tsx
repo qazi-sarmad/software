@@ -5,6 +5,7 @@ import { Shield, ChevronDown } from '../common/Icons';
 import { InlineError } from '../common/InlineError';
 import { listCycles, listEmergentRisks, siraModelSnapshot, type SiraCycle, type SiraEmergentRisk, type SiraModel } from '../../data/sira';
 import { latestPlanForUniverse, planHistory, type PlanRow, type PlanVersionRow } from '../../data/plan';
+import { isUuid } from '../../lib/ids';
 
 interface PersistedSira {
   model: SiraModel | null;
@@ -34,9 +35,12 @@ export const SiraTab: React.FC = () => {
 
   // R6a: load the persisted SIRA model, cycles and plan for the selected universe through src/data.
   // Every read is org-scoped by RLS; a failure shows an inline error, never a blocking dialog.
+  // The development demo seed uses readable universe ids (e.g. `u-gbm`) that are not database ids;
+  // sending one to a uuid column is a Postgres error, so those reads are skipped, not attempted.
   useEffect(() => {
-    const universeId = universe?.id;
-    if (!universeId) {
+    const universeId = isUuid(universe?.id) ? universe!.id : null;
+    const orgId = isUuid(currentUser.orgId) ? currentUser.orgId! : null;
+    if (!universeId && !orgId) {
       setPersisted(null);
       return;
     }
@@ -44,12 +48,10 @@ export const SiraTab: React.FC = () => {
     setLoadError(null);
     (async () => {
       try {
-        const [model, cycles, emergent, plan] = await Promise.all([
-          siraModelSnapshot(currentUser.orgId ?? ''),
-          listCycles(universeId),
-          listEmergentRisks(universeId),
-          latestPlanForUniverse(universeId),
-        ]);
+        const model = orgId ? await siraModelSnapshot(orgId) : null;
+        const cycles = universeId ? await listCycles(universeId) : [];
+        const emergent = universeId ? await listEmergentRisks(universeId) : [];
+        const plan = universeId ? await latestPlanForUniverse(universeId) : null;
         const versions = plan ? await planHistory(plan.id) : [];
         if (!cancelled) setPersisted({ model, cycles, emergent, plan, versions });
       } catch (err) {
@@ -89,7 +91,7 @@ export const SiraTab: React.FC = () => {
           <button
             type="button"
             data-testid="sira-open-model"
-            onClick={() => openInspector('sira_model', { model: persisted?.model ?? null })}
+            onClick={() => openInspector('sira_model', { model: null })}
             className="px-3 py-1.5 rounded-lg border border-hairline text-apple-12 text-primary hover:bg-surface-hover"
           >
             SIRA model
@@ -97,7 +99,7 @@ export const SiraTab: React.FC = () => {
           <button
             type="button"
             data-testid="sira-open-cycles"
-            onClick={() => openInspector('sira_cycles', { cycles: persisted?.cycles ?? [], emergent: persisted?.emergent ?? [] })}
+            onClick={() => openInspector('sira_cycles', { cycles: [], emergent: [] })}
             className="px-3 py-1.5 rounded-lg border border-hairline text-apple-12 text-primary hover:bg-surface-hover"
           >
             Cycles &amp; emergent risks

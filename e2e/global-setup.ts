@@ -128,6 +128,38 @@ export default async function globalSetup() {
     { id: 'aaf9bde0-512f-53b2-beef-def76ff6ca80', org_id: ORG_B, universe_id: B_U2, name: 'Access Management (Test)', kind: 'process', approved: true },
   ], { onConflict: 'id' }));
 
+  // R6a precondition. The database seeds a default SIRA model per org (migration 0019's insert trigger
+  // plus its backfill), but an org created inside this run would not have one until the next migration
+  // pass, so the harness seeds it explicitly and idempotently. phase3.spec still asserts the SIRA
+  // inspector's empty state: the SIRA tab opens that inspector with a null model regardless of the DB.
+  const SIRA_FACTORS: [string, string, number, number][] = [
+    ['inherent_risk', 'Inherent risk', 1, 1],
+    ['complexity', 'Complexity', 1, 2],
+    ['regulatory_exposure', 'Regulatory exposure', 1, 3],
+    ['prior_findings', 'Prior findings', 1, 4],
+    ['time_since_audit', 'Time since last audit', 1, 5],
+    ['materiality', 'Materiality', 1, 6],
+  ];
+  const SIRA_SCALES = ['Very low', 'Low', 'Medium', 'High', 'Very high'];
+  const SIRA_BANDS: [string, number, number, number][] = [
+    ['Low', 0, 25, 1],
+    ['Medium', 25, 50, 2],
+    ['High', 50, 75, 3],
+    ['Critical', 75, 100, 4],
+  ];
+  for (const org of [ORG_A, ORG_B]) {
+    must('sira_models', await sb.from('sira_models').upsert({ org_id: org }, { onConflict: 'org_id' }));
+    must('sira_factors', await sb.from('sira_factors').upsert(
+      SIRA_FACTORS.map(([key, label, weight, ordinal]) => ({ org_id: org, key, label, weight, ordinal })),
+      { onConflict: 'org_id,key' }));
+    must('sira_scales', await sb.from('sira_scales').upsert(
+      SIRA_SCALES.map((label, i) => ({ org_id: org, point: i + 1, label })),
+      { onConflict: 'org_id,point' }));
+    must('sira_bands', await sb.from('sira_bands').upsert(
+      SIRA_BANDS.map(([name, min_score, max_score, ordinal]) => ({ org_id: org, name, min_score, max_score, ordinal })),
+      { onConflict: 'org_id,name' }));
+  }
+
   for (const u of USERS) {
     const authId = await findOrCreateUser(sb, u.email);
     must('setPassword ' + u.email, await sb.auth.admin.updateUserById(authId, { password: passwordFor(u.email) }));

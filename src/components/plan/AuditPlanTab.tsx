@@ -5,6 +5,7 @@ import { HoverPreview } from '../common/HoverPreview';
 import { InlineError } from '../common/InlineError';
 import { listDeploymentRequests, listGateOutcomes, type DeploymentRequestRow, type GateOutcomeRow } from '../../data/deployment';
 import { latestPlanForUniverse, listPlanItems, planHistory, type PlanItemRow, type PlanVersionRow } from '../../data/plan';
+import { isUuid } from '../../lib/ids';
 import {
   Folder,
   FileText,
@@ -48,6 +49,15 @@ export const AuditPlanTab: React.FC = () => {
 
   useEffect(() => {
     if (!selectedUniverseId) {
+      setPlanItems([]);
+      setPlanVersions([]);
+      setGateOutcomes([]);
+      setRequests([]);
+      return;
+    }
+    // The development demo seed uses readable universe ids (e.g. `u-gbm`) that are not database ids;
+    // sending one to a uuid column is a Postgres error, so those reads are skipped, not attempted.
+    if (!isUuid(selectedUniverseId)) {
       setPlanItems([]);
       setPlanVersions([]);
       setGateOutcomes([]);
