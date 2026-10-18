@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { hasRight } from '../../lib/rights';
+import { useScopedData } from '../../hooks/useScopedData';
 import { decideCombinedDeployment, requestCombinedDeployment } from '../../data/deployment';
 import { InlineError } from '../common/InlineError';
 import { CheckCircle2, Clock, Send, XCircle } from '../common/Icons';
@@ -34,12 +35,31 @@ export const CombinedApprovalPanel: React.FC<{
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [raised, setRaised] = useState(false);
+  const [selectedEntityId, setSelectedEntityId] = useState<string | null>(null);
+
+  // The entities in scope come from the shared data hook, not a direct client call: components
+  // never import the Supabase client. Scoped to the selected universe, sorted by name.
+  const { scopedEntities } = useScopedData();
+  const entities = useMemo(
+    () =>
+      scopedEntities
+        .filter((e) => !universeId || e.universeId === universeId)
+        .slice()
+        .sort((a, b) => a.name.localeCompare(b.name)),
+    [scopedEntities, universeId]
+  );
+
+  // Default the picker to the entity the panel was opened with, if any, else the first in scope.
+  useEffect(() => {
+    setSelectedEntityId((prev) => prev ?? entityId ?? entities[0]?.id ?? null);
+  }, [entityId, entities]);
 
   const raise = async () => {
-    if (!universeId || !entityId) return;
+    const target = selectedEntityId ?? entityId;
+    if (!universeId || !target) return;
     setBusy(true);
     setError(null);
-    const r = await requestCombinedDeployment(universeId, entityId);
+    const r = await requestCombinedDeployment(universeId, target);
     setBusy(false);
     if (!r.ok) {
       setError(r.reason);
@@ -73,11 +93,36 @@ export const CombinedApprovalPanel: React.FC<{
       {error && <InlineError message={error} testId="combined-approval-error" />}
 
       {!request ? (
-        <div className="space-y-2">
+        <div className="space-y-3">
+          <div className="space-y-1">
+            <label htmlFor="combined-entity" className="block text-apple-12 font-medium text-primary">
+              Entity to deploy
+            </label>
+            {entities.length === 0 ? (
+              <p data-testid="combined-entity-empty" className="text-apple-12 text-tertiary">
+                No entities are in scope for this universe. Add an entity first, then raise a combined request.
+              </p>
+            ) : (
+              <select
+                id="combined-entity"
+                data-testid="combined-entity-picker"
+                value={selectedEntityId ?? ''}
+                onChange={(e) => setSelectedEntityId(e.target.value || null)}
+                className="w-full rounded-lg border border-hairline bg-surface px-3 py-1.5 text-apple-13 text-primary"
+              >
+                <option value="">Select an entity…</option>
+                {entities.map((e) => (
+                  <option key={e.id} value={e.id}>
+                    {e.name}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
           <button
             type="button"
             data-testid="combined-raise"
-            disabled={!canRaise || !universeId || !entityId || busy}
+            disabled={!canRaise || !universeId || !selectedEntityId || busy}
             title={canRaise ? undefined : 'Requires the perform work right'}
             onClick={() => void raise()}
             className="px-3 py-1.5 rounded-lg bg-primary text-canvas text-apple-13 font-semibold disabled:opacity-40 flex items-center gap-1.5"

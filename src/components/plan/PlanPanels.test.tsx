@@ -53,6 +53,28 @@ describe('CombinedApprovalPanel', () => {
     expect((screen.getByTestId('combined-raise') as HTMLButtonElement).disabled).toBe(true);
   });
 
+  it('populates the entity picker from the entities in scope (D7)', () => {
+    wrap('cia', <CombinedApprovalPanel request={null} universeId={testSeed.universes[0].id} />);
+    const picker = screen.getByTestId('combined-entity-picker') as HTMLSelectElement;
+    // The seed has at least one entity; each renders as an option (plus the placeholder).
+    expect(picker.options.length).toBeGreaterThan(1);
+  });
+
+  it('enables raising once an entity is picked (D7)', () => {
+    wrap('cia', <CombinedApprovalPanel request={null} universeId={testSeed.universes[0].id} />);
+    const picker = screen.getByTestId('combined-entity-picker') as HTMLSelectElement;
+    const raise = screen.getByTestId('combined-raise') as HTMLButtonElement;
+    // The first in-scope entity is selected by default, so raising is enabled without a manual pick.
+    expect(picker.value).not.toBe('');
+    expect(raise.disabled).toBe(false);
+  });
+
+  it('shows a designed empty state when no entity is in scope (D7)', () => {
+    wrap('cia', <CombinedApprovalPanel request={null} universeId="no-such-universe" />);
+    expect(screen.getByTestId('combined-entity-empty')).toBeTruthy();
+    expect((screen.getByTestId('combined-raise') as HTMLButtonElement).disabled).toBe(true);
+  });
+
   it('shows the SLA and escalation fields on a pending request', () => {
     wrap('cia', (
       <CombinedApprovalPanel
