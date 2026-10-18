@@ -8,6 +8,7 @@ import {
   type PopulationRow,
 } from '../../data/population';
 import { hasRight } from '../../lib/rights';
+import { rightReason, rightReasonFor } from '../../lib/rightLabels';
 import { InlineError } from '../common/InlineError';
 import { Upload, Hash, Lock, CheckCircle2, Database, RefreshCw } from '../common/Icons';
 
@@ -141,7 +142,7 @@ export const PopulationPanel: React.FC<{ engagementId: string }> = ({ engagement
               data-testid="population-register"
               onClick={register}
               disabled={busy || !canWrite || rowCount <= 0}
-              title={!canWrite ? 'You do not hold the perform_work right.' : undefined}
+              title={!canWrite ? rightReason('perform_work') : undefined}
               className="px-3 py-1.5 rounded-lg bg-surface border border-hairline hover:bg-surface-hover text-apple-12 font-semibold text-primary disabled:opacity-50"
             >
               Register and verify

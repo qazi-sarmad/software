@@ -92,4 +92,33 @@ describe('source guards for production paths', () => {
     // matched only when it appears as retest/re-test/fail_retest.
     expect(offenders(/fail_retest|retestStatus|RetestStatus|Re-?[Tt]est/i)).toEqual([]);
   });
+
+  it('never shows an internal right slug to the user (D14)', () => {
+    // Disabled controls must explain themselves in plain language via src/lib/rightLabels.ts; a
+    // user-visible string must never spell out perform_work, review_and_approve, etc. Only the
+    // contents of a string literal or of JSX text are user-visible, so we inspect those segments
+    // and ignore comments, identifiers and object keys such as `right: 'perform_work'`.
+    const slug =
+      /\b(perform_work|review_and_approve|manage_engagements|approve_plan|manage_users|can_reopen|view_all_scopes|edit_config|manage_roles|manage_team)\b/;
+    const rightWord = /\b(right|permission)s?\b/i;
+    const visibleSegments = (line: string): string[] => {
+      const t = line.trim();
+      if (t.startsWith('*') || t.startsWith('//') || t.startsWith('/*')) return [];
+      const segments: string[] = [];
+      for (const m of line.matchAll(/'([^']*)'|"([^"]*)"|`([^`]*)`/g)) {
+        segments.push(m[1] ?? m[2] ?? m[3] ?? '');
+      }
+      for (const m of line.matchAll(/>([^<>{}]+)</g)) segments.push(m[1]);
+      return segments;
+    };
+    const files = prodFiles.filter((f) => !relative(SRC, f).endsWith('lib/rightLabels.ts'));
+    const hits = files
+      .filter((f) =>
+        readFileSync(f, 'utf-8')
+          .split('\n')
+          .some((line) => visibleSegments(line).some((s) => slug.test(s) && rightWord.test(s))),
+      )
+      .map((f) => relative(SRC, f));
+    expect(hits).toEqual([]);
+  });
 });

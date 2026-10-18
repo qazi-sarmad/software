@@ -1,6 +1,7 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext';
 import { hasRight } from '../../lib/rights';
+import { rightReason } from '../../lib/rightLabels';
 import { CheckCircle2, Clock, Plus, XCircle } from '../common/Icons';
 
 export interface SiraCycleView {
@@ -112,7 +113,7 @@ export const SiraCyclePanel: React.FC<{
                   </p>
                 )}
                 {r.status === 'pending' && !canDecide && (
-                  <p className="text-apple-11 text-tertiary">Requires the review and approve right to decide.</p>
+                  <p className="text-apple-11 text-tertiary">{rightReason('review_and_approve')}</p>
                 )}
               </li>
             ))}

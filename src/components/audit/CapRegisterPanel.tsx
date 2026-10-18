@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { listCaps, updateCap, closeCap, type CapRow, type CapStatus } from '../../data/caps';
 import { hasRight } from '../../lib/rights';
+import { rightReason, rightReasonFor } from '../../lib/rightLabels';
 import { InlineError } from '../common/InlineError';
 import { CheckCircle2, Clock, ShieldCheck } from '../common/Icons';
 
@@ -146,7 +147,7 @@ export const CapRegisterPanel: React.FC<{ engagementId: string }> = ({ engagemen
                         data-testid={`cap-close-${c.id}`}
                         onClick={() => close(c, true, false)}
                         disabled={busy || !canReview}
-                        title={!canReview ? 'You do not hold the review_and_approve right.' : undefined}
+                        title={!canReview ? rightReason('review_and_approve') : undefined}
                         className="px-3 py-1.5 rounded-lg bg-surface border border-hairline text-apple-12 font-semibold text-primary disabled:opacity-50 flex items-center gap-1.5"
                       >
                         <CheckCircle2 className="w-3.5 h-3.5" /> Verify &amp; close

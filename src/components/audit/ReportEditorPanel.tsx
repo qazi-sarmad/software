@@ -16,6 +16,7 @@ import {
 } from '../../data/reports';
 import { checkCapReconciliation, type CapRow, listCaps } from '../../data/caps';
 import { hasRight } from '../../lib/rights';
+import { rightReason, rightReasonFor } from '../../lib/rightLabels';
 import { InlineError } from '../common/InlineError';
 import { HoldToConfirm } from '../common/HoldToConfirm';
 import { AlertTriangle, CheckCircle2, FileText, Layers, Send } from '../common/Icons';
@@ -354,7 +355,7 @@ export const ReportEditorPanel: React.FC<{ engagementId: string }> = ({ engageme
               </div>
               {!canApprove && (
                 <div className="text-apple-11 text-secondary" data-testid="report-rights-note">
-                  Freeze and issue need the approve_plan right.
+                  Freeze and issue: {rightReason('approve_plan')}
                 </div>
               )}
             </div>

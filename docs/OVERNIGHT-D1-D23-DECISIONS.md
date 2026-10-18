@@ -147,3 +147,21 @@ Reason: smallest change that removes the trap without touching the 12 call sites
 the WAI-ARIA button role.
 How to reverse: remove the `onKeyDown`/`handleKeyDown` wiring and the `aria-disabled` attribute and
 delete the four keyboard tests in `HoverPreview.test.tsx`.
+
+## D-D14-rights — disabled controls explain themselves in plain language
+
+Task D14. Unclear point: the prompt says disabled controls show "internal slugs" and gives a literal
+map (perform_work → "You don't have permission to perform work on this engagement", …). The code did
+not use the exact `title={Requires ${right}}` pattern; instead each panel carried its own sentence,
+and several leaked the slug verbatim ("You do not hold the perform_work right.") or interpolated an
+RPC's `requiredRight` field straight into the UI.
+Choice: add `src/lib/rightLabels.ts` exporting `rightReason(right)` (the prompt's map, extended to
+every right in `src/lib/rights.ts`) and `rightReasonFor(raw)` (a safe fallback for a plain string).
+Replace every slug-bearing user-visible string — in `title` attributes, inline banners and
+`AppContext`'s error reasons — with these helpers, and add a source guard that fails if a slug appears
+inside a user-visible string segment.
+Reason: the Laws require human-readable copy (no jargon), and the prompt's map keys must match the
+closed right vocabulary exactly; the fallback guarantees a slug can never reach the screen even when
+the value arrives from an RPC. The guard keeps the fix from regressing.
+How to reverse: `git revert` the D14 commit and delete `src/lib/rightLabels.ts` + its test and the
+guard case; restore the old literal sentences.

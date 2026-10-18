@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { hasRight } from '../../lib/rights';
+import { rightReason, rightReasonFor } from '../../lib/rightLabels';
 import {
   exportAuditPlan,
   exportCapRegister,
@@ -192,7 +193,7 @@ export const ExportPanel: React.FC<ExportPanelProps> = ({ engagementId, workpape
         </button>
         {current.right === 'manage_users' && (
           <span className="text-apple-11 text-secondary flex items-center gap-1">
-            <Lock className="w-3.5 h-3.5" /> Requires the manage-users right
+            <Lock className="w-3.5 h-3.5" /> {rightReason('manage_users')}
           </span>
         )}
       </div>

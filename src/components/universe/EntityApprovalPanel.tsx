@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { hasRight } from '../../lib/rights';
+import { rightReason, rightReasonFor } from '../../lib/rightLabels';
 import {
   decideEntity,
   entityHistory,
@@ -84,7 +85,7 @@ export const EntityApprovalPanel: React.FC<{ entity: EntityRow; onDone?: () => v
             type="button"
             data-testid="entity-submit"
             disabled={!canSubmit}
-            title={canSubmit ? undefined : 'Requires the perform work right'}
+            title={canSubmit ? undefined : rightReason('perform_work')}
             onClick={() => void run(() => submitEntity(entity.id), 'pending')}
             className="px-3 py-1.5 rounded-lg bg-primary text-canvas text-apple-13 font-semibold disabled:opacity-40"
           >
@@ -97,7 +98,7 @@ export const EntityApprovalPanel: React.FC<{ entity: EntityRow; onDone?: () => v
               type="button"
               data-testid="entity-approve"
               disabled={!canDecide}
-              title={canDecide ? undefined : 'Requires the approve plan right'}
+              title={canDecide ? undefined : rightReason('approve_plan')}
               onClick={() => void run(() => decideEntity(entity.id, true), 'approved')}
               className="px-3 py-1.5 rounded-lg bg-verdigris-subtle text-verdigris text-apple-13 font-semibold disabled:opacity-40"
             >

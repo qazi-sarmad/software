@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { hasRight } from '../../lib/rights';
+import { rightReason, rightReasonFor } from '../../lib/rightLabels';
 import { useScopedData } from '../../hooks/useScopedData';
 import { decideCombinedDeployment, requestCombinedDeployment } from '../../data/deployment';
 import { InlineError } from '../common/InlineError';
@@ -123,7 +124,7 @@ export const CombinedApprovalPanel: React.FC<{
             type="button"
             data-testid="combined-raise"
             disabled={!canRaise || !universeId || !selectedEntityId || busy}
-            title={canRaise ? undefined : 'Requires the perform work right'}
+            title={canRaise ? undefined : rightReason('perform_work')}
             onClick={() => void raise()}
             className="px-3 py-1.5 rounded-lg bg-primary text-canvas text-apple-13 font-semibold disabled:opacity-40 flex items-center gap-1.5"
           >
@@ -167,7 +168,7 @@ export const CombinedApprovalPanel: React.FC<{
                 type="button"
                 data-testid="combined-approve"
                 disabled={!canDecide || busy}
-                title={canDecide ? undefined : 'Requires the approve plan right'}
+                title={canDecide ? undefined : rightReason('approve_plan')}
                 onClick={() => void decide(true)}
                 className="px-3 py-1.5 rounded-lg bg-verdigris-subtle text-verdigris text-apple-13 font-semibold disabled:opacity-40"
               >

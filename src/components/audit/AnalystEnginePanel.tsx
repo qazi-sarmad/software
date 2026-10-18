@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { listAnalysisResults, raiseFinding, type AnalysisResultRow } from '../../data/analytics';
 import { hasRight } from '../../lib/rights';
+import { rightReason, rightReasonFor } from '../../lib/rightLabels';
 import { InlineError } from '../common/InlineError';
 import { Activity, AlertTriangle, ChevronDown, ChevronRight, Plus, RefreshCw } from '../common/Icons';
 
@@ -123,7 +124,7 @@ export const AnalystEnginePanel: React.FC<{ engagementId: string }> = ({ engagem
                           data-testid={`analyst-raise-${r.id}`}
                           onClick={() => raise(r)}
                           disabled={busy || !canRaise || raised[r.id] || !r.populationId}
-                          title={!canRaise ? 'You do not hold the perform_work right.' : undefined}
+                          title={!canRaise ? rightReason('perform_work') : undefined}
                           className="shrink-0 px-3 py-1.5 rounded-lg bg-surface border border-hairline hover:bg-surface-hover text-apple-12 font-semibold text-primary disabled:opacity-50 flex items-center gap-1.5"
                         >
                           <Plus className="w-3.5 h-3.5" /> {raised[r.id] ? 'Finding raised' : 'Raise finding'}

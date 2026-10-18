@@ -10,6 +10,7 @@ import {
   type RowResult,
 } from '../../data/rowTesting';
 import { hasRight } from '../../lib/rights';
+import { rightReason, rightReasonFor } from '../../lib/rightLabels';
 import { InlineError } from '../common/InlineError';
 import { Check, X, AlertTriangle, ShieldCheck, Lock, RotateCcw } from '../common/Icons';
 
@@ -230,14 +231,14 @@ export const RowTestingPanel: React.FC<{ workpaperId: string }> = ({ workpaperId
               data-testid="rowtesting-signoff"
               onClick={sign}
               disabled={busy || !canReview || rows.length === 0 || incomplete.length > 0}
-              title={!canReview ? 'You do not hold the review_and_approve right.' : undefined}
+              title={!canReview ? rightReason('review_and_approve') : undefined}
               className="px-4 py-2 rounded-lg bg-surface border border-hairline hover:bg-surface-hover text-apple-13 font-semibold text-primary disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               <Lock className="w-4 h-4" /> Sign off working paper
             </button>
             {!canReview && (
               <div className="text-apple-11 text-secondary" data-testid="rowtesting-signoff-reason">
-                You do not hold the review_and_approve right.
+                {rightReason('review_and_approve')}
               </div>
             )}
           </>

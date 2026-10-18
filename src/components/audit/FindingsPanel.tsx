@@ -13,6 +13,7 @@ import {
   type SeverityLevelRow,
 } from '../../data/observations';
 import { hasRight } from '../../lib/rights';
+import { rightReason, rightReasonFor } from '../../lib/rightLabels';
 import { InlineError } from '../common/InlineError';
 import { AlertTriangle, CheckCircle2, ChevronDown, ChevronRight, Plus, RefreshCw } from '../common/Icons';
 
@@ -178,7 +179,7 @@ export const FindingsPanel: React.FC<{ engagementId: string }> = ({ engagementId
                           data-testid={`observation-promote-${o.id}`}
                           onClick={() => promote(o)}
                           disabled={busy || !canWrite || !promotable}
-                          title={!canWrite ? 'You do not hold the perform_work right.' : undefined}
+                          title={!canWrite ? rightReason('perform_work') : undefined}
                           className="px-3 py-1.5 rounded-lg bg-surface border border-hairline hover:bg-surface-hover text-apple-12 font-semibold text-primary disabled:opacity-50 flex items-center gap-1.5"
                         >
                           <CheckCircle2 className="w-3.5 h-3.5" /> Promote to finding

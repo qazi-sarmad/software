@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { hasRight } from '../../lib/rights';
+import { rightReason, rightReasonFor } from '../../lib/rightLabels';
 import { deployEngagement, type GateResult } from '../../data/deployment';
 import { HoldToConfirm } from '../common/HoldToConfirm';
 import { InlineError } from '../common/InlineError';
@@ -125,11 +126,11 @@ export const DeploymentGatePanel: React.FC<{
       {result.detail && <p className="text-apple-12 text-secondary">{result.detail}</p>}
       {!ok && result.requiredRight && (
         <p data-testid="gate-required-right" className="text-apple-12 text-secondary">
-          Requires the <span className="font-semibold text-primary">{result.requiredRight}</span> right.
+          {rightReasonFor(result.requiredRight)}
         </p>
       )}
       {!ok && !canDeploy && (
-        <p className="text-apple-12 text-tertiary">You do not hold the right to deploy engagements.</p>
+        <p className="text-apple-12 text-tertiary">{rightReason('manage_engagements')}</p>
       )}
       {error && <InlineError message={error} testId="gate-deploy-error" />}
       {ok ? (

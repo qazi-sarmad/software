@@ -73,7 +73,9 @@ describe('PlanningPanel (4I, §10)', () => {
     render(<PlanningPanel engagementId="e1" />);
     await waitFor(() => expect(screen.getByTestId('planning-signoff')).toBeTruthy());
     expect((screen.getByTestId('planning-signoff') as HTMLButtonElement).disabled).toBe(true);
-    expect(screen.getByTestId('planning-signoff-reason').textContent).toMatch(/review_and_approve/);
+    const reason = screen.getByTestId('planning-signoff-reason').textContent ?? '';
+    expect(reason).toMatch(/review and approve/i);
+    expect(reason).not.toMatch(/review_and_approve/);
   });
 
   it('accepts a suggestion and removes it from the list', async () => {

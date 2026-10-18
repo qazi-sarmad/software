@@ -8,6 +8,7 @@ import {
   type ConclusionRecord,
 } from '../../data/conclusion';
 import { hasRight } from '../../lib/rights';
+import { rightReason, rightReasonFor } from '../../lib/rightLabels';
 import { InlineError } from '../common/InlineError';
 import { ArrowDown, ShieldCheck, XCircle } from '../common/Icons';
 
@@ -106,7 +107,7 @@ export const ConclusionPanel: React.FC<{ engagementId: string }> = ({ engagement
           data-testid="conclusion-pull"
           onClick={pull}
           disabled={busy || !canReview || !testingOk || locked}
-          title={!canReview ? 'You do not hold the review_and_approve right.' : undefined}
+          title={!canReview ? rightReason('review_and_approve') : undefined}
           className="px-3 py-1.5 rounded-lg bg-surface border border-hairline hover:bg-surface-hover text-apple-12 font-semibold text-primary disabled:opacity-50 flex items-center gap-1.5"
         >
           <ArrowDown className="w-3.5 h-3.5" /> Pull exceptions from Testing
@@ -158,14 +159,14 @@ export const ConclusionPanel: React.FC<{ engagementId: string }> = ({ engagement
               data-testid="conclusion-sign"
               onClick={sign}
               disabled={busy || !canReview || !testingOk || exceptions.length === 0}
-              title={!canReview ? 'You do not hold the review_and_approve right.' : undefined}
+              title={!canReview ? rightReason('review_and_approve') : undefined}
               className="px-4 py-2 rounded-lg bg-surface border border-hairline hover:bg-surface-hover text-apple-13 font-semibold text-primary disabled:opacity-50 flex items-center gap-2"
             >
               <ShieldCheck className="w-4 h-4" /> Sign conclusion
             </button>
             {!canReview && (
               <div className="text-apple-11 text-secondary" data-testid="conclusion-sign-reason">
-                You do not hold the review_and_approve right.
+                {rightReason('review_and_approve')}
               </div>
             )}
           </>

@@ -45,9 +45,11 @@ describe('DeploymentGatePanel', () => {
     expect(screen.queryByTestId('gate-deploy')).toBeNull();
   });
 
-  it('names the required right when a step blocks', () => {
+  it('names the required right in plain language when a step blocks (D14)', () => {
     renderAs('preparer', { outcome: 'approval_required', step: 3, requiredRight: 'approve_plan' });
     expect(screen.getByTestId('gate-outcome').textContent).toMatch(/approval is required/i);
-    expect(screen.getByTestId('gate-required-right').textContent).toMatch(/approve_plan/);
+    const reason = screen.getByTestId('gate-required-right').textContent ?? '';
+    expect(reason).toMatch(/approve plans/i);
+    expect(reason).not.toMatch(/approve_plan/);
   });
 });

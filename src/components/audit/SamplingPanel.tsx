@@ -11,6 +11,7 @@ import {
   type SampleRow,
 } from '../../data/sampling';
 import { hasRight } from '../../lib/rights';
+import { rightReason, rightReasonFor } from '../../lib/rightLabels';
 import { InlineError } from '../common/InlineError';
 import { Sliders, Lock, CheckCircle2, Hash, Layers } from '../common/Icons';
 
@@ -179,7 +180,7 @@ export const SamplingPanel: React.FC<{ workpaperId: string }> = ({ workpaperId }
           data-testid="sampling-compute"
           onClick={run}
           disabled={busy || !canWrite || (mode === 'auditor_paste' && pastedItems.length === 0)}
-          title={!canWrite ? 'You do not hold the perform_work right.' : undefined}
+          title={!canWrite ? rightReason('perform_work') : undefined}
           className="px-3 py-1.5 rounded-lg bg-surface border border-hairline hover:bg-surface-hover text-apple-12 font-semibold text-primary disabled:opacity-50 flex items-center gap-1.5"
         >
           <Sliders className="w-3.5 h-3.5" /> Compute sample
