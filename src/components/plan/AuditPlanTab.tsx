@@ -23,6 +23,7 @@ export const AuditPlanTab: React.FC = () => {
     filteredEngagements,
     scopedControls,
     scopedWorkpapers,
+    scopedEntities,
     can,
     currentUser,
     selectedUniverseId,
@@ -122,6 +123,24 @@ export const AuditPlanTab: React.FC = () => {
     setReopenNote('');
   };
 
+  // D8: the deployment gate needs an entity to deploy. The picker lists the entities in the selected
+  // universe that are approved, matching the gate's own step-2 rule, so a user cannot pick one the
+  // database will refuse on the entity check.
+  const gateEntities = scopedEntities.filter(
+    (e) => (!selectedUniverseId || e.universeId === selectedUniverseId) && e.status === 'active'
+  );
+  const [gateEntityId, setGateEntityId] = useState<string | null>(null);
+  useEffect(() => {
+    setGateEntityId((prev) => (prev && gateEntities.some((e) => e.id === prev) ? prev : gateEntities[0]?.id ?? null));
+  }, [gateEntities]);
+
+  const handleDeployed = (engagementId: string | null) => {
+    if (engagementId) setSelectedEngagementId(engagementId);
+    if (selectedUniverseId) {
+      void listGateOutcomes(selectedUniverseId).then(setGateOutcomes).catch(() => {});
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
       {/* Header */}
@@ -152,7 +171,19 @@ export const AuditPlanTab: React.FC = () => {
           <button
             type="button"
             data-testid="plan-open-gate"
-            onClick={() => openInspector('deployment_gate', { result: null })}
+            onClick={() =>
+              openInspector('deployment_gate', {
+                result: null,
+                deploy: selectedUniverseId
+                  ? {
+                      universeId: selectedUniverseId,
+                      entityId: gateEntityId,
+                      period: selectedEngagement?.periodStart ?? undefined,
+                    }
+                  : null,
+                onDeployed: handleDeployed,
+              })
+            }
             className="px-3 py-1.5 rounded-lg border border-hairline text-apple-12 text-primary hover:bg-surface-hover"
           >
             Deployment gate

@@ -13,3 +13,4 @@ Baseline counts at start: 65 vitest files, 58 SQL tests, 11 Playwright spec file
 | D5 demo clock injection | 2fbc7ce | 39152873058 | green | src/lib/demoTime.ts + 5 call sites; 722 tests |
 | D6 ethics acknowledgement wiring | 5e0543c | pending | green (local) | EthicsPanel handler via acknowledge_ethics + ethics_status refetch; 724 tests |
 | D7 combined approval entity picker | pending | pending | green (local) | scoped entity picker + empty state; 727 tests |
+| D8 deploy action in gate flow | pending | pending | green (local) | hold-to-confirm deploy + entity picker; 730 tests |

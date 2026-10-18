@@ -93,7 +93,14 @@ export const RecordContent: React.FC<RecordContentProps> = ({ type, data, onClos
         case 'entity_approval':
           return <EntityApprovalPanel entity={data?.entity} onDone={onClose} />;
         case 'deployment_gate':
-          return <DeploymentGatePanel result={data?.result ?? null} />;
+          return (
+            <DeploymentGatePanel
+              result={data?.result ?? null}
+              deploy={data?.deploy ?? null}
+              onDeployed={data?.onDeployed}
+              onResult={data?.onResult}
+            />
+          );
         case 'ethics':
           return <EthicsPanel members={data?.members} engagementId={data?.engagementId} />;
         case 'combined_approval':
