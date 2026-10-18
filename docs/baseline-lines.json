@@ -42,7 +42,7 @@
     "src/components/dashboard/CapInspector.tsx": 257,
     "src/components/dashboard/CapRadialTracker.tsx": 396,
     "src/components/dashboard/CapRadialTracker.test.tsx": 69,
-    "src/components/dashboard/CapTable.tsx": 350,
+    "src/components/dashboard/CapTable.tsx": 313,
     "src/components/dashboard/D3Sunburst.tsx": 230,
     "src/components/dashboard/EngagementGantt.tsx": 492,
     "src/components/dashboard/ExecutiveDashboardTab.tsx": 201,

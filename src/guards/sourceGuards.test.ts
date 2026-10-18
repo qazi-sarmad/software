@@ -85,4 +85,11 @@ describe('source guards for production paths', () => {
   it('TEMP_AUTH is removed: no references anywhere in src', () => {
     expect(offenders(/TEMP_AUTH|tempAuth|TempSignInForm|resolveTempAccount/)).toEqual([]);
   });
+
+  it('never reintroduces a retest workflow (spec §28)', () => {
+    // The capability list, the transition action set and the UI must not mention a retest workflow
+    // or a retest status. "Retry" (a button that re-runs a failed read) is a different word and is
+    // matched only when it appears as retest/re-test/fail_retest.
+    expect(offenders(/fail_retest|retestStatus|RetestStatus|Re-?[Tt]est/i)).toEqual([]);
+  });
 });

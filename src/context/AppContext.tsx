@@ -18,7 +18,6 @@ import {
   CapStatus,
   GlassBoxToken,
   LedgerEntry,
-  RetestStatus,
   ReviewComment,
   User,
   WorkingPaper,
@@ -128,8 +127,6 @@ interface AppContextType {
     file: { name: string; sizeBytes: number; sha256: string },
     actorName: string
   ) => Promise<void>;
-  /** @deprecated Prefer transitionCap */
-  updateCapStatus: (capId: string, status: CapStatus, retestStatus?: RetestStatus) => void;
   transitionCap: (
     capId: string,
     action: CapStatusAction,
@@ -640,21 +637,6 @@ export function AppProvider({ user, seed, children }: { user: User; seed: Tenant
     );
   };
 
-  const updateCapStatus = (capId: string, status: CapStatus, retestStatus?: RetestStatus) => {
-    // Legacy ungated path retained only for non-workflow callers; CapInspector must use transitionCap.
-    setRawCapItems((prev) =>
-      prev.map((c) =>
-        c.id === capId
-          ? {
-              ...c,
-              status,
-              retestStatus: retestStatus !== undefined ? retestStatus : c.retestStatus,
-            }
-          : c
-      )
-    );
-  };
-
   const transitionCap = (
     capId: string,
     action: CapStatusAction,
@@ -722,7 +704,6 @@ export function AppProvider({ user, seed, children }: { user: User; seed: Tenant
         addObservation,
         addReviewComment,
         attachEvidenceToWorkpaper,
-        updateCapStatus,
         transitionCap,
         orgRoleConfig,
         applyPlanItemDates,

@@ -192,7 +192,7 @@ export const ExecutiveDashboardTab: React.FC = () => {
         overdueCapCount={stats.overdueCapCount}
       />
 
-      {/* CAP Table below chart (§ 3.4 requirement: id, action, owner, dept, severity, due date, aging, status, retest) */}
+      {/* CAP Table below chart (§ 3.4 requirement: id, action, owner, dept, severity, due date, aging, status) */}
       <CapTable capItems={filteredCapItems} />
     </div>
   );

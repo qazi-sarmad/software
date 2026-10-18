@@ -80,3 +80,35 @@ Reason: the register, its status vocabulary (D-6D-CAP) and its close action alre
 tested; duplicating them would create the divergent second status set D-6D-CAP forbids.
 How to reverse: remove the section and the picker from `IssuesRegisterTab.tsx` and delete
 `IssuesRegisterTab.test.tsx`.
+
+## D-D11-retest — the retest workflow is deleted, not hidden
+
+Task D11. Unclear point: the prompt says "remove retest workflow" and SPEC §28 lists "A retest
+workflow and 'proposed' CAP due dates" as never-reintroduce. The old code carried a parallel
+`RetestStatus` axis (`Not tested | Passed | Failed | In retest`), a `cap_fail_retest` capability, a
+`fail_retest` transition action, a Re-Test table column and a "Fail Re-Test" panel in CapInspector.
+Choice: delete the axis entirely rather than hide it. Specifically:
+- removed the `RetestStatus` type and the `retestStatus` field from `AuditCapItem` (`src/types/index.ts`);
+- removed the `cap_fail_retest` capability from both capability unions and from
+  `buildDefaultOrgRoleConfig` (`src/lib/orgCapabilities.ts`);
+- removed the `fail_retest` action from `CapStatusAction`/`ACTION_CAPABILITY` and the
+  `retestStatus` writes from `transitionCapStatus` (`src/lib/cap.ts`);
+- removed the Re-Test column, badge and `getRetestBadge` from `CapTable.tsx` (colSpan 9→8);
+- removed the "Independent Re-Test" readout and the Fail Re-Test button/panel from `CapInspector.tsx`;
+- removed `updateCapStatus` from `AppContext` (its only caller was CapTable, and its retestStatus
+  parameter no longer exists) — the gated `transitionCap` path remains the single writer;
+- removed `retestStatus` from the CAP seed rows in `src/data/initialData.ts`;
+- added a source guard in `src/guards/sourceGuards.test.ts` that fails if `fail_retest`,
+  `retestStatus`, `RetestStatus` or `Re-?[Tt]est` reappears anywhere under `src` (excluding tests).
+Reason: §16.2 states "No in-system retest. Verification is documented through the action description,
+rationale and supporting evidence." A dormant type/column left in place would re-enable the workflow
+on the next edit and would keep the CAP register vocabulary divergent, which the Laws forbid. The
+database already uses the §16.2 vocabulary (`open | verified_closed | verified_closed_delay |
+unverified | overdue_unverified`), so no migration change is needed.
+Note: "proposed" CAP due dates (the other half of §28) were never implemented — there is no
+`proposed` due-date field in the codebase, so there is nothing to remove; recorded here for
+completeness.
+Baseline: `docs/baseline-lines.json` updated for `CapTable.tsx` (350 → 313 lines) so the intentional
+removal is not reported as an accidental shrink.
+How to reverse: `git revert` the D11 commit; restore `RetestStatus`, `retestStatus`, `cap_fail_retest`,
+the `fail_retest` action, the Re-Test column and the Fail Re-Test panel, and delete the retest guard.
