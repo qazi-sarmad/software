@@ -95,7 +95,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ onOpenCommandPalette }) =>
             </span>
           </button>
 
-          {/* Universe Switcher: ONLY if user has access to multiple universes */}
+          {/* Universe Switcher: ONLY if user has access to multiple universes (inline on md+) */}
           {hasMultipleUniverses && (
             <div className="hidden md:flex items-center gap-1.5 pl-3 border-l border-hairline">
               <Select
@@ -125,6 +125,19 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ onOpenCommandPalette }) =>
             </kbd>
           </button>
         </div>
+
+        {/* Center: search icon button on narrow screens (D15) — the full search field reflows away
+            below the `sm` breakpoint, so an icon keeps the entry point reachable at 375px. */}
+        <button
+          type="button"
+          onClick={onOpenCommandPalette}
+          data-testid="header-search-compact"
+          className="sm:hidden p-2 rounded-xl bg-surface-elevated hover:bg-surface-hover border border-hairline text-secondary hover:text-primary transition-colors shadow-xs shrink-0"
+          title="Search or jump to..."
+          aria-label="Search or jump to"
+        >
+          <Search className="w-4 h-4 stroke-[1.5]" />
+        </button>
 
         {/* Right Zone: Header Calendar Icon Button, Theme Toggle, Profile Menu */}
         <div className="flex items-center gap-2.5 shrink-0 relative">
@@ -239,6 +252,29 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ onOpenCommandPalette }) =>
 
                   {/* Menu items */}
                   <div className="py-1">
+                    {/* Universe switcher on narrow screens (D15): the inline switcher is hidden
+                        below `md`, so the same choice is offered here instead of disappearing. */}
+                    {hasMultipleUniverses && (
+                      <div className="md:hidden px-3 py-2 border-b border-hairline mb-1" data-testid="mobile-universe-switcher">
+                        <div className="text-apple-11 text-secondary uppercase font-medium mb-1">
+                          Audit universe
+                        </div>
+                        <Select
+                          ariaLabel="Select audit universe"
+                          value={selectedUniverseId}
+                          onChange={(v) => {
+                            setSelectedUniverseId(v || null);
+                            setIsProfileOpen(false);
+                          }}
+                          icon={<Building className="w-3.5 h-3.5 text-secondary stroke-[1.5]" />}
+                          options={scopedUniverses.map((u) => ({
+                            value: u.id,
+                            label: `${u.name} (${u.code})`,
+                            hint: `${u.totalEntities} entities`,
+                          }))}
+                        />
+                      </div>
+                    )}
                     {(hasRight(currentUser, 'manage_users') || hasRight(currentUser, 'manage_roles')) && (
                       <button
                         onClick={() => {

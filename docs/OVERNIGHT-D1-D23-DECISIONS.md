@@ -165,3 +165,26 @@ closed right vocabulary exactly; the fallback guarantees a slug can never reach 
 the value arrives from an RPC. The guard keeps the fix from regressing.
 How to reverse: `git revert` the D14 commit and delete `src/lib/rightLabels.ts` + its test and the
 guard case; restore the old literal sentences.
+
+## D-D15-responsive — mobile widths reflow instead of hiding
+
+Task D15. Unclear point: the prompt names `src/components/common/NavHeader.tsx` and
+`HeaderSearchBar.tsx` as the files hiding the search field, but neither file exists; the search field
+and the universe switcher both live in `HeaderBar.tsx`. The prompt also says floating windows are a
+"fixed width 960px", but the 960px is a prop the caller passes (App shell: 960 for workbench/audit
+file, 720 otherwise), and the floating-window chrome is `FloatingWindow.tsx`, not a modal.
+Options: (1) keep `display:none` and add a separate mobile header; (2) reflow the existing header so
+every entry point stays reachable at every width; (3) convert the floating window to a mobile sheet.
+Choice: option 2 for the header and a `min()` clamp for the window. The header gains a compact
+search icon button (`sm:hidden`) beside the full field (`hidden sm:block`), and the profile menu
+gains an `md:hidden` copy of the universe switcher so the same choice is offered where the inline
+`hidden md:flex` switcher disappears. `FloatingWindow` renders
+`width: min(<prop>px, calc(100vw - <right>px - 0.5rem))` so it can never clip off the left edge, and
+`HeaderCalendarPanel` uses `w-[min(340px,calc(100vw-2rem))]`. The NavStrip already collapses labels
+to icons below `sm`; no change was needed there.
+Reason: option 1 duplicates the header and risks two divergent copies; option 3 changes the record
+view interaction model that 17.1/27.5 and the 5C tests pin. A clamp keeps the desktop rendering
+byte-identical (the `min()` selects the prop width whenever the viewport is wide enough) while making
+375px usable, which is what "unhide and reflow" asks for.
+How to reverse: `git revert` the D15 commit; the header returns to hiding both entry points below
+their breakpoints and the window returns to a bare `width` style.

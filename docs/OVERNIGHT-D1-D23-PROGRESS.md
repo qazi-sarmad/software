@@ -19,4 +19,5 @@ Baseline counts at start: 65 vitest files, 58 SQL tests, 11 Playwright spec file
 | D11 remove retest workflow | bb7fe31 | 39159731923 | green (CI) | deleted RetestStatus axis, cap_fail_retest capability, fail_retest action, Re-Test column, Fail Re-Test panel; source guard added; 752 tests; D-D11-retest |
 | D12 Work Queue user-specific | 026a943 | 39161290344 | green (CI) | src/lib/workQueue.ts (pure) + PendingTasksTab rewired to My workpapers / Awaiting my sign-off / Awaiting my approval / My team's work; 8 new tests; 752 tests; D-D12-queue |
 | D13 HoverPreview keyboard | 0329d18 | (pending) | green (local) | onKeyDown fires onClick on Enter/Space + aria-disabled; 4 new tests; 756 tests; D-D13-keyboard |
-| D14 readable disabled reasons | (pending) | (pending) | green (local) | src/lib/rightLabels.ts + replacements across 15 files; source guard; 6 new tests; 762 tests; D-D14-rights |
+| D14 readable disabled reasons | 4801e4e | (pending) | green (local) | src/lib/rightLabels.ts + replacements across 15 files; source guard; 6 new tests; 762 tests; D-D14-rights |
+| D15 mobile widths | (pending) | (pending) | green (local) | HeaderBar compact search + mobile universe switcher; FloatingWindow min() clamp; HeaderCalendarPanel clamp; 4 new unit tests + e2e/responsive.spec.ts; 766 tests; D-D15-responsive |

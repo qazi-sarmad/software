@@ -46,4 +46,16 @@ describe('FloatingWindow (non-blocking record view chrome, §17.1)', () => {
     expect(openSpy).toHaveBeenCalledWith('/view/engagement/e1', expect.any(String), expect.any(String));
     openSpy.mockRestore();
   });
+
+  it('never renders wider than the viewport (D15)', () => {
+    render(
+      <FloatingWindow windowId="w" title="T" width={960} onClose={() => {}}>
+        <div />
+      </FloatingWindow>
+    );
+    const dialog = screen.getByRole('dialog', { name: 'T' }) as HTMLElement;
+    // The width is a `min()` clamp against the viewport, so a 960px window cannot clip on a phone.
+    expect(dialog.style.width).toContain('min(960px');
+    expect(dialog.style.width).toContain('100vw');
+  });
 });

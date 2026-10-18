@@ -173,7 +173,7 @@ export const HeaderCalendarPanel: React.FC<CalendarPanelProps> = ({
           exit={{ opacity: 0, scale: 0.94, y: -8 }}
           transition={{ type: 'spring', stiffness: 300, damping: 30 }}
           style={{ transformOrigin: 'top right', position: 'fixed', top: pos.top, right: pos.right }}
-          className="w-[340px] bg-surface/95 backdrop-blur-xl border border-hairline shadow-apple rounded-2xl p-4 z-[70] select-none text-primary"
+          className="w-[min(340px,calc(100vw-2rem))] bg-surface/95 backdrop-blur-xl border border-hairline shadow-apple rounded-2xl p-4 z-[70] select-none text-primary"
         >
           {/* Header row: Month in serif font, prev/next, and Jump to today */}
           <div className="flex items-center justify-between pb-3 border-b border-hairline">

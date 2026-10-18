@@ -85,7 +85,15 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.98, y: 6 }}
           transition={{ type: 'spring', stiffness: 320, damping: 32 }}
-          style={{ position: 'fixed', top: pos.top, right: pos.right, width }}
+          style={{
+            position: 'fixed',
+            top: pos.top,
+            right: pos.right,
+            // Responsive width (D15): never wider than the viewport minus the offset it is anchored
+            // to, so the window cannot clip off the left edge on a phone. `min()` keeps the desktop
+            // width identical when the viewport is wide enough.
+            width: `min(${width}px, calc(100vw - ${pos.right}px - 0.5rem))`,
+          }}
           className="z-[60] max-h-[min(84vh,52rem)] bg-surface border border-hairline rounded-2xl overflow-hidden shadow-apple flex flex-col text-primary"
         >
           <div

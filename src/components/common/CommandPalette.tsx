@@ -88,7 +88,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
     : scopedIssues.slice(0, 3);
 
   return (
-    <div className="fixed top-14 left-0 right-0 z-50 flex items-start justify-center pt-4 px-4 pointer-events-none">
+    <div className="fixed top-14 left-0 right-0 z-50 flex items-start justify-center pt-4 px-4 pointer-events-none" data-testid="command-palette">
       {/* Palette dropdown — non-blocking: no backdrop scrim, no modal semantics, no focus trap. The
           page behind it stays reachable; Escape and an outside click dismiss it (§27.5). */}
       <motion.div
