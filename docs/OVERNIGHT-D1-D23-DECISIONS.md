@@ -305,3 +305,42 @@ How to reverse: `git revert` the D20 commit, then drop `invite_cap_events.role_s
 single-argument function if the ledger column is unwanted. The D20 test is
 `supabase/tests/62_admin_invite_email.sql`; the panel test is
 `src/components/admin/PeopleAdminPanel.test.tsx`.
+
+## D-D21-next — dead ends become named next actions
+
+Task D21. Unclear point: the brief lists five dead-end screens and says to "add contextual links or
+buttons on every such screen", but several of the named screens do not exist as written (the review
+dock is a dock, not a dead end; there is no "entity approval pending" screen separate from
+`EntityApprovalPanel`). Two of the five need a decision the brief does not make:
+
+1. **Planning reconciliation.** The brief says "show which risks don't match". The gate
+   `check_planning_reconciliation` (0025) returns only a boolean, and the offending risk ids live
+   inside `planning_sections.content->'risks'` while the SIRA side is `sira_scores`. Nothing in the
+   app could name the mismatches without a new read.
+2. **Deployment gate.** The brief says each outcome shows the next action. The panel already showed
+   a `detail` sentence from the RPC, but no route to the screen where the fix happens.
+
+Options: (1) hard-code the fix sentence in the component and stop there; (2) add a read RPC that
+returns the mismatching risks, then route the buttons through `setActiveTab`/`openInspector`.
+Choice: option 2. `0049_planning_reconciliation_detail.sql` adds
+`planning_reconciliation_detail(uuid)`, a stable read that returns `reconciled`, `unmatched_planning`
+and `unmatched_sira` with names; it copies the exact definition of a planning risk from
+`check_planning_reconciliation` so the detail and the gate can never disagree (test 63 pins this in
+both directions). The Planning banner names the mismatching risks and offers "Review the SIRA cycle"
+(`setActiveTab('sira')`) and "Import risks and controls" (`openInspector('import_wizard')`). The
+deployment gate gains a `NEXT_ACTION` sentence per outcome and buttons that route to the universe,
+the plan, or a combined request. The combined panel now states who decides a pending request and
+that it escalates on the SLA, and `EntityApprovalPanel` tells a waiting submitter who decides and
+offers a "Check status" refresh. The population empty state gained the explicit "Upload a population
+to begin sampling" line.
+Reason: the brief's own words are "show which risks don't match"; a hard-coded sentence cannot do
+that, and a boolean gate gives the screen nothing to name. The read RPC is the smallest object that
+answers the question, it obeys "every DB call through src/data" (`reconciliationDetail` in
+`src/data/planning.ts`), and it is a read, so a read-only principal may call it (test 63 asserts
+that, and that another organisation cannot). Routing with the existing `setActiveTab`/`openInspector`
+keeps one navigation model.
+How to reverse: `git revert` the D21 commit; drop `planning_reconciliation_detail(uuid)` and delete
+`supabase/tests/63_planning_reconciliation_detail.sql`. The panel tests are the new D21 cases in
+`PlanningPanel.test.tsx`, `DeploymentGatePanel.test.tsx`, `PlanPanels.test.tsx` and
+`EntityApprovalPanel.test.tsx`.
+

@@ -46,4 +46,15 @@ describe('EntityApprovalPanel', () => {
     renderAs('cia', { ...draft, status: 'rejected', rejectionReason: 'duplicate of another entity' });
     expect(screen.getByText(/duplicate of another entity/)).toBeTruthy();
   });
+
+  it('tells a waiting submitter what happens next and offers a status check (D21)', () => {
+    renderAs('observer', { ...draft, status: 'pending' });
+    expect(screen.getByTestId('entity-pending-waiting').textContent).toMatch(/waiting for approval/i);
+    expect(screen.getByTestId('entity-check-status')).toBeTruthy();
+  });
+
+  it('does not show the waiting hint to someone who can decide (D21)', () => {
+    renderAs('cia', { ...draft, status: 'pending' });
+    expect(screen.queryByTestId('entity-pending-waiting')).toBeNull();
+  });
 });

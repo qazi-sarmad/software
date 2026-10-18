@@ -4,6 +4,7 @@ import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 
 const populate = vi.fn();
 const reconcile = vi.fn();
+const reconcileDetail = vi.fn();
 const signedOff = vi.fn();
 const decide = vi.fn();
 const sign = vi.fn();
@@ -12,6 +13,7 @@ const ack = vi.fn();
 vi.mock('../../data/planning', () => ({
   populateSuggestions: () => populate(),
   checkReconciliation: () => reconcile(),
+  reconciliationDetail: () => reconcileDetail(),
   isPlanningSignedOff: () => signedOff(),
   decideSuggestion: (...a: unknown[]) => decide(...a),
   signPlanning: (...a: unknown[]) => sign(...a),
@@ -19,7 +21,11 @@ vi.mock('../../data/planning', () => ({
 }));
 
 const userRef = { current: { role: 'cia', rights: { review_and_approve: true } } };
-vi.mock('../../context/AppContext', () => ({ useApp: () => ({ currentUser: userRef.current, rawEngagements: [] }) }));
+const setActiveTab = vi.fn();
+const openInspector = vi.fn();
+vi.mock('../../context/AppContext', () => ({
+  useApp: () => ({ currentUser: userRef.current, rawEngagements: [], setActiveTab, openInspector }),
+}));
 
 vi.mock('../../data/imports', () => ({
   listPriorYearImports: () => Promise.resolve([]),
@@ -46,6 +52,7 @@ describe('PlanningPanel (4I, §10)', () => {
     userRef.current = { role: 'cia', rights: { review_and_approve: true } } as never;
     populate.mockResolvedValue([suggestion]);
     reconcile.mockResolvedValue(true);
+    reconcileDetail.mockResolvedValue({ reconciled: true, unmatchedPlanning: [], unmatchedSira: [] });
     signedOff.mockResolvedValue(false);
     decide.mockResolvedValue({ ok: true });
     sign.mockResolvedValue({ ok: true });
@@ -90,5 +97,39 @@ describe('PlanningPanel (4I, §10)', () => {
     populate.mockResolvedValue([]);
     render(<PlanningPanel engagementId="e1" />);
     await waitFor(() => expect(screen.getByTestId('planning-suggestions-empty')).toBeTruthy());
+  });
+
+  it('names the mismatching risks and offers a next action when reconciliation fails (D21)', async () => {
+    reconcile.mockResolvedValue(false);
+    reconcileDetail.mockResolvedValue({
+      reconciled: false,
+      unmatchedPlanning: [{ riskId: 'r-1', name: 'Vendor onboarding risk' }],
+      unmatchedSira: [{ riskId: 'r-2', name: 'Cash handling risk' }],
+    });
+    render(<PlanningPanel engagementId="e1" />);
+    await waitFor(() => expect(screen.getByTestId('planning-mismatch')).toBeTruthy());
+    expect(screen.getByText('Vendor onboarding risk')).toBeTruthy();
+    expect(screen.getByText('Cash handling risk')).toBeTruthy();
+    expect(screen.getByTestId('planning-go-sira')).toBeTruthy();
+    expect(screen.getByTestId('planning-import-rcm')).toBeTruthy();
+  });
+
+  it('the mismatch next action routes to the SIRA cycle (D21)', async () => {
+    reconcile.mockResolvedValue(false);
+    reconcileDetail.mockResolvedValue({
+      reconciled: false,
+      unmatchedPlanning: [{ riskId: 'r-1', name: 'Vendor onboarding risk' }],
+      unmatchedSira: [],
+    });
+    render(<PlanningPanel engagementId="e1" />);
+    await waitFor(() => expect(screen.getByTestId('planning-go-sira')).toBeTruthy());
+    fireEvent.click(screen.getByTestId('planning-go-sira'));
+    expect(setActiveTab).toHaveBeenCalledWith('sira');
+  });
+
+  it('does not show a mismatch block when reconciliation passes (D21)', async () => {
+    render(<PlanningPanel engagementId="e1" />);
+    await waitFor(() => expect(screen.getByTestId('planning-signoff')).toBeTruthy());
+    expect(screen.queryByTestId('planning-mismatch')).toBeNull();
   });
 });

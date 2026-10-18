@@ -75,6 +75,40 @@ export async function checkReconciliation(engagementId: string): Promise<boolean
   return !!data;
 }
 
+export interface ReconciliationMismatch {
+  riskId: string;
+  name: string;
+}
+
+export interface ReconciliationDetail {
+  reconciled: boolean;
+  unmatchedPlanning: ReconciliationMismatch[];
+  unmatchedSira: ReconciliationMismatch[];
+}
+
+/**
+ * D21: the risks behind a failed reconciliation, so the Planning screen can name them and offer the
+ * fix (edit the Planning RCM) instead of a dead end. Returns null when the module is unconfigured.
+ */
+export async function reconciliationDetail(engagementId: string): Promise<ReconciliationDetail | null> {
+  const sb = getClient();
+  if (!sb) return null;
+  const { data, error } = await sb.rpc('planning_reconciliation_detail', { p_engagement_id: engagementId });
+  if (error) throw new Error(error.message);
+  if (!data) return null;
+  const r = data as Record<string, unknown>;
+  const map = (v: unknown): ReconciliationMismatch[] =>
+    ((v as Record<string, unknown>[]) ?? []).map((x) => ({
+      riskId: x.risk_id as string,
+      name: (x.name as string | null) ?? (x.risk_id as string),
+    }));
+  return {
+    reconciled: !!r.reconciled,
+    unmatchedPlanning: map(r.unmatched_planning),
+    unmatchedSira: map(r.unmatched_sira),
+  };
+}
+
 export function acknowledgeDiscrepancy(engagementId: string, reason: string): Promise<DataResult> {
   return callRpc('acknowledge_planning_discrepancy', { p_engagement_id: engagementId, p_reason: reason });
 }

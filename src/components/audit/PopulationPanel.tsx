@@ -164,8 +164,10 @@ export const PopulationPanel: React.FC<{ engagementId: string }> = ({ engagement
         </div>
         {rows.length === 0 ? (
           <div className="p-6 text-center text-apple-12 text-secondary bg-surface-elevated rounded-xl" data-testid="population-empty">
+            <div className="text-apple-13 font-semibold text-primary mb-1">Upload a population to begin sampling</div>
             No population has been uploaded for this engagement yet. Nothing can be sampled or tested until
-            a population is verified.
+            a population is verified. Use the file picker above to choose a CSV or TXT export of the
+            population.
           </div>
         ) : (
           <div className="divide-y divide-hairline border border-hairline rounded-xl overflow-hidden bg-surface">

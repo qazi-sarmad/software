@@ -94,4 +94,26 @@ describe('CombinedApprovalPanel', () => {
     ));
     expect(screen.queryByTestId('combined-approve')).toBeNull();
   });
+
+  it('tells a waiting requestor who decides and what happens next (D21)', () => {
+    wrap('preparer', (
+      <CombinedApprovalPanel
+        request={{ id: 'r1', universeId: 'u1', entityId: 'e1', title: 'Plan + deploy', period: null, status: 'pending', reason: null, slaDueAt: '2026-02-01T00:00:00Z', escalatedAt: null }}
+      />
+    ));
+    expect(screen.getByTestId('combined-next-action').textContent).toMatch(/approve-plans right decides/i);
+    // A preparer cannot decide, so the reason is shown in plain language (D14).
+    const reason = screen.getByTestId('combined-decide-reason').textContent ?? '';
+    expect(reason).not.toMatch(/approve_plan/);
+  });
+
+  it('explains an escalated request and still allows a decision (D21)', () => {
+    wrap('cia', (
+      <CombinedApprovalPanel
+        request={{ id: 'r1', universeId: 'u1', entityId: 'e1', title: 'Plan + deploy', period: null, status: 'escalated', reason: null, slaDueAt: '2026-02-01T00:00:00Z', escalatedAt: '2026-02-02T00:00:00Z' }}
+      />
+    ));
+    expect(screen.getByTestId('combined-escalated-next')).toBeTruthy();
+    expect(screen.queryByTestId('combined-approve')).toBeNull();
+  });
 });

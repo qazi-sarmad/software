@@ -163,27 +163,47 @@ export const CombinedApprovalPanel: React.FC<{
           )}
           {request.reason && <p className="text-apple-12 text-secondary">{request.reason}</p>}
           {request.status === 'pending' && (
-            <div className="flex gap-2">
-              <button
-                type="button"
-                data-testid="combined-approve"
-                disabled={!canDecide || busy}
-                title={canDecide ? undefined : rightReason('approve_plan')}
-                onClick={() => void decide(true)}
-                className="px-3 py-1.5 rounded-lg bg-verdigris-subtle text-verdigris text-apple-13 font-semibold disabled:opacity-40"
-              >
-                Approve both
-              </button>
-              <button
-                type="button"
-                data-testid="combined-reject"
-                disabled={!canDecide || busy}
-                onClick={() => void decide(false)}
-                className="px-3 py-1.5 rounded-lg border border-cinnabar text-cinnabar text-apple-13 font-semibold disabled:opacity-40"
-              >
-                Reject
-              </button>
+            <div className="space-y-2">
+              {/* D21: a pending request is not a dead end. Say who decides it, when it escalates and
+                  what the requestor can do while they wait. */}
+              <p data-testid="combined-next-action" className="text-apple-12 text-secondary">
+                Waiting for a decision. Someone with the approve-plans right decides this request; if it is
+                not decided by the SLA due time it is escalated to the configured senior role
+                automatically.
+              </p>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  data-testid="combined-approve"
+                  disabled={!canDecide || busy}
+                  title={canDecide ? undefined : rightReason('approve_plan')}
+                  onClick={() => void decide(true)}
+                  className="px-3 py-1.5 rounded-lg bg-verdigris-subtle text-verdigris text-apple-13 font-semibold disabled:opacity-40"
+                >
+                  Approve both
+                </button>
+                <button
+                  type="button"
+                  data-testid="combined-reject"
+                  disabled={!canDecide || busy}
+                  onClick={() => void decide(false)}
+                  className="px-3 py-1.5 rounded-lg border border-cinnabar text-cinnabar text-apple-13 font-semibold disabled:opacity-40"
+                >
+                  Reject
+                </button>
+                {!canDecide && (
+                  <span className="text-apple-11 text-tertiary self-center" data-testid="combined-decide-reason">
+                    {rightReason('approve_plan')}
+                  </span>
+                )}
+              </div>
             </div>
+          )}
+          {request.status === 'escalated' && (
+            <p data-testid="combined-escalated-next" className="text-apple-12 text-secondary">
+              This request passed its SLA and is now with the configured senior role. They can still approve
+              or reject it here.
+            </p>
           )}
         </div>
       )}

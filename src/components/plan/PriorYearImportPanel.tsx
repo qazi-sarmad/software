@@ -137,7 +137,11 @@ export const PriorYearImportPanel: React.FC<PriorYearImportPanelProps> = ({ enga
       {loading ? (
         <p className="text-secondary text-apple-13 py-2" data-testid="prior-year-loading">Loading prior-year items…</p>
       ) : items.length === 0 ? (
-        <p className="text-secondary text-apple-13 py-2" data-testid="prior-year-empty">No prior-year material has been imported.</p>
+        <p className="text-secondary text-apple-13 py-2" data-testid="prior-year-empty">
+          {sourceEngagements.length === 0
+            ? 'No prior-year material has been imported. Import a prior audit file first, then it can be copied here.'
+            : 'No prior-year material has been imported. Pick a source engagement and an item type above to copy material in.'}
+        </p>
       ) : (
         <ul className="space-y-1">
           {items.map((it) => (

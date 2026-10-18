@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, expect, it } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { DeploymentGatePanel } from './DeploymentGatePanel';
 import { AppProvider } from '../../context/AppContext';
 import { ThemeProvider } from '../../context/ThemeContext';
@@ -51,5 +51,33 @@ describe('DeploymentGatePanel', () => {
     const reason = screen.getByTestId('gate-required-right').textContent ?? '';
     expect(reason).toMatch(/approve plans/i);
     expect(reason).not.toMatch(/approve_plan/);
+  });
+
+  it('shows the next action for a blocked gate, never a dead end (D21)', () => {
+    renderAs('cia', { outcome: 'entity_required', step: 1 });
+    expect(screen.getByTestId('gate-next-action').textContent).toMatch(/choose an entity/i);
+    expect(screen.getByTestId('gate-go-universe')).toBeTruthy();
+  });
+
+  it('offers a route to the plan and a combined request when a plan change is required (D21)', () => {
+    renderAs('cia', { outcome: 'plan_change_required', step: 3 });
+    expect(screen.getByTestId('gate-go-plan')).toBeTruthy();
+    expect(screen.getByTestId('gate-open-combined')).toBeTruthy();
+  });
+
+  it('offers a combined request when approval is required (D21)', () => {
+    renderAs('cia', { outcome: 'approval_required', step: 5 });
+    expect(screen.getByTestId('gate-open-combined')).toBeTruthy();
+  });
+
+  it('the blocked gate routes to the audit universe (D21)', () => {
+    renderAs('cia', { outcome: 'entity_not_approved', step: 2 });
+    fireEvent.click(screen.getByTestId('gate-go-universe'));
+    expect(screen.getByTestId('deployment-gate')).toBeTruthy();
+  });
+
+  it('offers a route out of the empty state when there is no entity (D21)', () => {
+    renderAs('cia', null);
+    expect(screen.getByTestId('gate-go-plan')).toBeTruthy();
   });
 });

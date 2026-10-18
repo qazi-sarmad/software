@@ -4,10 +4,12 @@ import {
   populateSuggestions,
   decideSuggestion,
   checkReconciliation,
+  reconciliationDetail,
   acknowledgeDiscrepancy,
   signPlanning,
   isPlanningSignedOff,
   type PlanningSuggestion,
+  type ReconciliationDetail,
 } from '../../data/planning';
 import { hasRight } from '../../lib/rights';
 import { rightReason, rightReasonFor } from '../../lib/rightLabels';
@@ -22,11 +24,12 @@ import { AlertTriangle, CheckCircle2, ShieldCheck, Lock, RefreshCw } from '../co
  * reconciliation gate is unmet. Every write goes through the 4B RPCs; the database decides the right.
  */
 export const PlanningPanel: React.FC<{ engagementId: string }> = ({ engagementId }) => {
-  const { currentUser, rawEngagements } = useApp();
+  const { currentUser, rawEngagements, setActiveTab, openInspector } = useApp();
   const [suggestions, setSuggestions] = useState<PlanningSuggestion[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reconciled, setReconciled] = useState<boolean | null>(null);
+  const [mismatch, setMismatch] = useState<ReconciliationDetail | null>(null);
   const [signedOff, setSignedOff] = useState(false);
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
@@ -45,6 +48,17 @@ export const PlanningPanel: React.FC<{ engagementId: string }> = ({ engagementId
       setSuggestions(sugs);
       setReconciled(rec);
       setSignedOff(so);
+      // D21: when the gate fails, load which risks disagree so the banner can name them and offer
+      // the fix. A failure to load the detail must not break the panel.
+      if (!rec) {
+        try {
+          setMismatch(await reconciliationDetail(engagementId));
+        } catch {
+          setMismatch(null);
+        }
+      } else {
+        setMismatch(null);
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not load planning suggestions.');
     } finally {
@@ -122,6 +136,59 @@ export const PlanningPanel: React.FC<{ engagementId: string }> = ({ engagementId
               ? 'Every risk in the planning RCM matches a risk in the latest SIRA cycle.'
               : 'Every risk in the planning RCM must match a risk in the latest SIRA cycle before sign-off, or the discrepancy must be acknowledged with a recorded reason.'}
           </p>
+          {/* D21: name the risks that disagree and offer the next action, so this is not a dead end. */}
+          {!reconciled && mismatch && (
+            <div className="pt-1 space-y-2" data-testid="planning-mismatch">
+              {mismatch.unmatchedPlanning.length > 0 && (
+                <div className="text-apple-12 text-secondary">
+                  <span className="font-semibold text-primary">
+                    {mismatch.unmatchedPlanning.length} planned risk
+                    {mismatch.unmatchedPlanning.length === 1 ? '' : 's'} not in the latest SIRA cycle:
+                  </span>
+                  <ul className="list-disc pl-5 mt-0.5">
+                    {mismatch.unmatchedPlanning.map((r) => (
+                      <li key={r.riskId} data-testid="planning-mismatch-item">
+                        {r.name}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {mismatch.unmatchedSira.length > 0 && (
+                <div className="text-apple-12 text-secondary">
+                  <span className="font-semibold text-primary">
+                    {mismatch.unmatchedSira.length} SIRA risk
+                    {mismatch.unmatchedSira.length === 1 ? '' : 's'} not in the planning RCM:
+                  </span>
+                  <ul className="list-disc pl-5 mt-0.5">
+                    {mismatch.unmatchedSira.map((r) => (
+                      <li key={r.riskId} data-testid="planning-mismatch-item">
+                        {r.name}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              <div className="flex flex-wrap gap-2 pt-1">
+                <button
+                  type="button"
+                  data-testid="planning-go-sira"
+                  onClick={() => setActiveTab('sira')}
+                  className="px-3 py-1.5 rounded-lg bg-surface border border-hairline hover:bg-surface-hover text-apple-12 font-semibold text-primary"
+                >
+                  Review the SIRA cycle
+                </button>
+                <button
+                  type="button"
+                  data-testid="planning-import-rcm"
+                  onClick={() => openInspector('import_wizard')}
+                  className="px-3 py-1.5 rounded-lg bg-surface border border-hairline hover:bg-surface-hover text-apple-12 font-semibold text-primary"
+                >
+                  Import risks and controls
+                </button>
+              </div>
+            </div>
+          )}
           {!reconciled && (
             <div className="pt-2 space-y-2">
               <label className="block text-apple-11 text-secondary" htmlFor="planning-ack-reason">

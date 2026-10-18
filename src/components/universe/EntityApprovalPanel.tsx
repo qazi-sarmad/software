@@ -124,6 +124,22 @@ export const EntityApprovalPanel: React.FC<{ entity: EntityRow; onDone?: () => v
             </button>
           </>
         )}
+        {status === 'pending' && !canDecide && (
+          <div className="w-full space-y-2" data-testid="entity-pending-waiting">
+            <p className="text-apple-12 text-secondary">
+              This entity is waiting for approval. A manager with the approve-plans right decides it. You
+              will be able to deploy it once it is approved.
+            </p>
+            <button
+              type="button"
+              data-testid="entity-check-status"
+              onClick={() => void load()}
+              className="px-3 py-1.5 rounded-lg border border-hairline text-apple-12 text-primary hover:bg-surface-hover inline-flex items-center gap-1.5"
+            >
+              <History className="w-4 h-4 stroke-[1.5]" /> Check status
+            </button>
+          </div>
+        )}
         {status === 'approved' && <p className="text-apple-13 text-secondary">This entity is approved.</p>}
         {status === 'rejected' && entity.rejectionReason && (
           <p className="text-apple-13 text-secondary">Rejected: {entity.rejectionReason}</p>
