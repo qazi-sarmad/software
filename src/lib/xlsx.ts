@@ -3,9 +3,10 @@
  * parsed here with SheetJS, loaded on demand so the parser never enters the main bundle. Both paths
  * return the same { headers, rows } shape the wizard maps and validates.
  *
- * SheetJS CE 0.18.5 is the last version published to npm and carries a known high-severity advisory
- * with no npm fix (see docs/NOT-DONE.md item 12). It parses a file the operator chose in their own
- * browser; it is never given tenant data it did not already have.
+ * SheetJS 0.20.3, installed from the vendor CDN (see docs/OVERNIGHT-D1-D23-DECISIONS.md D-D1-xlsx):
+ * the npm `xlsx` package stopped at 0.18.5 and carried two unfixed advisories, so D1 moved to the
+ * current release, which resolves both. It still parses only a file the operator chose in their own
+ * browser.
  */
 export interface ParsedSheet {
   headers: string[];

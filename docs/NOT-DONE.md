@@ -92,11 +92,10 @@ clear the first two before Phase 2 closes.
   XLSX/XLS/XLSM (SheetJS, `src/lib/xlsx.ts`, loaded on demand so it stays out of the main bundle);
   both paths return the same `{ headers, rows }` shape and the database validation
   (`validate_import`) is format-agnostic. DOCX table parsing is still deferred.
-- SheetJS CE is pinned to `xlsx@0.18.5`, the last npm release, which carries a high-severity advisory
-  with no npm fix (prototype pollution / ReDoS in `sheet_to_json`). It runs only on a file the
-  operator picked in their own browser and never sees data the tenant did not already hold. Owner
-  action: move to the SheetJS CDN tarball (`https://cdn.sheetjs.com/xlsx-latest/…`) or an alternative
-  parser when convenient.
+- SheetJS moved to `xlsx@0.20.3`, installed from the vendor CDN
+  (`https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz`) by D1. The npm `xlsx` package stopped at
+  0.18.5 and carried two unfixed advisories; 0.20.3 resolves both, so `npm audit` now reports zero
+  vulnerabilities. It still runs only on a file the operator picked in their own browser.
 - Evidence: `src/lib/xlsx.ts`, `src/lib/xlsx.test.ts`, `src/components/admin/ImportWizardPanel.tsx`,
   `e2e/fixtures/rcm-sample.xlsx`, `e2e/r6.spec.ts`.
 
