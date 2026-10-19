@@ -46,3 +46,7 @@ Local harness: PostgreSQL 17.11, database `provio_test`, `/tmp/auth_shim.sql` + 
 | S5.a db: AI registry, deny-list, use cases, voice library | 5504084 | pending | green (local) | 0059_ai.sql; test 69 (24 assertions); ai_require_org_actor gates on has_feature |
 | S5.b lib+data: SSRF, number guard, prompt assembly, data module | da477f2 | pending | green (local) | _shared/aiSsrf, aiNumberGuard, aiPrompt; 58 unit tests; src/data/ai.ts; featureMap ai_require_org_actor |
 | S5.c app: AI settings, voice library, model registry | aded51f | pending | green (local) | OA-06/OA-07 OrgAiPanel, SA-06 SuperAdminAi; 8 component tests; e2e/s5-ai.spec.ts |
+| S5.d docs: AI decisions, UI contract, progress | a09981f | pending | green (local) | D-S5-* decisions, OA-06/07 UI contract, progress row |
+| S6.a db: escalation rules and Work Queue proposals | 563d57b | pending | green (local) | 0060_escalation.sql; test 70 (25 assertions); escalate action on the F7 engine; 3 platform template rules |
+| S6.b lib+data: escalation logic and data module | fb1e613 | pending | green (local) | src/lib/escalation.ts, src/data/escalation.ts, 18 unit tests; featureMap escalation |
+| S6.c app: escalation screen and Work Queue cards | fb612b2 | pending | green (local) | OA-13 OrgEscalationPanel (5 tests), WK-08 EscalationCards, e2e/s6-escalation.spec.ts; AI status vocabulary aligned |

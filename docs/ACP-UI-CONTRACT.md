@@ -344,6 +344,52 @@ as its slice lands.
 
 ---
 
+## OA-13 — escalation rules (S6)
+
+- **Purpose:** the Org Admin builds a rule that watches an event, tests conditions, and escalates to
+  configured roles with a DETERMINISTIC recommendation ("Audit required: Yes / No / Needs review")
+  filled from the event fields by a rule-defined template. It can also raise a Work Queue proposal a
+  CIA converts through the normal plan flow. There is no AI in the decision (L1, F12).
+- **Route:** Org Admin control plane, tab `Escalation`.
+- **Rights:** `edit_config`. Feature-gated: `escalation` (`F25`). The database re-checks both.
+- **Data:** `listEscalations(orgId)`, `listProposals(orgId)`, `saveEscalationRule(orgId, ruleKey,
+  name, eventKey, conditions, actions, enabled)`, `decideProposal(proposalId, status)`,
+  `convertProposal(proposalId, engagementId?)` (`src/data/escalation.ts`); `listRules(orgId)`,
+  `listEventCatalogue()` (`src/data/automation.ts`). The recommendation preview uses
+  `recommend(payload, template)` and `describeBranch(branch)` (`src/lib/escalation.ts`).
+- **Testids:** `oa-escalation`, `oa-escalation-loading`, `oa-escalation-error`, `oa-escalation-new`,
+  `oa-escalation-editor`, `oa-escalation-name`, `oa-escalation-event`,
+  `oa-escalation-add-condition`, `oa-escalation-condition-<i>`,
+  `oa-escalation-condition-field-<i>`, `oa-escalation-condition-value-<i>`,
+  `oa-escalation-condition-remove-<i>`, `oa-escalation-branch-<i>`,
+  `oa-escalation-branch-field-<i>`, `oa-escalation-branch-equals-<i>`,
+  `oa-escalation-branch-recommend-<i>`, `oa-escalation-branch-remove-<i>`,
+  `oa-escalation-add-branch`, `oa-escalation-preview`, `oa-escalation-save`,
+  `oa-escalation-cancel`, `oa-escalation-saved`, `oa-escalation-result`, `oa-escalation-empty`,
+  `oa-escalation-list`, `oa-escalation-rule-<key>`, `oa-escalation-log`, `oa-escalation-<id>`.
+- **States:** loading; error (`InlineError`); empty (no rules); ready. A save refusal (for example a
+  feature not in the plan) is shown in `oa-escalation-result`. The editor never shows a JSON box (F1).
+- **Tutorial keys:** `oa.escalation`.
+
+## WK-08 — escalation cards and proposals (S6)
+
+- **Purpose:** a role targeted by an escalation sees its card and the deterministic recommendation;
+  a CIA converts a proposal through the normal plan and deployment-gate flow (F12). An optional AI
+  note may sit beside the recommendation, labelled, and never changes it (F8).
+- **Route:** Work Queue tab, block "Escalations for you".
+- **Rights:** the escalation list is filtered server-side to `view_all_scopes` or a role the caller
+  holds; conversion needs `manage_engagements`.
+- **Data:** `listEscalations(orgId)`, `listProposals(orgId)`, `decideProposal(id, status)`,
+  `convertProposal(id, engagementId?)` (`src/data/escalation.ts`).
+- **Testids:** `wk-escalation`, `wk-escalation-error`, `wk-escalation-result`, `wk-proposal-list`,
+  `wk-proposal-<id>`, `wk-proposal-convert-<id>`, `wk-proposal-dismiss-<id>`,
+  `wk-escalation-list`, `wk-escalation-<id>`.
+- **States:** the block renders nothing when the caller has no escalation and no proposal; otherwise
+  it lists them. A conversion refusal is shown in `wk-escalation-result`.
+- **Tutorial keys:** `oa.escalation-cards`.
+
+---
+
 ## Tutorials regenerated
 
 `npm run tutorials:record` regenerates every GIF (S12). The recorder binds only to the testids listed

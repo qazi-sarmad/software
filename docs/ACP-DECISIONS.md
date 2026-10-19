@@ -510,3 +510,73 @@ IMPROVISE-THEN-DOCUMENT (this file).
   upstream packages publish a fix.
 - Reverse: remove the packages; nothing else depends on them.
 
+## D-S6-engine — escalation is a rule on the F7 engine, not a parallel subsystem (S6.a, F12)
+
+- Task: S6.a.
+- Point: F12 says escalation is "built on the F7 engine" with rule fields (trigger event, conditions,
+  outcomes) and outcomes that notify roles and set a deterministic recommendation.
+- Options: (a) a separate `escalation_rules` table with its own evaluator; (b) reuse `automation_rules`
+  with a new action type `escalate`, read by both `rule_engine_process` and `escalation_evaluate`.
+- Choice: (b). An escalation rule is an ordinary row in `automation_rules` carrying an action of type
+  `escalate`; `escalation_evaluate(p_event_id)` is the F12 hook that reads the same store the F7
+  engine reads, so the tenant-overrides-platform rule and the loop guard apply unchanged.
+- Reason: (a) would duplicate the condition evaluator, the loop guard and the recipient resolution,
+  and would drift from F7. F12 explicitly says the engine's event interface stays generic so a future
+  `watcher.signal` event can plug in; one rule store keeps that promise.
+- Reverse: move the `escalate` action rows to a separate table and give them their own evaluator.
+
+## D-S6-rec — the recommendation is a rule-defined template, never AI (S6.a, L1)
+
+- Task: S6.a.
+- Point: F12 requires "Audit required: Yes / No / Needs review" with a reason "filled from the event
+  fields by a rule-defined template (never AI-decided)".
+- Options: (a) store the recommendation as free text per escalation; (b) store an ordered template of
+  branches (field, value, recommendation, reason) with a final default branch.
+- Choice: (b). `escalation_recommendation(p_payload, p_template)` walks the branches in order, returns
+  the first match, and falls back to the last branch's `default_recommend` / `default_reason`. An
+  empty template answers `Needs review` rather than raising. The same walk is mirrored in
+  `src/lib/escalation.ts` so the editor's preview equals the stored value.
+- Reason: (a) lets the outcome depend on whoever wrote it and cannot be previewed; (b) is
+  deterministic, previewable and testable, and keeps the AI note (F8 "Explain anomaly") strictly
+  beside the recommendation, never inside it.
+- Reverse: replace the template with a single stored string.
+
+## D-S6-targets — a proposal is visible to its targeted roles, not to the whole tenant (S6.a, F12)
+
+- Task: S6.a.
+- Point: F12 says escalation events are "visible in the Work Queue to targeted roles".
+- Options: (a) visible to every member of the org; (b) visible when the caller holds `view_all_scopes`
+  or one of the proposal's `target_roles` matches a role the caller holds.
+- Choice: (b). `work_queue_proposal_list` returns a row when the caller is a CIA (`view_all_scopes`) or
+  holds any slug in `target_roles`; `escalation_event_list` is the same rule on the escalation.
+- Reason: (a) leaks the escalation to roles the rule did not name, which contradicts F12 and weakens
+  the "targeted roles" promise. (b) matches the seeded template rules, which name CIA or a specific
+  role.
+- Reverse: broaden the predicate to `jwt_org_id() = org_id`.
+
+## D-S6-idempotent — escalation_evaluate fires once per (event, rule) (S6.a, M2)
+
+- Task: S6.a.
+- Point: CI step 6 re-applies migrations and the engine can be invoked more than once for the same
+  event (a retry, or a manual re-run from the console).
+- Options: (a) rely on the caller to invoke once; (b) record `source_event_id` and `rule_id` on the
+  escalation row and skip a rule that already escalated that event.
+- Choice: (b). `escalation_evaluate` returns 0 when a row already exists for the same
+  `(source_event_id, rule_id)`, and test 70 asserts the second call returns 0.
+- Reason: (a) would double-notify the targeted roles on any retry; a duplicate notification is a real
+  defect for a person on the receiving end. (b) is deterministic and cheap.
+- Reverse: drop the guard; accept duplicate escalations on retry.
+
+## D-S6-status-vocab — AI model status uses the migration's vocabulary (S6.c, F8)
+
+- Task: S6.c.
+- Point: `SuperAdminAi.tsx` toggled a model between `active` and `disabled`, but `ai_models.status`
+  is `live` / `parked` (0059) and `update_ai_model` refuses anything else.
+- Options: (a) change the migration to accept `active` / `disabled`; (b) align the component with the
+  migration.
+- Choice: (b). The screen now parks a live model and enables a parked one, and the copy reads
+  "Park" / "Enable".
+- Reason: the fixed rule (F8's model registry, already migrated and tested) wins; where a fixed rule
+  and existing code disagree, the code changes.
+- Reverse: none needed; the migration is the source of truth.
+
