@@ -29,7 +29,7 @@ irreversible-action guards and admin entry points:
 
 ### CI
 
-Latest dispatch: run **39175545943** (pull_request) — **green**, all 7 steps.
+Latest dispatch: run **39201967169** (pull_request) — **green**, all 7 steps.
 
 ### Tests
 
