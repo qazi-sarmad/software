@@ -91,6 +91,18 @@ begin
   truncate automation_events;
   truncate ai_model_versions;
   truncate tutorials;
+  -- S2 (F5, F6, F7). These have no FK to orgs, so `truncate orgs cascade` does not reach them.
+  -- The platform rows the migrations seed (rules and templates with org_id null) are kept; only
+  -- tenant rows and per-run logs are cleared, so a test always starts from the same state (M5).
+  truncate secret_store;
+  truncate email_sender_profiles;
+  truncate automation_rule_versions;
+  truncate notification_template_versions;
+  truncate notification_preferences;
+  truncate automation_webhook_outbox;
+  truncate automation_event_processed;
+  delete from automation_rules where org_id is not null;
+  delete from notification_templates where org_id is not null;
 
   insert into orgs (id, name, is_demo) values
     ('a0000000-0000-0000-0000-000000000001', 'Org A', false),
