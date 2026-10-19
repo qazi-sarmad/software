@@ -74,46 +74,70 @@ language sql immutable as $$
 $$;
 
 -- Rebuild the fixtures from scratch. Run as the owner, before switching role.
+-- Reset every table the fixtures own. Split out of seed() so it can retry: `truncate orgs cascade`
+-- takes an AccessExclusiveLock on every table that references orgs, and a lingering pooled backend
+-- (for example one left by a cancelled CI run) can hold a read lock, producing a lock-order deadlock
+-- (M-1). A session advisory lock serialises two runners of our own; the retry loop absorbs a deadlock
+-- with an external session.
+create or replace function provio_test.reset_data() returns void
+language plpgsql as $$
+declare
+  i int;
+begin
+  perform pg_advisory_lock(hashtext('provio_test.seed'));
+  for i in 1..6 loop
+    begin
+      truncate orgs cascade;
+      -- reopen_grants, platform_trail and platform_admins have no FK to orgs, so cascade does not reach them.
+      truncate reopen_grants;
+      truncate platform_trail;
+      truncate platform_admins;
+      truncate entity_decision_grants;
+      -- ACP platform-level tables that accumulate rows and have no FK to orgs (S1).
+      truncate platform_notification_recipients;
+      truncate automation_events;
+      truncate ai_model_versions;
+      -- S5 (F8). ai_models has no FK to orgs, so cascade does not reach it. ai_endpoint_denylist is
+      -- seeded by 0059 and is NOT truncated, so the deny-list tests always see the platform rows.
+      truncate ai_models cascade;
+      truncate tutorials;
+      -- S6 (F12). escalation_events and work_queue_proposals have no FK to orgs, so cascade does not
+      -- reach them; they accumulate rows across runs (M5).
+      truncate escalation_events;
+      truncate work_queue_proposals;
+      -- S2 (F5, F6, F7). These have no FK to orgs, so `truncate orgs cascade` does not reach them.
+      -- The platform rows the migrations seed (rules and templates with org_id null) are kept; only
+      -- tenant rows and per-run logs are cleared, so a test always starts from the same state (M5).
+      truncate secret_store;
+      truncate email_sender_profiles;
+      truncate automation_rule_versions;
+      truncate notification_template_versions;
+      truncate notification_preferences;
+      truncate automation_webhook_outbox;
+      truncate automation_event_processed;
+      delete from automation_rules where org_id is not null;
+      delete from notification_templates where org_id is not null;
+      -- S3 (F6, F13). invite_cap_events and auth_invites cascade from orgs, but the invitation email
+      -- rows in email_queue do not reach them by cascade alone on a reused database, so clear the
+      -- per-run rows explicitly.
+      delete from email_queue where metadata ->> 'kind' = 'user_invitation';
+      perform pg_advisory_unlock(hashtext('provio_test.seed'));
+      return;
+    exception when deadlock_detected or lock_not_available then
+      perform pg_sleep(0.4 * i);
+    end;
+  end loop;
+  perform pg_advisory_unlock(hashtext('provio_test.seed'));
+  raise exception 'provio_test.reset_data: could not acquire the reset locks after 6 attempts';
+end $$;
+
 create or replace function provio_test.seed() returns void
 language plpgsql as $$
 declare
   sha_a text := repeat('a', 64);
   sha_b text := repeat('b', 64);
 begin
-  truncate orgs cascade;
-  -- reopen_grants, platform_trail and platform_admins have no FK to orgs, so cascade does not reach them.
-  truncate reopen_grants;
-  truncate platform_trail;
-  truncate platform_admins;
-  truncate entity_decision_grants;
-  -- ACP platform-level tables that accumulate rows and have no FK to orgs (S1).
-  truncate platform_notification_recipients;
-  truncate automation_events;
-  truncate ai_model_versions;
-  -- S5 (F8). ai_models has no FK to orgs, so cascade does not reach it. ai_endpoint_denylist is
-  -- seeded by 0059 and is NOT truncated, so the deny-list tests always see the platform rows.
-  truncate ai_models cascade;
-  truncate tutorials;
-  -- S6 (F12). escalation_events and work_queue_proposals have no FK to orgs, so cascade does not
-  -- reach them; they accumulate rows across runs (M5).
-  truncate escalation_events;
-  truncate work_queue_proposals;
-  -- S2 (F5, F6, F7). These have no FK to orgs, so `truncate orgs cascade` does not reach them.
-  -- The platform rows the migrations seed (rules and templates with org_id null) are kept; only
-  -- tenant rows and per-run logs are cleared, so a test always starts from the same state (M5).
-  truncate secret_store;
-  truncate email_sender_profiles;
-  truncate automation_rule_versions;
-  truncate notification_template_versions;
-  truncate notification_preferences;
-  truncate automation_webhook_outbox;
-  truncate automation_event_processed;
-  delete from automation_rules where org_id is not null;
-  delete from notification_templates where org_id is not null;
-  -- S3 (F6, F13). invite_cap_events and auth_invites cascade from orgs, but the invitation email
-  -- rows in email_queue do not reach them by cascade alone on a reused database, so clear the
-  -- per-run rows explicitly.
-  delete from email_queue where metadata ->> 'kind' = 'user_invitation';
+  perform provio_test.reset_data();
 
   insert into orgs (id, name, is_demo) values
     ('a0000000-0000-0000-0000-000000000001', 'Org A', false),
