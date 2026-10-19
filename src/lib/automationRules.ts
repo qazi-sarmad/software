@@ -14,7 +14,7 @@ export interface RuleCondition {
   value: string;
 }
 
-export type ActionType = 'notify' | 'set_flag' | 'webhook' | 'proposal';
+export type ActionType = 'notify' | 'set_flag' | 'webhook' | 'proposal' | 'escalate';
 
 export interface RuleAction {
   type: ActionType;
@@ -31,6 +31,14 @@ export interface RuleAction {
   message?: string;
   link?: string;
   url?: string;
+  /** Escalate only (F12): the severity recorded on the escalation. */
+  severity?: string;
+  /** Escalate only: whether to also raise a Work Queue proposal. */
+  createProposal?: boolean;
+  /** Escalate only: the proposal title. */
+  proposalTitle?: string;
+  /** Escalate only: the deterministic recommendation template. Never AI (L1). */
+  recommendation?: import('./escalation').RecommendationBranch[];
 }
 
 export interface AutomationRule {
@@ -60,6 +68,7 @@ export const ACTION_TYPES: { value: ActionType; label: string }[] = [
   { value: 'set_flag', label: 'Set a flag' },
   { value: 'proposal', label: 'Create a Work Queue proposal' },
   { value: 'webhook', label: 'Call a web address' },
+  { value: 'escalate', label: 'Escalate to roles with a recommendation' },
 ];
 
 /** Field catalogue for one event, so the editor offers dropdowns rather than free text (F1). */

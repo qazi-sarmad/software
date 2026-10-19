@@ -32,6 +32,10 @@ export const FEATURE_RPC_MAP: Record<string, string> = {
   // escalation / automation_rules
   escalation_evaluate: 'escalation',
   escalation_ack: 'escalation',
+  // S6 (F12): the escalation rule save and the Work Queue proposal conversion both gate on the
+  // escalation feature.
+  escalation_rule_save: 'escalation',
+  work_queue_proposal_decide: 'escalation',
   automation_rule_save: 'automation_rules',
   automation_rule_test: 'automation_rules',
   // email adapters
