@@ -55,3 +55,6 @@ Local harness: PostgreSQL 17.11, database `provio_test`, `/tmp/auth_shim.sql` + 
 | S7.a db: Board Pack snapshot, history and sections | fa520c0 | pending | green (local) | 0061_board_pack.sql; test 71 (36 assertions); figure-ref validation, canonical data_hash, ledger entry |
 | S7.b lib+data: Board Pack model and data module | 7306601 | 39290788312 | green | src/lib/boardPack.ts (25 tests), src/data/boardPack.ts; row model, delta, drill-down URL, section visibility |
 | S7.c app: Board Pack panel, generator and web view | 3454417 | 39292142326 | green (local) | WK-01 to WK-04, OA-09; BoardPackPanel, boardPackDocuments (12 tests), e2e/s7-board-pack.spec.ts; org_settings_extra_get/save |
+| S7.d docs: Board Pack decisions, sources, UI contract and parity | 9428061 | pending | green (local) | D-S7-* decisions, docs/ACP-BOARD-PACK-SOURCES.md, OA-09/WK-01..04 UI contract, 5 tutorial keys |
+| S8.a db: engagement certificate and public verification | e5c9504 | pending | green (local) | 0062_certificate.sql; test 72 (36 assertions); cert hash in DB, anon surface closed to exactly 2 functions |
+| MID-JOB CORRECTION M-0 started at e5c9504 | e5c9504 | — | started | corrective build: M-1 red CI, M-2 secrets, M-3 email dispatch, M-4a ai-gateway, M-4b F25 coverage, M-5 report |
