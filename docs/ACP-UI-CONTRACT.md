@@ -171,6 +171,107 @@ as its slice lands.
 
 ---
 
+## SA-04 — email sender profiles (S2)
+
+- **Purpose:** the platform default sender, the per-tenant override, the fallback switch and a Test
+  button per adapter (F6). A credential is never shown: only set / not set / last tested.
+- **Route:** `/superadmin`, tab `Email senders`.
+- **Rights:** platform admin.
+- **Data:** `listSenderProfiles(orgId)`, `saveSenderProfile(orgId, scope, provider, displayName,
+  fromAddress, replyTo, config, enabled, dailyCap)`, `setDefaultProfile(id)`,
+  `forceProfile(orgId, profileId, allowTenant, fallback)`, `recordTestResult(id, text, status)`
+  (`src/data/senderProfiles.ts`).
+- **Testids:** `superadmin-email`, `superadmin-email-loading`, `superadmin-email-error`,
+  `superadmin-email-result`, `superadmin-email-empty`, `superadmin-email-provider`,
+  `superadmin-email-display-name`, `superadmin-email-from`, `superadmin-email-secret`,
+  `superadmin-email-save`, `superadmin-email-list`, `sender-<id>`, `sender-test-<id>`,
+  `sender-default-<id>`, `superadmin-email-org`, `superadmin-email-tenant-empty`,
+  `superadmin-email-tenant-list`, `tenant-allow-<id>`, `tenant-deny-<id>`.
+- **States:** loading, error (with Retry), empty ("No platform sender is set yet. Email is queued and
+  not sent."), ready.
+- **Tutorial keys:** `sa.email-resend`, `sa.email-microsoft`, `sa.email-smtp`, `sa.email-default`,
+  `sa.email-force-tenant`.
+
+## SA-07 / SA-08 — automation rules and message templates (S2)
+
+- **Purpose:** a visual rule editor (event + conditions + actions) and a visual template editor
+  (blocks moved with up and down buttons). No screen accepts JSON (F1). Test with a sample event is a
+  dry run that sends nothing (F7).
+- **Route:** `/superadmin`, tab `Automation`; sub-tabs `Rules` and `Message templates`.
+- **Rights:** platform admin.
+- **Data:** `listRules(orgId)`, `saveRule(orgId, key, name, eventKey, conditions, actions, enabled)`,
+  `testRule(ruleId, sample)`, `listEventCatalogue()`, `listTemplates(orgId)`,
+  `saveTemplate(orgId, eventKey, subject, blocks)` (`src/data/automation.ts`).
+- **Testids:** `superadmin-automation`, `superadmin-automation-loading`,
+  `superadmin-automation-error`, `superadmin-automation-result`, `superadmin-automation-saved`,
+  `superadmin-automation-empty`, `superadmin-automation-tabs`,
+  `superadmin-automation-tab-rules`, `superadmin-automation-tab-templates`, `rule-key`, `rule-name`,
+  `rule-event`, `rule-enabled`, `rule-add-condition`, `rule-no-conditions`, `rule-condition-<i>`,
+  `rule-condition-field-<i>`, `rule-condition-op-<i>`, `rule-condition-value-<i>`,
+  `rule-condition-remove-<i>`, `rule-add-action`, `rule-no-actions`, `rule-action-<i>`,
+  `rule-action-type-<i>`, `rule-action-message-<i>`, `rule-action-remove-<i>`, `rule-save`,
+  `rule-list`, `rule-<key>`, `rule-test-<key>`, `rule-test-output`, `template-event`,
+  `template-subject`, `template-blocks`, `template-block-<i>`, `template-block-text-<i>`,
+  `template-block-up-<i>`, `template-block-down-<i>`, `template-block-remove-<i>`,
+  `template-add-<type>`, `template-save`, `template-list`, `template-<eventKey>`.
+- **States:** loading, error (with Retry), empty (no rules / no platform sender), ready. The test
+  output panel appears only after a test and always says "nothing was sent".
+- **Tutorial keys:** `sa.automation`, `sa.templates`.
+
+## OA-11 — email sender (S2)
+
+- **Purpose:** the Org Admin's own sender, its Test button, and a plain message when the platform
+  does not allow a tenant sender (F6).
+- **Route:** Org Admin control plane, tab `Email`.
+- **Rights:** `edit_config`. The database refuses a tenant profile when the platform denies it.
+- **Data:** `listSenderProfiles(orgId)`, `saveSenderProfile(...)`, `recordTestResult(id, text, status)`
+  (`src/data/senderProfiles.ts`).
+- **Testids:** `org-email`, `org-email-loading`, `org-email-error`, `org-email-result`,
+  `org-email-saved`, `org-email-denied`, `org-email-provider`, `org-email-display-name`,
+  `org-email-from`, `org-email-save`, `org-email-empty`, `org-email-list`, `org-sender-<id>`,
+  `org-sender-test-<id>`.
+- **States:** loading, error (with Retry), denied (the platform sends instead), empty ("You have no
+  sending address yet. Notifications are waiting, not lost."), ready.
+- **Tutorial keys:** `oa.email-resend`, `oa.email-microsoft`, `oa.email-smtp`, `oa.email-test`.
+
+## OA-12 / OA-13 — notification and escalation rules (S2)
+
+- **Purpose:** the Org Admin copies a platform rule and changes it, or starts a new one. The same
+  editor covers escalation rules, whose recommendation is filled from the event fields (F7, F12).
+- **Route:** Org Admin control plane, tab `Rules`.
+- **Rights:** `edit_config`.
+- **Data:** `listRules(orgId)`, `saveRule(...)`, `testRule(ruleId, sample)`, `listEventCatalogue()`,
+  `listTemplates(orgId)` (`src/data/automation.ts`).
+- **Testids:** `org-automation`, `org-automation-loading`, `org-automation-error`,
+  `org-automation-result`, `org-automation-saved`, `org-automation-empty`, `org-automation-new`,
+  `org-automation-editor`, `org-rule-key`, `org-rule-name`, `org-rule-event`, `org-rule-enabled`,
+  `org-rule-add-condition`, `org-rule-condition-<i>`, `org-rule-condition-field-<i>`,
+  `org-rule-condition-op-<i>`, `org-rule-condition-value-<i>`, `org-rule-condition-remove-<i>`,
+  `org-rule-add-action`, `org-rule-action-<i>`, `org-rule-action-type-<i>`,
+  `org-rule-action-message-<i>`, `org-rule-action-remove-<i>`, `org-rule-save`, `org-rule-cancel`,
+  `org-rule-list`, `org-rule-<key>`, `org-rule-copy-<key>`, `org-rule-edit-<key>`,
+  `org-rule-test-<key>`, `org-rule-test-output`, `org-template-list`, `org-template-<eventKey>`.
+- **States:** loading, error (with Retry), empty (no rules), ready. A platform template offers "Copy
+  and change"; a tenant rule offers "Change".
+- **Tutorial keys:** `oa.automation`, `oa.templates-email`, `oa.escalation`.
+
+## OA-20 — invite a colleague (S3)
+
+- **Purpose:** the Org Admin invites a colleague by email and role. The invitation is recorded as a
+  single-use row and its acceptance link is queued; the copy says "queued", never "sent", because no
+  account exists until the invitee accepts (D20 defect, F6, S3).
+- **Route:** Org Admin control plane, tab `People`, block "Invite a colleague".
+- **Rights:** `manage_users`. The database re-checks it inside `invite_user_capped`.
+- **Data:** `inviteUser(email, roleSlug)` → `{ ok, inviteId, status }`, `inviteStatus(inviteId)`
+  (`src/data/admin.ts`). `status` is the queue's own: `queued` until the dispatcher accepts the row.
+- **Testids:** `people-admin-panel`, `admin-people`, `admin-invite`, `admin-invite-sent`,
+  `admin-error`.
+- **States:** ready; the confirmation reads "Invitation queued for <email>". An invalid address keeps
+  the button disabled. A cap breach or a missing right shows the RPC's message in `admin-error`.
+- **Tutorial keys:** `oa.invite`.
+
+---
+
 ## Tutorials regenerated
 
 `npm run tutorials:record` regenerates every GIF (S12). The recorder binds only to the testids listed

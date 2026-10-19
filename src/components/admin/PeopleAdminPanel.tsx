@@ -246,7 +246,8 @@ export const PeopleAdminPanel: React.FC = () => {
           <div className="rounded-xl border border-hairline p-4 space-y-3">
             <h4 className="text-apple-13 font-semibold text-primary">Invite a colleague</h4>
             <p className="text-apple-11 text-secondary">
-              Enter the email address and the role to grant. They can sign in once their account is created.
+              Enter the email address and the role to grant. The invitation is queued and the invitee
+              sets their own password from the link. It is not an account until they accept.
             </p>
             <div className="flex flex-col sm:flex-row gap-2">
               <input
@@ -276,7 +277,7 @@ export const PeopleAdminPanel: React.FC = () => {
             </div>
             {inviteSentTo && (
               <p data-testid="admin-invite-sent" className="text-apple-12 text-verdigris">
-                Invitation sent to {inviteSentTo}
+                Invitation queued for {inviteSentTo}
               </p>
             )}
           </div>

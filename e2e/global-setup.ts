@@ -203,7 +203,9 @@ export default async function globalSetup() {
   must('insert scopes', await sb.from('user_scopes').insert(scopes));
 
   // Leave no residue (M5): the invite cap counts events per org and per user per day, so a run
-  // that created members would otherwise change the cap the next run observes.
+  // that created members would otherwise change the cap the next run observes. The live invitations
+  // go with them (S3): a leftover row would make a later run's token look used.
+  must('delete auth_invites', await sb.from('auth_invites').delete().in('org_id', [ORG_A, ORG_B]));
   must('delete invite_cap_events', await sb.from('invite_cap_events').delete().in('org_id', [ORG_A, ORG_B]));
 
   // Phase 4 workspace residue (4I). The testing workspace writes populations, samples, workpaper

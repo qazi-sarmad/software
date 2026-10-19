@@ -53,10 +53,10 @@ interface RawProfile {
   credential_display: string | null;
 }
 
-export async function listSenderProfiles(orgId: string): Promise<SenderProfile[]> {
+export async function listSenderProfiles(orgId: string | null): Promise<SenderProfile[]> {
   const sb = getClient();
   if (!sb) return [];
-  const { data, error } = await sb.rpc('email_sender_profiles_list', { p_org: orgId });
+  const { data, error } = await sb.rpc('email_sender_profiles_list', { p_org: orgId || null });
   if (error) throw new Error(error.message);
   return ((data ?? []) as RawProfile[]).map((p) => ({
     id: p.id,

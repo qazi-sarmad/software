@@ -56,7 +56,7 @@ describe('People admin invite (D20)', () => {
     await waitFor(() => expect(inviteUserFn).toHaveBeenCalledWith('new.auditor@example.test', 'audit_manager'));
     await waitFor(() =>
       expect(screen.getByTestId('admin-invite-sent').textContent).toContain(
-        'Invitation sent to new.auditor@example.test',
+        'Invitation queued for new.auditor@example.test',
       ),
     );
   });

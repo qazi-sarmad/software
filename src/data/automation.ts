@@ -42,20 +42,20 @@ function mapRule(r: RawRule): AutomationRule {
 }
 
 /** The rules a caller may see: its own organisation's plus the platform templates. */
-export async function listRules(orgId: string): Promise<AutomationRule[]> {
+export async function listRules(orgId: string | null): Promise<AutomationRule[]> {
   const sb = getClient();
   if (!sb) return [];
-  const { data, error } = await sb.rpc('automation_rule_list', { p_org: orgId });
+  const { data, error } = await sb.rpc('automation_rule_list', { p_org: orgId || null });
   if (error) throw new Error(error.message);
   return ((data ?? []) as RawRule[]).map(mapRule);
 }
 
 export function saveRule(
-  orgId: string, ruleKey: string, name: string, eventKey: string,
+  orgId: string | null, ruleKey: string, name: string, eventKey: string,
   conditions: RuleCondition[], actions: RuleAction[], enabled: boolean
 ): Promise<DataResult> {
   return callRpc('automation_rule_save', {
-    p_org: orgId, p_rule_key: ruleKey, p_name: name, p_event_key: eventKey,
+    p_org: orgId || null, p_rule_key: ruleKey, p_name: name, p_event_key: eventKey,
     p_conditions: conditions, p_actions: actions, p_enabled: enabled,
   }, NOT_CONFIGURED);
 }
@@ -106,10 +106,10 @@ interface RawTemplate {
   is_platform_template: boolean;
 }
 
-export async function listTemplates(orgId: string): Promise<NotificationTemplate[]> {
+export async function listTemplates(orgId: string | null): Promise<NotificationTemplate[]> {
   const sb = getClient();
   if (!sb) return [];
-  const { data, error } = await sb.rpc('notification_template_list', { p_org: orgId });
+  const { data, error } = await sb.rpc('notification_template_list', { p_org: orgId || null });
   if (error) throw new Error(error.message);
   return ((data ?? []) as RawTemplate[]).map((t) => ({
     id: t.id,
