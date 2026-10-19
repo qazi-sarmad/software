@@ -21,7 +21,12 @@ alter table invite_cap_events add column if not exists role_slug text;
 -- ---------------------------------------------------------------------------
 -- invite_user_capped: the one way an invitation is recorded. Replaces the single-argument form
 -- (0015) with an optional role, so existing callers keep working.
+--
+-- The drop covers both signatures: a later migration (0057) redefines this function with a uuid
+-- return type, so on a repeated apply of this file the uuid form must be dropped before the void
+-- form can be recreated (M2, M4).
 -- ---------------------------------------------------------------------------
+drop function if exists public.invite_user_capped(text, text);
 drop function if exists public.invite_user_capped(text);
 
 create or replace function public.invite_user_capped(p_email text, p_role_slug text default null)

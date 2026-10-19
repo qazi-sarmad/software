@@ -1,6 +1,7 @@
 -- Test 62 (D20): the email-based admin invite. invite_user_capped records the email and the role
 -- in the cap ledger and queues the invitation copy; an unknown role is refused; the cap and the
--- right check are unchanged (§4.1, §23).
+-- right check are unchanged (§4.1, §23). The copy is honest after S3: it is queued, not "sent".
+-- The acceptance path (token, single use, expiry) is test 67.
 \i supabase/tests/00_lib.sql
 select provio_test.seed();
 
@@ -36,8 +37,8 @@ begin
       where org_id = 'a0000000-0000-0000-0000-000000000001'
         and status = 'pending'
         and to_addresses = array['new.auditor@example.test']
-        and body_text like 'An invitation to join Provio has been sent%'),
-    1::bigint, 'D20: one pending invitation email is queued with the invitee copy');
+        and body_text like 'You have been invited to join Provio.%'),
+    1::bigint, 'D20 fix: one pending invitation email is queued, and the copy does not claim it was sent');
 end $$;
 
 -- ---------------------------------------------------------------------------

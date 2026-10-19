@@ -103,6 +103,10 @@ begin
   truncate automation_event_processed;
   delete from automation_rules where org_id is not null;
   delete from notification_templates where org_id is not null;
+  -- S3 (F6, F13). invite_cap_events and auth_invites cascade from orgs, but the invitation email
+  -- rows in email_queue do not reach them by cascade alone on a reused database, so clear the
+  -- per-run rows explicitly.
+  delete from email_queue where metadata ->> 'kind' = 'user_invitation';
 
   insert into orgs (id, name, is_demo) values
     ('a0000000-0000-0000-0000-000000000001', 'Org A', false),
@@ -286,5 +290,5 @@ begin
   perform set_config('request.jwt.claims', '', false);
 end $$;
 
-grant usage on schema provio_test to anon, authenticated;
-grant execute on all functions in schema provio_test to anon, authenticated;
+grant usage on schema provio_test to anon, authenticated, service_role;
+grant execute on all functions in schema provio_test to anon, authenticated, service_role;
