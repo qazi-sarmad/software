@@ -344,3 +344,22 @@ How to reverse: `git revert` the D21 commit; drop `planning_reconciliation_detai
 `PlanningPanel.test.tsx`, `DeploymentGatePanel.test.tsx`, `PlanPanels.test.tsx` and
 `EntityApprovalPanel.test.tsx`.
 
+
+## D-D22-gates — one script for the pre-PR gates
+
+Task D22. Unclear point: the brief lists six gates to run before the PR, but five of them already run
+in CI and three of the six are also enforced as vitest guard files (`singleClient`, `noBlockingModal`,
+`sourceGuards` for demo ids and Math.random). Running them by hand invites drift.
+Options: (1) run each gate by hand and paste the output into the progress file; (2) add
+`scripts/pre-pr-gates.sh` that runs the six in order and stops at the first failure.
+Choice: option 2. The script runs tsc, vitest, build, the token check, the shrink check and the guard
+tests. The two steps that need the hosted test project (SQL migrations/tests and Playwright) are not
+in the script; they are CI steps 6 and 7 and their evidence is the CI run id. `npm run ci` already
+chained five of the six; the script adds the guard run and is what the brief's checklist describes.
+Reason: a single command that matches the checklist is the smallest way to make "the gates are green"
+a fact rather than a claim, and it stops at the first failure so a red gate is never buried under a
+later green one. The confirmations the brief asks for are already guards, not manual greps: no demo
+tenant id (`provio-corp-tenant`), no `Math.random` outside tests, one Supabase client, no blocking
+modal outside the `ConfirmPanel`/`FloatingWindow`/`RecordView` allow-list.
+How to reverse: delete `scripts/pre-pr-gates.sh`; nothing else depends on it.
+
