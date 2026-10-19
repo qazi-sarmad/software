@@ -112,12 +112,37 @@ export function provisionMember(
   });
 }
 
+/** The queue status of an invitation: 'queued' until the dispatcher accepts it, never 'sent'. */
+export type InviteStatus = 'queued' | 'accepted' | 'revoked' | 'expired';
+
+export type InviteResult =
+  | { ok: true; inviteId?: string; status?: InviteStatus }
+  | { ok: false; reason: string };
+
 /**
- * Invite a colleague by email and role (D20). The database re-checks `manage_users`, counts the
- * invitation against the cap and queues the invitation email; this module only carries the request.
+ * Invite a colleague by email and role (D20, S3). The database re-checks `manage_users`, counts the
+ * invitation against the cap, records a single-use invitation and queues the acceptance link. The
+ * returned status is the queue's, so the UI can say "queued" and never "sent" before it is.
  */
-export function inviteUser(email: string, roleSlug: string | null): Promise<AdminResult> {
-  return callRpc('invite_user_capped', { p_email: email, p_role_slug: roleSlug });
+export async function inviteUser(email: string, roleSlug: string | null): Promise<InviteResult> {
+  const sb = getClient();
+  if (!sb) return { ok: false, reason: 'Administration is not configured.' };
+  const { data, error } = await sb.rpc('invite_user_capped', { p_email: email, p_role_slug: roleSlug });
+  if (error) return { ok: false, reason: error.message };
+  const inviteId = data as string | null;
+  if (!inviteId) return { ok: true };
+  const status = await inviteStatus(inviteId);
+  return { ok: true, inviteId, status: status ?? 'queued' };
+}
+
+/** The invitation's queue status, read from the database (S3). Null when it cannot be read. */
+export async function inviteStatus(inviteId: string): Promise<InviteStatus | null> {
+  const sb = getClient();
+  if (!sb) return null;
+  const { data, error } = await sb.rpc('invite_status', { p_invite_id: inviteId });
+  if (error) return null;
+  const row = ((data ?? []) as { status: string }[])[0];
+  return (row?.status as InviteStatus) ?? null;
 }
 
 export function setMemberRole(userId: string, roleSlug: string): Promise<AdminResult> {
