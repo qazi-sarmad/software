@@ -11,10 +11,11 @@ import { OrgConfigHistory } from './OrgConfigHistory';
 import { OrgEmailPanel } from './OrgEmailPanel';
 import { OrgAutomationPanel } from './OrgAutomationPanel';
 import { OrgBrandingPanel } from './OrgBrandingPanel';
+import { OrgAiPanel } from './OrgAiPanel';
 import { InlineError } from '../common/InlineError';
 import { Check, Lock, Zap, Sliders, Users, Shield, History } from '../common/Icons';
 
-type Tab = 'features' | 'branding' | 'email' | 'automation' | 'setup' | 'consultation' | 'history';
+type Tab = 'features' | 'branding' | 'email' | 'automation' | 'ai' | 'setup' | 'consultation' | 'history';
 type LoadState = 'loading' | 'ready' | 'error';
 
 /**
@@ -105,6 +106,7 @@ export const OrgControlPanel: React.FC = () => {
           { id: 'branding', label: 'Branding', icon: Sliders },
           { id: 'email', label: 'Email', icon: Check },
           { id: 'automation', label: 'Rules', icon: Zap },
+          { id: 'ai', label: 'AI', icon: Zap },
           { id: 'setup', label: 'Setup', icon: Sliders },
           { id: 'consultation', label: 'Dual Session', icon: Users },
           { id: 'history', label: 'History', icon: History },
@@ -162,6 +164,7 @@ export const OrgControlPanel: React.FC = () => {
       {tab === 'branding' && <OrgBrandingPanel />}
       {tab === 'email' && <OrgEmailPanel />}
       {tab === 'automation' && <OrgAutomationPanel />}
+      {tab === 'ai' && <OrgAiPanel orgId={currentUser.orgId ?? ''} />}
       {tab === 'setup' && (
         <div data-testid="org-setup">
           <SetupWizard scope="org_admin" enabledFeatures={[...enabled]} />
