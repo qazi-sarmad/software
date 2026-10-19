@@ -14,6 +14,56 @@ const NOT_CONFIGURED = 'The Board Pack module is not configured.';
 
 export type BoundaryKind = 'since_last' | 'custom' | 'since_meeting';
 
+export interface OrgSettingsExtra {
+  appBaseUrl: string;
+  lastBoardMeetingDate: string | null;
+  certificateAutoIssue: boolean;
+  publicVerifyShowTitle: boolean;
+  aiRetentionDays: number;
+}
+
+interface RawSettings {
+  app_base_url: string | null;
+  last_board_meeting_date: string | null;
+  certificate_auto_issue: boolean;
+  public_verify_show_title: boolean;
+  ai_retention_days: number;
+}
+
+/** The tenant-level settings the Board Pack and the certificate read (app_base_url and friends). */
+export async function getOrgSettingsExtra(orgId: string): Promise<OrgSettingsExtra | null> {
+  const sb = getClient();
+  if (!sb || !orgId) return null;
+  const { data, error } = await sb.rpc('org_settings_extra_get', { p_org: orgId });
+  if (error) throw new Error(error.message);
+  const raw = (Array.isArray(data) ? data[0] : data) as RawSettings | undefined;
+  if (!raw) return null;
+  return {
+    appBaseUrl: raw.app_base_url ?? '',
+    lastBoardMeetingDate: raw.last_board_meeting_date,
+    certificateAutoIssue: raw.certificate_auto_issue,
+    publicVerifyShowTitle: raw.public_verify_show_title,
+    aiRetentionDays: raw.ai_retention_days,
+  };
+}
+
+/** Save tenant-level settings. Needs edit_config (or an active consultation session). */
+export function saveOrgSettingsExtra(orgId: string, fields: Partial<{
+  appBaseUrl: string; lastBoardMeetingDate: string | null; certificateAutoIssue: boolean;
+  publicVerifyShowTitle: boolean; aiRetentionDays: number;
+}>): Promise<DataResult> {
+  return callRpc('org_settings_extra_save', {
+    p_org: orgId,
+    p_fields: {
+      app_base_url: fields.appBaseUrl,
+      last_board_meeting_date: fields.lastBoardMeetingDate,
+      certificate_auto_issue: fields.certificateAutoIssue,
+      public_verify_show_title: fields.publicVerifyShowTitle,
+      ai_retention_days: fields.aiRetentionDays,
+    },
+  }, NOT_CONFIGURED);
+}
+
 export interface GenerateOptions {
   scopeKey?: string;
   boundaryKind?: BoundaryKind;

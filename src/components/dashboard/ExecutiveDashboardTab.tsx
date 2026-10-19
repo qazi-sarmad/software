@@ -5,6 +5,7 @@ import { useApp } from '../../context/AppContext';
 import { CapRadialTracker } from './CapRadialTracker';
 import { CapTable } from './CapTable';
 import { EngagementGantt } from './EngagementGantt';
+import { BoardPackPanel } from '../pending/BoardPackPanel';
 import { HoverPreview } from '../common/HoverPreview';
 import {
   Folder,
@@ -194,6 +195,9 @@ export const ExecutiveDashboardTab: React.FC = () => {
 
       {/* CAP Table below chart (§ 3.4 requirement: id, action, owner, dept, severity, due date, aging, status) */}
       <CapTable capItems={filteredCapItems} />
+
+      {/* Board Pack panel (F10): pack history, Generate, Open and the drillable web view. */}
+      <BoardPackPanel />
     </div>
   );
 };

@@ -11,6 +11,8 @@ export const FEATURE_RPC_MAP: Record<string, string> = {
   board_pack_render_pdf: 'board_pack',
   board_pack_render_pptx: 'board_pack_pptx',
   board_pack_snapshot: 'board_pack',
+  board_pack_sections_save: 'board_pack',
+  board_pack_figure_refs: 'board_pack',
   // certificates / public_verification
   certificate_issue: 'certificates',
   certificate_revoke: 'certificates',

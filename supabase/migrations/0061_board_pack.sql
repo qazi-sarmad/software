@@ -386,6 +386,42 @@ begin
 end $$;
 
 -- ---------------------------------------------------------------------------
+-- 8b. org_settings_extra_get / org_settings_extra_save — the tenant-level settings F10 and F11 read
+--     (app_base_url, last_board_meeting_date, certificate_auto_issue, public_verify_show_title, AI
+--     retention). Configurable through the wizards, never by SQL (product law C1).
+-- ---------------------------------------------------------------------------
+create or replace function public.org_settings_extra_get(p_org uuid)
+returns table (
+  app_base_url text, last_board_meeting_date date, certificate_auto_issue boolean,
+  public_verify_show_title boolean, ai_retention_days int
+)
+language sql stable security definer set search_path = public as $$
+  select e.app_base_url, e.last_board_meeting_date, e.certificate_auto_issue,
+         e.public_verify_show_title, e.ai_retention_days
+    from org_settings_extra e
+   where e.org_id = p_org
+     and (public.is_platform_admin() or p_org = public.jwt_org_id())
+$$;
+
+create or replace function public.org_settings_extra_save(p_org uuid, p_fields jsonb)
+returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  if not public.config_actor_ok(p_org, 'edit_config') then
+    raise exception 'not allowed: the caller cannot edit the organisation settings' using errcode = 'P0001';
+  end if;
+  insert into org_settings_extra (org_id) values (p_org) on conflict (org_id) do nothing;
+  update org_settings_extra
+     set app_base_url = coalesce(p_fields ->> 'app_base_url', app_base_url),
+         last_board_meeting_date = coalesce((p_fields ->> 'last_board_meeting_date')::date, last_board_meeting_date),
+         certificate_auto_issue = coalesce((p_fields ->> 'certificate_auto_issue')::boolean, certificate_auto_issue),
+         public_verify_show_title = coalesce((p_fields ->> 'public_verify_show_title')::boolean, public_verify_show_title),
+         ai_retention_days = coalesce((p_fields ->> 'ai_retention_days')::int, ai_retention_days),
+         updated_at = now()
+   where org_id = p_org;
+end $$;
+
+-- ---------------------------------------------------------------------------
 -- 9. RLS: every table has RLS enabled and a select policy on the caller's org. No write policy, so
 --    every write goes through the security-definer RPCs above.
 -- ---------------------------------------------------------------------------
@@ -414,7 +450,8 @@ begin
     from pg_proc p join pg_namespace n on n.oid = p.pronamespace
     where n.nspname = 'public' and p.proname in (
       'board_pack_sections_seed','board_pack_figure_refs','board_pack_snapshot','board_pack_generate',
-      'board_pack_list','board_pack_get','board_pack_sections_save'
+      'board_pack_list','board_pack_get','board_pack_sections_save',
+      'org_settings_extra_get','org_settings_extra_save'
     )
   loop
     execute format('revoke execute on function public.%I(%s) from public', fn.name, fn.args);
