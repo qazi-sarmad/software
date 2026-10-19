@@ -3,6 +3,7 @@ import * as d3 from 'd3';
 import { useFilterStore } from '../../context/FilterStore';
 import { useApp } from '../../context/AppContext';
 import { AuditCapItem, Severity } from '../../types';
+import { stableKey } from '../../lib/readable';
 import { AlertCircle, RotateCcw } from '../common/Icons';
 
 interface CapDeptData {
@@ -54,7 +55,7 @@ export const CapRadialTracker: React.FC<CapRadialTrackerProps> = ({
 
   const departments = Object.values(capDeptMap).filter((d) => d.total > 0);
   // Redraw only when the underlying data or the selected department changes.
-  const drawKey = JSON.stringify(departments.map((d) => [d.department, d.total, d.caps?.length ?? 0])) + '|' + (filter.department ?? '');
+  const drawKey = stableKey(departments.map((d) => [d.department, d.total, d.caps?.length ?? 0])) + '|' + (filter.department ?? '');
 
   const getDeptOpacity = (dept: string, isCapSlice = false) => {
     if (hoveredDept && hoveredDept !== dept) return 0.35;

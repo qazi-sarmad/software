@@ -17,6 +17,7 @@ import {
 import { checkCapReconciliation, type CapRow, listCaps } from '../../data/caps';
 import { hasRight } from '../../lib/rights';
 import { rightReason, rightReasonFor } from '../../lib/rightLabels';
+import { formatFieldPairs } from '../../lib/readable';
 import { InlineError } from '../common/InlineError';
 import { HoldToConfirm } from '../common/HoldToConfirm';
 import { AlertTriangle, CheckCircle2, FileText, Layers, Send } from '../common/Icons';
@@ -249,9 +250,9 @@ export const ReportEditorPanel: React.FC<{ engagementId: string }> = ({ engageme
                         </span>
                       )}
                     </div>
-                    <pre className="text-apple-12 text-primary whitespace-pre-wrap font-mono break-words">
-                      {JSON.stringify(b.content)}
-                    </pre>
+                    <p className="text-apple-12 text-primary whitespace-pre-wrap break-words" data-testid={`report-block-content-${b.id}`}>
+                      {formatFieldPairs(b.content)}
+                    </p>
                   </div>
                 ))}
               </div>

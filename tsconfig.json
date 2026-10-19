@@ -25,5 +25,5 @@
     "noEmit": true
   },
   "include": ["src", "vite.config.ts", "vitest.config.ts"],
-  "exclude": ["node_modules", "dist", "docs"]
+  "exclude": ["node_modules", "dist", "docs", "supabase", "tools", "e2e"]
 }

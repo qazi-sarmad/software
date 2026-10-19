@@ -10,6 +10,6 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
-    exclude: ['**/node_modules/**', '**/e2e/**', '**/dist/**', '**/docs/**', '**/tests/adversarial/**'],
+    exclude: ['**/node_modules/**', '**/e2e/**', '**/dist/**', '**/docs/**', '**/tests/adversarial/**', 'tools/**'],
   },
 });

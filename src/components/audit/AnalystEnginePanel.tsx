@@ -3,6 +3,7 @@ import { useApp } from '../../context/AppContext';
 import { listAnalysisResults, raiseFinding, type AnalysisResultRow } from '../../data/analytics';
 import { hasRight } from '../../lib/rights';
 import { rightReason, rightReasonFor } from '../../lib/rightLabels';
+import { formatFieldPairs } from '../../lib/readable';
 import { InlineError } from '../common/InlineError';
 import { Activity, AlertTriangle, ChevronDown, ChevronRight, Plus, RefreshCw } from '../common/Icons';
 
@@ -116,7 +117,7 @@ export const AnalystEnginePanel: React.FC<{ engagementId: string }> = ({ engagem
                             rows: {r.rowRefs.slice(0, 20).join(', ')}{r.rowRefs.length > 20 ? '…' : ''}
                           </div>
                           <div className="text-apple-11 text-secondary font-mono truncate">
-                            params: {JSON.stringify(r.params)}
+                            params: {formatFieldPairs(r.params)}
                           </div>
                         </div>
                         <button
