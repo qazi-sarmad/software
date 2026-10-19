@@ -43,3 +43,6 @@ Local harness: PostgreSQL 17.11, database `provio_test`, `/tmp/auth_shim.sql` + 
 | S4.b lib+data: branding spec and renderers | b0b502d | 39276190620 | green (local) | src/lib/render (branding, pdf, pptx, qr), src/data/branding.ts, 18 unit tests |
 | S4.c app: branding screens with live preview | f4f44c1 | 39276190620 | green (local) | OA-02/OA-03 OrgBrandingPanel, 5 component tests |
 | S4.d docs: decisions, UI contract, PARITY | f479439 | 39276190620 | green (local) | D-S4-* decisions, OA-02/03 UI contract section |
+| S5.a db: AI registry, deny-list, use cases, voice library | 5504084 | pending | green (local) | 0059_ai.sql; test 69 (24 assertions); ai_require_org_actor gates on has_feature |
+| S5.b lib+data: SSRF, number guard, prompt assembly, data module | da477f2 | pending | green (local) | _shared/aiSsrf, aiNumberGuard, aiPrompt; 58 unit tests; src/data/ai.ts; featureMap ai_require_org_actor |
+| S5.c app: AI settings, voice library, model registry | aded51f | pending | green (local) | OA-06/OA-07 OrgAiPanel, SA-06 SuperAdminAi; 8 component tests; e2e/s5-ai.spec.ts |

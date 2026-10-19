@@ -303,6 +303,47 @@ as its slice lands.
 
 ---
 
+## OA-06 / OA-07 — AI settings and voice library (S5)
+
+- **Purpose:** the Org Admin sets the model endpoint, the access mode, the use-case toggles, the
+  parameters and the voice library. It can never add, remove, change or choose a model: that is the
+  Super Admin's registry, and the server refuses an attempt (F8). A vendor-hosted endpoint is
+  refused with the L2 message.
+- **Route:** Org Admin control plane, tab `AI`.
+- **Rights:** `edit_config`; feature-gated `ai_assist` (endpoint, use cases), `ai_voice_library`
+  (voice profile, terms, samples) (F25).
+- **Data:** `listUseCases(orgId)`, `saveUseCase(...)`, `setEndpoint(orgId, url, mode, secretId?)`,
+  `getVoiceProfile(orgId)`, `saveVoiceProfile(...)`, `listVoiceTerms(orgId)`, `addVoiceTerm(...)`,
+  `listVoiceSamples(orgId)`, `addVoiceSample(...)`, `isEndpointDenied(url)` (`src/data/ai.ts`).
+- **Testids:** `org-ai-panel`, `oa-ai-loading`, `oa-ai-error`, `oa-ai-result`, `oa-ai-endpoint`,
+  `oa-ai-endpoint-url`, `oa-ai-endpoint-mode`, `oa-ai-endpoint-save`, `oa-ai-usecases`,
+  `oa-ai-usecase-<key>`, `oa-ai-usecase-toggle-<key>`, `oa-voice`, `oa-voice-tone`, `oa-voice-save`,
+  `oa-voice-term-<id>`, `oa-voice-term-preferred`, `oa-voice-term-avoid`, `oa-voice-term-add`,
+  `oa-voice-sample-<id>`, `oa-voice-sample-kind`, `oa-voice-sample-text`, `oa-voice-sample-add`.
+- **States:** loading ("Loading the AI settings…"); ready; error (`InlineError`); a save refusal
+  (rights, entitlement, deny-list) is shown in `oa-ai-result` in the server's own words.
+- **Tutorial keys:** `oa.ai`, `oa.ai-test`, `oa.ai-usecases`, `oa.voice`.
+
+---
+
+## SA-06 — AI model registry and endpoint deny-list (S5)
+
+- **Purpose:** the Super Admin adds, removes or changes a model, and edits the deny-list of
+  vendor-hosted hosts (F8). Only the Super Admin writes `ai_models` and `ai_endpoint_denylist`.
+- **Route:** platform portal, tab `AI models`.
+- **Rights:** platform admin (`require_platform_admin`).
+- **Data:** `listAiModels()`, `addAiModel(name, modelRef, notes?)`, `updateAiModel(id, name,
+  modelRef, status)`, `removeAiModel(id)`, `listDenyPatterns()`, `addDenyPattern(pattern, label?)`,
+  `removeDenyPattern(id)` (`src/data/ai.ts`).
+- **Testids:** `superadmin-ai`, `sa-ai-loading`, `sa-ai-error`, `sa-ai-result`, `sa-ai-models`,
+  `sa-ai-models-empty`, `sa-ai-model-<id>`, `sa-ai-model-toggle-<id>`, `sa-ai-model-remove-<id>`,
+  `sa-ai-model-name`, `sa-ai-model-ref`, `sa-ai-model-add`, `sa-ai-denylist`,
+  `sa-ai-pattern-<id>`, `sa-ai-pattern-remove-<id>`, `sa-ai-pattern-input`, `sa-ai-pattern-add`.
+- **States:** loading; ready; error (`InlineError`); a save refusal is shown in `sa-ai-result`.
+- **Tutorial keys:** `sa.ai-models`, `sa.ai-denylist`.
+
+---
+
 ## Tutorials regenerated
 
 `npm run tutorials:record` regenerates every GIF (S12). The recorder binds only to the testids listed

@@ -410,6 +410,89 @@ IMPROVISE-THEN-DOCUMENT (this file).
   the swatch shows the real brand colour rather than a stand-in.
 - Reverse: inline the fallback in the component and allow-list the file.
 
+## D-S5-ai-featuremap — ai_require_org_actor maps to ai_assist (S5.a, F8, F25)
+
+- Task: S5.a.
+- Point: F25 rule 5 requires every feature RPC in the migrations to be mapped in
+  `src/lib/featureMap.ts`. `0059_ai.sql` defines one helper, `ai_require_org_actor(p_org, p_feature,
+  p_right)`, that calls `has_feature` once and is reused by every AI RPC; the guard test reads a
+  function's own body, so the helper itself must be mapped.
+- Options: (a) map it to `ai_assist`; (b) leave it unmapped and allow-list the file in the guard;
+  (c) inline the `has_feature` call into every AI RPC and drop the helper.
+- Choice: (a). The helper is mapped to `ai_assist`, the base AI feature; its callers inherit the
+  gate because they pass the feature key through the helper's argument.
+- Reason: (b) weakens the guard (the whole point of F25 rule 5 is that no feature RPC is unmapped);
+  (c) repeats the same five lines in nine RPCs and loses one place to audit the gate. (a) keeps one
+  gate point and keeps the guard total.
+- Reverse: delete the map entry and inline `has_feature` into each AI RPC.
+
+## D-S5-deny-seed — the deny-list seed is idempotent by unique pattern (S5.a, F8, M2)
+
+- Task: S5.a.
+- Point: `0059_ai.sql` seeds the vendor-hosted deny-list. CI step 6 applies every migration to the
+  persistent `provio-test` project on each run (M2), so a plain `insert` would add a duplicate set of
+  rows on the second apply.
+- Options: (a) a unique index on `pattern` plus `on conflict (pattern) do nothing`; (b) a
+  `where not exists` guard per row; (c) leave the duplicates and let the app de-duplicate.
+- Choice: (a). `create unique index if not exists ai_endpoint_denylist_pattern_uidx on
+  ai_endpoint_denylist (pattern)` then `insert ... on conflict (pattern) do nothing`.
+- Reason: the unique index is the one durable statement of intent ("a pattern appears once"), the
+  insert stays a plain data statement, and the second apply is a no-op. (b) is more verbose and
+  repeats the guard; (c) leaves residue on the shared project (M5).
+- Reverse: drop the index and delete the seed block.
+
+## D-S5-testlib-truncate — ai_models is truncated in the test library (S5.a, M5)
+
+- Task: S5.a.
+- Point: `ai_models` is a platform-level table with no foreign key to `orgs`, so
+  `truncate orgs cascade` in `provio_test.reset()` does not clear it. Rows added by test 69 would
+  leak into the next test run (M5).
+- Options: (a) `truncate ai_models cascade` in the reset; (b) give `ai_models` an `org_id` and a
+  cascade foreign key; (c) delete the rows in test 69's own cleanup.
+- Choice: (a). One line in the shared reset, alongside the other platform tables.
+- Reason: `ai_models` is genuinely platform-level (no `org_id`), so (b) would model it wrongly; (c)
+  puts the burden on every test that touches the table and is easy to forget.
+- Reverse: remove the line.
+
+## D-S5-ssrf-dns — a name that resolves to a private address is refused (S5.b, F8, L2)
+
+- Task: S5.b.
+- Point: in `server` mode the gateway must refuse an endpoint that is a vendor host, a private
+  literal, or a public name that resolves to a private address (DNS rebinding).
+- Options: (a) judge the literal host only; (b) accept a `resolvedIp` the caller passes and refuse a
+  private answer; (c) resolve DNS inside the pure module.
+- Choice: (b). `checkEndpoint(url, mode, denyPatterns, resolvedIp?)` refuses a private `resolvedIp`
+  when the caller supplies one; the pure module never resolves DNS itself.
+- Reason: the module stays pure and unit-testable (no network in vitest), while the gateway — which
+  may resolve — can pass the answer in. (a) leaves a rebinding hole; (c) makes the module impure.
+- Reverse: drop the `resolvedIp` parameter; the gateway then relies on the literal host only.
+
+## D-S5-prompt-budget — the sample section fills top-down to a character budget (S5.b, F8)
+
+- Task: S5.b.
+- Point: prompt assembly must include the top-k most similar voice samples of the same kind, but a
+  long sample could crowd out the record context or the system prompt.
+- Options: (a) always include exactly top-k samples; (b) truncate each sample to a fixed length;
+  (c) fill the sample section top-down until a character budget is reached, dropping the rest.
+- Choice: (c). The system prompt, voice, terms, branding facts, the allowed-numbers line and the
+  record context are always included; samples are added in rank order until the budget is reached.
+- Reason: (a) can overflow the model's context window; (b) can cut a sample mid-sentence and does
+  not adapt to the budget. (c) keeps the essential instructions and is deterministic.
+- Reverse: raise the default budget or include every ranked sample.
+
+## D-S5-number-format — an allowed number matches on its normalised value (S5.b, F8)
+
+- Task: S5.b.
+- Point: the number guard flags a figure in the model's response that the prompt did not carry. The
+  same quantity can be written differently ("1,000" vs "1000", "50%" vs "50").
+- Options: (a) exact string comparison; (b) compare on a normalised value (strip separators, a
+  trailing percent, a leading plus and trailing decimal zeros); (c) ask the model to echo the numbers.
+- Choice: (b). `normaliseNumber` makes "1,234.50", "1234.5" and "50%" comparable to the prompt's
+  allow-list.
+- Reason: (a) flags a correct figure that differs only in formatting, which trains users to ignore
+  the guard; (c) relies on the model and is not deterministic (L1).
+- Reverse: compare the raw token strings.
+
 ## D-S4-deps — the F22 render dependencies, versions and licences (S4.b, F22)
 
 - Task: S4.b.
