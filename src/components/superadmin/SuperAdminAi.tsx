@@ -56,7 +56,7 @@ export const SuperAdminAi: React.FC = () => {
 
   const toggleStatus = async (m: AiModel) => {
     setBusy(true);
-    const next = m.status === 'active' ? 'disabled' : 'active';
+    const next = m.status === 'live' ? 'parked' : 'live';
     const r = await updateAiModel(m.id, m.name, m.modelRef, next);
     setBusy(false);
     setResult(r);
@@ -121,7 +121,7 @@ export const SuperAdminAi: React.FC = () => {
               <span className="opacity-70">{m.status}</span>
               <button type="button" className="underline" data-testid={`sa-ai-model-toggle-${m.id}`}
                 disabled={busy} onClick={() => void toggleStatus(m)}>
-                {m.status === 'active' ? 'Disable' : 'Enable'}
+                {m.status === 'live' ? 'Park' : 'Enable'}
               </button>
               <button type="button" className="underline" data-testid={`sa-ai-model-remove-${m.id}`}
                 disabled={busy} onClick={() => void dropModel(m.id)}>Remove</button>

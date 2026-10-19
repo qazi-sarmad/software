@@ -23,7 +23,7 @@ vi.mock('../../data/ai', () => ({
 import { SuperAdminAi } from './SuperAdminAi';
 
 const MODELS = [
-  { id: 'm1', name: 'Llama 3.1', modelRef: 'llama3.1:8b', status: 'active', notes: null },
+  { id: 'm1', name: 'Llama 3.1', modelRef: 'llama3.1:8b', status: 'live', notes: null },
 ];
 const PATTERNS = [
   { id: 'p1', pattern: 'api.openai.com', label: 'OpenAI' },
@@ -70,6 +70,6 @@ describe('SA-06 AI model registry and deny-list (F8)', () => {
     render(<SuperAdminAi />);
     await waitFor(() => expect(screen.getByTestId('superadmin-ai')).toBeTruthy());
     fireEvent.click(screen.getByTestId('sa-ai-model-toggle-m1'));
-    await waitFor(() => expect(updateAiModel).toHaveBeenCalledWith('m1', 'Llama 3.1', 'llama3.1:8b', 'disabled'));
+    await waitFor(() => expect(updateAiModel).toHaveBeenCalledWith('m1', 'Llama 3.1', 'llama3.1:8b', 'parked'));
   });
 });
