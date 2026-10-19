@@ -23,21 +23,21 @@ const ROLE_NAMES: [string, string][] = [
   ['Auditee', 'auditee'],
 ];
 
-// The seed rights matrix from migration 0012_rights_closed.sql. The database decides access from
+// The seed rights matrix from migration 0050_rights_extended.sql (fifteen keys; 0012 grew into it).
 // these rights (caller_has_right), so the synthetic roles must carry them, not an empty map.
 const RIGHTS_BY_ROLE: Record<string, Record<string, boolean>> = {
-  org_admin: { manage_users: true, manage_roles: true, edit_config: true },
-  cia: { manage_roles: true, edit_config: true, manage_engagements: true, approve_plan: true, review_and_approve: true, perform_work: true, can_reopen: true, view_all_scopes: true },
-  audit_manager: { manage_engagements: true, review_and_approve: true, perform_work: true, view_all_scopes: true },
-  observer: { read_only: true, view_all_scopes: true },
-  reviewer: { review_and_approve: true, perform_work: true },
-  preparer: { perform_work: true },
+  org_admin: { manage_users: true, manage_roles: true, edit_config: true, manage_engagements: false, approve_plan: false, review_and_approve: false, perform_work: false, can_reopen: false, view_all_scopes: false, read_only: false, manage_team: false, view_board_pack: false, generate_board_pack: false, use_ai_assist: false, view_insights: false },
+  cia: { manage_roles: true, edit_config: true, manage_engagements: true, approve_plan: true, review_and_approve: true, perform_work: true, can_reopen: true, view_all_scopes: true, view_board_pack: true, generate_board_pack: true, use_ai_assist: true, view_insights: true },
+  audit_manager: { manage_engagements: true, review_and_approve: true, perform_work: true, view_all_scopes: true, view_board_pack: true, use_ai_assist: true, view_insights: true },
+  observer: { read_only: true, view_all_scopes: true, view_board_pack: true },
+  reviewer: { review_and_approve: true, perform_work: true, use_ai_assist: true },
+  preparer: { perform_work: true, use_ai_assist: true },
   auditee: { read_only: true },
 };
 
-/** The full eleven-key matrix, false-filled, so every role row carries every key (as 0012 does). */
+/** The full fifteen-key matrix, false-filled, so every role row carries every key (as 0050 does). */
 function rightsFor(slug: string): Record<string, boolean> {
-  const keys = ['manage_users', 'manage_roles', 'edit_config', 'manage_engagements', 'approve_plan', 'review_and_approve', 'perform_work', 'can_reopen', 'view_all_scopes', 'read_only', 'manage_team'];
+  const keys = ['manage_users', 'manage_roles', 'edit_config', 'manage_engagements', 'approve_plan', 'review_and_approve', 'perform_work', 'can_reopen', 'view_all_scopes', 'read_only', 'manage_team', 'view_board_pack', 'generate_board_pack', 'use_ai_assist', 'view_insights'];
   const held = RIGHTS_BY_ROLE[slug] ?? {};
   return Object.fromEntries(keys.map((k) => [k, held[k] === true]));
 }
@@ -242,4 +242,15 @@ export default async function globalSetup() {
   must('delete prior_year_imports', await sb.from('prior_year_imports').delete().in('org_id', [ORG_A, ORG_B]));
   must('delete import_jobs', await sb.from('import_jobs').delete().in('org_id', [ORG_A, ORG_B]));
   must('delete archive_jobs', await sb.from('archive_jobs').delete().in('org_id', [ORG_A, ORG_B]));
+
+  // ACP residue (S1.c, M5). A Dual Session leaves sessions and proposals; an entitlement toggle
+  // leaves an entitlement row; a wizard run leaves setup_state and tutorial_views rows. Clear them
+  // so the next run observes the same starting state. consultation_events and
+  // tenant_entitlement_versions are append-only by trigger (L5) and are deliberately left in place;
+  // the specs never assert on their counts.
+  must('delete consultation_proposals', await sb.from('consultation_proposals').delete().in('org_id', [ORG_A, ORG_B]));
+  must('delete consultation_sessions', await sb.from('consultation_sessions').delete().in('org_id', [ORG_A, ORG_B]));
+  must('delete tutorial_views', await sb.from('tutorial_views').delete().in('org_id', [ORG_A, ORG_B]));
+  must('delete setup_state', await sb.from('setup_state').delete().in('org_id', [ORG_A, ORG_B]));
+  must('delete tenant_entitlements', await sb.from('tenant_entitlements').delete().in('org_id', [ORG_A, ORG_B]));
 }

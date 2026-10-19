@@ -8,11 +8,14 @@
 import { callRpc, getClient, type DataResult } from './db';
 
 export type SetupScope = 'org_admin' | 'super_admin';
-export type StepStatus = 'not_started' | 'in_progress' | 'done' | 'skipped';
+/** The three statuses the database accepts (setup_save_step). */
+export type StepStatus = 'pending' | 'done' | 'skipped';
+/** A step with no saved row yet reads as not_started; that value is never written. */
+export type StepState = StepStatus | 'not_started';
 
 export interface SetupStep {
   stepKey: string;
-  status: StepStatus;
+  status: StepState;
   answerRef: Record<string, unknown>;
   updatedAt: string;
 }

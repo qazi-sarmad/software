@@ -25,6 +25,7 @@ const SiraCyclePanel = lazy(() => import('../sira/SiraCyclePanel').then((m) => (
 const PlanItemsPanel = lazy(() => import('../plan/PlanItemsPanel').then((m) => ({ default: m.PlanItemsPanel })));
 const ImportWizardPanel = lazy(() => import('../admin/ImportWizardPanel').then((m) => ({ default: m.ImportWizardPanel })));
 const ActivityLogPanel = lazy(() => import('../admin/ActivityLogPanel').then((m) => ({ default: m.ActivityLogPanel })));
+const OrgControlPanel = lazy(() => import('../admin/OrgControlPanel').then((m) => ({ default: m.OrgControlPanel })));
 
 export const INSPECTOR_TITLES: Record<InspectorType, string> = {
   observation: 'Audit Observation & 5C Analysis',
@@ -47,6 +48,7 @@ export const INSPECTOR_TITLES: Record<InspectorType, string> = {
   plan_items: 'Audit Plan Items',
   import_wizard: 'Import',
   activity_log: 'Activity Log',
+  org_control: 'Assurance control plane',
 };
 
 /** Record type in a URL (/view/:recordType/:id) to the inspector content it shows. */
@@ -115,6 +117,8 @@ export const RecordContent: React.FC<RecordContentProps> = ({ type, data, onClos
           return <ImportWizardPanel />;
         case 'activity_log':
           return <ActivityLogPanel />;
+        case 'org_control':
+          return <OrgControlPanel />;
         default:
           return null;
       }

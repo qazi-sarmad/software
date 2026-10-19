@@ -20,6 +20,7 @@ import {
   Users,
   Upload,
   Activity,
+  Zap,
 } from './Icons';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -297,6 +298,19 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ onOpenCommandPalette }) =>
                       >
                         <Sliders className="w-4 h-4 text-secondary stroke-[1.5]" />
                         <span>Organisation settings</span>
+                      </button>
+                    )}
+                    {hasRight(currentUser, 'edit_config') && (
+                      <button
+                        onClick={() => {
+                          openInspector('org_control');
+                          setIsProfileOpen(false);
+                        }}
+                        data-testid="menu-org-control"
+                        className="w-full text-left px-3 py-2 rounded-xl text-primary hover:bg-surface-hover transition-colors flex items-center gap-2.5"
+                      >
+                        <Zap className="w-4 h-4 text-secondary stroke-[1.5]" />
+                        <span>Assurance control plane</span>
                       </button>
                     )}
                     <button

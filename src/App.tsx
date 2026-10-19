@@ -15,6 +15,7 @@ import { CommandPalette } from './components/common/CommandPalette';
 import { FloatingWindowManager, type OpenWindow } from './components/common/FloatingWindowManager';
 import { RecordContent, INSPECTOR_TITLES, RECORD_TYPE_TO_INSPECTOR } from './components/common/RecordContent';
 import { ReviewCommentsGlobalDock } from './components/reviews/ReviewCommentsGlobalDock';
+import { ConsultationBanner } from './components/common/ConsultationBanner';
 
 // React.lazy + Suspense code-splitting of tabs per Requirement 5(b)
 const ExecutiveDashboardTab = lazy(() =>
@@ -77,7 +78,7 @@ const LoadingFallback: React.FC = () => (
 );
 
 const AppContent: React.FC = () => {
-  const { activeTab, inspector, closeInspector, ledgerError } = useApp();
+  const { activeTab, inspector, closeInspector, ledgerError, currentUser } = useApp();
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
 
   // One floating window for the current inspector record. The window id is derived from the record
@@ -106,6 +107,9 @@ const AppContent: React.FC = () => {
       <div className="min-h-screen flex flex-col">
         <HeaderBar onOpenCommandPalette={() => setIsCommandPaletteOpen(true)} />
         <NavStrip />
+
+        {/* GL-01 Dual Session banner (F4): a non-blocking strip, never a modal or a scrim. */}
+        <ConsultationBanner orgId={currentUser.orgId} />
 
         {ledgerError && (
           <div className="max-w-7xl mx-auto w-full px-6 pt-4">

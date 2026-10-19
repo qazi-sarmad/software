@@ -1,10 +1,15 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { platformWhoami } from '../../data/platform';
 import { InlineError } from '../common/InlineError';
-import { Building, Shield } from '../common/Icons';
+import { Building, Shield, Users, Zap, Eye, History } from '../common/Icons';
 import { SuperAdminTenants } from './SuperAdminTenants';
 import { SuperAdminSupport } from './SuperAdminSupport';
 import { SuperAdminTrail } from './SuperAdminTrail';
+import { SuperAdminConsultation } from './SuperAdminConsultation';
+import { SuperAdminFeatures } from './SuperAdminFeatures';
+import { SuperAdminRecipients } from './SuperAdminRecipients';
+import { SuperAdminTutorials } from './SuperAdminTutorials';
+import { SuperAdminSetup } from './SuperAdminSetup';
 
 /**
  * Super Admin portal (C4, spec §24).
@@ -14,7 +19,7 @@ import { SuperAdminTrail } from './SuperAdminTrail';
  * database. This is the sole surface that may know about the platform role (D-PLATFORM-RIGHTS);
  * no org-product code imports it. It renders no blocking modal (spec §27.5).
  */
-type Tab = 'tenants' | 'support' | 'trail';
+type Tab = 'tenants' | 'support' | 'consultation' | 'features' | 'recipients' | 'tutorials' | 'setup' | 'trail';
 type Gate = 'checking' | 'allowed' | 'denied';
 
 export const SuperAdminPortal: React.FC = () => {
@@ -77,7 +82,12 @@ export const SuperAdminPortal: React.FC = () => {
   const tabs: { id: Tab; label: string; icon: React.FC<{ className?: string }> }[] = [
     { id: 'tenants', label: 'Tenants', icon: Building },
     { id: 'support', label: 'Support access', icon: Shield },
-    { id: 'trail', label: 'Platform trail', icon: Building },
+    { id: 'consultation', label: 'Dual Session', icon: Users },
+    { id: 'features', label: 'Features & plans', icon: Zap },
+    { id: 'recipients', label: 'Recipients', icon: Users },
+    { id: 'tutorials', label: 'Tutorials', icon: Eye },
+    { id: 'setup', label: 'Setup', icon: History },
+    { id: 'trail', label: 'Platform trail', icon: History },
   ];
 
   return (
@@ -111,6 +121,7 @@ export const SuperAdminPortal: React.FC = () => {
                 key={t.id}
                 type="button"
                 onClick={() => setTab(t.id)}
+                data-testid={`superadmin-tab-${t.id}`}
                 className={`flex items-center gap-2 px-3 py-2 rounded-xl text-apple-13 font-medium transition-colors ${
                   active ? 'bg-accent-subtle text-primary' : 'text-secondary hover:text-primary'
                 }`}
@@ -124,6 +135,11 @@ export const SuperAdminPortal: React.FC = () => {
 
         {tab === 'tenants' && <SuperAdminTenants />}
         {tab === 'support' && <SuperAdminSupport />}
+        {tab === 'consultation' && <SuperAdminConsultation />}
+        {tab === 'features' && <SuperAdminFeatures />}
+        {tab === 'recipients' && <SuperAdminRecipients />}
+        {tab === 'tutorials' && <SuperAdminTutorials />}
+        {tab === 'setup' && <SuperAdminSetup />}
         {tab === 'trail' && <SuperAdminTrail />}
       </div>
     </div>

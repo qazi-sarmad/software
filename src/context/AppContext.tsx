@@ -44,7 +44,8 @@ export type InspectorType =
   | 'sira_cycles'
   | 'plan_items'
   | 'import_wizard'
-  | 'activity_log';
+  | 'activity_log'
+  | 'org_control';
 
 export interface InspectorState {
   type: InspectorType | null;

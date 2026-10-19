@@ -6,6 +6,7 @@ import { listFeatureCatalogue, listPlans, listTenantEntitlements, setEntitlement
 import { listSetupSteps, saveSetupStep, setupProgress } from './setup';
 import { acknowledgeConsultation, decideProposal, endConsultation, formatRemaining, getActiveConsultation, proposeChange, requestConsultation, secondsLeft } from './consultation';
 import { listTutorials, recordTutorialView, tutorialHealth } from './tutorials';
+import { listConfigHistory } from './configHistory';
 
 /** With no Supabase environment variables every S1 data module is inert. No request leaves the process. */
 describe('S1 data modules (not configured)', () => {
@@ -40,6 +41,10 @@ describe('S1 data modules (not configured)', () => {
     expect(await listTutorials()).toEqual([]);
     expect(await recordTutorialView('oa.profile', true)).toEqual({ ok: false, reason: 'The tutorials module is not configured.' });
   });
+
+  it('configuration history reads return empty', async () => {
+    expect(await listConfigHistory()).toEqual([]);
+  });
 });
 
 describe('S1 pure helpers', () => {
@@ -60,7 +65,7 @@ describe('S1 pure helpers', () => {
     const steps = [
       { stepKey: 'a', status: 'done' as const, answerRef: {}, updatedAt: '' },
       { stepKey: 'b', status: 'skipped' as const, answerRef: {}, updatedAt: '' },
-      { stepKey: 'c', status: 'in_progress' as const, answerRef: {}, updatedAt: '' },
+      { stepKey: 'c', status: 'pending' as const, answerRef: {}, updatedAt: '' },
     ];
     expect(setupProgress(steps, 4)).toBeCloseTo(0.5);
     expect(setupProgress(steps, 0)).toBe(0);
