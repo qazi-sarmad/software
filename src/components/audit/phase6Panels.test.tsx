@@ -104,7 +104,15 @@ describe('Phase 6 UI panels (6H)', () => {
     it('issues the report and shows the queued-email notice', async () => {
       listVersions.mockResolvedValue([{ ...version, status: 'frozen' as const }]);
       render(<ReportEditorPanel engagementId="e1" />);
-      const btn = await screen.findByTestId('report-issue');
+      // The panel loads twice: once with no version selected, then again once it selects the first
+      // version. Wait for both loads to finish (listCaps is each load's last call) and for the
+      // button to be enabled, or the hold can land on a button a re-render is about to unmount.
+      await waitFor(() => expect(listCapsFn).toHaveBeenCalledTimes(2));
+      let btn!: HTMLButtonElement;
+      await waitFor(() => {
+        btn = screen.getByTestId('report-issue') as HTMLButtonElement;
+        expect(btn.disabled).toBe(false);
+      });
       vi.useFakeTimers();
       holdToConfirm(btn);
       vi.useRealTimers();
