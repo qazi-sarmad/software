@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { platformWhoami } from '../../data/platform';
 import { InlineError } from '../common/InlineError';
-import { Building, Shield, Users, Zap, Eye, History } from '../common/Icons';
+import { Building, Shield, Users, Zap, Eye, History, Send } from '../common/Icons';
 import { SuperAdminTenants } from './SuperAdminTenants';
 import { SuperAdminSupport } from './SuperAdminSupport';
 import { SuperAdminTrail } from './SuperAdminTrail';
@@ -10,6 +10,8 @@ import { SuperAdminFeatures } from './SuperAdminFeatures';
 import { SuperAdminRecipients } from './SuperAdminRecipients';
 import { SuperAdminTutorials } from './SuperAdminTutorials';
 import { SuperAdminSetup } from './SuperAdminSetup';
+import { SuperAdminEmail } from './SuperAdminEmail';
+import { SuperAdminAutomation } from './SuperAdminAutomation';
 
 /**
  * Super Admin portal (C4, spec §24).
@@ -19,7 +21,7 @@ import { SuperAdminSetup } from './SuperAdminSetup';
  * database. This is the sole surface that may know about the platform role (D-PLATFORM-RIGHTS);
  * no org-product code imports it. It renders no blocking modal (spec §27.5).
  */
-type Tab = 'tenants' | 'support' | 'consultation' | 'features' | 'recipients' | 'tutorials' | 'setup' | 'trail';
+type Tab = 'tenants' | 'support' | 'consultation' | 'features' | 'recipients' | 'email' | 'automation' | 'tutorials' | 'setup' | 'trail';
 type Gate = 'checking' | 'allowed' | 'denied';
 
 export const SuperAdminPortal: React.FC = () => {
@@ -85,6 +87,8 @@ export const SuperAdminPortal: React.FC = () => {
     { id: 'consultation', label: 'Dual Session', icon: Users },
     { id: 'features', label: 'Features & plans', icon: Zap },
     { id: 'recipients', label: 'Recipients', icon: Users },
+    { id: 'email', label: 'Email senders', icon: Send },
+    { id: 'automation', label: 'Automation', icon: Zap },
     { id: 'tutorials', label: 'Tutorials', icon: Eye },
     { id: 'setup', label: 'Setup', icon: History },
     { id: 'trail', label: 'Platform trail', icon: History },
@@ -138,6 +142,8 @@ export const SuperAdminPortal: React.FC = () => {
         {tab === 'consultation' && <SuperAdminConsultation />}
         {tab === 'features' && <SuperAdminFeatures />}
         {tab === 'recipients' && <SuperAdminRecipients />}
+        {tab === 'email' && <SuperAdminEmail />}
+        {tab === 'automation' && <SuperAdminAutomation />}
         {tab === 'tutorials' && <SuperAdminTutorials />}
         {tab === 'setup' && <SuperAdminSetup />}
         {tab === 'trail' && <SuperAdminTrail />}

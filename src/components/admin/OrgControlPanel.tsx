@@ -8,10 +8,12 @@ import {
 import type { DataResult } from '../../data/db';
 import { SetupWizard } from '../common/SetupWizard';
 import { OrgConfigHistory } from './OrgConfigHistory';
+import { OrgEmailPanel } from './OrgEmailPanel';
+import { OrgAutomationPanel } from './OrgAutomationPanel';
 import { InlineError } from '../common/InlineError';
 import { Check, Lock, Zap, Sliders, Users, Shield, History } from '../common/Icons';
 
-type Tab = 'features' | 'setup' | 'consultation' | 'history';
+type Tab = 'features' | 'email' | 'automation' | 'setup' | 'consultation' | 'history';
 type LoadState = 'loading' | 'ready' | 'error';
 
 /**
@@ -99,6 +101,8 @@ export const OrgControlPanel: React.FC = () => {
       <nav className="flex gap-1" data-testid="org-control-tabs">
         {([
           { id: 'features', label: 'Features', icon: Zap },
+          { id: 'email', label: 'Email', icon: Check },
+          { id: 'automation', label: 'Rules', icon: Zap },
           { id: 'setup', label: 'Setup', icon: Sliders },
           { id: 'consultation', label: 'Dual Session', icon: Users },
           { id: 'history', label: 'History', icon: History },
@@ -153,6 +157,8 @@ export const OrgControlPanel: React.FC = () => {
         </div>
       )}
 
+      {tab === 'email' && <OrgEmailPanel />}
+      {tab === 'automation' && <OrgAutomationPanel />}
       {tab === 'setup' && (
         <div data-testid="org-setup">
           <SetupWizard scope="org_admin" enabledFeatures={[...enabled]} />
