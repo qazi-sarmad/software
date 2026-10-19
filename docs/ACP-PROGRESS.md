@@ -50,3 +50,8 @@ Local harness: PostgreSQL 17.11, database `provio_test`, `/tmp/auth_shim.sql` + 
 | S6.a db: escalation rules and Work Queue proposals | 563d57b | pending | green (local) | 0060_escalation.sql; test 70 (25 assertions); escalate action on the F7 engine; 3 platform template rules |
 | S6.b lib+data: escalation logic and data module | fb1e613 | pending | green (local) | src/lib/escalation.ts, src/data/escalation.ts, 18 unit tests; featureMap escalation |
 | S6.c app: escalation screen and Work Queue cards | fb612b2 | pending | green (local) | OA-13 OrgEscalationPanel (5 tests), WK-08 EscalationCards, e2e/s6-escalation.spec.ts; AI status vocabulary aligned |
+| S6.d docs: escalation decisions and UI contract | c0b5212 | pending | green (local) | D-S6-* decisions, OA-13/WK-08 UI contract sections, tutorial keys |
+| B-push-token resolved; branch pushed | a12be8d | 39290788312 | green | origin URL token is valid; GITHUB_TOKEN env var is stale |
+| S7.a db: Board Pack snapshot, history and sections | fa520c0 | pending | green (local) | 0061_board_pack.sql; test 71 (36 assertions); figure-ref validation, canonical data_hash, ledger entry |
+| S7.b lib+data: Board Pack model and data module | 7306601 | 39290788312 | green | src/lib/boardPack.ts (25 tests), src/data/boardPack.ts; row model, delta, drill-down URL, section visibility |
+| S7.c app: Board Pack panel, generator and web view | 3454417 | 39292142326 | green (local) | WK-01 to WK-04, OA-09; BoardPackPanel, boardPackDocuments (12 tests), e2e/s7-board-pack.spec.ts; org_settings_extra_get/save |

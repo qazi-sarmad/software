@@ -13,6 +13,11 @@ and warns on a stale `ui_hash`.
 |---|---|---|---|
 | `oa.escalation` | org_admin | OA-13 escalation rules | 1 Open the Org Admin control plane. 2 Open the Escalation tab. 3 Press "New escalation rule". 4 Choose the event it watches. 5 Add the conditions that must hold. 6 Set the recommendation template (the recommendation is decided by the rule, never by AI). 7 Save. |
 | `oa.escalation-cards` | org_admin | WK-08 escalation cards | 1 Open the Work Queue. 2 Find "Escalations for you". 3 Read the recommendation and its reason. 4 A CIA opens a proposal and starts a plan; the plan still goes through the deployment gate. |
+| `oa.boardpack-use` | org_admin | WK-01 Dashboard Board Pack panel | 1 Open the Dashboard. 2 Find the Board Pack panel. 3 Read the detected last pack: date, hash and whether it chains to a previous pack. |
+| `oa.boardpack-generate` | org_admin | WK-02 Board Pack generator | 1 In the Board Pack panel, type a scope. 2 Choose the boundary: since the last pack, a custom range, or since the last board meeting. 3 Press Generate. |
+| `oa.boardpack-view` | org_admin | WK-03 Board Pack web view | 1 Open a pack from the history. 2 Read the snapshot hash. 3 Every figure shows the record behind it; use the sources index to trace a number. |
+| `oa.boardpack-download` | org_admin | WK-04 downloads and verify chip | 1 Open a pack. 2 Press PDF or PPTX. 3 The file carries a hyperlink on every figure. 4 Scan the QR to verify the pack without signing in. |
+| `oa.boardpack-config` | org_admin | OA-09 Board Pack configuration | 1 Open the Board Pack panel. 2 Open the Sections tab. 3 Turn a section on or off. 4 Move a section up or down. A section is never deleted. |
 
 Keys for the other Appendix A screens are registered by their own slices (S1 to S13). A key with no
 row here yet is not yet recorded; `docs/ACP-UI-CONTRACT.md` names the key for each screen.

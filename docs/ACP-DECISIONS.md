@@ -580,3 +580,123 @@ IMPROVISE-THEN-DOCUMENT (this file).
   and existing code disagree, the code changes.
 - Reverse: none needed; the migration is the source of truth.
 
+## D-S7-scope-key — "last pack" is per scope_key, never global (S7.a, F10)
+
+- Task: S7.a.
+- Point: which pack is "the last pack" a new pack chains to and diffs against.
+- Options: (a) the most recent successful pack for the org; (b) the most recent successful pack with
+  the same `scope_key`.
+- Choice: (b). `board_pack_snapshot`/`board_pack_generate` select the previous row by
+  `(org_id, scope_key, status = 'ready')` and store it in `previous_pack_id`; test 71 asserts two
+  different scopes do not collide.
+- Reason: F10 states the boundary default is "since the last successful pack with the same scope_key",
+  and an organisation-wide pack must not silently bound a single-entity pack. Global selection would
+  also make the delta meaningless across scopes.
+- Reverse: change the WHERE clause to drop `scope_key` and null `previous_pack_id`.
+
+## D-S7-data-hash — the snapshot hash is computed in the database, file hashes in the browser (S7.a, F10)
+
+- Task: S7.a.
+- Point: where `data_hash` and `file_hashes` are computed.
+- Options: (a) compute both in the browser and send them; (b) compute `data_hash` in the database and
+  `file_hashes` in the browser.
+- Choice: (b). `board_pack_generate` computes `data_hash` = SHA-256 of the canonical JSON of the
+  snapshot inside Postgres (`encode(digest(canonical, 'sha256'), 'hex')`); the browser fills
+  `file_hashes` per format after rendering.
+- Reason: F10 says so explicitly, and a database-computed hash cannot be forged by a caller and is the
+  same value the ledger entry and the public verification page use. The file bytes only exist in the
+  browser, so their hashes must be computed there.
+- Reverse: move the digest call into the app; the ledger entry and verification page would then trust
+  a client value, which weakens the chain.
+
+## D-S7-figure-refs — a non-zero figure with no refs is a bug, not a warning (S7.a, F10)
+
+- Task: S7.a.
+- Point: what to do when a snapshot figure carries no `refs`.
+- Options: (a) allow it and render the number; (b) fail the generation and the test.
+- Choice: (b). `board_pack_figure_refs(snapshot)` returns the paths of every non-zero figure with an
+  empty `refs` array; `board_pack_generate` raises when it is non-empty and test 71 fails on it. A
+  zero figure is allowed to have no refs because there is nothing to point at.
+- Reason: F10 says "a figure with no refs is a bug; a SQL test fails on it", and L4 requires
+  everything to be drillable. A number a user cannot trace is worse than no number.
+- Reverse: drop the check; the pack would then show untraceable figures.
+
+## D-S7-zero-figures — a zero figure is excluded from the ref requirement (S7.a, F10)
+
+- Task: S7.a.
+- Point: whether a figure with value 0 must still carry refs.
+- Options: (a) require refs on every figure regardless of value; (b) require refs only on non-zero
+  figures.
+- Choice: (b). The check and the app walk (`figuresWithoutRefs`) both skip value 0.
+- Reason: a zero count has no underlying records to link to, so requiring a ref would force a
+  synthetic pointer, which is exactly the untraceable number the rule exists to prevent.
+- Reverse: drop the `value <> 0` condition in both places.
+
+## D-S7-sections-seeded — the eight F10 sections are seeded per org, never deleted (S7.a, F10)
+
+- Task: S7.a.
+- Point: how the configurable section list is stored.
+- Options: (a) a fixed list in code; (b) a per-org `board_pack_sections` table seeded on first read
+  with the eight F10 sections and edited visually.
+- Choice: (b). `board_pack_sections_seed(org)` inserts the eight rows idempotently; a section is
+  enabled/disabled and reordered, never deleted (product law C1: configuration, not code).
+- Reason: F10 makes the section list configurable and reorderable with per-section role visibility,
+  and the product law requires it be changed from a screen rather than code.
+- Reverse: drop the table and read a constant; the screen would lose its configuration.
+
+## D-S7-boundary-three-kinds — boundary is one of three kinds, stored on the row (S7.a, F10)
+
+- Task: S7.a.
+- Point: how the pack boundary is represented.
+- Options: (a) a free-text range; (b) a `boundary_kind` of `since_last` | `custom` | `since_meeting`
+  with `from_ts`/`to_ts` resolved at generation.
+- Choice: (b). The row stores the kind and the resolved timestamps.
+- Reason: F10 lists exactly those three options; storing the resolved range as well keeps a pack
+  reproducible even after `last_board_meeting_date` changes.
+- Reverse: drop the two timestamp columns and re-resolve at read time.
+
+## D-S7-app-base-url-gate — refuse to render a PDF or PPTX until app_base_url is set (S7.a/S7.c, F10)
+
+- Task: S7.a, S7.c.
+- Point: what happens when the org has not set `app_base_url`.
+- Options: (a) render with relative links; (b) refuse and say why.
+- Choice: (b). `board_pack_generate` raises "Set the application web address…" and the panel disables
+  the PDF and PPTX buttons and shows an inline error.
+- Reason: F10 says "refuse to generate PDF or PPTX until it is set", and a PDF whose links do not
+  resolve defeats the mandatory drill-down rule.
+- Reverse: allow generation and emit relative links.
+
+## D-S7-settings-rpc — app_base_url and friends are read and written through RPCs (S7.a/S7.c, F10/F11)
+
+- Task: S7.a, S7.c.
+- Point: how the tenant-level F10/F11 settings are exposed.
+- Options: (a) read `org_settings_extra` directly from the app; (b) `org_settings_extra_get` and
+  `org_settings_extra_save` RPCs behind `config_actor_ok(edit_config)`.
+- Choice: (b). The getter returns the five settings; the saver writes them and requires
+  `edit_config` (or an active consultation session).
+- Reason: the product law requires every setting be changeable from a screen; a direct table read
+  would leave the write path undefined, and F4 requires configuration RPCs to use `config_actor_ok`
+  so a consultant can reach them.
+- Reverse: expose the table; the app would then decide entitlement itself, which F25 forbids.
+
+## D-S7-panel-placement — the Board Pack panel lives on the Dashboard (S7.c, F10)
+
+- Task: S7.c.
+- Point: where the Board Pack panel appears.
+- Options: (a) a new top-level tab; (b) a panel on the Dashboard, per spec §5.
+- Choice: (b). `BoardPackPanel` renders at the foot of `ExecutiveDashboardTab`; the hard ban on a
+  Workbench tab and the F10 wording ("a Board Pack panel on the Dashboard") both point here.
+- Reason: F10 names the Dashboard explicitly, and adding a tab would risk the banned-surface list.
+- Reverse: mount the panel elsewhere; the component is self-contained.
+
+## D-S7-panel-hidden — a role without view_board_pack sees no panel at all (S7.c, F10)
+
+- Task: S7.c.
+- Point: what a Preparer (no view_board_pack) sees on the Dashboard.
+- Options: (a) the panel with a refusal message; (b) nothing.
+- Choice: (b). The component returns null; the database refuses the reads regardless.
+- Reason: F25 rule 3 says a feature the tenant lacks is hidden, and F10 gates the pack by the rights
+  matrix. Showing an empty shell would advertise a surface the role cannot use.
+- Reverse: render the refusal shell.
+
+

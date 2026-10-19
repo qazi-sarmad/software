@@ -201,5 +201,18 @@ clear the first two before Phase 2 closes.
 
 - No screenshots were captured; Phase 8 has no UI. Owner-deferred as in Phases 0-7.
 
+## Not done in the assurance and control plane (branch `feature/board-ai-control-plane`)
+
+- **Continuous-auditing watchers** (file drop, HTTP polling, database view) are PARKED by F12 and were
+  not built. The F7 event interface stays generic so a future `watcher.signal` event can plug in.
+- **Tutorial GIFs** for the S7 keys are registered in `docs/ACP-TUTORIALS.md` and named in the UI
+  contract, but `scripts/record-tutorials.mjs` and `npm run tutorials:record` are S12 work; the S7 GIFs
+  are produced then.
+- **Event catalogue gaps.** Events whose source does not exist yet are not wired: every key in the F7
+  catalogue that has no emitter is listed by the S2 automation test rather than faked.
+- Slices S8 to S13 (certificate and public verification, external auditor portal, time-travel and
+  patterns, hosting fit and the migration runner, the completed wizards, and the final contract) are
+  not started at the time of writing.
+
 
 

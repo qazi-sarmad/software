@@ -332,3 +332,18 @@ CI run **39026062113** on head `1a2f70b` — conclusion **success**, all 7 gate 
 | 26 Logging | ledger in memory only | activity log is append-only; archival writes an `archive_jobs` row and a ledger entry with the content hash before any delete; the tenant views and exports its own history | `0043_activity_archival.sql`, `52_activity_archival.sql`, `src/components/admin/ActivityLogPanel.tsx` |
 | 56 Phase 7 acceptance | n/a | cross-org, anon, no-right, export-ledger, prior-year sign-off gate and import org-scope all covered | `56_phase7_acceptance.sql` |
 
+## What the assurance and control plane added (branch `feature/board-ai-control-plane`)
+
+The ACP slices extend the control plane rather than building a parallel one (F2). Each row names the
+records that carry the behaviour.
+
+| Slice | Spec / rule | What it added | Evidence |
+|---|---|---|---|
+| S1 | F3, F4, F7, F17, F18, F25 | rights grow to 15 keys; `config_areas` and the notify machinery; `platform_notification_recipients`; `setup_state`; `tutorials` and `tutorial_views`; the consultation tables and `config_actor_ok`; `org_settings_extra`; `feature_catalogue`, `plan_definitions`, `tenant_entitlements` and `has_feature`; the two setup wizards; the tutorial drawer | `0051_control_plane_foundations.sql`, `64_acp_control_plane.sql`, `src/data/setup.ts`, `src/data/consultation.ts`, `src/data/entitlements.ts`, `src/components/admin/SetupWizard.tsx` |
+| S2 | F5, F6, F7 | Vault-backed secrets; `email_sender_profiles`; the five adapters; the dispatcher; the automation rule engine with a loop guard; in-app notifications and templates | `0054`-`0056`, `supabase/functions/_shared/`, `src/data/email.ts`, `src/data/automation.ts` |
+| S3 | F13 prerequisite | invitation acceptance through `invite-user` and `generateLink`; the UI says "Invitation queued", never "sent" | `0057_invites.sql`, `src/data/admin.ts` |
+| S4 | F9 | branding, report format and assets; the shared renderers `renderPdf`, `renderPptx`, `renderQr` consuming one `BrandingSpec`; PPTX theme extraction | `0058_branding.sql`, `src/lib/render/`, `src/components/admin/OrgBrandingPanel.tsx` |
+| S5 | F8 | the AI model registry, the endpoint deny-list, per-use-case settings, the voice library, SSRF checks and the number guard; "Suggest wording" as a labelled draft kept out of the record until accepted | `0059_ai.sql`, `supabase/functions/_shared/aiSsrf.ts`, `src/lib/ai*.ts`, `src/components/admin/OrgAiPanel.tsx` |
+| S6 | F12 | escalation on the F7 engine with a deterministic recommendation; `escalation_events`; `work_queue_proposals`; three platform template rules; the Work Queue cards | `0060_escalation.sql`, `src/lib/escalation.ts`, `src/components/admin/OrgEscalationPanel.tsx`, `src/components/pending/EscalationCards.tsx` |
+| S7 | F10 | the Board Pack: `board_pack_sections`, `board_pack_history`; a deterministic snapshot where every figure carries refs; the `data_hash` computed in the database; the ledger entry; the Dashboard panel, the generator and the drillable web view; the PDF and PPTX from the same snapshot; `org_settings_extra_get`/`save` | `0061_board_pack.sql`, `71_board_pack.sql`, `src/lib/boardPack.ts`, `src/lib/boardPackDocuments.ts`, `src/data/boardPack.ts`, `src/components/pending/BoardPackPanel.tsx`, `docs/ACP-BOARD-PACK-SOURCES.md` |
+

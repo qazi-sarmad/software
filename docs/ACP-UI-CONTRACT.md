@@ -390,6 +390,54 @@ as its slice lands.
 
 ---
 
+## OA-09 — Board Pack configuration (S7)
+
+- **Purpose:** the Org Admin reorders, enables and disables the pack sections. A section is never
+  deleted, only switched off (configuration, not code).
+- **Route:** the "Sections" tab inside the Board Pack panel on the Dashboard.
+- **Rights:** `edit_config` (a consultant in a session may reach it through `config_actor_ok`).
+- **Data:** `listBoardPackSections(orgId)`, `saveBoardPackSections(orgId, sections)`
+  (`src/data/boardPack.ts`).
+- **Testids:** `wk-boardpack`, `wk-boardpack-tab-config`, `oa-boardpack-config`,
+  `oa-boardpack-section-<key>`, `oa-boardpack-up-<key>`, `oa-boardpack-down-<key>`,
+  `oa-boardpack-enabled-<key>`, `wk-boardpack-error`, `wk-boardpack-result`.
+- **States:** loading; a section list, or an inline error. The first section's Up button and the last
+  section's Down button are disabled.
+- **Tutorial key:** `oa.boardpack-config`.
+
+---
+
+## WK-01 to WK-04 — Dashboard Board Pack panel (S7)
+
+- **Purpose:** the Dashboard carries the pack history, the generator, the open pack with a drill-down
+  on every figure, and the PDF and PPTX downloads with the verification chip (F10).
+- **Route:** the Dashboard tab, block "Board Pack".
+- **Rights:** `view_board_pack` to see the panel and open a pack; `generate_board_pack` to generate.
+  The `board_pack` entitlement gates the feature and `board_pack_pptx` gates the PPTX.
+- **Data:** `listBoardPacks(orgId, scopeKey?)`, `getBoardPack(packId)`,
+  `generateBoardPack(orgId, opts)`, `listBoardPackSections(orgId)`,
+  `saveBoardPackSections(orgId, sections)`, `getOrgSettingsExtra(orgId)`,
+  `saveOrgSettingsExtra(orgId, fields)` (`src/data/boardPack.ts`); `getBranding(orgId)`;
+  the renderers `renderPdf`, `renderPptx`, `renderQrDataUrl` via `buildBoardPackPdf` and
+  `buildBoardPackPptx` (`src/lib/boardPackDocuments.ts`).
+- **Testids:** `wk-boardpack`, `wk-boardpack-loading`, `wk-boardpack-error`, `wk-boardpack-result`,
+  `wk-boardpack-tab-history`, `wk-boardpack-tab-config`, `wk-boardpack-tab-view`,
+  `wk-boardpack-generator`, `wk-boardpack-scope`, `wk-boardpack-boundary`, `wk-boardpack-from`,
+  `wk-boardpack-to`, `wk-boardpack-generate`, `wk-boardpack-no-generate`, `wk-boardpack-history`,
+  `wk-boardpack-empty`, `wk-boardpack-<id>`, `wk-boardpack-open-<id>`, `wk-boardpack-view`,
+  `wk-boardpack-pdf`, `wk-boardpack-pptx`, `wk-boardpack-url-missing`, `wk-boardpack-missing-refs`,
+  `wk-boardpack-verify-chip`, `wk-boardpack-section-sira`, `wk-boardpack-section-issues`,
+  `wk-boardpack-section-sealed`, `wk-boardpack-section-changes`, `wk-boardpack-section-sources`,
+  `wk-boardpack-figure-sira-<i>`, `wk-boardpack-figure-cap-<band>`, `wk-boardpack-figure-sealed`,
+  `wk-boardpack-delta`, `wk-boardpack-source-<path>`.
+- **States:** a role without `view_board_pack` sees nothing. Loading, an empty history ("No pack yet"),
+  an inline error, and the open pack. The PDF and PPTX buttons are disabled until `app_base_url` is
+  set, with `wk-boardpack-url-missing` shown.
+- **Tutorial keys:** `oa.boardpack-use` (WK-01), `oa.boardpack-generate` (WK-02),
+  `oa.boardpack-view` (WK-03), `oa.boardpack-download` (WK-04).
+
+---
+
 ## Tutorials regenerated
 
 `npm run tutorials:record` regenerates every GIF (S12). The recorder binds only to the testids listed
