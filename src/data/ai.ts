@@ -209,3 +209,68 @@ export async function saveSuggestion(
 export function decideSuggestion(id: string, status: 'accepted' | 'edited' | 'rejected', acceptedText?: string) {
   return callRpc('ai_suggestion_decide', { p_id: id, p_status: status, p_accepted_text: acceptedText ?? null });
 }
+
+// --- gateway (server-mode call and the Test button, M-4a, F8) --------------------------------
+
+export interface GatewayResult {
+  ok: boolean;
+  text?: string;
+  suggestionId?: string | null;
+  promptHash?: string | null;
+  responseHash?: string | null;
+  unverifiedFigures?: { token: string; context: string }[];
+  reason?: string;
+}
+
+export interface EndpointProbe {
+  ok: boolean;
+  models?: string[];
+  modelInstalled?: boolean;
+  roundTripMs?: number;
+  reason?: string;
+}
+
+/**
+ * Send one prompt through the ai-gateway Edge Function (F8). Server mode only: the function refuses
+ * a vendor host (L2) and a private address. The response is a draft; nothing is in the record until
+ * a user accepts it.
+ */
+export async function runAiAssist(
+  orgId: string, useCase: string, prompt: string,
+  recordType: string, recordId: string, allowedNumbers: string[]
+): Promise<GatewayResult> {
+  const sb = getClient();
+  if (!sb) return { ok: false, reason: NOT_CONFIGURED };
+  const { data, error } = await sb.functions.invoke('ai-gateway', {
+    body: {
+      org_id: orgId, use_case: useCase, prompt, record_type: recordType,
+      record_id: recordId, allowed_numbers: allowedNumbers,
+    },
+  });
+  if (error) return { ok: false, reason: error.message };
+  const r = data as {
+    ok?: boolean; text?: string; suggestion_id?: string; prompt_hash?: string;
+    response_hash?: string; unverified_figures?: { token: string; context: string }[]; reason?: string;
+  } | null;
+  if (!r || r.ok !== true) return { ok: false, reason: r?.reason ?? 'The model did not answer.' };
+  return {
+    ok: true, text: r.text, suggestionId: r.suggestion_id ?? null,
+    promptHash: r.prompt_hash ?? null, responseHash: r.response_hash ?? null,
+    unverifiedFigures: r.unverified_figures ?? [],
+  };
+}
+
+/** Probe the org's endpoint through the ai-gateway Edge Function (F8 Test button). */
+export async function testAiEndpoint(orgId: string, useCase: string): Promise<EndpointProbe> {
+  const sb = getClient();
+  if (!sb) return { ok: false, reason: NOT_CONFIGURED };
+  const { data, error } = await sb.functions.invoke('ai-gateway', {
+    body: { org_id: orgId, use_case: useCase, probe: true },
+  });
+  if (error) return { ok: false, reason: error.message };
+  const r = data as {
+    ok?: boolean; models?: string[]; modelInstalled?: boolean; roundTripMs?: number; error?: string;
+  } | null;
+  if (!r || r.ok !== true) return { ok: false, reason: r?.error ?? 'The endpoint could not be reached.' };
+  return { ok: true, models: r.models, modelInstalled: r.modelInstalled, roundTripMs: r.roundTripMs };
+}
