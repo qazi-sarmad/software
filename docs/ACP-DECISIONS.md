@@ -700,3 +700,80 @@ IMPROVISE-THEN-DOCUMENT (this file).
 - Reverse: render the refusal shell.
 
 
+## D-M2-migration-number — the secret-entry change is migration 0063 (M-2)
+
+- Task: M-2.
+- Point: which migration number the secret-entry change takes.
+- Options: (a) 0062; (b) 0063.
+- Choice: (b) 0063_secret_entry.sql. 0062 was already taken by the certificate migration (S8.a).
+- Reason: one migration, one concern; never reuse a number.
+- Reverse: rename the file; the body is independent of its number.
+
+## D-M2-secret-store-ref — the database never receives a secret value (M-2, F5)
+
+- Task: M-2.
+- Point: how a secret reference enters the database without the value ever reaching SQL.
+- Options: (a) keep secret_put and pass the plaintext as an argument; (b) drop secret_put, add
+  secret_store_ref that accepts only a mask and, at most, ciphertext.
+- Choice: (b). 0054's secret_put took the plaintext, wrote a mask and left the ciphertext column
+  null, so every key, SMTP password and Microsoft secret was discarded and the value travelled
+  through SQL. secret_store_ref (M1: extends the existing secret_store table) is service_role only
+  and accepts p_ciphertext (already AES-GCM output, or null when Vault holds the value) and p_masked.
+- Reason: F5 — no secret reaches the browser, a log, the ledger, an email or a screenshot; the
+  database must not see the value at all. A plaintext-taking SQL entry point must not exist.
+- Reverse: reintroduce secret_put; not advisable.
+
+## D-M2-vault-fallback — AES-256-GCM when Vault is absent (M-2, F5)
+
+- Task: M-2.
+- Point: what to do when Supabase Vault is absent on the target.
+- Options: (a) refuse and block; (b) AES-256-GCM inside the Edge Function under SECRETS_MASTER_KEY,
+  ciphertext in secret_store, vault_id null.
+- Choice: (b). secret_vault_store raises when Vault is absent; the Edge Function catches that and
+  falls back to AES-GCM. The row keeps the vault id only when Vault stored the value.
+- Reason: F5 names this exact fallback. A deployment without Vault still needs a place for
+  credentials, and the value still must not reach the database.
+- Reverse: require Vault and delete the fallback branch.
+
+## D-M2-mask-parameter — the mask helper takes only a suffix (M-2, F5)
+
+- Task: M-2.
+- Point: secret_mask_value's argument.
+- Options: (a) keep p_value (the full value); (b) rename to p_last4, so the database receives only a
+  suffix.
+- Choice: (b). The Edge Function computes the mask; secret_mask_value only formats the suffix. The
+  signature change needs a drop of the old function (M4), added in 0063 and above the re-creation in
+  0054 (M7).
+- Reason: F5 — the full value must never reach SQL, not even to be masked.
+- Reverse: restore p_value; not advisable.
+
+## D-M1-extension-anon-grant — extension members are excluded from the anon-surface test (M-1)
+
+- Task: M-1.
+- Point: the hosted project grants EXECUTE on extension members (dblink and friends, 20 in public)
+  directly to anon through its own default privileges. The migration role does not own them, so
+  revoking that grant raises insufficient_privilege (the M-1 red CI) and skipping them leaves the
+  grant in place (the test-72 failure after the M-1 fix).
+- Options: (a) leave them and fail test 72; (b) skip extension members in the revoke loop and exclude
+  them from the test's count, reporting them with a notice.
+- Choice: (b). Extension members are platform-owned, not part of Provio's surface, and nothing in
+  this repository grants anon on them. 0062 revokes them best-effort (a refusal is swallowed);
+  test 72 counts only non-extension functions and raises a notice listing any extension member still
+  granted to anon.
+- Reason: the anonymous surface Provio controls is exactly verify_certificate and verify_board_pack;
+  the extension functions anon can still reach are dblink helpers no tenant can use through the API,
+  and no migration can revoke a grant the migration role does not own.
+- Reverse: if the owner wants the extension grants closed, drop the dblink extension from public
+  (only the SQL tests need it) or run a one-off revoke as the extension owner.
+
+## D-M2-vault-column — the Vault id has its own column (M-2)
+
+- Task: M-2.
+- Point: how the Vault id is recorded on a secret row.
+- Options: (a) store the Vault id in the existing `ciphertext` column; (b) add `vault_id uuid`.
+- Choice: (b). `alter table secret_store add column if not exists vault_id uuid` (M2).
+- Reason: the two are different facts — ciphertext is the AES-GCM blob, vault_id is a reference into
+  Vault. Overloading one column would make "which store holds this value" ambiguous.
+- Reverse: drop the column.
+
+

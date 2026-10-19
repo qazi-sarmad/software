@@ -478,4 +478,22 @@ begin
     execute format('revoke execute on function public.%I(%s) from public', fn.name, fn.args);
     execute format('revoke execute on function public.%I(%s) from anon', fn.name, fn.args);
   end loop;
+
+  -- Extension members (dblink and friends) also need their anon grant closed. The hosted project
+  -- sets default privileges that grant EXECUTE explicitly to anon at creation time, so these carry a
+  -- real anon grant that test 72 sees. The migration role may not own an extension member, so this is
+  -- best-effort: a refusal here cannot widen the anonymous surface, it only leaves it unchanged.
+  for fn in
+    select p.oid, p.proname as name, pg_get_function_identity_arguments(p.oid) as args
+    from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+    join pg_depend d on d.objid = p.oid and d.deptype = 'e'
+    where n.nspname = 'public' and p.prokind = 'f'
+  loop
+    begin
+      execute format('revoke execute on function public.%I(%s) from anon', fn.name, fn.args);
+    exception when insufficient_privilege then
+      null;  -- not the owner of the extension member; nothing we are permitted to change
+    end;
+  end loop;
 end $$;

@@ -9,18 +9,32 @@ select provio_test.seed();
 
 -- ---------------------------------------------------------------------------
 -- 1. A secret is stored masked and never revealed to a tenant role.
+--    The value no longer passes through SQL (M-2, F5): secret_store_ref, the service-role-only RPC
+--    the Edge Function calls, receives only a mask and, at most, ciphertext. The tests below set a
+--    secret the way the Edge Function does — as the service role.
 -- ---------------------------------------------------------------------------
-select provio_test.as_user('10000000-0000-0000-0000-0000000000a3', 'a0000000-0000-0000-0000-000000000001', 'org_admin');
+select provio_test.as_service();
 do $$
 declare
   v_id uuid;
   v_masked text;
 begin
-  v_id := public.secret_put('a0000000-0000-0000-0000-000000000001', 'resend_key', 're_abcdef123456');
-  perform provio_test.assert_true(v_id is not null, 'secret_put returns an id');
+  v_id := public.secret_store_ref('a0000000-0000-0000-0000-000000000001', 'resend_key', 'ct-1', '•••• 3456', null);
+  perform provio_test.assert_true(v_id is not null, 'secret_store_ref returns an id');
   v_masked := public.secret_display(v_id);
   perform provio_test.assert_eq(v_masked, '•••• 3456', 'the secret display is masked to the last four');
   perform provio_test.assert_true(position('abcdef' in v_masked) = 0, 'the masked display leaks no middle characters');
+  perform provio_test.assert_true(
+    public.secret_reveal(v_id) = 'ct-1',
+    'the service role stores ciphertext, never a plaintext value');
+end $$;
+
+-- The mask helper no longer receives a full value: it formats only a suffix (M-2, F5).
+select provio_test.as_owner();
+do $$
+begin
+  perform provio_test.assert_eq(public.secret_mask_value('3456'), '•••• 3456', 'mask formats a suffix');
+  perform provio_test.assert_eq(public.secret_mask_value(null), '•••• not set', 'mask handles an empty suffix');
 end $$;
 
 -- A tenant user cannot call secret_reveal (execute is service_role only) and cannot select the table.
@@ -34,21 +48,32 @@ begin
     'a tenant role reads no secret rows');
 end $$;
 
--- A caller with no configuration right cannot set one.
-select provio_test.as_user('10000000-0000-0000-0000-0000000000a5', 'a0000000-0000-0000-0000-000000000001', 'observer');
+-- A tenant role cannot call the new service-role-only entry points either.
 do $$
 begin
   perform provio_test.assert_raises(
-    $q$select public.secret_put('a0000000-0000-0000-0000-000000000001', 'x', 'value')$q$,
-    'not allowed', 'a caller without edit_config cannot set a secret');
+    $q$select public.secret_store_ref('a0000000-0000-0000-0000-000000000001','x','ct','•••• x',null)$q$,
+    'permission denied', 'a tenant role cannot call secret_store_ref');
+  perform provio_test.assert_raises(
+    $q$select public.secret_vault_store('value')$q$,
+    'permission denied', 'a tenant role cannot call secret_vault_store');
+end $$;
+
+-- secret_put is gone: no SQL entry point accepts a plaintext secret any more (M-2, F5).
+do $$
+begin
+  perform provio_test.assert_true(
+    not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+                 where n.nspname = 'public' and p.proname = 'secret_put'),
+    'the plaintext-taking secret_put no longer exists');
 end $$;
 
 -- Replacing a secret keeps only one live row and marks the old one replaced.
-select provio_test.as_user('10000000-0000-0000-0000-0000000000a3', 'a0000000-0000-0000-0000-000000000001', 'org_admin');
+select provio_test.as_service();
 do $$
 declare v_new uuid;
 begin
-  v_new := public.secret_put('a0000000-0000-0000-0000-000000000001', 'resend_key', 're_zzzz9999');
+  v_new := public.secret_store_ref('a0000000-0000-0000-0000-000000000001', 'resend_key', 'ct-2', '•••• 9999', null);
   perform provio_test.assert_eq(public.secret_display(v_new), '•••• 9999',
     'the new secret display shows the new last four');
 end $$;
@@ -268,7 +293,7 @@ begin
     $q$select public.automation_rule_save('a0000000-0000-0000-0000-000000000001','x','x','config.changed','[]'::jsonb,'[]'::jsonb)$q$,
     'permission denied', 'anon cannot save an automation rule');
   perform provio_test.assert_raises(
-    $q$select public.secret_put('a0000000-0000-0000-0000-000000000001','x','value')$q$,
+    $q$select public.secret_store_ref('a0000000-0000-0000-0000-000000000001','x','ct','•••• x',null)$q$,
     'permission denied', 'anon cannot set a secret');
 end $$;
 

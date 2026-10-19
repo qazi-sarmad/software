@@ -50,6 +50,8 @@ drop policy if exists secret_store_none on secret_store;
 create index if not exists secret_store_org_idx on secret_store (org_id);
 
 -- A masked display from a raw value: "•••• last4". Never returns more than the last four characters.
+-- M7: 0063 renames the parameter to p_last4, so a repeat apply must drop the old signature first.
+drop function if exists public.secret_mask_value(text);
 create or replace function public.secret_mask_value(p_value text) returns text
 language sql immutable as $$
   select case

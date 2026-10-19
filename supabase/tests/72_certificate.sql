@@ -168,21 +168,43 @@ end $$;
 
 -- ---------------------------------------------------------------------------
 -- 7. The anonymous surface. Exactly two functions, and they return only the permitted fields.
+--
+--    Extension members (dblink and the like) are excluded. The hosted platform grants EXECUTE to anon
+--    on them through its own default privileges, and the migration role does not own them, so no
+--    migration can revoke that grant. They are not part of Provio's surface: nothing in this
+--    repository grants anon on them. Their presence is reported below so it stays visible
+--    (D-M1-extension-anon-grant).
 -- ---------------------------------------------------------------------------
 select provio_test.as_owner();
 do $$
 declare
   v_anon text[];
+  v_ext text[];
 begin
   select array_agg(distinct p.proname) into v_anon
     from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+    left join pg_depend d on d.objid = p.oid and d.deptype = 'e'
     join aclexplode(p.proacl) a on true
     join pg_roles r on r.oid = a.grantee
-   where n.nspname = 'public' and r.rolname = 'anon' and a.privilege_type = 'EXECUTE';
+   where n.nspname = 'public' and r.rolname = 'anon' and a.privilege_type = 'EXECUTE'
+     and d.objid is null;
   perform provio_test.assert_eq(
     (select count(*) from unnest(coalesce(v_anon, '{}'::text[])) s
       where s not in ('verify_certificate','verify_board_pack')), 0,
-    'no function other than the two verification functions is granted to anon');
+    'no function other than the two verification functions is granted to anon: ' ||
+      coalesce((select string_agg(s, ', ' order by s) from unnest(coalesce(v_anon, '{}'::text[])) s
+                 where s not in ('verify_certificate','verify_board_pack')), 'none'));
+
+  select array_agg(distinct p.proname) into v_ext
+    from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+    join pg_depend d on d.objid = p.oid and d.deptype = 'e'
+    join aclexplode(p.proacl) a on true
+    join pg_roles r on r.oid = a.grantee
+   where n.nspname = 'public' and r.rolname = 'anon' and a.privilege_type = 'EXECUTE';
+  if coalesce(array_length(v_ext, 1), 0) > 0 then
+    raise notice 'note: % platform extension function(s) in public still granted to anon: %',
+      array_length(v_ext, 1), array_to_string(v_ext, ', ');
+  end if;
 end $$;
 
 -- The anon role can execute exactly the two functions and selects nothing: for every tenant table it

@@ -58,3 +58,6 @@ Local harness: PostgreSQL 17.11, database `provio_test`, `/tmp/auth_shim.sql` + 
 | S7.d docs: Board Pack decisions, sources, UI contract and parity | 9428061 | pending | green (local) | D-S7-* decisions, docs/ACP-BOARD-PACK-SOURCES.md, OA-09/WK-01..04 UI contract, 5 tutorial keys |
 | S8.a db: engagement certificate and public verification | e5c9504 | pending | green (local) | 0062_certificate.sql; test 72 (36 assertions); cert hash in DB, anon surface closed to exactly 2 functions |
 | MID-JOB CORRECTION M-0 started at e5c9504 | e5c9504 | — | started | corrective build: M-1 red CI, M-2 secrets, M-3 email dispatch, M-4a ai-gateway, M-4b F25 coverage, M-5 report |
+| M-1 db: skip extension members in the anon-surface revoke | a64a061 | 39298253900 | fixed (local green) | 0062 revoke loop: pg_depend deptype='e' filter; test 72 counts non-extension functions only and reports the rest |
+| M-2 db+lib+app: secret entry through an encrypted Edge Function | pending | pending | green (local) | 0063_secret_entry.sql (secret_store_ref, secret_vault_store, vault_id, drop secret_put); _shared/secretsCrypto.ts + 12 vitest; secrets-put Edge Function; src/data/secrets.ts; test 66 rewritten |
+

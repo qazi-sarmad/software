@@ -314,6 +314,15 @@ begin
   perform set_config('request.jwt.claims', '{}', false);
 end $$;
 
+-- The service role. Used by tests that exercise an Edge-Function-only entry point, such as
+-- secret_store_ref (F5), which no browser session can reach.
+create or replace function provio_test.as_service() returns void
+language plpgsql as $$
+begin
+  execute 'set role service_role';
+  perform set_config('request.jwt.claims', '{"role":"service_role"}', false);
+end $$;
+
 create or replace function provio_test.as_owner() returns void
 language plpgsql as $$
 begin
