@@ -94,6 +94,10 @@ begin
   -- seeded by 0059 and is NOT truncated, so the deny-list tests always see the platform rows.
   truncate ai_models cascade;
   truncate tutorials;
+  -- S6 (F12). escalation_events and work_queue_proposals have no FK to orgs, so cascade does not
+  -- reach them; they accumulate rows across runs (M5).
+  truncate escalation_events;
+  truncate work_queue_proposals;
   -- S2 (F5, F6, F7). These have no FK to orgs, so `truncate orgs cascade` does not reach them.
   -- The platform rows the migrations seed (rules and templates with org_id null) are kept; only
   -- tenant rows and per-run logs are cleared, so a test always starts from the same state (M5).
