@@ -161,6 +161,10 @@ clear the first two before Phase 2 closes.
 - Owner action: add a renderer behind `freeze_report`/`issue_report` so the issued artefact is the
   branded document.
 - Evidence: `0036_report_drafting.sql`, `src/components/audit/ReportEditorPanel.tsx`.
+- Update (S4): the shared renderers now exist — `src/lib/render/pdf.ts` (pdf-lib + fontkit),
+  `pptx.ts` (pptxgenjs, editable text/tables/charts) and `qr.ts`, all consuming one `BrandingSpec`
+  from `src/data/branding.ts` (migration 0058). The report editor is not yet wired to `renderPdf`;
+  that wiring and the DOCX path remain owner-scoped.
 
 ## 22. Screenshots owner-deferred (Phase 6)
 

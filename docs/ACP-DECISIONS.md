@@ -341,3 +341,89 @@ IMPROVISE-THEN-DOCUMENT (this file).
 - Reverse: remove `service_role` from the two grants and run the acceptance section through a
   `set role service_role` wrapper.
 
+
+## D-S4-assets-storage — where branding assets live when Storage is absent (S4.a, F9)
+
+- Task: S4.a.
+- Point: F9 puts logo and font files in a private Storage bucket `org-branding`; if Storage is not
+  configured on provio-test, small assets (<= 512 KB) go in a table as bytea.
+- Options: (a) always use Storage and fail when it is missing; (b) a `branding_assets` table with a
+  `bytea` column and a 512 KB check, used when Storage is not configured; (c) store a URL only.
+- Choice: (b). `branding_assets` holds the bytes as `bytea` with a 524288-byte check constraint and
+  a `storage_path` column that is null today and is filled when a bucket is configured. The upload
+  RPC refuses a file over the limit with a plain message.
+- Reason: the feature must work on provio-test with no Storage; a table keeps every asset inside the
+  tenant boundary and keeps the feature configurable without code. Moving to Storage later is a
+  data copy, not a schema change.
+- Reverse: point `branding_assets.storage_path` at a bucket and drop the `bytea` column.
+
+## D-S4-pptx-theme — extract the theme, not the layouts (S4.b, F9)
+
+- Task: S4.b.
+- Point: the owner may upload an organisation's .pptx or .potx; v1 extracts its theme (colours,
+  fonts, slide size, logo images) with JSZip and XML parsing and applies it to pptxgenjs masters.
+- Options: (a) reuse the file's slide layouts; (b) extract colours, fonts, slide size and media
+  parts and apply them to Provio's own masters.
+- Choice: (b). `extractPptxTheme` reads `ppt/theme/theme1.xml` (clrScheme, fontScheme) and
+  `ppt/presentation.xml` (sldSz) plus `ppt/media/*`; `renderPptx` builds its own slides. The UI says
+  "We match your colours, fonts and logos; we do not reuse your slide layouts."
+- Reason: the fixed rule says v1 extracts and does not reuse layouts, and it keeps every Provio
+  slide a native editable text/table/chart, which the owner can edit.
+- Reverse: add a layout-cloning path from the uploaded archive.
+
+## D-S4-fonts — bundled fonts vs an uploaded licensed font (S4.b, F9)
+
+- Task: S4.b.
+- Point: F9 lets an org pick bundled fonts or upload a .ttf/.otf/.woff2 with the reminder "only
+  upload fonts you are licensed to embed".
+- Choice: the OA-03 screen offers the bundled fonts by name and an upload control; an uploaded font
+  is stored as a `branding_assets` row of kind `font` and is embedded in the PDF through fontkit
+  when its bytes are supplied to `renderPdf`. Until a font's bytes are loaded, the renderer falls
+  back to the standard Helvetica, so a missing font never fails a render.
+- Reason: keeps the renderer total (never throws for a font) and keeps the licence decision with the
+  owner, exactly as F9 states.
+- Reverse: remove the `headingFontBytes`/`bodyFontBytes` fields and always use the standard fonts.
+
+## D-S4-branding-entitlements — which feature key gates branding (S4.b, F25)
+
+- Task: S4.b.
+- Point: F25 lists `branding_custom_fonts` and `pptx_theme_upload` as separate features. The guard
+  featureMapCompleteness requires every RPC that calls `has_feature(` to be mapped.
+- Options: (a) gate both branding RPCs on `branding_custom_fonts`; (b) gate `admin_set_branding` on
+  `branding_custom_fonts` and `admin_upload_pptx_theme` on `pptx_theme_upload`.
+- Choice: (b). Colours, page size, margins and a bundled font need no entitlement beyond the
+  branding RPC; the PPTX theme upload is its own add-on.
+- Reason: matches the two seeded keys and lets the owner sell theme upload on its own.
+- Reverse: change the mapping in `src/lib/featureMap.ts` and the `has_feature` key in 0058.
+
+## D-S4-colour-hex — no hex in a component (S4.c, F19)
+
+- Task: S4.c.
+- Point: the token guard `check-tokens` fails on any hex colour under `src/components`, and the
+  colour input needs a `#rrggbb` value for a token-named colour.
+- Options: (a) an allow-list in the guard; (b) resolve the token's value at runtime and keep the
+  fallback in the lib.
+- Choice: (b). `resolveHexColour` in `src/lib/render/branding.ts` returns a hex value as-is, reads
+  the live CSS custom property for a token name, and carries the neutral `#888888` fallback. No
+  component holds a hex value; the guard stays at an empty allow-list.
+- Reason: F19 requires components to contain no hex values, and reading the token at runtime means
+  the swatch shows the real brand colour rather than a stand-in.
+- Reverse: inline the fallback in the component and allow-list the file.
+
+## D-S4-deps — the F22 render dependencies, versions and licences (S4.b, F22)
+
+- Task: S4.b.
+- Point: F22 allows these minor additions, each MIT or compatible, and requires name, version and
+  licence to be recorded.
+- Choice: installed and pinned in `package.json`/`package-lock.json`: `pdf-lib@1.17.1` (MIT),
+  `@pdf-lib/fontkit@1.1.1` (MIT), `pptxgenjs@3.12.0` (MIT), `qrcode@1.5.4` (MIT),
+  `jszip@3.10.2` (MIT), `mammoth@1.13.0` (BSD-2-Clause), plus `@types/qrcode@1.5.5` (MIT, dev) for
+  types. No major version of an existing dependency changed.
+- Accepted risk: `npm audit` reports 4 advisories with no published fix — `image-size` (high,
+  GHSA-5p2g-fcmc-qvqq / GHSA-w3rx-r6r6-pgpr; the stated fix 2.0.3 was never published) and
+  `argparse`→`sprintf-js` (moderate, directory traversal) reached transitively through `pptxgenjs`
+  and `mammoth`. Both are build/render-time only and process no untrusted input in Provio: the
+  renderers consume data the tenant already owns. Recorded as accepted, to be revisited when the
+  upstream packages publish a fix.
+- Reverse: remove the packages; nothing else depends on them.
+

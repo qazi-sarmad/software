@@ -272,6 +272,37 @@ as its slice lands.
 
 ---
 
+## OA-02 / OA-03 — branding and report format (S4)
+
+- **Purpose:** the Org Admin sets the organisation's profile, branding and report format (fonts,
+  brand colours, logos, page size, margins, header and footer text, cover style, PPTX theme). The
+  live preview runs through the real `BrandingSpec`, so what the admin sees is what the renderers
+  produce (F9).
+- **Route:** Org Admin control plane, tab `Branding`.
+- **Rights:** `edit_config` (the database re-checks it in `admin_set_branding`). Feature-gated:
+  `admin_set_branding` needs `branding_custom_fonts`, `admin_upload_pptx_theme` needs
+  `pptx_theme_upload` (F25, D-S4-branding-entitlements).
+- **Data:** `getBranding(orgId)` → `BrandingSpec`, `saveBranding(orgId, fields)` →
+  `{ ok } | { ok:false, reason }`, `uploadBrandingAsset(orgId, kind, filename, mime, base64)`,
+  `savePptxTheme(orgId, theme)`, `listBrandingAssets(orgId)` (`src/data/branding.ts`). The PPTX theme
+  is extracted in the browser by `extractPptxTheme` (`src/lib/render/pptx.ts`) and only the extracted
+  facts are written; no JSON is typed by any user (F1, D-S4-pptx-theme).
+- **Testids:** `oa-branding`, `oa-branding-title`, `oa-branding-loading`, `oa-branding-readonly`,
+  `oa-branding-form`, `oa-branding-font-heading`, `oa-branding-font-body`,
+  `oa-branding-colour-primary`, `oa-branding-colour-accent`, `oa-branding-colour-text`,
+  `oa-branding-colour-background`, `oa-branding-page-size`, `oa-branding-cover-style`,
+  `oa-branding-margin-0`..`oa-branding-margin-3`, `oa-branding-header`, `oa-branding-footer`,
+  `oa-branding-logo-light`, `oa-branding-logo-input`, `oa-branding-theme-upload`,
+  `oa-branding-theme-note`, `oa-branding-save`, `oa-branding-error`, `oa-branding-saved`,
+  `oa-branding-preview`, `oa-branding-preview-header`, `oa-branding-preview-footer`,
+  `oa-branding-preview-note`.
+- **States:** loading ("Loading branding…"); ready; error (`InlineError`); read-only (no save button,
+  a plain notice). A save refusal (rights or entitlement) is shown in `oa-branding-error` in the
+  server's own words. An over-size asset is refused by the RPC.
+- **Tutorial keys:** `oa.branding`, `oa.pptx-theme`.
+
+---
+
 ## Tutorials regenerated
 
 `npm run tutorials:record` regenerates every GIF (S12). The recorder binds only to the testids listed
