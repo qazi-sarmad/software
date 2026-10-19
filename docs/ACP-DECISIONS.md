@@ -777,3 +777,36 @@ IMPROVISE-THEN-DOCUMENT (this file).
 - Reverse: drop the column.
 
 
+
+## D-M3-definer-guard - the dispatcher guard compares a session flag, not current_user (M-3)
+
+- Task: M-3.
+- Point: 0056's dispatcher guard required `current_user = 'service_role'`, but
+  `email_dispatch_claim` / `email_dispatch_complete` are SECURITY DEFINER functions owned by
+  `postgres`, so `current_user` inside them is always the owner. The guard could never pass, so no
+  row could ever be claimed (a latent bug no earlier test exercised, because test 73 is the first to
+  call claim as the service role).
+- Options: (a) edit 0056 in place; (b) add an M7 repair section to 0064 that replaces the guard.
+- Choice: (b). 0056 may already have run on provio-test, and editing an applied migration does not
+  re-run it. 0064 section 5 replaces the guard function so the fix lands on both fresh and existing
+  databases.
+- Reason: M7 - the repair for a partly-applied or already-applied migration goes above the failing
+  statement in the newest migration, never by editing the old one.
+- Reverse: drop section 5 of 0064 and restore 0056's guard (only correct if 0056 has not yet run
+  anywhere).
+
+## D-M3-FIX-panel-race - the 6H report test waits for both loads (M-3-FIX)
+
+- Task: M-3-FIX.
+- Point: CI 39314413666 failed `phase6Panels.test.tsx > issues the report and shows the queued-email
+  notice` with "expected vi.fn() to be called with arguments ['v1'] / Number of calls: 0", while the
+  same test passed locally eight times in a row.
+- Options: (a) skip or loosen the assertion; (b) make the test wait for the panel to settle.
+- Choice: (b). `ReportEditorPanel` loads twice - once with `activeId` null, then again once it
+  selects the first version - so the Issue button can appear, then be unmounted for the loading
+  skeleton, between the two loads. On a slower runner the hold landed in that window and the click
+  never reached the handler. The test now waits for both loads (`listCaps` is each load's last call)
+  and for the button to be enabled before holding.
+- Reason: the flake was in the test, not the product: the panel is correct to reload once it has a
+  version. Loosening the assertion (a) would have hidden a real regression later.
+- Reverse: revert the test change; the flake returns on a slow runner.
