@@ -23,9 +23,12 @@ function user(role: Role, extra: Partial<User> = {}): User {
 }
 
 describe('rights model (2F-2b)', () => {
-  it('exposes the closed eleven-key vocabulary', () => {
-    expect(RIGHTS).toHaveLength(11);
-    expect(new Set(RIGHTS).size).toBe(11);
+  it('exposes the closed fifteen-key vocabulary', () => {
+    expect(RIGHTS).toHaveLength(15);
+    expect(new Set(RIGHTS).size).toBe(15);
+    for (const key of ['view_board_pack', 'generate_board_pack', 'use_ai_assist', 'view_insights']) {
+      expect(RIGHTS).toContain(key);
+    }
   });
 
   it('maps every role to a default rights bag', () => {

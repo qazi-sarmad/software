@@ -19,6 +19,10 @@ const REASONS: Record<Right, string> = {
   edit_config: "You don't have permission to edit configuration",
   read_only: 'You have read-only access',
   manage_team: "You don't have permission to manage the audit team",
+  view_board_pack: "You don't have permission to view the Board Pack",
+  generate_board_pack: "You don't have permission to generate a Board Pack",
+  use_ai_assist: "You don't have permission to use AI assist",
+  view_insights: "You don't have permission to view insights",
 };
 
 /** The plain-language reason a control is disabled because the session lacks `right`. */
