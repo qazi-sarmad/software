@@ -458,8 +458,12 @@ declare
 begin
   for fn in
     select p.oid, p.proname as name, pg_get_function_identity_arguments(p.oid) as args
-    from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+    from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+    left join pg_depend d on d.objid = p.oid and d.deptype = 'e'
     where n.nspname = 'public'
+      and d.objid is null
+      and p.prokind = 'f'
       and p.proname not in ('verify_certificate', 'verify_board_pack')
   loop
     -- Re-grant explicitly to every application role that can reach the function today. Access
