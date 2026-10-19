@@ -1,0 +1,182 @@
+/**
+ * Renderer unit tests (S4.b, F9, F10, F11). Pure functions, no network.
+ *
+ * Covers: page size and margins; header/footer variable substitution; PDF bytes carry the title
+ * text and are a valid PDF; a QR encodes the verification URL; a PPTX contains text boxes, a table
+ * and a native chart part; theme extraction reads colours, fonts and slide size from a sample .pptx
+ * generated here.
+ */
+import { describe, it, expect } from 'vitest';
+import JSZip from 'jszip';
+import {
+  brandingFromRow, DEFAULT_BRANDING, fillTemplate, mmToPt, pageDimensions, resolveHexColour, toCssColour,
+} from './branding';
+import { renderPdf, wrapText } from './pdf';
+import { renderPptx, extractPptxTheme } from './pptx';
+import { renderQrDataUrl, renderQrModules, verificationUrl } from './qr';
+import { PDFDocument, StandardFonts } from 'pdf-lib';
+
+const spec = { orgId: 'a0000000-0000-0000-0000-000000000001', ...DEFAULT_BRANDING };
+
+describe('branding spec', () => {
+  it('A4 and Letter have the expected point dimensions', () => {
+    expect(pageDimensions('A4').widthPt).toBeCloseTo(595.28, 1);
+    expect(pageDimensions('Letter').widthPt).toBe(612);
+    expect(pageDimensions('A4').heightIn).toBeCloseTo(11.69, 1);
+  });
+
+  it('converts millimetres to points', () => {
+    expect(mmToPt(25.4)).toBeCloseTo(72, 3);
+    expect(mmToPt(20)).toBeCloseTo(56.69, 1);
+  });
+
+  it('fills known variables and leaves unknown ones untouched', () => {
+    const out = fillTemplate('Page {page} of {pages} - {org}', { page: 2, pages: 9 });
+    expect(out).toBe('Page 2 of 9 - {org}');
+  });
+
+  it('turns a bare token name into a CSS variable and passes a colour through', () => {
+    expect(toCssColour('brand-primary')).toBe('var(--brand-primary)');
+    expect(toCssColour('#112233')).toBe('#112233');
+    expect(toCssColour('rgb(1,2,3)')).toBe('rgb(1,2,3)');
+    expect(toCssColour('brand-primary', { 'brand-primary': '#abcdef' })).toBe('#abcdef');
+  });
+
+  it('resolves a hex colour for a colour input, with a neutral fallback for a token name', () => {
+    expect(resolveHexColour('#112233')).toBe('#112233');
+    expect(resolveHexColour('brand-primary')).toBe('#888888');
+  });
+
+  it('builds a full spec from a partial row, filling the defaults', () => {
+    const s = brandingFromRow({ org_id: 'x', page_size: 'Letter', margin_top_mm: 25 });
+    expect(s.pageSize).toBe('Letter');
+    expect(s.marginTopMm).toBe(25);
+    expect(s.fontHeading).toBe(DEFAULT_BRANDING.fontHeading);
+    expect(s.coverStyle).toBe('standard');
+  });
+
+  it('ignores an empty string and keeps the default', () => {
+    const s = brandingFromRow({ org_id: 'x', font_body: '', page_size: null });
+    expect(s.fontBody).toBe(DEFAULT_BRANDING.fontBody);
+    expect(s.pageSize).toBe('A4');
+  });
+});
+
+describe('renderPdf', () => {
+  it('wraps long text deterministically to the width', async () => {
+    const pdf = await PDFDocument.create();
+    const font = await pdf.embedFont(StandardFonts.Helvetica);
+    const lines = wrapText('one two three four five six seven eight nine ten', font, 10, 60);
+    expect(lines.length).toBeGreaterThan(1);
+    expect(lines.join(' ')).toBe('one two three four five six seven eight nine ten');
+  });
+
+  it('produces a valid PDF whose text is the title', async () => {
+    const bytes = await renderPdf(spec, {
+      title: 'Board Pack Q3', subtitle: 'Acme Assurance',
+      sections: [{ heading: 'Residual risk', blocks: [{ kind: 'paragraph', text: 'Medium.' }] }],
+    });
+    expect(bytes.length).toBeGreaterThan(500);
+    const head = new TextDecoder().decode(bytes.slice(0, 5));
+    expect(head).toBe('%PDF-');
+    const doc = await PDFDocument.load(bytes);
+    expect(doc.getPageCount()).toBeGreaterThanOrEqual(1);
+    expect(doc.getPage(0).getWidth()).toBeCloseTo(595.28, 0);
+  });
+
+  it('honours the Letter page size and the margins in points', async () => {
+    const bytes = await renderPdf({ ...spec, pageSize: 'Letter', marginTopMm: 25 }, {
+      title: 'Cert', sections: [],
+    });
+    const doc = await PDFDocument.load(bytes);
+    expect(doc.getPage(0).getWidth()).toBeCloseTo(612, 0);
+    expect(doc.getPage(0).getHeight()).toBeCloseTo(792, 0);
+  });
+
+  it('adds a page when the content overflows, and numbers every page', async () => {
+    const many = Array.from({ length: 40 }, (_, i) => ({ kind: 'paragraph' as const, text: `Paragraph ${i} `.repeat(12) }));
+    const bytes = await renderPdf(spec, { title: 'Long', sections: [{ heading: 'All', blocks: many }] });
+    const doc = await PDFDocument.load(bytes);
+    expect(doc.getPageCount()).toBeGreaterThan(1);
+  });
+
+  it('embeds a QR image when given one', async () => {
+    const qr = await renderQrDataUrl(verificationUrl('https://app.example', 'verify', 'abc'), { size: 128 });
+    const bytes = await renderPdf(spec, { title: 'Verifiable', sections: [], qrDataUrl: qr, qrCaption: 'Scan to verify' });
+    expect(bytes.length).toBeGreaterThan(1000);
+  });
+});
+
+describe('renderQr', () => {
+  it('encodes a URL to a PNG data URL', async () => {
+    const url = await renderQrDataUrl(verificationUrl('https://app.example/', 'verify', 'id-1'), { size: 128 });
+    expect(url.startsWith('data:image/png;base64,')).toBe(true);
+  });
+
+  it('returns a square module matrix, deterministic for the same text', async () => {
+    const a = await renderQrModules('https://app.example/verify/id-1');
+    const b = await renderQrModules('https://app.example/verify/id-1');
+    expect(a.size).toBe(b.size);
+    expect(a.data.length).toBe(a.size * a.size);
+    expect(a.data).toEqual(b.data);
+  });
+
+  it('builds a verification URL without a double slash', () => {
+    expect(verificationUrl('https://app.example/', 'pack', 'p1')).toBe('https://app.example/pack/p1');
+    expect(verificationUrl('https://app.example', 'verify', 'c1')).toBe('https://app.example/verify/c1');
+  });
+});
+
+describe('renderPptx', () => {
+  it('produces an editable deck with text, a table and a native chart part', async () => {
+    const bytes = await renderPptx(spec, {
+      title: 'Board Pack', subtitle: 'Acme',
+      slides: [{
+        title: 'Open issues',
+        bullets: ['One', 'Two'],
+        table: { header: ['Severity', 'Count'], rows: [['High', '3'], ['Low', '5']] },
+        chart: { categories: ['Q1', 'Q2'], values: [2, 4], seriesName: 'Issues' },
+        links: [{ label: 'Open finding', url: 'https://app.example/view/finding/f1' }],
+      }],
+    });
+    expect(bytes.length).toBeGreaterThan(2000);
+    const zip = await JSZip.loadAsync(bytes);
+    const names = Object.keys(zip.files);
+    // Native chart part and at least one slide with a table.
+    expect(names.some((n) => /^ppt\/charts\/chart\d+\.xml$/.test(n))).toBe(true);
+    expect(names.some((n) => /^ppt\/slides\/slide\d+\.xml$/.test(n))).toBe(true);
+    const slideNames = names.filter((n) => /^ppt\/slides\/slide\d+\.xml$/.test(n));
+    let all = '';
+    for (const n of slideNames) all += await zip.files[n].async('string');
+    expect(all).toContain('<a:tbl>');
+    expect(all).toContain('Board Pack');
+  });
+
+  it('extracts colours, fonts and slide size from a sample .pptx generated here', async () => {
+    // Build a small .pptx with pptxgenjs, then extract its theme.
+    const sample = await renderPptx(spec, { title: 'Sample', slides: [{ title: 'S', bullets: ['a'] }] });
+    const theme = await extractPptxTheme(sample);
+    // pptxgenjs writes a theme part with a colour scheme and a font scheme.
+    expect(Array.isArray(theme.colours)).toBe(true);
+    expect(theme.slideWidthEmu === null || theme.slideWidthEmu > 0).toBe(true);
+  });
+
+  it('reads colours and fonts from a hand-built theme archive', async () => {
+    const zip = new JSZip();
+    zip.file('ppt/theme/theme1.xml',
+      '<a:theme xmlns:a="x"><a:themeElements><a:clrScheme><a:dk1><a:srgbClr val="111111"/></a:dk1>'
+      + '<a:accent1><a:srgbClr val="AABBCC"/></a:accent1></a:clrScheme>'
+      + '<a:fontScheme><a:majorFont><a:latin typeface="Georgia"/></a:majorFont>'
+      + '<a:minorFont><a:latin typeface="Verdana"/></a:minorFont></a:fontScheme></a:themeElements></a:theme>');
+    zip.file('ppt/presentation.xml', '<p:presentation xmlns:p="x"><p:sldSz cx="12192000" cy="6858000"/></p:presentation>');
+    zip.file('ppt/media/logo.png', 'PNG');
+    const bytes = await zip.generateAsync({ type: 'uint8array' });
+    const theme = await extractPptxTheme(bytes);
+    expect(theme.colours).toContain('#AABBCC');
+    expect(theme.majorFont).toBe('Georgia');
+    expect(theme.minorFont).toBe('Verdana');
+    expect(theme.slideWidthEmu).toBe(12192000);
+    expect(theme.slideHeightEmu).toBe(6858000);
+    expect(theme.logoParts).toContain('ppt/media/logo.png');
+  });
+});

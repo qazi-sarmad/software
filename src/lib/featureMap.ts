@@ -51,6 +51,9 @@ export const FEATURE_RPC_MAP: Record<string, string> = {
   branding_save: 'branding_custom_fonts',
   branding_font_upload: 'branding_custom_fonts',
   pptx_theme_extract: 'pptx_theme_upload',
+  // S4: the real branding RPCs (0058).
+  admin_set_branding: 'branding_custom_fonts',
+  admin_upload_pptx_theme: 'pptx_theme_upload',
   // consultation tiers
   consultation_request: 'consultation_config',
   consultation_propose: 'consultation_full_admin',
