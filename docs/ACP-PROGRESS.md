@@ -39,6 +39,7 @@ Local harness: PostgreSQL 17.11, database `provio_test`, `/tmp/auth_shim.sql` + 
 | S3.b lib+data: invitation logic | 234847f | 39267810047 | green | _shared/invites.ts, 13 unit tests; inviteUser returns queue status |
 | S3.c app: honest invite copy | 435a8ee | 39267810047 | green | "Invitation queued for", never "sent"; e2e clears auth_invites |
 | S3.d docs: record S2.c fix and S3 green | e74d78e | 39267810047 | green | ACP-PROGRESS, ACP-DECISIONS |
-| S4.a db: branding, report format, assets | edde814 | pending | green (local) | 0058 org_branding/branding_assets/branding_versions; test 68 (15 assertions) |
-| S4.b lib+data: branding spec and renderers | b0b502d | pending | green (local) | src/lib/render (branding, pdf, pptx, qr), src/data/branding.ts, 18 unit tests |
-| S4.c app: branding screens with live preview | f4f44c1 | pending | green (local) | OA-02/OA-03 OrgBrandingPanel, 5 component tests |
+| S4.a db: branding, report format, assets | edde814 | 39276190620 | green (local) | 0058 org_branding/branding_assets/branding_versions; test 68 (15 assertions) |
+| S4.b lib+data: branding spec and renderers | b0b502d | 39276190620 | green (local) | src/lib/render (branding, pdf, pptx, qr), src/data/branding.ts, 18 unit tests |
+| S4.c app: branding screens with live preview | f4f44c1 | 39276190620 | green (local) | OA-02/OA-03 OrgBrandingPanel, 5 component tests |
+| S4.d docs: decisions, UI contract, PARITY | f479439 | 39276190620 | green (local) | D-S4-* decisions, OA-02/03 UI contract section |
