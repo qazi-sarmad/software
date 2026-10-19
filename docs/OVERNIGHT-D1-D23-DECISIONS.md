@@ -363,3 +363,19 @@ tenant id (`provio-corp-tenant`), no `Math.random` outside tests, one Supabase c
 modal outside the `ConfirmPanel`/`FloatingWindow`/`RecordView` allow-list.
 How to reverse: delete `scripts/pre-pr-gates.sh`; nothing else depends on it.
 
+
+## D-D23-pr — reuse the open PR, do not open a second one
+
+Task D23. Unclear point: the brief says `gh pr edit <pr-number>` but never names the number, and the
+"one PR per issue" rule means the D1–D23 work should not arrive as a new PR if one is already open.
+Options: (1) open a fresh PR from `feature/config-control-plane` to `main`; (2) edit the existing PR
+#10, which already targets `main` from this branch.
+Choice: option 2. PR #10 is open, its head is `feature/config-control-plane` and its base is `main`,
+which is exactly the D1–D23 delivery. It was retitled to "Complete Provio v1: all screens, all
+workflows, ready for testing" and its body replaced with the D1–D23 summary
+(`docs/OVERNIGHT-D1-D23-PR-BODY.md`). The body says explicitly not to merge; the owner merges after
+review.
+Reason: a second PR to the same base from the same head is a duplicate and would split the review.
+The PR stays open and unmerged, as the brief requires.
+How to reverse: `gh pr edit 10` back to the previous title/body; no code is affected.
+
