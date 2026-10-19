@@ -90,6 +90,9 @@ begin
   truncate platform_notification_recipients;
   truncate automation_events;
   truncate ai_model_versions;
+  -- S5 (F8). ai_models has no FK to orgs, so cascade does not reach it. ai_endpoint_denylist is
+  -- seeded by 0059 and is NOT truncated, so the deny-list tests always see the platform rows.
+  truncate ai_models cascade;
   truncate tutorials;
   -- S2 (F5, F6, F7). These have no FK to orgs, so `truncate orgs cascade` does not reach them.
   -- The platform rows the migrations seed (rules and templates with org_id null) are kept; only
