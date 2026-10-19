@@ -34,7 +34,7 @@ Local harness: PostgreSQL 17.11, database `provio_test`, `/tmp/auth_shim.sql` + 
 | S2.a db: secrets, email, automation engine | 87c0757 | 39257108516 | green | 0054-0056; test 66 (31 assertions); fixed platform-blind notifications policy, digest schema, seed cleanup |
 | S2.b lib+data: adapters, rules, templating | 08c5bcd | 39257108516 | green | 42 unit tests; emailAdapters in _shared |
 | S2.c app: secrets, email, automation screens | 5b33321 | 39260101456 | fixed | SA-04/07/08, OA-11/12/13; component tests |
-| S2.c-FIX: empty org id becomes null | (this commit) | pending | pending | D-S2c-empty-uuid; Playwright failure in 39260101456 |
-| S3.a db: invitation acceptance | (this commit) | pending | pending | 0057 auth_invites, admin_accept_invite, invite_status; test 67 (24 assertions) |
-| S3.b lib+data: invitation logic | (this commit) | pending | pending | _shared/invites.ts, 13 unit tests; inviteUser returns queue status |
-| S3.c app: honest invite copy | (this commit) | pending | pending | "Invitation queued for", never "sent" |
+| S2.c-FIX: empty org id becomes null | 435a8ee | 39267810047 | green | D-S2c-empty-uuid; Playwright failure in 39260101456 resolved |
+| S3.a db: invitation acceptance | 16a0df4 | 39267810047 | green | 0057 auth_invites, admin_accept_invite, invite_status; test 67 (24 assertions) |
+| S3.b lib+data: invitation logic | 234847f | 39267810047 | green | _shared/invites.ts, 13 unit tests; inviteUser returns queue status |
+| S3.c app: honest invite copy | 435a8ee | 39267810047 | green | "Invitation queued for", never "sent"; e2e clears auth_invites |
