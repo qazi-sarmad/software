@@ -326,4 +326,31 @@ export default async function globalSetup() {
     can_view_summary: true, can_download_pack: true, can_download_certificate: true, can_verify: true,
     expires_at: null, revoked_at: null,
   }, { onConflict: 'org_id,user_id,engagement_id' }));
+
+  // S10 fixture (F14, F15). The time_travel and patterns features must be on for org A, and a pair of
+  // concluded findings gives the Patterns view something to group. Seeded directly, like every other
+  // fixture here; the Super Admin console exercises the RPC path in acp-control-plane.spec.ts. The
+  // findings are cleaned up with the rest of the Phase 5 residue above, so this block runs after it.
+  must('tenant_entitlements time_travel', await sb.from('tenant_entitlements').upsert({
+    org_id: ORG_A, feature_key: 'time_travel', enabled: true,
+    plan_name: 'Assurance', reason: 'e2e fixture', effective_from: new Date().toISOString(), effective_to: null,
+  }, { onConflict: 'org_id,feature_key' }));
+  must('tenant_entitlements patterns', await sb.from('tenant_entitlements').upsert({
+    org_id: ORG_A, feature_key: 'patterns', enabled: true,
+    plan_name: 'Assurance', reason: 'e2e fixture', effective_from: new Date().toISOString(), effective_to: null,
+  }, { onConflict: 'org_id,feature_key' }));
+  must('findings (S10)', await sb.from('findings').upsert([
+    {
+      id: '5f000000-0000-4000-8000-000000000001', org_id: ORG_A, entity_id: A_ENTITY,
+      severity: 'High', status: 'concluded',
+      sections: { title: 'Segregation of duties gap', condition: 'One user approves and pays invoices.',
+        risk: 'Fraudulent payment.', effect: 'Loss of cash.' },
+    },
+    {
+      id: '5f000000-0000-4000-8000-000000000002', org_id: ORG_A, entity_id: A_ENTITY,
+      severity: 'High', status: 'concluded',
+      sections: { title: 'Segregation of duties gap (repeat)', condition: 'One user approves and pays invoices too.',
+        risk: 'Fraudulent payment risk.', effect: 'Loss of cash again.' },
+    },
+  ], { onConflict: 'id' }));
 }

@@ -4,6 +4,7 @@ import { useFilterStore } from '../../context/FilterStore';
 import { useApp } from '../../context/AppContext';
 import { HoverPreview } from '../common/HoverPreview';
 import { CapRegisterPanel } from '../audit/CapRegisterPanel';
+import { PatternsPanel } from './PatternsPanel';
 import { AuditIssue, Severity } from '../../types';
 import {
   AlertTriangle,
@@ -19,6 +20,8 @@ export const IssuesRegisterTab: React.FC = () => {
   const { filteredIssues, scopedEngagements, can, currentUser } = useScopedData();
   const filter = useFilterStore();
   const { openInspector, selectedEngagementId } = useApp();
+  // WK-10 (F15): the register carries a "Patterns" view beside the issue list.
+  const [view, setView] = useState<'register' | 'patterns'>('register');
 
   // D10: the CAP register is per engagement (§16.1 "CAPs are created from the final report"). The
   // tab is org-wide, so it offers the engagements in scope and renders the register for the chosen
@@ -81,6 +84,34 @@ export const IssuesRegisterTab: React.FC = () => {
           </button>
         )}
       </div>
+
+      {/* WK-10 (F15): the Patterns view sits beside the issue register. */}
+      <div className="flex items-center gap-1 rounded-xl border border-hairline bg-surface p-1 w-fit" role="tablist" aria-label="Issues and patterns">
+        {([
+          ['register', 'Issue register'],
+          ['patterns', 'Patterns'],
+        ] as const).map(([v, label]) => (
+          <button
+            key={v}
+            type="button"
+            role="tab"
+            aria-selected={view === v}
+            data-testid={`issues-view-${v}`}
+            onClick={() => setView(v)}
+            className={`px-3 py-1.5 rounded-lg text-apple-12 font-semibold ${
+              view === v ? 'bg-surface-hover text-primary' : 'text-secondary'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {view === 'patterns' ? (
+        // WK-10 (F15): a cluster, node or heat-map cell opens the original sealed finding.
+        <PatternsPanel onOpenFinding={(findingId) => openInspector('finding', { findingId })} />
+      ) : (
+        <>
 
       {/* Filter / Search Bar */}
       <div className="flex flex-wrap items-center justify-between gap-4 bg-surface p-4 rounded-2xl border border-hairline shadow-apple">
@@ -232,6 +263,8 @@ export const IssuesRegisterTab: React.FC = () => {
           </div>
         )}
       </div>
+        </>
+      )}
     </div>
   );
 };

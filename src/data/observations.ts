@@ -37,6 +37,19 @@ export interface FindingRow {
   linkedEntityIds: string[];
 }
 
+/** One concluded finding, read for the drill-down from a Patterns cluster or heat-map cell (F15). */
+export interface FindingDetailRow {
+  id: string;
+  entityId: string | null;
+  entityName: string | null;
+  severity: string | null;
+  title: string;
+  condition: string;
+  risk: string;
+  effect: string;
+  recommendation: string;
+}
+
 export interface IssueRow {
   id: string;
   title: string;
@@ -140,3 +153,33 @@ export async function listIssues(): Promise<IssueRow[]> {
     linkedFindingIds: (i.linked_finding_ids as string[] | null) ?? [],
   }));
 }
+
+/**
+ * One concluded finding, for the drill-down from a Patterns cluster, node or heat-map cell (F15).
+ * The read goes through the RLS-scoped `findings` table, so a caller outside the finding's org or
+ * scope sees nothing and the surface reports it as unavailable rather than guessing.
+ */
+export async function getFindingDetail(findingId: string): Promise<FindingDetailRow | null> {
+  const sb = getClient();
+  if (!sb) return null;
+  const { data, error } = await sb
+    .from('findings')
+    .select('id, entity_id, severity, sections, entities(name)')
+    .eq('id', findingId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) return null;
+  const sections = (data.sections as Record<string, string> | null) ?? {};
+  return {
+    id: data.id as string,
+    entityId: (data.entity_id as string | null) ?? null,
+    entityName: (data.entities as { name?: string } | null)?.name ?? null,
+    severity: (data.severity as string | null) ?? null,
+    title: sections.title ?? 'Untitled finding',
+    condition: sections.condition ?? '',
+    risk: sections.risk ?? '',
+    effect: sections.effect ?? '',
+    recommendation: sections.recommendation ?? '',
+  };
+}
+

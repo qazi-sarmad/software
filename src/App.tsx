@@ -104,12 +104,15 @@ const AppContent: React.FC = () => {
           ? `audit_file:${inspector.data.engagement.id}`
           : inspector.data?.workpaperId || inspector.data?.workpaper?.id
             ? `workbench:${inspector.data.workpaperId ?? inspector.data.workpaper.id}`
-            : `${inspector.type}`,
+            : inspector.data?.findingId
+              ? `finding:${inspector.data.findingId}`
+              : `${inspector.type}`,
         recordType: inspector.type,
         recordId:
           inspector.data?.engagement?.id ??
           inspector.data?.workpaperId ??
           inspector.data?.workpaper?.id ??
+          inspector.data?.findingId ??
           '',
         title: inspector.type ? INSPECTOR_TITLES[inspector.type] ?? 'Audit Inspector' : 'Audit Inspector',
         data: inspector.data,
@@ -251,7 +254,11 @@ const RecordPage: React.FC<{ target: ViewRecordTarget }> = ({ target }) => {
   useEffect(() => {
     if (!type) return;
     const data =
-      target.recordType === 'engagement' ? { engagement: { id: target.recordId } } : { id: target.recordId };
+      target.recordType === 'engagement'
+        ? { engagement: { id: target.recordId } }
+        : target.recordType === 'finding'
+        ? { findingId: target.recordId }
+        : { id: target.recordId };
     openInspector(type, data);
     return () => closeInspector();
   }, [type, target.recordId]);

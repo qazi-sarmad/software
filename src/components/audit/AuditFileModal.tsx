@@ -14,6 +14,7 @@ import {
 import { PlanningTab } from './file/PlanningTab';
 import { ExecutionTab } from './file/ExecutionTab';
 import { ReviewTab } from './file/ReviewTab';
+import { hasRight } from '../../lib/rights';
 import { PlanningPanel } from '../plan/PlanningPanel';
 import { PopulationPanel } from '../audit/PopulationPanel';
 import { SamplingPanel } from '../audit/SamplingPanel';
@@ -24,6 +25,7 @@ import { ConclusionPanel } from '../audit/ConclusionPanel';
 import { DocumentViewerPanel } from '../audit/DocumentViewerPanel';
 import { ReportEditorPanel } from '../audit/ReportEditorPanel';
 import { CapRegisterPanel } from '../audit/CapRegisterPanel';
+import { AsOfTimeline } from '../audit/AsOfTimeline';
 import { ExportPanel } from '../admin/ExportPanel';
 import { CertificatePanel } from '../pending/CertificatePanel';
 
@@ -39,7 +41,7 @@ export const AuditFileModal: React.FC = () => {
   const requestedId: string | undefined = inspector.data?.engagement?.id;
   const engagement = requestedId ? scopedEngagements.find((e) => e.id === requestedId) : undefined;
   const [tab, setTab] = useState<AuditFileTab>(() => getInitialAuditFileTab(inspector.data));
-  const [phaseView, setPhaseView] = useState<'overview' | 'workspace' | 'findings' | 'conclusion' | 'documents' | 'report' | 'caps' | 'certificate' | 'export'>('overview');
+  const [phaseView, setPhaseView] = useState<'overview' | 'workspace' | 'findings' | 'conclusion' | 'documents' | 'report' | 'caps' | 'certificate' | 'export' | 'as_of'>('overview');
   const [signOffError, setSignOffError] = useState<string | null>(null);
 
   // Neutral state: does not reveal whether an out-of-scope engagement exists.
@@ -105,6 +107,8 @@ export const AuditFileModal: React.FC = () => {
           ['caps', 'CAP register'],
           ['certificate', 'Certificate'],
           ['export', 'Export'],
+          // WK-09 Time-Travel (F14): offered only to a caller holding view_insights.
+          ...(hasRight(currentUser, 'view_insights') ? [['as_of', 'Time-Travel'] as const] : []),
         ] as const).map(([v, label]) => (
           <button
             key={v}
@@ -164,6 +168,10 @@ export const AuditFileModal: React.FC = () => {
             engagementId={engagement.id}
             workpaperId={workpapers[0]?.id}
           />
+        </div>
+      ) : phaseView === 'as_of' ? (
+        <div className="space-y-6" data-testid="audit-file-as-of">
+          <AsOfTimeline engagementId={engagement.id} />
         </div>
       ) : (
         <>

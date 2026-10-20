@@ -26,6 +26,7 @@ const PlanItemsPanel = lazy(() => import('../plan/PlanItemsPanel').then((m) => (
 const ImportWizardPanel = lazy(() => import('../admin/ImportWizardPanel').then((m) => ({ default: m.ImportWizardPanel })));
 const ActivityLogPanel = lazy(() => import('../admin/ActivityLogPanel').then((m) => ({ default: m.ActivityLogPanel })));
 const OrgControlPanel = lazy(() => import('../admin/OrgControlPanel').then((m) => ({ default: m.OrgControlPanel })));
+const FindingDrilldown = lazy(() => import('../issues/FindingDrilldown').then((m) => ({ default: m.FindingDrilldown })));
 
 export const INSPECTOR_TITLES: Record<InspectorType, string> = {
   observation: 'Audit Observation & 5C Analysis',
@@ -49,6 +50,7 @@ export const INSPECTOR_TITLES: Record<InspectorType, string> = {
   import_wizard: 'Import',
   activity_log: 'Activity Log',
   org_control: 'Assurance control plane',
+  finding: 'Audit Finding',
 };
 
 /** Record type in a URL (/view/:recordType/:id) to the inspector content it shows. */
@@ -60,6 +62,7 @@ export const RECORD_TYPE_TO_INSPECTOR: Record<string, InspectorType> = {
   org_settings: 'org_settings',
   import_wizard: 'import_wizard',
   activity_log: 'activity_log',
+  finding: 'finding',
 };
 
 export interface RecordContentProps {
@@ -119,6 +122,8 @@ export const RecordContent: React.FC<RecordContentProps> = ({ type, data, onClos
           return <ActivityLogPanel />;
         case 'org_control':
           return <OrgControlPanel />;
+        case 'finding':
+          return <FindingDrilldown findingId={data?.findingId} />;
         default:
           return null;
       }

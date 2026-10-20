@@ -45,7 +45,8 @@ export type InspectorType =
   | 'plan_items'
   | 'import_wizard'
   | 'activity_log'
-  | 'org_control';
+  | 'org_control'
+  | 'finding';
 
 export interface InspectorState {
   type: InspectorType | null;

@@ -79,6 +79,8 @@ export interface HeatCell {
   entityName: string;
   bucket: string;
   count: number;
+  /** The findings in this cell, in the corpus order. The cell drills into the first (F15). */
+  findingIds: string[];
 }
 
 /**
@@ -270,9 +272,10 @@ export function heatMap(findings: PatternFinding[], by: 'year' | 'category' = 'y
       : (f.categoryTags && f.categoryTags.length > 0 ? [...f.categoryTags].sort()[0] : 'Untagged');
     const key = `${f.entityId ?? ''}|${bucket}`;
     const existing = cells.get(key);
-    if (existing) existing.count += 1;
+    if (existing) { existing.count += 1; existing.findingIds.push(f.findingId); }
     else cells.set(key, {
       entityId: f.entityId, entityName: f.entityName ?? 'Unknown entity', bucket, count: 1,
+      findingIds: [f.findingId],
     });
   }
   return [...cells.values()].sort((a, b) =>
