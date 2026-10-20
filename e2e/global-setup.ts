@@ -13,6 +13,15 @@ const B_U2 = '3dd4b6f1-9f4b-57d9-a846-336993d97ec3';
 /** Platform staff login (spec §24). No org membership; the access-token hook stamps platform_admin. */
 const PLATFORM_EMAIL = 'platform.admin@provio-test.invalid';
 
+/**
+ * S9: the external auditor principal (F13). It is NOT an org member — the access-token hook stamps
+ * user_role = 'external_auditor' from the external_auditor_access row written below. A seeded
+ * engagement gives it something to be granted.
+ */
+const EXTERNAL_AUDITOR_EMAIL = 'external.auditor@provio-test.invalid';
+const A_ENGAGEMENT = 'e0000000-0000-4000-8000-000000000001';
+const A_ENTITY = '6130452d-1288-53a3-a1d0-b66e34cd7d69';
+
 const ROLE_NAMES: [string, string][] = [
   ['CIA', 'cia'],
   ['Audit Manager', 'audit_manager'],
@@ -199,6 +208,13 @@ export default async function globalSetup() {
   must('setPassword ' + PLATFORM_EMAIL, await sb.auth.admin.updateUserById(platformId, { password: passwordFor(PLATFORM_EMAIL) }));
   must('platform_admins', await sb.from('platform_admins').upsert({ user_id: platformId }, { onConflict: 'user_id' }));
 
+  // S9 (F13): an external auditor principal. It is NOT an org member. The access row makes the
+  // access-token hook stamp user_role = 'external_auditor' and org_id, and one grant lets it read a
+  // single engagement. Seeded after the residue cleanup below, like every other fixture here.
+  const externalId = await findOrCreateUser(sb, EXTERNAL_AUDITOR_EMAIL);
+  must('setPassword ' + EXTERNAL_AUDITOR_EMAIL, await sb.auth.admin.updateUserById(externalId, { password: passwordFor(EXTERNAL_AUDITOR_EMAIL) }));
+
+
   // R6c: hand each spec the password for the account it signs in as. The file lives under the
   // git-ignored e2e/.auth/ and is regenerated every run, so no password is ever committed.
   mkdirSync(join(process.cwd(), 'e2e', '.auth'), { recursive: true });
@@ -278,4 +294,31 @@ export default async function globalSetup() {
   must('delete tutorial_views', await sb.from('tutorial_views').delete().in('org_id', [ORG_A, ORG_B]));
   must('delete setup_state', await sb.from('setup_state').delete().in('org_id', [ORG_A, ORG_B]));
   must('delete tenant_entitlements', await sb.from('tenant_entitlements').delete().in('org_id', [ORG_A, ORG_B]));
+
+  // S9 residue (M5). An external auditor invite or acceptance leaves an invite, an access row, a
+  // grant and access-log rows. Clear them so the next run observes the same starting state; the
+  // ledger entries and config history they write are append-only and are left in place.
+  must('delete external_access_log', await sb.from('external_access_log').delete().in('org_id', [ORG_A, ORG_B]));
+  must('delete external_auditor_grants', await sb.from('external_auditor_grants').delete().in('org_id', [ORG_A, ORG_B]));
+  must('delete external_auditor_access', await sb.from('external_auditor_access').delete().in('org_id', [ORG_A, ORG_B]));
+  must('delete external_auditor_invites', await sb.from('external_auditor_invites').delete().in('org_id', [ORG_A, ORG_B]));
+
+  // S9 fixture (F13). Seeded after the cleanup above so it survives. The auditor is not an org
+  // member: the access row is what makes the access-token hook stamp user_role = 'external_auditor'
+  // and org_id. One grant lets it read a single engagement, and the entitlement is turned on through
+  // the same RPC the Super Admin console uses, never by a direct write.
+  must('engagements', await sb.from('engagements').upsert([
+    { id: A_ENGAGEMENT, org_id: ORG_A, universe_id: A_U1, entity_id: A_ENTITY, title: 'External Auditor Engagement (Test)', stage: 'testing', sealed: false },
+  ], { onConflict: 'id' }));
+  must('platform_set_entitlement', await sb.rpc('platform_set_entitlement', {
+    p_org: ORG_A, p_key: 'external_auditors', p_enabled: true, p_plan: 'Assurance', p_reason: 'e2e',
+  }));
+  must('external_auditor_access', await sb.from('external_auditor_access').upsert({
+    org_id: ORG_A, user_id: externalId, email: EXTERNAL_AUDITOR_EMAIL, active: true, revoked_at: null,
+  }, { onConflict: 'org_id,user_id' }));
+  must('external_auditor_grants', await sb.from('external_auditor_grants').upsert({
+    org_id: ORG_A, user_id: externalId, engagement_id: A_ENGAGEMENT,
+    can_view_summary: true, can_download_pack: true, can_download_certificate: true, can_verify: true,
+    expires_at: null, revoked_at: null,
+  }, { onConflict: 'org_id,user_id,engagement_id' }));
 }

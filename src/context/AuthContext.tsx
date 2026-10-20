@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { User } from '../types';
 import { signIn as clientSignIn, signOut as clientSignOut, loadCurrentUser } from '../data/client';
+import { isExternalAuditorSession } from '../data/externalAuditors';
 import { platformWhoami } from '../data/platform';
 
 export type SignInResult = { ok: true } | { ok: false; reason: string };
@@ -10,7 +11,7 @@ export type SignInResult = { ok: true } | { ok: false; reason: string };
  * from this, so a signed-in account that is not yet in an organisation sees a "welcome, not
  * provisioned" screen instead of an indefinite loading state.
  */
-export type AuthStatus = 'loading' | 'signed_out' | 'no_tenant' | 'signed_in' | 'platform';
+export type AuthStatus = 'loading' | 'signed_out' | 'no_tenant' | 'signed_in' | 'platform' | 'external_auditor';
 
 interface AuthContextType {
   /** The authenticated identity, or null when there is no session. There is no default user. */
@@ -70,6 +71,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setStatus('platform');
       return;
     }
+    // A signed-in account with no org membership may be an external auditor (F13). The database
+    // decides through ext_me; only then does the shell show the read-only portal rather than the
+    // "not provisioned" screen.
+    if (await isExternalAuditorSession().catch(() => false)) {
+      setUser(null);
+      setIsPlatform(false);
+      setStatus('external_auditor');
+      return;
+    }
     setUser(null);
     setIsPlatform(false);
     setStatus('no_tenant');
@@ -95,6 +105,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (who.isPlatformAdmin) {
         setIsPlatform(true);
         setStatus('platform');
+        return { ok: true };
+      }
+      // Or an external auditor (F13): the database decides through ext_me, and the shell then shows
+      // the read-only portal instead of the "not provisioned" welcome screen.
+      if (await isExternalAuditorSession().catch(() => false)) {
+        setUser(null);
+        setIsPlatform(false);
+        setStatus('external_auditor');
         return { ok: true };
       }
       // Signed in but not provisioned: the app shell shows the welcome screen, not an error.

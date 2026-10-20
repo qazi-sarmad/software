@@ -101,5 +101,28 @@ Deno.serve(async (req: Request) => {
     });
   }
 
+  // F13: an external auditor accepts its invite. Same shape as "accept", but the account is bound
+  // through external_auditor_accept (service-role only), which writes the access row and the
+  // per-engagement grants. The caller must already be signed in (the account was created by the
+  // invite link). No Supabase Auth email is used, exactly as the member flow.
+  if (body.action === 'accept-external') {
+    if (!body.token || body.token.trim() === '') {
+      return json({ ok: false, reason: 'the invitation code is required' }, 400);
+    }
+    const caller = callerClient(authHeader);
+    const { data: who, error: whoError } = await caller.auth.getUser();
+    if (whoError || !who?.user) {
+      return json({ ok: false, reason: 'a signed-in session is required' }, 401);
+    }
+    const admin = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
+    const { data: accepted, error: acceptError } = await admin.rpc('external_auditor_accept', {
+      p_token: body.token,
+      p_user: who.user.id,
+    });
+    if (acceptError) return json({ ok: false, reason: acceptError.message }, 403);
+    const row = Array.isArray(accepted) ? accepted[0] : accepted;
+    return json({ ok: true, orgId: row?.out_org_id ?? null, email: row?.out_email ?? null });
+  }
+
   return json({ ok: false, reason: 'unknown action' }, 400);
 });

@@ -19,6 +19,14 @@ export const GRANT_PERMISSIONS: { key: GrantPermission; label: string }[] = [
   { key: 'verify', label: 'Verify a hash' },
 ];
 
+/** The grant field that carries each permission, so a UI toggle can flip the right column. */
+export const PERMISSION_FIELD: Record<GrantPermission, keyof ExternalAuditorGrant> = {
+  view_summary: 'canViewSummary',
+  download_pack: 'canDownloadPack',
+  download_certificate: 'canDownloadCertificate',
+  verify: 'canVerify',
+};
+
 export type ExpiryKind = 'time_boxed' | 'permanent';
 
 export interface ExternalAuditorGrant {

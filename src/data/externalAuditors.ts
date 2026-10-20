@@ -218,3 +218,36 @@ export async function verifyExternalCertificate(certificateId: string): Promise<
     issuedAt: (raw.issued_at as string) ?? null,
   };
 }
+
+/**
+ * Does the signed-in session belong to an external auditor? The database decides: ext_me returns a
+ * row only for a principal with an active external access row. A signed-in account with no org
+ * membership that is not platform staff may still be an external auditor, so the shell asks this
+ * before showing the "not provisioned" screen.
+ */
+export async function isExternalAuditorSession(): Promise<boolean> {
+  const sb = getClient();
+  if (!sb) return false;
+  const { data, error } = await sb.rpc('ext_me');
+  if (error) return false;
+  const row = (Array.isArray(data) ? data[0] : data) as { active?: boolean } | undefined;
+  return Boolean(row?.active);
+}
+
+/**
+ * Accept an external-auditor invitation (EX-01). Reached from the acceptance screen; the token is
+ * presented to the invite-user Edge Function, which verifies the caller's session and binds the
+ * account through external_auditor_accept (service-role only). The database keeps only the token
+ * hash, and the token is never logged (F5).
+ */
+export async function acceptExternalInvite(token: string): Promise<DataResult> {
+  const sb = getClient();
+  if (!sb) return { ok: false, reason: NOT_CONFIGURED };
+  const { data, error } = await sb.functions.invoke('invite-user', {
+    body: { action: 'accept-external', token },
+  });
+  if (error) return { ok: false, reason: error.message };
+  const r = data as { ok?: boolean; reason?: string } | null;
+  if (!r || r.ok !== true) return { ok: false, reason: r?.reason ?? 'The invitation could not be accepted.' };
+  return { ok: true };
+}

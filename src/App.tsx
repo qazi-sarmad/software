@@ -63,6 +63,16 @@ const PublicVerifyRoute = lazy(() =>
     default: m.PublicVerifyRoute,
   }))
 );
+const ExternalAuditorPortal = lazy(() =>
+  import('./components/pending/ExternalAuditorPortal').then((m) => ({
+    default: m.ExternalAuditorPortal,
+  }))
+);
+const ExternalAuditorAccept = lazy(() =>
+  import('./components/pending/ExternalAuditorAccept').then((m) => ({
+    default: m.ExternalAuditorAccept,
+  }))
+);
 // Dev-only pages. The conditional is a build-time constant: in a production build the branch and
 // the dynamic imports are removed, so these modules are not emitted into the bundle at all.
 const DevPalettePage = import.meta.env.DEV
@@ -179,7 +189,7 @@ export interface ViewRecordTarget {
   recordId: string;
 }
 
-const AuthGate: React.FC<{ viewRecord?: ViewRecordTarget }> = ({ viewRecord }) => {
+const AuthGate: React.FC<{ viewRecord?: ViewRecordTarget; externalPortal?: boolean }> = ({ viewRecord, externalPortal }) => {
   const { user, status } = useAuth();
   // In a production build there is no demo tenant to load, so the shell renders from the empty seed
   // and every screen shows its designed empty state. In development the flagged demo tenant loads.
@@ -201,8 +211,27 @@ const AuthGate: React.FC<{ viewRecord?: ViewRecordTarget }> = ({ viewRecord }) =
   // Resolve the shell from the session lifecycle, so a signed-in account with no org sees the
   // welcome screen rather than an indefinite spinner (D4).
   if (status === 'loading') return <LoadingFallback />;
+  if (status === 'external_auditor') {
+    return (
+      <Suspense fallback={<LoadingFallback />}>
+        <ExternalAuditorPortal />
+      </Suspense>
+    );
+  }
   if (status === 'no_tenant') return <NoTenantScreen />;
   if (status === 'signed_out' || status === 'platform' || !user) return <SignInScreen />;
+  // The external portal is only for that principal: a signed-in tenant member who opens /external is
+  // told plainly, never shown the tenant shell.
+  if (externalPortal) {
+    return (
+      <div className="max-w-2xl mx-auto py-16 px-6">
+        <InlineError
+          message="This page is for external auditors. Sign in with the account the organisation invited."
+          testId="external-portal-wrong-principal"
+        />
+      </div>
+    );
+  }
   if (!seed) return <LoadingFallback />;
   return (
     <AppProvider key={user.id} user={user} seed={seed}>
@@ -306,6 +335,24 @@ const AppRoutes: React.FC = () => {
         </AppProvider>
       </Suspense>
     );
+  }
+
+  // External auditor invitation acceptance (/external/accept?token=...). The visitor must be signed
+  // in; the token is presented to the invite-user Edge Function, which binds the account. Kept
+  // outside the tenant shell, like the portal itself.
+  if (currentPath.startsWith('/external/accept')) {
+    const token = new URLSearchParams(window.location.search).get('token') ?? '';
+    return (
+      <Suspense fallback={<LoadingFallback />}>
+        <ExternalAuditorAccept tokenFromUrl={token} />
+      </Suspense>
+    );
+  }
+
+  // External auditor portal (/external). A separate read-only principal (F13): it needs a session,
+  // so it renders behind the auth gate, but never inside the tenant application shell.
+  if (currentPath.startsWith('/external')) {
+    return <AuthGate externalPortal />;
   }
 
   // Development-only tooling routes. Absent from production builds (see src/guards/prodBundle.test.ts).
