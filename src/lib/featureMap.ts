@@ -33,6 +33,8 @@ export const FEATURE_RPC_MAP: Record<string, string> = {
   // patterns
   pattern_clusters: 'patterns',
   pattern_settings_save: 'patterns',
+  pattern_settings_get: 'patterns',
+  pattern_findings: 'patterns',
   // time_travel
   engagement_as_of: 'time_travel',
   // escalation / automation_rules
