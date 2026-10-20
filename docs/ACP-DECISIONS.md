@@ -1131,3 +1131,68 @@ IMPROVISE-THEN-DOCUMENT (this file).
 - Reason: the click now lands on the node from any point in the group's box, and F15's drill-down is
   reachable by keyboard, an accessibility gain and not only a test fix. Pointer events stay on the node.
 - Reverse: none; the transparent circle is the standard SVG hit-area fix.
+
+## D-S11-password-secret-path — the database password never passes through SQL (S11)
+- Point: F16 OA-15 needs a database password. F5 forbids plaintext through SQL or the ledger.
+- Options: (a) `hosting_connection_save(p_password)` calling `store_secret` in SQL; (b) the browser
+  stores the password through the existing `secrets-put` Edge Function, then links the returned id.
+- Choice: (b). `hosting_connection_save` takes no password; `hosting_connection_set_secret` links a
+  `secret_store` id and a mask. The vault path is `secret_vault_store` (service_role only), built 0063.
+- Reason: F5 says a plaintext-taking SQL entry point must not exist; 0063 already dropped `secret_put`
+  for exactly this reason. Reusing `secrets-put` keeps one secret path for the whole product.
+- Reverse: none; a plaintext SQL parameter would reintroduce the defect 0063 removed.
+
+## D-S11-platform-rule-trail — platform-level edits go to platform_trail, not the tenant ledger
+- Point: `hosting_fit_rule_save` edits a platform catalogue with no tenant. The first version called
+  `append_ledger_entry(jwt_org_id(), …)`, which failed with a NOT NULL org_id.
+- Choice: platform settings log to `platform_trail` via `platform_log` (actor, action, object). The
+  tenant business ledger is only for tenant actions (F20/L5).
+- Reason: F20 enumerates the ledger kinds; none is a platform rule change. The platform trail is the
+  existing home for Super Admin actions.
+- Reverse: none.
+
+## D-S11-job-history — a migration job's start is configuration history, not the ledger (S11)
+- Point: F20 names `hosting_migration_cutover` and `hosting_migration_retired` as ledger kinds; it
+  does not name a "started" kind. F7 lists `hosting.migration.started` as an event.
+- Choice: `migration_job_create` writes a `config_versions` row (key `hosting_migration:job`) and
+  emits `hosting.migration.started`; the cutover and retire transitions write the two F20 ledger kinds.
+- Reason: one story for configuration (L5, F2) and exactly the ledger kinds F20 fixed.
+- Reverse: none.
+
+## D-S11-fk-cascade — migration tables carry an org foreign key for the test reset (S11)
+- Point: M5 requires SQL tests to leave no residue; the shared reset is `truncate orgs cascade`.
+  `hosting_connections`, `migration_jobs` and `migration_steps` were created without an org FK, so
+  test 78's rows survived between runs and its "expected 1, got 2" assertion failed.
+- Choice: add guarded `org_id -> orgs(id) on delete cascade` (and `migration_jobs.connection_id ->
+  hosting_connections(id)`) constraints, each guarded by a `pg_constraint` existence check (M2).
+- Reason: existing S1 tables already follow this pattern; it is the only reset path the suite uses.
+- Reverse: none.
+
+## D-S11-ledger-copy-guard — the bypass is inlined in the chain trigger (S11)
+- Point: F16 allows a migration runner to preserve sequence, timestamps and hashes, bypassing the
+  chain trigger, only as `provio_migrator` with `provio.migration_mode` on.
+- Choice: put the guard directly in `chain_ledger_entry()` (0006) as `if current_user =
+  'provio_migrator' and current_setting('provio.migration_mode', true) = 'on' then return new`.
+  `ledger_copy_mode_ok()` mirrors it for callers.
+- Reason: 0006 sorts eleventh, before every later migration; a function defined later could not be
+  called from it. `current_user` cannot be spoofed by a session variable, so an ordinary role setting
+  the GUC changes nothing (SQL test 78 proves it).
+- Reverse: none; the guard is inert unless the runner role exists.
+
+## D-S11-migration-runner-standalone — the runner is a separate Node package (S11)
+- Point: F16 requires a runner outside the Vite bundle. Where does it sit relative to tsc/vite/vitest?
+- Choice: `tools/migration-runner/` with its own `package.json` and `node --test`; already under
+  tsconfig `exclude` and vitest `exclude`, and no import from `src/`. The step logic is driver-injected
+  and tested against `fakeDriver.mjs`.
+- Reason: F16 says heavy work cannot run in Edge Functions and must not enter the browser bundle; the
+  pure step logic is unit-testable without two live databases, which CI cannot provide.
+- Reverse: none.
+
+## D-S11-rule-seed-conflict — hosting rule seed keeps administrator edits (S11)
+- Point: the seed ran on every apply with `on conflict do update`, which would overwrite a Super
+  Admin's edited rule on the second (CI step 6) apply.
+- Choice: seed with `on conflict (rule_key) do nothing`, called once from the migration.
+- Reason: M2 requires a migration to be safe on top of its own result; overwriting live configuration
+  is also a config-not-code violation (C1).
+- Reverse: none.
+
