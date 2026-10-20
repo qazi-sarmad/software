@@ -266,7 +266,7 @@ export const BoardPackPanel: React.FC = () => {
               </label>
               <label className="text-apple-12 text-secondary">
                 Boundary
-                <Select data-testid="wk-boardpack-boundary" ariaLabel="Boundary" value={boundary}
+                <Select testId="wk-boardpack-boundary" ariaLabel="Boundary" value={boundary}
                   onChange={(v) => setBoundary(v as BoundaryKind)}
                   options={BOUNDARIES.map((b) => ({ value: b.value, label: b.label }))} />
               </label>
