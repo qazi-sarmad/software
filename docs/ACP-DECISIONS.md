@@ -1196,3 +1196,32 @@ IMPROVISE-THEN-DOCUMENT (this file).
   is also a config-not-code violation (C1).
 - Reverse: none.
 
+
+## D-S11c-testid-naming — hosting testids follow the <screenId>-<element> rule (S11.c)
+- Point: F19 fixes testid shape as `<screenId>-<element>`, but SA-10/SA-11/SA-12 share one screen
+  (`/superadmin`) and OA-15 lives inside `Organisation settings`.
+- Choice: prevent collisions with a screen prefix: `sa-hosting-*` for SA-10/SA-11, `sa-migration-*`
+  and `sa-deployment-kit` for SA-12, `oa-hosting-*` for OA-15. The sub-tab switch is
+  `sa-hosting-tab-<check|rules>`.
+- Reason: keeps the F19 contract exact while never colliding with the existing `superadmin-*` and
+  `org-*` ids; the recorder binds only to these.
+- Reverse: rename the ids in the components and in `docs/ACP-UI-CONTRACT.md` together.
+
+## D-S11c-no-password-in-sql — the connection password goes through secrets-put only (S11.c)
+- Point: OA-15 collects a database password; F5 forbids a secret reaching SQL, a log or the ledger.
+- Choice: `OrgHostingPanel` sends the password to `storeSecret` (the `secrets-put` Edge Function) and
+  links only the returned secret id and mask through `hosting_connection_set_secret`. The
+  `saveHostingConnection` payload never carries a password.
+- Reason: F5; a unit test asserts the saved payload does not contain the password text.
+- Reverse: none; storing a password through SQL would be a Law violation.
+
+## D-S11d-tutorial-keys — the S11 tutorial keys are registered now, recorded by S12 (S11.d)
+- Point: F18 wants a GIF for every configuration screen; S11's screens were not in the S10 registry.
+- Choice: register `sa.hosting-fit`, `sa.hosting-rules`, `sa.migration`, `oa.hosting`, `oa.migration`,
+  `oa.deployment-kit`, `oa.retire-old` in `docs/ACP-TUTORIALS.md` with their plain steps. The GIF
+  files and registry rows are produced by `scripts/record-tutorials.mjs` in S12, which fails the build
+  until every key has a row and a file.
+- Reason: the recorder binds to the testids frozen in `docs/ACP-UI-CONTRACT.md`; naming the keys now
+  lets S12 record them against a stable contract.
+- Reverse: none.
+

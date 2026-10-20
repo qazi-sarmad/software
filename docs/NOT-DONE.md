@@ -210,9 +210,20 @@ clear the first two before Phase 2 closes.
   are produced then.
 - **Event catalogue gaps.** Events whose source does not exist yet are not wired: every key in the F7
   catalogue that has no emitter is listed by the S2 automation test rather than faked.
-- Slices S11 to S13 (hosting fit and the migration runner, the completed wizards, and the final
-  contract) are not started at the time of writing. S8 (certificate and public verification), S9
-  (external auditor portal) and S10 (Time-Travel and Patterns) are complete.
+- Slices S12 and S13 (the completed wizards and Go Live, and the final contract) are not started at
+  the time of writing. S8 (certificate and public verification), S9 (external auditor portal),
+  S10 (Time-Travel and Patterns) and S11 (hosting fit and database mobility) are complete.
+- **Migration runner against two live databases.** `tools/migration-runner/` ships its 11 steps with a
+  driver-injected design and unit tests against `fakeDriver.mjs`. CI cannot provide two reachable
+  Postgres databases, so the end-to-end run against two real targets is left to the owner's runner
+  machine; the step logic, the checkpointing and the ledger-copy guard are tested in isolation.
+- **Test button against a real target.** OA-15's connectivity Test calls `hosting-test`; with no
+  reachable target configured it reports the error the provider returns. The owner supplies a real
+  connection (F23).
+- **Tutorial GIFs for the S11 keys** (`sa.hosting-fit`, `sa.hosting-rules`, `sa.migration`,
+  `oa.hosting`, `oa.migration`, `oa.deployment-kit`, `oa.retire-old`) are registered in
+  `docs/ACP-TUTORIALS.md` and named in the UI contract, but `scripts/record-tutorials.mjs` and
+  `npm run tutorials:record` are S12 work; the GIFs are produced then.
 - **Time-Travel coverage gaps.** `engagement_as_of` reconstructs workpapers, findings, seals and
   statuses from append-only history (ledger, activity log, version tables). Entities that keep only
   current state cannot be reconstructed; the function reports them as "Not recorded before <date>"

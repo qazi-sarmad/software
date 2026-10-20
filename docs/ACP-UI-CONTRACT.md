@@ -603,6 +603,72 @@ as its slice lands.
 
 ---
 
+## SA-10 / SA-11 — hosting fit check and hosting rules (S11, F16)
+
+- **Purpose:** a searchable stack catalogue ("RDS", "Aurora", "Azure PG", "Cloud SQL", "Docker",
+  "VMware", "SQL Server", "Oracle", "MySQL" and more) pre-fills a short questionnaire; the
+  deterministic `evaluateFit` returns a verdict (any blocker → Red; else any warning → Amber; else
+  Green), a cost tier, plain reasons and a "what the client must provide" checklist. SA-11 edits the
+  rules visually, one field / operator / value / severity / cost tier per row.
+- **Route:** `/superadmin`, tabs `Hosting fit` (`sa-hosting-tab-check`) and `Rules`
+  (`sa-hosting-tab-rules`).
+- **Rights:** platform admin only.
+- **Data:** `getHostingCatalogue()` (`src/data/hostingFit.ts`), `saveHostingRule(rule)`
+  (`src/data/hostingFit.ts`). Pure logic `evaluateFit`, `searchStacks`, `requiredChecklist`
+  (`src/lib/hostingFit.ts`).
+- **Testids:** `sa-hosting`, `sa-hosting-loading`, `sa-hosting-error`, `sa-hosting-tabs`,
+  `sa-hosting-tab-check`, `sa-hosting-tab-rules`, `sa-hosting-fit`, `sa-hosting-search`,
+  `sa-hosting-search-empty`, `sa-hosting-search-results`, `sa-hosting-stack-<key>`,
+  `sa-hosting-field-<field>` (engine, hosting_kind, os, ram_gb, cpu_cores, disk_gb, backup_policy,
+  users, largest_population, docker_available, inbound_443, outbound_internet), `sa-hosting-verdict`,
+  `sa-hosting-verdict-value`, `sa-hosting-cost`, `sa-hosting-reasons`, `sa-hosting-checklist`,
+  `sa-hosting-rules`, `sa-hosting-rule-saved`, `sa-hosting-rule-<key>`,
+  `sa-hosting-rule-enabled-<key>`, `sa-hosting-rule-field-<key>`, `sa-hosting-rule-op-<key>`,
+  `sa-hosting-rule-value-<key>`, `sa-hosting-rule-sev-<key>`, `sa-hosting-rule-cost-<key>`.
+- **States:** loading; error (with Retry); a rule edit that fails reloads the catalogue and shows the
+  error; the verdict region always renders.
+- **Tutorial key:** `sa.hosting-fit`, `sa.hosting-rules`.
+
+## SA-12 — migration jobs and deployment kit (S11, F16)
+
+- **Purpose:** platform staff pick a tenant and watch its migration job: status, per-step rows and
+  checkpoints, the retention window. The Deployment Kit panel states the env template and hosting
+  steps in plain words. The runner itself is a separate Node package (`tools/migration-runner/`).
+- **Route:** `/superadmin`, tab `Migration jobs`.
+- **Rights:** platform admin only.
+- **Data:** `listMigrationJobs(orgId)` (`src/data/hostingFit.ts`), `listTenants()`
+  (`src/data/platform.ts`).
+- **Testids:** `sa-migration`, `sa-migration-loading`, `sa-migration-error`, `sa-migration-tenant`,
+  `sa-migration-refresh`, `sa-migration-jobs-loading`, `sa-migration-jobs-error`, `sa-migration-empty`,
+  `sa-migration-job-<id>`, `sa-migration-job-error-<id>`, `sa-migration-steps-<id>`,
+  `sa-deployment-kit`.
+- **States:** loading tenants; loading jobs; an empty jobs list; an inline job error; a failed job is
+  flagged in cinnabar, an awaiting-cutover or retired job in verdigris.
+- **Tutorial key:** `sa.migration`.
+
+## OA-15 — hosting and database (S11, F16)
+
+- **Purpose:** the Org Admin enters the target connection (kind, host, port, database, user, SSL mode;
+  the password goes through the secrets-put Edge Function and is shown only masked — F5), starts a
+  migration job, copies the runner command, and retires the old connection with a hold-to-confirm.
+- **Route:** `Organisation settings` → tab `Hosting` (`org-control-tab-hosting`).
+- **Rights:** `edit_config`. The `hosting_migration` entitlement gates the RPCs in the database.
+- **Data:** `listHostingConnections(orgId)`, `saveHostingConnection(input)`,
+  `setConnectionSecret(connectionId, secretId, masked)`, `createMigrationJob(orgId, connectionId)`,
+  `migrationRunnerCommand(jobId, jobToken)` (`src/data/hostingFit.ts`); `storeSecret(orgId, label,
+  value)` (`src/data/secrets.ts`).
+- **Testids:** `oa-hosting`, `oa-hosting-loading`, `oa-hosting-error`, `oa-hosting-action-error`,
+  `oa-hosting-notice`, `oa-hosting-label`, `oa-hosting-kind`, `oa-hosting-host`, `oa-hosting-port`,
+  `oa-hosting-database`, `oa-hosting-username`, `oa-hosting-ssl`, `oa-hosting-password`,
+  `oa-hosting-save`, `oa-hosting-runner-command`, `oa-hosting-empty`, `oa-hosting-connection-<id>`,
+  `oa-hosting-mask-<id>`, `oa-hosting-test-<id>`, `oa-hosting-migrate-<id>`, `oa-hosting-retire-<id>`.
+- **States:** loading; error (with Retry); an incomplete form refused inline before any call; an empty
+  connections list; a runner command panel after a job starts. No blocking modal; retire uses
+  hold-to-confirm.
+- **Tutorial key:** `oa.hosting`, `oa.migration`, `oa.deployment-kit`, `oa.retire-old`.
+
+---
+
 ## Tutorials regenerated
 
 `npm run tutorials:record` regenerates every GIF (S12). The recorder binds only to the testids listed
