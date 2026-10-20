@@ -23,7 +23,10 @@ node scripts/check-tokens.mjs || { echo "FAIL: tokens"; exit 1; }
 step "5. Shrink check"
 node scripts/check-shrink.mjs || { echo "FAIL: shrink"; exit 1; }
 
-step "6. Source guards (single client, no blocking modals, no demo ids, no Math.random)"
+step "6. Tutorial check (every Appendix A key has a GIF)"
+npm run check-tutorials || { echo "FAIL: check-tutorials"; exit 1; }
+
+step "7. Source guards (single client, no blocking modals, no demo ids, no Math.random)"
 npx vitest run src/guards || { echo "FAIL: guards"; exit 1; }
 
 printf '\nPRE-PR GATES GREEN\n'

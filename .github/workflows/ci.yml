@@ -48,7 +48,10 @@ jobs:
       - name: 5. Shrink check
         run: node scripts/check-shrink.mjs
 
-      - name: 6. Migrations and SQL tests (test project only)
+      - name: 6. Tutorial check
+        run: npm run check-tutorials
+
+      - name: 7. Migrations and SQL tests (test project only)
         if: ${{ hashFiles('supabase/migrations/**') != '' }}
         env:
           TEST_SUPABASE_DB_URL: ${{ secrets.TEST_SUPABASE_DB_URL }}
@@ -64,7 +67,7 @@ jobs:
             psql "$TEST_SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f "$f"
           done
 
-      - name: 7. Playwright
+      - name: 8. Playwright
         env:
           VITE_SUPABASE_URL: ${{ secrets.TEST_SUPABASE_URL }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.TEST_SUPABASE_PUBLISHABLE_KEY }}
