@@ -113,3 +113,23 @@ Diagnosis: the test called `signIn` (returns as soon as the button is clicked) a
 navigated to `/external`. The reload raced the session write, landed on the sign-in screen, and the
 notice never rendered. Fixed in `2b0a770` by using `signInTenant`, which waits for the navigation
 strip. Test-only. No blocker remains.
+
+## S12-FIX — the tutorial spec failed on an over-broad dialog assertion (fixed in a63acb9)
+
+Exact error (CI run 39502753545, step "8. Playwright"):
+
+```
+Error: expect(locator).toHaveCount(expected) failed
+Locator:  locator('[role="dialog"]')
+Expected: 0
+Received: 1
+  at /home/runner/work/software/software/e2e/s12-tutorials.spec.ts:39:51
+```
+
+Diagnosis: the S12 spec asserted that the page holds zero `[role="dialog"]` elements while the drawer
+is open. The Org Control panel legitimately opens inside a non-blocking `FloatingWindow`, which
+carries `role="dialog"` — the `noBlockingModal` guard allow-lists exactly that file, and the window
+sets no `aria-modal`. The assertion tested "no dialog element", not the actual rule, which is "no
+blocking modal". Fix (test-only, no production change): assert the drawer's own
+`role="complementary"` and that no element sets `aria-modal="true"`. CI run 39506774584 is green on
+all eight steps.
