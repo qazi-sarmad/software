@@ -35,6 +35,14 @@ run for a while and keep a lock. The deadlock is therefore intermittent: the sam
 it never races another session, and retry once on a deadlock.
 
 
+## B-credentials-outage — RESOLVED 2026-10-19 (later in the same run)
+
+The outage ended on its own: the `GITHUB_TOKEN` environment variable answers 200 again and
+`git push` through `origin` succeeds. Every commit that was held locally (M-2 onward) was pushed as
+one batch, and CI was dispatched for the head. No commit was lost and no code defect was involved.
+The lesson recorded: when both tokens 401 at once, stop retrying and keep committing locally; the
+outage is environmental and clears.
+
 ## B-credentials-outage — both GitHub tokens return 401 (2026-10-19, M-2)
 
 Exact text from every call at 2026-10-19T18:45Z onwards:
