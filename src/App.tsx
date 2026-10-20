@@ -58,6 +58,11 @@ const GlassBoxPublicRoute = lazy(() =>
     default: m.GlassBoxPublicRoute,
   }))
 );
+const PublicVerifyRoute = lazy(() =>
+  import('./components/pending/PublicVerifyRoute').then((m) => ({
+    default: m.PublicVerifyRoute,
+  }))
+);
 // Dev-only pages. The conditional is a build-time constant: in a production build the branch and
 // the dynamic imports are removed, so these modules are not emitted into the bundle at all.
 const DevPalettePage = import.meta.env.DEV
@@ -276,6 +281,20 @@ const AppRoutes: React.FC = () => {
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
+
+  // Public route /verify/:id (certificate) and /pack/:id (Board Pack). The ONLY anonymous surface
+  // (F11). Needs no session and touches no tenant table as anon.
+  if (currentPath.startsWith('/verify/') || currentPath.startsWith('/pack/')) {
+    const kind = currentPath.startsWith('/verify/') ? 'verify' : 'pack';
+    const id = currentPath.replace(kind === 'verify' ? '/verify/' : '/pack/', '').split('/')[0];
+    return (
+      <Suspense fallback={<LoadingFallback />}>
+        <AppProvider user={EXTERNAL_TOKEN_HOLDER} seed={EMPTY_SEED}>
+          <PublicVerifyRoute kind={kind} idFromUrl={id} />
+        </AppProvider>
+      </Suspense>
+    );
+  }
 
   // Public route /e/:token (GlassBox public upload portal). Needs no session.
   if (currentPath.startsWith('/e/')) {
