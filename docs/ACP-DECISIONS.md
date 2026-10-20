@@ -900,3 +900,84 @@ IMPROVISE-THEN-DOCUMENT (this file).
   `canonical_value` silently change a previously issued certificate's hash.
 - Reverse: none; this is the intended invariant.
 
+## D-S9-metadata — the identity/metadata tables exclude the external auditor explicitly (S9, F13)
+- Point: F13 requires an external auditor to read ZERO rows from every business table, and requires
+  RLS on every table to keep excluding them (they are not `org_members`). But the auditor carries an
+  `org_id` claim (the access-token hook stamps it so the ext_ functions can find its grants), and
+  several policies written before this slice key only on `org_id = jwt_org_id()`.
+- Options: (a) leave the auditor without an `org_id` claim and let the ext_ functions resolve the org
+  another way; (b) keep the claim and tighten each affected policy with
+  `and not public.is_external_auditor()`.
+- Choice: (b). 0066 tightens `roles`, `orgs`, `findings`, `issues`, `cap_items`, `notifications` and
+  `severity_levels` in place, adding `and not public.is_external_auditor()` to each select policy.
+  `is_external_auditor()` reads only `jwt_user_role()`, so the check costs nothing and cannot be
+  forged without a signed claim.
+- Reason: (a) would force every ext_ helper to take an explicit `p_org` and re-derive it from the
+  grant table, widening the surface. The claim is set by the access-token hook, which strips any
+  pre-existing `org_id`/`user_role` first, so it cannot be forged. Test 75 enumerates every table in
+  `org_tables()` and fails if the auditor reads a single row.
+- Reverse: drop the `and not public.is_external_auditor()` clause from the seven policies; the
+  original `org_id = jwt_org_id()` behaviour returns and the auditor would see those rows again.
+
+## D-S9-denial-no-raise — a refused ext_ call logs and returns no rows, it does not raise (S9, F13)
+- Point: F13 says "every call is logged". If a refused ext_ call raised an exception, the caller's
+  transaction would abort and the `insert into external_access_log` with it — the denial would leave
+  no trace, and the requirement would be false.
+- Options: (a) `raise exception 'not allowed'` on refusal, as the tenant RPCs do; (b) log
+  `outcome = 'denied'` and `return` with no rows.
+- Choice: (b) for the read surface. Every ext_ function returns `outcome = 'denied'` and no rows when
+  `external_actor_ok` or `external_has_permission` is false; `ext_verify_certificate` returns a
+  `not_found` row. The portal calls `ext_me` first to learn whether access is active, so it can show
+  the plain "your access is not active" screen instead of an empty list.
+- Reason: an audit trail that vanishes exactly when access is refused is worse than useless. The
+  refusal is still absolute — no row of tenant data is returned — so nothing is weakened. Test 75
+  asserts at least one `denied` log row exists.
+- Reverse: replace the `return` with a `raise exception`; the log row would be lost, so the test that
+  counts `denied` rows would fail first and make the change visible.
+
+## D-S9-board-pack-scope — a Board Pack is matched to an engagement by scope_key or snapshot ref (S9, F10)
+- Point: `ext_latest_board_pack(p_engagement_id)` must return the hash of the pack that covers an
+  engagement, but `board_pack_history` (0061) has no `engagement_id` column: a pack is scoped by a
+  free-text `scope_key` (organisation, universe, entity or period), per F10.
+- Options: (a) add an `engagement_id` column to `board_pack_history`; (b) match the latest successful
+  pack whose `scope_key` equals the engagement id, or whose snapshot names the engagement among its
+  figure refs.
+- Choice: (b). The function selects the newest `status = 'ready'` row where
+  `scope_key = p_engagement_id::text` or `snapshot::text like '%' || p_engagement_id || '%'`.
+- Reason: F10 fixes the scope model and F2 forbids building a parallel one; adding a column would
+  change the pack's meaning. A pack generated with the engagement as its scope, or a snapshot whose
+  refs name the engagement, is the pack that covers it. Only the id and hash are returned; the file is
+  rendered in the browser, so no tenant content crosses the boundary.
+- Reverse: drop the function (it is a read helper) and add the column if the pack model ever gains an
+  explicit engagement link.
+
+## D-S9-invite-not-sent — the invitation is queued, and the UI says so (S9, S3, F6)
+- Point: the D20 defect was an "Invitation sent" message for an email that was never sent. F6 makes
+  the stub provider the default, so nothing leaves the platform until an adapter is configured.
+- Choice: `external_auditor_invite` writes a single-use, hashed token and calls the existing
+  `queue_email` with the acceptance link; the panel's success message is "Invitation queued. It is
+  not sent yet; it goes out when email is set up." The same wording is used for member invitations
+  (S3). The Edge Function `invite-user` (action `accept-external`) binds the account through
+  `external_auditor_accept`, which is service-role only.
+- Reason: honest copy is a product rule (F24), and the queue is the single dispatch path (F6). The
+  token is stored only as a sha256 hex digest (test 75 asserts `length(token_hash) = 64`).
+- Reverse: none; the copy is required by the D20 fix.
+
+## D-S9-external-principal — the external auditor is a session status, not an org role (S9, F13)
+- Point: F13 makes the external auditor a separate principal type; the closed rights list (F3) is
+  unaffected. The app shell must decide, for a signed-in account with no org membership, between
+  "platform staff", "external auditor" and "not provisioned".
+- Options: (a) add an external role to the rights matrix; (b) a new `AuthStatus` value
+  `external_auditor`, resolved from the database by `ext_me`, that renders the portal outside the
+  tenant shell.
+- Choice: (b). `AuthContext` gains the status and asks `isExternalAuditorSession()` (an `ext_me`
+  call) only after `loadCurrentUser` and `platformWhoami` have both said no. The portal renders
+  outside `AppProvider`, so no tenant seed, scope or right is mounted. `/external` for a tenant
+  member shows a plain notice instead of the portal.
+- Reason: the rights list is a closed list of fifteen keys (F3) and F13 says it is unaffected; an
+  external role would have to appear there. Resolving the principal in the database keeps the
+  decision server-side and works for both the initial load and the sign-in path (both were fixed in
+  this slice, so signing in as an auditor reaches the portal, not the welcome screen).
+- Reverse: remove the `external_auditor` status and the two `isExternalAuditorSession()` calls; the
+  account would fall back to the "not provisioned" screen.
+

@@ -481,6 +481,58 @@ as its slice lands.
 
 ---
 
+## OA-14 — external auditors (S9)
+
+- **Purpose:** invite an external auditor by email and edit the per-engagement permission matrix
+  (F13). An external auditor is a separate read-only principal, never an org role.
+- **Route:** the Org Control panel, tab "External auditors" (`org-control-tab-auditors`).
+- **Rights:** `edit_config` to invite, edit the matrix or revoke. The `external_auditors` entitlement
+  gates the feature; a refusal from the server is shown in plain words.
+- **Data:** `inviteExternalAuditor({email, engagementIds, expiryKind, accessDays})`,
+  `listExternalAuditors(orgId)`, `saveExternalAuditorGrants(orgId, grants)`,
+  `revokeExternalAuditor(orgId, userId, engagementId?)`, `listExternalAccessLog(orgId, limit)`
+  (`src/data/externalAuditors.ts`). Pure helpers in `src/lib/externalAuditors.ts` (`grantIsLive`,
+  `permissionsOf`, `permissionMatrix`, `normaliseEngagementIds`, `describeExpiry`, `SIGNUP_DISABLED_HINT`).
+- **Testids:** `oa-auditors`, `oa-auditors-loading`, `oa-auditors-error`, `oa-auditors-result-error`,
+  `oa-auditors-result-ok`, `oa-auditors-email`, `oa-auditors-expiry-kind`, `oa-auditors-days`,
+  `oa-auditors-permanent-warning`, `oa-auditors-engagements`, `oa-auditors-engagement-<id>`,
+  `oa-auditors-no-engagements`, `oa-auditors-invite`, `oa-auditors-matrix`, `oa-auditors-matrix-empty`,
+  `oa-auditors-row-<userId>`, `oa-auditors-cell-<userId>-<permission>`, `oa-auditors-expiry-<userId>`,
+  `oa-auditors-revoke-<userId>`, `oa-auditors-log`, `oa-auditors-log-empty`.
+- **States:** loading; an empty matrix ("No external auditors yet."); an empty log; an inline error.
+  Choosing "Permanent" shows a plain warning. Revoking a whole account is a hold-to-confirm. The
+  invitation result is "Invitation queued…", never "sent" (D20).
+- **Tutorial keys:** `oa.auditors`, `oa.auditor-matrix`.
+
+---
+
+## EX-01 to EX-04 — the external auditor portal (S9)
+
+- **Purpose:** the read-only portal an external auditor sees (F13). It lists the engagements the
+  auditor is granted, shows an engagement summary, exposes the latest Board Pack and certificate
+  hashes, and verifies a dropped document in the browser.
+- **Route:** `/external` (portal), `/external/accept?token=…` (accept an invitation). Both are
+  outside the tenant shell; the portal needs a session, the acceptance page is where the session is
+  first used. A tenant member who opens `/external` sees a plain notice, never the portal.
+- **Rights:** none from the closed list (F13: the list is unaffected). Access is decided by the
+  database through the security-definer `ext_*` family, which checks an active, unexpired grant.
+- **Data:** `getMyAccess()`, `listMyEngagements()`, `getEngagementSummary(engagementId)`,
+  `getLatestPack(engagementId)`, `getLatestCertificate(engagementId)`,
+  `verifyExternalCertificate(certificateId)`, `acceptExternalInvite(token)`
+  (`src/data/externalAuditors.ts`). The accept call reaches the `invite-user` Edge Function, which
+  binds the account through `external_auditor_accept` (service-role only).
+- **Testids:** `ex-accept`, `ex-accept-token`, `ex-accept-submit`, `ex-accept-error`, `ex-accept-done`,
+  `ex-accept-continue`, `ex-accept-hint`; `ex-portal`, `ex-portal-loading`, `ex-portal-inactive`,
+  `ex-portal-error`, `ex-portal-empty`, `ex-portal-engagements`, `ex-portal-engagement-<id>`,
+  `ex-portal-summary`, `ex-portal-downloads`, `ex-portal-pack-hash`, `ex-portal-cert-hash`,
+  `ex-portal-verify`, `ex-portal-verify-result`, `ex-portal-drop`, `ex-portal-drop-input`,
+  `ex-portal-drop-error`, `ex-portal-drop-result`; `external-portal-wrong-principal` (tenant member).
+- **States:** loading; inactive ("Your access is not active"); an empty engagement list; an inline
+  error; a drop that matches or does not match. There is no write control anywhere.
+- **Tutorial keys:** `ex.accept`, `ex.home`, `ex.engagement`, `ex.verify`.
+
+---
+
 ## Tutorials regenerated
 
 `npm run tutorials:record` regenerates every GIF (S12). The recorder binds only to the testids listed
