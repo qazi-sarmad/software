@@ -52,6 +52,10 @@ begin
   v_rule := (select r from jsonb_array_elements(public.hosting_fit_get() -> 'rules') r
               where r ->> 'key' = 'size.ram.warning');
   perform provio_test.assert_eq(v_rule ->> 'value', '16', 'F16: a rule edit is saved by key');
+  -- M5: leave no residue on the shared project. Restore the seeded rule so the app's real evaluator
+  -- still returns Green for the documented default answers.
+  perform public.hosting_fit_rule_save('size.ram.warning','ram_gb','lt','8','warning',
+    '8 GB RAM is recommended for a comfortable deployment.', 'standard', true);
 end $$;
 select provio_test.as_owner();
 
