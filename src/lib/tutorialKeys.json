@@ -1,0 +1,512 @@
+[
+  {
+    "key": "oa.dual-session",
+    "audience": "org_admin",
+    "screenId": "GL-01",
+    "title": "Dual Session banner"
+  },
+  {
+    "key": "sa.dual-session",
+    "audience": "super_admin",
+    "screenId": "GL-01",
+    "title": "Dual Session banner"
+  },
+  {
+    "key": "sa.setup-wizard",
+    "audience": "super_admin",
+    "screenId": "SA-01",
+    "title": "Platform setup wizard"
+  },
+  {
+    "key": "sa.setup-1",
+    "audience": "super_admin",
+    "screenId": "SA-01",
+    "title": "Platform readiness check"
+  },
+  {
+    "key": "sa.setup-2",
+    "audience": "super_admin",
+    "screenId": "SA-01",
+    "title": "Platform email"
+  },
+  {
+    "key": "sa.setup-3",
+    "audience": "super_admin",
+    "screenId": "SA-01",
+    "title": "Platform notification recipients"
+  },
+  {
+    "key": "sa.setup-4",
+    "audience": "super_admin",
+    "screenId": "SA-01",
+    "title": "AI model registry and deny-list"
+  },
+  {
+    "key": "sa.setup-5",
+    "audience": "super_admin",
+    "screenId": "SA-01",
+    "title": "Hosting catalogue review"
+  },
+  {
+    "key": "sa.setup-6",
+    "audience": "super_admin",
+    "screenId": "SA-01",
+    "title": "Platform default rules and templates"
+  },
+  {
+    "key": "sa.setup-7",
+    "audience": "super_admin",
+    "screenId": "SA-01",
+    "title": "Feature catalogue and plans"
+  },
+  {
+    "key": "sa.setup-8",
+    "audience": "super_admin",
+    "screenId": "SA-01",
+    "title": "Tutorial library check"
+  },
+  {
+    "key": "sa.setup-9",
+    "audience": "super_admin",
+    "screenId": "SA-01",
+    "title": "New-tenant defaults and Go Live"
+  },
+  {
+    "key": "sa.health",
+    "audience": "super_admin",
+    "screenId": "SA-02",
+    "title": "Platform health"
+  },
+  {
+    "key": "sa.tenant-hub",
+    "audience": "super_admin",
+    "screenId": "SA-03",
+    "title": "Tenant hub"
+  },
+  {
+    "key": "sa.email-resend",
+    "audience": "super_admin",
+    "screenId": "SA-04",
+    "title": "Email: Resend"
+  },
+  {
+    "key": "sa.email-microsoft",
+    "audience": "super_admin",
+    "screenId": "SA-04",
+    "title": "Email: Microsoft"
+  },
+  {
+    "key": "sa.email-smtp",
+    "audience": "super_admin",
+    "screenId": "SA-04",
+    "title": "Email: SMTP"
+  },
+  {
+    "key": "sa.email-default",
+    "audience": "super_admin",
+    "screenId": "SA-04",
+    "title": "Email: platform default profile"
+  },
+  {
+    "key": "sa.email-force-tenant",
+    "audience": "super_admin",
+    "screenId": "SA-04",
+    "title": "Email: force a profile for one tenant"
+  },
+  {
+    "key": "sa.recipients",
+    "audience": "super_admin",
+    "screenId": "SA-05",
+    "title": "Notification recipients"
+  },
+  {
+    "key": "sa.ai-models",
+    "audience": "super_admin",
+    "screenId": "SA-06",
+    "title": "AI model registry"
+  },
+  {
+    "key": "sa.ai-denylist",
+    "audience": "super_admin",
+    "screenId": "SA-06",
+    "title": "AI endpoint deny-list"
+  },
+  {
+    "key": "sa.automation",
+    "audience": "super_admin",
+    "screenId": "SA-07",
+    "title": "Automation templates"
+  },
+  {
+    "key": "sa.templates",
+    "audience": "super_admin",
+    "screenId": "SA-08",
+    "title": "Notification templates"
+  },
+  {
+    "key": "sa.hosting-fit",
+    "audience": "super_admin",
+    "screenId": "SA-10",
+    "title": "Hosting fit check"
+  },
+  {
+    "key": "sa.hosting-rules",
+    "audience": "super_admin",
+    "screenId": "SA-11",
+    "title": "Hosting rules editor"
+  },
+  {
+    "key": "sa.migration",
+    "audience": "super_admin",
+    "screenId": "SA-12",
+    "title": "Migration jobs"
+  },
+  {
+    "key": "sa.tutorials",
+    "audience": "super_admin",
+    "screenId": "SA-13",
+    "title": "Tutorial library"
+  },
+  {
+    "key": "sa.features",
+    "audience": "super_admin",
+    "screenId": "SA-14",
+    "title": "Features and plans"
+  },
+  {
+    "key": "sa.plans",
+    "audience": "super_admin",
+    "screenId": "SA-14",
+    "title": "Plans editor"
+  },
+  {
+    "key": "sa.trail",
+    "audience": "super_admin",
+    "screenId": "SA-15",
+    "title": "Platform trail"
+  },
+  {
+    "key": "oa.setup-wizard",
+    "audience": "org_admin",
+    "screenId": "OA-01",
+    "title": "Setup wizard"
+  },
+  {
+    "key": "oa.setup-1",
+    "audience": "org_admin",
+    "screenId": "OA-01",
+    "title": "Organisation profile and branding"
+  },
+  {
+    "key": "oa.setup-2",
+    "audience": "org_admin",
+    "screenId": "OA-01",
+    "title": "Feature enablement"
+  },
+  {
+    "key": "oa.setup-3",
+    "audience": "org_admin",
+    "screenId": "OA-01",
+    "title": "Roles and permission defaults"
+  },
+  {
+    "key": "oa.setup-4",
+    "audience": "org_admin",
+    "screenId": "OA-01",
+    "title": "AI settings"
+  },
+  {
+    "key": "oa.setup-5",
+    "audience": "org_admin",
+    "screenId": "OA-01",
+    "title": "Presentation and certificate templates"
+  },
+  {
+    "key": "oa.setup-6",
+    "audience": "org_admin",
+    "screenId": "OA-01",
+    "title": "Escalation and automation rules"
+  },
+  {
+    "key": "oa.setup-7",
+    "audience": "org_admin",
+    "screenId": "OA-01",
+    "title": "Hosting"
+  },
+  {
+    "key": "oa.setup-8",
+    "audience": "org_admin",
+    "screenId": "OA-01",
+    "title": "Email"
+  },
+  {
+    "key": "oa.setup-9",
+    "audience": "org_admin",
+    "screenId": "OA-01",
+    "title": "Health check and Go Live"
+  },
+  {
+    "key": "oa.profile",
+    "audience": "org_admin",
+    "screenId": "OA-02",
+    "title": "Organisation profile"
+  },
+  {
+    "key": "oa.branding",
+    "audience": "org_admin",
+    "screenId": "OA-03",
+    "title": "Branding and report format"
+  },
+  {
+    "key": "oa.pptx-theme",
+    "audience": "org_admin",
+    "screenId": "OA-03",
+    "title": "PPTX theme upload"
+  },
+  {
+    "key": "oa.features",
+    "audience": "org_admin",
+    "screenId": "OA-04",
+    "title": "Features (read-only)"
+  },
+  {
+    "key": "oa.roles",
+    "audience": "org_admin",
+    "screenId": "OA-05",
+    "title": "Roles and rights"
+  },
+  {
+    "key": "oa.ai",
+    "audience": "org_admin",
+    "screenId": "OA-06",
+    "title": "AI settings"
+  },
+  {
+    "key": "oa.ai-test",
+    "audience": "org_admin",
+    "screenId": "OA-06",
+    "title": "AI test button"
+  },
+  {
+    "key": "oa.ai-usecases",
+    "audience": "org_admin",
+    "screenId": "OA-06",
+    "title": "AI use-cases"
+  },
+  {
+    "key": "oa.voice",
+    "audience": "org_admin",
+    "screenId": "OA-07",
+    "title": "Voice library"
+  },
+  {
+    "key": "oa.templates",
+    "audience": "org_admin",
+    "screenId": "OA-08",
+    "title": "Templates hub"
+  },
+  {
+    "key": "oa.boardpack-config",
+    "audience": "org_admin",
+    "screenId": "OA-09",
+    "title": "Board Pack configuration"
+  },
+  {
+    "key": "oa.certificate-config",
+    "audience": "org_admin",
+    "screenId": "OA-10",
+    "title": "Certificate configuration"
+  },
+  {
+    "key": "oa.email-resend",
+    "audience": "org_admin",
+    "screenId": "OA-11",
+    "title": "Email: Resend"
+  },
+  {
+    "key": "oa.email-microsoft",
+    "audience": "org_admin",
+    "screenId": "OA-11",
+    "title": "Email: Microsoft"
+  },
+  {
+    "key": "oa.email-smtp",
+    "audience": "org_admin",
+    "screenId": "OA-11",
+    "title": "Email: SMTP"
+  },
+  {
+    "key": "oa.email-test",
+    "audience": "org_admin",
+    "screenId": "OA-11",
+    "title": "Email: Test button"
+  },
+  {
+    "key": "oa.automation",
+    "audience": "org_admin",
+    "screenId": "OA-12",
+    "title": "Notification rules"
+  },
+  {
+    "key": "oa.templates-email",
+    "audience": "org_admin",
+    "screenId": "OA-12",
+    "title": "Email templates"
+  },
+  {
+    "key": "oa.escalation",
+    "audience": "org_admin",
+    "screenId": "OA-13",
+    "title": "Escalation rules"
+  },
+  {
+    "key": "oa.auditors",
+    "audience": "org_admin",
+    "screenId": "OA-14",
+    "title": "External auditors"
+  },
+  {
+    "key": "oa.auditor-matrix",
+    "audience": "org_admin",
+    "screenId": "OA-14",
+    "title": "External auditor permission matrix"
+  },
+  {
+    "key": "oa.hosting",
+    "audience": "org_admin",
+    "screenId": "OA-15",
+    "title": "Hosting and database"
+  },
+  {
+    "key": "oa.migration",
+    "audience": "org_admin",
+    "screenId": "OA-15",
+    "title": "Migration"
+  },
+  {
+    "key": "oa.deployment-kit",
+    "audience": "org_admin",
+    "screenId": "OA-15",
+    "title": "Deployment Kit"
+  },
+  {
+    "key": "oa.retire-old",
+    "audience": "org_admin",
+    "screenId": "OA-15",
+    "title": "Retire the old connection"
+  },
+  {
+    "key": "oa.history",
+    "audience": "org_admin",
+    "screenId": "OA-17",
+    "title": "Configuration history"
+  },
+  {
+    "key": "oa.tutorials",
+    "audience": "org_admin",
+    "screenId": "OA-18",
+    "title": "Tutorial library"
+  },
+  {
+    "key": "oa.golive",
+    "audience": "org_admin",
+    "screenId": "OA-19",
+    "title": "Go Live health check"
+  },
+  {
+    "key": "oa.invite",
+    "audience": "org_admin",
+    "screenId": "OA-20",
+    "title": "Invite a colleague"
+  },
+  {
+    "key": "oa.patterns-config",
+    "audience": "org_admin",
+    "screenId": "OA-21",
+    "title": "Patterns settings"
+  },
+  {
+    "key": "oa.boardpack-use",
+    "audience": "org_admin",
+    "screenId": "WK-01",
+    "title": "Dashboard Board Pack panel"
+  },
+  {
+    "key": "oa.boardpack-generate",
+    "audience": "org_admin",
+    "screenId": "WK-02",
+    "title": "Board Pack generator"
+  },
+  {
+    "key": "oa.boardpack-view",
+    "audience": "org_admin",
+    "screenId": "WK-03",
+    "title": "Board Pack web view"
+  },
+  {
+    "key": "oa.boardpack-download",
+    "audience": "org_admin",
+    "screenId": "WK-04",
+    "title": "Board Pack downloads and verify"
+  },
+  {
+    "key": "oa.certificate",
+    "audience": "org_admin",
+    "screenId": "WK-05",
+    "title": "Certificate panel"
+  },
+  {
+    "key": "oa.verify",
+    "audience": "both",
+    "screenId": "WK-06",
+    "title": "Public verification page"
+  },
+  {
+    "key": "oa.ai-assist",
+    "audience": "org_admin",
+    "screenId": "WK-07",
+    "title": "AI assist"
+  },
+  {
+    "key": "oa.escalation-cards",
+    "audience": "org_admin",
+    "screenId": "WK-08",
+    "title": "Escalation cards and proposals"
+  },
+  {
+    "key": "oa.timetravel",
+    "audience": "org_admin",
+    "screenId": "WK-09",
+    "title": "Time-Travel"
+  },
+  {
+    "key": "oa.patterns",
+    "audience": "org_admin",
+    "screenId": "WK-10",
+    "title": "Patterns"
+  },
+  {
+    "key": "ex.accept",
+    "audience": "both",
+    "screenId": "EX-01",
+    "title": "Accept invite and sign in"
+  },
+  {
+    "key": "ex.home",
+    "audience": "both",
+    "screenId": "EX-02",
+    "title": "Portal home"
+  },
+  {
+    "key": "ex.engagement",
+    "audience": "both",
+    "screenId": "EX-03",
+    "title": "Engagement view"
+  },
+  {
+    "key": "ex.verify",
+    "audience": "both",
+    "screenId": "EX-04",
+    "title": "Hash verification"
+  }
+]
