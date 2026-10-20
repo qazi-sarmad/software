@@ -101,7 +101,9 @@ test.describe('S9 external auditor portal', () => {
   });
 
   test('[E2E] a tenant member who opens /external is told plainly, never shown the portal', async ({ page }) => {
-    await signIn(page, ORG_ADMIN_EMAIL);
+    // signInTenant waits for the shell, which proves the session is persisted before the reload.
+    // Navigating straight after the click raced the sign-in and landed on the sign-in screen.
+    await signInTenant(page, ORG_ADMIN_EMAIL);
     await page.goto('/external');
     // The portal is only for the external principal; a tenant member gets the plain notice.
     await expect(page.getByTestId('external-portal-wrong-principal')).toBeVisible();
