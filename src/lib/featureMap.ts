@@ -23,6 +23,9 @@ export const FEATURE_RPC_MAP: Record<string, string> = {
   // ai_assist / ai_voice_library / ai_board_slides
   ai_assist_suggest: 'ai_assist',
   ai_call_log: 'ai_assist',
+  // R-1: the gateway's authorisation gate. It answers membership + use_ai_assist + the ai_assist
+  // entitlement in one call, so it belongs to ai_assist.
+  ai_gateway_authorise: 'ai_assist',
   voice_profile_save: 'ai_voice_library',
   voice_term_save: 'ai_voice_library',
   voice_sample_add: 'ai_voice_library',
