@@ -210,9 +210,14 @@ clear the first two before Phase 2 closes.
   are produced then.
 - **Event catalogue gaps.** Events whose source does not exist yet are not wired: every key in the F7
   catalogue that has no emitter is listed by the S2 automation test rather than faked.
-- Slices S10 to S13 (time-travel and patterns, hosting fit and the migration runner, the completed
-  wizards, and the final contract) are not started at the time of writing. S8 (certificate and public
-  verification) and S9 (external auditor portal) are complete.
+- Slices S11 to S13 (hosting fit and the migration runner, the completed wizards, and the final
+  contract) are not started at the time of writing. S8 (certificate and public verification), S9
+  (external auditor portal) and S10 (Time-Travel and Patterns) are complete.
+- **Time-Travel coverage gaps.** `engagement_as_of` reconstructs workpapers, findings, seals and
+  statuses from append-only history (ledger, activity log, version tables). Entities that keep only
+  current state cannot be reconstructed; the function reports them as "Not recorded before <date>"
+  rather than guessing. Activity archived out of the live window is outside the as-of range; the UI
+  states the earliest available date.
 - **External auditor invitation email.** `external_auditor_invite` queues the acceptance email through
   the F6 queue; with the default stub provider it stays queued until an adapter is configured and the
   dispatcher runs. This is by design (D-S9-invite-not-sent), not a gap.

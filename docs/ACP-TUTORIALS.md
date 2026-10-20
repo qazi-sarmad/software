@@ -18,6 +18,8 @@ and warns on a stale `ui_hash`.
 | `oa.boardpack-view` | org_admin | WK-03 Board Pack web view | 1 Open a pack from the history. 2 Read the snapshot hash. 3 Every figure shows the record behind it; use the sources index to trace a number. |
 | `oa.boardpack-download` | org_admin | WK-04 downloads and verify chip | 1 Open a pack. 2 Press PDF or PPTX. 3 The file carries a hyperlink on every figure. 4 Scan the QR to verify the pack without signing in. |
 | `oa.boardpack-config` | org_admin | OA-09 Board Pack configuration | 1 Open the Board Pack panel. 2 Open the Sections tab. 3 Turn a section on or off. 4 Move a section up or down. A section is never deleted. |
+| `oa.timetravel` | org_admin | WK-09 Time-Travel | 1 Open an engagement in the Audit File window. 2 Open the Time-Travel view. 3 Drag the handle or use the previous/next buttons to snap to a recorded event. 4 Read the state as it was. 5 Press "Compare with now" to see what was added, changed or removed. Everything is read-only. |
+| `oa.patterns` | org_admin | WK-10 Patterns | 1 Open the Issues & CAP Register. 2 Switch to the Patterns view. 3 Read the groups of similar findings. 4 Click a node, a heat-map cell or a group member to open the original sealed finding. 5 Open Settings to change the thresholds. |
 
 Keys for the other Appendix A screens are registered by their own slices (S1 to S13). A key with no
 row here yet is not yet recorded; `docs/ACP-UI-CONTRACT.md` names the key for each screen.

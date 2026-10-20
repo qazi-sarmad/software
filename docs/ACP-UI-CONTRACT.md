@@ -533,6 +533,76 @@ as its slice lands.
 
 ---
 
+## OA-21 — patterns settings (S10)
+
+- **Purpose:** set the deterministic pattern thresholds (F15). Similarity threshold, minimum group
+  size, years back, included severities and the right that can see the view. No AI is involved and
+  nothing here changes a finding.
+- **Route:** the Org Control panel, tab "Features" is OA-04; the Patterns settings live in the
+  Issues & CAP Register "Patterns" view, its "Settings" sub-view (`oa-patterns-config`). It needs
+  `edit_config`; a caller without it sees the read-only notice.
+- **Rights:** `edit_config` to read and write the settings. The `patterns` entitlement gates the
+  feature; a refusal from the server is shown in plain words.
+- **Data:** `getPatternSettings(orgId)`, `savePatternSettings(orgId, settings)`
+  (`src/data/patterns.ts`). Pure logic in `src/lib/patterns.ts`.
+- **Testids:** `oa-patterns-config`, `oa-patterns-config-readonly`, `oa-patterns-threshold`,
+  `oa-patterns-min-size`, `oa-patterns-years`, `oa-patterns-visibility`, `oa-patterns-save`,
+  `oa-patterns-result`, `oa-patterns-result-error`.
+- **States:** loading; read-only for a caller without `edit_config`; an inline error; a plain result
+  line after a save. Every control is a slider, a number input or a select — never a JSON box.
+- **Tutorial key:** `oa.patterns-config`.
+
+---
+
+## WK-09 — Time-Travel (S10, F14)
+
+- **Purpose:** reconstruct one engagement as of a past moment from append-only history (F14). The
+  timeline handle snaps to recorded events; the state shows workpapers, findings and seals as they
+  were, or says what history did not record.
+- **Route:** inside the Audit File window, the "Time-Travel" phase view (`audit-file-as-of`), offered
+  only to a caller holding `view_insights` (`audit-file-view-as_of`). Read-only.
+- **Rights:** `view_insights`. The `time_travel` entitlement gates the database functions; a refusal
+  from the server is surfaced as the state's error, never hidden.
+- **Data:** `listAsOfEvents(engagementId, ts)`, `getEngagementAsOf(engagementId, ts)`
+  (`src/data/timeTravel.ts`). Pure logic in `src/lib/asOfTimeline.ts` (`snapToEvent`, `diffStates`,
+  `isBeforeEarliest`, `formatAsOf`).
+- **Testids:** `wk-timetravel`, `wk-timetravel-loading`, `wk-timetravel-banner`, `wk-timetravel-track`,
+  `wk-timetravel-handle`, `wk-timetravel-prev`, `wk-timetravel-next`, `wk-timetravel-date`,
+  `wk-timetravel-now`, `wk-timetravel-compare`, `wk-timetravel-state`, `wk-timetravel-workpapers`,
+  `wk-timetravel-not-recorded`, `wk-timetravel-diff`, `wk-timetravel-diff-empty`,
+  `wk-timetravel-diff-<id>`, `wk-timetravel-event-<action>`.
+- **States:** loading; an as-of state with the banner; "Not recorded before <date>" when the entity
+  kept no history; a diff region that lists added, changed and removed records. Animation respects
+  `prefers-reduced-motion`.
+- **Tutorial key:** `oa.timetravel`.
+
+## WK-10 — Cross-engagement patterns (S10, F15)
+
+- **Purpose:** group concluded findings across engagements by deterministic text similarity and shared
+  tags (F15). Three views: clusters, a heat map (entity by year, or by category) and a node graph.
+  Clicking a cluster member, a graph node or a heat-map cell opens the original sealed finding.
+- **Route:** the Issues & CAP Register, a "Patterns" view (`issues-view-patterns`). The view switch
+  is offered to everyone; the data needs `view_insights`.
+- **Rights:** `view_insights` for the data; `edit_config` for the settings sub-view (OA-21). The
+  `patterns` entitlement gates the feature. A caller without `view_insights` sees `wk-patterns-denied`.
+- **Data:** `getPatternFindings(orgId)`, `getPatternSettings(orgId)`, `savePatternSettings(orgId, ...)`
+  (`src/data/patterns.ts`); the drill-down read is `getFindingDetail(findingId)`
+  (`src/data/observations.ts`). Pure logic in `src/lib/patterns.ts` (TF-IDF, clustering, deterministic
+  seeded layout, `heatMap`).
+- **Testids:** `wk-patterns`, `wk-patterns-loading`, `wk-patterns-denied`, `wk-patterns-empty`,
+  `wk-patterns-unclustered`, `wk-patterns-tab-<view>`, `wk-patterns-clusters`, `wk-patterns-cluster-<id>`,
+  `wk-patterns-finding-<id>`, `wk-patterns-node-<id>`, `wk-patterns-graph`, `wk-patterns-graph-empty`,
+  `wk-patterns-heatmap`, `wk-patterns-heat-by`, `wk-patterns-heatmap-cells`,
+  `wk-patterns-cell-<entityId>-<bucket>`, `wk-patterns-cell-count-<entityId>-<bucket>`,
+  `wk-patterns-heatmap-empty`. The drill-down renders `finding-drilldown`, `finding-drilldown-title`,
+  `finding-drilldown-severity`, `finding-drilldown-entity`, `finding-drilldown-unavailable` and
+  `finding-drilldown-error`, and is reachable at `/view/finding/:id`.
+- **States:** loading; a plain refusal for a caller without `view_insights`; an empty clusters list;
+  an empty graph or heat map; an inline error. The graph node is a keyboard-reachable button.
+- **Tutorial key:** `oa.patterns`.
+
+---
+
 ## Tutorials regenerated
 
 `npm run tutorials:record` regenerates every GIF (S12). The recorder binds only to the testids listed

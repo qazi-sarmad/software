@@ -1055,3 +1055,79 @@ IMPROVISE-THEN-DOCUMENT (this file).
 - Reason: every other test in the file already used `signInTenant`; this one was the outlier. The
   product behaviour (a tenant member sees a plain notice, never the portal) is correct and unchanged.
 - Reverse: none; the previous form was a race.
+
+
+## D-S10-asof-coverage — the entities history can and cannot reconstruct (S10.a, F14)
+- Point: F14 requires an inventory of entities that keep only current state and therefore cannot be
+  reconstructed, so the timeline can say "Not recorded before <date>" instead of guessing.
+- Inventory. Reconstructable in `engagement_as_of` (0068): workpapers (status, prepared and
+  signed-off, replayed from the sign-off and reopen events), findings (id, severity, title, at), seals
+  and status changes (from ledger entries and the activity log). NOT reconstructable: populations and
+  their row counts (the table keeps the current count only), sampling parameters and drawn samples
+  (current state only), and any configuration table that is versioned rather than evented. These
+  report as `not_recorded_before` with the earliest recorded date for the engagement.
+- Choice: the function returns `status: 'not_recorded_before'`, `earliest_recorded` and
+  `earliest_available`; the WK-09 surface renders the honesty note. Activity archived out of the live
+  window (0043) sets `earliest_available`, and the timeline states the earliest date it can show.
+- Reason: L1 and L4 — the view must replay exactly what was recorded and never invent state.
+- Reverse: none; recording more entities would require them to be evented first.
+
+## D-S10-drilldown-type — a finding is opened through the existing record view (S10.c, F15, L4)
+- Point: F15 says clicking a node or cell opens the original sealed finding. The app has two record
+  modes (window in-app, full page on `/view/:recordType/:id`) driven by `RECORD_TYPE_TO_INSPECTOR`.
+  A finding was not a known record type.
+- Options: (a) build a bespoke finding panel with its own routing; (b) add `finding` to the inspector
+  type union, the title map, the path map and the content switch, so the finding rides the same
+  record view every other record uses.
+- Choice: (b). `InspectorType` gains `'finding'`; `RECORD_TYPE_TO_INSPECTOR` maps `finding:'finding'`;
+  `RecordContent` renders `<FindingDrilldown>` for it; `recordTypeToPath('finding')` falls through to
+  `'finding'`, so the drill-down URL is `/view/finding/:id`; `App.tsx` maps that URL to `{ findingId }`.
+- Reason: L4 says everything is drillable and both modes must work. Reusing the record view means the
+  Patterns drill-down behaves exactly like every other drill-down, and the PDF/PPTX hyperlinks (F10)
+  point at a real, already-routed URL. A bespoke panel would duplicate the window/page logic.
+- Reverse: remove `'finding'` from the union and the maps; the drill-down would need its own surface.
+
+## D-S10-heatcell-ids — a heat-map cell carries the finding ids it counted (S10.c, F15)
+- Point: F15 makes every figure a drill-down, including a heat-map cell. `heatMap()` returned only a
+  count per entity-by-bucket, so a cell could not say which findings it counted.
+- Choice: `HeatCell` gains `findingIds: string[]`, populated during the same deterministic pass that
+  builds the count. The cell is a button whose `onClick` opens the first id; the cluster list and the
+  graph node already carry their own ids from the same `pattern_findings` read.
+- Reason: the ids come from the same read as the count, so the figure and its refs can never disagree
+  (the F10 "a figure with no refs is a bug" rule, applied here for consistency). No new query.
+- Reverse: drop the field; the cell would show a count with no drill-down, which F15 forbids.
+
+## D-S10-unavailable-copy — an out-of-scope finding says "Not available", never a guess (S10.c, L4)
+- Point: the drill-down can be asked for a finding id the caller cannot read (another org, or outside
+  their scope). The read is RLS-scoped and returns null.
+- Choice: null renders `finding-drilldown-unavailable` with "Not available. This finding is outside
+  your scope, or it is no longer recorded." A thrown error renders `finding-drilldown-error` with the
+  server message. The two are distinct surfaces.
+- Reason: the same rule the record view already follows for a neutral state — never reveal whether an
+  out-of-scope record exists. F15's clusters are built from the caller's own readable findings, so
+  this is the edge, not the norm.
+- Reverse: none; showing a guess would break L4.
+
+## D-S10-e2e-entitlement-collision — the S1 entitlement spec moved off patterns (S10-FIX)
+- Point: CI 39416981015 step 7 failed at acp-control-plane.spec.ts:127. The S1 spec toggled the
+  `patterns` entitlement for Synthetic Org A expecting it OFF, but the S10 global-setup fixture
+  enables `patterns` for that same org (the Patterns view needs the feature). The Org Admin saw the
+  feature already on, so the test never followed an OFF-to-ON transition.
+- Options: (a) turn `patterns` off in the S10 fixture and have the spec seed it; (b) leave the S10
+  fixture as the true state and move the S1 spec to a feature key no slice enables — `board_pack_pptx`.
+- Choice: (b). The S1 spec proves one thing: an entitlement change needs a reason and reaches the Org
+  Admin. The feature key is incidental. `board_pack_pptx` is a real catalogue key (F25) that no other
+  spec or fixture touches, so it starts OFF and the transition is honest.
+- Reason: two specs sharing one org must not fight over one key's starting value. Moving the spec
+  keeps both meanings intact and removes the order dependency between the S1 and S10 fixtures.
+- Reverse: point the spec back at `patterns` only if the S10 fixture stops enabling it.
+
+## D-S10-graph-node-hit — the graph node is a real, keyboard-reachable target (S10-FIX)
+- Point: CI 39416981015 step 7 failed at s10-time-travel-patterns.spec.ts:62 with `locator.click:
+  Test timeout`. `wk-patterns-node-<id>` is an SVG `<g>` whose bounding box spans the circle AND the
+  text label; Playwright clicks the box centre, which sat between the two shapes, hit nothing, waited.
+- Choice: keep the `<g>` testid but add a transparent `r=16` hit circle centred on the node, and make
+  the group `role="button"`, focusable, with Enter and Space handlers.
+- Reason: the click now lands on the node from any point in the group's box, and F15's drill-down is
+  reachable by keyboard, an accessibility gain and not only a test fix. Pointer events stay on the node.
+- Reverse: none; the transparent circle is the standard SVG hit-area fix.
