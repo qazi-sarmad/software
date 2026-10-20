@@ -14,10 +14,11 @@ import { OrgBrandingPanel } from './OrgBrandingPanel';
 import { OrgAiPanel } from './OrgAiPanel';
 import { OrgEscalationPanel } from './OrgEscalationPanel';
 import { ExternalAuditorsPanel } from './ExternalAuditorsPanel';
+import { OrgHostingPanel } from './OrgHostingPanel';
 import { InlineError } from '../common/InlineError';
-import { Check, Lock, Zap, Sliders, Users, Shield, History } from '../common/Icons';
+import { Check, Lock, Zap, Sliders, Users, Shield, History, Database } from '../common/Icons';
 
-type Tab = 'features' | 'branding' | 'email' | 'automation' | 'escalation' | 'ai' | 'setup' | 'consultation' | 'auditors' | 'history';
+type Tab = 'features' | 'branding' | 'email' | 'automation' | 'escalation' | 'ai' | 'setup' | 'consultation' | 'auditors' | 'hosting' | 'history';
 type LoadState = 'loading' | 'ready' | 'error';
 
 /**
@@ -113,6 +114,7 @@ export const OrgControlPanel: React.FC = () => {
           { id: 'setup', label: 'Setup', icon: Sliders },
           { id: 'consultation', label: 'Dual Session', icon: Users },
           { id: 'auditors', label: 'External auditors', icon: Shield },
+          { id: 'hosting', label: 'Hosting', icon: Database },
           { id: 'history', label: 'History', icon: History },
         ] as { id: Tab; label: string; icon: React.FC<{ className?: string }> }[]).map((t) => {
           const Icon = t.icon;
@@ -224,6 +226,7 @@ export const OrgControlPanel: React.FC = () => {
         </div>
       )}
 
+      {tab === 'hosting' && <OrgHostingPanel />}
       {tab === 'history' && <OrgConfigHistory />}
     </div>
   );
