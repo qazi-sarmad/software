@@ -32,11 +32,11 @@ test.describe('S7 Board Pack', () => {
     await signIn(page, CIA_EMAIL);
     await openBoardPack(page);
     // The history region is always present; inside it the panel shows either the first-pack note or
-    // one row per pack. Assert the region, then require one of the two contents (not both).
+    // one row per pack (each row has an open button). Assert the region, then require one of the two.
     const history = page.getByTestId('wk-boardpack-history');
     await expect(history).toBeVisible();
     const empty = page.getByTestId('wk-boardpack-empty');
-    const rows = history.locator('> div');
+    const rows = page.locator('[data-testid^="wk-boardpack-open-"]');
     expect((await empty.count()) + (await rows.count())).toBeGreaterThan(0);
   });
 

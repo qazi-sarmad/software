@@ -810,3 +810,42 @@ IMPROVISE-THEN-DOCUMENT (this file).
 - Reason: the flake was in the test, not the product: the panel is correct to reload once it has a
   version. Loosening the assertion (a) would have hidden a real regression later.
 - Reverse: revert the test change; the flake returns on a slow runner.
+
+## D-M4b-gate-style — a disabled feature raises, except in the two engine hooks (M-4b, F25)
+- Point: how a gated RPC behaves when `has_feature` is false.
+- Options: (a) always `raise exception 'This feature is not included in your plan.'`; (b) raise for
+  user-facing RPCs, but return a neutral value for the two internal hooks.
+- Choice: (b). User-facing RPCs (`board_pack_snapshot`, `board_pack_sections_save`,
+  `certificate_config_save`, `certificate_revoke`, `ai_call_log`, `automation_rule_save`,
+  `automation_rule_test`) raise, matching the wording F25 requires. `escalation_evaluate` returns 0,
+  the same as "nothing to do". `verify_certificate` reports `not_found`.
+- Reason: `escalation_evaluate` is called in a loop over the event batch by the dispatcher. Raising
+  there would abort the batch and starve unrelated events, so a disabled feature must be a no-op.
+  `verify_certificate` is the anonymous surface; returning `not_found` for a disabled feature is
+  identical to an unknown id, so the public page cannot be used to probe whether a certificate
+  exists while `public_verification` is off. Both keep the refusal indistinguishable from the
+  feature being absent, which is what F25 asks for ("hidden and refused").
+- Reverse: change the two bodies in 0065 to raise the standard exception and re-run test 74.
+
+## D-M4b-verbatim-bodies — the retrofit reproduces each function verbatim (M-4b, F25, M2, M4)
+- Point: how to add the gate without changing any other behaviour.
+- Options: (a) edit each original migration in place; (b) re-`create or replace` each function in a
+  new migration with only the gate added.
+- Choice: (b). 0065 carries the nine functions byte-for-byte as they were, each with one added
+  `if not public.has_feature(...)` block. The bodies were extracted from the source migrations by
+  script and the only edit is the inserted block, so a reviewer can diff and see one change per
+  function.
+- Reason: M2 and M4 forbid changing an object's shape in place, and editing an already-applied
+  migration would not reach the persistent test project. `create or replace` keeps the signature,
+  volatility, security and grants, so nothing else moves.
+- Reverse: drop 0065 and delete the gate blocks from the copy; the original migrations still hold the
+  ungated bodies.
+
+## D-M4b-M1 — all nine names already existed; each is extended, not created (M-4b, M1)
+- Point: M1 requires a grep of `supabase/migrations` and `supabase/tests` before naming an object.
+- Choice: found and extended, no duplicates created. `board_pack_snapshot`, `board_pack_sections_save`
+  (0061); `certificate_config_save`, `certificate_revoke`, `verify_certificate` (0062); `ai_call_log`
+  (0059); `automation_rule_save`, `automation_rule_test` (0056); `escalation_evaluate` (0060).
+- Reason: every name pre-existed; the retrofit is the extension M1 asks for.
+- Reverse: none needed.
+
