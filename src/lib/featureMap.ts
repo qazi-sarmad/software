@@ -17,6 +17,7 @@ export const FEATURE_RPC_MAP: Record<string, string> = {
   certificate_issue: 'certificates',
   certificate_revoke: 'certificates',
   certificate_supersede: 'certificates',
+  certificate_config_save: 'certificates',
   verify_certificate: 'public_verification',
   verify_board_pack: 'public_verification',
   // ai_assist / ai_voice_library / ai_board_slides

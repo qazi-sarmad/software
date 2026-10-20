@@ -54,7 +54,16 @@ end $$;
 -- ---------------------------------------------------------------------------
 -- 3. The snapshot is deterministic and every figure carries refs. Fixtures: one SIRA score, one
 --    plan item, one open CAP, one signed-off workpaper and one sealed engagement.
+--    The snapshot belongs to the board_pack feature (M-4b), so grant it for both orgs first.
 -- ---------------------------------------------------------------------------
+select provio_test.as_user('10000000-0000-0000-0000-0000000000f0', '', 'platform_admin');
+do $$
+begin
+  perform public.platform_set_entitlement('a0000000-0000-0000-0000-000000000001','board_pack',true,'Assurance','board pack add-on');
+  perform public.platform_set_entitlement('a0000000-0000-0000-0000-000000000001','board_pack_pptx',true,'Assurance','board pack add-on');
+  perform public.platform_set_entitlement('b0000000-0000-0000-0000-000000000001','board_pack',true,'Assurance','board pack add-on');
+end $$;
+
 select provio_test.as_owner();
 do $$
 declare
@@ -116,6 +125,13 @@ begin
 end $$;
 
 -- The CIA holds generate_board_pack, but the entitlement is off and app_base_url is unset.
+select provio_test.as_user('10000000-0000-0000-0000-0000000000f0', '', 'platform_admin');
+do $$
+begin
+  -- Turn board_pack back off, so the entitlement gate (not the right) is what refuses below.
+  perform public.platform_set_entitlement('a0000000-0000-0000-0000-000000000001','board_pack',false,'Assurance','exercise the off state');
+end $$;
+
 select provio_test.as_user('10000000-0000-0000-0000-0000000000a1', 'a0000000-0000-0000-0000-000000000001', 'cia');
 do $$
 begin

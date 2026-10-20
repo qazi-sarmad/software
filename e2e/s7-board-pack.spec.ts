@@ -31,9 +31,13 @@ test.describe('S7 Board Pack', () => {
   test('[E2E] the Dashboard shows the Board Pack panel with the history or the first-pack note', async ({ page }) => {
     await signIn(page, CIA_EMAIL);
     await openBoardPack(page);
+    // The history region is always present; inside it the panel shows either the first-pack note or
+    // one row per pack. Assert the region, then require one of the two contents (not both).
     const history = page.getByTestId('wk-boardpack-history');
+    await expect(history).toBeVisible();
     const empty = page.getByTestId('wk-boardpack-empty');
-    await expect(history.or(empty)).toBeVisible();
+    const rows = history.locator('> div');
+    expect((await empty.count()) + (await rows.count())).toBeGreaterThan(0);
   });
 
   test('[E2E] the panel never offers a JSON box (F1)', async ({ page }) => {
