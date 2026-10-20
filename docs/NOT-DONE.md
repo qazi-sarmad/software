@@ -205,14 +205,17 @@ clear the first two before Phase 2 closes.
 
 - **Continuous-auditing watchers** (file drop, HTTP polling, database view) are PARKED by F12 and were
   not built. The F7 event interface stays generic so a future `watcher.signal` event can plug in.
-- **Tutorial GIFs** for the S7 keys are registered in `docs/ACP-TUTORIALS.md` and named in the UI
-  contract, but `scripts/record-tutorials.mjs` and `npm run tutorials:record` are S12 work; the S7 GIFs
-  are produced then.
+- **Tutorial GIFs** are now produced by `scripts/record-tutorials.mjs` (S12). CI commits
+  clearly-marked placeholder GIFs (the recorder's output with no `TUTORIALS_BASE_URL` set); the owner
+  runs `npm run tutorials:record` with `TUTORIALS_BASE_URL` against a live deployment to replace them
+  with the real recordings. `scripts/check-tutorials.mjs` fails the build if any Appendix A key has no
+  GIF (D-S12-placeholder-gifs).
 - **Event catalogue gaps.** Events whose source does not exist yet are not wired: every key in the F7
   catalogue that has no emitter is listed by the S2 automation test rather than faked.
-- Slices S12 and S13 (the completed wizards and Go Live, and the final contract) are not started at
-  the time of writing. S8 (certificate and public verification), S9 (external auditor portal),
-  S10 (Time-Travel and Patterns) and S11 (hosting fit and database mobility) are complete.
+- Slice S12 (tutorials) is complete. Slice S13 (the final UI contract, PARITY and NOT-DONE sweep, and
+  the final gate run) is not started at the time of writing. S8 (certificate and public verification),
+  S9 (external auditor portal), S10 (Time-Travel and Patterns), S11 (hosting fit and database
+  mobility) and S12 (tutorials) are complete.
 - **Migration runner against two live databases.** `tools/migration-runner/` ships its 11 steps with a
   driver-injected design and unit tests against `fakeDriver.mjs`. CI cannot provide two reachable
   Postgres databases, so the end-to-end run against two real targets is left to the owner's runner
@@ -222,8 +225,9 @@ clear the first two before Phase 2 closes.
   connection (F23).
 - **Tutorial GIFs for the S11 keys** (`sa.hosting-fit`, `sa.hosting-rules`, `sa.migration`,
   `oa.hosting`, `oa.migration`, `oa.deployment-kit`, `oa.retire-old`) are registered in
-  `docs/ACP-TUTORIALS.md` and named in the UI contract, but `scripts/record-tutorials.mjs` and
-  `npm run tutorials:record` are S12 work; the GIFs are produced then.
+  `docs/ACP-TUTORIALS.md`, named in the UI contract and seeded by 0071; the recorder (S12) writes their
+  GIFs. As with every other key, the committed files are placeholders until the owner re-runs
+  `npm run tutorials:record` with `TUTORIALS_BASE_URL` against a live deployment.
 - **Time-Travel coverage gaps.** `engagement_as_of` reconstructs workpapers, findings, seals and
   statuses from append-only history (ledger, activity log, version tables). Entities that keep only
   current state cannot be reconstructed; the function reports them as "Not recorded before <date>"

@@ -46,6 +46,16 @@ as its slice lands.
   `role="complementary"`, never a modal, never a scrim.
 - **Tutorial key:** n/a (this is the player).
 
+### Tutorial button and first-visit autoplay (S12.c)
+
+Every Appendix A screen renders one `TutorialButton` beside its heading, bound to that screen's key
+(`src/lib/tutorialKeys.json`). The button label is "Show me how"; its testid is `<screenId>-tutorial`.
+On a screen's first visit for a browser the drawer autoplays once and the
+key is remembered in `localStorage` under `acp.tutorial.seen.<key>` (and the autoplay preference
+under `acp.tutorial.autoplay`), so the same screen never autoplays twice. The e2e
+`e2e/s12-tutorials.spec.ts` proves the autoplay-once behaviour; the other ACP e2e specs pre-seed
+`acp.tutorial.autoplay` to `off` in their storage state so the drawer never intercepts a click.
+
 ## SA-09 — Dual Session console (S1)
 
 - **Purpose:** the platform side of the two-tier consultation: request a session for a tenant,

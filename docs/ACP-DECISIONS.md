@@ -1261,3 +1261,44 @@ IMPROVISE-THEN-DOCUMENT (this file).
   this one was an omission. Same signature means no caller change.
 - Reverse: re-run the 0068 body over the function (but that reintroduces the leak).
 
+## D-S12-key-registry — the tutorial key list is one JSON file (S12.b, F18)
+- Point: F18 fixes 85 Appendix A keys, and both a Node script (the recorder, the checker) and the
+  browser app need the list. A TypeScript module cannot be imported by a plain `node` script without
+  a loader, and duplicating the list would let the two drift.
+- Options: (a) one `src/lib/tutorialKeys.json`, read by `tutorialKeys.ts` for the app and by
+  `JSON.parse(readFileSync(...))` in the scripts; (b) a `.ts` module the scripts import with a
+  ts-loader; (c) a `.mjs` module imported by both.
+- Choice: (a). `tutorialKeys.json` holds key, audience, screen id and title. `tutorialKeys.ts` reads
+  it and re-exports the typed list; `scripts/record-tutorials.mjs` and `scripts/check-tutorials.mjs`
+  read the same file. The migration 0071 seeds from the same list (generated once, checked by test 80).
+- Reason: one file, no build step for the scripts, and the app keeps a typed view. The check-tutorials
+  gate then compares one list against the GIF files, so nothing can silently diverge.
+- Reverse: replace the JSON with a module and update the three readers; the key set is unchanged.
+
+## D-S12-placeholder-gifs — CI ships placeholder GIFs; the owner records the real ones (S12.d, F18)
+- Point: F18 wants an automated recorder, but recording drives the real UI against a running app and a
+  backend. CI has neither, and committing binary GIFs that were hand-made is forbidden ("never
+  hand-drawn"). The build gate must still fail if a key has no GIF.
+- Options: (a) the recorder writes a clearly-marked placeholder GIF (correct size, palette and frame
+  count, with the key rendered) whenever `TUTORIALS_BASE_URL` is unset, and commits those; the owner
+  runs `npm run tutorials:record` with `TUTORIALS_BASE_URL` set to produce the real recordings;
+  (b) the gate tolerates a missing GIF in CI and only fails locally; (c) no GIFs are committed and the
+  gate is advisory.
+- Choice: (a). The recorder is real (Playwright drives the UI when a base URL is given; gifenc +
+  pngjs encode, no system ffmpeg). Without a base URL it emits a placeholder at the same path so the
+  build gate — and the SA-13 library — are never empty.
+- Reason: the gate stays meaningful (a missing file still fails), CI needs no browser backend, and no
+  hand-drawn asset is committed. The placeholder is produced by the same code path as a real capture.
+- Reverse: delete the placeholders and run the recorder with `TUTORIALS_BASE_URL` against a live app.
+
+## D-S12-registry-seed — the tutorials registry is seeded from the key list (S12.a, F18)
+- Point: the SA-13 library reads the `tutorials` table; the checker reads the GIF files. With no seed
+  rows the library is empty and the two views disagree.
+- Options: (a) seed one `tutorials` row per key in a migration, generated from `tutorialKeys.json`;
+  (b) seed from the app at first load; (c) leave the table empty and have the library synthesise rows.
+- Choice: (a). `0071_tutorial_registry_seed.sql` inserts (key, audience, title, steps, media_path)
+  with `on conflict (key) do nothing`, so it is idempotent and M2-safe on the persistent project.
+- Reason: L5/F2 — configuration lives in the database, written by a migration, not by the browser. The
+  `on conflict` guard keeps a re-apply clean, and a later recorder run fills `media_path`/`ui_hash`.
+- Reverse: delete the migration's rows; the library falls back to the app-side key list.
+

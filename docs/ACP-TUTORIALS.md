@@ -7,7 +7,24 @@ The registry table `tutorials` holds the key, audience, ordered steps, media pat
 `scripts/check-tutorials.mjs` fails the build when an Appendix A key has no registry row or no GIF,
 and warns on a stale `ui_hash`.
 
-## Keys recorded so far
+## The key list
+
+`src/lib/tutorialKeys.json` is the frozen list of all **85** Appendix A keys (key, audience, screen
+id, title). It is the single source of truth: `src/lib/tutorialKeys.ts` reads it for the app,
+`supabase/migrations/0071_tutorial_registry_seed.sql` seeds one `tutorials` row per key from it, and
+`scripts/record-tutorials.mjs` and `scripts/check-tutorials.mjs` read the same JSON. Adding a key
+means editing the JSON and re-running `npm run tutorials:record`.
+
+`npm run tutorials:record` needs a running app and its backend; without `TUTORIALS_BASE_URL` it
+writes clearly-marked placeholder GIFs (the state committed today), so the build gate stays green.
+Set `TUTORIALS_BASE_URL` against a live deployment to regenerate the real recordings — the recorder
+drives the real UI with Playwright and encodes with pure-JS `gifenc` + `pngjs`, never system ffmpeg.
+
+## Keys with a screen-specific recorded script
+
+The recorder drives each key's steps against the real UI. These keys already have a documented,
+plain-language step list (the rest fall back to the generic open-and-follow script until their UI is
+finalised):
 
 | Key | Audience | Screen | Steps (plain language) |
 |---|---|---|---|
@@ -28,6 +45,16 @@ and warns on a stale `ui_hash`.
 | `oa.deployment-kit` | org_admin | OA-15 deployment kit | 1 After migration, read the Deployment Kit. 2 Add VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY. 3 Deploy the front end to free static hosting. |
 | `oa.retire-old` | org_admin | OA-15 retire the old connection | 1 Wait out the retention window (read-only, default 14 days). 2 Press and hold "Retire old connection" to confirm. 3 The old connection is retired after an export hash is recorded. |
 
-Keys for the other Appendix A screens are registered by their own slices (S1 to S13). A key with no
-row here yet is not yet recorded; `docs/ACP-UI-CONTRACT.md` names the key for each screen.
+The remaining keys (the setup wizards' nine steps each, the Super Admin screens, the Org Admin
+screens, the Work UI and the external portal) are all registered in `src/lib/tutorialKeys.json` and
+seeded by 0071, so the SA-13 library and the check-tutorials gate cover every Appendix A key. Their
+recordings carry the generic three-step script until the owner re-runs the recorder against the live
+UI; the step list for each screen lives in `docs/ACP-UI-CONTRACT.md`.
+
+## Player
+
+`TutorialButton` (src/components/common/TutorialButton.tsx) opens a non-blocking side drawer, never a
+modal: the GIF, numbered steps, "Copy steps" and "Did this help?" (written to `tutorial_views`). On a
+screen's first visit the drawer autoplays once; a "Show me how" button reopens it any time. The
+`noBlockingModal` guard stays green because the drawer is a side panel with no backdrop.
 
