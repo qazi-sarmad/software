@@ -78,9 +78,29 @@ const USERS = [
   { email: 'fatima.rehman@provio-test.invalid', name: 'Fatima Rehman', org: ORG_B, role: 'preparer', roleIds: ROLE_IDS_B, universes: [] },
 ];
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
 function must<T extends { error: { message: string } | null }>(label: string, result: T): T {
   if (result.error) throw new Error(`${label}: ${result.error.message}`);
   return result;
+}
+
+/**
+ * The schema cache can be empty for a moment after step 6 applies new migrations to the shared test
+ * project; the first PostgREST query then fails with "Could not query the database for the schema
+ * cache". That is a transient, not a code defect, so retry the very first table call a few times.
+ */
+async function firstWrite<T extends { error: { message: string } | null }>(
+  label: string, run: () => Promise<T>
+): Promise<T> {
+  let result = await run();
+  for (let attempt = 1; attempt <= 5 && result.error; attempt += 1) {
+    if (!/schema cache/i.test(result.error.message)) break;
+    console.log(`${label}: schema cache not ready, retry ${attempt}/5`);
+    await sleep(3000);
+    result = await run();
+  }
+  return must(label, result);
 }
 
 function generatePassword(): string {
@@ -105,7 +125,7 @@ export default async function globalSetup() {
   const passwords: Record<string, string> = {};
   const passwordFor = (email: string) => (passwords[email] ??= generatePassword());
 
-  must('orgs', await sb.from('orgs').upsert([
+  await firstWrite('orgs', () => sb.from('orgs').upsert([
     { id: ORG_A, name: 'Synthetic Org A (Lahore, single universe)', is_demo: true },
     { id: ORG_B, name: 'Synthetic Org B (Karachi, two universes)', is_demo: true },
   ], { onConflict: 'id' }));
