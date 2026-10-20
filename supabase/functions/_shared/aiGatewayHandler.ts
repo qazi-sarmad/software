@@ -123,6 +123,20 @@ export function createAiGatewayHandler(deps: GatewayDeps) {
     const orgId = payload.org_id ?? '';
     if (!orgId) return json({ ok: false, reason: 'an organisation is required' }, 400);
 
+    // Authorise before anything is read with the service role (R-1). The caller's own client verifies
+    // the JWT and runs the check as that user; org_id from the body is only a candidate, never the
+    // authority. ai_gateway_authorise answers membership, the use_ai_assist right and the ai_assist
+    // entitlement in one call.
+    const caller = deps.callerClient(authHeader);
+    const who = await caller.auth.getUser();
+    if (!who.data?.user) {
+      return json({ ok: false, reason: 'a signed-in session is required' }, 401);
+    }
+    const allowed = await caller.rpc('ai_gateway_authorise', { p_org: orgId });
+    if (allowed.data !== true) {
+      return json({ ok: false, reason: 'not allowed to use AI for this organisation' }, 403);
+    }
+
     const service = deps.serviceClient();
     const config = await loadEndpoint(service, orgId);
     if (!config.enabled) {
@@ -175,7 +189,6 @@ export function createAiGatewayHandler(deps: GatewayDeps) {
     }, fetchImpl, crypto);
 
     const promptHash = await sha256Hex(payload.prompt, crypto);
-    const caller = deps.callerClient(authHeader);
 
     if (!outcome.ok || !outcome.text) {
       // Record the failed call too, so the ledger keeps a trace (F8). The error text is redacted.
