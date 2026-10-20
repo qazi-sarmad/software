@@ -981,3 +981,77 @@ IMPROVISE-THEN-DOCUMENT (this file).
 - Reverse: remove the `external_auditor` status and the two `isExternalAuditorSession()` calls; the
   account would fall back to the "not provisioned" screen.
 
+
+## D-R1-org-from-caller — the org is taken from the verified caller, never the request body (R-1, F8)
+- Point: the ai-gateway read `org_id` straight from the request body and went to the service client,
+  which bypasses RLS. Any signed-in account could name another tenant's org and reach that tenant's
+  endpoint configuration and (once set) its bearer token.
+- Options: (a) keep reading the body and rely on the service client; (b) verify the caller's session,
+  then check membership of the named org in the database before the service client is built.
+- Choice: (b). The handler calls `caller.auth.getUser()` first (401 when there is no user), then
+  `caller.rpc('ai_gateway_authorise', { p_org })` with the caller's own client (403 when it is not
+  true). `org_id` from the body is a candidate only. The service client is constructed only after the
+  check returns true, so a refused call reads no endpoint and never calls `secret_reveal`.
+- Reason: L2 and the multi-tenant boundary. The caller's JWT is the only authority for its org; a body
+  field is caller-controlled input. Proving membership through the caller's client keeps the decision
+  in the database (the same `org_members` row RLS uses).
+- Reverse: none; reading the org from the body is the defect this task fixes.
+
+## D-R1-single-gate — one authorisation RPC answers membership, right and entitlement (R-1, F8, F25)
+- Point: the gateway needs three facts before it may spend the service role: is the caller a member of
+  this org; does it hold `use_ai_assist`; is `ai_assist` entitled for the org.
+- Options: (a) three separate calls (`org_members` read, `caller_has_right`, `has_feature`); (b) one
+  SECURITY DEFINER function that answers all three and is granted to `authenticated` only.
+- Choice: (b). `public.ai_gateway_authorise(p_org uuid)` (migration 0067) returns true only for a
+  member of `p_org` who holds `use_ai_assist` while `has_feature(p_org,'ai_assist')`. `execute` is
+  revoked from `public` and `anon` and granted to `authenticated`. Test 76 covers cross-org, no-right,
+  feature-off, allowed, platform-admin-refused and anon-refused.
+- Reason: one round trip, one place to reason about the gate, and the same shape F25 rule 1 asks for
+  ("every new feature RPC calls it before its right check"). The function is mapped to `ai_assist` in
+  `src/lib/featureMap.ts` so the completeness guard stays total (D-R1-featuremap).
+- Reverse: drop `ai_gateway_authorise` and inline the three checks in the Edge Function; the test and
+  the featureMap entry go with it.
+
+## D-R1-tdz-crypto — the crypto dependency is injected, not a self-reference (R-1, F8)
+- Point: `index.ts` had `const crypto = crypto as unknown as HashCrypto` inside the request handler.
+  A `const` is in its own temporal dead zone until initialised, so the initialiser reads itself and
+  throws `ReferenceError: Cannot access 'crypto' before initialization` on every non-probe request.
+- Options: (a) rename the local (`const webcrypto = crypto`); (b) pass the global `crypto` in as a
+  dependency of the handler, so the logic is testable with an injected implementation.
+- Choice: (b). `GatewayDeps.crypto` carries it; `index.ts` passes `crypto as unknown as HashCrypto`.
+  The `HashCrypto` interface stays, because it is still the parameter type of the shared `aiGateway`
+  helpers (`sha256Hex`, `runGatewayCall`), which are not Deno-only.
+- Reason: the crash is real and fatal; injecting it also lets `src/lib/aiGatewayHandler.test.ts` run
+  the whole path without Deno. Removing the type entirely would mean retyping five signatures in
+  `_shared/aiGateway.ts`, which no task asks for.
+- Reverse: replace `deps.crypto` with the global in the handler; the crash returns, so there is no
+  reason to.
+
+## D-R1-featuremap — ai_gateway_authorise belongs to ai_assist (R-1, F25 rule 5)
+- Point: the new RPC calls `has_feature(`, so the featureMapCompleteness guard requires a map entry.
+  The first R-1b commit left it out and vitest went red (1 failed of 1307).
+- Choice: `ai_gateway_authorise: 'ai_assist'` in `src/lib/featureMap.ts`. It gates on the same feature
+  its callers do.
+- Reason: F25 rule 5 is explicit; the guard is the mechanism that keeps the mapping total. Committed
+  as R-1c.
+- Reverse: none; an unmapped feature RPC is a build failure by design.
+
+## D-R1-migration-number — 0067, not 0066 (R-1, M1)
+- Point: the task named `0066_ai_gateway_authorise.sql` and test `75`, but S9 had already created
+  `0066_external_auditors.sql` and `75_external_auditors.sql`.
+- Choice: renumbered to `0067_ai_gateway_authorise.sql` and `76_ai_gateway_authorise.sql`, the highest
+  existing + 1 (M1 and the H0 numbering rule). M1 grep found no prior `ai_gateway_authorise`.
+- Reason: creating 0066 would have been a duplicate. The migration is `create or replace` (M2), so it
+  is a no-op on a second apply.
+- Reverse: none; the number follows the repository, not the task text.
+
+## D-R1-s9-fix — the /external test waited for the session, not the click (S9-FIX)
+- Point: CI run 39393636028 step 7 failed at e2e/s9-external-auditor.spec.ts:107. The spec called
+  `signIn` (which returns as soon as the Sign in button is clicked) then `page.goto('/external')`. The
+  reload raced the session write, landed on the sign-in screen, and the wrong-principal notice never
+  rendered.
+- Choice: the spec uses `signInTenant`, which waits for the navigation strip and so proves the session
+  is persisted, before navigating. Test-only change; no production code touched.
+- Reason: every other test in the file already used `signInTenant`; this one was the outlier. The
+  product behaviour (a tenant member sees a plain notice, never the portal) is correct and unchanged.
+- Reverse: none; the previous form was a race.

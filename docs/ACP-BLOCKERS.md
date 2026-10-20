@@ -74,3 +74,42 @@ committed locally; the push and the CI dispatch resume as one batch when credent
 Owner action: refresh the sandbox's GitHub credentials (or re-issue the token), then push
 `feature/board-ai-control-plane` and dispatch CI.
 
+
+## R-1 defect (TDZ) — the AI gateway threw on every request, and verified nothing (fixed in R-1b)
+
+Found while applying R-1, not a CI red: the failure was invisible because nothing exercised the
+server-mode path. Two defects in `supabase/functions/ai-gateway/index.ts`:
+
+1. `const crypto = crypto as unknown as HashCrypto` inside the request handler. A `const` is in its
+   temporal dead zone until it is initialised, so the initialiser read itself and threw
+   `ReferenceError: Cannot access 'crypto' before initialization` on every non-probe request. Fixed by
+   injecting the global `crypto` through `GatewayDeps.crypto` (D-R1-tdz-crypto).
+2. The handler verified nothing about the caller: it read `org_id` from the request body and went
+   straight to the service client, which bypasses RLS. Any signed-in account could name another
+   tenant's org and reach that tenant's endpoint configuration and credential. Fixed by
+   `caller.auth.getUser()` then `ai_gateway_authorise` with the caller's own client, before the
+   service client exists (D-R1-org-from-caller, D-R1-single-gate).
+
+Status: RESOLVED in commit `9686fbb` (R-1b) plus `59b8762` (R-1c, the featureMap entry the guard
+required). Test 76 and `src/lib/aiGatewayHandler.test.ts` (5 cases) cover it.
+
+## S9-FIX — the /external spec raced its own sign-in (fixed in S9-FIX)
+
+CI run `39393636028` on `7761183`, step 7 Playwright, exact text:
+
+```
+Error: expect(locator).toBeVisible() failed
+Locator: getByTestId('external-portal-wrong-principal')
+Expected: visible
+Timeout: 5000ms
+Error: element(s) not found
+  at /home/runner/work/software/software/e2e/s9-external-auditor.spec.ts:107:71
+1 failed
+  [chromium] › e2e/s9-external-auditor.spec.ts:103:3 › S9 external auditor portal › [E2E] a tenant member who opens /external is told plainly, never shown the portal
+92 passed (7.8m)
+```
+
+Diagnosis: the test called `signIn` (returns as soon as the button is clicked) and immediately
+navigated to `/external`. The reload raced the session write, landed on the sign-in screen, and the
+notice never rendered. Fixed in `2b0a770` by using `signInTenant`, which waits for the navigation
+strip. Test-only. No blocker remains.
