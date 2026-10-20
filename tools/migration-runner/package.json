@@ -1,0 +1,15 @@
+{
+  "name": "provio-migration-runner",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Provio database mobility runner (F16). Separate from the Vite app; run by QSCorp or the client on a machine that can reach both databases.",
+  "main": "index.mjs",
+  "bin": { "provio-migration-runner": "index.mjs" },
+  "scripts": {
+    "test": "node --test src/"
+  },
+  "dependencies": {
+    "pg": "^8.13.1"
+  }
+}

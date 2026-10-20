@@ -58,6 +58,9 @@ export const FEATURE_RPC_MAP: Record<string, string> = {
   ext_engagement_summary: 'external_auditors',
   // hosting_migration
   hosting_test_connection: 'hosting_migration',
+  // S11 (F16): the real RPC names in 0069 that gate on has_feature.
+  hosting_connection_save: 'hosting_migration',
+  migration_job_create: 'hosting_migration',
   migration_start: 'hosting_migration',
   migration_resume: 'hosting_migration',
   migration_rollback: 'hosting_migration',
