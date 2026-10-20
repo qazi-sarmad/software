@@ -34,9 +34,11 @@ test.describe('S12 tutorials (F18)', () => {
     await page.getByTestId('org-features-tutorial').click();
     const drawer = page.getByTestId('tutorial-drawer');
     await expect(drawer).toBeVisible();
-    // F19 / no-blocking-modal: a complementary side panel, never role="dialog" or a backdrop.
+    // F19 / no-blocking-modal: a complementary side panel, never a blocking dialog. The Org Control
+    // panel itself opens in a non-blocking FloatingWindow (an allow-listed role="dialog" that sets no
+    // aria-modal), so assert on the drawer's own role and on the absence of any modal dialog.
     await expect(drawer).toHaveAttribute('role', 'complementary');
-    await expect(page.locator('[role="dialog"]')).toHaveCount(0);
+    await expect(page.locator('[aria-modal="true"]')).toHaveCount(0);
     await page.getByTestId('tutorial-drawer-close').click();
     await expect(drawer).toBeHidden();
   });
