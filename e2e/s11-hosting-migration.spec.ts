@@ -29,7 +29,8 @@ async function openOrgHosting(page: Page) {
   await page.getByRole('button', { name: 'Sign in' }).click();
   await expect(page.getByRole('navigation', { name: 'Navigation Strip' })).toBeVisible();
   await page.getByLabel('Open user profile menu').click();
-  await page.getByText('Organisation settings').click();
+  // The hosting panel lives in the Assurance control plane, not Organisation settings.
+  await page.getByTestId('menu-org-control').click();
   await expect(page.getByTestId('org-control-panel')).toBeVisible();
   await page.getByTestId('org-control-tab-hosting').click();
   await expect(page.getByTestId('oa-hosting')).toBeVisible();

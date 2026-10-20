@@ -270,14 +270,21 @@ export const PatternsPanel: React.FC<{ onOpenFinding?: (findingId: string) => vo
                   onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onOpenFinding?.(n.id); }}
                   className="cursor-pointer focus:outline-none"
                 >
-                  {/* A transparent hit circle centred on the node: the group's bounding box also spans
-                      the label, so clicking its centre would otherwise miss both shapes. */}
+                  {/* The group holds ONLY the two centred circles, so its bounding box centre is the
+                      node centre: a click at that centre always lands on the hit circle. The visible
+                      label is a sibling below, so it neither shifts the box nor swallows a click. */}
                   <circle cx={n.x} cy={n.y} r={16} className="fill-transparent" />
                   <circle cx={n.x} cy={n.y} r={7} className={n.clusterId ? 'fill-accent' : 'fill-secondary'} />
-                  {/* The label must not intercept pointer events: a neighbouring node's label can
-                      overlap a hit circle, which would swallow the click. */}
-                  <text x={n.x + 10} y={n.y + 3} className="fill-primary text-[11px] pointer-events-none">{n.label}</text>
                 </g>
+              ))}
+              {graph.nodes.map((n) => (
+                <text
+                  key={`label-${n.id}`}
+                  x={n.x + 10} y={n.y + 3}
+                  className="fill-primary text-[11px] pointer-events-none"
+                >
+                  {n.label}
+                </text>
               ))}
             </svg>
           )}
