@@ -1225,3 +1225,39 @@ IMPROVISE-THEN-DOCUMENT (this file).
   lets S12 record them against a stable contract.
 - Reverse: none.
 
+
+## D-S10-FIX-seed-bridge — the DB test engagement also exists in the seed (S11-FIX-5, F14)
+- Point: the Audit File window renders records from the in-memory demo seed; the Time-Travel view
+  (WK-09) is database-backed and keys its reconstruction on the engagement id. The S10 e2e opened a
+  database-uuid engagement that had no seed row, so the window showed "unavailable" and the as_of tab
+  never appeared. There is no database hydration path for records (that is a later slice).
+- Options: (a) seed the same uuid so the window opens it and the DB-backed timeline reconstructs;
+  (b) make the whole record path read the database (out of scope, a much larger change); (c) point the
+  e2e at a seed id (the timeline would then have no database history to replay, so WK-09 could never
+  reach a reconstruction).
+- Choice: (a). `src/data/initialData.ts` gains one synthetic engagement with the fixture uuid
+  `e0000000-0000-4000-8000-000000000001`, in universe `u-gbm` on entity `ent-treasury`.
+- Reason: it is the smallest change that lets the browser record path and the database timeline agree
+  on one id, so the three time-travel e2e tests (which never ran — the S10-FIX run was cancelled at
+  step 6, and serial mode masked them) finally exercise the real reconstruction. The seed is
+  development-only and stripped from the production bundle (sourceGuards + prodBundle guards), so no
+  synthetic row reaches production.
+- Reverse: delete the entry from `initialEngagements`; the window stops opening the fixture id.
+
+## D-S10-FIX-events-guard — engagement_as_of_events is guarded like engagement_as_of (S10-FIX, L2)
+- Point: 0068 created `engagement_as_of_events` as SECURITY DEFINER and granted it to authenticated;
+  the browser calls it directly (src/data/timeTravel.ts `listAsOfEvents`) before `engagement_as_of`.
+  Its body derived the org from the passed engagement id and returned that org's ledger payloads and
+  activity with NO org, scope, right or feature check. Any authenticated member of org B could pass an
+  org A engagement uuid and read org A's ledger and activity — a cross-tenant leak (L2).
+- Options: (a) add the guard to the events function so it matches its sibling; (b) revoke execute and
+  fold the events into `engagement_as_of` (a larger signature change); (c) leave it and rely on the
+  browser never passing a foreign id (not a control; the RPC is directly callable).
+- Choice: (a). 0070 replaces the body with the same order `engagement_as_of` uses: resolve the org,
+  require `has_feature(org,'time_travel')`, require the caller's org to match and the engagement to be
+  in scope (`can_read_all_scopes` or `has_scope`), require `config_actor_ok(org,'view_insights')`.
+  Signature, return shape and grants are unchanged. Test 79 proves each refusal and the happy path.
+- Reason: L2 and F2 — the control plane already enforces these checks on every other timeline RPC;
+  this one was an omission. Same signature means no caller change.
+- Reverse: re-run the 0068 body over the function (but that reintroduces the leak).
+
