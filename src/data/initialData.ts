@@ -398,6 +398,25 @@ export const initialEngagements: AuditEngagement[] = [
     dueDate: '2026-10-10',
     completionPercent: 88,
   },
+  // 13. The synthetic engagement the E2E fixture (e2e/global-setup.ts) creates in the database under
+  // this exact id. The Audit File window is seed-backed, but the Time-Travel view (WK-09) is
+  // database-backed and keys its reconstruction on the engagement id; a DB-uuid engagement must
+  // therefore also resolve in the seed so the window can open it. Development-only (this seed is
+  // stripped from the production bundle), never a real client record.
+  {
+    id: 'e0000000-0000-4000-8000-000000000001',
+    universeId: 'u-gbm',
+    entityId: 'ent-treasury',
+    title: 'Treasury Controls Walkthrough (Test)',
+    stage: 'testing',
+    status: 'in_progress',
+    leadAuditorId: 'usr-prep-1',
+    reviewerId: 'usr-rev',
+    periodStart: '2026-07-01',
+    periodEnd: '2026-09-30',
+    dueDate: '2026-10-24',
+    completionPercent: 40,
+  },
 ];
 
 export const initialControls: AuditControl[] = [
