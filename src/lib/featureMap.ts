@@ -45,7 +45,9 @@ export const FEATURE_RPC_MAP: Record<string, string> = {
   email_profile_save: 'email_resend',
   email_test_send: 'email_resend',
   email_dispatch_now: 'email_resend',
-  // external_auditors
+  // external_auditors (S9: the real RPC names in 0066)
+  external_auditor_invite: 'external_auditors',
+  external_auditor_grants_save: 'external_auditors',
   ext_accept_invite: 'external_auditors',
   ext_list_engagements: 'external_auditors',
   ext_engagement_summary: 'external_auditors',
