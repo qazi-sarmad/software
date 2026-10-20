@@ -849,3 +849,54 @@ IMPROVISE-THEN-DOCUMENT (this file).
 - Reason: every name pre-existed; the retrofit is the extension M1 asks for.
 - Reverse: none needed.
 
+## D-S8-engagement-root-hash — the engagement root hash joins the sealing ledger hashes (S8, F11)
+- Point: F11 says use the ledger's engagement-level head hash if one exists, else
+  `sha256(newline-joined ledger entry hashes of the engagement's sealing entries, in sequence order)`.
+- Options: (a) add an engagement-level head hash to the ledger; (b) join the existing per-entry hashes.
+- Choice: (b). `engagement_root_hash(p_engagement_id)` selects the ledger entries whose `kind` is a
+  sealing kind for that engagement, orders them by sequence, joins their hashes with a newline and
+  hashes the result. No new ledger column.
+- Reason: the ledger already stores a hash per entry and is append-only, so a head hash would be a
+  second source of truth that could drift. Joining in sequence order is deterministic and re-derivable
+  by any verifier from the public ledger rows.
+- Reverse: change the function body in 0062; existing certificates keep their stored `cert_hash` and
+  are unaffected, and a re-issue after the change would supersede them under the normal version rule.
+
+## D-S8-anon-surface-exactly-two — the anonymous surface is two functions, closed by a sweep (S8, F11)
+- Point: F11 requires the functions callable by `anon` to be EXACTLY `verify_certificate` and
+  `verify_board_pack`. Functions created without an explicit ACL inherit EXECUTE from PUBLIC, so
+  `anon` could otherwise reach internal helpers.
+- Options: (a) grant the two and trust the default ACLs elsewhere; (b) grant the two, then sweep every
+  other function in `public` and revoke its PUBLIC and anon grants.
+- Choice: (b). 0062 first re-grants EXECUTE to `authenticated` and `service_role` for each function
+  that has it today (so revoking PUBLIC does not remove real access), then revokes PUBLIC and anon,
+  skipping the two verification functions. `src/guards/anonGrantAllowList.test.ts` replays every
+  anon grant and revoke in migration order and fails if the net set is anything other than the two.
+- Reason: the sweep is the only way to close grants that no migration names explicitly. The static
+  guard is order-aware because the sweep clears the earlier helper grants (`is_cia`, `is_org_admin`,
+  `can_read_all_scopes` from 0016), so a plain union of grants would be wrong.
+- Reverse: delete the sweep block from 0062 and the guard's sweep handling; the earlier migrations
+  still hold their own grants.
+
+## D-S8-extension-anon-grant — extension members keep their hosted anon grant; reported, not widened (S8, M1)
+- Point: the hosted project grants EXECUTE explicitly to `anon` on extension members (`dblink` and
+  friends) at creation time, and the migration role may not own those objects.
+- Options: (a) attempt to revoke and fail the migration if refused; (b) best-effort revoke inside a
+  `begin … exception when insufficient_privilege then null` block and report the residue.
+- Choice: (b). The sweep skips extension members (`pg_depend deptype = 'e'`) and test 72 excludes
+  them from the count while raising a notice that names any that remain.
+- Reason: a refusal to revoke an extension member cannot widen the anonymous surface (the grant
+  already existed before this build); failing the migration over it would block the slice on a
+  condition it cannot change. Keeping it visible in the test output means it stays on the record.
+- Reverse: none needed; if the platform later removes the default grant, the notice simply stops
+  firing.
+
+## D-S8-hash-not-recomputed — a certificate hash is written once and never recomputed (S8, F11, L5)
+- Point: F16 forbids recomputing hashes during a ledger copy; the same caution applies to certificates.
+- Choice: `cert_hash` is computed once, in the database, when the row is inserted, and never updated.
+  Reopening an engagement supersedes the row (status change only); revoking sets status and reason.
+  A superseding re-issue writes a NEW row with an incremented version.
+- Reason: L5 requires the hash chain to be stable. Recomputing on read would let a change to
+  `canonical_value` silently change a previously issued certificate's hash.
+- Reverse: none; this is the intended invariant.
+

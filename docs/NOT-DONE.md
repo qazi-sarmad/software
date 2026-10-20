@@ -210,9 +210,9 @@ clear the first two before Phase 2 closes.
   are produced then.
 - **Event catalogue gaps.** Events whose source does not exist yet are not wired: every key in the F7
   catalogue that has no emitter is listed by the S2 automation test rather than faked.
-- Slices S8 to S13 (certificate and public verification, external auditor portal, time-travel and
-  patterns, hosting fit and the migration runner, the completed wizards, and the final contract) are
-  not started at the time of writing.
+- Slices S9 to S13 (external auditor portal, time-travel and patterns, hosting fit and the migration
+  runner, the completed wizards, and the final contract) are not started at the time of writing.
+  S8 (certificate and public verification) is complete.
 
 
 

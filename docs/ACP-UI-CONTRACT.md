@@ -438,6 +438,49 @@ as its slice lands.
 
 ---
 
+## WK-05 — Certificate panel (S8)
+
+- **Purpose:** issue, revoke and download an engagement certificate; configure which fields appear
+  (F11).
+- **Route:** the Audit File window, view "Certificate" (`audit-file-view-certificate`).
+- **Rights:** `manage_engagements` to issue, `can_reopen` to revoke, `edit_config` to change the
+  field list. The `certificates` entitlement gates the feature.
+- **Data:** `listCertificates(orgId)`, `getCertificate(certificateId)`,
+  `issueCertificate(engagementId, extra?)`, `revokeCertificate(certificateId, reason)`,
+  `getCertificateConfig(orgId)`, `saveCertificateConfig(orgId, fields)` (`src/data/certificate.ts`);
+  `getOrgSettingsExtra(orgId)`; `getBranding(orgId)`; the shared `renderPdf` and `renderQrDataUrl`
+  renderers (`src/lib/render/`). Pure helpers in `src/lib/certificate.ts`.
+- **Testids:** `wk-certificate`, `wk-certificate-loading`, `wk-certificate-error`,
+  `wk-certificate-issue`, `wk-certificate-no-issue`, `wk-certificate-ok`, `wk-certificate-result`,
+  `wk-certificate-empty`, `wk-certificate-list`, `wk-certificate-<id>`, `wk-certificate-status-<id>`,
+  `wk-certificate-pdf-<id>`, `wk-certificate-revoke-<id>`, `wk-certificate-revoke-form-<id>`,
+  `wk-certificate-revoke-reason-<id>`, `wk-certificate-revoke-confirm-<id>`, `oa-certificate-config`,
+  `oa-certificate-field-<key>`, `oa-certificate-enabled-<key>`.
+- **States:** loading; an empty list ("No certificate has been issued…"); an inline error. Revoke is
+  refused until the reason is at least five characters. A role without `manage_engagements` sees a
+  disabled issue button and a plain explanation.
+- **Tutorial key:** `oa.certificate`.
+
+---
+
+## WK-06 — Public verification page (S8)
+
+- **Purpose:** the ONLY anonymous surface (F11). A visitor checks a certificate or Board Pack by id
+  and may compare a dropped JSON or PDF hash in the browser.
+- **Route:** `/verify/:id` (certificate) and `/pack/:id` (Board Pack), outside the auth guard.
+- **Rights:** none. The page calls exactly one of the two anon-callable RPCs.
+- **Data:** `verifyCertificate(certificateId)`, `verifyBoardPack(packId)` (`src/data/certificate.ts`);
+  `parseDroppedDocument`, `matchesHash`, `statusLabel` (`src/lib/certificate.ts`).
+- **Testids:** `wk-verify`, `wk-verify-loading`, `wk-verify-error`, `wk-verify-status`,
+  `wk-verify-not-found`, `wk-verify-rate-limited`, `wk-verify-organisation`, `wk-verify-title`,
+  `wk-verify-issued`, `wk-verify-workpapers`, `wk-verify-findings`, `wk-verify-hash`, `wk-verify-drop`,
+  `wk-verify-file`, `wk-verify-drop-error`, `wk-verify-drop-result`.
+- **States:** loading; valid / superseded / revoked / not found / rate limited. Organisation name and
+  title appear only when the tenant turned `public_verify_show_title` on.
+- **Tutorial key:** `oa.verify`.
+
+---
+
 ## Tutorials regenerated
 
 `npm run tutorials:record` regenerates every GIF (S12). The recorder binds only to the testids listed
