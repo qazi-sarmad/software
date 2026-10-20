@@ -130,6 +130,25 @@ describe('layoutGraph', () => {
     const g = layoutGraph(two, clusters);
     expect(g.edges).toHaveLength(1);
   });
+
+  it('never places two co-clustered nodes on the same point', () => {
+    // A cluster's members once shared one angle and overlapped exactly, so only the top node could
+    // be clicked. Every pair of nodes must now have a distinct position.
+    const many = [
+      finding({ findingId: 'f1', title: 'weak access control' }),
+      finding({ findingId: 'f2', title: 'weak access control' }),
+      finding({ findingId: 'f3', title: 'weak access control' }),
+      finding({ findingId: 'f4', title: 'weak access control' }),
+    ];
+    const clusters = clusterFindings(many, settings);
+    const g = layoutGraph(many, clusters);
+    const seen = new Set<string>();
+    for (const n of g.nodes) {
+      const key = `${n.x},${n.y}`;
+      expect(seen.has(key)).toBe(false);
+      seen.add(key);
+    }
+  });
 });
 
 describe('heatMap', () => {

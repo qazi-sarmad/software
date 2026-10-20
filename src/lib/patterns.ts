@@ -232,14 +232,32 @@ export function layoutGraph(
 
   const nodes: PatternGraphNode[] = sorted.map((f) => {
     const cid = clusterOf.get(f.findingId) ?? null;
-    const angle = cid
-      ? (baseAngle.get(cid) as number)
-      : (2 * Math.PI * sorted.indexOf(f)) / Math.max(1, sorted.length);
+    if (!cid) {
+      const angle = (2 * Math.PI * sorted.indexOf(f)) / Math.max(1, sorted.length);
+      return {
+        id: f.findingId,
+        label: f.title,
+        x: Math.round((cx + radius * Math.cos(angle)) * 100) / 100,
+        y: Math.round((cy + radius * Math.sin(angle)) * 100) / 100,
+        clusterId: null,
+        severity: f.severity,
+      };
+    }
+    // Spread a cluster's members across an arc around its base angle and alternate their radius,
+    // so co-clustered findings never land on the same point (they would otherwise overlap and hide
+    // each other's hit target). Deterministic: order is the sorted id order.
+    const members = sorted.filter((x) => clusterOf.get(x.findingId) === cid);
+    const idx = members.indexOf(f);
+    const n = members.length;
+    const base = baseAngle.get(cid) as number;
+    const spread = Math.min(Math.PI / 3, 0.16 * Math.max(0, n - 1));
+    const angle = n === 1 ? base : base - spread / 2 + (spread * idx) / (n - 1);
+    const radial = radius - (idx % 2 === 0 ? 0 : 34);
     return {
       id: f.findingId,
       label: f.title,
-      x: Math.round((cx + radius * Math.cos(angle)) * 100) / 100,
-      y: Math.round((cy + radius * Math.sin(angle)) * 100) / 100,
+      x: Math.round((cx + radial * Math.cos(angle)) * 100) / 100,
+      y: Math.round((cy + radial * Math.sin(angle)) * 100) / 100,
       clusterId: cid,
       severity: f.severity,
     };
