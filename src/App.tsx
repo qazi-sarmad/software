@@ -282,7 +282,17 @@ const RecordPage: React.FC<{ target: ViewRecordTarget }> = ({ target }) => {
         </nav>
         {type ? (
           <div className="rounded-2xl border border-hairline bg-surface p-6" data-testid="record-page">
-            <RecordContent type={type} data={target.recordType === 'engagement' ? { engagement: { id: target.recordId } } : { id: target.recordId }} onClose={() => {}} />
+            <RecordContent
+              type={type}
+              data={
+                target.recordType === 'engagement'
+                  ? { engagement: { id: target.recordId } }
+                  : target.recordType === 'finding'
+                  ? { findingId: target.recordId }
+                  : { id: target.recordId }
+              }
+              onClose={() => {}}
+            />
           </div>
         ) : (
           <InlineError message="That record type is not available." testId="record-page-unknown" />
