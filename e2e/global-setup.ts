@@ -67,6 +67,9 @@ const ROLE_IDS_B: Record<string, string> = {
 // a scope row so the RLS spec still observes non-empty user_scopes for its own org.
 const USERS = [
   { email: 'ayesha.khan@provio-test.invalid', name: 'Ayesha Khan', org: ORG_A, role: 'org_admin', roleIds: ROLE_IDS_A, universes: [A_U1] },
+  // CIA: holds all four assurance rights (F3) plus edit_config, so the Board Pack panel, its section
+  // editor and the AI assist are reachable. The Org Admin holds none of the four by F3.
+  { email: 'kamran.sheikh@provio-test.invalid', name: 'Kamran Sheikh', org: ORG_A, role: 'cia', roleIds: ROLE_IDS_A, universes: [] },
   { email: 'bilal.ahmed@provio-test.invalid', name: 'Bilal Ahmed', org: ORG_A, role: 'preparer', roleIds: ROLE_IDS_A, universes: [] },
   // Audit manager: holds manage_engagements, which the Phase 7 import/activity/prior-year flows need.
   { email: 'zara.malik@provio-test.invalid', name: 'Zara Malik', org: ORG_A, role: 'audit_manager', roleIds: ROLE_IDS_A, universes: [] },

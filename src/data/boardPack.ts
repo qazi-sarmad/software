@@ -147,10 +147,13 @@ export function generateBoardPack(orgId: string, opts: GenerateOptions = {}): Pr
   }, NOT_CONFIGURED);
 }
 
-/** The configured section list, in order. Falls back to the F10 defaults when unset. */
+/** The configured section list, in order. Seeds the F10 defaults on first read, then returns them. */
 export async function listBoardPackSections(orgId: string): Promise<BoardPackSection[]> {
   const sb = getClient();
   if (!sb || !orgId) return [];
+  // A fresh tenant has no rows until a pack is generated or the list is saved; seed the defaults
+  // first (idempotent, on conflict do nothing) so the configuration screen always has the list.
+  await sb.rpc('board_pack_sections_seed', { p_org: orgId });
   const { data, error } = await sb
     .from('board_pack_sections')
     .select('section_key,label,ordinal,enabled,visible_roles')
