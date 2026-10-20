@@ -7,6 +7,7 @@ import { hasRight } from '../../lib/rights';
 import { useApp } from '../../context/AppContext';
 import type { DataResult } from '../../data/db';
 import { InlineError } from '../common/InlineError';
+import { TutorialButton } from '../common/TutorialButton';
 import { AlertTriangle, Network, Settings, TrendingUp } from '../common/Icons';
 
 type LoadState = 'loading' | 'ready' | 'error';
@@ -132,6 +133,8 @@ export const PatternsPanel: React.FC<{ onOpenFinding?: (findingId: string) => vo
             </p>
           </div>
         </div>
+        <div className="flex items-center gap-2">
+        <TutorialButton tutorialKey="oa.patterns" title="WK-10 Patterns" screenId="wk-patterns" autoplay={false} />
         <div className="flex items-center gap-1 rounded-xl border border-hairline bg-surface p-1" role="tablist" aria-label="Patterns view">
           {([
             ['clusters', 'Groups'],
@@ -153,6 +156,7 @@ export const PatternsPanel: React.FC<{ onOpenFinding?: (findingId: string) => vo
               {label}
             </button>
           ))}
+        </div>
         </div>
       </div>
 

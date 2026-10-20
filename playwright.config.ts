@@ -18,6 +18,13 @@ export default defineConfig({
   use: {
     baseURL: 'http://localhost:3000',
     trace: 'retain-on-failure',
+    // S12 (F18): the tutorial drawer autoplays on a screen's first visit. Every E2E context is
+    // seeded with the autoplay OFF so existing specs stay deterministic. A dedicated spec clears the
+    // key to exercise the autoplay itself. See src/components/common/TutorialButton.tsx.
+    storageState: {
+      cookies: [],
+      origins: [{ origin: 'http://localhost:3000', localStorage: [{ name: 'acp.tutorial.autoplay', value: 'off' }] }],
+    },
   },
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } } },

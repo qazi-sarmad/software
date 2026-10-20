@@ -15,6 +15,7 @@ import { SuperAdminAi } from './SuperAdminAi';
 import { SuperAdminAutomation } from './SuperAdminAutomation';
 import { SuperAdminHosting } from './SuperAdminHosting';
 import { SuperAdminMigration, DeploymentKitPanel } from './SuperAdminMigration';
+import { TutorialButton } from '../common/TutorialButton';
 
 /**
  * Super Admin portal (C4, spec §24).
@@ -26,6 +27,23 @@ import { SuperAdminMigration, DeploymentKitPanel } from './SuperAdminMigration';
  */
 type Tab = 'tenants' | 'support' | 'consultation' | 'features' | 'recipients' | 'email' | 'automation' | 'ai' | 'tutorials' | 'setup' | 'trail' | 'hosting' | 'migration';
 type Gate = 'checking' | 'allowed' | 'denied';
+
+/** F18: every platform tab carries its own "Show me how" tutorial key (Appendix A). */
+const TAB_TUTORIAL: Record<Tab, { key: string; title: string }> = {
+  tenants: { key: 'sa.tenant-hub', title: 'SA-03 tenant hub' },
+  support: { key: 'sa.health', title: 'SA-02 platform health' },
+  consultation: { key: 'sa.dual-session', title: 'SA-09 Dual Session console' },
+  features: { key: 'sa.features', title: 'SA-14 features and plans' },
+  recipients: { key: 'sa.recipients', title: 'SA-05 notification recipients' },
+  email: { key: 'sa.email-default', title: 'SA-04 email sender profiles' },
+  automation: { key: 'sa.automation', title: 'SA-07 automation templates' },
+  ai: { key: 'sa.ai-models', title: 'SA-06 AI model registry' },
+  tutorials: { key: 'sa.tutorials', title: 'SA-13 tutorial library' },
+  setup: { key: 'sa.setup-wizard', title: 'SA-01 platform setup wizard' },
+  hosting: { key: 'sa.hosting-fit', title: 'SA-10 hosting fit check' },
+  migration: { key: 'sa.migration', title: 'SA-12 migration jobs' },
+  trail: { key: 'sa.trail', title: 'SA-15 platform trail' },
+};
 
 export const SuperAdminPortal: React.FC = () => {
   const [gate, setGate] = useState<Gate>('checking');
@@ -122,7 +140,8 @@ export const SuperAdminPortal: React.FC = () => {
       </header>
 
       <div className="max-w-7xl mx-auto px-6 py-6">
-        <nav className="flex gap-1 mb-6" data-testid="superadmin-tabs">
+        <div className="flex items-center justify-between gap-2 mb-6">
+        <nav className="flex flex-wrap gap-1" data-testid="superadmin-tabs">
           {tabs.map((t) => {
             const Icon = t.icon;
             const active = tab === t.id;
@@ -142,6 +161,12 @@ export const SuperAdminPortal: React.FC = () => {
             );
           })}
         </nav>
+        <TutorialButton
+          tutorialKey={TAB_TUTORIAL[tab].key}
+          title={TAB_TUTORIAL[tab].title}
+          screenId={`sa-${tab}`}
+        />
+        </div>
 
         {tab === 'tenants' && <SuperAdminTenants />}
         {tab === 'support' && <SuperAdminSupport />}

@@ -7,6 +7,7 @@ import {
 } from '../../data/consultation';
 import type { DataResult } from '../../data/db';
 import { SetupWizard } from '../common/SetupWizard';
+import { TutorialButton } from '../common/TutorialButton';
 import { OrgConfigHistory } from './OrgConfigHistory';
 import { OrgEmailPanel } from './OrgEmailPanel';
 import { OrgAutomationPanel } from './OrgAutomationPanel';
@@ -20,6 +21,21 @@ import { Check, Lock, Zap, Sliders, Users, Shield, History, Database } from '../
 
 type Tab = 'features' | 'branding' | 'email' | 'automation' | 'escalation' | 'ai' | 'setup' | 'consultation' | 'auditors' | 'hosting' | 'history';
 type LoadState = 'loading' | 'ready' | 'error';
+
+/** F18: every configuration tab carries its own "Show me how" tutorial key (Appendix A). */
+const TAB_TUTORIAL: Record<Tab, { key: string; title: string }> = {
+  features: { key: 'oa.features', title: 'OA-04 features' },
+  branding: { key: 'oa.branding', title: 'OA-02/03 branding and report format' },
+  email: { key: 'oa.email-resend', title: 'OA-11 email sender' },
+  automation: { key: 'oa.automation', title: 'OA-12 notification rules' },
+  escalation: { key: 'oa.escalation', title: 'OA-13 escalation rules' },
+  ai: { key: 'oa.ai', title: 'OA-06 AI settings' },
+  setup: { key: 'oa.setup-wizard', title: 'OA-01 setup wizard' },
+  consultation: { key: 'oa.dual-session', title: 'OA-16 Dual Session' },
+  auditors: { key: 'oa.auditors', title: 'OA-14 external auditors' },
+  hosting: { key: 'oa.hosting', title: 'OA-15 hosting and database' },
+  history: { key: 'oa.history', title: 'OA-17 configuration history' },
+};
 
 /**
  * Org Admin control panel (OA-04 features read-only, OA-01 setup wizard, OA-16 Dual Session).
@@ -103,7 +119,8 @@ export const OrgControlPanel: React.FC = () => {
 
   return (
     <div className="p-6 space-y-4" data-testid="org-control-panel">
-      <nav className="flex gap-1" data-testid="org-control-tabs">
+      <div className="flex items-center justify-between gap-2">
+        <nav className="flex flex-wrap gap-1" data-testid="org-control-tabs">
         {([
           { id: 'features', label: 'Features', icon: Zap },
           { id: 'branding', label: 'Branding', icon: Sliders },
@@ -131,7 +148,13 @@ export const OrgControlPanel: React.FC = () => {
             </button>
           );
         })}
-      </nav>
+        </nav>
+        <TutorialButton
+          tutorialKey={TAB_TUTORIAL[tab].key}
+          title={TAB_TUTORIAL[tab].title}
+          screenId={`org-${tab}`}
+        />
+      </div>
 
       {tab === 'features' && (
         <div data-testid="org-features">

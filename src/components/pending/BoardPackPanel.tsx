@@ -17,6 +17,7 @@ import { renderQrDataUrl, verificationUrl } from '../../lib/render/qr';
 import type { BrandingSpec } from '../../lib/render/branding';
 import type { DataResult } from '../../data/db';
 import { InlineError } from '../common/InlineError';
+import { TutorialButton } from '../common/TutorialButton';
 import { Select } from '../common/Select';
 import { AlertTriangle, Download, Eye, FileText, History, RefreshCw, Settings } from '../common/Icons';
 
@@ -229,6 +230,7 @@ export const BoardPackPanel: React.FC = () => {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <TutorialButton tutorialKey="oa.boardpack-use" title="WK-01 Board Pack" screenId="wk-boardpack" autoplay={false} />
           <button type="button" data-testid="wk-boardpack-tab-history" onClick={() => setView('history')}
             className={`px-3 py-1.5 rounded-xl text-apple-12 border ${view === 'history' ? 'bg-accent-subtle border-accent text-accent' : 'border-hairline text-secondary'}`}>
             <History className="w-3.5 h-3.5 inline mr-1" />History

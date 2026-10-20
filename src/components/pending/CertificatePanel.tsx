@@ -15,6 +15,7 @@ import type { DataResult } from '../../data/db';
 import { hasRight } from '../../lib/rights';
 import { useApp } from '../../context/AppContext';
 import { InlineError } from '../common/InlineError';
+import { TutorialButton } from '../common/TutorialButton';
 import { Download, FileCheck, RefreshCw, ShieldCheck, ShieldAlert, XCircle } from '../common/Icons';
 
 type LoadState = 'loading' | 'ready' | 'error';
@@ -144,9 +145,12 @@ export const CertificatePanel: React.FC<{ engagementId?: string }> = ({ engageme
   return (
     <div className="space-y-4" data-testid="wk-certificate">
       <div className="rounded-2xl border border-hairline bg-surface p-4 space-y-2">
-        <div className="flex items-center gap-2">
-          <ShieldCheck className="w-4 h-4 text-accent" />
-          <h3 className="text-apple-14 font-semibold text-primary">Engagement certificate</h3>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4 text-accent" />
+            <h3 className="text-apple-14 font-semibold text-primary">Engagement certificate</h3>
+          </div>
+          <TutorialButton tutorialKey="oa.certificate" title="WK-05 certificate" screenId="wk-certificate" autoplay={false} />
         </div>
         <p className="text-apple-12 text-secondary">
           A certificate freezes the engagement&apos;s sealing position — its ledger root hash, the sealed

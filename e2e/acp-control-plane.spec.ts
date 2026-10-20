@@ -20,6 +20,14 @@ const PLATFORM_EMAIL = 'platform.admin@provio-test.invalid';
 const BASE_URL = 'http://localhost:3000';
 const ORG_A_NAME = /Synthetic Org A/;
 
+// F18: the tutorial drawer autoplays on a screen's first visit. The config seeds the off switch for
+// the default fixture; a context created by hand (the Dual Session tests) must seed it too, or the
+// autoplay panel covers the top-right profile menu the test then clicks.
+const AUTOPLAY_OFF = {
+  cookies: [] as { name: string; value: string; domain: string; path: string }[],
+  origins: [{ origin: BASE_URL, localStorage: [{ name: 'acp.tutorial.autoplay', value: 'off' }] }],
+};
+
 test.describe.configure({ mode: 'serial' });
 
 async function signIn(page: Page, email: string) {
@@ -93,7 +101,7 @@ test.describe('ACP control plane (S1)', () => {
     await expect(page.getByTestId('superadmin-consultation-result')).toHaveCount(0);
 
     // A separate context, so the Org Admin sign-in does not overwrite the platform session.
-    const orgContext = await browser.newContext({ baseURL: BASE_URL });
+    const orgContext = await browser.newContext({ baseURL: BASE_URL, storageState: AUTOPLAY_OFF });
     const orgPage = await orgContext.newPage();
     await signIn(orgPage, ORG_ADMIN_EMAIL);
     await expect(orgPage.getByTestId('consultation-banner')).toBeVisible();
@@ -120,7 +128,7 @@ test.describe('ACP control plane (S1)', () => {
     await page.getByTestId('entitlement-toggle-board_pack_pptx').click();
     await expect(page.getByTestId('superadmin-features-result')).toHaveCount(0);
 
-    const orgContext = await browser.newContext({ baseURL: BASE_URL });
+    const orgContext = await browser.newContext({ baseURL: BASE_URL, storageState: AUTOPLAY_OFF });
     const orgPage = await orgContext.newPage();
     await signIn(orgPage, ORG_ADMIN_EMAIL);
     await openControlPlane(orgPage);

@@ -5,6 +5,7 @@ import {
   type AsOfEvent, type AsOfState,
 } from '../../lib/asOfTimeline';
 import { InlineError } from '../common/InlineError';
+import { TutorialButton } from '../common/TutorialButton';
 import { ArrowLeft, ArrowRight, Clock, GitCommit, RotateCcw } from '../common/Icons';
 
 type LoadState = 'loading' | 'ready' | 'error';
@@ -121,7 +122,8 @@ export const AsOfTimeline: React.FC<{ engagementId: string }> = ({ engagementId 
 
   return (
     <div className="space-y-4" data-testid="wk-timetravel">
-      <div className="flex items-start gap-2">
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex items-start gap-2">
         <Clock className="w-4 h-4 text-accent mt-0.5" />
         <div>
           <h3 className="text-apple-14 font-semibold text-primary">Time-Travel</h3>
@@ -130,6 +132,8 @@ export const AsOfTimeline: React.FC<{ engagementId: string }> = ({ engagementId 
             What history did not record is reported as not recorded, never guessed.
           </p>
         </div>
+        </div>
+        <TutorialButton tutorialKey="oa.timetravel" title="WK-09 Time-Travel" screenId="wk-timetravel" autoplay={false} />
       </div>
 
       <InlineError message={loadError} testId="wk-timetravel-error" />
