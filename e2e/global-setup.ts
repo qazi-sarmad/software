@@ -310,9 +310,14 @@ export default async function globalSetup() {
   must('engagements', await sb.from('engagements').upsert([
     { id: A_ENGAGEMENT, org_id: ORG_A, universe_id: A_U1, entity_id: A_ENTITY, title: 'External Auditor Engagement (Test)', stage: 'testing', sealed: false },
   ], { onConflict: 'id' }));
-  must('platform_set_entitlement', await sb.rpc('platform_set_entitlement', {
-    p_org: ORG_A, p_key: 'external_auditors', p_enabled: true, p_plan: 'Assurance', p_reason: 'e2e',
-  }));
+  // The external_auditors feature must be on for the portal (F25 enforcement). The setup client is
+  // service-role and carries no platform_admin claim, so the platform_set_entitlement RPC would
+  // refuse it (require_platform_admin). The row is seeded directly, like every other fixture here;
+  // the Super Admin console exercises the RPC path in acp-control-plane.spec.ts.
+  must('tenant_entitlements', await sb.from('tenant_entitlements').upsert({
+    org_id: ORG_A, feature_key: 'external_auditors', enabled: true,
+    plan_name: 'Assurance', reason: 'e2e fixture', effective_from: new Date().toISOString(), effective_to: null,
+  }, { onConflict: 'org_id,feature_key' }));
   must('external_auditor_access', await sb.from('external_auditor_access').upsert({
     org_id: ORG_A, user_id: externalId, email: EXTERNAL_AUDITOR_EMAIL, active: true, revoked_at: null,
   }, { onConflict: 'org_id,user_id' }));
