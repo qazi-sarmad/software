@@ -37,6 +37,7 @@ export const FEATURE_RPC_MAP: Record<string, string> = {
   pattern_findings: 'patterns',
   // time_travel
   engagement_as_of: 'time_travel',
+  engagement_as_of_events: 'time_travel',
   // escalation / automation_rules
   escalation_evaluate: 'escalation',
   escalation_ack: 'escalation',
