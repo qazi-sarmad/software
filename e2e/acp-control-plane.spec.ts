@@ -109,22 +109,22 @@ test.describe('ACP control plane (S1)', () => {
     await page.getByTestId('superadmin-tab-features').click();
     await expect(page.getByTestId('superadmin-features')).toBeVisible();
     await pickTenant(page, 'Tenant for entitlements');
-    await expect(page.getByTestId('entitlement-toggle-patterns')).toBeVisible();
+    await expect(page.getByTestId('entitlement-toggle-board_pack_pptx')).toBeVisible();
 
     // Without a reason the change is refused in the UI and never sent.
-    await page.getByTestId('entitlement-toggle-patterns').click();
+    await page.getByTestId('entitlement-toggle-board_pack_pptx').click();
     await expect(page.getByTestId('superadmin-features-result')).toContainText('reason is required');
 
     // With a reason it is applied, and the Org Admin's read-only view reflects it.
-    await page.getByTestId('entitlement-reason-patterns').fill('Sold as an add-on for the E2E run');
-    await page.getByTestId('entitlement-toggle-patterns').click();
+    await page.getByTestId('entitlement-reason-board_pack_pptx').fill('Sold as an add-on for the E2E run');
+    await page.getByTestId('entitlement-toggle-board_pack_pptx').click();
     await expect(page.getByTestId('superadmin-features-result')).toHaveCount(0);
 
     const orgContext = await browser.newContext({ baseURL: BASE_URL });
     const orgPage = await orgContext.newPage();
     await signIn(orgPage, ORG_ADMIN_EMAIL);
     await openControlPlane(orgPage);
-    await expect(orgPage.getByTestId('org-feature-patterns')).toContainText('included');
+    await expect(orgPage.getByTestId('org-feature-board_pack_pptx')).toContainText('included');
     await orgContext.close();
   });
 

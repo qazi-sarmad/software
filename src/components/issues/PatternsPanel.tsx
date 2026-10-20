@@ -260,7 +260,19 @@ export const PatternsPanel: React.FC<{ onOpenFinding?: (findingId: string) => vo
                 );
               })}
               {graph.nodes.map((n) => (
-                <g key={n.id} data-testid={`wk-patterns-node-${n.id}`} onClick={() => onOpenFinding?.(n.id)} className="cursor-pointer">
+                <g
+                  key={n.id}
+                  data-testid={`wk-patterns-node-${n.id}`}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Open ${n.label}`}
+                  onClick={() => onOpenFinding?.(n.id)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onOpenFinding?.(n.id); }}
+                  className="cursor-pointer focus:outline-none"
+                >
+                  {/* A transparent hit circle centred on the node: the group's bounding box also spans
+                      the label, so clicking its centre would otherwise miss both shapes. */}
+                  <circle cx={n.x} cy={n.y} r={16} className="fill-transparent" />
                   <circle cx={n.x} cy={n.y} r={7} className={n.clusterId ? 'fill-accent' : 'fill-secondary'} />
                   <text x={n.x + 10} y={n.y + 3} className="fill-primary text-[11px]">{n.label}</text>
                 </g>
