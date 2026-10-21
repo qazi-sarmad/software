@@ -91,6 +91,19 @@ describe('OA-20 member invitation acceptance (C2.4)', () => {
     expect(acceptMemberInvite).toHaveBeenCalledWith('tok-signed');
   });
 
+  it('accepts directly when the invitee has an account but no membership yet (no_tenant)', async () => {
+    // The expected state for an invitee: the account exists, the membership does not. Offering the
+    // account-creation form here was a real defect found by the C2.4 e2e run.
+    authState = { status: 'no_tenant', user: null };
+    render(<MemberAccept tokenFromUrl="tok-no-tenant" />);
+    expect(screen.queryByTestId('oa-accept-email')).toBeNull();
+    fireEvent.click(screen.getByTestId('oa-accept-submit'));
+
+    await waitFor(() => expect(screen.getByTestId('oa-accept-done')).toBeTruthy());
+    expect(createInviteeAccount).not.toHaveBeenCalled();
+    expect(acceptMemberInvite).toHaveBeenCalledWith('tok-no-tenant');
+  });
+
   it('reports a missing code instead of sending an empty token', async () => {
     render(<MemberAccept tokenFromUrl="" />);
     fireEvent.change(screen.getByTestId('oa-accept-email'), { target: { value: 'nobody@example.test' } });

@@ -20,12 +20,28 @@ const ORG_ADMIN_EMAIL = 'ayesha.khan@provio-test.invalid';
 const INVITEE_EMAIL = 'nadia.hassan.invited@provio-test.invalid';
 const INVITEE_PASSWORD = 'invited-e2e-password-0001';
 
-async function signIn(page: Page, email: string) {
+/**
+ * Sign in as a synthetic user. The password comes from the per-run `passwords.json` the global setup
+ * writes, EXCEPT for the invited colleague: this spec creates that account itself, so it passes the
+ * password it chose.
+ */
+async function signIn(page: Page, email: string, password?: string) {
   await page.goto('/');
   await page.getByLabel('Email').fill(email);
-  await page.getByLabel('Password').fill(passwordFor(email));
+  await page.getByLabel('Password').fill(password ?? passwordFor(email));
   await page.getByRole('button', { name: 'Sign in' }).click();
   await expect(page.getByRole('navigation', { name: 'Navigation Strip' })).toBeVisible();
+}
+
+/**
+ * Sign out before switching principal. The session lives in the browser, so a second `signIn` while
+ * one is active would land on the tenant shell with no sign-in form (this bit the first CI run).
+ */
+async function signOut(page: Page) {
+  await page.goto('/');
+  await page.getByLabel('Open user profile menu').click();
+  await page.getByText('Sign out').click();
+  await expect(page.getByTestId('signin-screen')).toBeVisible();
 }
 
 function serviceClient(): SupabaseClient {
@@ -93,22 +109,47 @@ test.describe('C2.4: colleague invitation end to end', () => {
       email: INVITEE_EMAIL, password: INVITEE_PASSWORD, email_confirm: true,
     });
     expect(created.error, created.error?.message).toBeNull();
+    const user = (await sb.auth.admin.listUsers({ page: 1, perPage: 1000 })).data!.users
+      .find((u) => u.email === INVITEE_EMAIL)!;
+    expect(user, 'the invited account exists').toBeTruthy();
 
     // 4. The acceptance route is reachable without a session and carries the code from the link.
+    await signOut(page);
     await page.goto(`/invite/accept?token=${token}`);
     await expect(page.getByTestId('oa-accept')).toBeVisible();
     await expect(page.getByTestId('oa-accept-token')).toHaveValue(token);
 
-    // 5. Sign in, then accept on the same route.
-    await signIn(page, INVITEE_EMAIL);
+    // 5. Sign in as the invitee (who has no organisation yet, so no tenant shell), then accept on the
+    //    same route. The screen sees the session and offers "Accept invitation".
+    //
+    //    The `invite-user` Edge Function is not deployed to the test project (the owner deploys it;
+    //    see docs/COMPLETION-REPORT.md), so the HTTP hop is stubbed at the network boundary — exactly
+    //    as e2e/c1-graph-oauth.spec.ts stubs graph-oauth. The stub is NOT a mock of our logic: it runs
+    //    in the test process with the service-role key and calls the real `admin_accept_invite` RPC,
+    //    which is the only thing the deployed function does. So the screen, the route and the database
+    //    binding are all real; only the undeployed function hop is stubbed.
+    await page.route('**/functions/v1/invite-user', async (route) => {
+      const { data, error } = await sb.rpc('admin_accept_invite', { p_token: token, p_user: user.id });
+      const bound = !error && Array.isArray(data) && data.length > 0;
+      await route.fulfill({
+        status: bound ? 200 : 400,
+        contentType: 'application/json',
+        body: JSON.stringify(bound ? { ok: true } : { ok: false, reason: error?.message ?? 'not bound' }),
+      });
+    });
+
+    await page.goto('/');
+    await page.getByLabel('Email').fill(INVITEE_EMAIL);
+    await page.getByLabel('Password').fill(INVITEE_PASSWORD);
+    await page.getByRole('button', { name: 'Sign in' }).click();
+    // The invitee has no membership yet, so the app shows the no-tenant welcome, never the tenant shell.
+    await expect(page.getByTestId('no-tenant-screen')).toBeVisible();
     await page.goto(`/invite/accept?token=${token}`);
     await expect(page.getByTestId('oa-accept-submit')).toBeVisible();
     await page.getByTestId('oa-accept-submit').click();
     await expect(page.getByTestId('oa-accept-done')).toBeVisible();
 
     // 6. The membership exists with the invited role, and the invitation is used once.
-    const user = (await sb.auth.admin.listUsers({ page: 1, perPage: 1000 })).data!.users
-      .find((u) => u.email === INVITEE_EMAIL)!;
     const member = await sb.from('org_members')
       .select('org_id, role_id, roles(slug)').eq('user_id', user.id).single();
     expect(member.error, member.error?.message).toBeNull();
@@ -122,6 +163,7 @@ test.describe('C2.4: colleague invitation end to end', () => {
     expect(second.error?.message ?? '').toMatch(/already been used/i);
 
     // 7. The People table now lists the new member.
+    await signOut(page);
     await signIn(page, ORG_ADMIN_EMAIL);
     await page.getByLabel('Open user profile menu').click();
     await page.getByText('People & Roles').click();

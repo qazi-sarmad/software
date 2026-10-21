@@ -77,7 +77,13 @@ export const MemberAccept: React.FC<{ tokenFromUrl: string }> = ({ tokenFromUrl 
     await accept();
   }, [token, email, password, accept]);
 
-  const signedIn = status === 'signed_in';
+  /**
+   * A session exists unless the visitor is signed out (or still resolving). `no_tenant` is the
+   * EXPECTED state for an invitee: their account exists but they hold no membership yet, which is
+   * exactly what the invitation will create. Treating only `signed_in` as signed in offered a
+   * colleague who already had an account a second account-creation form.
+   */
+  const signedIn = status !== 'signed_out' && status !== 'loading';
 
   return (
     <div className="min-h-screen bg-canvas text-primary flex items-center justify-center px-6">
