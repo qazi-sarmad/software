@@ -94,12 +94,20 @@ fi
 
 if [ -z "$FAILED" ]; then
   step "7. Tutorial check (npm run check-tutorials)"
-  if npm run check-tutorials; then echo "PASS: 7. Tutorial check"; else fail "7. Tutorial check"; fi
+  # Matches .github/workflows/ci.yml step 6: CI records nothing live, so the committed GIFs are
+  # placeholders and are allowed here only with this flag (the count is printed). The pre-PR gate
+  # scripts/pre-pr-gates.sh runs --strict instead.
+  if TUTORIALS_ALLOW_PLACEHOLDER=1 npm run check-tutorials; then echo "PASS: 7. Tutorial check"; else fail "7. Tutorial check"; fi
 fi
 
 if [ -z "$FAILED" ]; then
   step "8. Edge Function deploy list (node scripts/check-function-deploy-list.mjs)"
   if node scripts/check-function-deploy-list.mjs; then echo "PASS: 8. Edge Function deploy list"; else fail "8. Edge Function deploy list"; fi
+fi
+
+if [ -z "$FAILED" ]; then
+  step "8b. UI contract (node scripts/check-ui-contract.mjs)"
+  if node scripts/check-ui-contract.mjs; then echo "PASS: 8b. UI contract"; else fail "8b. UI contract"; fi
 fi
 
 # ---------------------------------------------------------------------------

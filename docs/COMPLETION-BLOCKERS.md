@@ -2,6 +2,29 @@
 
 A blocker is recorded here with the exact error text, what was tried, and the commit hash.
 
+## CI infrastructure: GitHub runner platform still refuses to start jobs (2026-10-21, C6)
+
+- The workflow had been paused (`CI disabled_manually`, workflow id 383084794). It was re-enabled
+  (`PUT repos/qazi-sarmad/software/actions/workflows/383084794/enable` -> `active`) and dispatched
+  three times on the C5 commits:
+  - **39674966693** on `fc68455` -> `completed / failure`, job `gates`, `steps: []`,
+    `started 2026-10-21T20:58:58Z`, `completed 2026-10-21T20:59:00Z`.
+  - **39675053575** on `fc68455` -> `completed / failure`, `steps: []`,
+    `started 2026-10-21T20:59:36Z`, `completed 2026-10-21T20:59:38Z`.
+  - (Earlier, the same signature on 39604710289 / 39604815983 on `7a5dbef`.)
+- No step ran, so no gate produced a result and no log exists to read; the job-log endpoint still
+  answers `BlobNotFound`. This is the same platform-side failure recorded above, not a repository
+  fault.
+- What was tried: re-enable, dispatch, wait, inspect `jobs` and `jobs/*/logs`, re-dispatch. Two
+  attempts are the five-attempt budget's worth for an infrastructure fault that returns identically
+  in three seconds; more dispatches cannot change a runner that never starts.
+- Consequence: **CI cannot be green on this branch while the platform refuses to start the runner.**
+  The C5 commits (`fa48a0e`, `fc68455`) are verified by `scripts/ci-local.sh` steps 1-9 instead,
+  which run the workflow's steps in the workflow's order against Node 22 and local PostgreSQL 17.
+  Step 10 (Playwright) needs Supabase credentials and is skipped with exit code 3.
+- Owner action: re-dispatch CI when the platform is healthy; the run will then exercise the SQL and
+  Playwright steps against the hosted test project, which cannot be reached from the sandbox.
+
 ## CI infrastructure: two GitHub runs executed zero steps (2026-10-21)
 
 - Runs **39604710289** and **39604815983**, both on head `7a5dbef`, dispatched with
