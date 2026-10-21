@@ -298,3 +298,56 @@ IMPROVISE-THEN-DOCUMENT (this file).
   notified today; without (b) a second run in the same day would emit again. The log is also the
   tenant-visible record of what was sent, which L5 wants.
 - Reverse: drop the table and remove the guard; the job then emits once per run.
+
+## D-C2.3-a — every emitter goes through one door, emit_catalogue_event (C2.3)
+
+- Task: C2.3 "Wire every event whose source exists" and "SQL test enumerates catalogue keys against
+  emitters and fails on any key that has neither an emitter nor an entry in an explicit allow-list".
+- Options: (a) each emitter calls `emit_event` directly; (b) one `emit_catalogue_event` that checks
+  the key against `automation_events_catalogue` first.
+- Choice: (b). Every new trigger emitter calls `emit_catalogue_event`, which raises on a key that is
+  not in the catalogue.
+- Reason: the task's completeness rule is only meaningful if an emitter cannot invent a key. The door
+  makes the catalogue the single list, so a typo fails loudly at the source instead of creating an
+  event no rule can ever match.
+- Reverse: change the callers back to `emit_event`; the completeness test still passes, but a typo
+  would create an unmatched event.
+
+## D-C2.3-b — the allow-list is a table with reasons, and it holds exactly two keys (C2.3)
+
+- Task: C2.3 "or an entry in an explicit allow-list (only `watcher.signal` and any key you justify in
+  the doc)".
+- Choice: `event_emitter_allowlist (event_key, reason)`, seeded with `anomaly.raised` and
+  `watcher.signal`. Test 84 fails if a key has neither an emitter nor a row, and fails if the list
+  grows past two.
+- Reason: `anomaly.raised` is the one key the earlier review named as apparently missing an emitter;
+  measuring shows there is genuinely no server-side anomaly record (detection is a pure client
+  function in `src/lib/analytics.ts`), so wiring it would mean inventing a record and breaking L1.
+  The prompt's example was `watcher.signal`; the second row is justified in COMPLETION-EVENTS.md.
+- Reverse: drop the table and the test block; a key without an emitter then passes silently.
+
+## D-C2.3-c — emitters are triggers on the source table, not calls inside the writing RPC (C2.3)
+
+- Task: C2.3 "Wire every event whose source exists, with a field catalogue matching the rule
+  conditions."
+- Options: (a) add an `emit_event` call inside each writing RPC; (b) an AFTER trigger on the table
+  that holds the fact.
+- Choice: (b). Triggers cover every writer — the RPC, a backfill, an Edge Function through the
+  service role — and cannot be forgotten when a new writer is added. The RPC path is the only writer
+  today, so (a) would work, but it would silently miss the first Edge Function that writes the table.
+- Reason: the fact, not the caller, is the source. The trigger is also where the transition
+  (false→true, `draft`→`frozen`) is visible, which is what the event means.
+- Reverse: drop the triggers and put `perform public.emit_catalogue_event(...)` at the end of each
+  writing RPC.
+
+## D-C2.3-d — finding.sealed fires when the engagement seals (C2.3)
+
+- Task: C2.3 lists `finding.sealed` among the keys to wire; no `findings` seal column exists.
+- Point: a finding has no seal of its own. It becomes read-only when its engagement seals (0034's
+  conclusion sign-off sets `engagements.sealed`; the row guards then refuse writes).
+- Choice: `emit_engagement_sealed` emits `finding.sealed` once per finding of that engagement at the
+  moment it seals, resolving the finding to its engagement through its observation, or through its
+  entity when it was created without one.
+- Reason: it is the only true reading of the key. A dedicated column would be a new fact the model
+  does not have, and emitting per finding on every seal would be a guess.
+- Reverse: drop the loop; `finding.sealed` then has no emitter and must move to the allow-list.
