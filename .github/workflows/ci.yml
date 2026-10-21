@@ -54,6 +54,9 @@ jobs:
       - name: 6b. Edge Function deploy list
         run: node scripts/check-function-deploy-list.mjs
 
+      - name: 6c. UI contract
+        run: node scripts/check-ui-contract.mjs
+
       - name: 7. Migrations and SQL tests (test project only)
         if: ${{ hashFiles('supabase/migrations/**') != '' }}
         env:

@@ -6,11 +6,14 @@ import { Check, AlertTriangle, XCircle } from '../common/Icons';
 type LoadState = 'loading' | 'ready' | 'error';
 
 /**
- * SA-13 tutorial library health (F18). Shows every Appendix A key and whether its recording exists
- * and is current. A stale ui_hash means the screen changed since the recording was made; a missing
- * media path means the GIF has not been generated yet. Read-only; non-blocking.
+ * SA-13 / OA-18 tutorial library health (F18). Shows every Appendix A key and whether its recording
+ * exists and is current. A stale ui_hash means the screen changed since the recording was made; a
+ * missing media path means the GIF has not been generated yet. Read-only; non-blocking.
+ *
+ * `audience` scopes the view: SA-13 (the default) shows every key, while OA-18 shows the keys an
+ * Org Admin owns so the organisation can see which of its own screens have a current recording.
  */
-export const SuperAdminTutorials: React.FC = () => {
+export const SuperAdminTutorials: React.FC<{ audience?: 'org_admin' }> = ({ audience }) => {
   const [state, setState] = useState<LoadState>('loading');
   const [loadError, setLoadError] = useState('');
   const [rows, setRows] = useState<TutorialRow[]>([]);
@@ -19,13 +22,14 @@ export const SuperAdminTutorials: React.FC = () => {
     setState('loading');
     setLoadError('');
     try {
-      setRows(await listTutorials());
+      const all = await listTutorials();
+      setRows(audience ? all.filter((r) => r.audience === audience || r.audience === 'both') : all);
       setState('ready');
     } catch (err) {
       setLoadError(err instanceof Error ? err.message : 'Could not load the tutorial library.');
       setState('error');
     }
-  }, []);
+  }, [audience]);
 
   useEffect(() => {
     void load();

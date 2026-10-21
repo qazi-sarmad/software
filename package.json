@@ -14,6 +14,7 @@
     "ci": "npm run lint && npm run test && node scripts/check-shrink.mjs && node scripts/check-tokens.mjs && npm run build",
     "tutorials:record": "node scripts/record-tutorials.mjs",
     "check-tutorials": "node scripts/check-tutorials.mjs",
+    "check-ui-contract": "node scripts/check-ui-contract.mjs",
     "tutorials:placeholder": "node scripts/record-tutorials.mjs --placeholder"
   },
   "dependencies": {

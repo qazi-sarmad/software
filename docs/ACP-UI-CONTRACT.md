@@ -726,3 +726,199 @@ under `acp.tutorial.autoplay`), so the same screen never autoplays twice. The e2
 
 `npm run tutorials:record` regenerates every GIF (S12). The recorder binds only to the testids listed
 above. `docs/ACP-TUTORIALS.md` lists every key and its steps.
+## SA-03 — tenant hub (S2)
+
+- **Purpose:** the platform's per-tenant register: every tenant with its status, feature flags, AI
+  enablement and the invitation cap, plus the controls to change them.
+- **Route:** `/superadmin`, tab `Tenants` (`superadmin-tab-tenants`).
+- **Rights:** platform admin (`is_platform_admin()`); every write is a platform-only RPC.
+- **Data:** `listTenants()`, `setTenantStatus(orgId, status)`, `setFeatureFlag(orgId, key, enabled)`,
+  `enableAi(orgId, enabled)`, `listInviteCaps()`, `setInviteCap(orgId, perUserDaily)`
+  (`src/data/platform.ts`).
+- **Testids:** `superadmin-tenants`, `superadmin-tenants-loading`, `superadmin-tenants-error`,
+  `superadmin-tenants-result`, `superadmin-tenants-empty`, `tenant-<id>`,
+  `tenant-allow-<id>`, `tenant-deny-<id>`.
+- **States:** loading, error (with Retry), empty (no tenants), ready; an inline result when a write
+  is refused.
+- **Tutorial key:** `sa.tenant-hub`.
+
+## SA-13 — tutorial library (S12)
+
+- **Purpose:** the registry health view for the guided recordings: every Appendix A key, its
+  audience, whether its media file exists and whether the recorded `ui_hash` is stale.
+- **Route:** `/superadmin`, tab `Tutorials` (`superadmin-tab-tutorials`).
+- **Rights:** platform admin (`is_platform_admin()`); read-only.
+- **Data:** `listTutorials()` (`src/data/tutorials.ts`), `tutorialHealth(rows, liveHashes)`.
+- **Testids:** `superadmin-tutorials`, `superadmin-tutorials-loading`,
+  `superadmin-tutorials-error`, `superadmin-tutorials-empty`, `tutorial-<key>`.
+- **States:** loading, error, empty (registry empty), ready.
+- **Tutorial key:** `sa.tutorials`.
+
+## SA-15 — platform trail (S12, F20)
+
+- **Purpose:** the append-only platform audit trail: every platform action with its actor, action,
+  target and time. Read-only, no filter that could hide a row.
+- **Route:** `/superadmin`, tab `Trail` (`superadmin-tab-trail`).
+- **Rights:** platform admin (`is_platform_admin()`); read-only.
+- **Data:** `listTrail()` (`src/data/platform.ts`).
+- **Testids:** `superadmin-trail`, `superadmin-trail-loading`, `superadmin-trail-error`,
+  `superadmin-trail-empty`.
+- **States:** loading, error (with Retry), empty, ready.
+- **Tutorial key:** `sa.trail`.
+
+## OA-05 — roles and rights (S3)
+
+- **Purpose:** the role register and the rights matrix. A role is a named bundle of the 15 closed
+  rights keys; the app and the database both check rights, never role names.
+- **Route:** Org Admin control plane, tab `People` (`org-control-tab-people`) — the roles section of
+  the people panel.
+- **Rights:** `edit_config` to write; `manage_people` for membership changes.
+- **Data:** `listRoles()` (`src/data/admin.ts`), `rightsOfRoleRow(row)`, `createRole(name, slug,
+  rights)`, `updateRoleRights(slug, rights)`, `deleteRole(slug)`; `RIGHTS` (`src/lib/rights.ts`).
+- **Testids:** `people-admin-panel`, `admin-roles`, `admin-roles-readonly`, `admin-create-role`,
+  `role-<slug>`.
+- **States:** loading, load error (`admin-load-error`), read-only without `edit_config`
+  (`admin-roles-readonly`), ready; an inline error on a refused write (`admin-error`).
+- **Tutorial key:** `oa.roles`.
+
+## OA-08 — templates hub (S2)
+
+- **Purpose:** the notification-template hub: every catalogue event, the tenant template that
+  overrides the platform default, and the blocks each template is built from.
+- **Route:** Org Admin control plane, tab `Automation` (`org-control-tab-automation`) — the templates
+  section of the automation panel.
+- **Rights:** `edit_config`.
+- **Data:** `listTemplates(orgId)`, `saveTemplate(...)` (`src/data/automation.ts`).
+- **Testids:** `org-automation`, `org-template-list`, `org-template-<eventKey>`,
+  `template-<eventKey>`, `template-list`, `template-event`, `template-subject`, `template-blocks`,
+  `template-block-<i>`, `template-block-text-<i>`, `template-block-up-<i>`, `template-block-down-<i>`,
+  `template-block-remove-<i>`, `template-add-<type>`, `template-save`.
+- **States:** loading, error, empty (no templates), ready; an inline saved/failure result.
+- **Tutorial key:** `oa.templates`.
+
+## OA-10 — certificate configuration (S8)
+
+- **Purpose:** the certificate template: which fields a public certificate shows, in order, and
+  whether the certificate is enabled at all.
+- **Route:** Org Admin control plane, tab `Branding` (`org-control-tab-branding`) — the certificate
+  section beside the Board Pack configuration.
+- **Rights:** `edit_config` to save; `approve_plan` is required to issue.
+- **Data:** `getCertificateConfig()`, `saveCertificateConfig(fields)`
+  (`src/data/certificate.ts`); `enabledFields(config)`, `certificateVerifyUrl(id)`
+  (`src/lib/certificate.ts`).
+- **Testids:** `oa-certificate-config`, `oa-certificate-field-<key>`, `oa-certificate-enabled-<key>`.
+- **States:** loading, error, ready; the read-only view without `edit_config`.
+- **Tutorial key:** `oa.certificate-config`.
+
+## OA-18 — tutorial library (tenant view) (S12)
+
+- **Purpose:** the same registry health as SA-13, scoped to the keys an Org Admin owns, so the
+  organisation can see which of its own screens have a current recording.
+- **Route:** Org Admin control plane, tab `Tutorials` (`org-control-tab-tutorials`).
+- **Rights:** any signed-in org member; read-only.
+- **Data:** `listTutorials()` (`src/data/tutorials.ts`), `tutorialHealth(rows, liveHashes)`.
+- **Testids:** `superadmin-tutorials`, `superadmin-tutorials-loading`,
+  `superadmin-tutorials-error`, `superadmin-tutorials-empty`, `tutorial-<key>`.
+- **States:** loading, error, empty, ready.
+- **Tutorial key:** `oa.tutorials`.
+
+## OA-19 — Go Live health check (S1)
+
+- **Purpose:** the last wizard step: a short, deterministic readiness check with a plain-language
+  line per item and a Go Live button that only enables when nothing blocking is outstanding.
+- **Route:** Org Admin control plane, tab `Setup` (`org-control-tab-setup`), step `org.golive`.
+- **Rights:** `edit_config`.
+- **Data:** `listSetupSteps('org_admin')`, `saveSetupStep('org_admin','org.golive',…)`,
+  `setupProgress(steps, total)` (`src/data/setup.ts`).
+- **Testids:** `org_admin-wizard`, `org_admin-wizard-step-org.golive`,
+  `org_admin-wizard-content-org.golive`, `org_admin-wizard-save`, `org_admin-wizard-next`.
+- **States:** loading, error, empty, ready; a resume banner when a later step is open.
+- **Tutorial key:** `oa.golive`.
+
+## WK-02 — Board Pack generator (S7)
+
+- **Purpose:** build a Board Pack snapshot for a scope and a boundary, then take it away as a web
+  view, a PDF or a PPTX. The pack is a frozen snapshot: every figure points at the record behind it.
+- **Route:** WK-01 Board Pack panel (`wk-boardpack`), tab `Generate` (`wk-boardpack-tab-generator`).
+- **Rights:** `approve_plan` to generate; the pack shows only what the caller may read.
+- **Data:** `buildBoardPackPdf(...)`, `buildBoardPackPptx(...)`, `capAgingRows(...)`
+  (`src/lib/boardPackDocuments.ts`); `getBranding()` (`src/data/branding.ts`);
+  `renderPdf(...)`, `renderPptx(...)`, `renderQrDataUrl(...)`, `verificationUrl(...)`.
+- **Testids:** `wk-boardpack`, `wk-boardpack-loading`, `wk-boardpack-error`, `wk-boardpack-result`,
+  `wk-boardpack-tab-generator`, `wk-boardpack-generator`, `wk-boardpack-scope`, `wk-boardpack-from`,
+  `wk-boardpack-to`, `wk-boardpack-boundary`, `wk-boardpack-generate`, `wk-boardpack-no-generate`,
+  `wk-boardpack-pdf`, `wk-boardpack-pptx`, `wk-boardpack-url-missing`,
+  `wk-boardpack-missing-refs`.
+- **States:** loading, error, ready; generate disabled until a scope and boundary are chosen; an
+  inline refusal when the database rejects the call.
+- **Tutorial key:** `oa.boardpack-generate`.
+
+## WK-03 — Board Pack web view (S7)
+
+- **Purpose:** read a generated pack: the scope, the boundary, the delta against the previous pack,
+  every section, and the sources index that traces each figure back to its record.
+- **Route:** WK-01 Board Pack panel (`wk-boardpack`), tab `View` (`wk-boardpack-tab-view`), then a
+  pack from the history (`wk-boardpack-open-<id>`).
+- **Rights:** `approve_plan`; a figure the caller may not read is shown sealed
+  (`wk-boardpack-figure-sealed`), not silently omitted.
+- **Data:** the pack snapshot read through `src/data/boardPack.ts`.
+- **Testids:** `wk-boardpack`, `wk-boardpack-tab-view`, `wk-boardpack-view`, `wk-boardpack-history`,
+  `wk-boardpack-open-<id>`, `wk-boardpack-verify-chip`, `wk-boardpack-delta`,
+  `wk-boardpack-section-sira`, `wk-boardpack-section-issues`, `wk-boardpack-section-changes`,
+  `wk-boardpack-section-sealed`, `wk-boardpack-section-sources`,
+  `wk-boardpack-figure-sira-<i>`, `wk-boardpack-figure-cap-<band>`,
+  `wk-boardpack-figure-sealed`, `wk-boardpack-source-<path>`.
+- **States:** loading, error, empty (no packs yet), ready; sealed figures.
+- **Tutorial key:** `oa.boardpack-view`.
+
+## WK-07 — AI assist (S5, M-4a)
+
+- **Purpose:** the drafting aid beside any editor: "Suggest wording" sends the current text and the
+  numbers in it to the tenant's own AI endpoint and returns a draft the person may accept, edit or
+  reject. The draft is never a test result, a sample, a score or a finding status (L1).
+- **Route:** rendered inside the observation editor and any other editor that opts in; not a route.
+- **Rights:** `perform_work`; the AI feature must be enabled for the organisation
+  (`has_feature(org,'ai_assist')`).
+- **Data:** `runAiAssist(orgId, useCase, prompt, recordType, recordId, allowedNumbers)`
+  (`src/data/ai.ts`), through the caller-verified `ai-gateway` Edge Function.
+- **Testids:** the component takes a prefix prop (default ai-assist), and exposes
+  `<prefix>-suggest`, `<prefix>-draft`, `<prefix>-text`, `<prefix>-accept`, `<prefix>-reject`,
+  `<prefix>-retry`, `<prefix>-label`, `<prefix>-test`, `<prefix>-probe`, `<prefix>-figures`,
+  `<prefix>-figure-<token>`, `<prefix>-figure-confirm-<token>`, `<prefix>-error`.
+- **States:** idle, suggesting, draft shown, accepted, rejected, error with Retry; a figure the
+  model invented is listed for confirmation and is never written into the record unconfirmed.
+- **Tutorial key:** `oa.ai-assist`.
+
+## EX-02 — portal home (S9)
+
+- **Purpose:** the external auditor's landing view: the engagements they may read, the summary of
+  each, and the downloads available to them. No tenant application shell, no write path.
+- **Route:** `/external` (`ex-portal`), outside the tenant shell but behind the auth gate.
+- **Rights:** the `external_auditor` access status plus a live, unexpired, unrevoked grant; the
+  portal reads only the granted objects.
+- **Data:** `getMyAccess()`, `listMyEngagements()` (`src/data/externalAuditors.ts`);
+  `describeExpiry(...)`, `SIGNUP_DISABLED_HINT` (`src/lib/externalAuditors.ts`).
+- **Testids:** `ex-portal`, `ex-portal-loading`, `ex-portal-error`, `ex-portal-inactive`,
+  `ex-portal-empty`, `ex-portal-engagements`, `ex-portal-engagement-<id>`, `ex-portal-summary`,
+  `ex-portal-downloads`, `ex-portal-cert-hash`, `ex-portal-pack-hash`, `ex-portal-verify`,
+  `ex-portal-verify-result`, `external-portal-wrong-principal`.
+- **States:** loading, error, inactive (no live grant, with the reason), empty (no engagements),
+  ready.
+- **Tutorial key:** `ex.home`.
+
+## EX-03 — engagement view (S9)
+
+- **Purpose:** one engagement as the external auditor sees it: the summary, the certificate hash and
+  the pack hash, and the drop zone where the auditor returns a document whose SHA-256 must match the
+  hash on record.
+- **Route:** `/external`, engagement card (`ex-portal-engagement-<id>`).
+- **Rights:** as EX-02; read-only plus the return-a-document action.
+- **Data:** `getEngagementSummary(id)`, `getLatestCertificate(id)`, `getLatestPack(id)`,
+  `verifyExternalCertificate(...)` (`src/data/externalAuditors.ts`); `matchesHash(...)`,
+  `parseDroppedDocument(...)` (`src/lib/certificate.ts`).
+- **Testids:** `ex-portal`, `ex-portal-summary`, `ex-portal-cert-hash`, `ex-portal-pack-hash`,
+  `ex-portal-drop`, `ex-portal-drop-input`, `ex-portal-drop-result`, `ex-portal-drop-error`,
+  `ex-portal-verify`, `ex-portal-verify-result`.
+- **States:** loading, error, ready; a returned document that does not match the recorded hash is
+  refused with the plain reason.
+- **Tutorial key:** `ex.engagement`.

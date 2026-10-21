@@ -549,3 +549,44 @@ IMPROVISE-THEN-DOCUMENT (this file).
 - Reason: "configuration not code" (Laws, decision protocol (d)). A firm that treats planned-date
   nudges as routine can say so without a migration, and the change is versioned (`admin_log_change`).
 - Reverse: drop the column and read the class list from a constant.
+
+## D-C5.1-1 — every Appendix A screen gets its own contract section (C5.1)
+
+- Task: C5.1, the UI contract.
+- Point: 32 of the ~52 Appendix A screens had a section; SA-03, SA-13, SA-15, OA-05, OA-08, OA-10,
+  OA-18, OA-19, WK-02, WK-03, WK-07, EX-02 and EX-03 had none, and several (OA-01, OA-03, OA-07,
+  SA-08, SA-11, WK-04, EX-04) were only folded into a combined heading.
+- Options: (a) leave the folded headings and let the checker accept a screen id mentioned anywhere;
+  (b) give every Appendix A id a section of its own, with the real route, rights, data functions,
+  testids and states.
+- Choice: (b). A folded heading cannot carry a screen's own testids or states, and the owner's new UI
+  needs one contract per screen.
+- Reason: the checker is the contract's enforcement, so the contract must be granular enough to be
+  checked. Combined headings (SA-10 / SA-11, OA-02 / OA-03) are kept where the two screens really
+  share one surface, and the checker treats a listed id as covered.
+- Reverse: delete the added sections; the checker then fails again, which is the point.
+
+## D-C5.1-2 — OA-18 is a scoped view of the one tutorial library, not a second component (C5.1, C4)
+
+- Task: C5.1, the OA-18 tenant tutorial library.
+- Point: the library component existed for SA-13 only; OA-18 (the Org Admin view of its own
+  recordings) had no surface at all.
+- Options: (a) build a second component that reads the same registry; (b) add an `audience` prop to
+  the one component and a `Tutorials` tab in the Org Admin control plane.
+- Choice: (b), with `audience="org_admin"` filtering to `org_admin` plus `both` keys.
+- Reason: one component means one place to keep correct when the owner restyles; a second copy would
+  drift. The filter is a view concern, so it belongs in the component, not in a new RPC.
+- Reverse: drop the `audience` prop and the tab; SA-13 is unaffected.
+
+## D-C5.1-3 — the contract checker fails on a missing section OR a testid absent from src (C5.1)
+
+- Task: C5.1, `scripts/check-ui-contract.mjs`.
+- Point: the contract could drift from the code in two directions: a screen with no section, or a
+  documented testid that no component renders.
+- Options: (a) check only the section list; (b) check both, and also that every Appendix A id from
+  GL-01/TUT-01/SA-01..15/OA-01..21/WK-01..10/EX-01..04 is covered.
+- Choice: (b), with placeholder-aware matching so `tenant-<id>` matches the template literal
+  `tenant-${t.id}` and `:id` route params are ignored.
+- Reason: a testid in the contract that the code does not render is exactly the failure the owner's
+  UI replacement would hit; catching it now is the whole value of the file.
+- Reverse: drop the testid loop; the section check stays.

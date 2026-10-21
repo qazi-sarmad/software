@@ -40,6 +40,17 @@ describe('SA-13 tutorial library (F18)', () => {
     render(<SuperAdminTutorials />);
     await waitFor(() => expect(screen.getByTestId('superadmin-tutorials-empty')).toBeTruthy());
   });
+
+  it('OA-18 scopes the library to the Org Admin keys', async () => {
+    listTutorialsFn.mockResolvedValue([
+      ...ROWS,
+      { key: 'both.key', audience: 'both', title: 'Both', steps: ['a'], mediaPath: 'tutorials/both.key.gif', uiHash: null, generatedAt: null },
+    ]);
+    render(<SuperAdminTutorials audience="org_admin" />);
+    await waitFor(() => expect(screen.getByTestId('tutorial-oa.profile')).toBeTruthy());
+    expect(screen.getByTestId('tutorial-both.key')).toBeTruthy();
+    expect(screen.queryByTestId('tutorial-sa.features')).toBeNull();
+  });
 });
 
 describe('TUT-01 tutorial drawer (F18)', () => {
