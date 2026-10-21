@@ -937,3 +937,44 @@ above. `docs/ACP-TUTORIALS.md` lists every key and its steps.
 - **States:** loading, error, ready; a returned document that does not match the recorded hash is
   refused with the plain reason.
 - **Tutorial key:** `ex.engagement`.
+
+## OA-22 — governance settings (C3.2-B)
+
+- **Purpose:** the remaining Org Admin configuration in one portal, never in code or JSON: one-stage
+  or two-stage testing with the sign-off role per stage (§10), the finding structure — section names
+  and role tags — (§14.2), methodology scales and FSLI mapping (§23), workflow, SLA and escalation
+  (§7.1, §23), notification rules by role with a supervisor copy (§22), the BI check parameters
+  within fixed platform ranges (§12), the evidence size cap and accepted formats (§20), and export
+  and retention settings (§23, §25.4). Every save writes a versioned, logged configuration change.
+- **Route:** Org Admin control plane, tab `Governance` (`org-control-tab-governance`).
+- **Rights:** `edit_config`.
+- **Data:** `getLifecycleSettings()`, `saveLifecycleSettings(s)`, `getWorkflowSettings()`,
+  `saveWorkflowSettings(s)`, `getExportRetention()`, `saveExportRetention(s)`, `getUploadLimits()`,
+  `saveUploadLimits(mb, exts)`, `listFindingSections()`, `upsertFindingSection(...)`,
+  `deleteFindingSection(id)`, `listMethodologyScales()`, `upsertMethodologyScale(...)`,
+  `listFsliMappings()`, `upsertFsliMapping(...)`, `listNotificationRules()`,
+  `upsertNotificationRule(...)`, `listBiParameters()`, `setBiParameter(key, value)`
+  (`src/data/governance.ts`).
+- **Testids:** `oa-governance`, `oa-governance-loading`, `oa-governance-error`, `oa-governance-empty`,
+  `oa-governance-result`, `oa-governance-lifecycle`, `oa-governance-testing-mode`,
+  `oa-governance-signoff-planning`, `oa-governance-signoff-testing`, `oa-governance-signoff-conclusion`,
+  `oa-governance-opinion-required`, `oa-governance-lifecycle-save`, `oa-governance-findings`,
+  `oa-governance-findings-list`, `oa-governance-findings-empty`, `oa-governance-section-<roleTag>`,
+  `oa-governance-section-delete-<roleTag>`, `oa-governance-section-tag`, `oa-governance-section-label`,
+  `oa-governance-section-position`, `oa-governance-section-add`, `oa-governance-methodology`,
+  `oa-governance-scales-list`, `oa-governance-scale-<key>`, `oa-governance-scale-key`,
+  `oa-governance-scale-label`, `oa-governance-scale-add`, `oa-governance-fsli-list`,
+  `oa-governance-fsli-<code>`, `oa-governance-fsli-code`, `oa-governance-fsli-label`,
+  `oa-governance-fsli-category`, `oa-governance-fsli-add`, `oa-governance-workflow`,
+  `oa-governance-sla-hours`, `oa-governance-escalation-hours`, `oa-governance-escalation-role`,
+  `oa-governance-workflow-save`, `oa-governance-notifications`, `oa-governance-rules-list`,
+  `oa-governance-rules-empty`, `oa-governance-rule-<eventKey>`, `oa-governance-rule-event`,
+  `oa-governance-rule-roles`, `oa-governance-rule-supervisor`, `oa-governance-rule-add`,
+  `oa-governance-bi`, `oa-governance-bi-list`, `oa-governance-bi-<checkKey>`,
+  `oa-governance-bi-value-<checkKey>`, `oa-governance-bi-save-<checkKey>`, `oa-governance-uploads`,
+  `oa-governance-max-file-mb`, `oa-governance-ext-<ext>`, `oa-governance-uploads-save`,
+  `oa-governance-retention`, `oa-governance-export-schedule`, `oa-governance-activity-retention`,
+  `oa-governance-population-retention`, `oa-governance-retention-save`.
+- **States:** loading, error, empty, ready; an inline result line reports a saved change or the plain
+  refusal (a value outside the platform range, an unknown role tag, an unsupported format).
+- **Tutorial key:** `oa.governance`.

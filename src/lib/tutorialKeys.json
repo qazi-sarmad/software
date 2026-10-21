@@ -2738,5 +2738,29 @@
         "testid": "ex-portal-drop"
       }
     ]
+  },
+  {
+    "key": "oa.governance",
+    "audience": "org_admin",
+    "screenId": "OA-22",
+    "title": "Governance settings",
+    "steps": [
+      {
+        "text": "Open OA-22 (Governance settings).",
+        "testid": "org-control-tab-governance"
+      },
+      {
+        "text": "Read the lifecycle settings.",
+        "testid": "oa-governance-lifecycle"
+      },
+      {
+        "text": "Choose the testing stages.",
+        "testid": "oa-governance-testing-mode"
+      },
+      {
+        "text": "Click Save lifecycle settings.",
+        "testid": "oa-governance-lifecycle-save"
+      }
+    ]
   }
 ]

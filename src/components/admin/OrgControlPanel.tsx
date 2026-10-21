@@ -18,10 +18,11 @@ import { OrgAiPanel } from './OrgAiPanel';
 import { OrgEscalationPanel } from './OrgEscalationPanel';
 import { ExternalAuditorsPanel } from './ExternalAuditorsPanel';
 import { OrgHostingPanel } from './OrgHostingPanel';
+import { OrgGovernancePanel } from './OrgGovernancePanel';
 import { InlineError } from '../common/InlineError';
 import { Check, Lock, Zap, Sliders, Users, Shield, History, Database } from '../common/Icons';
 
-type Tab = 'features' | 'branding' | 'email' | 'automation' | 'escalation' | 'ai' | 'setup' | 'consultation' | 'auditors' | 'hosting' | 'history' | 'changes' | 'tutorials';
+type Tab = 'features' | 'branding' | 'email' | 'automation' | 'escalation' | 'ai' | 'setup' | 'consultation' | 'auditors' | 'hosting' | 'governance' | 'history' | 'changes' | 'tutorials';
 type LoadState = 'loading' | 'ready' | 'error';
 
 /** F18: every configuration tab carries its own "Show me how" tutorial key (Appendix A). */
@@ -36,6 +37,7 @@ const TAB_TUTORIAL: Record<Tab, { key: string; title: string }> = {
   consultation: { key: 'oa.dual-session', title: 'OA-16 Dual Session' },
   auditors: { key: 'oa.auditors', title: 'OA-14 external auditors' },
   hosting: { key: 'oa.hosting', title: 'OA-15 hosting and database' },
+  governance: { key: 'oa.governance', title: 'OA-22 governance settings' },
   history: { key: 'oa.history', title: 'OA-17 configuration history' },
   changes: { key: 'oa.history', title: 'OA-17 change control' },
   tutorials: { key: 'oa.tutorials', title: 'OA-18 tutorial library' },
@@ -136,6 +138,7 @@ export const OrgControlPanel: React.FC = () => {
           { id: 'consultation', label: 'Dual Session', icon: Users },
           { id: 'auditors', label: 'External auditors', icon: Shield },
           { id: 'hosting', label: 'Hosting', icon: Database },
+          { id: 'governance', label: 'Governance', icon: Sliders },
           { id: 'history', label: 'History', icon: History },
           { id: 'changes', label: 'Change control', icon: Shield },
           { id: 'tutorials', label: 'Tutorials', icon: History },
@@ -256,6 +259,7 @@ export const OrgControlPanel: React.FC = () => {
       )}
 
       {tab === 'hosting' && <OrgHostingPanel />}
+      {tab === 'governance' && <OrgGovernancePanel />}
       {tab === 'history' && <OrgConfigHistory />}
       {tab === 'changes' && <ChangeControlPanel mode="settings" />}
       {tab === 'tutorials' && <SuperAdminTutorials audience="org_admin" />}

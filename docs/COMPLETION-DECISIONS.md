@@ -647,3 +647,17 @@ IMPROVISE-THEN-DOCUMENT (this file).
 - Test: a new case renders at two instants 10 seconds apart (fake timers) and compares the bytes;
   it fails without the pin. The 2-second DOS resolution is why the gap is 10, not 1.
 - Reverse: remove the pinning loop; the fast path still returns a valid DOCX.
+
+## D-C3.2-B — governance settings surfaces (spec §10, §12, §14.2, §20, §22, §23)
+- Point: the spec requires the Org Admin to configure, visually and without code or JSON, the
+  lifecycle (one/two-stage, sign-off roles), finding structure, methodology scales and FSLI mapping,
+  workflow/SLA/escalation, notification rules, export and retention, BI parameters and upload limits.
+- Options: (a) one settings table with a JSON blob per area; (b) one purpose-built table and one RPC
+  per area, each logging a versioned change; (c) store nothing and read spec defaults.
+- Choice: (b). The hard ban forbids JSON typed by a user, so each area gets typed columns and a
+  validated RPC. Every RPC calls admin_log_change, so a save lands in config_versions and
+  activity_log exactly like the existing severity/sampling admin (L5, §23). The eight areas are
+  registered in config_areas so a change emits config.changed through the F7 trigger.
+- Reason: typed columns let the database enforce the §12 BI range, the closed finding role tags, the
+  §20 platform format set and the bounded retention periods — a JSON blob could not.
+- Reverse: drop migration 0082's tables and RPCs; the other admin panels are unaffected.
