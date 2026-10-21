@@ -110,14 +110,18 @@ export async function clientCredentials(
   return parseTokenBody(await res.text());
 }
 
-/** The consent URL the Super Admin opens once for the delegated flow. */
-export function authorizeUrl(clientId: string, redirectUri: string): string {
+/**
+ * The consent URL the configuration actor opens for the delegated flow. The signed `state` is a
+ * required argument (C1.1): without it the flow would be open to CSRF and account linking.
+ */
+export function authorizeUrl(clientId: string, redirectUri: string, state: string): string {
   const params = new URLSearchParams({
     client_id: clientId,
     response_type: 'code',
     redirect_uri: redirectUri,
     response_mode: 'query',
     scope: DELEGATED_SCOPES,
+    state,
   });
   return `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?${params.toString()}`;
 }

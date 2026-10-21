@@ -3,6 +3,7 @@ import {
   PROVIDER_LABELS, credentialLine, forceProfile, listSenderProfiles, recordTestResult,
   saveSenderProfile, setDefaultProfile, statusLabel, type SenderProfile,
 } from '../../data/senderProfiles';
+import { startGraphSignIn } from '../../data/emailOauth';
 import type { DataResult } from '../../data/db';
 import { InlineError } from '../common/InlineError';
 import { Check, Send, Settings, Shield } from '../common/Icons';
@@ -55,6 +56,21 @@ export const SuperAdminEmail: React.FC = () => {
     setBusy(false);
     setResult(r);
     if (r.ok) await load(orgId);
+  };
+
+  // C1.1: the platform-level Microsoft Graph sign-in. Only a platform admin can start it; the Edge
+  // Function checks that, and returns the consent URL. The refresh token is stored as a platform
+  // secret and referenced on the app registration.
+  const connectGraph = async () => {
+    setBusy(true);
+    setResult(null);
+    const r = await startGraphSignIn(null);
+    setBusy(false);
+    if (!r.ok) {
+      setResult({ ok: false, reason: r.reason });
+      return;
+    }
+    window.location.href = r.url;
   };
 
   const makeDefault = async (id: string) => {
@@ -168,6 +184,24 @@ export const SuperAdminEmail: React.FC = () => {
         >
           <Check className="w-3.5 h-3.5" /> Save platform sender
         </button>
+
+        {(draft.provider === 'graph_delegated' || draft.provider === 'graph_app') && (
+          <div className="space-y-2 border-t border-hairline pt-3">
+            <p className="text-apple-12 text-secondary">
+              Sign in to Microsoft once with the account the platform sends from. The refresh token is
+              stored as a platform secret; it is never shown again.
+            </p>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => void connectGraph()}
+              data-testid="superadmin-email-connect-graph"
+              className="inline-flex items-center gap-1 px-3 py-2 rounded-xl border border-hairline text-primary text-apple-12 font-medium hover:bg-canvas disabled:opacity-50"
+            >
+              <Send className="w-3.5 h-3.5" /> Connect Microsoft account
+            </button>
+          </div>
+        )}
       </div>
 
       {platform.length === 0 ? (

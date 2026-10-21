@@ -61,10 +61,11 @@ describe('Microsoft Graph OAuth (M-3, F6)', () => {
     expect(calls[0].init?.body).toContain('.default');
   });
 
-  it('builds a consent URL with Mail.Send and offline_access', () => {
-    const url = authorizeUrl('cid', 'https://app.example/cb');
+  it('builds a consent URL with Mail.Send, offline_access and the signed state', () => {
+    const url = authorizeUrl('cid', 'https://app.example/cb', 'signed-state-token');
     expect(url).toContain('response_type=code');
     expect(url).toContain('Mail.Send');
     expect(url).toContain('offline_access');
+    expect(new URL(url).searchParams.get('state')).toBe('signed-state-token');
   });
 });

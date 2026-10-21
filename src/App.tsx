@@ -73,6 +73,13 @@ const ExternalAuditorAccept = lazy(() =>
     default: m.ExternalAuditorAccept,
   }))
 );
+// C1.1: the Microsoft Graph sign-in callback (OA-11 / SA-04). Kept outside the tenant shell so the
+// platform-level flow also lands here.
+const GraphOauthCallback = lazy(() =>
+  import('./components/auth/GraphOauthCallback').then((m) => ({
+    default: m.GraphOauthCallback,
+  }))
+);
 // Dev-only pages. The conditional is a build-time constant: in a production build the branch and
 // the dynamic imports are removed, so these modules are not emitted into the bundle at all.
 const DevPalettePage = import.meta.env.DEV
@@ -370,6 +377,17 @@ const AppRoutes: React.FC = () => {
   // so it renders behind the auth gate, but never inside the tenant application shell.
   if (currentPath.startsWith('/external')) {
     return <AuthGate externalPortal />;
+  }
+
+  // Microsoft Graph sign-in callback (/oauth/graph, C1.1). Like /external/accept it sits outside the
+  // tenant shell, so the platform-level flow also lands here; the Edge Function verifies the session
+  // from the bearer token before it does anything, so an anonymous visit stores nothing.
+  if (currentPath.startsWith('/oauth/graph')) {
+    return (
+      <Suspense fallback={<LoadingFallback />}>
+        <GraphOauthCallback screenId="oa-11" />
+      </Suspense>
+    );
   }
 
   // Development-only tooling routes. Absent from production builds (see src/guards/prodBundle.test.ts).

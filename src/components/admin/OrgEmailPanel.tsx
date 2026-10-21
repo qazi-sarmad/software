@@ -4,6 +4,7 @@ import {
   PROVIDER_LABELS, credentialLine, listSenderProfiles, recordTestResult, saveSenderProfile,
   statusLabel, type SenderProfile,
 } from '../../data/senderProfiles';
+import { startGraphSignIn } from '../../data/emailOauth';
 import type { DataResult } from '../../data/db';
 import { InlineError } from '../common/InlineError';
 import { Check, Send, Settings } from '../common/Icons';
@@ -63,6 +64,21 @@ export const OrgEmailPanel: React.FC = () => {
     setBusy(false);
     setResult(r);
     if (r.ok) await load();
+  };
+
+  // C1.1: start the Microsoft Graph delegated sign-in. The Edge Function authorises the caller and
+  // returns the consent URL; the browser leaves the app for the Microsoft page and returns to the
+  // callback route. Nothing secret is held here.
+  const connectGraph = async () => {
+    setBusy(true);
+    setResult(null);
+    const r = await startGraphSignIn(orgId);
+    setBusy(false);
+    if (!r.ok) {
+      setResult({ ok: false, reason: r.reason });
+      return;
+    }
+    window.location.href = r.url;
   };
 
   if (state === 'loading') {
@@ -148,6 +164,24 @@ export const OrgEmailPanel: React.FC = () => {
         >
           <Check className="w-3.5 h-3.5" /> Save
         </button>
+
+        {(draft.provider === 'graph_delegated' || draft.provider === 'graph_app') && (
+          <div className="space-y-2 border-t border-hairline pt-3">
+            <p className="text-apple-12 text-secondary">
+              Sign in to Microsoft once so Provio can send from this address. The sign-in is stored
+              securely; you are never shown the credential.
+            </p>
+            <button
+              type="button"
+              disabled={busy || denied}
+              onClick={() => void connectGraph()}
+              data-testid="org-email-connect-graph"
+              className="inline-flex items-center gap-1 px-3 py-2 rounded-xl border border-hairline text-primary text-apple-12 font-medium hover:bg-canvas disabled:opacity-50"
+            >
+              <Send className="w-3.5 h-3.5" /> Connect Microsoft account
+            </button>
+          </div>
+        )}
       </div>
 
       {mine.length === 0 ? (
