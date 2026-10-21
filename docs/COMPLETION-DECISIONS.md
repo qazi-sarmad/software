@@ -661,3 +661,14 @@ IMPROVISE-THEN-DOCUMENT (this file).
 - Reason: typed columns let the database enforce the §12 BI range, the closed finding role tags, the
   §20 platform format set and the bounded retention periods — a JSON blob could not.
 - Reverse: drop migration 0082's tables and RPCs; the other admin panels are unaffected.
+
+## D-C3.1 — the spec audit is evidence-first (C3.1)
+- Point: PARITY.md still carried the Phase 0 table and said Missing for §7, §7.1, §22, §23 while the
+  code now implements them.
+- Options: (a) trust PARITY.md; (b) re-derive every clause from object + test + app file; (c) mark
+  only what the gate scripts cover.
+- Choice: (b). Each row names the migration that creates the object, the SQL or vitest test that
+  fails when the behaviour is removed, and the app file. A clause with no behaviour test is Partial,
+  and the missing piece is named. This is the only honest base for the C5.2 PARITY rebuild.
+- Reason: "Present without a failing test" is the failure mode that let the stale table survive.
+- Reverse: the file is documentation; delete it and PARITY reverts to the old table.
