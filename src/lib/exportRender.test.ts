@@ -7,7 +7,7 @@
  * hash of exactly the bytes delivered. Determinism is asserted directly: the same input renders the
  * same bytes, so the recorded hash is reproducible.
  */
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import JSZip from 'jszip';
 import { PDFDocument } from 'pdf-lib';
 import { renderExport, tabulate, downloadBytes } from './exportRender';
@@ -80,6 +80,25 @@ describe('renderDocx produces a real DOCX', () => {
   it('is deterministic for the same model', async () => {
     const model = documentFromReportBlocks('Audit report', fixtureBlocks);
     expect(await bytesHash(await renderDocx(model))).toBe(await bytesHash(await renderDocx(model)));
+  });
+
+  it('stamps no wall-clock date, so two renders in different seconds still match', async () => {
+    // Regression: `docx` stamps every ZIP entry with `new Date()`; JSZip keeps those per-entry dates
+    // on re-pack, so without pinning them the bytes differ whenever the two renders fall in different
+    // seconds. Fake timers make `new Date()` return a fixed instant, so the test is deterministic.
+    const model = documentFromReportBlocks('Audit report', fixtureBlocks);
+    // DOS timestamps in a ZIP have 2-second resolution, so the two instants must be far enough apart
+    // to land in different buckets, otherwise the test could pass by accident.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    try {
+      vi.setSystemTime(new Date(Date.UTC(2026, 0, 1, 0, 0, 0)));
+      const a = await renderDocx(model);
+      vi.setSystemTime(new Date(Date.UTC(2026, 0, 1, 0, 0, 10)));
+      const b = await renderDocx(model);
+      expect(await bytesHash(a)).toBe(await bytesHash(b));
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
 

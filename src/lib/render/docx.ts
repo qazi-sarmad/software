@@ -93,7 +93,15 @@ export async function normaliseDocx(bytes: Uint8Array): Promise<Uint8Array> {
       .replace(/<dcterms:modified[^>]*>[^<]*<\/dcterms:modified>/, `<dcterms:modified xsi:type="dcterms:W3CDTF">${FIXED_DATE}</dcterms:modified>`);
     zip.file('docProps/core.xml', patched);
   }
-  return zip.generateAsync({ type: 'uint8array', compression: 'DEFLATE', date: new Date(Date.UTC(1980, 0, 1)) } as JSZip.JSZipGeneratorOptions<'uint8array'>);
+  // `docx` stamps every ZIP entry with `new Date()`. JSZip keeps those per-entry dates on re-pack, so
+  // two renders a second apart would differ. Pin each entry, then pack.
+  const fixed = new Date(Date.UTC(1980, 0, 1));
+  for (const name of Object.keys(zip.files)) zip.files[name].date = fixed;
+  return zip.generateAsync({
+    type: 'uint8array',
+    compression: 'DEFLATE',
+    date: fixed,
+  } as JSZip.JSZipGeneratorOptions<'uint8array'>);
 }
 
 /** The visible text of a DOCX, read from word/document.xml — used by the PDF/DOCX parity test. */
