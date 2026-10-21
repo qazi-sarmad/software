@@ -7,7 +7,7 @@
 import { callRpc, getClient, type DataResult } from './db';
 
 export type DocumentStage = 'planning' | 'testing' | 'conclusion';
-export type ExtractionStatus = 'pending' | 'done' | 'failed';
+export type ExtractionStatus = 'pending' | 'done' | 'failed' | 'unsupported' | 'legacy_not_extracted';
 
 export interface DocumentHit {
   fileId: string;
@@ -60,6 +60,37 @@ export async function searchDocuments(
 /** Ask the extraction stub to queue an evidence file (writes a pending row; extraction is out of scope). */
 export function requestExtraction(fileId: string): Promise<DataResult> {
   return callRpc('request_extraction', { p_file_id: fileId });
+}
+
+/**
+ * Run real extraction (C2.6, spec §13.1, §20) through the doc-extract Edge Function. The database is
+ * the authority: the function re-checks the caller's right and org before it reads a byte. Returns
+ * the outcome only — never the file's bytes, and never a secret.
+ */
+export interface ExtractionOutcome {
+  status: 'done' | 'failed' | 'unsupported' | 'legacy_not_extracted';
+  extractor: string | null;
+  pageCount: number | null;
+  characters: number;
+  reason: string | null;
+}
+
+export async function extractDocument(fileId: string): Promise<ExtractionOutcome> {
+  const sb = getClient();
+  if (!sb) throw new Error('no database client');
+  // Queue first so the row exists, then run the real extraction; both are idempotent.
+  const queued = await sb.rpc('request_extraction', { p_file_id: fileId });
+  if (queued.error) throw new Error(queued.error.message);
+  const { data, error } = await sb.functions.invoke('doc-extract', { body: { fileId } });
+  if (error) throw new Error(error.message);
+  const row = (data ?? {}) as Record<string, unknown>;
+  return {
+    status: (row.status as ExtractionOutcome['status']) ?? 'failed',
+    extractor: (row.extractor as string | null) ?? null,
+    pageCount: (row.pageCount as number | null) ?? null,
+    characters: (row.characters as number | null) ?? 0,
+    reason: (row.reason as string | null) ?? null,
+  };
 }
 
 export async function listEvidenceFiles(engagementId: string): Promise<EvidenceFileRow[]> {

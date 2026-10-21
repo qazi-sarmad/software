@@ -478,3 +478,33 @@ IMPROVISE-THEN-DOCUMENT (this file).
 - Reason: the same lesson as C1.1 — an org id or id from the body is not authority.
 - Reverse: revoke EXECUTE on `can_upload_archive` from `authenticated` and read the job in the edge
   function with the service role.
+
+## D-C2.6-M1 — `document_extractions` is extended, not redefined (C2.6)
+
+- Task: C2.6, "document extraction".
+- Point: M1 grep found `document_extractions` and `request_extraction` in 0035, plus test 44 which
+  inserts `extraction_status` rows and asserts the stub writes 'pending'.
+- Options: (a) create a new table for the real extraction; (b) extend the existing one — add columns,
+  widen the status check, and add the write/authority RPCs — leaving 0035's stub and test 44 intact.
+- Choice: (b). `extraction_error` and `extractor` are added with `add column if not exists`, the 0035
+  inline status check is dropped by name (guarded by an existence check) and replaced with one that
+  also allows 'unsupported' and 'legacy_not_extracted' (§20's two non-error outcomes), and the write
+  path becomes `document_extraction_complete`, service-role only.
+- Reason: the browser already reads this table through `search_documents`, and §17.2's full-text
+  search reads `extracted_text` here. A parallel table would fork the search path.
+- Reverse: drop the two columns and restore the 0035 three-value check; drop
+  `document_extraction_complete`, `document_extraction_context` and `can_extract_document`.
+
+## D-C2.6-pdf — a PDF with no text layer is 'unsupported', not 'failed' (C2.6, §20)
+
+- Task: C2.6, the extraction outcome vocabulary.
+- Point: §13.1 extracts text from a text-based PDF; §20 says legacy binaries are stored but not
+  extracted. A scanned PDF is neither: it is a modern format with no text to take.
+- Options: (a) mark it 'failed' and lose the distinction from a real parse error; (b) add an explicit
+  'unsupported' status so the operator can see the file is stored and simply has no text layer.
+- Choice: (b). The scanner outcome is `unsupported` with the reason recorded; a genuine parser error
+  stays `failed`. Both are non-error states in the sense that neither is used for any test result
+  (L1) — the status only describes whether text was obtained.
+- Reason: collapsing the two would make a real, expected case look like a defect and would give the
+  operator no way to tell a broken extractor from a scan.
+- Reverse: fold 'unsupported' back into 'failed' and remove it from the check constraint.

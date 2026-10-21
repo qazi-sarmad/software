@@ -2,10 +2,29 @@ import React, { useState, useMemo } from 'react';
 import { WorkingPaper } from '../../types';
 import { useApp } from '../../context/AppContext';
 import { runDocumentReview, DocumentReviewCheckResult } from '../../lib/analytics';
+import { runStructuralReview, type DocCheckResult } from '../../lib/documentReview';
 import { FileText, CheckCircle2, AlertTriangle, ShieldCheck } from '../common/Icons';
 
 interface DocumentReviewTabProps {
   workpaper: WorkingPaper;
+}
+
+/** The text checks and the structural checks share a shape; the tab renders both. */
+interface ReviewRow {
+  rule: string;
+  passed: boolean;
+  message: string;
+  findings: string[];
+}
+
+function toRows(checks: Array<DocumentReviewCheckResult | DocCheckResult>): ReviewRow[] {
+  return checks.map((c) => ({
+    rule: c.rule,
+    passed: c.passed,
+    message: c.message,
+    findings: (c.findings as Array<string | { where: string; detail: string }>).map((f) =>
+      typeof f === 'string' ? f : `${f.where}: ${f.detail}`),
+  }));
 }
 
 export const DocumentReviewTab: React.FC<DocumentReviewTabProps> = ({ workpaper }) => {
@@ -14,7 +33,9 @@ export const DocumentReviewTab: React.FC<DocumentReviewTabProps> = ({ workpaper 
   const [docText, setDocText] = useState(documentSample);
 
   const reviewResults = useMemo(() => {
-    return runDocumentReview(docText);
+    // §13.1: the text checks (placeholders, signatures, dates, empty sections) and the structural
+    // checks (cross-footing, numeric consistency, template conformance) always run together.
+    return toRows([...runDocumentReview(docText), ...runStructuralReview(docText)]);
   }, [docText]);
 
   return (
