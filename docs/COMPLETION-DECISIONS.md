@@ -400,3 +400,42 @@ IMPROVISE-THEN-DOCUMENT (this file).
   off, or when the project requires email confirmation (no session), the screen says so plainly
   rather than pretending the invitation was applied — the same honesty rule as EX-01.
 - Reverse: delete the component, the lazy import and the route branch in `src/App.tsx`.
+
+## D-C2.9-1 — the support session is a grant-gated read path, not a role (C2.9)
+
+- Task: C2.9 "Implement the content_read session as the spec says."
+- Point: `support_access_grants` was metadata only. The spec §24 says a tenant administrator can
+  create a time-boxed, read-only grant and the platform then reads tenant content under it, with the
+  default (no grant) being zero reads.
+- Options: (a) give the platform role a widened RLS read policy on business tables while a grant is
+  live; (b) keep the platform blind and expose read-only `support_*` functions that check the grant on
+  every call and log every read.
+- Choice: (b). The platform role keeps reading zero rows from every business table directly (tests 03,
+  40, 57, 60 stay green). `support_grant_active(org, 'content_read')` is the single gate; it is
+  non-null only for a platform administrator while an unrevoked, unexpired `content_read` grant
+  exists. `support_list_engagements` and `support_read_object` return only the grant's org's objects;
+  a cross-org object id is refused. Every call, including every refusal, writes `support_access_log`,
+  which the tenant reads through `support_access_log_list`.
+- Reason: (a) would put a `using (... exists grant ...)` clause on ~50 tables — an enormous, fragile
+  surface and a real risk of a blanket read. (b) keeps the blast radius to four functions, keeps the
+  grant check on every call (so expiry and revocation take effect on the next call, L4), and keeps the
+  L2 guarantee provable by the existing zero-read tests. `kind='content_read'` is also required, so a
+  config or full_admin grant cannot open a content session.
+- Reverse: drop `support_access_log`, `support_grant_active`, `support_list_engagements`,
+  `support_read_object`, `support_access_log_list` and remove `support_access_log` from
+  `provio_test.org_tables()`.
+
+## D-C2.9-2 — `support_access_log` carries the 0008 blanket SELECT for anon and platform_admin (C2.9)
+
+- Task: C2.9, the "platform role still reads zero rows directly" proof.
+- Point: the six tests that assert "zero rows" (03, 04, 40, 57, 60, 72) iterate
+  `provio_test.org_tables()` and read each table. A new table with no SELECT grant raises a permission
+  error there instead of returning zero, which is the same information but a different code path.
+- Options: (a) grant no SELECT to anon/platform_admin and let the tests see `insufficient_privilege`;
+  (b) grant SELECT to authenticated, anon and platform_admin and let the authenticated-only,
+  own-org policy do the filtering, exactly as the 0008 convention does for every other table.
+- Choice: (b). It matches the existing convention (privilege granted, RLS filters) and keeps the
+  zero-row tests reading an empty set. The policy keys on `org_id = jwt_org_id()`; anon has no claim
+  and the platform administrator's claim is empty, so both read nothing.
+- Reason: consistency with the rest of the schema, and no test needs to special-case the new table.
+- Reverse: revoke SELECT from anon and platform_admin in a follow-up migration.

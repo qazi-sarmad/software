@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   grantSupportAccess, listJobHealth, listSupportGrants, revokeSupportAccess,
-  type JobHealthRow, type SupportGrantRow,
+  supportGrantActive, supportListEngagements, supportReadObject, supportAccessLog,
+  type JobHealthRow, type SupportAccessLogRow, type SupportEngagement, type SupportGrantRow,
 } from '../../data/platform';
 import type { DataResult } from '../../data/db';
 import { InlineError } from '../common/InlineError';
@@ -10,9 +11,12 @@ import { Shield, Clock } from '../common/Icons';
 type LoadState = 'loading' | 'ready' | 'error';
 
 /**
- * Support access panel (C4, spec §24). Grants are metadata only: they never give the platform read
- * access to tenant business tables (proven by SQL test 40). A grant is time-boxed and can be
- * revoked with a recorded reason. Non-blocking; revoke uses an inline reason field.
+ * Support access panel (C4, spec §24; C2.9 session).
+ *
+ * Two things live here. The grants are time-boxed and revocable metadata. The session below is the
+ * read-only access those grants unlock: it is refused in the database unless a live content_read
+ * grant exists, it returns only the granted org's objects, and every call (including every refusal)
+ * is written to support_access_log, which the tenant can read. Nothing here writes tenant content.
  */
 export const SuperAdminSupport: React.FC = () => {
   const [state, setState] = useState<LoadState>('loading');
@@ -25,6 +29,13 @@ export const SuperAdminSupport: React.FC = () => {
   const [busy, setBusy] = useState(false);
   const [jobs, setJobs] = useState<JobHealthRow[]>([]);
   const [jobsError, setJobsError] = useState('');
+  const [sessionOrgId, setSessionOrgId] = useState('');
+  const [sessionState, setSessionState] = useState<'closed' | 'open'>('closed');
+  const [engagements, setEngagements] = useState<SupportEngagement[]>([]);
+  const [readLabel, setReadLabel] = useState('');
+  const [readFields, setReadFields] = useState<{ key: string; value: string }[]>([]);
+  const [sessionError, setSessionError] = useState('');
+  const [trail, setTrail] = useState<SupportAccessLogRow[]>([]);
 
   const load = useCallback(async () => {
     setState('loading');
@@ -76,8 +87,9 @@ export const SuperAdminSupport: React.FC = () => {
       <div className="rounded-2xl border border-hairline bg-surface p-4 space-y-3">
         <h3 className="text-apple-14 font-semibold text-primary">Request a time-boxed grant</h3>
         <p className="text-apple-12 text-secondary">
-          A grant is metadata used by an authenticated support session (Phase 9/10). It never gives
-          the platform read access to tenant business content.
+          A grant is the key to an authenticated, read-only support session. Without a live grant the
+          platform reads nothing at all; with one it reads only that tenant's objects, and every read
+          is written to the tenant's own trail.
         </p>
         <div className="flex flex-wrap items-end gap-3">
           <label className="space-y-1">
@@ -116,6 +128,133 @@ export const SuperAdminSupport: React.FC = () => {
             Grant access
           </button>
         </div>
+      </div>
+
+      <div className="rounded-2xl border border-hairline bg-surface p-4 space-y-3" data-testid="superadmin-support-session">
+        <h3 className="text-apple-14 font-semibold text-primary">Read-only support session</h3>
+        <p className="text-apple-12 text-secondary">
+          Open a session for a tenant that has granted you content_read. The database checks the
+          grant on every call; an expired or revoked grant closes the session on the next read. No
+          call here writes tenant content.
+        </p>
+        <div className="flex flex-wrap items-end gap-3">
+          <label className="space-y-1">
+            <span className="text-apple-11 text-secondary">Tenant id</span>
+            <input
+              value={sessionOrgId}
+              onChange={(e) => setSessionOrgId(e.target.value)}
+              className="w-64 p-2 rounded-lg bg-surface-elevated border border-hairline text-apple-12 text-primary outline-none"
+              placeholder="00000000-0000-0000-0000-000000000000"
+              data-testid="superadmin-support-session-org"
+            />
+          </label>
+          <button
+            type="button"
+            disabled={busy || sessionOrgId.trim() === ''}
+            onClick={async () => {
+              const org = sessionOrgId.trim();
+              setBusy(true);
+              setSessionError('');
+              try {
+                const live = await supportGrantActive(org);
+                if (!live) {
+                  setSessionState('closed');
+                  setEngagements([]);
+                  setTrail([]);
+                  setSessionError('No live content_read grant for that tenant. The session stays closed.');
+                } else {
+                  setEngagements(await supportListEngagements(org));
+                  setTrail(await supportAccessLog(org));
+                  setSessionState('open');
+                }
+              } catch (err) {
+                setSessionState('closed');
+                setSessionError(err instanceof Error ? err.message : 'Could not open the session.');
+              } finally {
+                setBusy(false);
+              }
+            }}
+            className="px-3 py-2 rounded-lg bg-accent text-white text-apple-12 font-medium hover:opacity-90 disabled:opacity-40 transition-opacity"
+            data-testid="superadmin-support-session-open"
+          >
+            Open session
+          </button>
+        </div>
+        <InlineError message={sessionError || null} testId="superadmin-support-session-error" />
+        {sessionState === 'open' && (
+          <div className="space-y-3" data-testid="superadmin-support-session-open-panel">
+            <p className="text-apple-11 text-tertiary" data-testid="superadmin-support-session-count">
+              {engagements.length} engagement{engagements.length === 1 ? '' : 's'} in the grant's scope.
+            </p>
+            {engagements.length === 0 ? (
+              <p className="text-apple-12 text-secondary py-2" data-testid="superadmin-support-session-empty">
+                The grant is live but this tenant has no engagements yet.
+              </p>
+            ) : (
+              <ul className="space-y-2" data-testid="superadmin-support-session-list">
+                {engagements.map((e) => (
+                  <li key={e.engagementId} className="rounded-xl border border-hairline bg-surface-elevated p-3"
+                      data-testid={`support-engagement-${e.engagementId}`}>
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-apple-12 font-medium text-primary">{e.title}</span>
+                      <span className="text-apple-11 text-tertiary">{e.stage}{e.sealed ? ' · sealed' : ''}</span>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={async () => {
+                        setBusy(true);
+                        setSessionError('');
+                        try {
+                          const rows = await supportReadObject('engagement', e.engagementId, sessionOrgId.trim());
+                          setReadLabel(rows[0]?.label ?? '');
+                          setReadFields(
+                            Object.entries(rows[0]?.detail ?? {}).map(([key, value]) => ({
+                              key, value: String(value),
+                            }))
+                          );
+                          setTrail(await supportAccessLog(sessionOrgId.trim()));
+                        } catch (err) {
+                          setSessionError(err instanceof Error ? err.message : 'Could not read the object.');
+                        } finally {
+                          setBusy(false);
+                        }
+                      }}
+                      className="mt-2 px-2.5 py-1 rounded-lg border border-hairline text-apple-12 text-secondary hover:bg-surface transition-colors"
+                      data-testid={`support-read-${e.engagementId}`}
+                    >
+                      Read this engagement
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {readLabel && (
+              <div className="text-apple-11 text-secondary" data-testid="superadmin-support-session-read-result">
+                <p>Read {readLabel}:</p>
+                <ul className="space-y-0.5">
+                  {readFields.map((f) => (
+                    <li key={f.key} data-testid={`support-read-field-${f.key}`}>
+                      {f.key}: {f.value}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {trail.length > 0 && (
+              <div data-testid="superadmin-support-session-trail">
+                <p className="text-apple-11 text-secondary mb-1">This tenant's trail (what you read, and every refusal):</p>
+                <ul className="space-y-1">
+                  {trail.map((t) => (
+                    <li key={t.id} className="text-apple-11 text-tertiary">
+                      {t.createdAt} · {t.functionName} · {t.outcome}{t.objectKind ? ` · ${t.objectKind}` : ''}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="rounded-2xl border border-hairline bg-surface p-4 space-y-3" data-testid="superadmin-job-health">

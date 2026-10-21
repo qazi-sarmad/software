@@ -188,3 +188,99 @@ export async function listJobHealth(): Promise<JobHealthRow[]> {
     lastMessage: (j.last_message as string | null) ?? null,
   }));
 }
+
+// ---------------------------------------------------------------------------
+// C2.9: the tenant-granted, read-only support session (spec §24).
+// ---------------------------------------------------------------------------
+
+/** One object a support session read, as returned by support_read_object. */
+export interface SupportObject {
+  objectKind: string;
+  objectId: string;
+  label: string;
+  detail: Record<string, unknown>;
+}
+
+/** One engagement a support session may read, as returned by support_list_engagements. */
+export interface SupportEngagement {
+  engagementId: string;
+  title: string;
+  stage: string;
+  sealed: boolean;
+  orgName: string;
+}
+
+/** One row of a tenant's own support trail, as returned by support_access_log_list. */
+export interface SupportAccessLogRow {
+  id: string;
+  grantId: string | null;
+  actorId: string | null;
+  functionName: string;
+  objectKind: string | null;
+  objectId: string | null;
+  outcome: 'ok' | 'denied';
+  createdAt: string;
+}
+
+/**
+ * True when the signed-in platform administrator holds a live content_read grant for the org. Reads
+ * support_grant_active, which is null for everyone else and for an expired or revoked grant.
+ */
+export async function supportGrantActive(orgId: string): Promise<boolean> {
+  const sb = getClient();
+  if (!sb) return false;
+  const { data, error } = await sb.rpc('support_grant_active', { p_org: orgId });
+  if (error) throw new Error(error.message);
+  return data != null;
+}
+
+/** The engagements of an org the caller holds a live content_read grant for. Empty otherwise. */
+export async function supportListEngagements(orgId: string): Promise<SupportEngagement[]> {
+  const sb = getClient();
+  if (!sb) return [];
+  const { data, error } = await sb.rpc('support_list_engagements', { p_org: orgId });
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((e: Record<string, unknown>) => ({
+    engagementId: e.engagement_id as string,
+    title: (e.title as string) ?? '',
+    stage: (e.stage as string) ?? '',
+    sealed: Boolean(e.sealed),
+    orgName: (e.org_name as string) ?? '',
+  }));
+}
+
+/** Read one object (engagement, workpaper, population, finding) inside the grant's org. */
+export async function supportReadObject(
+  kind: string, objectId: string, orgId: string
+): Promise<SupportObject[]> {
+  const sb = getClient();
+  if (!sb) return [];
+  const { data, error } = await sb.rpc('support_read_object', {
+    p_kind: kind, p_id: objectId, p_org: orgId,
+  });
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((o: Record<string, unknown>) => ({
+    objectKind: (o.object_kind as string) ?? '',
+    objectId: o.object_id as string,
+    label: (o.label as string) ?? '',
+    detail: (o.detail as Record<string, unknown>) ?? {},
+  }));
+}
+
+/** The tenant's own support trail: who read what, and every refusal. */
+export async function supportAccessLog(orgId: string, limit = 100): Promise<SupportAccessLogRow[]> {
+  const sb = getClient();
+  if (!sb) return [];
+  const { data, error } = await sb.rpc('support_access_log_list', { p_org: orgId, p_limit: limit });
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((l: Record<string, unknown>) => ({
+    id: l.id as string,
+    grantId: (l.grant_id as string | null) ?? null,
+    actorId: (l.actor_id as string | null) ?? null,
+    functionName: (l.function_name as string) ?? '',
+    objectKind: (l.object_kind as string | null) ?? null,
+    objectId: (l.object_id as string | null) ?? null,
+    outcome: (l.outcome as 'ok' | 'denied') ?? 'denied',
+    createdAt: (l.created_at as string) ?? '',
+  }));
+}

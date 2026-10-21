@@ -690,6 +690,38 @@ under `acp.tutorial.autoplay`), so the same screen never autoplays twice. The e2
 
 ---
 
+## SA-02 — platform health, support grants and the read-only support session (C2.2, C2.9)
+
+- **Purpose:** the platform's operations surface. It shows every scheduled job and its last run,
+  lists the time-boxed support grants, and opens the tenant-granted, read-only support session that
+  those grants unlock.
+- **Route:** `/superadmin`, tab `Support access` (`superadmin-tab-support`).
+- **Rights:** platform admin (`is_platform_admin()`, `require_platform_admin()` in the database). The
+  session additionally requires a live, unrevoked, unexpired `content_read` grant for the tenant.
+- **Data:** `listJobHealth()` (`platform_job_health`), `listSupportGrants()`
+  (`platform_list_support_grants`), `grantSupportAccess(orgId, scope, durationHours)`,
+  `revokeSupportAccess(grantId, reason)` (`src/data/platform.ts`); the session calls
+  `supportGrantActive(orgId)` (`support_grant_active`), `supportListEngagements(orgId)`
+  (`support_list_engagements`), `supportReadObject(kind, objectId, orgId)` (`support_read_object`)
+  and `supportAccessLog(orgId)` (`support_access_log_list`) — all in `src/data/platform.ts`,
+  backed by migration 0076.
+- **Testids:** `superadmin-support`, `superadmin-support-loading`, `superadmin-support-error`,
+  `superadmin-support-result`, `superadmin-support-empty`, `superadmin-support-session`,
+  `superadmin-support-session-org`, `superadmin-support-session-open`,
+  `superadmin-support-session-error`, `superadmin-support-session-open-panel`,
+  `superadmin-support-session-count`, `superadmin-support-session-empty`,
+  `superadmin-support-session-list`, `superadmin-support-session-read-result`,
+  `superadmin-support-session-trail`, `support-engagement-<id>`, `support-read-<id>`,
+  `superadmin-job-health`, `superadmin-job-health-error`, `superadmin-job-health-empty`,
+  `superadmin-job-health-list`, `job-<jobName>`, `job-status-<jobName>`, `grant-<grantId>`.
+- **States:** loading grants; loading jobs; an empty jobs list (the scheduler is absent); an inline
+  job error; a session that stays closed when no live grant exists, with the reason inline; an open
+  session with the granted engagements; an inline refusal when the database rejects the call.
+  No blocking modal.
+- **Tutorial key:** `sa.support`.
+
+---
+
 ## Tutorials regenerated
 
 `npm run tutorials:record` regenerates every GIF (S12). The recorder binds only to the testids listed

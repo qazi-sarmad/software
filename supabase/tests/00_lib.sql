@@ -69,7 +69,9 @@ language sql immutable as $$
     'severity_levels',
     'conclusion_records',
     'evidence_files','document_extractions',
-    'report_versions','report_blocks','report_comments','caps','email_queue','exports_log','import_jobs','archive_jobs','prior_year_imports'
+    'report_versions','report_blocks','report_comments','caps','email_queue','exports_log','import_jobs','archive_jobs','prior_year_imports',
+    -- C2.9. Appended (never inserted) so the positional consumers of this list are unaffected.
+    'support_access_log'
   ]
 $$;
 
