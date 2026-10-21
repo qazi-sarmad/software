@@ -206,3 +206,95 @@ IMPROVISE-THEN-DOCUMENT (this file).
   machine. The same-line form is what the docs use; a multi-line list is not silently skipped because
   the check names every offender it does see.
 - Reverse: delete the script and the two wiring lines.
+
+
+## D-C2.2-a — the CAP overdue rule lives once in SQL, and the app agrees by parity test (C2.2)
+
+- Task: C2.2 (1) "using the SAME overdue logic the app uses (read the CAP model and orgDate handling
+  first; write the rule once as a SQL function and have the app's helper agree via a parity test on
+  fixtures)".
+- Options: (a) duplicate the rule in the job and trust the two to stay aligned; (b) put the rule in
+  SQL only and have the app call it per cap; (c) put the rule in SQL, keep the app's pure helper, and
+  pin both to one fixture table.
+- Choice: (c). `public.cap_is_overdue(status, due_date, today)` is the rule;
+  `public.org_local_date(org, now)` is the org-local calendar day; the app keeps
+  `isCapOverdue`/`getOrgLocalToday`, and `src/lib/capOverdueParity.test.ts` plus
+  `supabase/tests/83_scheduled_jobs.sql` assert the same cases. The vitest test also transcribes the
+  SQL rule and compares it to the app's, so a change on either side alone fails.
+- Reason: the job must not need a round trip per cap, and the app must not depend on a network call
+  to decide whether a row is overdue. The parity test is the join. Option (a) is how the drift the
+  task warns about happens.
+- Reverse: delete the parity test and one of the two copies; the rule is then single-sourced but the
+  other side must be regenerated.
+
+## D-C2.2-b — the due-soon window is configuration on org_settings_extra, default 7 days (C2.2)
+
+- Task: C2.2 (1) "emits `cap.due_soon` … using the SAME overdue logic" (the window itself is not
+  fixed by the prompt).
+- Options: (a) hard-code 7 days in the job; (b) a column on `org_settings_extra` with a 7-day
+  default, read by `public.cap_due_soon_days(org)`.
+- Choice: (b). `org_settings_extra.cap_due_soon_days int not null default 7`; the job reads it per
+  organisation.
+- Reason: the decision protocol prefers configuration-not-code for a number a tenant may want to
+  change, and the column keeps the existing default behaviour for every tenant.
+- Reverse: drop the column and the helper; the job falls back to 7.
+
+## D-C2.2-c — the organisation time zone is a column, not a constant (C2.2)
+
+- Task: C2.2 (1) "read the CAP model and orgDate handling first".
+- Options: (a) reuse `src/lib/orgDate.ts`'s constant `Asia/Karachi` in SQL; (b) add
+  `org_settings_extra.time_zone` (default `Asia/Karachi`) and read it in `org_local_date`.
+- Choice: (b). The default reproduces today's behaviour exactly, so no existing fixture moves; a
+  tenant that operates elsewhere can be corrected without a migration.
+- Reason: a database job cannot import a TypeScript constant, and hard-coding a zone in SQL is the
+  same defect the task's parity requirement exists to prevent.
+- Reverse: drop the column; `org_local_date` then falls back to `Asia/Karachi` (the coalesce).
+
+## D-C2.2-d — the escalation sweep is a platform-wide wrapper, not a second rule (C2.2)
+
+- Task: C2.2 (4) "hourly `escalate_overdue_deployment_requests()`".
+- Point: the existing function reads the caller's organisation from the JWT, which a scheduled run
+  does not have.
+- Choice: `public.deployment_requests_escalate_all()` loops the organisations and performs the same
+  update, with the same audit row. The JWT-scoped function is left exactly as it was, so the
+  Org Admin screen keeps its behaviour. The wrapper also emits `escalation.triggered`, a catalogue
+  key that had no emitter.
+- Reason: rewriting the JWT function to accept an org would widen its surface for every tenant
+  caller; a separate platform-only wrapper is narrower.
+- Reverse: drop the wrapper and unschedule `deployment-escalation-sweep`.
+
+## D-C2.2-e — the digest is a database function, and only daily_digest recipients get it (C2.2)
+
+- Task: C2.2 (6) "the daily change-notification digest for recipients who chose digest".
+- Choice: `public.notification_digest_send(since)` queues one email per `notification_preferences`
+  row whose mode is `daily_digest`, listing that organisation's `config.changed` events since the
+  window. Recipients on `immediately` are untouched because the rule engine already emailed them.
+  The body is escaped by a new pure `public.escape_html_text`.
+- Reason: the task says "queues one email per recipient", and doing it in the database keeps the
+  recipient decision next to the preference row (no second copy of the rule in TypeScript).
+- Reverse: unschedule `notification-digest` and drop the function.
+
+## D-C2.2-f — SA-02's job-health reader is platform-only and tolerates a missing pg_cron (C2.2)
+
+- Task: C2.2 "Health: SA-02 must read `cron.job` and `cron.job_run_details` through a platform-only
+  function and show each job's last run and failure."
+- Options: (a) the RPC raises when pg_cron is absent; (b) the RPC returns an empty set and the screen
+  says "no scheduled jobs are registered".
+- Choice: (b). `public.platform_job_health()` checks `is_platform_admin` first, then returns empty
+  when the extension is missing. The screen renders that as an informational empty state, not an
+  error.
+- Reason: a database without the scheduler is a supported state (0064 creates pg_cron behind a
+  guard), and SA-02 must still open. A tenant caller is refused, which is the security requirement.
+- Reverse: make the RPC raise instead; the screen's error branch already renders it.
+
+## D-C2.2-g — cap_event_log is the idempotency ledger for the daily CAP job (C2.2)
+
+- Task: C2.2 (1) with M5 ("SQL tests leave no residue") and L5 ("every action is logged").
+- Options: (a) rely on `automation_event_processed` alone; (b) a small `cap_event_log`
+  (org, cap, event key, day) with a unique index, read-only to tenants.
+- Choice: (b), unique on (cap_id, event_key, event_date). The job inserts with
+  `on conflict do nothing` and emits only when the insert actually happened.
+- Reason: `automation_event_processed` records that an event was processed, not that a cap was
+  notified today; without (b) a second run in the same day would emit again. The log is also the
+  tenant-visible record of what was sent, which L5 wants.
+- Reverse: drop the table and remove the guard; the job then emits once per run.

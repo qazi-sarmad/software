@@ -13,6 +13,7 @@ vi.mock('../../data/platform', () => ({
   listTenants: () => listTenantsFn(),
   listInviteCaps: () => listCapsFn(),
   listSupportGrants: () => listGrantsFn(),
+  listJobHealth: () => Promise.resolve([]),
   listTrail: () => listTrailFn(),
   setTenantStatus: () => Promise.resolve({ ok: true }),
   setFeatureFlag: () => Promise.resolve({ ok: true }),

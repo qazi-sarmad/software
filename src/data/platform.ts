@@ -152,3 +152,39 @@ export async function listSupportGrants(): Promise<SupportGrantRow[]> {
     platformActorId: (g.platform_actor_id as string | null) ?? null,
   }));
 }
+
+/** One scheduled job and its last run (C2.2, SA-02). */
+export interface JobHealthRow {
+  jobId: number;
+  jobName: string;
+  schedule: string;
+  active: boolean;
+  command: string;
+  lastStart: string | null;
+  lastEnd: string | null;
+  lastStatus: string | null;
+  lastMessage: string | null;
+}
+
+/**
+ * Every scheduled job and its last run. Platform administrators only; the database refuses anyone
+ * else. When pg_cron is absent the reader returns an empty list, which the screen shows as
+ * "no scheduled jobs" rather than an error.
+ */
+export async function listJobHealth(): Promise<JobHealthRow[]> {
+  const sb = getClient();
+  if (!sb) return [];
+  const { data, error } = await sb.rpc('platform_job_health');
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((j: Record<string, unknown>) => ({
+    jobId: Number(j.job_id),
+    jobName: (j.job_name as string) ?? '',
+    schedule: (j.schedule as string) ?? '',
+    active: Boolean(j.active),
+    command: (j.command as string) ?? '',
+    lastStart: (j.last_start as string | null) ?? null,
+    lastEnd: (j.last_end as string | null) ?? null,
+    lastStatus: (j.last_status as string | null) ?? null,
+    lastMessage: (j.last_message as string | null) ?? null,
+  }));
+}

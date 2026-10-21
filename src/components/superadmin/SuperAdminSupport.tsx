@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-  grantSupportAccess, listSupportGrants, revokeSupportAccess,
-  type SupportGrantRow,
+  grantSupportAccess, listJobHealth, listSupportGrants, revokeSupportAccess,
+  type JobHealthRow, type SupportGrantRow,
 } from '../../data/platform';
 import type { DataResult } from '../../data/db';
 import { InlineError } from '../common/InlineError';
@@ -23,6 +23,8 @@ export const SuperAdminSupport: React.FC = () => {
   const [hours, setHours] = useState('4');
   const [revokeReason, setRevokeReason] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
+  const [jobs, setJobs] = useState<JobHealthRow[]>([]);
+  const [jobsError, setJobsError] = useState('');
 
   const load = useCallback(async () => {
     setState('loading');
@@ -33,6 +35,12 @@ export const SuperAdminSupport: React.FC = () => {
     } catch (err) {
       setLoadError(err instanceof Error ? err.message : 'Could not load support grants.');
       setState('error');
+    }
+    try {
+      setJobs(await listJobHealth());
+      setJobsError('');
+    } catch (err) {
+      setJobsError(err instanceof Error ? err.message : 'Could not read the scheduled jobs.');
     }
   }, []);
 
@@ -108,6 +116,42 @@ export const SuperAdminSupport: React.FC = () => {
             Grant access
           </button>
         </div>
+      </div>
+
+      <div className="rounded-2xl border border-hairline bg-surface p-4 space-y-3" data-testid="superadmin-job-health">
+        <h3 className="text-apple-14 font-semibold text-primary">Scheduled jobs</h3>
+        <p className="text-apple-12 text-secondary">
+          Every background job and its last run, read from the scheduler itself. A job that has
+          never run, or whose last run failed, is shown as such.
+        </p>
+        {jobsError ? (
+          <InlineError message={jobsError} testId="superadmin-job-health-error" />
+        ) : jobs.length === 0 ? (
+          <p className="text-apple-12 text-secondary py-4" data-testid="superadmin-job-health-empty">
+            No scheduled jobs are registered. The scheduler extension is not installed on this
+            database, so the jobs run only when an administrator calls them.
+          </p>
+        ) : (
+          <ul className="space-y-2" data-testid="superadmin-job-health-list">
+            {jobs.map((j) => {
+              const failed = j.lastStatus != null && j.lastStatus !== 'succeeded';
+              const never = j.lastStart == null;
+              return (
+                <li key={j.jobId} className="rounded-xl border border-hairline bg-surface-elevated p-3" data-testid={`job-${j.jobName}`}>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-apple-12 font-medium text-primary">{j.jobName}</span>
+                    <span className="text-apple-11 text-tertiary">{j.schedule}</span>
+                  </div>
+                  <p className="text-apple-11 text-secondary mt-1" data-testid={`job-status-${j.jobName}`}>
+                    {never ? 'Has not run yet' : `Last run ${j.lastStatus ?? 'unknown'}`}
+                    {j.lastStart ? ` at ${j.lastStart}` : ''}
+                    {failed && j.lastMessage ? ` — ${j.lastMessage}` : ''}
+                  </p>
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </div>
 
       {grants.length === 0 ? (

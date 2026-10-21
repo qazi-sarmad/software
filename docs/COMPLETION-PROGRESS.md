@@ -11,3 +11,4 @@ SQL 80 files / 71 migrations / 1683 assertions; Playwright 113 passed / 2 skippe
 | C0 preflight and docs | (this commit) | n/a (docs only) | green |
 | C1.3 RPC authority review | (this commit) | pending | local SQL 82/82 green, twice |
 | C2.1 hosting-test edge function | (this commit) | pending | local gates green |
+| C2.2 scheduled jobs for CAP events, purges, sweeps and digests | (this commit) | pending | local SQL 83/83 green twice, vitest 135 files / 1498 tests green |
