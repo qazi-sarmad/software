@@ -39,6 +39,26 @@ export async function signIn(email: string, password: string): Promise<SignInOut
   return error ? { ok: false, reason: error.message } : { ok: true };
 }
 
+/**
+ * Create the account an invitation is waiting for (S3, C2.4). The invitee sets their own password;
+ * no Supabase Auth email is used, because the acceptance link in the queued message is the only
+ * thing the invitee needs. When the owner has sign-ups disabled the call fails and the caller shows
+ * the plain message (the same honesty rule as the external auditor acceptance, F13).
+ *
+ * `sessionStarted` is false when the project requires email confirmation: the account exists but no
+ * session does, so the caller must tell the invitee to confirm and reopen the link rather than
+ * pretend the invitation was applied.
+ */
+export async function signUp(
+  email: string, password: string
+): Promise<{ ok: true; sessionStarted: boolean } | { ok: false; reason: string }> {
+  const sb = getClient();
+  if (!sb) return { ok: false, reason: 'Account creation is not configured.' };
+  const { data, error } = await sb.auth.signUp({ email, password });
+  if (error) return { ok: false, reason: error.message };
+  return { ok: true, sessionStarted: data.session !== null };
+}
+
 export async function signOut(): Promise<void> {
   const sb = getClient();
   if (!sb) return;

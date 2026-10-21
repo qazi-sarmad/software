@@ -5,7 +5,7 @@
  * Supabase client (spec §25.1). Every write goes through an RPC in migration 0017, so the
  * database decides the right the caller needs; this module only carries the request.
  */
-import { getClient } from './client';
+import { getClient, signUp } from './client';
 import type { Right } from '../lib/rights';
 
 export interface MemberRow {
@@ -143,6 +143,38 @@ export async function inviteStatus(inviteId: string): Promise<InviteStatus | nul
   if (error) return null;
   const row = ((data ?? []) as { status: string }[])[0];
   return (row?.status as InviteStatus) ?? null;
+}
+
+/**
+ * Create the account a member invitation is waiting for (C2.4). The invitee sets their own password
+ * here; the invitation link is the only thing they need. Sign-ups must be enabled in Supabase Auth
+ * (the screen says so plainly when they are not, exactly as the external auditor flow does).
+ *
+ * `sessionStarted` is false when the project requires email confirmation: the caller then tells the
+ * invitee to confirm and reopen the link instead of pretending the invitation was applied.
+ */
+export async function createInviteeAccount(
+  email: string, password: string
+): Promise<{ ok: true; sessionStarted: boolean } | { ok: false; reason: string }> {
+  return signUp(email, password);
+}
+
+/**
+ * Accept a member invitation (C2.4). The caller must already be signed in as the invited account;
+ * the token is presented to the invite-user Edge Function, which calls admin_accept_invite
+ * (service-role only) to bind the account to the invited role and mark the invitation used. The
+ * database keeps only the token hash, and the token is never logged (F5).
+ */
+export async function acceptMemberInvite(token: string): Promise<AdminResult> {
+  const sb = getClient();
+  if (!sb) return NOT_CONFIGURED;
+  const { data, error } = await sb.functions.invoke('invite-user', {
+    body: { action: 'accept', token },
+  });
+  if (error) return { ok: false, reason: error.message };
+  const r = data as { ok?: boolean; reason?: string } | null;
+  if (!r || r.ok !== true) return { ok: false, reason: r?.reason ?? 'The invitation could not be accepted.' };
+  return { ok: true };
 }
 
 export function setMemberRole(userId: string, roleSlug: string): Promise<AdminResult> {

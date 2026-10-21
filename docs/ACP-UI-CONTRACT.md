@@ -269,15 +269,21 @@ under `acp.tutorial.autoplay`), so the same screen never autoplays twice. The e2
 
 - **Purpose:** the Org Admin invites a colleague by email and role. The invitation is recorded as a
   single-use row and its acceptance link is queued; the copy says "queued", never "sent", because no
-  account exists until the invitee accepts (D20 defect, F6, S3).
-- **Route:** Org Admin control plane, tab `People`, block "Invite a colleague".
+  account exists until the invitee accepts (D20 defect, F6, S3). The invitee accepts at
+  `/invite/accept?token=…`, which creates their account and applies the invitation.
+- **Route:** Org Admin control plane, tab `People`, block "Invite a colleague". Acceptance:
+  `/invite/accept?token=…`, outside the tenant shell and outside the auth gate.
 - **Rights:** `manage_users`. The database re-checks it inside `invite_user_capped`.
-- **Data:** `inviteUser(email, roleSlug)` → `{ ok, inviteId, status }`, `inviteStatus(inviteId)`
-  (`src/data/admin.ts`). `status` is the queue's own: `queued` until the dispatcher accepts the row.
+- **Data:** `inviteUser(email, roleSlug)` → `{ ok, inviteId, status }`, `inviteStatus(inviteId)`,
+  `createInviteeAccount(email, password)`, `acceptMemberInvite(token)` (`src/data/admin.ts`).
+  `status` is the queue's own: `queued` until the dispatcher accepts the row.
 - **Testids:** `people-admin-panel`, `admin-people`, `admin-invite`, `admin-invite-sent`,
-  `admin-error`.
+  `admin-error`; acceptance `oa-accept`, `oa-accept-token`, `oa-accept-email`, `oa-accept-password`,
+  `oa-accept-submit`, `oa-accept-error`, `oa-accept-hint`, `oa-accept-done`, `oa-accept-continue`.
 - **States:** ready; the confirmation reads "Invitation queued for <email>". An invalid address keeps
   the button disabled. A cap breach or a missing right shows the RPC's message in `admin-error`.
+  Acceptance: idle; busy; the token pre-filled from the link; a short password or a missing code is
+  refused inline; email confirmation required is stated plainly; done.
 - **Tutorial keys:** `oa.invite`.
 
 ---

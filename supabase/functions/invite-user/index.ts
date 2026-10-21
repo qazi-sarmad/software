@@ -2,21 +2,23 @@
  * invite-user (S3, F6, F13). Two actions behind one function, both reachable only with a verified
  * JWT:
  *
- *   { action: "invite", email, roleSlug } — an Org Admin (manage_users) invites a colleague. The
- *                                           database records the invitation, counts it against the
- *                                           cap and queues the acceptance link. No Supabase Auth
- *                                           email is used: the link in the queued message is the
- *                                           only thing the invitee needs.
  *   { action: "accept", token }           — the invitee, already signed in, presents the token. The
  *                                           function calls admin_accept_invite, which is
  *                                           service-role-only, to bind the account to the invited
  *                                           role and mark the invitation used.
+ *   { action: "accept-external", token }  — the external auditor accepts its invite through
+ *                                           external_auditor_accept (service-role only).
+ *
+ * The invitation itself has ONE path, the `invite_user_capped` RPC (migration 0057), which the
+ * browser calls directly as the caller. The earlier `invite` action here duplicated that RPC behind
+ * the Edge Function and was removed in C2.4 so there is a single caller path; see
+ * docs/COMPLETION-DECISIONS.md (D-C2.4-1).
  *
  * Laws that shape this file:
  *   - F5: no secret and no token is logged. The service-role key is read from the environment and
  *     never returned.
  *   - F4/L5: the caller is verified before anything happens, and the database re-checks the right.
- *   - The service role is used only here and only for the acceptance call, which is exactly the
+ *   - The service role is used only here and only for the acceptance calls, which is exactly the
  *     list F21 allows.
  */
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -60,19 +62,6 @@ Deno.serve(async (req: Request) => {
     body = await req.json();
   } catch {
     return json({ ok: false, reason: 'a JSON body is required' }, 400);
-  }
-
-  if (body.action === 'invite') {
-    if (!body.email || !body.email.includes('@')) {
-      return json({ ok: false, reason: 'a valid email address is required' }, 400);
-    }
-    const caller = callerClient(authHeader);
-    const { data, error } = await caller.rpc('invite_user_capped', {
-      p_email: body.email,
-      p_role_slug: body.roleSlug ?? null,
-    });
-    if (error) return json({ ok: false, reason: error.message }, 403);
-    return json({ ok: true, inviteId: data, status: 'queued' });
   }
 
   if (body.action === 'accept') {

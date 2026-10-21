@@ -73,6 +73,14 @@ const ExternalAuditorAccept = lazy(() =>
     default: m.ExternalAuditorAccept,
   }))
 );
+// C2.4: the member invitation acceptance route (/invite/accept?token=…). It is outside the tenant
+// shell because the invitee has no account yet; the screen creates the account and applies the
+// invitation, exactly as the external auditor acceptance does.
+const MemberAccept = lazy(() =>
+  import('./components/pending/MemberAccept').then((m) => ({
+    default: m.MemberAccept,
+  }))
+);
 // C1.1: the Microsoft Graph sign-in callback (OA-11 / SA-04). Kept outside the tenant shell so the
 // platform-level flow also lands here.
 const GraphOauthCallback = lazy(() =>
@@ -357,6 +365,18 @@ const AppRoutes: React.FC = () => {
         <AppProvider user={EXTERNAL_TOKEN_HOLDER} seed={EMPTY_SEED}>
           <GlassBoxPublicRoute tokenFromUrl={token} />
         </AppProvider>
+      </Suspense>
+    );
+  }
+
+  // Member invitation acceptance (/invite/accept?token=…, C2.4). Outside the tenant shell and
+  // outside the auth gate: the invitee has no account yet, so the screen creates it and applies the
+  // invitation. It renders no tenant data, so it needs no session.
+  if (currentPath.startsWith('/invite/accept')) {
+    const token = new URLSearchParams(window.location.search).get('token') ?? '';
+    return (
+      <Suspense fallback={<LoadingFallback />}>
+        <MemberAccept tokenFromUrl={token} />
       </Suspense>
     );
   }
