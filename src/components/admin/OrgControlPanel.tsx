@@ -9,6 +9,7 @@ import type { DataResult } from '../../data/db';
 import { SetupWizard } from '../common/SetupWizard';
 import { TutorialButton } from '../common/TutorialButton';
 import { OrgConfigHistory } from './OrgConfigHistory';
+import { ChangeControlPanel } from './ChangeControlPanel';
 import { OrgEmailPanel } from './OrgEmailPanel';
 import { OrgAutomationPanel } from './OrgAutomationPanel';
 import { OrgBrandingPanel } from './OrgBrandingPanel';
@@ -19,7 +20,7 @@ import { OrgHostingPanel } from './OrgHostingPanel';
 import { InlineError } from '../common/InlineError';
 import { Check, Lock, Zap, Sliders, Users, Shield, History, Database } from '../common/Icons';
 
-type Tab = 'features' | 'branding' | 'email' | 'automation' | 'escalation' | 'ai' | 'setup' | 'consultation' | 'auditors' | 'hosting' | 'history';
+type Tab = 'features' | 'branding' | 'email' | 'automation' | 'escalation' | 'ai' | 'setup' | 'consultation' | 'auditors' | 'hosting' | 'history' | 'changes';
 type LoadState = 'loading' | 'ready' | 'error';
 
 /** F18: every configuration tab carries its own "Show me how" tutorial key (Appendix A). */
@@ -35,6 +36,7 @@ const TAB_TUTORIAL: Record<Tab, { key: string; title: string }> = {
   auditors: { key: 'oa.auditors', title: 'OA-14 external auditors' },
   hosting: { key: 'oa.hosting', title: 'OA-15 hosting and database' },
   history: { key: 'oa.history', title: 'OA-17 configuration history' },
+  changes: { key: 'oa.history', title: 'OA-17 change control' },
 };
 
 /**
@@ -133,6 +135,7 @@ export const OrgControlPanel: React.FC = () => {
           { id: 'auditors', label: 'External auditors', icon: Shield },
           { id: 'hosting', label: 'Hosting', icon: Database },
           { id: 'history', label: 'History', icon: History },
+          { id: 'changes', label: 'Change control', icon: Shield },
         ] as { id: Tab; label: string; icon: React.FC<{ className?: string }> }[]).map((t) => {
           const Icon = t.icon;
           return (
@@ -251,6 +254,7 @@ export const OrgControlPanel: React.FC = () => {
 
       {tab === 'hosting' && <OrgHostingPanel />}
       {tab === 'history' && <OrgConfigHistory />}
+      {tab === 'changes' && <ChangeControlPanel mode="settings" />}
     </div>
   );
 };

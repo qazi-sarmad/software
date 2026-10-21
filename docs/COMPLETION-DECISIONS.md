@@ -508,3 +508,44 @@ IMPROVISE-THEN-DOCUMENT (this file).
 - Reason: collapsing the two would make a real, expected case look like a defect and would give the
   operator no way to tell a broken extractor from a scan.
 - Reverse: fold 'unsupported' back into 'failed' and remove it from the check constraint.
+
+## D-C3.2-A1 — change control is a table pair plus two RPCs, not a client-side rule (C3.2-A, §21)
+
+- Task: C3.2-A, change control after deployment.
+- Point: §21 requires routine and material changes, configurable approvers, and approved changes
+  hash-chained, but names no schema.
+- Options: (a) classify in the browser and log to activity_log only; (b) two tables
+  (`change_control_settings`, `change_requests`) and two security-definer RPCs
+  (`request_change`, `decide_change`) that write the hash-chained business ledger on approval.
+- Choice: (b). L5 ("configuration changes are versioned and logged ... sign-offs ... hash-chained")
+  and L1 ("no AI in ... gate, finding status or check") both require the decision to be server-side
+  and deterministic.
+- Reason: a browser-side classifier could be bypassed and would leave the ledger without the
+  approval. The classification rule (a class named in `routine_classes` is routine; anything else
+  material) lives in the database so the app and any future caller agree.
+- Reverse: drop `change_requests` and `change_control_settings` and the four `change_control_*` /
+  `request_change` / `decide_change` / `list_changes` functions.
+
+## D-C3.2-A2 — four-eyes on a material change: the requester never approves it (C3.2-A, §21)
+
+- Task: C3.2-A, who may decide a material change.
+- Point: §21 says "approvers are configurable" but does not say whether the requester may approve.
+- Options: (a) any holder of the approver right, including the requester; (b) the approver right plus
+  a four-eyes bar on the requester.
+- Choice: (b), rejected with the plain message on a self-approval attempt. It mirrors the existing
+  four-eyes rules in `sign_planning` (0025) and the seal gate.
+- Reason: the audit-quality purpose of a material change control disappears if one person both asks
+  and grants. The `escalate_right` column exists so a stuck request has a named route if the owner
+  later wants an override.
+- Reverse: delete the `v_req.requested_by = auth.uid()` guard in `decide_change`.
+
+## D-C3.2-A3 — routine classes are configurable per organisation (C3.2-A, §21)
+
+- Task: C3.2-A, the routine/material boundary.
+- Point: §21 names "reassigning a workpaper to someone already on the team" as routine and lists
+  material examples, but the boundary is a policy each firm may draw differently.
+- Options: (a) hard-code the spec's list; (b) store it in `change_control_settings.routine_classes`.
+- Choice: (b), defaulting to the spec's single example (`workpaper_reassign`).
+- Reason: "configuration not code" (Laws, decision protocol (d)). A firm that treats planned-date
+  nudges as routine can say so without a migration, and the change is versioned (`admin_log_change`).
+- Reverse: drop the column and read the class list from a constant.

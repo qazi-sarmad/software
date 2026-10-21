@@ -4,6 +4,7 @@ import { GateSummary, SignOffState } from '../../../lib/auditFile';
 import { CheckCircle2, FileText, ShieldCheck } from '../../common/Icons';
 import { InlineError } from '../../common/InlineError';
 import { HoldToConfirm } from '../../common/HoldToConfirm';
+import { ChangeControlPanel } from '../../admin/ChangeControlPanel';
 
 interface ReviewTabProps {
   engagement: AuditEngagement;
@@ -69,6 +70,13 @@ export const ReviewTab: React.FC<ReviewTabProps> = ({ engagement, gate, signOff,
           The report pack follows the organization's report format and is not available yet.
         </div>
       </div>
+    </div>
+
+    {/* Change control (§21, C3.2-A): routine changes apply immediately; material changes wait for
+        the configured approver and, once approved, are hash-chained in the business ledger. */}
+    <div className="p-5 rounded-2xl bg-surface border border-hairline space-y-3" data-testid="wk-changes">
+      <div className="text-apple-13 font-semibold text-primary">Change control</div>
+      <ChangeControlPanel mode="engagement" engagementId={engagement.id} />
     </div>
   </div>
 );
