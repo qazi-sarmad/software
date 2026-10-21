@@ -39,7 +39,11 @@ function sections() {
 function testidsIn(block) {
   const m = block.match(/\*\*Testids[^:]*:\*\*([\s\S]*?)(?=\n- \*\*|\n##|\Z)/);
   if (!m) return [];
-  return [...m[1].matchAll(/`([^`]+)`/g)].map((x) => x[1]);
+  // Only tokens that look like a testid: lowercase kebab, optional `<...>`/`:...` placeholders.
+  // A wizard step key such as `org.profile` is not a testid and is skipped.
+  return [...m[1].matchAll(/`([^`]+)`/g)]
+    .map((x) => x[1])
+    .filter((t) => t.includes('-') && /^[a-z0-9][a-z0-9<>:.-]*$/.test(t) && !/\.[a-z]/.test(t.replace(/<[^>]*>/g, '')));
 }
 
 // Every src testid, static or a template literal, as a regex pattern with wildcards.

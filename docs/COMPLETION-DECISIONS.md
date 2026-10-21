@@ -590,3 +590,60 @@ IMPROVISE-THEN-DOCUMENT (this file).
 - Reason: a testid in the contract that the code does not render is exactly the failure the owner's
   UI replacement would hit; catching it now is the whole value of the file.
 - Reverse: drop the testid loop; the section check stays.
+
+## D-C4-1 — tutorial steps are derived from the contract, not hand-written (C4)
+
+- Task: C4. The S12 seed wrote the same three generic lines for all 85 keys.
+- Point: where the real ordered steps come from.
+- Options: (a) hand-write 85 x 4-8 steps; (b) derive them from the testids the contract already
+  documents, so the drawer, "Copy steps" and the recorder all read one source.
+- Choice: (b). `scripts/gen-tutorial-steps.mjs` reads `docs/ACP-UI-CONTRACT.md`, ranks each screen's
+  testids by relevance to the key (several keys share one screen), and emits one step per control
+  with the exact testid to drive. The two setup wizards get a real per-step walkthrough.
+- Reason: the owner replaces the UI and re-runs the recorder; steps bound to contract testids cannot
+  silently point at a control that no longer exists. Hand-written prose would drift immediately.
+- Reverse: delete `scripts/gen-tutorial-steps.mjs`; `src/lib/tutorialKeys.json` keeps its steps.
+
+## D-C4-2 — a step never targets a state element (C4)
+
+- Task: C4. Point: which testids a step may drive.
+- Options: (a) any documented testid; (b) only controls a person operates.
+- Choice: (b). A step skips `-loading`, `-error`, `-empty`, `-denied`, `-readonly`, `-no-*` and other
+  state or absence elements; a display element becomes a "Read ..." step, a control a "Click ..." step.
+- Reason: driving `wk-boardpack-no-generate` would be nonsense in a recording, and a step that cannot
+  be performed would fail the recorder for the wrong reason.
+- Reverse: remove the `STATE`/`NEGATIVE` filters in the generator.
+
+## D-C4-3 — staleness is `ui_hash`, not file mtime (C4)
+
+- Task: C4. Point: how the checker decides a recording is stale.
+- Options: (a) compare GIF mtime against the newest source mtime (the S12 signal); (b) hash the key's
+  step testids plus the text of the files that declare them.
+- Choice: (b). The recorder writes `public/tutorials/.ui-hashes.json`; `check-tutorials` recomputes it
+  and fails on a mismatch. (a) is meaningless on a fresh checkout: every file is newer than the GIF.
+- Reason: the signal must mean "the UI this recording shows has changed", which only the testids and
+  their declaring files can tell us.
+- Reverse: restore the mtime comparison; the sidecar file is then ignored.
+
+## D-C4-4 — the placeholder is a first-class, detectable state (C4)
+
+- Task: C4. Point: how a placeholder is prevented from passing as a recording.
+- Options: (a) trust the filename/size; (b) write the placeholder through the same encoder and record
+  its byte hash, so the checker recognises it exactly; normal CI allows it only under
+  `TUTORIALS_ALLOW_PLACEHOLDER=1` and prints the count, `--strict` (pre-PR gate) refuses it.
+- Choice: (b). The placeholder hash is `public/tutorials/.placeholder-hash`.
+- Reason: the S12 gate passed on any file that existed, which is how 85 identical placeholders shipped.
+  A hash is exact; a size heuristic is not.
+- Reverse: delete `.placeholder-hash`; the strict mode then only checks frames and size.
+
+## D-C2.7-FIX — DOCX bytes are pinned per ZIP entry (C2.7-FIX)
+
+- Task: C2.7-FIX. Point: `renderDocx` was not deterministic across a second boundary.
+- Root cause: `docx` stamps every ZIP entry with `new Date()`. `normaliseDocx` rewrote only
+  `docProps/core.xml` and passed a single `date` to `generateAsync`, but JSZip keeps the per-entry
+  dates it read, so two renders in different seconds produced different bytes. The existing
+  determinism test passed only because both renders usually fell in the same 2-second DOS bucket.
+- Fix: pin `zip.files[name].date` for every entry before packing.
+- Test: a new case renders at two instants 10 seconds apart (fake timers) and compares the bytes;
+  it fails without the pin. The 2-second DOS resolution is why the gap is 10, not 1.
+- Reverse: remove the pinning loop; the fast path still returns a valid DOCX.

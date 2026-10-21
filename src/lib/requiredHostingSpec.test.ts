@@ -34,11 +34,15 @@ function extensionsInMigrations(): Set<string> {
   return out;
 }
 
-/** `create role <name>` in the migrations. */
+/**
+ * `create role <name>` in the migrations, at the start of a statement. The boundary is required so
+ * that English prose inside a data value (a tutorial step such as "Press Create role in OA-05.") is
+ * not read as DDL. Real `create role` statements begin a statement.
+ */
 function rolesInMigrations(): Set<string> {
   const text = allMigrationText();
   const out = new Set<string>();
-  for (const m of text.matchAll(/create\s+role\s+(?:if\s+not\s+exists\s+)?([a-z_0-9]+)/gi)) {
+  for (const m of text.matchAll(/(?:^|;)\s*create\s+role\s+(?:if\s+not\s+exists\s+)?([a-z_0-9]+)/gim)) {
     out.add(m[1].toLowerCase());
   }
   return out;

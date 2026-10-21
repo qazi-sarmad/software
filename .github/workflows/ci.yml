@@ -49,6 +49,10 @@ jobs:
         run: node scripts/check-shrink.mjs
 
       - name: 6. Tutorial check
+        env:
+          # CI records nothing live (no backend), so the committed GIFs are placeholders. They are
+          # allowed here only with this flag, and the count is printed; the pre-PR gate runs --strict.
+          TUTORIALS_ALLOW_PLACEHOLDER: '1'
         run: npm run check-tutorials
 
       - name: 6b. Edge Function deploy list

@@ -18,8 +18,8 @@ import { SuperAdminTutorials } from './SuperAdminTutorials';
 import { TutorialDrawer } from '../common/TutorialDrawer';
 
 const ROWS = [
-  { key: 'oa.profile', audience: 'org_admin', title: 'Profile', steps: ['Open the profile screen'], mediaPath: 'tutorials/oa.profile.gif', uiHash: 'abc', generatedAt: null },
-  { key: 'sa.features', audience: 'super_admin', title: 'Features', steps: ['Open features'], mediaPath: null, uiHash: null, generatedAt: null },
+  { key: 'oa.profile', audience: 'org_admin', title: 'Profile', steps: [{ text: 'Open the profile screen', testid: null }], mediaPath: 'tutorials/oa.profile.gif', uiHash: 'abc', generatedAt: null },
+  { key: 'sa.features', audience: 'super_admin', title: 'Features', steps: [{ text: 'Open features', testid: null }], mediaPath: null, uiHash: null, generatedAt: null },
 ];
 
 describe('SA-13 tutorial library (F18)', () => {
@@ -44,7 +44,7 @@ describe('SA-13 tutorial library (F18)', () => {
   it('OA-18 scopes the library to the Org Admin keys', async () => {
     listTutorialsFn.mockResolvedValue([
       ...ROWS,
-      { key: 'both.key', audience: 'both', title: 'Both', steps: ['a'], mediaPath: 'tutorials/both.key.gif', uiHash: null, generatedAt: null },
+      { key: 'both.key', audience: 'both', title: 'Both', steps: [{ text: 'a', testid: null }], mediaPath: 'tutorials/both.key.gif', uiHash: null, generatedAt: null },
     ]);
     render(<SuperAdminTutorials audience="org_admin" />);
     await waitFor(() => expect(screen.getByTestId('tutorial-oa.profile')).toBeTruthy());

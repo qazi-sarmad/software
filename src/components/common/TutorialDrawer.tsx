@@ -47,7 +47,7 @@ export const TutorialDrawer: React.FC<TutorialDrawerProps> = ({ tutorialKey, tit
   const copySteps = useCallback(async () => {
     const steps = row?.steps ?? [];
     try {
-      await navigator.clipboard.writeText(steps.map((s, i) => `${i + 1}. ${s}`).join('\n'));
+      await navigator.clipboard.writeText(steps.map((s, i) => `${i + 1}. ${s.text}`).join('\n'));
       setCopied(true);
     } catch {
       setCopied(false);
@@ -108,7 +108,7 @@ export const TutorialDrawer: React.FC<TutorialDrawerProps> = ({ tutorialKey, tit
           {(row?.steps ?? []).map((step, i) => (
             <li key={i} className="flex gap-2 text-apple-12 text-primary">
               <span className="text-tertiary tabular-nums">{i + 1}.</span>
-              <span>{step}</span>
+              <span data-testid={`tutorial-drawer-step-${i + 1}`}>{step.text}</span>
             </li>
           ))}
         </ol>

@@ -282,6 +282,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ onOpenCommandPalette }) =>
                           openInspector('people_admin');
                           setIsProfileOpen(false);
                         }}
+                        data-testid="menu-people-admin"
                         className="w-full text-left px-3 py-2 rounded-xl text-primary hover:bg-surface-hover transition-colors flex items-center gap-2.5"
                       >
                         <Users className="w-4 h-4 text-secondary stroke-[1.5]" />

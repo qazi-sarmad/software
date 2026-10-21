@@ -11,12 +11,21 @@ import raw from './tutorialKeys.json';
 
 export type TutorialAudience = 'super_admin' | 'org_admin' | 'both';
 
+export interface TutorialStep {
+  /** The plain-language instruction shown in the drawer and copied by "Copy steps". */
+  text: string;
+  /** The testid this step drives, or null for a step that only opens or reads the screen. */
+  testid: string | null;
+}
+
 export interface TutorialKeyDef {
   key: string;
   audience: TutorialAudience;
   /** The Appendix A screen id (e.g. `OA-03`). */
   screenId: string;
   title: string;
+  /** The real ordered steps, derived from the contract by scripts/gen-tutorial-steps.mjs. */
+  steps: TutorialStep[];
 }
 
 export const TUTORIAL_KEYS: TutorialKeyDef[] = raw as TutorialKeyDef[];

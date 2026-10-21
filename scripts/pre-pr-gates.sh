@@ -23,8 +23,8 @@ node scripts/check-tokens.mjs || { echo "FAIL: tokens"; exit 1; }
 step "5. Shrink check"
 node scripts/check-shrink.mjs || { echo "FAIL: shrink"; exit 1; }
 
-step "6. Tutorial check (every Appendix A key has a GIF)"
-npm run check-tutorials || { echo "FAIL: check-tutorials"; exit 1; }
+step "6. Tutorial check, strict (no placeholder, 8..15 frames, <= 400 KB, ui_hash current)"
+npm run check-tutorials -- --strict || { echo "FAIL: check-tutorials --strict"; exit 1; }
 
 step "6b. Edge Function deploy list"
 node scripts/check-function-deploy-list.mjs || { echo "FAIL: check-function-deploy-list"; exit 1; }

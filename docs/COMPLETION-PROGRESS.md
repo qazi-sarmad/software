@@ -20,3 +20,6 @@ SQL 80 files / 71 migrations / 1683 assertions; Playwright 113 passed / 2 skippe
 | C2.5 verified archival upload and population archival | (this commit) | pending | local SQL 86/86 green twice; vitest 137 files / 1523 tests green; guards green |
 | C2.6 document extraction and rule-based review | (this commit) | pending | local SQL 87/87 green twice; vitest green; guards green |
 | C2.7 binary exports and report issuance files | 4a2288f | pending | local SQL 88/88 green twice; vitest 140 files / 1604 tests green; tsc, build, tokens, shrink, tutorials green |
+| C5.1 one contract section per Appendix A screen, enforced | 36dbf58 | pending | check-ui-contract PASS (52 screens); vitest green |
+| C4 tutorials: real steps, real recording, honest gate | (this commit) | pending | local SQL 91/91 green twice; vitest 142 files / 1635 tests green; check-tutorials strict logic verified; tsc, build, tokens, shrink, contract green |
+| C2.7-FIX DOCX determinism across a second boundary | 98648ee | pending | vitest 142 files / 1635 tests green; new regression test fails without the pin |

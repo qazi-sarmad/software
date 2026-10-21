@@ -126,11 +126,22 @@ under `acp.tutorial.autoplay`), so the same screen never autoplays twice. The e2
 - **Data:** `listSetupSteps(scope)`, `saveSetupStep(scope, stepKey, status, answerRef)`,
   `setupProgress(steps, total)` (`src/data/setup.ts`); `visibleSteps(scope, enabledFeatures)`
   (`src/lib/wizardSteps.ts`).
-- **Testids (scope is `org_admin` or `super_admin`):** `<scope>-wizard`, `<scope>-wizard-loading`,
-  `<scope>-wizard-error`, `<scope>-wizard-empty`, `<scope>-wizard-resume`, `<scope>-wizard-progress`,
-  `<scope>-wizard-steps`, `<scope>-wizard-step-<stepKey>`, `<scope>-wizard-body`,
-  `<scope>-wizard-show-<stepKey>`, `<scope>-wizard-content-<stepKey>`, `<scope>-wizard-back`,
-  `<scope>-wizard-skip`, `<scope>-wizard-save`, `<scope>-wizard-next`.
+- **Testids (scope is `org_admin` or `super_admin`; the same ids exist for both scopes):**
+  `org_admin-wizard`, `org_admin-wizard-loading`, `org_admin-wizard-error`, `org_admin-wizard-empty`,
+  `org_admin-wizard-resume`, `org_admin-wizard-progress`, `org_admin-wizard-steps`,
+  `org_admin-wizard-body`, `org_admin-wizard-back`, `org_admin-wizard-skip`,
+  `org_admin-wizard-save`, `org_admin-wizard-next`, `super_admin-wizard`,
+  `super_admin-wizard-loading`, `super_admin-wizard-error`, `super_admin-wizard-resume`,
+  `super_admin-wizard-progress`, `super_admin-wizard-steps`, `super_admin-wizard-body`,
+  `super_admin-wizard-back`, `super_admin-wizard-save`, `super_admin-wizard-next`.
+  Per step, `<scope>-wizard-step-<stepKey>`, `<scope>-wizard-show-<stepKey>` and
+  `<scope>-wizard-content-<stepKey>`, e.g. `org_admin-wizard-step-org.profile`,
+  `org_admin-wizard-show-org.profile`, `org_admin-wizard-content-org.golive`,
+  `super_admin-wizard-step-sa.readiness`, `super_admin-wizard-show-sa.readiness`.
+  The Org Admin step keys are `org.profile`, `org.features`, `org.roles`, `org.ai`,
+  `org.presentation`, `org.escalation`, `org.hosting`, `org.email`, `org.golive`; the platform step
+  keys are `sa.readiness`, `sa.email`, `sa.recipients`, `sa.ai`, `sa.hosting`, `sa.rules`,
+  `sa.features`, `sa.tutorials`, `sa.golive`.
 - **States:** loading, error (with Retry), empty, ready; a resume banner when a later step is open.
   A step whose `requiresFeature` is not entitled is hidden (F25).
 - **Tutorial key:** `oa.setup-wizard` (+ `oa.setup-1` … `oa.setup-9`), `sa.setup-wizard`
@@ -806,7 +817,11 @@ above. `docs/ACP-TUTORIALS.md` lists every key and its steps.
 - **Data:** `getCertificateConfig()`, `saveCertificateConfig(fields)`
   (`src/data/certificate.ts`); `enabledFields(config)`, `certificateVerifyUrl(id)`
   (`src/lib/certificate.ts`).
-- **Testids:** `oa-certificate-config`, `oa-certificate-field-<key>`, `oa-certificate-enabled-<key>`.
+- **Testids:** `oa-certificate-config`, and per field `oa-certificate-field-<key>` and
+  `oa-certificate-enabled-<key>`, where the seeded keys are `engagement_id`, `engagement_title`,
+  `organisation`, `engagement_root_hash`, `issued_at`, `sealed_workpapers`, `findings_count`,
+  `sealing_actors`, `verification` and `free_text`; e.g. `oa-certificate-field-engagement_id`,
+  `oa-certificate-enabled-verification`.
 - **States:** loading, error, ready; the read-only view without `edit_config`.
 - **Tutorial key:** `oa.certificate-config`.
 
@@ -881,10 +896,10 @@ above. `docs/ACP-TUTORIALS.md` lists every key and its steps.
   (`has_feature(org,'ai_assist')`).
 - **Data:** `runAiAssist(orgId, useCase, prompt, recordType, recordId, allowedNumbers)`
   (`src/data/ai.ts`), through the caller-verified `ai-gateway` Edge Function.
-- **Testids:** the component takes a prefix prop (default ai-assist), and exposes
-  `<prefix>-suggest`, `<prefix>-draft`, `<prefix>-text`, `<prefix>-accept`, `<prefix>-reject`,
-  `<prefix>-retry`, `<prefix>-label`, `<prefix>-test`, `<prefix>-probe`, `<prefix>-figures`,
-  `<prefix>-figure-<token>`, `<prefix>-figure-confirm-<token>`, `<prefix>-error`.
+- **Testids:** the component takes a prefix prop (default ai-assist) and exposes
+  `ai-assist-suggest`, `ai-assist-draft`, `ai-assist-text`, `ai-assist-accept`, `ai-assist-reject`,
+  `ai-assist-retry`, `ai-assist-label`, `ai-assist-test`, `ai-assist-probe`, `ai-assist-figures`,
+  `ai-assist-figure-<token>`, `ai-assist-figure-confirm-<token>`, `ai-assist-error`.
 - **States:** idle, suggesting, draft shown, accepted, rejected, error with Retry; a figure the
   model invented is listed for confirmation and is never written into the record unconfirmed.
 - **Tutorial key:** `oa.ai-assist`.

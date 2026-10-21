@@ -6,14 +6,26 @@ import { callRpc, getClient, type DataResult } from './db';
 
 export type TutorialAudience = 'super_admin' | 'org_admin' | 'both';
 
+export interface TutorialStep {
+  text: string;
+  testid: string | null;
+}
+
 export interface TutorialRow {
   key: string;
   audience: TutorialAudience;
   title: string;
-  steps: string[];
+  steps: TutorialStep[];
   mediaPath: string | null;
   uiHash: string | null;
   generatedAt: string | null;
+}
+
+/** A step may be stored as a plain string (the S12 seed) or as `{ text, testid }` (C4 onward). */
+function toStep(raw: unknown): TutorialStep {
+  if (typeof raw === 'string') return { text: raw, testid: null };
+  const r = (raw ?? {}) as Record<string, unknown>;
+  return { text: (r.text as string) ?? '', testid: (r.testid as string | null) ?? null };
 }
 
 const NOT_CONFIGURED = 'The tutorials module is not configured.';
@@ -27,7 +39,7 @@ export async function listTutorials(): Promise<TutorialRow[]> {
     key: r.key as string,
     audience: (r.audience as TutorialAudience) ?? 'both',
     title: (r.title as string) ?? '',
-    steps: ((r.steps as unknown[]) ?? []).map((s) => (typeof s === 'string' ? s : (s as Record<string, unknown>).step as string)),
+    steps: ((r.steps as unknown[]) ?? []).map(toStep),
     mediaPath: (r.media_path as string | null) ?? null,
     uiHash: (r.ui_hash as string | null) ?? null,
     generatedAt: (r.generated_at as string | null) ?? null,
