@@ -351,3 +351,52 @@ IMPROVISE-THEN-DOCUMENT (this file).
 - Reason: it is the only true reading of the key. A dedicated column would be a new fact the model
   does not have, and emitting per finding on every seal would be a guess.
 - Reverse: drop the loop; `finding.sealed` then has no emitter and must move to the allow-list.
+
+## D-C2.2-1 — the pg_cron assertions in test 83 are conditional on the extension (C2.2, C2.3 fix)
+
+- Task: C2.2 scheduled jobs; the red CI run 39586479221 on 0b91dea is the evidence.
+- Point: test 83 asserted `count(*) = 0` from `platform_job_health()` "when pg_cron is absent". The
+  local harness has no pg_cron (so it passed locally), but the hosted `provio-test` project DOES have
+  pg_cron, so the function returned the 7 scheduled jobs and the assertion failed:
+  `FAIL: the platform admin reads no jobs when pg_cron is absent (expected 0, got 7)`.
+- Options: (a) keep the fixed 0 and accept that the test only passes on a bare Postgres; (b) branch
+  the expectation on `exists (select 1 from pg_extension where extname = 'pg_cron')`.
+- Choice: (b). When pg_cron is present the test asserts the six C2.2 job names are visible through
+  `platform_job_health()`; when it is absent it asserts the empty set. Both states are honest.
+- Reason: the test must pass on the environment CI actually uses, and the "absent" branch still
+  proves the migration applies without pg_cron.
+- Reverse: revert to the unconditional zero (breaks CI on the hosted project).
+
+## D-C2.4-1 — one invitation path: the RPC, not the Edge Function action (C2.4)
+
+- Task: C2.4 "invite-user action `invite` currently duplicates the RPC; keep one path and remove the
+  duplicate caller confusion; document which."
+- Point: `invite-user`'s `invite` action called `invite_user_capped`, and `src/data/admin.ts` also
+  called the same RPC directly from the browser. Two callers, one effect.
+- Options: (a) keep the Edge Function action and route the browser through it; (b) keep the RPC and
+  delete the action.
+- Choice: (b). `invite_user_capped` is already granted to `authenticated` and re-checks
+  `manage_users` inside the database; the Edge Function added nothing but a second code path and a
+  second place to keep the copy honest. The browser calls the RPC directly; the Edge Function keeps
+  only the two acceptance actions (`accept`, `accept-external`), which genuinely need the service role.
+- Reason: the database is the authority; one caller path is simpler to audit and cannot drift.
+- Reverse: re-add the `invite` branch to `supabase/functions/invite-user/index.ts`.
+
+## D-C2.4-2 — the member acceptance route is public and creates the account (C2.4)
+
+- Task: C2.4 "If the member accept route or page does not exist, build it (functional)."
+- Point: `acceptanceLink()` has always emitted `/invite/accept?token=…`, but no route or component
+  existed, so the link was dead. The invitee also has no account, and the spec forbids a third
+  anonymous-callable database function (F11: exactly `verify_certificate` and `verify_board_pack`).
+- Options: (a) an anonymous `invite_accept_context` RPC to preview the invitation; (b) no preview RPC
+  at all — the invitee enters the code and sets a password.
+- Choice: (b). The screen (`src/components/pending/MemberAccept.tsx`, testid prefix `oa-accept`) sits
+  outside the tenant shell and outside the auth gate, like `/external/accept`. It creates the account
+  through `supabase.auth.signUp` (the invitee's own password), then presents the token to
+  `invite-user`'s `accept` action, which calls the service-role-only `admin_accept_invite`.
+- Reason: F11 is fixed and may not be widened; the token is the secret, so no preview is needed; the
+  acceptance boundary stays in the database (`admin_accept_invite` is service_role only).
+- Consequence recorded honestly: the invitee needs Supabase Auth sign-ups enabled. When sign-ups are
+  off, or when the project requires email confirmation (no session), the screen says so plainly
+  rather than pretending the invitation was applied — the same honesty rule as EX-01.
+- Reverse: delete the component, the lazy import and the route branch in `src/App.tsx`.

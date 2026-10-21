@@ -154,17 +154,30 @@ begin
   end loop;
 end $$;
 
--- platform_job_health is platform-only, and returns nothing when pg_cron is absent.
+-- platform_job_health is platform-only. It returns the six scheduled jobs when pg_cron is present and
+-- an empty set when it is absent (the hosted test project has pg_cron; a bare local Postgres does
+-- not), so the expectation is conditional on the extension, never a fixed count.
 do $$
+declare
+  v_present boolean := exists (select 1 from pg_extension where extname = 'pg_cron');
+  v_names text[] := array['cap-notification-sweep','ai-purge-expired','consultation-sweep',
+                          'deployment-escalation-sweep','grant-expiry-sweep','notification-digest'];
+  v_found int;
 begin
   perform provio_test.as_user('10000000-0000-0000-0000-0000000000b1','b0000000-0000-0000-0000-000000000001','cia');
   perform provio_test.assert_raises(
     'select * from public.platform_job_health()',
     'platform administrators only', 'a tenant user cannot read job health');
   perform provio_test.as_user('10000000-0000-0000-0000-0000000000f0', null, 'platform_admin');
-  perform provio_test.assert_eq(
-    (select count(*) from public.platform_job_health()), 0::bigint,
-    'the platform admin reads no jobs when pg_cron is absent');
+  if v_present then
+    select count(*) into v_found from public.platform_job_health() h where h.job_name = any(v_names);
+    perform provio_test.assert_eq(
+      v_found, 6, 'the platform admin reads the six scheduled jobs when pg_cron is present');
+  else
+    perform provio_test.assert_eq(
+      (select count(*) from public.platform_job_health()), 0::bigint,
+      'the platform admin reads no jobs when pg_cron is absent');
+  end if;
   perform provio_test.as_owner();
 end $$;
 
