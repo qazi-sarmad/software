@@ -11,6 +11,9 @@ A blocker is recorded here with the exact error text, what was tried, and the co
     `started 2026-10-21T20:58:58Z`, `completed 2026-10-21T20:59:00Z`.
   - **39675053575** on `fc68455` -> `completed / failure`, `steps: []`,
     `started 2026-10-21T20:59:36Z`, `completed 2026-10-21T20:59:38Z`.
+  - **39677607517** on `fc68455` (dispatched again after the C5.4 sweep commit) -> `completed /
+    failure`, job `gates`, `steps: 0`, started `2026-10-21T21:17:46Z`, completed
+    `2026-10-21T21:17:49Z`. Same signature, same `BlobNotFound` on the job log.
   - (Earlier, the same signature on 39604710289 / 39604815983 on `7a5dbef`.)
 - No step ran, so no gate produced a result and no log exists to read; the job-log endpoint still
   answers `BlobNotFound`. This is the same platform-side failure recorded above, not a repository
