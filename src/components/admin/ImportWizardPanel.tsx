@@ -14,6 +14,7 @@ import { InlineError } from '../common/InlineError';
 import { Select } from '../common/Select';
 import { Upload, CheckCircle2, AlertTriangle, RefreshCw, ChevronRight } from '../common/Icons';
 import { isSpreadsheet, parseSpreadsheet } from '../../lib/xlsx';
+import { isDocx, parseDocxTables } from '../../lib/docxImport';
 
 type Step = 'upload' | 'mapping' | 'confirm';
 
@@ -23,6 +24,8 @@ const IMPORT_TYPES: { type: ImportType; label: string }[] = [
   { type: 'users', label: 'Users' },
   { type: 'populations', label: 'Populations' },
 ];
+
+interface ParsedSheetChoice { name: string; headers: string[]; rows: string[][] }
 
 /** Product fields a source column can be mapped to, per import type (§19). */
 const TARGET_FIELDS: Record<ImportType, string[]> = {
@@ -64,6 +67,8 @@ export const ImportWizardPanel: React.FC<ImportWizardPanelProps> = () => {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<number | null>(null);
+  // A DOCX can hold several tables; when it does, the operator picks which one to import.
+  const [docxSheets, setDocxSheets] = useState<ParsedSheetChoice[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const canImport = hasRight(currentUser, 'manage_engagements');
@@ -80,21 +85,49 @@ export const ImportWizardPanel: React.FC<ImportWizardPanelProps> = () => {
     void load();
   }, [load]);
 
+  const applySheet = (name: string, h: string[], r: string[][]) => {
+    if (h.length === 0) throw new Error('The file has no header row.');
+    setFilename(name);
+    setHeaders(h);
+    setRows(r);
+    setMapping(Object.fromEntries(h.map((col) => [col, ''])));
+    setStep('mapping');
+  };
+
   const onFile = async (file: File) => {
     setError(null);
+    setDocxSheets([]);
     try {
       const buf = await file.arrayBuffer();
+      if (isDocx(file.name)) {
+        const sheets = await parseDocxTables(buf);
+        if (sheets.length === 0) throw new Error('The document has no table to import.');
+        if (sheets.length === 1) {
+          applySheet(file.name, sheets[0].headers, sheets[0].rows);
+          return;
+        }
+        // More than one table: ask which. The operator sees a header list and row count per table.
+        setDocxSheets(sheets.map((s) => ({ name: s.name, headers: s.headers, rows: s.rows })));
+        setFilename(file.name);
+        setStep('mapping');
+        return;
+      }
       const { headers: h, rows: r } = isSpreadsheet(file.name)
         ? await parseSpreadsheet(buf)
         : parseCsv(new TextDecoder().decode(buf));
-      if (h.length === 0) throw new Error('The file has no header row.');
-      setFilename(file.name);
-      setHeaders(h);
-      setRows(r);
-      setMapping(Object.fromEntries(h.map((col) => [col, ''])));
-      setStep('mapping');
+      applySheet(file.name, h, r);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not read the file.');
+    }
+  };
+
+  const chooseDocxTable = (choice: ParsedSheetChoice) => {
+    setError(null);
+    try {
+      applySheet(`${filename} — ${choice.name}`, choice.headers, choice.rows);
+      setDocxSheets([]);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not read the table.');
     }
   };
 
@@ -204,21 +237,44 @@ export const ImportWizardPanel: React.FC<ImportWizardPanelProps> = () => {
             className="px-3 py-2 rounded-xl text-apple-12 font-semibold bg-surface border border-hairline text-primary hover:bg-surface-hover transition-colors"
             data-testid="import-choose-file"
           >
-            Choose a CSV or XLSX file
+            Choose a CSV, XLSX or DOCX file
           </button>
           <input
             ref={inputRef}
             type="file"
-            accept=".csv,text/csv,.xlsx,.xls,.xlsm"
+            accept=".csv,text/csv,.xlsx,.xls,.xlsm,.docx"
             className="hidden"
             data-testid="import-file-input"
             onChange={(e) => { const f = e.target.files?.[0]; if (f) void onFile(f); }}
           />
-          <p className="text-apple-11 text-secondary">CSV and XLSX are parsed in the browser. DOCX table import is recorded in NOT-DONE.</p>
+          <p className="text-apple-11 text-secondary">CSV, XLSX and DOCX tables are parsed in the browser, on the file you chose.</p>
         </section>
       )}
 
-      {step === 'mapping' && (
+      {docxSheets.length > 1 && (
+        <section className="space-y-2" data-testid="import-docx-tables">
+          <p className="text-apple-12 text-secondary">
+            This document holds {docxSheets.length} tables. Choose the one to import.
+          </p>
+          <ul className="space-y-1">
+            {docxSheets.map((t) => (
+              <li key={t.name}>
+                <button
+                  type="button"
+                  onClick={() => chooseDocxTable(t)}
+                  data-testid={`import-docx-${t.name.replace(/\s+/g, '-').toLowerCase()}`}
+                  className="px-3 py-1.5 rounded-lg text-apple-12 border border-hairline text-primary hover:bg-surface-hover"
+                >
+                  {t.name} — {t.headers.slice(0, 4).join(', ')}
+                  {t.headers.length > 4 ? '…' : ''} ({t.rows.length} rows)
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {step === 'mapping' && headers.length > 0 && (
         <section className="space-y-3" data-testid="import-mapping">
           <p className="text-apple-12 text-secondary">
             <span className="font-mono">{filename}</span> — map each source column to a product field.

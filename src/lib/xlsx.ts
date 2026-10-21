@@ -9,6 +9,8 @@
  * browser.
  */
 export interface ParsedSheet {
+  /** A display name for the sheet or table (a worksheet name, or `Table 1` for a DOCX table). */
+  name: string;
   headers: string[];
   rows: string[][];
 }
@@ -21,18 +23,18 @@ export function isSpreadsheet(filename: string): boolean {
 
 /** Parse an XLSX/XLS ArrayBuffer's first sheet into the wizard's { headers, rows } shape. */
 export async function parseSpreadsheet(buf: ArrayBuffer): Promise<ParsedSheet> {
-  if (buf.byteLength === 0) return { headers: [], rows: [] };
+  if (buf.byteLength === 0) return { name: 'Sheet', headers: [], rows: [] };
   const XLSX = await import('xlsx');
   const wb = XLSX.read(new Uint8Array(buf), { type: 'array' });
   const first = wb.SheetNames[0];
-  if (!first) return { headers: [], rows: [] };
+  if (!first) return { name: 'Sheet', headers: [], rows: [] };
   const grid = XLSX.utils.sheet_to_json<string[]>(wb.Sheets[first], { header: 1, raw: false, defval: '' });
   const [headerRow, ...bodyRows] = grid;
-  if (!headerRow || headerRow.length === 0) return { headers: [], rows: [] };
+  if (!headerRow || headerRow.length === 0) return { name: first, headers: [], rows: [] };
   const headers = headerRow.map((h) => String(h ?? '').trim());
-  if (headers.every((h) => h.length === 0)) return { headers: [], rows: [] };
+  if (headers.every((h) => h.length === 0)) return { name: first, headers: [], rows: [] };
   const rows = bodyRows
     .map((r) => headers.map((_, i) => String((r as unknown[])[i] ?? '').trim()))
     .filter((r) => r.some((c) => c.length > 0));
-  return { headers, rows };
+  return { name: first, headers, rows };
 }
