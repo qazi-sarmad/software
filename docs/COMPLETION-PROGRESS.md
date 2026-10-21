@@ -9,3 +9,4 @@ SQL 80 files / 71 migrations / 1683 assertions; Playwright 113 passed / 2 skippe
 | Task | Commit | CI run id | Result |
 |---|---|---|---|
 | C0 preflight and docs | (this commit) | n/a (docs only) | green |
+| C1.3 RPC authority review | (this commit) | pending | local SQL 82/82 green, twice |

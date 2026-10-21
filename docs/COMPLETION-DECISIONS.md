@@ -103,3 +103,58 @@ IMPROVISE-THEN-DOCUMENT (this file).
   a source-level guard catches the next one at review time, and the code path it protects is covered
   by the handler unit tests.
 - Reverse: relax or delete the guard; the handler tests remain.
+
+## D-C1.3-a — one shared guard, provio_org_guard, instead of 29 inline checks (C1.3)
+
+- Task: C1.3.
+- Point: how a SECURITY DEFINER function decides that an organisation argument is the caller's.
+- Options: (a) repeat a `jwt_org_id() is not distinct from p_org` test in each function; (b) one
+  helper, `provio_org_guard(p_org)`, called first by each function.
+- Choice: (b).
+- Reason: 29 functions needed the same rule, and a single helper makes the rule reviewable in one
+  place and gives the next reviewer one thing to check. The helper is `security definer` so it reads
+  the JWT claims consistently regardless of the caller's role, and it raises `P0001` with a
+  plain-language message.
+- Reverse: inline the three-branch test into each function and drop the helper.
+
+## D-C1.3-b — the discovery was two passes, and the second pass was mechanical (C1.3)
+
+- Task: C1.3 "Any function with an id or org parameter and no cross-org refusal test gets one now".
+- Point: how to be sure every leaking function was found, out of 285.
+- Options: (a) read the bodies of the app-facing functions only; (b) generate a call for every
+  security-definer function that takes an argument, run them all as an Org B user with Org A handles,
+  and inspect every one that returned data or wrote a row.
+- Choice: (b), after (a).
+- Reason: pass (a) found 23 leaks. Pass (b) — 254 generated calls — found six more (`board_pack_list`,
+  `list_tenant_entitlements`, `email_resolve_profile`, `render_notification`, `rule_recipients`,
+  `rule_loop_guard`) that a body reading had missed because their org argument was not named `p_org` or
+  was read from a row. `supabase/tests/82_rpc_authority.sql` is pass (b) made durable.
+- Reverse: none; the test is the record.
+
+## D-C1.3-c — the guard returns early when no JWT claims are set (C1.3)
+
+- Task: C1.3, after 18 existing SQL tests failed.
+- Point: `append_ledger_entry` and the other helpers are called from inside other definer functions,
+  from triggers, and from migrations and tests that run as the owner with no JWT. A guard that always
+  demanded a matching org claim broke all of those.
+- Options: (a) require the claim everywhere and rewrite the internal callers; (b) treat an absent
+  `request.jwt.claims` as a trusted in-database context and return early; (c) let the owner bypass.
+- Choice: (b), plus an explicit `auth.role() = 'service_role'` bypass for the Edge Functions.
+- Reason: PostgREST always sets `request.jwt.claims` for a browser request, so an empty setting means
+  the call did not come from a browser at all — it is a trigger, a nested definer call, a migration or
+  a test. That context already runs with the database owner's authority. This is the only test that
+  distinguishes "a request" from "inside the database" without relying on `current_user`, which is the
+  definer's owner in both cases. Option (c) is what option (b) amounts to, stated precisely.
+- Reverse: delete the two early returns; internal callers would then need a claims shim.
+
+## D-C1.3-d — the mask readers stay callable, they just check the org first (C1.3)
+
+- Task: C1.3, the `secret_display` and `email_sender_profiles_list` leaks.
+- Point: `secret_display` returns a masked value, not a secret, and the app calls it. Should it be
+  withdrawn instead of guarded?
+- Choice: keep it callable by `authenticated` and guard it: the row's `org_id` must be the caller's,
+  and a platform-scoped secret (org_id null) needs `is_platform_admin()`.
+- Reason: the leak was a mask for another tenant's secret label and existence, which is tenant
+  information even though it is not the secret itself. Withdrawing it would break the secrets screen
+  for no gain.
+- Reverse: revoke execute from authenticated and route the screen through a service-role Edge Function.
