@@ -145,8 +145,12 @@ test.describe('C2.4: colleague invitation end to end', () => {
     // The invitee has no membership yet, so the app shows the no-tenant welcome, never the tenant shell.
     await expect(page.getByTestId('no-tenant-screen')).toBeVisible();
     await page.goto(`/invite/accept?token=${token}`);
-    await expect(page.getByTestId('oa-accept-submit')).toBeVisible();
-    await page.getByTestId('oa-accept-submit').click();
+    // The session is still resolving for a moment after the navigation; wait for the resolved state
+    // ("Accept invitation") before clicking, or the screen would offer account creation instead.
+    const acceptBtn = page.getByTestId('oa-accept-submit');
+    await expect(acceptBtn).toBeVisible();
+    await expect(acceptBtn).toHaveText('Accept invitation');
+    await acceptBtn.click();
     await expect(page.getByTestId('oa-accept-done')).toBeVisible();
 
     // 6. The membership exists with the invited role, and the invitation is used once.

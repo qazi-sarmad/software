@@ -104,6 +104,15 @@ describe('OA-20 member invitation acceptance (C2.4)', () => {
     expect(acceptMemberInvite).toHaveBeenCalledWith('tok-no-tenant');
   });
 
+  it('shows no account form and a disabled button while the session is still resolving', () => {
+    // After a navigation the session is 'loading' for a moment. Offering "create account" then would
+    // create a second account for a colleague who is about to resolve as signed in (found by C2.4 e2e).
+    authState = { status: 'loading', user: null };
+    render(<MemberAccept tokenFromUrl="tok-loading" />);
+    expect(screen.queryByTestId('oa-accept-email')).toBeNull();
+    expect((screen.getByTestId('oa-accept-submit') as HTMLButtonElement).disabled).toBe(true);
+  });
+
   it('reports a missing code instead of sending an empty token', async () => {
     render(<MemberAccept tokenFromUrl="" />);
     fireEvent.change(screen.getByTestId('oa-accept-email'), { target: { value: 'nobody@example.test' } });

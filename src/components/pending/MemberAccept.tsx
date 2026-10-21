@@ -78,12 +78,15 @@ export const MemberAccept: React.FC<{ tokenFromUrl: string }> = ({ tokenFromUrl 
   }, [token, email, password, accept]);
 
   /**
-   * A session exists unless the visitor is signed out (or still resolving). `no_tenant` is the
-   * EXPECTED state for an invitee: their account exists but they hold no membership yet, which is
-   * exactly what the invitation will create. Treating only `signed_in` as signed in offered a
-   * colleague who already had an account a second account-creation form.
+   * A session exists unless the visitor is signed out. `no_tenant` is the EXPECTED state for an
+   * invitee: their account exists but they hold no membership yet, which is exactly what the
+   * invitation will create. Treating only `signed_in` as signed in offered a colleague who already
+   * had an account a second account-creation form.
    */
   const signedIn = status !== 'signed_out' && status !== 'loading';
+  // While the session is still resolving we must not guess: offering "create account" to someone who
+  // is about to resolve as signed in would create a second account for them (found by the C2.4 e2e).
+  const resolving = status === 'loading';
 
   return (
     <div className="min-h-screen bg-canvas text-primary flex items-center justify-center px-6">
@@ -120,7 +123,7 @@ export const MemberAccept: React.FC<{ tokenFromUrl: string }> = ({ tokenFromUrl 
               className="w-full rounded-xl border border-hairline bg-canvas px-3 py-2 text-apple-13"
               placeholder="Paste the code from your invitation"
             />
-            {!signedIn && (
+            {!signedIn && !resolving && (
               <>
                 <label className="block text-apple-12 text-secondary" htmlFor="oa-accept-email">Email</label>
                 <input
@@ -146,12 +149,12 @@ export const MemberAccept: React.FC<{ tokenFromUrl: string }> = ({ tokenFromUrl 
             )}
             <button
               type="button"
-              disabled={phase === 'busy'}
+              disabled={phase === 'busy' || resolving}
               onClick={() => void (signedIn ? accept() : createAndAccept())}
               data-testid="oa-accept-submit"
               className="px-3 py-2 rounded-xl bg-accent-subtle text-primary text-apple-12 disabled:opacity-50"
             >
-              {phase === 'busy' ? 'Checking…' : signedIn ? 'Accept invitation' : 'Create account and accept'}
+              {resolving ? 'Checking…' : phase === 'busy' ? 'Checking…' : signedIn ? 'Accept invitation' : 'Create account and accept'}
             </button>
             {phase === 'error' && <InlineError message={message} testId="oa-accept-error" />}
             <p className="text-apple-11 text-tertiary" data-testid="oa-accept-hint">
