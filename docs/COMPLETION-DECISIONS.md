@@ -704,3 +704,20 @@ IMPROVISE-THEN-DOCUMENT (this file).
   screen that fails to render, a route that 404s, and any blocking modal.
 - Reason: deterministic on a fresh database, and it does not depend on the seed's exact shape.
 - Reverse: delete `e2e/full-flow.spec.ts`.
+
+## D-C5.4b — the sweep covers every Appendix A id, and a guard holds the coverage (C5.4)
+- Point: the first sweep named only the 19 screens with a distinct route; the contract has 52, and the
+  screens that share a tab (SA-08 under SA-07, OA-10 under OA-02, WK-02/03 under WK-01, OA-05/20 under
+  People) were not captured at all.
+- Options: (a) one capture per distinct route; (b) one entry per Appendix A id, with the extra ids
+  opening the sub-tab or sub-view they live in.
+- Choice: (b). `scripts/screenshot-all.mjs` now names all 53 entries (52 ids plus OA-22) and, for a
+  shared tab, clicks the sub-tab (`superadmin-automation-tab-templates`, `sa-hosting-tab-check`/
+  `-rules`, `wk-boardpack-tab-config`/`-view`, `audit-file-view-certificate`/`-as_of`,
+  `issues-view-patterns`) before the shot. `src/guards/screenshotCoverage.test.ts` fails if an
+  Appendix A id is absent from the sweep, and fails if the sweep signs in as an address that
+  `e2e/global-setup.ts` does not create (the first draft used `sana.khan@` and `zara.malik@`, which
+  the seed does not have, so every one of those screens would have been "unreached" silently).
+- Reason: a screen the sweep never attempts is a silent gap; an unreached screen is at least visible
+  in the manifest.
+- Reverse: revert `scripts/screenshot-all.mjs` and delete the guard.
