@@ -54,8 +54,13 @@ begin
     '7C: the archive records a content hash');
   perform provio_test.assert_true((select storage_path from archive_jobs where id = v_id) is not null,
     '7C: the archive records a storage path');
-  perform provio_test.assert_eq((select status from archive_jobs where id = v_id), 'done',
-    '7C: a completed archive job is done');
+  -- C2.5 (migration 0077) changed this: an archive with no uploaded file is 'pending', not 'done'.
+  -- 0043 marked it done in the same transaction that computed the hash, before any file existed, so
+  -- 'done' meant "hashed" rather than "stored and verified" (decision D-C2.5-order). The completion
+  -- path is now archive_job_mark_uploaded(), which refuses a hash that does not match what was stored.
+  -- Test 86 covers the pending -> done transition; this test keeps the archive-side facts.
+  perform provio_test.assert_eq((select status from archive_jobs where id = v_id), 'pending',
+    '7C: an archive with no uploaded file is pending (C2.5)');
   -- D-7C-append-only: activity_log stays append-only (L5), so the rows are NOT physically deleted.
   perform provio_test.assert_eq(
     (select count(*) from activity_log

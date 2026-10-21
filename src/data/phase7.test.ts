@@ -112,9 +112,11 @@ describe('archival data module (7F)', () => {
     const m = await import('./archival');
     await m.archiveActivityPeriod('o1', '2026-01-01', '2026-01-31');
     expect(rpcMock).toHaveBeenCalledWith('archive_activity_period', { p_org_id: 'o1', p_period_start: '2026-01-01', p_period_end: '2026-01-31' });
-    queryResult = { data: [{ id: 'a1', period_start: '2026-01-01', period_end: '2026-01-31', archived_row_count: 5, storage_path: 'p', content_hash: 'h', status: 'done', created_at: 't' }], error: null };
+    queryResult = { data: [{ id: 'a1', period_start: '2026-01-01', period_end: '2026-01-31', archived_row_count: 5, storage_path: 'p', content_hash: 'h', status: 'done', created_at: 't', uploaded_bytes: 42, upload_verified_at: 'v' }], error: null };
     const jobs = await m.listArchiveJobs();
-    expect(jobs[0]).toEqual({ id: 'a1', periodStart: '2026-01-01', periodEnd: '2026-01-31', archivedRowCount: 5, storagePath: 'p', contentHash: 'h', status: 'done', createdAt: 't' });
+    // C2.5 added uploaded_bytes and upload_verified_at: an archive now carries the proof that its
+    // stored bytes were hashed, not just the hash the row was created with.
+    expect(jobs[0]).toEqual({ id: 'a1', periodStart: '2026-01-01', periodEnd: '2026-01-31', archivedRowCount: 5, storagePath: 'p', contentHash: 'h', status: 'done', createdAt: 't', uploadedBytes: 42, uploadVerifiedAt: 'v' });
   });
 
   it('reads return empty when not configured', async () => {

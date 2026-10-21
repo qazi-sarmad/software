@@ -439,3 +439,42 @@ IMPROVISE-THEN-DOCUMENT (this file).
   and the platform administrator's claim is empty, so both read nothing.
 - Reason: consistency with the rest of the schema, and no test needs to special-case the new table.
 - Reverse: revoke SELECT from anon and platform_admin in a follow-up migration.
+
+## D-C2.5-order — deletion happens only after a verified upload (C2.5, §25.4, §26)
+
+- Task: C2.5, "verified archival upload and population archival".
+- Point: 0043 computed the archive JSON and its `content_hash` and then deleted live rows in the same
+  transaction, and it marked the job `done` before any file existed. Nothing uploaded the JSON. The
+  spec (§25.4) requires the upload to be verified before anything is treated as archived.
+- Options: (a) keep the 0043 order and add an uploader that runs afterwards; (b) make `done` and the
+  removal of working rows follow a verified upload, so `archive_jobs.status` is `pending` until the
+  stored bytes have been hashed and matched.
+- Choice: (b). `archive_activity_period` still builds the JSON and records the hash, but the job is
+  `pending`. `archive_job_mark_uploaded(job, sha256, bytes)` is the only path to `done`: it compares
+  the hash of what was stored against the ledgered `content_hash` and, on a mismatch, records
+  `last_error`, marks the job `failed` and raises exactly one `integrity_alerts` row. For
+  populations, `archive_population` records the archive without touching working rows;
+  `population_archive_verify` removes them only after the upload hash matches. `archive_job_canonical`
+  is the service-only accessor that returns the exact bytes to upload, so the hash checked is the hash
+  of what was stored.
+- Reason: the earlier order made "archived" mean "hashed", which is not the guarantee the spec asks
+  for. Making verification the gate is the only order in which an unverified archive cannot destroy
+  live rows (L5).
+- Reverse: revert to the 0043 body of `archive_activity_period` and drop `archive_job_mark_uploaded`,
+  `archive_job_canonical`, `archive_job_for_upload`, `can_upload_archive`, `population_archives`,
+  `integrity_alerts`, `archive_population`, `population_archive_verify`, `population_archive_page`,
+  `population_archive_due`, `population_retention_months`.
+
+## D-C2.5-space — the archive reports `{reachable, ...}`-style fields through RPCs, never the client
+- Task: C2.5, the upload path's authority.
+- Point: the upload needs the job's storage path and the canonical bytes. Those are read with the
+  service role. The check that decides whether the caller may upload must run as the caller.
+- Options: (a) let the edge function read `archive_jobs` directly with the service role and trust an
+  org id in the body; (b) expose `can_upload_archive` for the caller and `archive_job_for_upload` /
+  `archive_job_canonical` for the service role only.
+- Choice: (b). `can_upload_archive(archive_id)` compares the job's org to `jwt_org_id()` and checks
+  `manage_engagements`, all as the caller. The two readers are revoked from `authenticated`; test 86
+  proves an authenticated caller gets `permission denied` from both (C1.2 pattern).
+- Reason: the same lesson as C1.1 — an org id or id from the body is not authority.
+- Reverse: revoke EXECUTE on `can_upload_archive` from `authenticated` and read the job in the edge
+  function with the service role.
