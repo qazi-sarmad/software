@@ -672,3 +672,12 @@ IMPROVISE-THEN-DOCUMENT (this file).
   and the missing piece is named. This is the only honest base for the C5.2 PARITY rebuild.
 - Reason: "Present without a failing test" is the failure mode that let the stale table survive.
 - Reverse: the file is documentation; delete it and PARITY reverts to the old table.
+
+## D-C5.2 — PARITY and NOT-DONE are rebuilt, not appended (C5.2/C5.3)
+- Point: PARITY.md carried the Phase 0 table plus per-phase close-outs; NOT-DONE.md carried resolved
+  items and phase-scope entries that are now built.
+- Options: (a) append a new close-out section; (b) rebuild one current table and archive the old file.
+- Choice: (b), required by the brief. The old files move to docs/archive/. PARITY takes its rows from
+  the C3.1 audit, so every status has a named test behind it.
+- Reason: an appended file hides the contradiction the brief exists to remove.
+- Reverse: restore the archived files.

@@ -1,244 +1,75 @@
-# Not done (open items with a recorded plan)
+# Not done (one current list)
 
-Each item below is known, is not fixed in the current branch, and has a plan. Phase 2 must
-clear the first two before Phase 2 closes.
+Rebuilt for the completion build (C5.3). Resolved items from earlier phases are removed; the phase
+"scope" entries that are now built are gone. What remains is: real gaps (with a decision asked of the
+owner), owner actions, and parked items. Cross-references: `docs/PARITY.md` (status by section),
+`docs/COMPLETION-BLOCKERS.md` (full text of each blocker), `docs/COMPLETION-SPEC-AUDIT.md` (evidence).
 
-## 1. vitest and tinypool advisories (resolved in Phase 2, task 2A)
+## Real gaps (owner decision requested)
 
-- Advisories: `vitest` 0.0.95 to 4.1.10 (critical, direct devDependency), `tinypool` 2.1.1 and below
-  (critical, transitive, RCE via worker options), `@vitest/mocker` 2.1.0 to 4.1.10 (moderate,
-  path traversal in redirect mocks).
-- Fix applied: `vitest` upgraded to `^5.0.4` on branch `phase-2-access` (commit `f73d86b`), which is a
-  **major version bump** and was therefore held back from Phase 1. `npm audit --audit-level=critical`
-  now exits 0 (was 2 critical). CI run 38696591808 green. Only `package.json` and `package-lock.json`
-  changed.
+These are Partial or Missing in `docs/PARITY.md`, each with the reason in `COMPLETION-BLOCKERS.md`.
 
-## 2. Dependency pin (resolved in Phase 1, recorded here for the audit trail)
+1. **§2 cross-universe view-only sharing** — Missing. No share table, RPC, read-only projection,
+   notification or screen. This is the one whole clause with no implementation. Owner decision: build
+   it, or amend §2 to defer it.
+2. **§10.1 configurable grace period before the Testing hard lock** — Partial. The hard lock is
+   present and tested; the configurable overlap is not.
+3. **§11.4 central pre-flight** — Partial. The eight checks exist across the testing panels and
+   `src/lib/`; a single named module with an acknowledge-with-a-logged-reason path is not present.
+4. **§17.1 pop-out Realtime sync test** — Partial. The pop-out window and the poll fallback exist; a
+   test that proves the pop-out stays in sync is not present.
+5. **§22 Realtime in-app notification delivery test** — Partial. Notifications are delivered and
+   visible in the Work Queue; a Realtime-delivery test is not present.
+6. **§3 / §25.7 mobile viewport smoke** — Partial. The app is responsive; a phone-viewport
+   Playwright test for ethics sign-off, simple approvals and report viewing is not present.
 
-- `source-map-js` 1.2.1 had a high-severity event-loop DoS. Pinned to 1.2.2 with an npm override.
-  Production audit at high level is clean.
+## Owner actions
 
-## 3. Per-user passwords in end-to-end tests (resolved in R6c)
+- **Deploy the Edge Functions.** `supabase functions deploy ai-gateway email-dispatch graph-oauth
+  hosting-test invite-user secrets-put archive-upload doc-extract`. Three of these (archive-upload,
+  doc-extract, hosting-test) are new in this build.
+- **Confirm platform services.** Vault, pg_cron and pg_net must be enabled on the project. Set
+  `SECRETS_MASTER_KEY` if Vault is absent (the graph-oauth `state` HMAC and the AES-GCM secret store
+  both derive from it). The scheduled jobs (C2.2) need pg_cron, and email dispatch needs pg_net.
+- **Enter Resend and Microsoft credentials in the platform wizard.** Never paste them into chat.
+  Revoke the Resend key that was pasted on 2026-10-19.
+- **Re-run the tutorial recording.** `npm run tutorials:record` with `TUTORIALS_BASE_URL` set, against
+  the live app after the UI is final. The committed GIFs are placeholders (the recorder's output with
+  no base URL). `npm run check-tutorials -- --strict` then passes on real recordings.
+- **Set `TEST_SUPABASE_DB_URL` without the trailing newline** in the hosted test project's secret.
+- **Verify §25.4 free-tier limits** on Supabase's pricing page before production use (§32 item 1).
+- **Confirm Microsoft guidance** on basic-auth SMTP retirement and the Graph consent process before
+  Gate 5 (§32 item 2).
+- **Superadmin UI is Phase 8.1, owner-designed.** The Phase 8 *database* and logic are in place
+  (migrations 0031/0032/0033/0045, tests 40–42/57, `src/data/platform.ts`); the `/superadmin` screen
+  layout is the owner's to finalise.
+- **Re-dispatch CI** if a GitHub-runner outage recurs (see `COMPLETION-BLOCKERS.md`, runs
+  39604710289 / 39604815983 executed zero steps).
 
-- Resolved: each synthetic user now gets its own random password per run. `e2e/global-setup.ts`
-  builds a per-address password map and writes it to the git-ignored `e2e/.auth/passwords.json`;
-  every spec reads its own account's password through `e2e/password.ts` `passwordFor(email)`.
-- Evidence: commit R6c, decision D-R6c-passwords.
+## Parked (by an earlier decision)
 
-## 4. Browser coverage (resolved in R6d)
+- **Continuous-auditing watchers** (file drop, HTTP polling, database view) are PARKED by F12. The F7
+  event interface stays generic so a future `watcher.signal` event can plug in. `watcher.signal` is
+  the only catalogue key with no emitter and no source, by design.
+- **Migration runner against two live databases.** `tools/migration-runner/` ships its 11
+  driver-injected steps with unit tests against `fakeDriver.mjs`. CI cannot provide two reachable
+  Postgres databases, so the end-to-end run is left to the owner's runner machine; the step logic,
+  checkpointing and ledger-copy guard are tested in isolation.
+- **TeamMate / AuditBoard migration** is not committed in this version (§19, §28). Export is complete;
+  import of prior-year material, RCM, entities, users and populations is built.
 
-- Resolved: `playwright.config.ts` declares `chromium`, `firefox` and `webkit`. Normal CI step 7 pins
-  `--project=chromium`; `.github/workflows/browsers.yml` runs Firefox and WebKit on
-  `workflow_dispatch` only.
-- Evidence: commit R6d, decisions D-R6d-browsers and D-R6d-nolocalrun.
+## Known limitations (stated plainly, not gaps)
 
-## 5. Hosted test secret carries a trailing newline (owner action)
-
-- `TEST_SUPABASE_DB_URL` still carries a trailing newline. This environment's CI token has no `secrets:write`
-  (403) and no Supabase token exists, so the secret cannot be re-set from the CI environment.
-- Until it is re-set, CI step 6 and `supabase/tests/15_ledger_concurrency.sql` strip whitespace.
-- Owner: `printf '%s' "$URL" | gh secret set TEST_SUPABASE_DB_URL`, then remove both strips.
-
-## 6. Administration portal covers People and Roles only (Phase 2 scope)
-
-- §23 lists the whole Org Admin portal. Phase 2 built the People and Roles parts (members, roles,
-  rights, scopes, reporting lines, invite cap). Organisation settings, structure, controls,
-  methodology, the risk model, workflow, SLA and escalation, finding structure, notifications,
-  BI parameters, templates and branding, export and retention, and AI remain not built.
-- Priority: medium. The remaining parts are Phase 3+ work; each is a separate task.
-
-## 7. Overdue-request escalation needs a scheduler (Phase 3 scope)
-
-- §7 and §22 require overdue plan-change/deployment requests to escalate on a timer.
-  `public.escalate_overdue_deployment_requests()` is built and tested, but nothing calls it on a
-  schedule: no scheduler (pg_cron or an external worker) exists in this environment.
-- Owner action: wire `escalate_overdue_deployment_requests()` to a scheduler when the deployment
-  provides one. Until then it must be invoked by hand.
-
-## 8. SIRA cycles, plan versions and gate outcomes are not yet read into the UI (resolved in R6a)
-
-- Resolved: the SIRA screen now loads the persisted SIRA model, cycles and emergent risks, and the
-  latest plan with its version history, for the selected universe through `src/data/sira.ts` and
-  `src/data/plan.ts` (new `latestPlanForUniverse`). The Audit Plan screen loads persisted plan items,
-  plan versions, deployment-gate outcomes (new `listGateOutcomes` reading the `engagement_deployed`
-  activity rows) and deployment requests. All reads go through `src/data`; no component touches the
-  client. A failed read shows an inline error.
-- Evidence: commit R6a, decisions D-R6a-users, D-R6a-gate-source; `src/components/sira/SiraTab.tsx`,
-  `src/components/plan/AuditPlanTab.tsx`, `e2e/r6.spec.ts`, `src/data/r6a.test.ts`.
-
-## 10. Activity-log archival needs a Storage-upload edge function (Phase 7 scope)
-
-- `archive_activity_period` builds the JSON in-database, writes an `archive_jobs` row, records a
-  hash-chained ledger entry with the content hash, and then removes the archived rows from the live
-  activity log. The actual upload to Storage is a placeholder: the function writes the archive job
-  and a signed-URL stub, but no edge function performs the upload yet.
-- Owner action: add an edge function that uploads the built JSON to the `archive_jobs.storage_path`
-  and marks the job `done`. Until then the ledger entry is the durable record.
-- Evidence: `0043_activity_archival.sql`, `52_activity_archival.sql`, decision D-7C-storage.
-
-## 11. PDF/DOCX generation for exports (Phase 7 scope)
-
-- The §18 export table lists PDF, XLSX and DOCX for several objects. The Phase 7 export panel
-  serialises CSV, JSON and a deterministic text payload in the browser and records the content hash;
-  it does not generate a PDF, XLSX or DOCX binary. The per-object RPCs return the data to be
-  serialised, as the task specifies.
-- Owner action: add a server-side (or in-browser) PDF/XLSX/DOCX renderer behind the same
-  `log_export` call so the recorded hash still covers the delivered file.
-- Evidence: `src/lib/exportSerialise.ts`, `src/components/admin/ExportPanel.tsx`.
-
-## 12. Import parsers: XLSX added (R6b); DOCX still deferred (Phase 7 scope)
-
-- §19 lists CSV, XLSX and DOCX tables per source. The wizard now parses both CSV (inline) and
-  XLSX/XLS/XLSM (SheetJS, `src/lib/xlsx.ts`, loaded on demand so it stays out of the main bundle);
-  both paths return the same `{ headers, rows }` shape and the database validation
-  (`validate_import`) is format-agnostic. DOCX table parsing is still deferred.
-- SheetJS moved to `xlsx@0.20.3`, installed from the vendor CDN
-  (`https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz`) by D1. The npm `xlsx` package stopped at
-  0.18.5 and carried two unfixed advisories; 0.20.3 resolves both, so `npm audit` now reports zero
-  vulnerabilities. It still runs only on a file the operator picked in their own browser.
-- Evidence: `src/lib/xlsx.ts`, `src/lib/xlsx.test.ts`, `src/components/admin/ImportWizardPanel.tsx`,
-  `e2e/fixtures/rcm-sample.xlsx`, `e2e/r6.spec.ts`.
-
-## 13. Screenshots owner-deferred (Phase 7)
-
-- No screenshots were captured for the Phase 7 surfaces (export panel, import wizard, activity log,
-  prior-year import); this is owner-deferred as in Phases 0-3.
-
-
-## 14. One-stage vs two-stage testing selection UI deferred (Phase 4 scope)
-
-- §23 requires the organisation to choose one-stage or two-stage testing and to set sign-off roles
-  per stage. The org setting and the database gate exist; no screen sets the choice yet.
-- Owner action: add the control to the Org Admin portal.
-- Evidence: `docs/PHASE-4-REPORT.md`.
-
-## 15. Per-organisation BI parameter admin UI deferred (Phase 4 scope)
-
-- §23 lists BI parameters among the Methodology settings. The parameters are data; no admin screen
-  edits them yet.
-- Evidence: `docs/PHASE-4-REPORT.md`.
-
-
-## 16. Document extraction edge function deferred (Phase 5 scope)
-
-- §13.1 requires full extraction and analysis of modern formats. `document_extractions` and the FTS
-  index exist and `search_documents` reads them, but no edge function performs the extraction: the
-  stub writes a `pending` row and returns.
-- Owner action: add an edge function that extracts text (PDF/DOCX/XLSX/CSV), fills `extracted_text`
-  and `page_count`, and sets `extraction_status` to `done` or `failed`.
-- Evidence: `0035_document_viewer.sql`, `44_document_viewer.sql`, decision D-5D-extraction-stub.
-
-## 17. One-stage vs two-stage testing mode UI deferred (Phase 5 scope)
-
-- The database supports both modes; no screen switches the mode or shows the two-stage reviewer
-  step. Same owner action as item 14.
-- Evidence: `docs/PHASE-5-REPORT.md`.
-
-## 18. Screenshots owner-deferred (Phase 5)
-
-- No screenshots were captured for the Phase 5 surfaces (findings, issues, conclusion, document
-  viewer); owner-deferred as in Phases 0-4.
-
-## 19. Email dispatch edge function (Phase 6 scope)
-
-- §15.5 says the report email is queued at issuance. The queue row is written (`email_queue`,
-  `queue_email`), but nothing sends it: there is no edge function and no provider is wired (D-6E,
-  B-6E-provider).
-- Owner action: add an edge function that reads `pending` rows and dispatches through the chosen
-  provider, then sets `status` to `sent` or `failed` with `error_text`.
-- Evidence: `0039_email_queue.sql`, `48_email_queue.sql`, decision D-6E.
-
-## 20. Graph or Resend provider wiring (Phase 6 scope)
-
-- Per decision D-6E the provider choice is pending the owner. Neither a Resend domain nor a Graph
-  delegated credential is configured; `provider_config` is unset for every org.
-- Evidence: decision D-6E, blocker B-6E-provider.
-
-## 21. PDF/DOCX report generation and branding templates (Phase 6 scope)
-
-- §15.5 and §23 require the issued report as a branded PDF/DOCX. The report exists as blocks in the
-  database; no renderer produces a binary, and no branding template is applied.
-- Owner action: add a renderer behind `freeze_report`/`issue_report` so the issued artefact is the
-  branded document.
-- Evidence: `0036_report_drafting.sql`, `src/components/audit/ReportEditorPanel.tsx`.
-- Update (S4): the shared renderers now exist — `src/lib/render/pdf.ts` (pdf-lib + fontkit),
-  `pptx.ts` (pptxgenjs, editable text/tables/charts) and `qr.ts`, all consuming one `BrandingSpec`
-  from `src/data/branding.ts` (migration 0058). The report editor is not yet wired to `renderPdf`;
-  that wiring and the DOCX path remain owner-scoped.
-
-## 22. Screenshots owner-deferred (Phase 6)
-
-- No screenshots were captured for the Phase 6 surfaces (report editor, comments, freeze panel, CAP
-  register, issuance); owner-deferred as in Phases 0-5.
-
-## 23. Superadmin UI deferred to Phase 8.1 (owner-designed)
-
-- Phase 8 is DB and logic only. `src/data/platform.ts` exposes `platformSetFeatureFlag`,
-  `grantSupportAccess`, `revokeSupportAccess`, `platformEnableAI` and `platformSetInviteCap`, but no
-  `/superadmin` screen calls them.
-- Owner action: design and build the Phase 8.1 platform portal.
-- Evidence: `src/data/platform.ts`, `src/data/platform.test.ts`, decision D-8E-coverage.
-
-## 24. Support-session authentication (Phase 8 scope)
-
-- `support_access_grants` is metadata: a grant row with a scope, an expiry (<= 48h) and a revoke
-  reason. The platform admin still cannot read tenant business tables. An authenticated support
-  session that acts under a grant is Phase 9/10 work.
-- Evidence: `0031_platform_control_plane.sql`, test `40`, `src/data/platform.ts`.
-
-## 25. Tenant-side per-org email configuration UI (Phase 8 scope)
-
-- The provider is set through `admin_set_email_provider`; no Org Admin screen sets it, and the
-  provider choice itself is the owner's (D-6E, B-6E-provider).
-
-## 26. AI advisory summaries (Phase 8 scope)
-
-- `platform_enable_ai` turns AI on per org and records the model endpoint; no advisory summary is
-  generated. AI remains off by default (§13.2).
-- Evidence: `0045_platform_ai_ledger.sql`, decision D-8C-ledger.
-
-## 27. Screenshots owner-deferred (Phase 8)
-
-- No screenshots were captured; Phase 8 has no UI. Owner-deferred as in Phases 0-7.
-
-## Not done in the assurance and control plane (branch `feature/board-ai-control-plane`)
-
-- **Continuous-auditing watchers** (file drop, HTTP polling, database view) are PARKED by F12 and were
-  not built. The F7 event interface stays generic so a future `watcher.signal` event can plug in.
-- **Tutorial GIFs** are now produced by `scripts/record-tutorials.mjs` (S12). CI commits
-  clearly-marked placeholder GIFs (the recorder's output with no `TUTORIALS_BASE_URL` set); the owner
-  runs `npm run tutorials:record` with `TUTORIALS_BASE_URL` against a live deployment to replace them
-  with the real recordings. `scripts/check-tutorials.mjs` fails the build if any Appendix A key has no
-  GIF (D-S12-placeholder-gifs).
-- **Event catalogue gaps.** Events whose source does not exist yet are not wired: every key in the F7
-  catalogue that has no emitter is listed by the S2 automation test rather than faked.
-- Slice S12 (tutorials) is complete. Slice S13 (the final UI contract, PARITY and NOT-DONE sweep, and
-  the final gate run) is not started at the time of writing. S8 (certificate and public verification),
-  S9 (external auditor portal), S10 (Time-Travel and Patterns), S11 (hosting fit and database
-  mobility) and S12 (tutorials) are complete.
-- **Migration runner against two live databases.** `tools/migration-runner/` ships its 11 steps with a
-  driver-injected design and unit tests against `fakeDriver.mjs`. CI cannot provide two reachable
-  Postgres databases, so the end-to-end run against two real targets is left to the owner's runner
-  machine; the step logic, the checkpointing and the ledger-copy guard are tested in isolation.
+- **Time-Travel coverage.** `engagement_as_of` reconstructs workpapers, findings, seals and statuses
+  from append-only history. Entities that keep only current state are reported as "Not recorded before
+  <date>" rather than guessed. Activity archived out of the live window is outside the as-of range;
+  the UI states the earliest available date.
+- **External auditor account creation.** The portal assumes the account exists. The owner's Supabase
+  Auth signup/email-confirmation settings decide how the invitee creates one; the acceptance page says
+  so plainly when signups are off. The invitation email queues through the F6 queue and, with the stub
+  provider, stays queued until an adapter is configured (D-S9-invite-not-sent, by design).
 - **Test button against a real target.** OA-15's connectivity Test calls `hosting-test`; with no
   reachable target configured it reports the error the provider returns. The owner supplies a real
   connection (F23).
-- **Tutorial GIFs for the S11 keys** (`sa.hosting-fit`, `sa.hosting-rules`, `sa.migration`,
-  `oa.hosting`, `oa.migration`, `oa.deployment-kit`, `oa.retire-old`) are registered in
-  `docs/ACP-TUTORIALS.md`, named in the UI contract and seeded by 0071; the recorder (S12) writes their
-  GIFs. As with every other key, the committed files are placeholders until the owner re-runs
-  `npm run tutorials:record` with `TUTORIALS_BASE_URL` against a live deployment.
-- **Time-Travel coverage gaps.** `engagement_as_of` reconstructs workpapers, findings, seals and
-  statuses from append-only history (ledger, activity log, version tables). Entities that keep only
-  current state cannot be reconstructed; the function reports them as "Not recorded before <date>"
-  rather than guessing. Activity archived out of the live window is outside the as-of range; the UI
-  states the earliest available date.
-- **External auditor invitation email.** `external_auditor_invite` queues the acceptance email through
-  the F6 queue; with the default stub provider it stays queued until an adapter is configured and the
-  dispatcher runs. This is by design (D-S9-invite-not-sent), not a gap.
-- **External auditor account creation.** The portal assumes the account already exists. The owner's
-  Supabase Auth signup/email-confirmation settings decide how the invitee creates one; the acceptance
-  page says so plainly when signups are off. No owner credential is needed for this build (F23).
-
-
-
+- **Legacy binary evidence** (.doc, .ppt, .xls) is stored and linked but not extracted and not used
+  for population sampling (§13.1, §20), with `extraction_status='legacy_not_extracted'`.

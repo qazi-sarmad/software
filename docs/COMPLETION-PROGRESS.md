@@ -25,3 +25,5 @@ SQL 80 files / 71 migrations / 1683 assertions; Playwright 113 passed / 2 skippe
 | C2.7-FIX DOCX determinism across a second boundary | 98648ee | pending | vitest 142 files / 1635 tests green; new regression test fails without the pin |
 | C3.2-B governance settings and admin surfaces (§10/§12/§14.2/§20/§22/§23) | (this commit) | pending | local SQL 92/92 green twice; vitest 143 files / 1643 tests green; tsc, build, tokens, shrink, contract, tutorials green |
 | C3.1 clause-by-clause spec audit (§1–§29, §30–§32) | (this commit) | n/a (docs) | docs/COMPLETION-SPEC-AUDIT.md written from evidence; gaps recorded in COMPLETION-BLOCKERS.md |
+| C5.2 PARITY rebuilt as one current table from C3.1 | (this commit) | n/a (docs) | docs/PARITY.md rebuilt; stale Phase 0 table archived |
+| C5.3 NOT-DONE rebuilt as one current list | (this commit) | n/a (docs) | resolved/scope items removed; real gaps, owner actions, parked items only |
