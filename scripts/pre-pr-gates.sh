@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# D22 pre-PR gates. Runs every gate the release checklist names, in order, and stops at the first
-# failure. This is the same set CI runs (steps 1-5 plus the guard tests), so a green local run means
-# CI's fast steps will be green too. The SQL and Playwright steps need the hosted test project and
-# are not run here.
+# Completion-build gates (D22, extended in C5). Runs every gate the release checklist names, in
+# order, and stops at the first failure. This is the same set CI runs (steps 1-6c plus the guard
+# tests), so a green local run means CI's fast steps will be green too. The SQL, Playwright and
+# screenshot steps need the hosted test project and a seeded database, and are not run here.
 set -u
 cd "$(dirname "$0")/.." || exit 1
 

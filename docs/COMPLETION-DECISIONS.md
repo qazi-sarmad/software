@@ -681,3 +681,26 @@ IMPROVISE-THEN-DOCUMENT (this file).
   the C3.1 audit, so every status has a named test behind it.
 - Reason: an appended file hides the contradiction the brief exists to remove.
 - Reverse: restore the archived files.
+
+## D-C5.4 — screenshots are a sweep tool, not a gate (C5.4)
+- Point: spec §29 wants every screen in three presets and light/dark. CI must not fail the whole run
+  because one screen's testid moved.
+- Options: (a) a Playwright project; (b) a standalone script that drives Chromium, captures, and
+  records an "unreached" entry instead of failing.
+- Choice: (b), `scripts/screenshot-all.mjs`, `continue-on-error: true` in CI, PNGs uploaded as an
+  artifact and never committed (`artifacts/screenshots/` is git-ignored). The manifest lists every
+  screen, preset, theme and status.
+- Reason: the owner replaces the UI and re-runs the sweep; a hard gate would make the sweep itself a
+  maintenance burden and a source of red CI that hides real failures.
+- Reverse: delete the script and the CI step.
+
+## D-C5.5 — the full-flow spec asserts designed states, not one privileged data path (C5.5)
+- Point: one Playwright spec must walk the whole happy path, but the CI database is seeded once and
+  shared, so a spec that insists on creating every object would fight the other specs.
+- Options: (a) create every object in the spec (slow, and collides with the seed); (b) walk the path
+  and assert each screen's DESIGNED state (panel or designed empty state), and where an object is
+  needed, assert the object OR its designed gate.
+- Choice: (b). Every testid was verified present in `src/` before the commit. The spec still catches a
+  screen that fails to render, a route that 404s, and any blocking modal.
+- Reason: deterministic on a fresh database, and it does not depend on the seed's exact shape.
+- Reverse: delete `e2e/full-flow.spec.ts`.
