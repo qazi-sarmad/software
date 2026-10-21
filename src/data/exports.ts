@@ -7,7 +7,7 @@
  */
 import { getClient } from './db';
 
-export type ExportFormat = 'csv' | 'xlsx' | 'pdf' | 'zip' | 'json';
+export type ExportFormat = 'csv' | 'xlsx' | 'pdf' | 'zip' | 'json' | 'docx' | 'png' | 'svg';
 
 export interface ExportLogRow {
   id: string;

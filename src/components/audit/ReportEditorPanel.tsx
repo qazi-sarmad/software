@@ -15,6 +15,7 @@ import {
   type ReportCommentRow,
 } from '../../data/reports';
 import { checkCapReconciliation, type CapRow, listCaps } from '../../data/caps';
+import { renderAndStoreReportFiles, type StoredReportFiles } from '../../data/reportFiles';
 import { hasRight } from '../../lib/rights';
 import { rightReason, rightReasonFor } from '../../lib/rightLabels';
 import { formatFieldPairs } from '../../lib/readable';
@@ -39,6 +40,9 @@ const SECTION_ORDER = ['executive_summary', 'scope', 'findings', 'opinion', 'app
  */
 export const ReportEditorPanel: React.FC<{ engagementId: string }> = ({ engagementId }) => {
   const { currentUser } = useApp();
+  const orgId = currentUser.orgId ?? '';
+  const engagementLabel = engagementId;
+  const [reportHashes, setReportHashes] = useState<StoredReportFiles | null>(null);
   const [versions, setVersions] = useState<ReportVersionRow[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [blocks, setBlocks] = useState<ReportBlockRow[]>([]);
@@ -120,8 +124,36 @@ export const ReportEditorPanel: React.FC<{ engagementId: string }> = ({ engageme
     if (!activeId) return setBusy(false);
     const res = await freezeReport(activeId);
     if (!res.ok) setError(res.reason);
-    else await load();
+    else {
+      // §18: the frozen report is a real PDF and a real DOCX from the one block model. Store them and
+      // record both hashes; a failure here is reported but the freeze itself already stands.
+      try {
+        await storeReportFiles(activeId);
+        setNotice('Frozen. The PDF and DOCX have been rendered and their hashes recorded.');
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'The report files could not be rendered.');
+      }
+      await load();
+    }
     setBusy(false);
+  };
+
+  /** Render, upload and record the frozen report's files from the current blocks. */
+  const storeReportFiles = async (reportVersionId: string) => {
+    if (!orgId) throw new Error('no organisation in the session');
+    const stored = await renderAndStoreReportFiles({
+      reportVersionId,
+      orgId,
+      title: engagementLabel || 'Audit report',
+      blocks: blocks.map((b) => ({
+        sectionType: b.sectionType, blockType: b.blockType, content: b.content, position: b.position,
+      })),
+      engagementLabel: engagementLabel || 'Engagement',
+      userLabel: currentUser?.name ?? currentUser?.email ?? 'auditor',
+      frozenAt: new Date().toISOString(),
+    });
+    setReportHashes(stored);
+    return stored;
   };
 
   const issue = async () => {
@@ -132,6 +164,13 @@ export const ReportEditorPanel: React.FC<{ engagementId: string }> = ({ engageme
     const res = await issueReport(activeId);
     if (!res.ok) setError(res.reason);
     else {
+      // §18: issuance stores the PDF and the DOCX and the ledger entry carries both hashes. The files
+      // are written here as well as at freeze, so an issued report always has its binaries recorded.
+      try {
+        await storeReportFiles(activeId);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'The report files could not be rendered.');
+      }
       setNotice('Email queued (pending dispatch).');
       await load();
     }
@@ -358,6 +397,16 @@ export const ReportEditorPanel: React.FC<{ engagementId: string }> = ({ engageme
               {!canApprove && (
                 <div className="text-apple-11 text-secondary" data-testid="report-rights-note">
                   Freeze and issue: {rightReason('approve_plan')}
+                </div>
+              )}
+              {reportHashes && (
+                <div className="space-y-0.5 text-apple-11 text-secondary" data-testid="report-files">
+                  <div data-testid="report-file-pdf">
+                    Frozen PDF: {reportHashes.pdf.sha256.slice(0, 16)}… ({reportHashes.pdf.bytes} bytes)
+                  </div>
+                  <div data-testid="report-file-docx">
+                    Editable DOCX: {reportHashes.docx.sha256.slice(0, 16)}… ({reportHashes.docx.bytes} bytes)
+                  </div>
                 </div>
               )}
             </div>

@@ -37,7 +37,7 @@ select provio_test.as_user('10000000-0000-0000-0000-0000000000a4', 'a0000000-000
 do $$
 begin
   perform provio_test.assert_raises(
-    $q$select public.log_export('workpaper', null, 'docx', '{}'::jsonb, null)$q$,
+    $q$select public.log_export('workpaper', null, 'xml', '{}'::jsonb, null)$q$,
     'unknown export format', '7A: an unknown format is refused');
 end $$;
 

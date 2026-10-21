@@ -72,7 +72,7 @@ begin
   v_id := public.log_export('workpaper', '60000000-0000-0000-0000-0000000000a1', 'csv', '{}'::jsonb, 'abc123');
   perform provio_test.assert_true(v_id is not null, '7E: log_export returns a row id');
   perform provio_test.assert_raises(
-    $q$select public.log_export('workpaper', null, 'docx', '{}'::jsonb, 'h')$q$,
+    $q$select public.log_export('workpaper', null, 'xml', '{}'::jsonb, 'h')$q$,
     'unknown export format', '7E: an unknown export format is refused');
 end $$;
 

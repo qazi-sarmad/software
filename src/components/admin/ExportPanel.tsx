@@ -16,11 +16,10 @@ import {
   type ExportLogRow,
 } from '../../data/exports';
 import {
-  downloadExport,
-  exportContentHash,
-  exportFilename,
-  serialiseExport,
-} from '../../lib/exportSerialise';
+  downloadBytes,
+  renderExport,
+  type BinaryFormat,
+} from '../../lib/exportRender';
 import { InlineError } from '../common/InlineError';
 import { Select } from '../common/Select';
 import { Download, Hash, RefreshCw, Lock } from '../common/Icons';
@@ -37,13 +36,13 @@ interface ExportObject {
 }
 
 const OBJECTS: ExportObject[] = [
-  { type: 'workpaper', label: 'Working paper', right: 'perform_work', formats: ['csv', 'xlsx', 'pdf'] },
+  { type: 'workpaper', label: 'Working paper', right: 'perform_work', formats: ['pdf', 'xlsx', 'docx', 'csv'] },
   { type: 'engagement', label: 'Audit File bundle', right: 'perform_work', formats: ['zip', 'json'] },
-  { type: 'sira', label: 'SIRA results', right: 'perform_work', formats: ['csv', 'xlsx', 'pdf'] },
-  { type: 'audit_plan', label: 'Audit Plan (incl. Gantt)', right: 'perform_work', formats: ['csv', 'xlsx', 'pdf'] },
-  { type: 'cap_register', label: 'CAP register', right: 'perform_work', formats: ['csv', 'xlsx', 'pdf'] },
+  { type: 'sira', label: 'SIRA results', right: 'perform_work', formats: ['pdf', 'xlsx', 'png', 'csv'] },
+  { type: 'audit_plan', label: 'Audit Plan (incl. Gantt)', right: 'perform_work', formats: ['pdf', 'xlsx', 'png', 'csv'] },
+  { type: 'cap_register', label: 'CAP register', right: 'perform_work', formats: ['xlsx', 'csv', 'pdf'] },
   { type: 'ledger', label: 'Business ledger', right: 'perform_work', formats: ['json', 'csv'] },
-  { type: 'full_tenant', label: 'Full tenant export', right: 'manage_users', formats: ['zip', 'json'] },
+  { type: 'full_tenant', label: 'Full tenant export', right: 'manage_users', formats: ['zip', 'json', 'csv'] },
 ];
 
 export interface ExportPanelProps {
@@ -132,12 +131,15 @@ export const ExportPanel: React.FC<ExportPanelProps> = ({ engagementId, workpape
           objectId = orgId;
           break;
       }
-      const text = serialiseExport(payload, format);
-      const hash = await exportContentHash(text);
-      const filename = exportFilename(selected, format);
-      await logExport(selected, objectId, format, {}, hash);
-      downloadExport(text, filename);
-      setConfirmed({ object: current.label, hash, filename });
+      const rendered = await renderExport({
+        objectType: selected,
+        data: payload,
+        format: format as BinaryFormat,
+      });
+      await logExport(selected, objectId, format, {}, rendered.hash);
+      const filename = `${selected}-export.${rendered.extension}`;
+      downloadBytes(rendered.bytes, filename, rendered.contentType);
+      setConfirmed({ object: current.label, hash: rendered.hash, filename });
       await load();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'The export could not be completed.');
