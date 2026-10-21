@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import {
   createMigrationJob, listHostingConnections, migrationRunnerCommand, saveHostingConnection,
-  setConnectionSecret, type HostingConnection,
+  setConnectionSecret, testHostingConnection, type HostingConnection, type HostingTestReport,
 } from '../../data/hostingFit';
 import { storeSecret } from '../../data/secrets';
 import { InlineError } from '../common/InlineError';
@@ -33,6 +33,7 @@ export const OrgHostingPanel: React.FC = () => {
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [runner, setRunner] = useState<string | null>(null);
+  const [testReports, setTestReports] = useState<Record<string, HostingTestReport>>({});
 
   const load = useCallback(async () => {
     setState('loading');
@@ -94,6 +95,22 @@ export const OrgHostingPanel: React.FC = () => {
       setNotice('Migration job created. Copy the command below and run it on a machine that can reach both databases.');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not start the migration job.');
+    }
+    setBusy(false);
+  };
+
+  const runTest = async (connectionId: string) => {
+    setBusy(true);
+    setError(null);
+    setNotice(null);
+    const outcome = await testHostingConnection({ orgId, connectionId });
+    if (outcome.ok) {
+      setTestReports((prev) => ({ ...prev, [connectionId]: outcome.report }));
+      setNotice(outcome.report.reachable
+        ? 'The database answered.'
+        : 'The database could not be reached.');
+    } else {
+      setError(outcome.reason);
     }
     setBusy(false);
   };
@@ -223,6 +240,15 @@ export const OrgHostingPanel: React.FC = () => {
                 <button
                   type="button"
                   disabled={busy}
+                  onClick={() => void runTest(r.id)}
+                  data-testid={`oa-hosting-test-run-${r.id}`}
+                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-hairline text-apple-12 text-primary hover:bg-surface-hover disabled:opacity-50"
+                >
+                  <CheckCircle className="w-3.5 h-3.5" /> Test connection
+                </button>
+                <button
+                  type="button"
+                  disabled={busy}
                   onClick={() => void startMigration(r.id)}
                   data-testid={`oa-hosting-migrate-${r.id}`}
                   className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-hairline text-apple-12 text-primary hover:bg-surface-hover disabled:opacity-50"
@@ -238,6 +264,30 @@ export const OrgHostingPanel: React.FC = () => {
                   <Download className="w-3.5 h-3.5" /> Retire old connection
                 </HoldToConfirm>
               </div>
+              {testReports[r.id] && (
+                <div className="rounded-xl border border-hairline bg-surface p-3 space-y-1" data-testid={`oa-hosting-report-${r.id}`}>
+                  <p className="text-apple-12 text-primary" data-testid={`oa-hosting-report-reachable-${r.id}`}>
+                    {testReports[r.id].reachable ? 'Reachable' : 'Not reachable'}
+                    {testReports[r.id].version ? ` · PostgreSQL ${testReports[r.id].version}` : ''}
+                    {testReports[r.id].latency_ms != null ? ` · ${testReports[r.id].latency_ms} ms` : ''}
+                  </p>
+                  <ul className="space-y-0.5" data-testid={`oa-hosting-report-messages-${r.id}`}>
+                    {testReports[r.id].messages.map((m, i) => (
+                      <li key={i} className="text-apple-11 text-secondary">{m}</li>
+                    ))}
+                  </ul>
+                  {testReports[r.id].extensions_missing.length > 0 && (
+                    <p className="text-apple-11 text-cinnabar" data-testid={`oa-hosting-report-extensions-${r.id}`}>
+                      Missing extensions: {testReports[r.id].extensions_missing.join(', ')}
+                    </p>
+                  )}
+                  {testReports[r.id].roles_missing.length > 0 && (
+                    <p className="text-apple-11 text-cinnabar" data-testid={`oa-hosting-report-roles-${r.id}`}>
+                      Missing roles: {testReports[r.id].roles_missing.join(', ')}
+                    </p>
+                  )}
+                </div>
+              )}
             </li>
           ))}
         </ul>

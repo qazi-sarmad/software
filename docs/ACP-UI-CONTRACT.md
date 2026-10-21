@@ -665,13 +665,18 @@ under `acp.tutorial.autoplay`), so the same screen never autoplays twice. The e2
 - **Rights:** `edit_config`. The `hosting_migration` entitlement gates the RPCs in the database.
 - **Data:** `listHostingConnections(orgId)`, `saveHostingConnection(input)`,
   `setConnectionSecret(connectionId, secretId, masked)`, `createMigrationJob(orgId, connectionId)`,
-  `migrationRunnerCommand(jobId, jobToken)` (`src/data/hostingFit.ts`); `storeSecret(orgId, label,
-  value)` (`src/data/secrets.ts`).
+  `migrationRunnerCommand(jobId, jobToken)`, `testHostingConnection({ orgId, connectionId,
+  consultationSessionId? })` (`src/data/hostingFit.ts`); `storeSecret(orgId, label, value)`
+  (`src/data/secrets.ts`). The Test button calls the `hosting-test` Edge Function (C2.1), which reads
+  the password server-side and returns the report below; the password never reaches the browser.
 - **Testids:** `oa-hosting`, `oa-hosting-loading`, `oa-hosting-error`, `oa-hosting-action-error`,
   `oa-hosting-notice`, `oa-hosting-label`, `oa-hosting-kind`, `oa-hosting-host`, `oa-hosting-port`,
   `oa-hosting-database`, `oa-hosting-username`, `oa-hosting-ssl`, `oa-hosting-password`,
   `oa-hosting-save`, `oa-hosting-runner-command`, `oa-hosting-empty`, `oa-hosting-connection-<id>`,
-  `oa-hosting-mask-<id>`, `oa-hosting-test-<id>`, `oa-hosting-migrate-<id>`, `oa-hosting-retire-<id>`.
+  `oa-hosting-mask-<id>`, `oa-hosting-test-<id>`, `oa-hosting-test-run-<id>` (C2.1 connectivity test),
+  `oa-hosting-report-<id>`, `oa-hosting-report-reachable-<id>`, `oa-hosting-report-messages-<id>`,
+  `oa-hosting-report-extensions-<id>`, `oa-hosting-report-roles-<id>`, `oa-hosting-migrate-<id>`,
+  `oa-hosting-retire-<id>`.
 - **States:** loading; error (with Retry); an incomplete form refused inline before any call; an empty
   connections list; a runner command panel after a job starts. No blocking modal; retire uses
   hold-to-confirm.

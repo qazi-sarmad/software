@@ -163,4 +163,51 @@ export function migrationRunnerCommand(jobId: string, jobToken: string): string 
   return `node tools/migration-runner/index.mjs --job ${jobId} --token ${jobToken}`;
 }
 
+/** The report the hosting-test Edge Function returns (C2.1). Never carries the password. */
+export interface HostingTestReport {
+  reachable: boolean;
+  version: string | null;
+  version_supported: boolean;
+  extensions_present: string[];
+  extensions_missing: string[];
+  extensions_optional_missing: string[];
+  roles_present: string[];
+  roles_missing: string[];
+  free_space_estimate: string | null;
+  latency_ms: number | null;
+  messages: string[];
+}
+
+export type HostingTestOutcome =
+  | { ok: true; report: HostingTestReport }
+  | { ok: false; reason: string };
+
+/**
+ * Ask the hosting-test Edge Function to probe the target database (C2.1, S11). The function reads
+ * the password server-side, so it never reaches the browser. `orgId` null is the platform flow; a
+ * consultation session id lets the platform run the test during a tier-1 migration.
+ */
+export async function testHostingConnection(input: {
+  orgId: string | null;
+  connectionId: string;
+  consultationSessionId?: string;
+}): Promise<HostingTestOutcome> {
+  const sb = getClient();
+  if (!sb) return { ok: false, reason: NOT_CONFIGURED };
+  const { data, error } = await sb.functions.invoke('hosting-test', {
+    body: {
+      org_id: input.orgId,
+      connection_id: input.connectionId,
+      consultation_session_id: input.consultationSessionId,
+    },
+  });
+  if (error) return { ok: false, reason: error.message };
+  const result = data as { ok?: boolean; reason?: string; report?: HostingTestReport } | null;
+  if (!result) return { ok: false, reason: 'The test returned no result.' };
+  // A metadata or link-local refusal comes back as ok:false with a plain reason.
+  if (result.ok !== true) return { ok: false, reason: result.reason ?? 'The test could not run.' };
+  if (!result.report) return { ok: false, reason: 'The test returned no report.' };
+  return { ok: true, report: result.report };
+}
+
 export type { FitAnswers, FitResult, FitRule };

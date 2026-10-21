@@ -158,3 +158,51 @@ IMPROVISE-THEN-DOCUMENT (this file).
   information even though it is not the secret itself. Withdrawing it would break the secrets screen
   for no gain.
 - Reverse: revoke execute from authenticated and route the screen through a service-role Edge Function.
+
+## D-C2.1-a — the driver is injected, so the function is testable without Deno or a database (C2.1)
+
+- Task: C2.1 "Tests with an injected fake driver (success, auth failure, timeout, missing extension,
+  metadata address)".
+- Choice: `_shared/hostingTestHandler.ts` takes a `DriverLike` with one `probe(spec, timeoutMs)`
+  method; `index.ts` supplies the real one built on `deno.land/x/postgres`. The driver is imported
+  lazily inside `probe` so the handler module stays free of Deno-only imports and the vitest suite can
+  import it.
+- Reason: same pattern as `aiGatewayHandler.ts` and `graphOauthHandler.ts`. The five required cases
+  are all reachable by a fake driver, and the handler's own rules (authorisation, the metadata
+  refusal, the password never in a response) run as real code.
+- Reverse: none; the interface is the seam.
+
+## D-C2.1-b — the requirement lists are derived from the migrations and asserted against them (C2.1)
+
+- Task: C2.1 "Required extensions and roles come from a single list derived from the migrations
+  (`grep create extension`), kept in `_shared/requiredHostingSpec.ts` with a test that the list
+  matches the migrations."
+- Choice: `REQUIRED_EXTENSIONS = [pgcrypto, pg_cron, pg_net]`, split into `CORE_EXTENSIONS =
+  [pgcrypto]` and `OPTIONAL_EXTENSIONS = [pg_cron, pg_net]`; `REQUIRED_ROLES = [platform_admin]`.
+  `src/lib/requiredHostingSpec.test.ts` strips SQL comments, greps the migrations for `create
+  extension` and `create role`, and fails if either list disagrees in either direction.
+- Reason: a drift between the check and the migrations would pass a database that cannot run the
+  application. pg_cron and pg_net are optional because 0064 creates them behind a guard and the app
+  runs without them; the report names them separately rather than failing the whole test.
+- Reverse: edit the lists; the test then tells you which migration to change.
+
+## D-C2.1-c — the probe reports the database size when it cannot read free space (C2.1)
+
+- Task: C2.1 "free_space_estimate".
+- Point: a tenant role can read `pg_database_size` but not always the disk's free space.
+- Choice: the driver reads `pg_database_size(current_database())` and the report labels it "free
+  space is about …". It is an estimate, as the field name says, and the report says "about".
+- Reason: the honest alternative — omitting the field — gives the Org Admin nothing. The task asks
+  for an estimate, and the label carries the caveat.
+- Reverse: read `pg_ls_dir`/`pg_stat_file` if the tenant grants superuser; not required.
+
+## D-C2.1-d — the deploy-list check reads docs/ only, and only the same-line form (C2.1)
+
+- Task: C2.1 "Add a check script `scripts/check-function-deploy-list.mjs` that fails if any
+  `supabase functions deploy <name>` string in docs/ names a function with no directory."
+- Choice: the script scans every `docs/**/*.md` for `supabase functions deploy <name…>` and checks
+  each name against `supabase/functions/<name>`. Wired as CI step 6b and pre-PR gate 6b.
+- Reason: the owner copies the deploy line out of the docs, so a stale name fails on the owner's
+  machine. The same-line form is what the docs use; a multi-line list is not silently skipped because
+  the check names every offender it does see.
+- Reverse: delete the script and the two wiring lines.

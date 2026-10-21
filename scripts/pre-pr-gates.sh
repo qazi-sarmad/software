@@ -26,6 +26,9 @@ node scripts/check-shrink.mjs || { echo "FAIL: shrink"; exit 1; }
 step "6. Tutorial check (every Appendix A key has a GIF)"
 npm run check-tutorials || { echo "FAIL: check-tutorials"; exit 1; }
 
+step "6b. Edge Function deploy list"
+node scripts/check-function-deploy-list.mjs || { echo "FAIL: check-function-deploy-list"; exit 1; }
+
 step "7. Source guards (single client, no blocking modals, no demo ids, no Math.random)"
 npx vitest run src/guards || { echo "FAIL: guards"; exit 1; }
 
