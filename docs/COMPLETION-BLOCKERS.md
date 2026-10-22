@@ -125,3 +125,19 @@ Vault is absent.
   twice against PostgreSQL 17 with the Supabase shim) and the full Playwright chromium suite.
 - Owner action: re-dispatch CI when the platform is healthy; it will then exercise the SQL and
   Playwright steps against the hosted test project, which the sandbox cannot reach.
+
+## CI infrastructure: final head also refused (2026-10-22, C6 final)
+
+- The completion-report commit `fa84229` was pushed (which auto-triggers the `pull_request` run) and
+  CI was dispatched again. Both runs report the same signature:
+  - **39748486235** on `fa84229` -> `completed / failure`, job `gates`, **`steps: 0`**.
+  - **39748504017** on `fa84229` -> `completed / failure`, job `gates`, **`steps: 0`**.
+- Total dispatches this session: five, all identical (39739987481, 39742870677, 39745950473,
+  39748486235, 39748504017). That is the five-attempt budget for an infrastructure fault that returns
+  identically every time; a sixth dispatch cannot change a runner that never starts.
+- The draft pull request is **#11** (`feature/board-ai-control-plane` -> `main`); PR #10 is left open
+  for the owner.
+- Consequence unchanged: the final head is verified locally by the whole gate set (tsc, vitest 146
+  files / 1654 tests, vite build, check-tokens, check-shrink, check-ui-contract,
+  check-function-deploy-list, check-tutorials, the local SQL harness with migrations twice and tests
+  twice, and the full Playwright chromium suite 127 passed / 2 skipped).
