@@ -766,3 +766,33 @@ IMPROVISE-THEN-DOCUMENT (this file).
 - Reverse: revert `e2e/full-flow.spec.ts`.
 - Evidence: `npx playwright test --project=chromium e2e/full-flow.spec.ts` → **10 passed** (was 8
   passed / 2 failed), against a local Supabase stack.
+
+## D-C4b — the recorder reused one browser context and captured at the wrong size (C4)
+- Point: `e2e/c4-tutorial-record.spec.ts` (the C4 proof that a recording is not a placeholder) timed
+  out at its 300 s budget, and a direct run of `recordLive` recorded 1 of 5 keys. Root causes:
+  (1) `recordLive` opened ONE page and reused it for every key. Key 1 signs in as its principal; key 2
+      then finds the app already signed in, so `getByLabel('Email')` never appears and each later key
+      waits out a 30 s fill timeout. Two keys were therefore impossible to record at all.
+  (2) `recordKey` threw when a single step's testid was absent. Several steps legitimately target a
+      control that only exists in a state the synthetic dataset does not reach (an error result, an
+      empty-state action), so a whole key failed on one conditional control.
+  (3) The recorder captured at `viewport: { width: 960, height: 900 }` — the viewport height, not the
+      declared `HEIGHT = 540`. Frames were 960x900 and two keys exceeded the 400 KB budget (478 KB).
+  (4) A 4-step key produced 4 frames, so `frames.length < 8` padding filled the animation with the
+      same still.
+- Options: (a) raise the C4 spec's timeout; (b) relax the frame and size assertions; (c) fix the
+  recorder so a key really records, at the declared size, within budget.
+- Choice: (c).
+  (1) `recordLive` creates and closes a FRESH browser context per key (clean session per key).
+  (2) `recordKey` takes a frame for an unreachable control and collects it in `missing`, and throws
+      only when NOTHING on the key's screen matched (a screen that did not render is a real defect).
+  (3) The context viewport is `{ width: WIDTH, height: HEIGHT }` = 960x540.
+  (4) Each step contributes two real moments (target highlighted, then settled), so even a 4-step key
+      yields a genuine 9-frame animation.
+- Reason: (a) and (b) would leave the recorder unable to record most keys, which is the exact
+  dishonesty C4 exists to remove; the C4 spec's frame/size assertions then become untestable.
+- Reverse: revert `scripts/record-tutorials.mjs`.
+- Evidence: `recordLive` over the five C4 smoke keys → `{ok: 5, failed: []}` (was `{ok: 1, failed: 4}`)
+  in 23 s; every output GIF is 960x540, 8 to 12 frames, 213 to 372 KB, none equal to the placeholder
+  hash. `npx playwright test --project=chromium e2e/c4-tutorial-record.spec.ts` → **1 passed (1.1m)**
+  (was a 5.0m timeout).
