@@ -41,10 +41,8 @@ begin
   perform provio_test.assert_raises(
     $q$select public.sign_conclusion('50000000-0000-0000-0000-0000000000a1')$q$,
     null, '5E: anon cannot sign a conclusion');
-  perform provio_test.assert_eq((select count(*) from observations), 0::bigint,
-    '5E: anon reads zero observations');
-  perform provio_test.assert_eq((select count(*) from conclusion_records), 0::bigint,
-    '5E: anon reads zero conclusion records');
+  perform provio_test.assert_raises('select count(*) from observations', 'permission denied', '5E: anon reads zero observations');
+  perform provio_test.assert_raises('select count(*) from conclusion_records', 'permission denied', '5E: anon reads zero conclusion records');
 end $$;
 select provio_test.as_owner();
 

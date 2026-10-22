@@ -57,7 +57,8 @@ function harness(): Harness {
   let password: string | null = PASSWORD;
   let nowMs = 1_000_000;
   const calls: string[] = [];
-  const rpcs: Record<string, RpcResult> = {};
+  // An authorised admin: config_write_mode answers 'apply' (the only direct-authority value).
+  const rpcs: Record<string, RpcResult> = { config_write_mode: { data: 'apply', error: null } };
   const state = { driverCalls: 0 };
 
   const caller: CallerClientLike = {
@@ -109,7 +110,7 @@ function post(body: unknown, auth = 'Bearer token'): Request {
 }
 
 const ALLOW = (h: Harness) => {
-  h.setRpc('config_write_mode', { data: 'allow', error: null });
+  h.setRpc('config_write_mode', { data: 'apply', error: null });
   h.setRpc('has_feature', { data: true, error: null });
 };
 
@@ -304,5 +305,34 @@ describe('summarise', () => {
     expect(text).toContain('PostgreSQL 14 or newer');
     expect(text).toContain('pgcrypto');
     expect(text).toContain('platform_admin');
+  });
+});
+
+// Audit 2026-10-23: the address check must see DNS answers, and only 'apply' is direct authority.
+describe('hosting-test handler hardening', () => {
+  it('refuses a hostname that resolves to the cloud metadata address, before any probe', async () => {
+    const h = harness();
+    ALLOW(h);
+    const deps = { ...h.deps, resolveHost: async () => ['169.254.169.254'] };
+    const res = await createHostingTestHandler(deps)(post({ org_id: ORG_A, connection_id: CONN_A }));
+    expect(res.status).toBe(400);
+    expect(h.driverCalls).toBe(0);
+  });
+
+  it('refuses a hostname with no address records', async () => {
+    const h = harness();
+    ALLOW(h);
+    const deps = { ...h.deps, resolveHost: async () => [] };
+    const res = await createHostingTestHandler(deps)(post({ org_id: ORG_A, connection_id: CONN_A }));
+    expect(res.status).toBe(400);
+    expect(h.driverCalls).toBe(0);
+  });
+
+  it('does not treat a propose-only right as permission to run the test', async () => {
+    const h = harness();
+    h.setRpc('config_write_mode', { data: 'propose', error: null });
+    const res = await createHostingTestHandler(h.deps)(post({ org_id: ORG_A, connection_id: CONN_A }));
+    expect(res.status).toBe(403);
+    expect(h.driverCalls).toBe(0);
   });
 });

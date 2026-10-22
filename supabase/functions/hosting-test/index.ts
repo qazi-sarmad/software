@@ -81,6 +81,14 @@ const handler = createHostingTestHandler({
   serviceClient,
   driver: postgresDriver,
   now: () => Date.now(),
+  // The address check runs on every DNS answer, not only on the literal host (audit 2026-10-23).
+  resolveHost: async (host: string) => {
+    const out: string[] = [];
+    for (const type of ['A', 'AAAA'] as const) {
+      try { out.push(...(await Deno.resolveDns(host, type))); } catch { /* no record of this type */ }
+    }
+    return out;
+  },
 });
 
 Deno.serve(handler);

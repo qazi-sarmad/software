@@ -62,8 +62,7 @@ select provio_test.as_owner();
 select provio_test.as_anon();
 do $$
 begin
-  perform provio_test.assert_eq((select count(*) from analysis_results), 0::bigint,
-    '4F: anon reads zero analysis results');
+  perform provio_test.assert_raises('select count(*) from analysis_results', 'permission denied', '4F: anon reads zero analysis results');
 end $$;
 select provio_test.as_owner();
 

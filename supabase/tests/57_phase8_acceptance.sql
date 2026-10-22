@@ -39,7 +39,7 @@ select provio_test.as_owner();
 select provio_test.as_anon();
 do $$
 begin
-  perform provio_test.assert_eq((select count(*) from tenant_settings), 0, '8E: anon reads zero tenant settings');
+  perform provio_test.assert_raises('select count(*) from tenant_settings', 'permission denied', '8E: anon cannot read tenant settings');
   perform provio_test.assert_raises(
     $q$select public.platform_set_feature_flag('a0000000-0000-0000-0000-000000000001','exports',true)$q$,
     null, '8E: anon cannot call a platform RPC');

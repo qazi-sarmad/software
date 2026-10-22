@@ -40,10 +40,8 @@ begin
   perform provio_test.assert_raises(
     $q$select public.start_import('rcm', 'a.csv')$q$,
     null, '7E: anon cannot start an import');
-  perform provio_test.assert_eq((select count(*) from exports_log), 0::bigint,
-    '7E: anon reads zero export rows');
-  perform provio_test.assert_eq((select count(*) from import_jobs), 0::bigint,
-    '7E: anon reads zero import jobs');
+  perform provio_test.assert_raises('select count(*) from exports_log', 'permission denied', '7E: anon reads zero export rows');
+  perform provio_test.assert_raises('select count(*) from import_jobs', 'permission denied', '7E: anon reads zero import jobs');
 end $$;
 select provio_test.as_owner();
 

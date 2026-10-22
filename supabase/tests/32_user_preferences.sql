@@ -75,8 +75,8 @@ end $$;
 select provio_test.as_anon();
 do $$
 begin
-  perform provio_test.assert_eq((select count(*) from user_preferences), 0::bigint,
-    'H3a: anon sees zero preference rows');
+  perform provio_test.assert_raises('select count(*) from user_preferences', 'permission denied',
+    'H3a: anon cannot read preference rows');
 end $$;
 select provio_test.as_owner();
 

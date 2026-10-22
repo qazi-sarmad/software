@@ -40,10 +40,8 @@ begin
   perform provio_test.assert_raises(
     $q$select public.close_cap('00000000-0000-0000-0000-000000000000'::uuid, true, false)$q$,
     null, '6F: anon cannot close a CAP');
-  perform provio_test.assert_eq((select count(*) from report_versions), 0::bigint,
-    '6F: anon reads zero report versions');
-  perform provio_test.assert_eq((select count(*) from caps), 0::bigint,
-    '6F: anon reads zero CAPs');
+  perform provio_test.assert_raises('select count(*) from report_versions', 'permission denied', '6F: anon reads zero report versions');
+  perform provio_test.assert_raises('select count(*) from caps', 'permission denied', '6F: anon reads zero CAPs');
 end $$;
 select provio_test.as_owner();
 

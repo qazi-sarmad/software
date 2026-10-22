@@ -49,10 +49,8 @@ begin
   perform provio_test.assert_raises(
     $q$select public.record_analysis_result('50000000-0000-0000-0000-0000000000a1','70000000-0000-0000-0000-0000000000c1','duplicates','{}'::jsonb,array[1])$q$,
     null, '4G: anon cannot raise a finding');
-  perform provio_test.assert_eq((select count(*) from planning_sections), 0::bigint,
-    '4G: anon reads zero planning sections');
-  perform provio_test.assert_eq((select count(*) from analysis_results), 0::bigint,
-    '4G: anon reads zero analysis results');
+  perform provio_test.assert_raises('select count(*) from planning_sections', 'permission denied', '4G: anon reads zero planning sections');
+  perform provio_test.assert_raises('select count(*) from analysis_results', 'permission denied', '4G: anon reads zero analysis results');
 end $$;
 select provio_test.as_owner();
 

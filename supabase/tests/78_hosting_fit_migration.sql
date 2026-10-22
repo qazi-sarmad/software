@@ -93,6 +93,11 @@ end $$;
 select provio_test.as_owner();
 
 -- ---------------------------------------------------------------------------
+select provio_test.as_owner();
+insert into secret_store (id, org_id, label, ciphertext, masked) values
+  ('00000000-0000-0000-0000-0000000000aa', 'a0000000-0000-0000-0000-000000000001', 'hosting db password', 'ct-h', '•••• 1234')
+  on conflict (id) do nothing;
+
 -- 3. A hosting connection: the right is required, the row is created with a masked secret, and the
 --    configuration history records it (F16, F5: no plaintext through SQL).
 -- ---------------------------------------------------------------------------

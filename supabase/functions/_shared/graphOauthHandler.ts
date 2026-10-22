@@ -114,7 +114,8 @@ async function authorise(
   const { data: mode } = await caller.rpc('config_write_mode', {
     p_org: scope.orgId, p_right: 'edit_config',
   });
-  if (mode === 'deny') {
+  // Only 'apply' writes directly; 'propose' is not permission to change the platform email app.
+  if (mode !== 'apply') {
     return {
       ok: false,
       reason: 'not allowed: the caller cannot configure this organisation',

@@ -8,14 +8,14 @@ declare
   t text;
   n int;
 begin
-  execute 'select count(*) from orgs' into n;
-  perform provio_test.assert_eq(n, 0, 'anon sees no orgs');
+  -- Audit 2026-10-23: anon holds no table privilege at all, so it is refused before RLS applies.
+  perform provio_test.assert_raises('select count(*) from orgs', 'permission denied', 'anon cannot read orgs');
   foreach t in array provio_test.org_tables() loop
-    execute format('select count(*) from %I', t) into n;
-    perform provio_test.assert_eq(n, 0, format('anon sees zero rows in %s', t));
+    perform provio_test.assert_raises(format('select count(*) from %I', t), 'permission denied',
+      format('anon cannot read %s', t));
   end loop;
-  execute 'select count(*) from platform_trail' into n;
-  perform provio_test.assert_eq(n, 0, 'anon sees no platform trail');
+  perform provio_test.assert_raises('select count(*) from platform_trail', 'permission denied',
+    'anon cannot read the platform trail');
 end $$;
 
 select provio_test.as_owner();

@@ -118,3 +118,6 @@ begin
   perform provio_test.assert_eq(public.verify_ledger('a0000000-0000-0000-0000-000000000001'), null::bigint,
     'the chain verifies after 50 concurrent appends');
 end $$;
+
+-- Audit 2026-10-23: dblink is a test tool here only. Remove it so no later test sees it.
+drop extension if exists dblink;

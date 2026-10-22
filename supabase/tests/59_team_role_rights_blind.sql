@@ -39,8 +39,8 @@ select provio_test.as_owner();
 select provio_test.as_anon();
 do $$
 begin
-  perform provio_test.assert_eq((select count(*) from team_role_rights), 0,
-    'anon reads zero team_role_rights rows');
+  perform provio_test.assert_raises('select count(*) from team_role_rights', 'permission denied',
+    'anon cannot read team_role_rights');
 end $$;
 select provio_test.as_owner();
 

@@ -111,9 +111,7 @@ select provio_test.as_owner();
 select provio_test.as_anon();
 do $$
 begin
-  perform provio_test.assert_eq((select count(*) from severity_levels), 0::bigint,
-    '5A: anon reads zero severity levels');
-  perform provio_test.assert_eq((select count(*) from observations), 0::bigint,
-    '5A: anon reads zero observations');
+  perform provio_test.assert_raises('select count(*) from severity_levels', 'permission denied', '5A: anon reads zero severity levels');
+  perform provio_test.assert_raises('select count(*) from observations', 'permission denied', '5A: anon reads zero observations');
 end $$;
 select provio_test.as_owner();

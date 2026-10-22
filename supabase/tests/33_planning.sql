@@ -220,7 +220,7 @@ select provio_test.as_owner();
 select provio_test.as_anon();
 do $$
 begin
-  perform provio_test.assert_eq((select count(*) from planning_sections), 0::bigint,
-    '4B: anon reads zero planning sections');
+  perform provio_test.assert_raises('select count(*) from planning_sections', 'permission denied',
+    '4B: anon cannot read planning sections');
 end $$;
 select provio_test.as_owner();

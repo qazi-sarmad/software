@@ -83,7 +83,9 @@ Deno.serve(async (req: Request) => {
       p_org: orgId, p_right: 'edit_config',
     });
     if (modeErr) return json({ ok: false, reason: modeErr.message }, 403);
-    if (mode === 'deny') {
+    // Only 'apply' writes directly. 'propose' (a platform admin outside an active session) must go
+    // through the consultation flow, so it is refused here rather than treated as permission.
+    if (mode !== 'apply') {
       return json({ ok: false, reason: 'not allowed: the caller cannot set a secret for this organisation' }, 403);
     }
   } else {

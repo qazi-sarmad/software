@@ -48,7 +48,11 @@ select provio_test.as_user('10000000-0000-0000-0000-0000000000a1', 'a0000000-000
 -- ---------------------------------------------------------------------------
 -- 1. Org sampling table: seeded defaults and deterministic get_sample_size.
 -- ---------------------------------------------------------------------------
+-- Audit 2026-10-23: seeders are database-internal (run by triggers and definer functions), so the
+-- test seeds as the owner, the same way the trigger does.
+select provio_test.as_owner();
 select public.seed_org_sampling_table('a0000000-0000-0000-0000-000000000001');
+select provio_test.as_user('10000000-0000-0000-0000-0000000000a1', 'a0000000-0000-0000-0000-000000000001', 'cia');
 do $$
 begin
   perform provio_test.assert_eq(
@@ -204,7 +208,6 @@ select provio_test.as_owner();
 select provio_test.as_anon();
 do $$
 begin
-  perform provio_test.assert_eq(
-    (select count(*) from org_sampling_table), 0::bigint, '4D: anon reads zero sampling rules');
+  perform provio_test.assert_raises('select count(*) from org_sampling_table', 'permission denied', '4D: anon reads zero sampling rules');
 end $$;
 select provio_test.as_owner();

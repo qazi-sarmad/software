@@ -10,11 +10,11 @@ begin
   perform provio_test.assert_eq((select count(*) from universes where id = '30000000-0000-0000-0000-0000000000a9'), 1,
     'cia_A can INSERT a universe in its own org');
 
-  insert into engagements (id, org_id, universe_id, entity_id, title) values
-    ('50000000-0000-0000-0000-0000000000a9', 'a0000000-0000-0000-0000-000000000001',
-     '30000000-0000-0000-0000-0000000000a9', '40000000-0000-0000-0000-0000000000a1', 'A-Eng9');
-  perform provio_test.assert_eq((select count(*) from engagements where id = '50000000-0000-0000-0000-0000000000a9'), 1,
-    'cia_A can INSERT an engagement in its own org');
+  -- Audit 2026-10-23: engagements are created only by deploy_engagement (spec §7). A direct insert,
+  -- even by the CIA in its own org, is refused; the gated path is tested in 92_hardening.sql.
+  perform provio_test.assert_raises(
+    $q$insert into engagements (id, org_id, universe_id, entity_id, title) values ('50000000-0000-0000-0000-0000000000a9', 'a0000000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-0000000000a9', '40000000-0000-0000-0000-0000000000a1', 'A-Eng9')$q$,
+    'permission denied', 'cia_A cannot INSERT an engagement directly (deploy_engagement is the only path)');
 end $$;
 
 -- An explicit org_id that matches the claim is accepted; the row is readable afterwards.

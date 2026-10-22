@@ -65,6 +65,8 @@ export interface HostingTestDeps {
   serviceClient(): ServiceClientLike;
   driver: DriverLike;
   now(): number;
+  /** DNS answers for a hostname. Production passes the resolver; the check fails closed without one only for names. */
+  resolveHost?(host: string): Promise<string[]>;
 }
 
 export interface HostingTestPayload {
@@ -233,7 +235,8 @@ export function createHostingTestHandler(deps: HostingTestDeps) {
         p_org: orgId, p_right: 'edit_config',
       });
       if (modeErr) return json({ ok: false, reason: errorText(modeErr) }, 403);
-      authorised = mode !== 'deny';
+      // Only 'apply' is direct authority; 'propose' goes through the consultation flow.
+      authorised = mode === 'apply';
       if (authorised) {
         // The hosting_migration entitlement gates the feature (F25).
         const { data: hasFeature, error: featErr } = await caller.rpc('has_feature', {
@@ -278,7 +281,16 @@ export function createHostingTestHandler(deps: HostingTestDeps) {
     }
 
     const host = String(conn.host ?? '').trim();
-    const forbidden = addressIsForbidden(host);
+    // Check the name and every address it resolves to. A name that resolves to a metadata, loopback
+    // or link-local address is refused, which closes the DNS route around the literal check.
+    let forbidden = addressIsForbidden(host);
+    if (!forbidden && deps.resolveHost && !/^[0-9.]+$|:/.test(host)) {
+      const answers = await deps.resolveHost(host).catch(() => [] as string[]);
+      if (answers.length === 0) forbidden = 'the host did not resolve';
+      for (const a of answers) {
+        forbidden = forbidden ?? addressIsForbidden(a);
+      }
+    }
     if (forbidden) {
       const blocked = buildReport(false, null, null);
       blocked.messages = [forbidden];

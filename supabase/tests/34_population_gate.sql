@@ -140,7 +140,7 @@ select provio_test.as_owner();
 select provio_test.as_anon();
 do $$
 begin
-  perform provio_test.assert_eq((select count(*) from populations), 0::bigint,
-    '4C: anon reads zero populations');
+  perform provio_test.assert_raises('select count(*) from populations', 'permission denied',
+    '4C: anon cannot read populations');
 end $$;
 select provio_test.as_owner();

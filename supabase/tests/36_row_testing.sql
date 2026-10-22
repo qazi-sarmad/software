@@ -130,7 +130,6 @@ select provio_test.as_owner();
 select provio_test.as_anon();
 do $$
 begin
-  perform provio_test.assert_eq((select count(*) from workpaper_rows), 0::bigint,
-    '4E: anon reads zero workpaper rows');
+  perform provio_test.assert_raises('select count(*) from workpaper_rows', 'permission denied', '4E: anon reads zero workpaper rows');
 end $$;
 select provio_test.as_owner();
