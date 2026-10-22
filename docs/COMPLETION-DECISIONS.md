@@ -721,3 +721,25 @@ IMPROVISE-THEN-DOCUMENT (this file).
 - Reason: a screen the sweep never attempts is a silent gap; an unreached screen is at least visible
   in the manifest.
 - Reverse: revert `scripts/screenshot-all.mjs` and delete the guard.
+
+## D-C2.4c — refreshSession must re-mint the JWT, not just re-read the session (C2.4)
+- Point: the C2.4 e2e (invite → accept → membership visible) failed on the last step. `AuthContext`
+  claimed `refreshSession` let "an account added to an org need not sign out", but it only called
+  `resolveSession`, which re-reads the CACHED session. The org and role live in the JWT, stamped by
+  the access-token hook (`0010_auth_hook.sql`), and `org_members` RLS requires
+  `org_id = jwt_org_id()`. A colleague whose token was minted before accepting the invitation keeps
+  the pre-acceptance claims, so `loadCurrentUser` sees no membership and the invitee is stuck on the
+  "Welcome to Provio" no-tenant screen forever. This is a real product defect, not a spec bug: it
+  affects any account provisioned while signed in.
+- Options: (a) change the spec to sign out and in after accepting; (b) weaken the RLS read so a user
+  can always read their own membership row regardless of the org claim; (c) re-mint the token in
+  `refreshSession` so the hook stamps the new claims.
+- Choice: (c). `src/data/client.ts` gains `refreshAuthToken()` (calls `sb.auth.refreshSession()`);
+  `AuthContext.refreshSession` calls it before `resolveSession`, and the context value now exposes
+  that function instead of the bare `resolveSession`.
+- Reason: (a) hides a real defect and contradicts the screen's own promise; (b) weakens RLS, which no
+  task may do. (c) keeps the claim authority in the database and fixes the general case.
+- Reverse: revert `src/context/AuthContext.tsx` and `src/data/client.ts`.
+- Evidence: `e2e/c2-member-invite.spec.ts` fails without this change (stuck on `no-tenant-screen`) and
+  passes with it, against a local Supabase stack; unit tests `src/data/client.test.ts` and
+  `src/App.noTenant.test.tsx` cover the re-mint.

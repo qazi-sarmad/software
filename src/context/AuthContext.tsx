@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { User } from '../types';
-import { signIn as clientSignIn, signOut as clientSignOut, loadCurrentUser } from '../data/client';
+import { signIn as clientSignIn, signOut as clientSignOut, loadCurrentUser, refreshAuthToken } from '../data/client';
 import { isExternalAuditorSession } from '../data/externalAuditors';
 import { platformWhoami } from '../data/platform';
 
@@ -89,6 +89,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     void resolveSession();
   }, [resolveSession]);
 
+  /**
+   * Re-resolve the session after a membership change (S3, C2.4). The org and role claims live in the
+   * JWT, so re-reading the session alone would still see the pre-change claims and `org_members` RLS
+   * would hide the new membership. Mint a fresh token first, then resolve. The extra call is a no-op
+   * when there is no session.
+   */
+  const refreshSession = useCallback(async () => {
+    await refreshAuthToken().catch(() => false);
+    await resolveSession();
+  }, [resolveSession]);
+
   const signInWithPassword = useCallback(async (email: string, password: string): Promise<SignInResult> => {
     const result = await clientSignIn(email, password);
     if (!result.ok) return result;
@@ -133,8 +144,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ user, status, isPlatform, signInWithPassword, refreshSession: resolveSession, signOut }),
-    [user, status, isPlatform, signInWithPassword, resolveSession, signOut]
+    () => ({ user, status, isPlatform, signInWithPassword, refreshSession, signOut }),
+    [user, status, isPlatform, signInWithPassword, refreshSession, signOut]
   );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
