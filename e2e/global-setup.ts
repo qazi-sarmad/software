@@ -339,6 +339,32 @@ export default async function globalSetup() {
     org_id: ORG_A, feature_key: 'patterns', enabled: true,
     plan_name: 'Assurance', reason: 'e2e fixture', effective_from: new Date().toISOString(), effective_to: null,
   }, { onConflict: 'org_id,feature_key' }));
+
+  // S5 fixture (F8, L2). The AI panel's save path is gated by has_feature('ai_assist') and
+  // tenant_settings.ai_enabled BEFORE the endpoint deny-list runs (ai_require_org_actor in
+  // 0059_ai.sql). Without both the vendor-hosted refusal is unreachable and the L2 assertion in
+  // e2e/s5-ai.spec.ts passed vacuously: the panel rendered the plan refusal instead. Seeded
+  // directly, like every other fixture here; the Super Admin console exercises the RPC path in
+  // acp-control-plane.spec.ts.
+  must('tenant_entitlements ai_assist', await sb.from('tenant_entitlements').upsert({
+    org_id: ORG_A, feature_key: 'ai_assist', enabled: true,
+    plan_name: 'Assurance', reason: 'e2e fixture', effective_from: new Date().toISOString(), effective_to: null,
+  }, { onConflict: 'org_id,feature_key' }));
+  must('tenant_settings ai_enabled', await sb.from('tenant_settings').upsert({
+    org_id: ORG_A, ai_enabled: true, updated_at: new Date().toISOString(),
+  }, { onConflict: 'org_id' }));
+
+  // S6 fixture (F12). The Work Queue escalation block renders only when the caller has escalations
+  // or proposals. One escalation targeting audit_manager (zara.malik) is seeded so
+  // e2e/s6-escalation.spec.ts can assert the deterministic wording unconditionally instead of
+  // guarding the assertion away when nothing rendered.
+  must('delete escalation_events', await sb.from('escalation_events').delete().in('org_id', [ORG_A, ORG_B]));
+  must('escalation_events', await sb.from('escalation_events').insert({
+    org_id: ORG_A, rule_key: 'platform.escalation.test', source_event_key: 'finding.sealed',
+    severity: 'high', recommendation: 'Yes',
+    reason: 'A sealed finding matched the escalation rule.',
+    target_roles: ['audit_manager', 'cia'], payload: { finding_id: 'e2e-fixture' },
+  }));
   must('findings (S10)', await sb.from('findings').upsert([
     {
       id: '5f000000-0000-4000-8000-000000000001', org_id: ORG_A, entity_id: A_ENTITY,

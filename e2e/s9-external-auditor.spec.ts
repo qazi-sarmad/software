@@ -49,13 +49,11 @@ test.describe('S9 external auditor portal', () => {
     await openControlPlane(page);
     await page.getByTestId('org-control-tab-auditors').click();
     await expect(page.getByTestId('oa-auditors')).toBeVisible();
-    // The global-setup seeds one auditor with a live grant; the matrix or the empty state shows.
-    const matrix = page.getByTestId('oa-auditors-matrix');
-    const empty = page.getByTestId('oa-auditors-matrix-empty');
-    await expect(matrix.or(empty)).toBeVisible();
-    if (await matrix.count()) {
-      await expect(page.getByTestId('oa-auditors-matrix')).toContainText(EXTERNAL_AUDITOR_EMAIL);
-    }
+    // global-setup seeds one auditor with a live grant and turns the external_auditors feature on,
+    // so the matrix is always present. Unconditional: the earlier `matrix.or(empty)` + `if (count())`
+    // pair let the assertion pass when the panel rendered the empty state instead.
+    await expect(page.getByTestId('oa-auditors-matrix')).toBeVisible();
+    await expect(page.getByTestId('oa-auditors-matrix')).toContainText(EXTERNAL_AUDITOR_EMAIL);
     // The access-log section is always present.
     await expect(page.getByTestId('oa-auditors-log').or(page.getByTestId('oa-auditors-log-empty'))).toBeVisible();
   });

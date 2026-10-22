@@ -101,3 +101,27 @@ invite-user, secrets-put, archive-upload, doc-extract) must be deployed:
 `supabase functions deploy ai-gateway email-dispatch graph-oauth hosting-test invite-user secrets-put archive-upload doc-extract`.
 Also confirm Vault, pg_cron and pg_net are enabled on the project, and set `SECRETS_MASTER_KEY` if
 Vault is absent.
+
+## CI infrastructure: platform still refuses to start the runner (2026-10-22, C6)
+- The workflow is `active` (workflow id 383084794) and was dispatched on the final head `9de5ac2`:
+  - **39742870677** on `9de5ac2` -> `completed / failure`, job `gates`, **`steps: 0`**,
+    `started 2026-10-22T07:46:36Z`, `completed 2026-10-22T07:46:38Z`. No log exists
+    (`BlobNotFound`).
+  - Earlier in this session, **39739987481** on `3b9818c` -> identical signature.
+- The decisive evidence that this is platform-side, not a repository fault: the unrelated
+  **`Keep test project awake`** workflow on `main` (run **39740345392**, and **39717003409** before
+  it) fails with the same `steps: 0` signature in two seconds. Its YAML, its branch and its commit
+  are untouched by this run.
+- The workflow file is structurally valid (no tab-indented lines; `jobs.gates` present; 16 named
+  steps) and the pinned actions resolve (`actions/checkout@v7` and `actions/setup-node@v7` both
+  exist). The last run that actually executed was **39595405218** on `d3b7f87`
+  (2026-10-21T11:54Z), which ran all 17 steps, passed steps 1-12 including the SQL step, and failed
+  only at step 8 (Playwright) on `e2e/c2-member-invite.spec.ts` — the defect fixed by the C2.4-FIX
+  commits, and since then the C4 recorder and frame-counter defects too.
+- Consequence: CI cannot be green on this branch while the platform refuses to start the runner. The
+  final head is verified locally by the same gate set: tsc, vitest 145 files / 1652 tests, vite
+  build, check-tokens, check-shrink, check-ui-contract, check-function-deploy-list, check-tutorials
+  (86 current, 0 stale), the local SQL harness (every migration applied twice and every SQL test run
+  twice against PostgreSQL 17 with the Supabase shim) and the full Playwright chromium suite.
+- Owner action: re-dispatch CI when the platform is healthy; it will then exercise the SQL and
+  Playwright steps against the hosted test project, which the sandbox cannot reach.

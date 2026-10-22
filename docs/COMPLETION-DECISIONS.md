@@ -823,3 +823,54 @@ IMPROVISE-THEN-DOCUMENT (this file).
   e2e/c4-tutorial-record.spec.ts` → **1 passed (1.1m)** (was `oa.roles has 22 frames`).
   vitest 145 files / 1652 tests green; tsc, build, tokens, shrink, ui-contract, deploy-list and
   check-tutorials (86 current, 0 stale) green.
+
+## D-S5-AI — a security assertion must not be skippable (S5, L2)
+
+- Number: D-S5-AI
+- Task: S5-AI (the failing `e2e/s5-ai.spec.ts` L2 test found at the start of this session)
+- Point: `e2e/s5-ai.spec.ts:50` ("a vendor-hosted endpoint is refused with the L2 message") guarded its
+  only assertion with `if (await result.count()) { await expect(result).toContainText(...) }`. The
+  global-setup fixture never wrote a `tenant_entitlements` row for `ai_assist` and never wrote
+  `tenant_settings.ai_enabled`, so `ai_set_endpoint` -> `ai_require_org_actor` (0059_ai.sql:416/487)
+  raised `This feature is not included in your plan.` BEFORE the vendor-hosted deny-list branch
+  (0059_ai.sql:492). The result element did render, but with the plan message; the guard could not
+  save it, so the test failed once the fixture was inspected honestly — and it had been recorded
+  "green" earlier only because the panel rendered no result at all in an even earlier fixture state.
+  The rule the test exists to prove — tenant data never reaches a vendor-hosted model (L2) — had no
+  test behind it.
+- Options: (a) delete or skip the test; (b) keep the `if` guard and move on; (c) seed the real
+  precondition (`ai_assist` entitlement + `ai_enabled`) and make the assertion unconditional.
+- Choice: (c), plus a guard against the whole shape. The fixture now seeds both rows directly (like
+  every other entitlement in that file) and the assertion is unconditional
+  (`await expect(result).toBeVisible(); await expect(result).toContainText('vendor-hosted AI service')`).
+  New `src/guards/e2eAssertions.test.ts` fails if any spec wraps an `expect` in
+  `if (await <locator>.count())` / `.isVisible()`, and asserts the L2 test itself is unguarded.
+- Reason: (a) and (b) both leave an L2 rule unproven, which is a Law violation by omission. Seeding
+  the precondition is the smallest change that exercises the deny-list, and the guard stops the same
+  vacuous shape returning anywhere in `e2e/`.
+- Reverse: revert `e2e/global-setup.ts`, `e2e/s5-ai.spec.ts` and `src/guards/e2eAssertions.test.ts`.
+- Evidence: `npx playwright test --project=chromium e2e/s5-ai.spec.ts` -> **3 passed (9.3s)** against
+  the local Supabase stack; the same spec failed before the fixture fix.
+
+## D-S5-AI-b — the guard found the same defect shape in three more specs (S2, S6, S9)
+
+- Number: D-S5-AI-b
+- Task: S5-AI (follow-on)
+- Point: `src/guards/e2eAssertions.test.ts` immediately flagged three more conditional assertions:
+  `s2-secrets-email-automation.spec.ts:66` (the automation dry-run was skipped entirely when the
+  copy control was absent), `s6-escalation.spec.ts:59` (the escalation card assertion was skipped
+  when nothing rendered) and `s9-external-auditor.spec.ts:56` (the matrix assertion was skipped when
+  the empty state rendered). Each was a whole behaviour that could pass without being exercised.
+- Options: (a) allow-list the three and keep the guard narrow; (b) fix each to assert its fixture-
+  guaranteed state, seeding a fixture where none existed.
+- Choice: (b). The `platform.config.changed` template is migration-seeded and
+  `automation_rule_list` returns `org_id is null` rows, so s2's copy control is always present and
+  the assertion is now unconditional. The external-auditor matrix is already fixture-seeded with a
+  live grant, so s9 asserts the matrix and the seeded email directly. The escalation block had no
+  fixture at all, so `e2e/global-setup.ts` now seeds one `escalation_events` row for ORG_A targeting
+  `audit_manager` (and clears both orgs' rows first, M5), and s6 asserts `Audit required:` is shown.
+- Reason: an allow-list would have preserved the exact defect the guard was written to catch. Every
+  one of the three now fails if the behaviour it names is removed.
+- Reverse: revert the three specs and the `escalation_events` fixture block in `e2e/global-setup.ts`.
+- Evidence: `npx playwright test --project=chromium e2e/s2-... e2e/s6-... e2e/s9-...` -> **15 passed
+  (30.3s)**; `npx vitest run src/guards/e2eAssertions.test.ts` -> **2 passed**.

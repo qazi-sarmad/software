@@ -54,10 +54,13 @@ test.describe('S5 AI assist', () => {
     await expect(page.getByTestId('org-ai-panel')).toBeVisible();
     await page.getByTestId('oa-ai-endpoint-url').fill('https://api.openai.com/v1');
     await page.getByTestId('oa-ai-endpoint-save').click();
+    // Unconditional: the panel always renders a result after a save. The earlier `if (count())`
+    // guard let the assertion pass when nothing rendered at all, which is exactly what happened
+    // while the fixture left ai_assist unentitled and ai_enabled false: the plan refusal fired
+    // before the deny-list and the L2 rule was never exercised.
     const result = page.getByTestId('oa-ai-result');
-    if (await result.count()) {
-      await expect(result).toContainText('vendor-hosted AI service');
-    }
+    await expect(result).toBeVisible();
+    await expect(result).toContainText('vendor-hosted AI service');
   });
 
   test('[E2E] the Super Admin sees the model registry and the deny-list and no tenant data', async ({ page }) => {

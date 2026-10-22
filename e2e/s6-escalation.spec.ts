@@ -53,11 +53,11 @@ test.describe('S6 escalation rules', () => {
     await signIn(page, MANAGER_EMAIL);
     await page.getByRole('navigation', { name: 'Navigation Strip' }).getByTitle('Work Queue').click();
     await expect(page.getByTestId('tab-pending')).toBeVisible();
-    // The escalation block renders only when the caller has escalations or proposals; when it does,
-    // it must carry the deterministic recommendation wording.
+    // The escalation block renders when the caller has escalations or proposals. global-setup seeds
+    // one escalation targeting audit_manager for this org, so it is always present; the earlier
+    // `if (count())` guard made the whole assertion skippable when nothing rendered.
     const cards = page.getByTestId('wk-escalation');
-    if (await cards.count()) {
-      await expect(cards).toBeVisible();
-    }
+    await expect(cards).toBeVisible();
+    await expect(cards).toContainText('Audit required:');
   });
 });

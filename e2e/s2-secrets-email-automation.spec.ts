@@ -62,16 +62,19 @@ test.describe('S2 secrets, email and automation', () => {
     await page.getByTestId('org-control-tab-automation').click();
     await expect(page.getByTestId('org-automation')).toBeVisible();
 
+    // The platform templates are migration-seeded (0056_automation_engine.sql) and
+    // automation_rule_list returns rows where org_id is null, so the copy control for
+    // platform.config.changed is always present. Unconditional: the earlier `if (count())` guard
+    // let the whole dry-run assertion pass without exercising anything when the list was empty.
     const copy = page.getByTestId('org-rule-copy-platform.config.changed');
-    if (await copy.count()) {
-      await copy.click();
-      await expect(page.getByTestId('org-automation-editor')).toBeVisible();
-      await page.getByTestId('org-rule-save').click();
-      await expect(page.getByTestId('org-automation-result')).toHaveCount(0);
-      await page.getByTestId('org-rule-test-platform.config.changed.copy').click();
-      await expect(page.getByTestId('org-rule-test-output')).toBeVisible();
-      await expect(page.getByTestId('org-rule-test-output')).toContainText('nothing was sent');
-    }
+    await expect(copy).toBeVisible();
+    await copy.click();
+    await expect(page.getByTestId('org-automation-editor')).toBeVisible();
+    await page.getByTestId('org-rule-save').click();
+    await expect(page.getByTestId('org-automation-result')).toHaveCount(0);
+    await page.getByTestId('org-rule-test-platform.config.changed.copy').click();
+    await expect(page.getByTestId('org-rule-test-output')).toBeVisible();
+    await expect(page.getByTestId('org-rule-test-output')).toContainText('nothing was sent');
   });
 
   test('[E2E] the platform console has an email tab and an automation tab', async ({ page }) => {
