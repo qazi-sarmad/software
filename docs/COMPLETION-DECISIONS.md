@@ -743,3 +743,26 @@ IMPROVISE-THEN-DOCUMENT (this file).
 - Evidence: `e2e/c2-member-invite.spec.ts` fails without this change (stuck on `no-tenant-screen`) and
   passes with it, against a local Supabase stack; unit tests `src/data/client.test.ts` and
   `src/App.noTenant.test.tsx` cover the re-mint.
+
+## D-C5.5b — the full-flow spec asserted four things that are not the designed behaviour (C5.5)
+- Point: `e2e/full-flow.spec.ts` (C5.5) failed 2 of 10 tests on a real run. Root causes, each a
+  spec defect, not an app defect:
+  (1) `ADMIN` was `zara.malik@`, who is seeded `audit_manager`; `audit_manager` does not hold
+      `edit_config`, so `menu-org-control` is correctly hidden. The real org_admin is `ayesha.khan@`.
+  (2) The "people administration" step re-clicked `menu-org-control` and re-asserted the control
+      plane; it never opened People. The People panel is `menu-people-admin` → `people-admin-panel`.
+  (3) The Board Pack step used `wk-boardpack-generator`.or(`wk-boardpack-empty`); the empty note is a
+      CHILD of the generator, so `.or()` matched two elements and strict mode failed. The generator
+      panel is always present, so asserting it alone is correct.
+  (4) The platform step expected `superadmin-denied` with no session. `PlatformGate` renders the
+      sign-in screen when there is no session; the denial is for a signed-in TENANT session. The step
+      now walks no-session → tenant denial → platform portal, as `config-control-plane.spec.ts` does.
+- Options: (a) delete the spec (C5.5 requires it); (b) weaken the assertions; (c) correct each
+  assertion to the designed behaviour, keeping the coverage.
+- Choice: (c). `ADMIN` is `ayesha.khan@`; the people step asserts `people-admin-panel`; the Board Pack
+  step asserts `wk-boardpack-generator`; the platform step asserts all three gates in order.
+- Reason: the spec is the regression net for the whole happy path; weakening it would hide a real
+  defect later. Each correction names the designed behaviour it now checks.
+- Reverse: revert `e2e/full-flow.spec.ts`.
+- Evidence: `npx playwright test --project=chromium e2e/full-flow.spec.ts` → **10 passed** (was 8
+  passed / 2 failed), against a local Supabase stack.

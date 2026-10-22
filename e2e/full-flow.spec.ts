@@ -18,7 +18,7 @@ import { passwordFor } from './password';
 
 const CIA = 'kamran.sheikh@provio-test.invalid';       // governs the function, approves plans
 const PREPARER = 'bilal.ahmed@provio-test.invalid';   // performs and documents work
-const ADMIN = 'zara.malik@provio-test.invalid';       // configures the organisation
+const ADMIN = 'ayesha.khan@provio-test.invalid';      // configures the organisation (org_admin)
 const PLATFORM = 'platform.admin@provio-test.invalid';
 
 test.describe.configure({ mode: 'serial' });
@@ -62,11 +62,8 @@ test('[E2E] setup wizard and people administration are reachable', async ({ page
 
   // People administration opens as a non-blocking record view with the invite control.
   await page.getByLabel('Open user profile menu').click();
-  const people = page.getByTestId('menu-org-control');
-  if (await people.count()) {
-    // The People panel is reached from the same control plane; assert it is present or reachable.
-    await expect(page.getByTestId('org-control-tabs')).toBeVisible();
-  }
+  await page.getByTestId('menu-people-admin').click();
+  await expect(page.getByTestId('people-admin-panel')).toBeVisible();
 });
 
 test('[E2E] universe and entity screens render, and the deployment gate is a gate not a button', async ({ page }) => {
@@ -166,18 +163,34 @@ test('[E2E] the Dashboard carries the Board Pack generator, history and scope', 
   await signIn(page, CIA);
   await expect(page.getByTestId('nav-strip-track')).toBeVisible();
   await expect(page.getByTestId('wk-boardpack')).toBeVisible();
-  await expect(
-    page.getByTestId('wk-boardpack-generator').or(page.getByTestId('wk-boardpack-empty'))
-  ).toBeVisible();
+  // The generator panel always renders; before the first pack it carries the empty note instead of
+  // a history. (The empty note is a CHILD of the generator, so `.or()` would match two elements.)
+  await expect(page.getByTestId('wk-boardpack-generator')).toBeVisible();
   await expect(page.getByTestId('wk-boardpack-history')).toBeVisible();
 });
 
 test('[E2E] the platform portal is reachable by platform staff only', async ({ page }) => {
+  // With NO session the route renders the sign-in screen (PlatformGate), never the portal.
+  await page.goto('/superadmin');
+  await expect(page.getByTestId('superadmin-portal')).toHaveCount(0);
+
+  // A signed-in TENANT session is shown the denial, never the portal.
+  await signIn(page, ADMIN);
   await page.goto('/superadmin');
   await expect(page.getByTestId('superadmin-denied')).toBeVisible();
+  await expect(page.getByTestId('superadmin-portal')).toHaveCount(0);
 
-  await signIn(page, PLATFORM);
+  // Leave the denial screen, sign out from the tenant shell, then sign in as platform staff.
+  await page.getByRole('button', { name: 'Back to workspace' }).click();
+  await expect(page.getByRole('navigation', { name: 'Navigation Strip' })).toBeVisible();
+  await page.getByLabel('Open user profile menu').click();
+  await page.getByText('Sign out').click();
+  await expect(page.getByTestId('signin-screen')).toBeVisible();
+
   await page.goto('/superadmin');
+  await page.getByLabel('Email').fill(PLATFORM);
+  await page.getByLabel('Password').fill(passwordFor(PLATFORM));
+  await page.getByRole('button', { name: 'Sign in' }).click();
   await expect(page.getByTestId('superadmin-portal')).toBeVisible();
   await expect(page.getByTestId('superadmin-tabs')).toBeVisible();
 });
