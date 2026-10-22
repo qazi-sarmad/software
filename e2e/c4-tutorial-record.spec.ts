@@ -18,11 +18,15 @@ const OUT = join(process.cwd(), 'artifacts', 'tutorial-smoke');
 
 const SMOKE_KEYS = ['oa.features', 'oa.roles', 'sa.tenant-hub', 'oa.boardpack-use', 'oa.tutorials'];
 
-/** The number of Graphic Control Extensions, i.e. animation frames. */
-function gifFrames(buf: Buffer): number {
-  let frames = 0;
-  for (let i = 0; i < buf.length - 3; i++) if (buf[i] === 0x21 && buf[i + 1] === 0xf9) frames++;
-  return frames;
+/**
+ * The real frame count, from the GIF block structure (scripts/gifInfo.mjs). A byte scan for the
+ * Graphic Control Extension introducer also matches those bytes inside compressed image data, which
+ * over-counts a real recording; this walks the blocks.
+ */
+async function gifFrames(buf: Buffer): Promise<number> {
+  // Imported lazily: the spec is ESM (package.json type: module) and the parser is plain .mjs.
+  const { readGif } = await import('../scripts/gifInfo.mjs');
+  return readGif(buf).frames;
 }
 
 function placeholderHash(): string {
@@ -52,7 +56,7 @@ test.describe('C4 tutorial recording', () => {
     for (const def of defs) {
       const buf = readFileSync(join(OUT, `${def.key}.gif`));
       expect(sha(buf), `${def.key} is a placeholder`).not.toBe(placeholder);
-      const frames = gifFrames(buf);
+      const frames = await gifFrames(buf);
       expect(frames, `${def.key} has ${frames} frames`).toBeGreaterThanOrEqual(8);
       expect(frames, `${def.key} has ${frames} frames`).toBeLessThanOrEqual(15);
       expect(buf.length, `${def.key} is ${(buf.length / 1024).toFixed(0)} KB`).toBeLessThanOrEqual(400 * 1024);

@@ -15,9 +15,10 @@ missing piece is named. **Missing** = not built.
 |---|---|
 | Migrations | 82 |
 | SQL test files | 91 |
-| Playwright specs | 25 |
-| vitest files / tests | 143 / 1643 |
-| Guards (`src/guards/*.test.ts`) | 9 |
+| SQL assertions (`provio_test.assert_*` calls) | 1499 |
+| Playwright spec files / tests | 27 / 130 |
+| vitest files / tests | 144 / 1646 |
+| Guards (`src/guards/*.test.ts`) | 10 |
 
 Baseline at C0 (last green run 39516753943, head a41d46e): vitest 128 files / 1428 tests; SQL 80
 files / 71 migrations / 1683 assertions; Playwright 113 passed / 2 skipped. Every count above is at

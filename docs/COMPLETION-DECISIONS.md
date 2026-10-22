@@ -796,3 +796,30 @@ IMPROVISE-THEN-DOCUMENT (this file).
   in 23 s; every output GIF is 960x540, 8 to 12 frames, 213 to 372 KB, none equal to the placeholder
   hash. `npx playwright test --project=chromium e2e/c4-tutorial-record.spec.ts` → **1 passed (1.1m)**
   (was a 5.0m timeout).
+
+## D-C4c — the tutorial frame counter was a byte scan, not a GIF reader (C4)
+- Point: `scripts/check-tutorials.mjs` and `e2e/c4-tutorial-record.spec.ts` each counted animation
+  frames by scanning for the byte pair `0x21 0xF9` (the Graphic Control Extension introducer). Those
+  two bytes also occur inside compressed LZW image data, so a genuine 8-frame recording was counted
+  as 22 frames and the C4 spec failed on a recording that was correct:
+  `Error: oa.roles has 22 frames / Expected: <= 15 / Received: 22`. The gate used the same scan, so
+  once a real recording replaced the placeholder, `check-tutorials --strict` would have rejected
+  correct recordings the same way. `gifInfo` also counted every `0x2C` byte from offset 0x0d, which
+  has the same false-positive problem.
+- Options: (a) raise the frame ceiling; (b) allow a tolerance; (c) read the GIF block structure.
+- Choice: (c). `scripts/gifInfo.mjs` walks the header, logical screen descriptor, global colour table,
+  then each extension/image-descriptor/trailer block, skipping every sub-block chain as the format
+  defines it; a frame is one image descriptor. It returns `{width, height, frames, bytes, valid}`.
+  Both the gate and the C4 spec call it (the spec imports it dynamically, since the spec is ESM).
+  A malformed file is reported as `valid: false` and the gate now fails on it in both modes.
+- Reason: the frame count and size are the evidence that a recording is real; a counter that
+  over-counts turns that evidence into noise. (a) and (b) would weaken the C4 gate to make a wrong
+  number pass.
+- Reverse: revert `scripts/gifInfo.mjs`, `scripts/check-tutorials.mjs` and
+  `e2e/c4-tutorial-record.spec.ts`.
+- Evidence: `src/guards/gifFrames.test.ts` (4 tests) pins the parser against an independent walk, on
+  the committed placeholder and on a synthetic two-frame GIF whose image data contains the decoy
+  `0x21 0xF9` pair, and proves a non-GIF is rejected. `npx playwright test --project=chromium
+  e2e/c4-tutorial-record.spec.ts` → **1 passed (1.1m)** (was `oa.roles has 22 frames`).
+  vitest 145 files / 1652 tests green; tsc, build, tokens, shrink, ui-contract, deploy-list and
+  check-tutorials (86 current, 0 stale) green.

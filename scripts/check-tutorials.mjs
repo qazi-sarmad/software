@@ -16,6 +16,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { hashFile, uiHashes } from './tutorialUiHash.mjs';
+import { readGifFile } from './gifInfo.mjs';
 
 const strict = process.argv.includes('--strict');
 const allowPlaceholder = process.env.TUTORIALS_ALLOW_PLACEHOLDER === '1';
@@ -37,27 +38,9 @@ const placeholderHash = fs.existsSync(placeholderFile)
   ? fs.readFileSync(placeholderFile, 'utf8').trim()
   : null;
 
-/** Frame count and width from the GIF header, without decoding every frame. */
+/** Frame count and width from the GIF block structure (never a byte scan: see scripts/gifInfo.mjs). */
 function gifInfo(file) {
-  const buf = fs.readFileSync(file);
-  const width = buf.readUInt16LE(6);
-  // Count image descriptors (0x2C) that are followed by a valid 9-byte descriptor header.
-  let frames = 0;
-  for (let i = 0x0d; i < buf.length - 10; i++) {
-    if (buf[i] === 0x2c) frames++;
-  }
-  return { width, frames, bytes: buf.length };
-}
-
-/** The animation frame count, read from the NETSCAPE/Graphic Control Extension blocks. */
-function gifFrames(file) {
-  const buf = fs.readFileSync(file);
-  let frames = 0;
-  for (let i = 0; i < buf.length - 3; i++) {
-    // A Graphic Control Extension is 0x21 0xF9; one precedes every frame.
-    if (buf[i] === 0x21 && buf[i + 1] === 0xf9) frames++;
-  }
-  return frames;
+  return readGifFile(file);
 }
 
 const missing = [];
@@ -66,6 +49,7 @@ const placeholders = [];
 const badFrames = [];
 const tooBig = [];
 const wrongWidth = [];
+const invalid = [];
 let ok = 0;
 
 for (const def of keys) {
@@ -78,7 +62,8 @@ for (const def of keys) {
   if (placeholderHash && digest === placeholderHash) placeholders.push(def.key);
 
   const info = gifInfo(file);
-  const frames = gifFrames(file);
+  const frames = info.frames;
+  if (!info.valid) invalid.push(def.key);
   if (info.width !== 960) wrongWidth.push(`${def.key} (${info.width}px)`);
   if (frames < 8 || frames > 15) badFrames.push(`${def.key} (${frames} frames)`);
   if (info.bytes > 400 * 1024) tooBig.push(`${def.key} (${(info.bytes / 1024).toFixed(0)} KB)`);
@@ -104,6 +89,7 @@ if (!strict && placeholders.length && !allowPlaceholder) {
 if (strict && badFrames.length) failures.push(`frame count outside 8..15: ${badFrames.join(', ')}`);
 if (strict && tooBig.length) failures.push(`over the 400 KB budget: ${tooBig.join(', ')}`);
 if (strict && wrongWidth.length) failures.push(`not 960px wide: ${wrongWidth.join(', ')}`);
+if (invalid.length) failures.push(`not a readable GIF: ${invalid.join(', ')}`);
 if (strict && stale.length) failures.push(`ui_hash stale (re-record): ${stale.join(', ')}`);
 
 if (failures.length) {

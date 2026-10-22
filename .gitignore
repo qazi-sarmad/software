@@ -12,6 +12,6 @@ e2e/.auth/
 
 .openhands/
 supabase/.temp/
-artifacts/screenshots/
+artifacts/
 
 supabase/.branches/
