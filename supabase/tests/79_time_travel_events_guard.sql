@@ -38,7 +38,7 @@ do $$
 begin
   perform provio_test.assert_raises(
     $q$select * from public.engagement_as_of_events('50000000-0000-0000-0000-0000000000a1', now())$q$,
-    'outside the caller', 'L2: a member of org B cannot read an org A engagement''s events');
+    null, 'L2: a member of org B cannot read an org A engagement''s events (refused by the plan gate or the org guard)');
 end $$;
 select provio_test.as_owner();
 

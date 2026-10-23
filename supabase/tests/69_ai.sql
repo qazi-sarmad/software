@@ -215,6 +215,8 @@ begin
    where org_id = 'a0000000-0000-0000-0000-000000000001' and response_text = 'old response';
 end $$;
 select provio_test.as_user('10000000-0000-0000-0000-0000000000a3', 'a0000000-0000-0000-0000-000000000001', 'org_admin');
+-- Audit round 2: the purge is a platform-wide sweep run by the scheduler, not by a user.
+select provio_test.as_owner();
 do $$
 declare v_purged int; v_text text;
 begin

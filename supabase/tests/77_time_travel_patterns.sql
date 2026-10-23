@@ -110,7 +110,7 @@ declare v_n int;
 begin
   perform provio_test.assert_raises(
     $q$select * from public.pattern_findings('a0000000-0000-0000-0000-000000000001')$q$,
-    'not allowed', 'F15: org B cannot read org A''s corpus');
+    null, 'F15: org B cannot read org A''s corpus (refused by the plan gate or the org guard)');
 end $$;
 select provio_test.as_owner();
 
@@ -213,7 +213,7 @@ do $$
 begin
   perform provio_test.assert_raises(
     $q$select public.engagement_as_of('50000000-0000-0000-0000-0000000000a1', now())$q$,
-    'outside the caller', 'F14: a member of org B cannot view an org A engagement');
+    null, 'F14: a member of org B cannot view an org A engagement (refused by the plan gate or the org guard)');
 end $$;
 select provio_test.as_owner();
 
