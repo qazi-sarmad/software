@@ -6,8 +6,14 @@ create or replace function auth.uid() returns uuid language sql stable as $$
   select (nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'sub')::uuid $$;
 create or replace function auth.jwt() returns jsonb language sql stable as $$
   select coalesce(nullif(current_setting('request.jwt.claims', true), '')::jsonb, '{}'::jsonb) $$;
+-- Faithful to Supabase: the `role` claim, else the legacy PostgREST GUC, else NULL. It must NOT
+-- fall back to current_user — Supabase does not, and a non-NULL fallback hides guards written as
+-- `auth.role() <> 'service_role'`, which then fail open on the hosted project (migration 0086).
 create or replace function auth.role() returns text language sql stable as $$
-  select coalesce(auth.jwt() ->> 'role', current_user) $$;
+  select coalesce(
+    nullif(current_setting('request.jwt.claim.role', true), ''),
+    (nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'role')
+  )::text $$;
 do $$ begin
   if not exists (select 1 from pg_roles where rolname='anon') then create role anon nologin noinherit; end if;
   if not exists (select 1 from pg_roles where rolname='authenticated') then create role authenticated nologin noinherit; end if;
