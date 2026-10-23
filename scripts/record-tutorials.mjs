@@ -226,17 +226,9 @@ async function navigateTo(page, plan, baseUrl, creds) {
     await page.getByTestId(`audit-file-view-${plan.view}`).click();
     return;
   }
-  if (plan.kind === 'issues' || plan.kind === 'issues-observation') {
+  if (plan.kind === 'issues') {
     await signIn(page, PRINCIPAL.dashboard, baseUrl, creds);
     await goToTab(page, 'Issues & CAP Register');
-    if (plan.kind === 'issues-observation') {
-      // WK-07 lives in the observation editor the register opens from a finding row.
-      await page.locator('[data-testid="issues-cap-register-section"]').waitFor({ timeout: 15000 });
-      const row = page.getByText('Raise Observation');
-      await row.waitFor({ timeout: 15000 });
-      await row.click();
-      return;
-    }
     await page.getByTestId('issues-view-patterns').click();
     await page.getByTestId('wk-patterns').waitFor({ timeout: 15000 });
     if (plan.sub) await page.getByTestId(`wk-patterns-tab-${plan.sub}`).click();

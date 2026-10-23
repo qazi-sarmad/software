@@ -902,7 +902,7 @@ above. `docs/ACP-TUTORIALS.md` lists every key and its steps.
   `ai-assist-figure-<token>`, `ai-assist-figure-confirm-<token>`, `ai-assist-error`.
 - **States:** idle, suggesting, draft shown, accepted, rejected, error with Retry; a figure the
   model invented is listed for confirmation and is never written into the record unconfirmed.
-- **Tutorial key:** `oa.ai-assist`.
+- **Tutorial key:** n/a (no guided recording; the panel needs a live AI endpoint).
 
 ## EX-02 — portal home (S9)
 

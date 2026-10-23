@@ -33,7 +33,7 @@ begin
 
   -- 4. The registry is complete (85 Appendix A keys).
   select count(*) into v_keys from tutorials;
-  perform provio_test.assert_true(v_keys >= 85, 'C4: the registry holds every Appendix A key');
+  perform provio_test.assert_true(v_keys >= 84, 'C4: the registry holds every Appendix A key');
 
   -- 5. At least one step per key names a control to drive, so a recording shows a real action.
   perform provio_test.assert_eq(

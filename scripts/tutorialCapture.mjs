@@ -66,8 +66,6 @@ export function captureFor(def) {
     if (key === 'oa.patterns') return { kind: 'issues', view: 'patterns' };
     // WK-08 renders in the Work Queue tab.
     if (key === 'oa.escalation-cards') return { kind: 'work-queue' };
-    // WK-07 renders inside the observation editor the Issues register opens.
-    if (key === 'oa.ai-assist') return { kind: 'issues-observation' };
     // WK-06 is the public verification page, outside the auth guard.
     if (key === 'oa.verify') {
       return { kind: 'public', path: '/verify/00000000-0000-0000-0000-000000000000' };
@@ -85,5 +83,5 @@ export function captureFor(def) {
 
 export const CAPTURE_KINDS = [
   'superadmin', 'org', 'people', 'dashboard', 'external',
-  'audit-file', 'issues', 'issues-observation', 'work-queue', 'public', 'external-accept',
+  'audit-file', 'issues', 'work-queue', 'public', 'external-accept',
 ];

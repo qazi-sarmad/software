@@ -37,7 +37,7 @@ begin
     ('oa.escalation'),('oa.auditors'),('oa.auditor-matrix'),('oa.hosting'),('oa.migration'),
     ('oa.deployment-kit'),('oa.retire-old'),('oa.history'),('oa.tutorials'),('oa.golive'),('oa.invite'),
     ('oa.patterns-config'),('oa.boardpack-use'),('oa.boardpack-generate'),('oa.boardpack-view'),
-    ('oa.boardpack-download'),('oa.certificate'),('oa.verify'),('oa.ai-assist'),
+    ('oa.boardpack-download'),('oa.certificate'),('oa.verify'),
     ('oa.escalation-cards'),('oa.timetravel'),('oa.patterns'),('ex.accept'),('ex.home'),
     ('ex.engagement'),('ex.verify')
   ) as expected(key)
@@ -58,7 +58,7 @@ select provio_test.as_user('10000000-0000-0000-0000-0000000000f0', null, 'platfo
 do $$
 begin
   perform provio_test.assert_true(
-    (select count(*) from public.list_tutorials()) >= 85,
+    (select count(*) from public.list_tutorials()) >= 84,
     'F18: a platform admin reads the whole tutorial registry');
 end $$;
 

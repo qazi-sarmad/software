@@ -947,7 +947,7 @@
       },
       {
         "text": "Read Features result in SA-14.",
-        "testid": "superadmin-features-result"
+        "testid": "superadmin-features"
       },
       {
         "text": "Check the values shown on SA-14 and confirm they are correct.",
@@ -2468,42 +2468,6 @@
       {
         "text": "Fill in Verify title in WK-06.",
         "testid": "wk-verify-title"
-      }
-    ]
-  },
-  {
-    "key": "oa.ai-assist",
-    "audience": "org_admin",
-    "screenId": "WK-07",
-    "title": "AI assist",
-    "steps": [
-      {
-        "text": "Open WK-07 (AI assist).",
-        "testid": null
-      },
-      {
-        "text": "Read AI assist figures in WK-07.",
-        "testid": "ai-assist-figures"
-      },
-      {
-        "text": "Click AI assist accept in WK-07.",
-        "testid": "ai-assist-accept"
-      },
-      {
-        "text": "Find the first AI assist figure in WK-07.",
-        "testid": "ai-assist-figure-<token>"
-      },
-      {
-        "text": "Click AI assist retry in WK-07.",
-        "testid": "ai-assist-retry"
-      },
-      {
-        "text": "Click AI assist test in WK-07.",
-        "testid": "ai-assist-test"
-      },
-      {
-        "text": "Click AI assist probe in WK-07.",
-        "testid": "ai-assist-probe"
       }
     ]
   },

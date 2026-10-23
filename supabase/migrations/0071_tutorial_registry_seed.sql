@@ -86,7 +86,6 @@ insert into tutorials (key, audience, title, steps, media_path) values
   ('oa.boardpack-download', 'org_admin', 'Board Pack downloads and verify', '["Open WK-04", "Follow the highlighted control", "Confirm the change"]'::jsonb, 'tutorials/oa.boardpack-download.gif'),
   ('oa.certificate', 'org_admin', 'Certificate panel', '["Open WK-05", "Follow the highlighted control", "Confirm the change"]'::jsonb, 'tutorials/oa.certificate.gif'),
   ('oa.verify', 'both', 'Public verification page', '["Open WK-06", "Follow the highlighted control", "Confirm the change"]'::jsonb, 'tutorials/oa.verify.gif'),
-  ('oa.ai-assist', 'org_admin', 'AI assist', '["Open WK-07", "Follow the highlighted control", "Confirm the change"]'::jsonb, 'tutorials/oa.ai-assist.gif'),
   ('oa.escalation-cards', 'org_admin', 'Escalation cards and proposals', '["Open WK-08", "Follow the highlighted control", "Confirm the change"]'::jsonb, 'tutorials/oa.escalation-cards.gif'),
   ('oa.timetravel', 'org_admin', 'Time-Travel', '["Open WK-09", "Follow the highlighted control", "Confirm the change"]'::jsonb, 'tutorials/oa.timetravel.gif'),
   ('oa.patterns', 'org_admin', 'Patterns', '["Open WK-10", "Follow the highlighted control", "Confirm the change"]'::jsonb, 'tutorials/oa.patterns.gif'),
