@@ -151,13 +151,17 @@ export default async function globalSetup() {
     { id: B_U2, org_id: ORG_B, name: 'IT Audit (Test)', domain: 'Technology' },
   ], { onConflict: 'id' }));
 
+  // `status` must be set alongside `approved`. Migration 0083's engagements_entity_gate admits an
+  // engagement only when the entity's status is 'approved', and the status column defaults to
+  // 'draft'; a fixture with approved: true alone is a state 0018's backfill never produces, and the
+  // gate then refuses every engagement. supabase/tests/00_lib.sql seeds both columns for this reason.
   must('entities', await sb.from('entities').upsert([
-    { id: '6130452d-1288-53a3-a1d0-b66e34cd7d69', org_id: ORG_A, universe_id: A_U1, name: 'Lahore Plant (Test)', kind: 'process', approved: true },
-    { id: 'c5166c65-1481-56c9-b3d6-b9a9bf42bd66', org_id: ORG_A, universe_id: A_U1, name: 'Procurement (Test)', kind: 'process', approved: true },
-    { id: '5c54c4d4-791e-56bf-a328-521b1d3b316f', org_id: ORG_A, universe_id: A_U1, name: 'Payroll (Test)', kind: 'process', approved: true },
-    { id: '78b72d04-5134-5b50-8d42-48a306809c07', org_id: ORG_B, universe_id: B_U1, name: 'Treasury (Test)', kind: 'process', approved: true },
-    { id: '353c19f3-dfe5-585e-aea0-78da873140fb', org_id: ORG_B, universe_id: B_U1, name: 'Accounts Payable (Test)', kind: 'process', approved: true },
-    { id: 'aaf9bde0-512f-53b2-beef-def76ff6ca80', org_id: ORG_B, universe_id: B_U2, name: 'Access Management (Test)', kind: 'process', approved: true },
+    { id: '6130452d-1288-53a3-a1d0-b66e34cd7d69', org_id: ORG_A, universe_id: A_U1, name: 'Lahore Plant (Test)', kind: 'process', approved: true, status: 'approved' },
+    { id: 'c5166c65-1481-56c9-b3d6-b9a9bf42bd66', org_id: ORG_A, universe_id: A_U1, name: 'Procurement (Test)', kind: 'process', approved: true, status: 'approved' },
+    { id: '5c54c4d4-791e-56bf-a328-521b1d3b316f', org_id: ORG_A, universe_id: A_U1, name: 'Payroll (Test)', kind: 'process', approved: true, status: 'approved' },
+    { id: '78b72d04-5134-5b50-8d42-48a306809c07', org_id: ORG_B, universe_id: B_U1, name: 'Treasury (Test)', kind: 'process', approved: true, status: 'approved' },
+    { id: '353c19f3-dfe5-585e-aea0-78da873140fb', org_id: ORG_B, universe_id: B_U1, name: 'Accounts Payable (Test)', kind: 'process', approved: true, status: 'approved' },
+    { id: 'aaf9bde0-512f-53b2-beef-def76ff6ca80', org_id: ORG_B, universe_id: B_U2, name: 'Access Management (Test)', kind: 'process', approved: true, status: 'approved' },
   ], { onConflict: 'id' }));
 
   // R6a precondition. The database seeds a default SIRA model per org (migration 0019's insert trigger
