@@ -49,14 +49,41 @@ export function captureFor(def) {
   }
   if (screenId.startsWith('OA-')) {
     if (key === 'oa.roles' || key === 'oa.invite') return { kind: 'people' };
+    // OA-09 is the "Sections" tab inside the Dashboard Board Pack panel, not an Org Control tab.
+    if (key === 'oa.boardpack-config') return { kind: 'dashboard', boardpackConfig: true };
+    // OA-10 sits beside the certificate panel in the Audit File window.
+    if (key === 'oa.certificate-config') return { kind: 'audit-file', view: 'certificate' };
+    // OA-21 is the "Settings" sub-view of the Issues & CAP Register Patterns view.
+    if (key === 'oa.patterns-config') return { kind: 'issues', view: 'patterns', sub: 'settings' };
     return { kind: 'org', tab: ORG_TAB[key] ?? 'features' };
   }
   if (screenId.startsWith('GL-')) return { kind: 'org', tab: 'consultation' };
-  if (screenId.startsWith('WK-') || screenId.startsWith('TUT-')) {
+  if (screenId.startsWith('WK-')) {
+    // WK-05 and WK-09 are Audit File window views, not Dashboard blocks.
+    if (key === 'oa.certificate') return { kind: 'audit-file', view: 'certificate' };
+    if (key === 'oa.timetravel') return { kind: 'audit-file', view: 'as_of' };
+    // WK-10 is the Patterns view of the Issues & CAP Register.
+    if (key === 'oa.patterns') return { kind: 'issues', view: 'patterns' };
+    // WK-08 renders in the Work Queue tab.
+    if (key === 'oa.escalation-cards') return { kind: 'work-queue' };
+    // WK-07 renders inside the observation editor the Issues register opens.
+    if (key === 'oa.ai-assist') return { kind: 'issues-observation' };
+    // WK-06 is the public verification page, outside the auth guard.
+    if (key === 'oa.verify') {
+      return { kind: 'public', path: '/verify/00000000-0000-0000-0000-000000000000' };
+    }
     return { kind: 'dashboard' };
   }
-  if (screenId.startsWith('EX-')) return { kind: 'external' };
+  if (screenId.startsWith('TUT-')) return { kind: 'dashboard' };
+  if (screenId.startsWith('EX-')) {
+    // EX-01 is the invitation acceptance page, not the portal home.
+    if (key === 'ex.accept') return { kind: 'external-accept', path: '/external/accept?token=invite' };
+    return { kind: 'external' };
+  }
   return { kind: 'dashboard' };
 }
 
-export const CAPTURE_KINDS = ['superadmin', 'org', 'people', 'dashboard', 'external'];
+export const CAPTURE_KINDS = [
+  'superadmin', 'org', 'people', 'dashboard', 'external',
+  'audit-file', 'issues', 'issues-observation', 'work-queue', 'public', 'external-accept',
+];

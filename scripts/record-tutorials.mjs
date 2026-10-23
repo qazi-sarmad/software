@@ -196,6 +196,16 @@ async function waitForScreen(page, def) {
 
 /** Open the key's real screen. A screen that does not appear fails the key. */
 async function navigateTo(page, plan, baseUrl, creds) {
+  if (plan.kind === 'public') {
+    // The only anonymous surface (WK-06): no session, so no sign-in.
+    await page.goto(`${baseUrl}${plan.path}`, { waitUntil: 'domcontentloaded' });
+    return;
+  }
+  if (plan.kind === 'external-accept') {
+    // The acceptance page is reached with the token in the URL; the session is created on submit.
+    await page.goto(`${baseUrl}${plan.path}`, { waitUntil: 'domcontentloaded' });
+    return;
+  }
   if (plan.kind === 'external') {
     await signIn(page, PRINCIPAL.external, `${baseUrl}/external`, creds);
     return;
@@ -207,9 +217,43 @@ async function navigateTo(page, plan, baseUrl, creds) {
     await page.getByTestId(`superadmin-tab-${plan.tab}`).click();
     return;
   }
+  if (plan.kind === 'audit-file') {
+    await signIn(page, PRINCIPAL.dashboard, baseUrl, creds);
+    await goToTab(page, 'Audit Files');
+    await page.getByTestId('tab-audit-file').waitFor({ timeout: 15000 });
+    await page.locator('[data-testid^="audit-card-"]').first().click();
+    await page.getByTestId('audit-file').waitFor({ timeout: 15000 });
+    await page.getByTestId(`audit-file-view-${plan.view}`).click();
+    return;
+  }
+  if (plan.kind === 'issues' || plan.kind === 'issues-observation') {
+    await signIn(page, PRINCIPAL.dashboard, baseUrl, creds);
+    await goToTab(page, 'Issues & CAP Register');
+    if (plan.kind === 'issues-observation') {
+      // WK-07 lives in the observation editor the register opens from a finding row.
+      await page.locator('[data-testid="issues-cap-register-section"]').waitFor({ timeout: 15000 });
+      const row = page.getByText('Raise Observation');
+      await row.waitFor({ timeout: 15000 });
+      await row.click();
+      return;
+    }
+    await page.getByTestId('issues-view-patterns').click();
+    await page.getByTestId('wk-patterns').waitFor({ timeout: 15000 });
+    if (plan.sub) await page.getByTestId(`wk-patterns-tab-${plan.sub}`).click();
+    return;
+  }
+  if (plan.kind === 'work-queue') {
+    await signIn(page, PRINCIPAL.dashboard, baseUrl, creds);
+    await goToTab(page, 'Work Queue');
+    return;
+  }
   await signIn(page, PRINCIPAL[plan.kind] ?? PRINCIPAL.org, baseUrl, creds);
   if (plan.kind === 'dashboard') {
-    await page.getByRole('navigation', { name: 'Navigation Strip' }).getByTitle('Dashboard').click();
+    await goToTab(page, 'Dashboard');
+    if (plan.boardpackConfig) {
+      await page.getByTestId('wk-boardpack').waitFor({ timeout: 15000 });
+      await page.getByTestId('wk-boardpack-tab-config').click();
+    }
     return;
   }
   await page.getByLabel('Open user profile menu').click();
@@ -218,6 +262,11 @@ async function navigateTo(page, plan, baseUrl, creds) {
     await page.getByTestId('org-control-panel').waitFor({ timeout: 15000 });
     await page.getByTestId(`org-control-tab-${plan.tab}`).click();
   }
+}
+
+/** Click a Navigation Strip tab by its visible label. */
+async function goToTab(page, label) {
+  await page.getByRole('navigation', { name: 'Navigation Strip' }).getByRole('button', { name: label }).click();
 }
 
 /**
