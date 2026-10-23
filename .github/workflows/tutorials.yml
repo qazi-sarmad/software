@@ -1,0 +1,83 @@
+name: Tutorial GIFs
+
+# Manual only. Records the tutorial GIFs against the real UI on the shared test project, then commits
+# them back to the branch. One run is budgeted for this (owner decision, 2026-10-23).
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: provio-test-db
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  record:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      # Secrets carry a trailing newline (see keepalive.yml); each value is trimmed below.
+      TEST_SUPABASE_URL: ${{ secrets.TEST_SUPABASE_URL }}
+      TEST_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.TEST_SUPABASE_PUBLISHABLE_KEY }}
+      TEST_SUPABASE_SECRET_KEY: ${{ secrets.TEST_SUPABASE_SECRET_KEY }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Trim secrets and export the app and seed variables
+        run: |
+          trim() { printf '%s' "$1" | tr -d '\r\n\t '; }
+          URL=$(trim "$TEST_SUPABASE_URL")
+          PUB=$(trim "$TEST_SUPABASE_PUBLISHABLE_KEY")
+          SEC=$(trim "$TEST_SUPABASE_SECRET_KEY")
+          {
+            echo "VITE_SUPABASE_URL=$URL"
+            echo "VITE_SUPABASE_PUBLISHABLE_KEY=$PUB"
+            echo "SUPABASE_URL=$URL"
+            echo "SUPABASE_PUBLISHABLE_KEY=$PUB"
+            echo "SUPABASE_SECRET_KEY=$SEC"
+          } >> "$GITHUB_ENV"
+          test -n "$URL" && test -n "$PUB" && test -n "$SEC" || { echo "::error::a TEST_SUPABASE_* secret is empty"; exit 1; }
+
+      - name: Seed the synthetic test accounts
+        run: npx tsx e2e/global-setup.ts
+
+      - name: Start the app
+        run: |
+          npm run dev -- --port 3000 > /tmp/dev.log 2>&1 &
+          for i in $(seq 1 90); do
+            if curl -sf http://localhost:3000 > /dev/null; then echo "app is up"; exit 0; fi
+            sleep 1
+          done
+          echo "::error::the app did not start"; cat /tmp/dev.log; exit 1
+
+      - name: Record the GIFs from the real UI
+        run: TUTORIALS_BASE_URL=http://localhost:3000 npm run tutorials:record
+
+      - name: Check the tutorials
+        run: npm run check-tutorials
+
+      - name: Commit the GIFs back to the branch
+        if: success()
+        run: |
+          git config user.name "Qazi Sarmad Ali Mahesar"
+          git config user.email "qazi.sarmad@qscorp.com"
+          git add public/tutorials
+          if git diff --cached --quiet; then echo "no GIF changes"; exit 0; fi
+          git commit -m "tutorials: record GIFs from the real UI"
+          git push origin HEAD:"${GITHUB_REF_NAME}"
