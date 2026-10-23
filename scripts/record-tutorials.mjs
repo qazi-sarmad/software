@@ -26,6 +26,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import gifenc from 'gifenc';
 import pngjs from 'pngjs';
 
@@ -325,7 +326,15 @@ export async function recordLive(defs, baseUrl, outDir = OUT_DIR) {
   return { ok, failed };
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+// Only run the CLI when this file is the entry point. The C4 Playwright smoke imports recordLive
+// from here; running main() on import would rewrite every GIF in public/tutorials/ mid-suite, which
+// the Vite dev server watches and reloads the page for, aborting whatever test is running.
+const isEntryPoint =
+  process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+
+if (isEntryPoint) {
+  main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}
