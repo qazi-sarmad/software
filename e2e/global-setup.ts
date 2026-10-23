@@ -2,6 +2,7 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { randomBytes } from 'node:crypto';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 // Synthetic test data only. Fixed ids make every run idempotent.
 const ORG_A = '02af9314-9781-5bde-b8a7-d46bfee07783';
@@ -383,4 +384,14 @@ export default async function globalSetup() {
         risk: 'Fraudulent payment risk.', effect: 'Loss of cash again.' },
     },
   ], { onConflict: 'id' }));
+}
+
+// Run the seed when this file is executed directly (`npx tsx e2e/global-setup.ts`). Playwright calls
+// the default export itself, and the tutorials workflow shells out to the file, so without this the
+// seed silently does nothing and the recorder then has no e2e/.auth/passwords.json to sign in with.
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+  globalSetup().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
 }
