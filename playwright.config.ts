@@ -15,6 +15,10 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   reporter: [['list'], ['github']],
+  // The hosted test project answers over the network, so a sign-in and the screen that follows it can
+  // take longer than Playwright's 5s default. A short timeout turns a slow response into a flake; a
+  // longer one keeps the assertion (the element must still appear) without the noise.
+  expect: { timeout: 15_000 },
   use: {
     baseURL: 'http://localhost:3000',
     trace: 'retain-on-failure',

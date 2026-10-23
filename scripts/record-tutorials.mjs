@@ -157,6 +157,43 @@ async function signIn(page, email, baseUrl, creds) {
   await page.waitForTimeout(1200);
 }
 
+/**
+ * Wait for a screen to finish loading before it is photographed. The hosted backend answers over the
+ * network, so a panel can still be showing its `*-loading` placeholder when navigation returns; a
+ * screenshot taken then records a spinner and every step target looks absent. A screen with no
+ * placeholder returns at once, and a screen that never clears is left to the step check to report.
+ */
+async function waitForSettled(page) {
+  await page
+    .waitForFunction(
+      () =>
+        !Array.from(document.querySelectorAll('[data-testid$="-loading"]')).some(
+          (el) => el.getBoundingClientRect().height > 0,
+        ),
+      null,
+      { timeout: 20000 },
+    )
+    .catch(() => undefined);
+}
+
+/**
+ * Wait until at least one of the key's own step targets is on the screen. This is the reliable signal
+ * that the panel has rendered: `waitForSettled` alone can return before React has mounted anything,
+ * because a not-yet-rendered screen has no `*-loading` placeholder either. When no target appears the
+ * caller still runs the step check, so a genuinely broken screen is reported, not hidden.
+ */
+async function waitForScreen(page, def) {
+  const selectors = def.steps.map((s) => selectorFor(s.testid)).filter(Boolean);
+  if (selectors.length === 0) return;
+  const deadline = Date.now() + 20000;
+  while (Date.now() < deadline) {
+    for (const selector of selectors) {
+      if ((await page.locator(selector).count()) > 0) return;
+    }
+    await page.waitForTimeout(250);
+  }
+}
+
 /** Open the key's real screen. A screen that does not appear fails the key. */
 async function navigateTo(page, plan, baseUrl, creds) {
   if (plan.kind === 'external') {
@@ -191,6 +228,8 @@ async function recordKey(page, def, baseUrl, creds) {
   const frames = [];
   const missing = [];
   await navigateTo(page, captureFor(def), baseUrl, creds);
+  await waitForSettled(page);
+  await waitForScreen(page, def);
   await page.waitForTimeout(300);
   // The opening frame: the screen as reached, before any step is performed.
   frames.push(await page.screenshot({ type: 'png' }));
