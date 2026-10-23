@@ -33,7 +33,6 @@
     "qrcode": "^1.5.4",
     "react": "^19.0.1",
     "react-dom": "^19.0.1",
-    "vite": "^8.3.0",
     "xlsx": "file:vendor/xlsx-0.20.3.tgz",
     "zustand": "^5.0.3"
   },
@@ -55,9 +54,11 @@
     "tailwindcss": "^4.3.3",
     "tsx": "^4.21.0",
     "typescript": "^7.0.2",
+    "vite": "^8.3.5",
     "vitest": "^5.0.4"
   },
   "overrides": {
-    "source-map-js": "1.2.2"
+    "source-map-js": "1.2.2",
+    "image-size": "^2.0.2"
   }
 }
