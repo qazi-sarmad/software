@@ -8,8 +8,9 @@ Format: task id | status | commit | CI run id | result
 T0  | green | 95e9892 | n/a (docs only) | progress log created
 T1  | committed | 8c85521 | pending | tutorial target audit; oa.tutorials retargeted to org-tutorials; oa.templates reported
 T2  | committed | fce7cc8 | pending | SetupWizard render loop fixed; load effect 382 -> 1
-CI-1 | running | 6382125 | 40125698154 | CI trigger + step-9 secrets fixed; run queued behind a main run
-CI-2 | committed | (this commit) | pending | DECISIONS, BLOCKERS, tutorial skeleton docs created
+CI-1 | committed | 6382125 | 40125698154 (cancelled while queued) | CI trigger enabled; push starts a run again
+CI-2 | committed | 5c0c196 | 40125826186 | DECISIONS, BLOCKERS, tutorial skeletons; steps 1-14 green, step 9 hung and the job limit cancelled the run
+CI-3 | running | (this commit) | pending | step 9 given the VITE_ vars + its own 15 min limit; job limit stays 45
 T3  | not started | | |
 T4  | not started | | |
 T5  | not started | | |

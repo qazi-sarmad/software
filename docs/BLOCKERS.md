@@ -18,7 +18,7 @@ entry is removed only when its resolution is verified on CI.
   the CI-1 push started run `40125698154` (`push`, head `6382125`).
 - Reversal path: recorded as D-CI-1 in `docs/DECISIONS.md`.
 
-## B2. Step 9 could never complete — RESOLVED (CI-1)
+## B2. Step 9 could never complete — PARTLY RESOLVED (CI-1), root cause fixed in CI-3
 
 - Symptom: the screenshot sweep was cancelled by the job timeout on every run that
   reached it, which reddened the whole run.
@@ -26,9 +26,15 @@ entry is removed only when its resolution is verified on CI.
   `SUPABASE_ANON_KEY`; none are repository secrets, so all three arrived empty,
   `e2e/global-setup.ts` threw, and the sweep hung until the job's 45-minute timeout
   cancelled the run. Step 9 never once completed across past runs.
-- Resolution: CI-1 pointed step 9 at the `TEST_SUPABASE_*` secrets. The step keeps
-  `continue-on-error`, and the job timeout stays at 45 minutes.
-- Reversal path: recorded as D-CI-2 in `docs/DECISIONS.md`.
+- CI-1 correction: step 9 now reads the `TEST_SUPABASE_*` secrets. That was necessary
+  but not sufficient — run `40125826186` passed steps 1 to 14 and then hung in step 9
+  for 19 minutes 21 seconds until the job limit cancelled the run.
+- Root cause: the app reads only `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`
+  (`src/data/client.ts`), and step 9 did not set them, so the dev server it starts had no
+  Supabase client and every one of the 318 capture visits burned its timeouts.
+- CI-3 fix: step 9 sets the `VITE_` variables and carries its own 15-minute limit, so a
+  slow sweep fails this step (which is `continue-on-error`) instead of cancelling the run.
+- Reversal path: recorded as D-CI-3 in `docs/DECISIONS.md`.
 
 ## B3. T6–T12 were already built — RESOLVED (decision recorded)
 

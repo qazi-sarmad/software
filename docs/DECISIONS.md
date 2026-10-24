@@ -28,6 +28,24 @@ reason and the reversal path. It is appended to, never rewritten.
 - Reversal path: none needed; the TEST_ names are the ones the rest of the workflow
   already uses.
 
+## D-CI-3. Step 9 also needs the VITE_ variables, and its own limit
+
+- Decision: step 9 sets `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` in
+  addition to the `SUPABASE_*` names, and carries `timeout-minutes: 15` of its own. The
+  job limit stays at 45 minutes.
+- Reason: correcting the secret names alone did not stop the hang. Run 40125826186
+  passed steps 1 to 14, then step 9 ran for 19 minutes 21 seconds and the job's
+  45-minute limit cancelled the entire run. The cause is that the app reads only
+  `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` (`src/data/client.ts`, where
+  `config()` returns null when either is absent). Step 8 sets those variables and
+  passes; step 9 did not, so the dev server it starts had no Supabase client, no sign-in
+  could succeed, and every capture burned its 30-second sign-in and 20-second ready
+  timeouts. There are 53 captures across 3 presets and 2 themes, 318 visits, which cannot
+  finish inside the job. The step's own limit makes a slow sweep fail this step, which is
+  already `continue-on-error`, instead of cancelling the whole run.
+- Reversal path: remove the `VITE_` lines and the step limit once the sweep is known to
+  finish inside the job.
+
 ## D-T6-T12. Identity, plans, security, structure, risk, plan and lifecycle are closed
 
 - Decision: T6 identity and roles, T7 features and plans, T8 security hardening, T9
