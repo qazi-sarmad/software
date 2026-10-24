@@ -75,4 +75,31 @@ describe('guided setup wizard (F17)', () => {
     await waitFor(() => expect(screen.getByTestId('super_admin-wizard')).toBeTruthy());
     expect(screen.getByTestId('super_admin-wizard-body').textContent).toContain('Platform readiness check');
   });
+
+  /**
+   * T2. The default `enabledFeatures = []` was a new array on every render, so the `steps` useMemo
+   * and the `load` useCallback were recreated each time and the load effect re-ran forever: the
+   * wizard oscillated between `loading` and `ready` and a screenshot could catch the loading state.
+   * The load effect must run a bounded number of times and the wizard must settle on its loaded
+   * state. StrictMode is not used here, so one run is expected; three leaves room for a re-render.
+   */
+  it('loads once and settles, rather than reloading on every render (T2)', async () => {
+    render(<SetupWizard scope="org_admin" />);
+    await waitFor(() => expect(screen.getByTestId('org_admin-wizard')).toBeTruthy());
+    // Let any runaway effect loop schedule its next pass before counting.
+    await new Promise((r) => setTimeout(r, 250));
+    expect(listSetupSteps.mock.calls.length, 'the load effect must not re-run every render').toBeLessThanOrEqual(3);
+    expect(screen.getByTestId('org_admin-wizard')).toBeTruthy();
+  });
+
+  it('does not reload when the parent passes a fresh feature array each render (T2)', async () => {
+    const { rerender } = render(<SetupWizard scope="org_admin" enabledFeatures={[...[]]} />);
+    await waitFor(() => expect(screen.getByTestId('org_admin-wizard')).toBeTruthy());
+    for (let i = 0; i < 5; i++) {
+      // A new array identity each render, exactly as OrgControlPanel does with `[...enabled]`.
+      rerender(<SetupWizard scope="org_admin" enabledFeatures={[...[]]} />);
+    }
+    await new Promise((r) => setTimeout(r, 250));
+    expect(listSetupSteps.mock.calls.length, 'a new array identity must not re-run the load effect').toBeLessThanOrEqual(3);
+  });
 });

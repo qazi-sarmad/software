@@ -17,15 +17,27 @@ interface SetupWizardProps {
 }
 
 /**
+ * A module-level constant, not a fresh `[]`. A default array literal is a new identity on every
+ * render, so anything memoised on it is recreated on every render.
+ */
+const EMPTY_FEATURES: readonly string[] = [];
+
+/**
  * Guided setup wizard (F17). Two linear, persisted wizards share this frame. Each step shows the
  * plain-language what / why / skip text, a tutorial ("Show me how") and Back / Skip / Save and
  * exit. Progress is persisted through src/data/setup.ts; a resume banner appears on return. The
  * frame is non-blocking and never a modal.
  */
 export const SetupWizard: React.FC<SetupWizardProps> = ({
-  scope, enabledFeatures = [], renderStep, onDone,
+  scope, enabledFeatures = EMPTY_FEATURES, renderStep, onDone,
 }) => {
-  const steps = useMemo(() => visibleSteps(scope, new Set(enabledFeatures)), [scope, enabledFeatures]);
+  // A parent may pass a fresh array on every render (OrgControlPanel spreads `[...enabled]`), so the
+  // feature set is keyed on the feature *contents*, not the array identity. Keyed on identity, the
+  // `steps` memo and the `load` callback were recreated every render, the load effect re-ran without
+  // end and the wizard never settled out of its loading state (T2).
+  const featureKey = [...enabledFeatures].sort().join('\u0000');
+  const features = useMemo(() => new Set(featureKey ? featureKey.split('\u0000') : []), [featureKey]);
+  const steps = useMemo(() => visibleSteps(scope, features), [scope, features]);
   const [state, setState] = useState<LoadState>('loading');
   const [loadError, setLoadError] = useState('');
   const [saved, setSaved] = useState<SetupStep[]>([]);

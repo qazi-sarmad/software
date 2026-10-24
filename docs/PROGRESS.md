@@ -6,8 +6,8 @@ Resume from the last green task; never repeat a green task.
 Format: task id | status | commit | CI run id | result
 
 T0  | green | 95e9892 | n/a (docs only) | progress log created
-T1  | committed | (this commit) | pending | tutorial target audit; oa.tutorials retargeted to org-tutorials; oa.templates reported
-T2  | not started | | |
+T1  | committed | 8c85521 | pending | tutorial target audit; oa.tutorials retargeted to org-tutorials; oa.templates reported
+T2  | committed | (this commit) | pending | SetupWizard render loop fixed; load effect 382 -> 1
 T3  | not started | | |
 T4  | not started | | |
 T5  | not started | | |
