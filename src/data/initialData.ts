@@ -398,6 +398,25 @@ export const initialEngagements: AuditEngagement[] = [
     dueDate: '2026-10-10',
     completionPercent: 88,
   },
+  // 13. The synthetic engagement the E2E fixture (e2e/global-setup.ts) creates in the database under
+  // this exact id. The Audit File window is seed-backed, but the Time-Travel view (WK-09) is
+  // database-backed and keys its reconstruction on the engagement id; a DB-uuid engagement must
+  // therefore also resolve in the seed so the window can open it. Development-only (this seed is
+  // stripped from the production bundle), never a real client record.
+  {
+    id: 'e0000000-0000-4000-8000-000000000001',
+    universeId: 'u-gbm',
+    entityId: 'ent-treasury',
+    title: 'Treasury Controls Walkthrough (Test)',
+    stage: 'testing',
+    status: 'in_progress',
+    leadAuditorId: 'usr-prep-1',
+    reviewerId: 'usr-rev',
+    periodStart: '2026-07-01',
+    periodEnd: '2026-09-30',
+    dueDate: '2026-10-24',
+    completionPercent: 40,
+  },
 ];
 
 export const initialControls: AuditControl[] = [
@@ -1262,7 +1281,6 @@ export const initialCapItems: AuditCapItem[] = [
     severity: 'high',
     dueDate: '2026-11-30',
     status: 'In progress',
-    retestStatus: 'Not tested',
     capApprovalStatus: 'Approved by CIA',
     identifiedDate: '2026-09-19',
     entityId: 'ent-treasury',
@@ -1277,7 +1295,6 @@ export const initialCapItems: AuditCapItem[] = [
     severity: 'critical',
     dueDate: '2026-10-31',
     status: 'In progress',
-    retestStatus: 'Not tested',
     capApprovalStatus: 'Approved by CIA',
     identifiedDate: '2026-09-21',
     entityId: 'ent-trading',
@@ -1292,7 +1309,6 @@ export const initialCapItems: AuditCapItem[] = [
     severity: 'high',
     dueDate: '2026-12-15',
     status: 'Open',
-    retestStatus: 'Not tested',
     capApprovalStatus: 'Approved by CIA',
     identifiedDate: '2026-09-23',
     entityId: 'ent-compliance',
@@ -1307,7 +1323,6 @@ export const initialCapItems: AuditCapItem[] = [
     severity: 'high',
     dueDate: '2026-11-15',
     status: 'In progress',
-    retestStatus: 'Not tested',
     capApprovalStatus: 'Approved by CIA',
     identifiedDate: '2026-09-25',
     entityId: 'ent-retail',
@@ -1322,7 +1337,6 @@ export const initialCapItems: AuditCapItem[] = [
     severity: 'high',
     dueDate: '2026-12-01',
     status: 'Open',
-    retestStatus: 'Not tested',
     capApprovalStatus: 'Approved by CIA',
     identifiedDate: '2026-09-27',
     entityId: 'ent-cards',
@@ -1337,7 +1351,6 @@ export const initialCapItems: AuditCapItem[] = [
     severity: 'critical',
     dueDate: '2026-10-20',
     status: 'In progress',
-    retestStatus: 'Not tested',
     capApprovalStatus: 'Approved by CIA',
     identifiedDate: '2026-09-28',
     entityId: 'ent-digital',

@@ -50,10 +50,10 @@ export const GlassBoxShareModal: React.FC = () => {
       <div className="p-4 rounded-xl bg-surface-sunken border border-hairline space-y-2">
         <div className="flex items-center gap-2 text-primary font-medium text-apple-13">
           <Share2 className="w-4 h-4 text-verdigris" />
-          <span>GlassBox — Zero-Trust Evidence Collection Portal</span>
+          <span>GlassBox — Secure Evidence Collection Portal</span>
         </div>
         <p className="text-apple-12 text-secondary">
-          Generate an ephemeral, single-use upload URL for external auditees. Uploaded files are SHA-256 hashed and attested to the ledger before storage.
+          Generate a single-use upload link for external auditees. Uploaded files are fingerprinted with SHA-256 and recorded in the audit ledger before storage.
         </p>
       </div>
 

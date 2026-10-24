@@ -25,7 +25,6 @@ describe('§ 3.4 CAP Radial Tracker & Legend Rail', () => {
           dueDate: '2026-09-15',
           agingDays: 45,
           status: 'Overdue' as const,
-          retestStatus: 'Not tested' as const,
           approvalStatus: 'Approved by CIA' as const,
           originatingReport: 'Q3 Report',
           engagementId: 'eng-1',

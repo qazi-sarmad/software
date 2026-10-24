@@ -14,6 +14,13 @@ jobs:
           TEST_SUPABASE_URL: ${{ secrets.TEST_SUPABASE_URL }}
           TEST_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.TEST_SUPABASE_PUBLISHABLE_KEY }}
         run: |
-          curl -sf "$TEST_SUPABASE_URL/rest/v1/" \
-            -H "apikey: $TEST_SUPABASE_PUBLISHABLE_KEY" \
-            -o /dev/null && echo "Ping OK"
+          # The secrets are known to carry a trailing newline; strip all whitespace so curl
+          # does not see a malformed URL (exit 3). The owner action to re-set them cleanly is
+          # recorded in NOT-DONE.
+          URL="${TEST_SUPABASE_URL//[$'\r\n\t ']/}"
+          KEY="${TEST_SUPABASE_PUBLISHABLE_KEY//[$'\r\n\t ']/}"
+          # /auth/v1/health is the GoTrue health endpoint; it wakes the project and returns 200
+          # with the apikey header. Print the code, not just OK.
+          CODE=$(curl -s -o /dev/null -w '%{http_code}' "$URL/auth/v1/health" -H "apikey: $KEY")
+          echo "auth/v1/health HTTP $CODE"
+          if [ "$CODE" != "200" ]; then echo "::error::keepalive ping failed (HTTP $CODE)"; exit 1; fi

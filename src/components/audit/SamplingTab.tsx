@@ -40,10 +40,10 @@ export const SamplingTab: React.FC<SamplingTabProps> = ({ workpaper, lock }) => 
       <div className="p-4 rounded-xl bg-surface-sunken border border-hairline space-y-2">
         <div className="flex items-center gap-2 text-primary font-medium text-apple-13">
           <Sliders className="w-4 h-4 text-verdigris" />
-          <span>Deterministic Audit Sampling Engine (Law 1: seeded and reproducible)</span>
+          <span>Audit Sampling (seeded and reproducible)</span>
         </div>
         <p className="text-apple-12 text-secondary">
-          Samples are deterministically selected using the Mulberry32 PRNG initialized with an audit seed string. Identical seeds yield identical sample sets anywhere, anytime.
+          Samples are drawn from a fixed seed, so the same seed always produces the same sample set.
         </p>
       </div>
 
@@ -104,7 +104,7 @@ export const SamplingTab: React.FC<SamplingTabProps> = ({ workpaper, lock }) => 
             Seeded Sample Draw ({sampledItems.length} records)
           </h3>
           <span className="text-apple-11 text-verdigris font-semibold flex items-center gap-1">
-            <ShieldCheck className="w-3.5 h-3.5" /> Deterministically Reproducible
+            <ShieldCheck className="w-3.5 h-3.5" /> Reproducible
           </span>
         </div>
         <div className="border border-hairline rounded-xl overflow-hidden bg-surface">

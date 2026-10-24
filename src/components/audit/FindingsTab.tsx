@@ -39,7 +39,7 @@ export const FindingsTab: React.FC<FindingsTabProps> = ({ workpaper }) => {
             className="px-3 py-1.5 rounded-lg bg-surface border border-hairline hover:bg-surface-hover text-apple-12 font-semibold text-primary transition-colors flex items-center gap-1.5"
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>Raise Finding</span>
+            <span>Raise Observation</span>
           </button>
         )}
       </div>

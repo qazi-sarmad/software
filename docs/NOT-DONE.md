@@ -1,67 +1,75 @@
-# Not done (open items with a recorded plan)
+# Not done (one current list)
 
-Each item below is known, is not fixed in the current branch, and has a plan. Phase 2 must
-clear the first two before Phase 2 closes.
+Rebuilt for the completion build (C5.3). Resolved items from earlier phases are removed; the phase
+"scope" entries that are now built are gone. What remains is: real gaps (with a decision asked of the
+owner), owner actions, and parked items. Cross-references: `docs/PARITY.md` (status by section),
+`docs/COMPLETION-BLOCKERS.md` (full text of each blocker), `docs/COMPLETION-SPEC-AUDIT.md` (evidence).
 
-## 1. vitest and tinypool advisories (resolved in Phase 2, task 2A)
+## Real gaps (owner decision requested)
 
-- Advisories: `vitest` 0.0.95 to 4.1.10 (critical, direct devDependency), `tinypool` 2.1.1 and below
-  (critical, transitive, RCE via worker options), `@vitest/mocker` 2.1.0 to 4.1.10 (moderate,
-  path traversal in redirect mocks).
-- Fix applied: `vitest` upgraded to `^5.0.4` on branch `phase-2-access` (commit `f73d86b`), which is a
-  **major version bump** and was therefore held back from Phase 1. `npm audit --audit-level=critical`
-  now exits 0 (was 2 critical). CI run 38696591808 green. Only `package.json` and `package-lock.json`
-  changed.
+These are Partial or Missing in `docs/PARITY.md`, each with the reason in `COMPLETION-BLOCKERS.md`.
 
-## 2. Dependency pin (resolved in Phase 1, recorded here for the audit trail)
+1. **§2 cross-universe view-only sharing** — Missing. No share table, RPC, read-only projection,
+   notification or screen. This is the one whole clause with no implementation. Owner decision: build
+   it, or amend §2 to defer it.
+2. **§10.1 configurable grace period before the Testing hard lock** — Partial. The hard lock is
+   present and tested; the configurable overlap is not.
+3. **§11.4 central pre-flight** — Partial. The eight checks exist across the testing panels and
+   `src/lib/`; a single named module with an acknowledge-with-a-logged-reason path is not present.
+4. **§17.1 pop-out Realtime sync test** — Partial. The pop-out window and the poll fallback exist; a
+   test that proves the pop-out stays in sync is not present.
+5. **§22 Realtime in-app notification delivery test** — Partial. Notifications are delivered and
+   visible in the Work Queue; a Realtime-delivery test is not present.
+6. **§3 / §25.7 mobile viewport smoke** — Partial. The app is responsive; a phone-viewport
+   Playwright test for ethics sign-off, simple approvals and report viewing is not present.
 
-- `source-map-js` 1.2.1 had a high-severity event-loop DoS. Pinned to 1.2.2 with an npm override.
-  Production audit at high level is clean.
+## Owner actions
 
-## 3. Per-user passwords in end-to-end tests
+- **Deploy the Edge Functions.** `supabase functions deploy ai-gateway email-dispatch graph-oauth
+  hosting-test invite-user secrets-put archive-upload doc-extract`. Three of these (archive-upload,
+  doc-extract, hosting-test) are new in this build.
+- **Confirm platform services.** Vault, pg_cron and pg_net must be enabled on the project. Set
+  `SECRETS_MASTER_KEY` if Vault is absent (the graph-oauth `state` HMAC and the AES-GCM secret store
+  both derive from it). The scheduled jobs (C2.2) need pg_cron, and email dispatch needs pg_net.
+- **Enter Resend and Microsoft credentials in the platform wizard.** Never paste them into chat.
+  Revoke the Resend key that was pasted on 2026-10-19.
+- **Re-run the tutorial recording.** `npm run tutorials:record` with `TUTORIALS_BASE_URL` set, against
+  the live app after the UI is final. The committed GIFs are placeholders (the recorder's output with
+  no base URL). `npm run check-tutorials -- --strict` then passes on real recordings.
+- **Set `TEST_SUPABASE_DB_URL` without the trailing newline** in the hosted test project's secret.
+- **Verify §25.4 free-tier limits** on Supabase's pricing page before production use (§32 item 1).
+- **Confirm Microsoft guidance** on basic-auth SMTP retirement and the Graph consent process before
+  Gate 5 (§32 item 2).
+- **Superadmin UI is Phase 8.1, owner-designed.** The Phase 8 *database* and logic are in place
+  (migrations 0031/0032/0033/0045, tests 40–42/57, `src/data/platform.ts`); the `/superadmin` screen
+  layout is the owner's to finalise.
+- **Re-dispatch CI** if a GitHub-runner outage recurs (see `COMPLETION-BLOCKERS.md`, runs
+  39604710289 / 39604815983 executed zero steps).
 
-- Today the end-to-end setup generates one random password per CI run and sets it on all five
-  synthetic test users in `provio-test`. The password is held only in that run's environment
-  and is not written to the repo.
-- Improvement: give each test user its own random password per run, so one leaked value does not open all five accounts.
-- Priority: low. The accounts are synthetic and hold no client data.
+## Parked (by an earlier decision)
 
-## 4. Browser coverage
+- **Continuous-auditing watchers** (file drop, HTTP polling, database view) are PARKED by F12. The F7
+  event interface stays generic so a future `watcher.signal` event can plug in. `watcher.signal` is
+  the only catalogue key with no emitter and no source, by design.
+- **Migration runner against two live databases.** `tools/migration-runner/` ships its 11
+  driver-injected steps with unit tests against `fakeDriver.mjs`. CI cannot provide two reachable
+  Postgres databases, so the end-to-end run is left to the owner's runner machine; the step logic,
+  checkpointing and ledger-copy guard are tested in isolation.
+- **TeamMate / AuditBoard migration** is not committed in this version (§19, §28). Export is complete;
+  import of prior-year material, RCM, entities, users and populations is built.
 
-- CI runs Chromium only. Phase 4 and Phase 9 require Firefox and WebKit in Playwright.
+## Known limitations (stated plainly, not gaps)
 
-## 5. Hosted test secret carries a trailing newline (owner action)
-
-- `TEST_SUPABASE_DB_URL` still carries a trailing newline. The agent's token has no `secrets:write`
-  (403) and no Supabase token exists, so the secret cannot be re-set from the agent environment.
-- Until it is re-set, CI step 6 and `supabase/tests/15_ledger_concurrency.sql` strip whitespace.
-- Owner: `printf '%s' "$URL" | gh secret set TEST_SUPABASE_DB_URL`, then remove both strips.
-
-## 6. Administration portal covers People and Roles only (Phase 2 scope)
-
-- §23 lists the whole Org Admin portal. Phase 2 built the People and Roles parts (members, roles,
-  rights, scopes, reporting lines, invite cap). Organisation settings, structure, controls,
-  methodology, the risk model, workflow, SLA and escalation, finding structure, notifications,
-  BI parameters, templates and branding, export and retention, and AI remain not built.
-- Priority: medium. The remaining parts are Phase 3+ work; each is a separate task.
-
-## 7. Overdue-request escalation needs a scheduler (Phase 3 scope)
-
-- §7 and §22 require overdue plan-change/deployment requests to escalate on a timer.
-  `public.escalate_overdue_deployment_requests()` is built and tested, but nothing calls it on a
-  schedule: no scheduler (pg_cron or an external worker) exists in this environment.
-- Owner action: wire `escalate_overdue_deployment_requests()` to a scheduler when the deployment
-  provides one. Until then it must be invoked by hand.
-
-## 8. SIRA cycles, plan versions and gate outcomes are not yet read into the UI
-
-- The Phase 3 database objects (SIRA model/cycles, plan versions, deployment outcomes, ethics
-  acknowledgements) are exercised by SQL tests and the `src/data/*` modules, and the panels render
-  from the payload the tab passes in. No screen yet loads a persisted SIRA model, cycle or plan
-  version to display (the demo tenant still feeds the screen rows).
-- Priority: low. The reading screens are Phase 4+ work; the panels accept the loaded rows unchanged
-  when it lands.
-
-## 9. Browser coverage (unchanged from item 4)
-
-- CI runs Chromium only. Firefox and WebKit are Phase 4+ work.
+- **Time-Travel coverage.** `engagement_as_of` reconstructs workpapers, findings, seals and statuses
+  from append-only history. Entities that keep only current state are reported as "Not recorded before
+  <date>" rather than guessed. Activity archived out of the live window is outside the as-of range;
+  the UI states the earliest available date.
+- **External auditor account creation.** The portal assumes the account exists. The owner's Supabase
+  Auth signup/email-confirmation settings decide how the invitee creates one; the acceptance page says
+  so plainly when signups are off. The invitation email queues through the F6 queue and, with the stub
+  provider, stays queued until an adapter is configured (D-S9-invite-not-sent, by design).
+- **Test button against a real target.** OA-15's connectivity Test calls `hosting-test`; with no
+  reachable target configured it reports the error the provider returns. The owner supplies a real
+  connection (F23).
+- **Legacy binary evidence** (.doc, .ppt, .xls) is stored and linked but not extracted and not used
+  for population sampling (§13.1, §20), with `extraction_status='legacy_not_extracted'`.

@@ -170,3 +170,21 @@ is noted below.
 `is_cia()` and `is_org_admin()` keep their names because the RLS policies reference them; their
 bodies now read rights. `jwt_user_role()` remains the identity source, not a permission decision.
 
+## R5a guard extension
+
+The `src/guards/noRoleStrings.test.ts` guard was extended in R5a. It now fails on:
+
+- a comparison of any `role` / `user_role` / `role_slug` / `slug` field against a role-name literal,
+  including the platform slug `platform_admin`; and
+- a comparison of a `teamRole` field against a team-role name literal (`lead`, `preparer`,
+  `reviewer`, `observer`).
+
+The allow-list (`DATA_FILES` in the test) is exactly the DISPLAY/SCOPE files named in this document:
+`types/index.ts`, `lib/rights.ts`, `data/client.ts`, `data/demoSeed.ts`, `data/initialData.ts`,
+`context/AppContext.tsx`, `App.tsx`, `components/glassbox/GlassBoxPublicRoute.tsx`,
+`test/testUsers.ts`. Widening it is a deliberate act recorded here.
+
+Empirically the extension adds no new failures: a grep of the broadened patterns over `src/**`
+returns zero offenders, so the previous guard was already complete for the current code. The
+extension is a ratchet against future code, not a fix for existing code.
+

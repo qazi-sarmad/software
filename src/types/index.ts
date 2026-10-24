@@ -29,6 +29,12 @@ export type User = {
   universeIds: string[];
   entityIds: string[];
   department?: string;
+  /**
+   * The id of the organisation this session belongs to, from `org_members.org_id`. Set for a real
+   * session (src/data/client.ts); absent for the external token holder. Used only as a display /
+   * RPC argument: the database still decides the caller's org from the JWT, never from this value.
+   */
+  orgId?: string;
 };
 
 export type AuditUniverse = {
@@ -213,7 +219,6 @@ export type AuditIssue = {
 };
 
 export type CapStatus = 'Open' | 'In progress' | 'Pending validation' | 'Overdue' | 'Closed';
-export type RetestStatus = 'Not tested' | 'Passed' | 'Failed' | 'In retest';
 export type CapApprovalStatus = 'Pending review' | 'Approved by CIA';
 
 export type CapStatusHistoryEntry = {
@@ -240,7 +245,6 @@ export type AuditCapItem = {
   dueDate: string;
   agingDays?: number;
   status: CapStatus;
-  retestStatus: RetestStatus;
   approvalStatus?: CapApprovalStatus;
   capApprovalStatus?: CapApprovalStatus;
   originatingReport?: string;
@@ -370,7 +374,6 @@ export type ActionType =
   | 'cap_submit_validation'
   | 'cap_verify_close'
   | 'cap_reject'
-  | 'cap_fail_retest'
   | 'cap_change_due_date';
 
 /** Stable product capabilities (catalog is fixed; org assigns them to designations). */
@@ -379,7 +382,6 @@ export type CapCapability =
   | 'cap_submit_validation'
   | 'cap_verify_close'
   | 'cap_reject'
-  | 'cap_fail_retest'
   | 'cap_change_due_date';
 
 export type OrgDesignation = {

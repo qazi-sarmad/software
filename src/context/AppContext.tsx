@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import type { TenantSeed } from '../types/seed';
 import { canPerformAction, canAccessEntity } from '../lib/access';
 import { hasRight } from '../lib/rights';
+import { rightReason } from '../lib/rightLabels';
 import { getSignOffBlockers } from '../lib/auditFile';
 import { appendLedgerEntry, computePayloadHash, HashUnavailableError } from '../lib/ledger';
 import { transitionCapStatus, CapStatusAction, TransitionCapResult } from '../lib/cap';
@@ -18,7 +19,6 @@ import {
   CapStatus,
   GlassBoxToken,
   LedgerEntry,
-  RetestStatus,
   ReviewComment,
   User,
   WorkingPaper,
@@ -35,13 +35,18 @@ export type InspectorType =
   | 'comment_history'
   | 'cap_inspector'
   | 'people_admin'
+  | 'org_settings'
   | 'entity_approval'
   | 'deployment_gate'
   | 'ethics'
   | 'combined_approval'
   | 'sira_model'
   | 'sira_cycles'
-  | 'plan_items';
+  | 'plan_items'
+  | 'import_wizard'
+  | 'activity_log'
+  | 'org_control'
+  | 'finding';
 
 export interface InspectorState {
   type: InspectorType | null;
@@ -125,15 +130,14 @@ interface AppContextType {
     file: { name: string; sizeBytes: number; sha256: string },
     actorName: string
   ) => Promise<void>;
-  /** @deprecated Prefer transitionCap */
-  updateCapStatus: (capId: string, status: CapStatus, retestStatus?: RetestStatus) => void;
   transitionCap: (
     capId: string,
     action: CapStatusAction,
     payload?: { note?: string; evidenceRefs?: string[]; rejectTo?: 'Open' | 'In progress' }
   ) => TransitionCapResult;
   orgRoleConfig: ReturnType<typeof buildDefaultOrgRoleConfig>;
-
+  /** D9: apply a persisted plan-item reschedule to the in-memory engagement so the Gantt moves. */
+  applyPlanItemDates: (engagementId: string, start: string, end: string) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -247,7 +251,7 @@ export function AppProvider({ user, seed, children }: { user: User; seed: Tenant
       entityId: eng.entityId,
       recordId: eng.id,
       recordType: 'engagement',
-      payloadSummary: `Audit engagement "${eng.title}" signed-off and sealed by ${currentUser.name}`,
+      payloadSummary: `Audit engagement "${eng.title}" sealed by ${currentUser.name}`,
       payloadHash,
     });
 
@@ -272,7 +276,7 @@ export function AppProvider({ user, seed, children }: { user: User; seed: Tenant
 
   const addEntity = async (input: NewEntityInput): Promise<{ ok: true; id: string } | { ok: false; reason: string }> => {
     if (!hasRight(currentUser, 'edit_config')) {
-      return { ok: false, reason: 'Only a principal with the edit_config right can add auditable entities.' };
+      return { ok: false, reason: rightReason('edit_config') };
     }
     const name = input.name.trim();
     const code = input.code.trim().toUpperCase();
@@ -464,7 +468,7 @@ export function AppProvider({ user, seed, children }: { user: User; seed: Tenant
       entityId: wp.entityId,
       recordId: wp.id,
       recordType: 'workpaper',
-      payloadSummary: `Working paper "${wp.refCode}" sealed and signed-off by Reviewer ${currentUser.name}`,
+      payloadSummary: `Working paper "${wp.refCode}" sealed by Reviewer ${currentUser.name}`,
       payloadHash,
     });
 
@@ -628,18 +632,11 @@ export function AppProvider({ user, seed, children }: { user: User; seed: Tenant
 
   const orgRoleConfig = buildDefaultOrgRoleConfig();
 
-  const updateCapStatus = (capId: string, status: CapStatus, retestStatus?: RetestStatus) => {
-    // Legacy ungated path retained only for non-workflow callers; CapInspector must use transitionCap.
-    setRawCapItems((prev) =>
-      prev.map((c) =>
-        c.id === capId
-          ? {
-              ...c,
-              status,
-              retestStatus: retestStatus !== undefined ? retestStatus : c.retestStatus,
-            }
-          : c
-      )
+  // D9: after a reschedule is persisted, reflect it on the engagement the Gantt draws. The plan
+  // item holds the authoritative dates; this keeps the dashboard consistent until the next load.
+  const applyPlanItemDates = (engagementId: string, start: string, end: string) => {
+    setRawEngagements((prev) =>
+      prev.map((e) => (e.id === engagementId ? { ...e, periodStart: start, dueDate: end } : e))
     );
   };
 
@@ -710,9 +707,9 @@ export function AppProvider({ user, seed, children }: { user: User; seed: Tenant
         addObservation,
         addReviewComment,
         attachEvidenceToWorkpaper,
-        updateCapStatus,
         transitionCap,
         orgRoleConfig,
+        applyPlanItemDates,
       }}
     >
       {children}

@@ -61,23 +61,85 @@ language sql immutable as $$
     'risks_library','sira_cycles','sira_scores','plans','plan_versions','populations','population_rows',
     'samples','sample_rows','workpapers','sign_offs','test_rows','observations','findings','issues',
     'cap_items','ledger_entries','activity_log','config_versions','notifications','email_outbox',
-    'entity_approval_settings','entity_decision_grants'
+    'workpaper_rows',
+    'entity_approval_settings','entity_decision_grants','user_preferences',
+    'planning_sections','planning_suggestion_decisions','planning_reconciliation_acks',
+    'org_sampling_table',
+    'analysis_results',
+    'severity_levels',
+    'conclusion_records',
+    'evidence_files','document_extractions',
+    'report_versions','report_blocks','report_comments','caps','email_queue','exports_log','import_jobs','archive_jobs','prior_year_imports',
+    -- C2.9. Appended (never inserted) so the positional consumers of this list are unaffected.
+    'support_access_log'
   ]
 $$;
 
 -- Rebuild the fixtures from scratch. Run as the owner, before switching role.
+-- Reset every table the fixtures own. Split out of seed() so it can retry: `truncate orgs cascade`
+-- takes an AccessExclusiveLock on every table that references orgs, and a lingering pooled backend
+-- (for example one left by a cancelled CI run) can hold a read lock, producing a lock-order deadlock
+-- (M-1). A session advisory lock serialises two runners of our own; the retry loop absorbs a deadlock
+-- with an external session.
+create or replace function provio_test.reset_data() returns void
+language plpgsql as $$
+declare
+  i int;
+begin
+  perform pg_advisory_lock(hashtext('provio_test.seed'));
+  for i in 1..6 loop
+    begin
+      truncate orgs cascade;
+      -- reopen_grants, platform_trail and platform_admins have no FK to orgs, so cascade does not reach them.
+      truncate reopen_grants;
+      truncate platform_trail;
+      truncate platform_admins;
+      truncate entity_decision_grants;
+      -- ACP platform-level tables that accumulate rows and have no FK to orgs (S1).
+      truncate platform_notification_recipients;
+      truncate automation_events;
+      truncate ai_model_versions;
+      -- S5 (F8). ai_models has no FK to orgs, so cascade does not reach it. ai_endpoint_denylist is
+      -- seeded by 0059 and is NOT truncated, so the deny-list tests always see the platform rows.
+      truncate ai_models cascade;
+      truncate tutorials;
+      -- S6 (F12). escalation_events and work_queue_proposals have no FK to orgs, so cascade does not
+      -- reach them; they accumulate rows across runs (M5).
+      truncate escalation_events;
+      truncate work_queue_proposals;
+      -- S2 (F5, F6, F7). These have no FK to orgs, so `truncate orgs cascade` does not reach them.
+      -- The platform rows the migrations seed (rules and templates with org_id null) are kept; only
+      -- tenant rows and per-run logs are cleared, so a test always starts from the same state (M5).
+      truncate secret_store;
+      truncate email_sender_profiles;
+      truncate automation_rule_versions;
+      truncate notification_template_versions;
+      truncate notification_preferences;
+      truncate automation_webhook_outbox;
+      truncate automation_event_processed;
+      delete from automation_rules where org_id is not null;
+      delete from notification_templates where org_id is not null;
+      -- S3 (F6, F13). invite_cap_events and auth_invites cascade from orgs, but the invitation email
+      -- rows in email_queue do not reach them by cascade alone on a reused database, so clear the
+      -- per-run rows explicitly.
+      delete from email_queue where metadata ->> 'kind' = 'user_invitation';
+      perform pg_advisory_unlock(hashtext('provio_test.seed'));
+      return;
+    exception when deadlock_detected or lock_not_available then
+      perform pg_sleep(0.4 * i);
+    end;
+  end loop;
+  perform pg_advisory_unlock(hashtext('provio_test.seed'));
+  raise exception 'provio_test.reset_data: could not acquire the reset locks after 6 attempts';
+end $$;
+
 create or replace function provio_test.seed() returns void
 language plpgsql as $$
 declare
   sha_a text := repeat('a', 64);
   sha_b text := repeat('b', 64);
 begin
-  truncate orgs cascade;
-  -- reopen_grants, platform_trail and platform_admins have no FK to orgs, so cascade does not reach them.
-  truncate reopen_grants;
-  truncate platform_trail;
-  truncate platform_admins;
-  truncate entity_decision_grants;
+  perform provio_test.reset_data();
 
   insert into orgs (id, name, is_demo) values
     ('a0000000-0000-0000-0000-000000000001', 'Org A', false),
@@ -85,20 +147,20 @@ begin
 
   -- Seven seed roles per organisation, with the rights matrix from migration 0012_rights_closed.sql.
   insert into roles (id, org_id, name, slug, is_seed, rights) values
-    ('20000000-0000-0000-0000-0000000000a1', 'a0000000-0000-0000-0000-000000000001', 'CIA', 'cia', true, '{"manage_users":false,"manage_roles":true,"edit_config":true,"manage_engagements":true,"approve_plan":true,"review_and_approve":true,"perform_work":true,"can_reopen":true,"view_all_scopes":true,"read_only":false}'),
-    ('20000000-0000-0000-0000-0000000000a2', 'a0000000-0000-0000-0000-000000000001', 'Preparer', 'preparer', true, '{"manage_users":false,"manage_roles":false,"edit_config":false,"manage_engagements":false,"approve_plan":false,"review_and_approve":false,"perform_work":true,"can_reopen":false,"view_all_scopes":false,"read_only":false}'),
-    ('20000000-0000-0000-0000-0000000000a3', 'a0000000-0000-0000-0000-000000000001', 'Org Admin', 'org_admin', true, '{"manage_users":true,"manage_roles":true,"edit_config":true,"manage_engagements":false,"approve_plan":false,"review_and_approve":false,"perform_work":false,"can_reopen":false,"view_all_scopes":false,"read_only":false}'),
-    ('20000000-0000-0000-0000-0000000000a4', 'a0000000-0000-0000-0000-000000000001', 'Audit Manager', 'audit_manager', true, '{"manage_users":false,"manage_roles":false,"edit_config":false,"manage_engagements":true,"approve_plan":false,"review_and_approve":true,"perform_work":true,"can_reopen":false,"view_all_scopes":true,"read_only":false}'),
-    ('20000000-0000-0000-0000-0000000000a5', 'a0000000-0000-0000-0000-000000000001', 'Observer', 'observer', true, '{"manage_users":false,"manage_roles":false,"edit_config":false,"manage_engagements":false,"approve_plan":false,"review_and_approve":false,"perform_work":false,"can_reopen":false,"view_all_scopes":true,"read_only":true}'),
-    ('20000000-0000-0000-0000-0000000000a6', 'a0000000-0000-0000-0000-000000000001', 'Reviewer', 'reviewer', true, '{"manage_users":false,"manage_roles":false,"edit_config":false,"manage_engagements":false,"approve_plan":false,"review_and_approve":true,"perform_work":true,"can_reopen":false,"view_all_scopes":false,"read_only":false}'),
-    ('20000000-0000-0000-0000-0000000000a7', 'a0000000-0000-0000-0000-000000000001', 'Auditee', 'auditee', true, '{"manage_users":false,"manage_roles":false,"edit_config":false,"manage_engagements":false,"approve_plan":false,"review_and_approve":false,"perform_work":false,"can_reopen":false,"view_all_scopes":false,"read_only":true}'),
-    ('20000000-0000-0000-0000-0000000000b1', 'b0000000-0000-0000-0000-000000000001', 'CIA', 'cia', true, '{"manage_users":false,"manage_roles":true,"edit_config":true,"manage_engagements":true,"approve_plan":true,"review_and_approve":true,"perform_work":true,"can_reopen":true,"view_all_scopes":true,"read_only":false}'),
-    ('20000000-0000-0000-0000-0000000000b2', 'b0000000-0000-0000-0000-000000000001', 'Preparer', 'preparer', true, '{"manage_users":false,"manage_roles":false,"edit_config":false,"manage_engagements":false,"approve_plan":false,"review_and_approve":false,"perform_work":true,"can_reopen":false,"view_all_scopes":false,"read_only":false}'),
-    ('20000000-0000-0000-0000-0000000000b3', 'b0000000-0000-0000-0000-000000000001', 'Org Admin', 'org_admin', true, '{"manage_users":true,"manage_roles":true,"edit_config":true,"manage_engagements":false,"approve_plan":false,"review_and_approve":false,"perform_work":false,"can_reopen":false,"view_all_scopes":false,"read_only":false}'),
-    ('20000000-0000-0000-0000-0000000000b4', 'b0000000-0000-0000-0000-000000000001', 'Audit Manager', 'audit_manager', true, '{"manage_users":false,"manage_roles":false,"edit_config":false,"manage_engagements":true,"approve_plan":false,"review_and_approve":true,"perform_work":true,"can_reopen":false,"view_all_scopes":true,"read_only":false}'),
-    ('20000000-0000-0000-0000-0000000000b5', 'b0000000-0000-0000-0000-000000000001', 'Observer', 'observer', true, '{"manage_users":false,"manage_roles":false,"edit_config":false,"manage_engagements":false,"approve_plan":false,"review_and_approve":false,"perform_work":false,"can_reopen":false,"view_all_scopes":true,"read_only":true}'),
-    ('20000000-0000-0000-0000-0000000000b6', 'b0000000-0000-0000-0000-000000000001', 'Reviewer', 'reviewer', true, '{"manage_users":false,"manage_roles":false,"edit_config":false,"manage_engagements":false,"approve_plan":false,"review_and_approve":true,"perform_work":true,"can_reopen":false,"view_all_scopes":false,"read_only":false}'),
-    ('20000000-0000-0000-0000-0000000000b7', 'b0000000-0000-0000-0000-000000000001', 'Auditee', 'auditee', true, '{"manage_users":false,"manage_roles":false,"edit_config":false,"manage_engagements":false,"approve_plan":false,"review_and_approve":false,"perform_work":false,"can_reopen":false,"view_all_scopes":false,"read_only":true}');
+    ('20000000-0000-0000-0000-0000000000a1', 'a0000000-0000-0000-0000-000000000001', 'CIA', 'cia', true, '{"manage_users":false,"manage_roles":true,"edit_config":true,"manage_engagements":true,"approve_plan":true,"review_and_approve":true,"perform_work":true,"can_reopen":true,"view_all_scopes":true,"read_only":false,"manage_team":false,"view_board_pack":true,"generate_board_pack":true,"use_ai_assist":true,"view_insights":true}'),
+    ('20000000-0000-0000-0000-0000000000a2', 'a0000000-0000-0000-0000-000000000001', 'Preparer', 'preparer', true, '{"manage_users":false,"manage_roles":false,"edit_config":false,"manage_engagements":false,"approve_plan":false,"review_and_approve":false,"perform_work":true,"can_reopen":false,"view_all_scopes":false,"read_only":false,"manage_team":false,"view_board_pack":false,"generate_board_pack":false,"use_ai_assist":true,"view_insights":false}'),
+    ('20000000-0000-0000-0000-0000000000a3', 'a0000000-0000-0000-0000-000000000001', 'Org Admin', 'org_admin', true, '{"manage_users":true,"manage_roles":true,"edit_config":true,"manage_engagements":false,"approve_plan":false,"review_and_approve":false,"perform_work":false,"can_reopen":false,"view_all_scopes":false,"read_only":false,"manage_team":false,"view_board_pack":false,"generate_board_pack":false,"use_ai_assist":false,"view_insights":false}'),
+    ('20000000-0000-0000-0000-0000000000a4', 'a0000000-0000-0000-0000-000000000001', 'Audit Manager', 'audit_manager', true, '{"manage_users":false,"manage_roles":false,"edit_config":false,"manage_engagements":true,"approve_plan":false,"review_and_approve":true,"perform_work":true,"can_reopen":false,"view_all_scopes":true,"read_only":false,"manage_team":false,"view_board_pack":true,"generate_board_pack":false,"use_ai_assist":true,"view_insights":true}'),
+    ('20000000-0000-0000-0000-0000000000a5', 'a0000000-0000-0000-0000-000000000001', 'Observer', 'observer', true, '{"manage_users":false,"manage_roles":false,"edit_config":false,"manage_engagements":false,"approve_plan":false,"review_and_approve":false,"perform_work":false,"can_reopen":false,"view_all_scopes":true,"read_only":true,"manage_team":false,"view_board_pack":true,"generate_board_pack":false,"use_ai_assist":false,"view_insights":false}'),
+    ('20000000-0000-0000-0000-0000000000a6', 'a0000000-0000-0000-0000-000000000001', 'Reviewer', 'reviewer', true, '{"manage_users":false,"manage_roles":false,"edit_config":false,"manage_engagements":false,"approve_plan":false,"review_and_approve":true,"perform_work":true,"can_reopen":false,"view_all_scopes":false,"read_only":false,"manage_team":false,"view_board_pack":false,"generate_board_pack":false,"use_ai_assist":true,"view_insights":false}'),
+    ('20000000-0000-0000-0000-0000000000a7', 'a0000000-0000-0000-0000-000000000001', 'Auditee', 'auditee', true, '{"manage_users":false,"manage_roles":false,"edit_config":false,"manage_engagements":false,"approve_plan":false,"review_and_approve":false,"perform_work":false,"can_reopen":false,"view_all_scopes":false,"read_only":true,"manage_team":false,"view_board_pack":false,"generate_board_pack":false,"use_ai_assist":false,"view_insights":false}'),
+    ('20000000-0000-0000-0000-0000000000b1', 'b0000000-0000-0000-0000-000000000001', 'CIA', 'cia', true, '{"manage_users":false,"manage_roles":true,"edit_config":true,"manage_engagements":true,"approve_plan":true,"review_and_approve":true,"perform_work":true,"can_reopen":true,"view_all_scopes":true,"read_only":false,"manage_team":false,"view_board_pack":true,"generate_board_pack":true,"use_ai_assist":true,"view_insights":true}'),
+    ('20000000-0000-0000-0000-0000000000b2', 'b0000000-0000-0000-0000-000000000001', 'Preparer', 'preparer', true, '{"manage_users":false,"manage_roles":false,"edit_config":false,"manage_engagements":false,"approve_plan":false,"review_and_approve":false,"perform_work":true,"can_reopen":false,"view_all_scopes":false,"read_only":false,"manage_team":false,"view_board_pack":false,"generate_board_pack":false,"use_ai_assist":true,"view_insights":false}'),
+    ('20000000-0000-0000-0000-0000000000b3', 'b0000000-0000-0000-0000-000000000001', 'Org Admin', 'org_admin', true, '{"manage_users":true,"manage_roles":true,"edit_config":true,"manage_engagements":false,"approve_plan":false,"review_and_approve":false,"perform_work":false,"can_reopen":false,"view_all_scopes":false,"read_only":false,"manage_team":false,"view_board_pack":false,"generate_board_pack":false,"use_ai_assist":false,"view_insights":false}'),
+    ('20000000-0000-0000-0000-0000000000b4', 'b0000000-0000-0000-0000-000000000001', 'Audit Manager', 'audit_manager', true, '{"manage_users":false,"manage_roles":false,"edit_config":false,"manage_engagements":true,"approve_plan":false,"review_and_approve":true,"perform_work":true,"can_reopen":false,"view_all_scopes":true,"read_only":false,"manage_team":false,"view_board_pack":true,"generate_board_pack":false,"use_ai_assist":true,"view_insights":true}'),
+    ('20000000-0000-0000-0000-0000000000b5', 'b0000000-0000-0000-0000-000000000001', 'Observer', 'observer', true, '{"manage_users":false,"manage_roles":false,"edit_config":false,"manage_engagements":false,"approve_plan":false,"review_and_approve":false,"perform_work":false,"can_reopen":false,"view_all_scopes":true,"read_only":true,"manage_team":false,"view_board_pack":true,"generate_board_pack":false,"use_ai_assist":false,"view_insights":false}'),
+    ('20000000-0000-0000-0000-0000000000b6', 'b0000000-0000-0000-0000-000000000001', 'Reviewer', 'reviewer', true, '{"manage_users":false,"manage_roles":false,"edit_config":false,"manage_engagements":false,"approve_plan":false,"review_and_approve":true,"perform_work":true,"can_reopen":false,"view_all_scopes":false,"read_only":false,"manage_team":false,"view_board_pack":false,"generate_board_pack":false,"use_ai_assist":true,"view_insights":false}'),
+    ('20000000-0000-0000-0000-0000000000b7', 'b0000000-0000-0000-0000-000000000001', 'Auditee', 'auditee', true, '{"manage_users":false,"manage_roles":false,"edit_config":false,"manage_engagements":false,"approve_plan":false,"review_and_approve":false,"perform_work":false,"can_reopen":false,"view_all_scopes":false,"read_only":true,"manage_team":false,"view_board_pack":false,"generate_board_pack":false,"use_ai_assist":false,"view_insights":false}');
 
   insert into platform_admins (user_id) values ('10000000-0000-0000-0000-0000000000f0');
 
@@ -159,9 +221,9 @@ begin
     ('a0000000-0000-0000-0000-000000000001', 'a2000000-0000-0000-0000-0000000000a1', 1, '{"v":1}'),
     ('b0000000-0000-0000-0000-000000000001', 'b2000000-0000-0000-0000-0000000000b1', 1, '{"v":1}');
 
-  insert into populations (id, org_id, engagement_id, sha256, control_total_cents, status) values
-    ('70000000-0000-0000-0000-0000000000a1', 'a0000000-0000-0000-0000-000000000001', '50000000-0000-0000-0000-0000000000a1', sha_a, 100000, 'verified'),
-    ('70000000-0000-0000-0000-0000000000b1', 'b0000000-0000-0000-0000-000000000001', '50000000-0000-0000-0000-0000000000b1', sha_b, 100000, 'verified');
+  insert into populations (id, org_id, engagement_id, sha256, control_total_cents, row_count, status) values
+    ('70000000-0000-0000-0000-0000000000a1', 'a0000000-0000-0000-0000-000000000001', '50000000-0000-0000-0000-0000000000a1', sha_a, 100000, 1, 'verified'),
+    ('70000000-0000-0000-0000-0000000000b1', 'b0000000-0000-0000-0000-000000000001', '50000000-0000-0000-0000-0000000000b1', sha_b, 100000, 1, 'verified');
 
   insert into population_rows (org_id, population_id, row_ref, data) values
     ('a0000000-0000-0000-0000-000000000001', '70000000-0000-0000-0000-0000000000a1', 1, '{"amt":1}'),
@@ -205,6 +267,14 @@ begin
   insert into cap_items (org_id, issue_id, action)
   select 'b0000000-0000-0000-0000-000000000001', id, 'B cap' from issues where org_id = 'b0000000-0000-0000-0000-000000000001';
 
+  insert into severity_levels (org_id, name, color_token, rank) values
+    ('a0000000-0000-0000-0000-000000000001', 'High',   '--accent-cinnabar',  3),
+    ('a0000000-0000-0000-0000-000000000001', 'Medium', '--accent-brass',     2),
+    ('a0000000-0000-0000-0000-000000000001', 'Low',    '--accent-verdigris', 1),
+    ('b0000000-0000-0000-0000-000000000001', 'High',   '--accent-cinnabar',  3),
+    ('b0000000-0000-0000-0000-000000000001', 'Medium', '--accent-brass',     2),
+    ('b0000000-0000-0000-0000-000000000001', 'Low',    '--accent-verdigris', 1);
+
   insert into ledger_entries (org_id, prev_hash, hash, payload_hash, action, payload) values
     ('a0000000-0000-0000-0000-000000000001', '', '', '', 'seed', '{"org":"A"}'),
     ('b0000000-0000-0000-0000-000000000001', '', '', '', 'seed', '{"org":"B"}');
@@ -246,6 +316,15 @@ begin
   perform set_config('request.jwt.claims', '{}', false);
 end $$;
 
+-- The service role. Used by tests that exercise an Edge-Function-only entry point, such as
+-- secret_store_ref (F5), which no browser session can reach.
+create or replace function provio_test.as_service() returns void
+language plpgsql as $$
+begin
+  execute 'set role service_role';
+  perform set_config('request.jwt.claims', '{"role":"service_role"}', false);
+end $$;
+
 create or replace function provio_test.as_owner() returns void
 language plpgsql as $$
 begin
@@ -253,5 +332,5 @@ begin
   perform set_config('request.jwt.claims', '', false);
 end $$;
 
-grant usage on schema provio_test to anon, authenticated;
-grant execute on all functions in schema provio_test to anon, authenticated;
+grant usage on schema provio_test to anon, authenticated, service_role;
+grant execute on all functions in schema provio_test to anon, authenticated, service_role;

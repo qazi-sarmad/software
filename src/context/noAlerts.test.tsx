@@ -172,13 +172,17 @@ describe('components show errors in place', () => {
   it('ReviewTab shows a failed sign-off message inline', () => {
     const eng = initialEngagements[0];
     render(
-      <ReviewTab
-        engagement={{ ...eng, status: 'in_progress' } as any}
-        gate={{ sealed: 0, total: 1, unsealed: 1, allSealed: false } as any}
-        signOff={{ enabled: true } as any}
-        onSignOff={() => undefined}
-        error="Cannot sign off yet: 1 open comment"
-      />
+      wrapperFor('cia')({
+        children: (
+        <ReviewTab
+          engagement={{ ...eng, status: 'in_progress' } as any}
+          gate={{ sealed: 0, total: 1, unsealed: 1, allSealed: false } as any}
+          signOff={{ enabled: true } as any}
+          onSignOff={() => undefined}
+          error="Cannot sign off yet: 1 open comment"
+        />
+        ),
+      })
     );
     expect(screen.getByTestId('signoff-error').textContent).toContain('Cannot sign off yet');
   });
@@ -192,7 +196,7 @@ describe('components show errors in place', () => {
         </AppProvider>
       </ThemeProvider>
     );
-    fireEvent.click(screen.getByText('Commit Finding'));
+    fireEvent.click(screen.getByText('Record Observation'));
     expect((await screen.findByTestId('observation-form-error')).textContent).toBe('Please provide title and condition.');
     expect(s.alert).not.toHaveBeenCalled();
   });

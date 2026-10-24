@@ -92,7 +92,7 @@ export const CommentHistoryPanel: React.FC<CommentPanelProps> = ({ data, onClose
       {/* Header */}
       <div className="border-b border-hairline pb-4">
         <span className="text-apple-11 font-semibold text-accent uppercase tracking-wider">
-          {isSingleCommentMode ? 'Reviewer Query & Dialogue' : 'Four-Eyes Assurance Audit Trail'}
+          {isSingleCommentMode ? 'Reviewer Query & Dialogue' : 'Independent Review Trail'}
         </span>
         <h3 className="text-apple-20 font-bold text-primary mt-1">
           {isSingleCommentMode

@@ -39,10 +39,46 @@ export async function signIn(email: string, password: string): Promise<SignInOut
   return error ? { ok: false, reason: error.message } : { ok: true };
 }
 
+/**
+ * Create the account an invitation is waiting for (S3, C2.4). The invitee sets their own password;
+ * no Supabase Auth email is used, because the acceptance link in the queued message is the only
+ * thing the invitee needs. When the owner has sign-ups disabled the call fails and the caller shows
+ * the plain message (the same honesty rule as the external auditor acceptance, F13).
+ *
+ * `sessionStarted` is false when the project requires email confirmation: the account exists but no
+ * session does, so the caller must tell the invitee to confirm and reopen the link rather than
+ * pretend the invitation was applied.
+ */
+export async function signUp(
+  email: string, password: string
+): Promise<{ ok: true; sessionStarted: boolean } | { ok: false; reason: string }> {
+  const sb = getClient();
+  if (!sb) return { ok: false, reason: 'Account creation is not configured.' };
+  const { data, error } = await sb.auth.signUp({ email, password });
+  if (error) return { ok: false, reason: error.message };
+  return { ok: true, sessionStarted: data.session !== null };
+}
+
 export async function signOut(): Promise<void> {
   const sb = getClient();
   if (!sb) return;
   await sb.auth.signOut();
+}
+
+/**
+ * Mint a fresh access token from the stored refresh token (S3, C2.4).
+ *
+ * The organisation and role live in the JWT, stamped by the access-token hook (0010). A session
+ * minted before a membership change keeps the OLD claims: `org_members` RLS requires
+ * `org_id = jwt_org_id()`, so a colleague who has just accepted an invitation cannot see their own
+ * membership row until the token is re-minted. Re-reading the session is not enough; the token
+ * itself must be replaced. Returns false when there is no session or the refresh failed.
+ */
+export async function refreshAuthToken(): Promise<boolean> {
+  const sb = getClient();
+  if (!sb) return false;
+  const { data, error } = await sb.auth.refreshSession();
+  return !error && data.session !== null;
 }
 
 export async function loadCurrentUser(): Promise<User | null> {
@@ -84,5 +120,6 @@ export async function loadCurrentUser(): Promise<User | null> {
     rights: roleRow?.rights ?? undefined,
     universeIds,
     entityIds,
+    orgId: member.org_id as string,
   };
 }

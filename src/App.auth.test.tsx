@@ -20,7 +20,7 @@ describe('no session: sign-in screen and no data', () => {
       expect(text).not.toContain(u.name);
       expect(text).not.toContain(u.email);
     }
-    expect(text).not.toContain('Executive Summary');
+    expect(text).not.toContain('Dashboard');
   });
 
   it('has exactly one button, Sign in', async () => {

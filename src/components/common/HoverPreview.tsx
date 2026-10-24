@@ -104,6 +104,17 @@ export const HoverPreview: React.FC<HoverPreviewProps> = ({
     setIsOpen(false);
   };
 
+  // A div with role="button" is focusable but not activatable by the keyboard unless we handle
+  // Enter/Space ourselves; without this the trigger is a keyboard trap (D13).
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (disabled || !onClick) return;
+    if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+      e.preventDefault();
+      setIsOpen(false);
+      onClick();
+    }
+  };
+
   // Touch support: long press (350ms)
   const touchTimer = useRef<number | null>(null);
   const handleTouchStart = () => {
@@ -149,8 +160,10 @@ export const HoverPreview: React.FC<HoverPreviewProps> = ({
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       onClick={onClick}
+      onKeyDown={handleKeyDown}
       tabIndex={0}
       role="button"
+      aria-disabled={disabled || undefined}
       data-testid="hover-preview-trigger"
     >
       {children}

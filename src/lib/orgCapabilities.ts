@@ -40,7 +40,6 @@ export function buildDefaultOrgRoleConfig(orgId: string = DEFAULT_ORG_ID): OrgRo
           'cap_submit_validation',
           'cap_verify_close',
           'cap_reject',
-          'cap_fail_retest',
           'cap_change_due_date',
         ],
       },
@@ -52,7 +51,6 @@ export function buildDefaultOrgRoleConfig(orgId: string = DEFAULT_ORG_ID): OrgRo
           'cap_submit_validation',
           'cap_verify_close',
           'cap_reject',
-          'cap_fail_retest',
           'cap_change_due_date',
         ],
       },
@@ -116,7 +114,7 @@ export function canPerformCapability(
   ) {
     return {
       allowed: false,
-      reason: 'Four-eyes policy: you cannot verify or reject a CAP you submitted',
+      reason: 'Segregation of duties: you cannot verify or reject a CAP you submitted',
     };
   }
   return { allowed: true };

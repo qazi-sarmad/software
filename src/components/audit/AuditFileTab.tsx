@@ -4,6 +4,7 @@ import { useScopedData } from '../../hooks/useScopedData';
 import { Folder, ShieldCheck } from '../common/Icons';
 import { Select } from '../common/Select';
 import { isCommentOpen } from '../../lib/comments';
+import { getOrgLocalToday } from '../../lib/orgDate';
 
 const STAGES = ['planning', 'testing', 'conclusion'] as const;
 
@@ -15,6 +16,7 @@ export const AuditFileTab: React.FC = () => {
   const { openInspector, selectedEngagementId } = useApp();
   const { scopedEngagements, scopedEntities, scopedWorkpapers, scopedComments } = useScopedData();
   const [entityId, setEntityId] = useState<string>('all');
+  const today = getOrgLocalToday();
 
   const entityName = (id: string) => scopedEntities.find((e) => e.id === id)?.name ?? 'Entity';
   const list = useMemo(
@@ -59,7 +61,7 @@ export const AuditFileTab: React.FC = () => {
             const open = scopedComments.filter((c) => wpIds.has(c.workpaperId) && isCommentOpen(c)).length;
             const stageIdx = Math.max(0, STAGES.indexOf(eng.stage as (typeof STAGES)[number]));
             const signed = eng.status === 'signed_off';
-            const overdue = !signed && eng.dueDate < '2026-09-30';
+            const overdue = !signed && eng.dueDate < today;
             return (
               <button
                 key={eng.id}

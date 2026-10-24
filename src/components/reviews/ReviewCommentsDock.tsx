@@ -14,7 +14,7 @@ export const ReviewCommentsDock: React.FC = () => {
         <div>
           <h3 className="text-apple-15 font-semibold text-primary">Review Comments Dock</h3>
           <p className="text-apple-12 text-secondary">
-            Four-eyes peer review queries and supervisor clearance notes
+            Reviewer queries and supervisor clearance notes
           </p>
         </div>
         <span className="px-2 py-0.5 rounded text-apple-11 font-medium bg-surface-elevated text-secondary border border-hairline tabular-nums">

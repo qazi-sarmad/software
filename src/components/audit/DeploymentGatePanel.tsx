@@ -1,6 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { hasRight } from '../../lib/rights';
+import { rightReason, rightReasonFor } from '../../lib/rightLabels';
+import { deployEngagement, type GateResult } from '../../data/deployment';
+import { HoldToConfirm } from '../common/HoldToConfirm';
+import { InlineError } from '../common/InlineError';
 import { ShieldCheck, ShieldAlert, Clock, CheckCircle2, XCircle } from '../common/Icons';
 
 /**
@@ -18,26 +22,104 @@ const STEP_LABELS: Record<string, string> = {
   deployed: 'Deployed',
 };
 
+/**
+ * D21: a blocked gate must not be a dead end. Each outcome names the single next action that
+ * unblocks it, so the user knows where to go. The action is a sentence, never a slug (D14).
+ */
+const NEXT_ACTION: Record<string, string> = {
+  entity_required: 'Choose an entity to audit, then run the gate again.',
+  entity_not_found: 'Pick an entity that belongs to this universe, then run the gate again.',
+  entity_not_approved: 'Create the entity or open it and submit it for approval, then run the gate again.',
+  plan_change_required: 'Add the entity to an approved audit plan, or raise a combined plan change and deployment request.',
+  period_mismatch: 'Ask someone authorised to change the plan to set the plan period to the deployment period, or raise a combined request.',
+  approval_required: 'Raise a combined plan change and deployment request for the configured approver to decide.',
+};
+
 export interface GateStepResult {
   outcome: string;
   step: number;
   detail?: string;
   requiredRight?: string;
+  engagementId?: string;
 }
 
-export const DeploymentGatePanel: React.FC<{ result: GateStepResult | null }> = ({ result }) => {
-  const { currentUser } = useApp();
+export const DeploymentGatePanel: React.FC<{
+  result: GateStepResult | null;
+  /** The ids the deploy call needs. When present, the panel offers the final Deploy action. */
+  deploy?: { universeId: string; entityId: string | null; planId?: string; period?: string; title?: string } | null;
+  /** Called with the successful outcome so the caller can route to the new engagement. */
+  onDeployed?: (engagementId: string | null) => void;
+  /** Called with every fresh outcome so the caller can refresh its recorded gates. */
+  onResult?: (result: GateResult) => void;
+}> = ({ result: initialResult, deploy, onDeployed, onResult }) => {
+  const { currentUser, setSelectedEngagementId, setActiveTab, openInspector } = useApp();
   const canDeploy = hasRight(currentUser, 'manage_engagements');
+  const [result, setResult] = useState<GateStepResult | null>(initialResult);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   if (!result) {
+    // No outcome yet. With deploy context the panel can run the gate: deploy_engagement evaluates
+    // every gate and only creates the engagement when they all pass, so the call is the gate check.
+    if (deploy?.entityId && canDeploy) {
+      return (
+        <div data-testid="deployment-gate-run" className="space-y-3 p-1">
+          <p className="text-apple-13 text-secondary">
+            Run the deployment gate to check this entity against every step.
+          </p>
+          {error && <InlineError message={error} testId="gate-deploy-error" />}
+          <HoldToConfirm
+            label="Hold to run the gate and deploy"
+            testId="gate-deploy"
+            disabled={busy}
+            onConfirm={() => void handleDeploy()}
+          />
+        </div>
+      );
+    }
     return (
-      <div data-testid="deployment-gate-empty" className="p-4 text-apple-13 text-secondary">
-        Run the deployment gate to see its outcome.
+      <div data-testid="deployment-gate-empty" className="space-y-3 p-1">
+        <p className="text-apple-13 text-secondary">
+          The gate needs an entity before it can run.
+        </p>
+        <button
+          type="button"
+          data-testid="gate-go-plan"
+          onClick={() => setActiveTab('plan')}
+          className="px-3 py-1.5 rounded-lg border border-hairline text-apple-12 text-primary hover:bg-surface-hover"
+        >
+          Go to the audit plan and pick an entity
+        </button>
       </div>
     );
   }
 
   const ok = result.outcome === 'deployed';
+  // The final Deploy action (§7 step 5) is offered only when the caller could actually pass every
+  // gate: an entity is chosen, the caller holds the deploy right, and the record is not already
+  // deployed. The database re-evaluates every gate on the call, so this is a trigger, not a bypass.
+  const canAttemptDeploy = Boolean(deploy?.entityId) && canDeploy && result.outcome !== 'deployed';
+
+  const handleDeploy = async () => {
+    if (!deploy || !deploy.entityId) return;
+    setBusy(true);
+    setError(null);
+    const outcome = await deployEngagement(
+      deploy.universeId, deploy.entityId, deploy.planId, deploy.period, deploy.title
+    );
+    setBusy(false);
+    if (!outcome) {
+      setError('Deployment could not be recorded. Check your connection and try again.');
+      return;
+    }
+    setResult(outcome);
+    onResult?.(outcome);
+    if (outcome.outcome === 'deployed') {
+      const engagementId = outcome.engagementId ?? null;
+      if (engagementId) setSelectedEngagementId(engagementId);
+      onDeployed?.(engagementId);
+    }
+  };
   return (
     <div data-testid="deployment-gate" className="space-y-3 p-1">
       <div className="flex items-center gap-2">
@@ -67,11 +149,80 @@ export const DeploymentGatePanel: React.FC<{ result: GateStepResult | null }> = 
       {result.detail && <p className="text-apple-12 text-secondary">{result.detail}</p>}
       {!ok && result.requiredRight && (
         <p data-testid="gate-required-right" className="text-apple-12 text-secondary">
-          Requires the <span className="font-semibold text-primary">{result.requiredRight}</span> right.
+          {rightReasonFor(result.requiredRight)}
         </p>
       )}
       {!ok && !canDeploy && (
-        <p className="text-apple-12 text-tertiary">You do not hold the right to deploy engagements.</p>
+        <p className="text-apple-12 text-tertiary">{rightReason('manage_engagements')}</p>
+      )}
+      {!ok && NEXT_ACTION[result.outcome] && (
+        <p data-testid="gate-next-action" className="text-apple-12 text-primary">
+          Next: {NEXT_ACTION[result.outcome]}
+        </p>
+      )}
+      {!ok && (
+        <div className="flex flex-wrap gap-2">
+          {(result.outcome === 'entity_required' ||
+            result.outcome === 'entity_not_found' ||
+            result.outcome === 'entity_not_approved') && (
+            <button
+              type="button"
+              data-testid="gate-go-universe"
+              onClick={() => setActiveTab('universe')}
+              className="px-3 py-1.5 rounded-lg border border-hairline text-apple-12 text-primary hover:bg-surface-hover"
+            >
+              Go to the audit universe
+            </button>
+          )}
+          {(result.outcome === 'plan_change_required' || result.outcome === 'period_mismatch') && (
+            <button
+              type="button"
+              data-testid="gate-go-plan"
+              onClick={() => setActiveTab('plan')}
+              className="px-3 py-1.5 rounded-lg border border-hairline text-apple-12 text-primary hover:bg-surface-hover"
+            >
+              Go to the audit plan
+            </button>
+          )}
+          {(result.outcome === 'plan_change_required' ||
+            result.outcome === 'period_mismatch' ||
+            result.outcome === 'approval_required') && (
+            <button
+              type="button"
+              data-testid="gate-open-combined"
+              onClick={() =>
+                openInspector('combined_approval', {
+                  request: null,
+                  universeId: deploy?.universeId,
+                  entityId: deploy?.entityId ?? undefined,
+                })
+              }
+              className="px-3 py-1.5 rounded-lg border border-hairline text-apple-12 text-primary hover:bg-surface-hover"
+            >
+              Raise a combined request
+            </button>
+          )}
+        </div>
+      )}
+      {error && <InlineError message={error} testId="gate-deploy-error" />}
+      {ok ? (
+        <button
+          type="button"
+          data-testid="gate-view-engagement"
+          onClick={() => onDeployed?.(result.engagementId ?? null)}
+          className="px-3 py-1.5 rounded-lg border border-hairline text-apple-12 text-primary hover:bg-surface-hover"
+        >
+          Open the audit file
+        </button>
+      ) : (
+        canAttemptDeploy && (
+          <HoldToConfirm
+            label="Hold to deploy"
+            testId="gate-deploy"
+            disabled={busy}
+            onConfirm={() => void handleDeploy()}
+          />
+        )
       )}
       <p className="text-apple-11 text-tertiary flex items-center gap-1">
         <Clock className="w-3.5 h-3.5 stroke-[1.5]" /> Gate checks run in the database; this panel only

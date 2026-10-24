@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AuditCapItem, CapStatus, RetestStatus, Severity } from '../../types';
+import { AuditCapItem, CapStatus, Severity } from '../../types';
 import { useApp } from '../../context/AppContext';
 import { useScopedData } from '../../hooks/useScopedData';
 import { isCapOverdue } from '../../lib/orgDate';
@@ -15,6 +15,7 @@ import {
   User,
   Calendar,
 } from '../common/Icons';
+import { HoldToConfirm } from '../common/HoldToConfirm';
 
 interface CapInspectorProps {
   data?: {
@@ -82,7 +83,7 @@ export const CapInspector: React.FC<CapInspectorProps> = ({ data, onClose }) => 
     </div>
   );
   const [formError, setFormError] = useState<string | null>(null);
-  const [panel, setPanel] = useState<'none' | 'submit' | 'reject' | 'fail' | 'verify'>('none');
+  const [panel, setPanel] = useState<'none' | 'submit' | 'reject' | 'verify'>('none');
 
   // Show an action only to designations that hold its capability (four-eyes still enforced on click).
   const allowed = (action: keyof typeof ACTION_CAPABILITY) =>
@@ -90,7 +91,7 @@ export const CapInspector: React.FC<CapInspectorProps> = ({ data, onClose }) => 
       submitterUserId: activeCap?.lastSubmittedByUserId,
     }).allowed;
 
-  const run = (action: 'mark_in_progress' | 'submit_validation' | 'verify_close' | 'reject' | 'fail_retest') => {
+  const run = (action: 'mark_in_progress' | 'submit_validation' | 'verify_close' | 'reject') => {
     if (!activeCap) return;
     const evidenceRefs = [
       ...evidence.split(/[;\n]/).map((s) => s.trim()).filter(Boolean),
@@ -249,12 +250,6 @@ export const CapInspector: React.FC<CapInspectorProps> = ({ data, onClose }) => 
                   {activeCap.status}
                 </div>
               </div>
-              <div className="p-2.5 rounded-xl bg-surface border border-hairline">
-                <div className="text-apple-11 text-tertiary">Independent Re-Test</div>
-                <div className="font-semibold text-primary mt-0.5">
-                  {activeCap.retestStatus}
-                </div>
-              </div>
             </div>
 
             {/* Link to originating report (§ 3.4 requirement) */}
@@ -300,7 +295,7 @@ export const CapInspector: React.FC<CapInspectorProps> = ({ data, onClose }) => 
           {/* Remediation Lifecycle Management Actions */}
           <div className="p-5 rounded-2xl bg-surface border border-hairline space-y-3">
             <h5 className="text-apple-13 font-semibold text-primary">
-              Update Remediation Status &amp; Re-Test Protocol
+              Update Remediation Status
             </h5>
             {formError && (
               <div className="text-apple-12 text-cinnabar" data-testid="cap-form-error">{formError}</div>
@@ -334,16 +329,6 @@ export const CapInspector: React.FC<CapInspectorProps> = ({ data, onClose }) => 
                 <span>Verify &amp; Close</span>
               </button>
 )}
-              {allowed('fail_retest') && (
-<button
-                type="button"
-                onClick={() => { setFormError(null); setPanel('fail'); }}
-                className="p-2 rounded-xl bg-cinnabar-subtle hover:opacity-85 text-cinnabar text-apple-12 font-semibold transition-opacity text-center flex items-center justify-center gap-1"
-              >
-                <AlertCircle className="w-3.5 h-3.5 stroke-[2]" />
-                <span>Fail Re-Test</span>
-              </button>
-)}
             </div>
 
             {panel === 'submit' && (
@@ -365,7 +350,15 @@ export const CapInspector: React.FC<CapInspectorProps> = ({ data, onClose }) => 
                 <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} className="w-full rounded-xl border border-hairline bg-surface-elevated p-2 text-apple-12 text-primary" />
                 {uploader}
                 <div className="flex gap-2">
-                  <button type="button" onClick={() => run('verify_close')} className="px-3 py-1.5 rounded-lg bg-verdigris-subtle text-verdigris text-apple-12 font-semibold">Confirm close</button>
+                  <HoldToConfirm
+                    label="Confirm close"
+                    testId="cap-confirm-close"
+                    durationMs={2000}
+                    onConfirm={() => run('verify_close')}
+                    className="relative overflow-hidden px-3 py-1.5 rounded-lg bg-verdigris-subtle text-verdigris text-apple-12 font-semibold transition-colors"
+                  >
+                    Confirm close
+                  </HoldToConfirm>
                   <button type="button" onClick={() => { setPanel('reject'); }} className="px-3 py-1.5 rounded-lg border border-cinnabar text-cinnabar text-apple-12 font-semibold">Reject instead</button>
                   <button type="button" onClick={() => setPanel('none')} className="px-3 py-1.5 rounded-lg border border-hairline text-apple-12">Cancel</button>
                 </div>
@@ -377,16 +370,6 @@ export const CapInspector: React.FC<CapInspectorProps> = ({ data, onClose }) => 
                 <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={3} className="w-full rounded-xl border border-hairline bg-surface-elevated p-2 text-apple-12 text-primary" />
                 <div className="flex gap-2">
                   <button type="button" onClick={() => run('reject')} className="px-3 py-1.5 rounded-lg bg-cinnabar-subtle text-cinnabar text-apple-12 font-semibold">Reject to in progress</button>
-                  <button type="button" onClick={() => setPanel('none')} className="px-3 py-1.5 rounded-lg border border-hairline text-apple-12">Cancel</button>
-                </div>
-              </div>
-            )}
-            {panel === 'fail' && (
-              <div className="space-y-2 pt-2 border-t border-hairline">
-                <label className="block text-apple-12 text-secondary">Fail re-test note (required)</label>
-                <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={3} className="w-full rounded-xl border border-hairline bg-surface-elevated p-2 text-apple-12 text-primary" />
-                <div className="flex gap-2">
-                  <button type="button" onClick={() => run('fail_retest')} className="px-3 py-1.5 rounded-lg bg-cinnabar-subtle text-cinnabar text-apple-12 font-semibold">Confirm fail</button>
                   <button type="button" onClick={() => setPanel('none')} className="px-3 py-1.5 rounded-lg border border-hairline text-apple-12">Cancel</button>
                 </div>
               </div>

@@ -16,6 +16,8 @@ describe('plan data module (not configured)', () => {
     expect(await m.addPlanItem('p1', 'T')).toEqual(nc);
     expect(await m.decideAdhocItem('i1', true)).toEqual(nc);
     expect(await m.approvePlan('p1')).toEqual(nc);
+    expect(await m.updatePlanItemDates('i1', '2026-01-01', '2026-01-31')).toEqual(nc);
+    expect(await m.planItemForEngagement('e1')).toBeNull();
     expect(await m.setPlanApproval('manage_engagements', 'approve_plan')).toEqual(nc);
   });
 });

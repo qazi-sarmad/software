@@ -5,9 +5,9 @@ select provio_test.seed();
 select provio_test.as_user('10000000-0000-0000-0000-0000000000a1', 'a0000000-0000-0000-0000-000000000001', 'cia');
 
 -- A pending population.
-insert into populations (id, org_id, engagement_id, sha256, status)
+insert into populations (id, org_id, engagement_id, sha256, row_count, status)
 values ('70000000-0000-0000-0000-0000000000a9', 'a0000000-0000-0000-0000-000000000001',
-        '50000000-0000-0000-0000-0000000000a1', repeat('c',64), 'pending');
+        '50000000-0000-0000-0000-0000000000a1', repeat('c',64), 1, 'pending');
 
 do $$
 begin

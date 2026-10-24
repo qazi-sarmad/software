@@ -134,7 +134,7 @@ export const D3Sunburst: React.FC<SunburstProps> = ({ deptMap }) => {
           setHoveredNode({
             title: d.data.name,
             category: 'Department Breakdown',
-            subtitle: `${deptData?.issues.length || 0} Open Findings across ${deptData?.total || 0} Entities`,
+            subtitle: `${deptData?.issues.length || 0} Open Issues across ${deptData?.total || 0} Entities`,
             status: filter.department === d.data.name ? 'Active Filter' : 'Click to Filter',
             statusType: filter.department === d.data.name ? 'verdigris' : 'neutral',
             exceptionsCount: deptData?.issues.length || 0,

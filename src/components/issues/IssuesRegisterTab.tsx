@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useScopedData } from '../../hooks/useScopedData';
 import { useFilterStore } from '../../context/FilterStore';
 import { useApp } from '../../context/AppContext';
 import { HoverPreview } from '../common/HoverPreview';
+import { CapRegisterPanel } from '../audit/CapRegisterPanel';
+import { PatternsPanel } from './PatternsPanel';
 import { AuditIssue, Severity } from '../../types';
 import {
   AlertTriangle,
@@ -15,9 +17,25 @@ import {
 } from '../common/Icons';
 
 export const IssuesRegisterTab: React.FC = () => {
-  const { filteredIssues, can, currentUser } = useScopedData();
+  const { filteredIssues, scopedEngagements, can, currentUser } = useScopedData();
   const filter = useFilterStore();
-  const { openInspector } = useApp();
+  const { openInspector, selectedEngagementId } = useApp();
+  // WK-10 (F15): the register carries a "Patterns" view beside the issue list.
+  const [view, setView] = useState<'register' | 'patterns'>('register');
+
+  // D10: the CAP register is per engagement (§16.1 "CAPs are created from the final report"). The
+  // tab is org-wide, so it offers the engagements in scope and renders the register for the chosen
+  // one. The register itself (listCaps, update_cap, close_cap) lives in src/data/caps.ts and is
+  // reused unchanged, so the CAP status vocabulary stays the single set from 0038 (D-6D-CAP).
+  const engagements = useMemo(
+    () => scopedEngagements.slice().sort((a, b) => a.title.localeCompare(b.title)),
+    [scopedEngagements]
+  );
+  const [capEngagementId, setCapEngagementId] = useState<string | null>(selectedEngagementId);
+  const activeCapEngagementId = useMemo(() => {
+    if (capEngagementId && engagements.some((e) => e.id === capEngagementId)) return capEngagementId;
+    return engagements[0]?.id ?? null;
+  }, [capEngagementId, engagements]);
 
   const getSeverityBadge = (severity: Severity) => {
     switch (severity) {
@@ -49,9 +67,9 @@ export const IssuesRegisterTab: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-hairline pb-4">
         <div>
-          <h1 className="text-apple-28 font-bold text-primary tracking-tight">Audit Findings &amp; Issues Register</h1>
+          <h1 className="text-apple-28 font-bold text-primary tracking-tight">Issues &amp; CAP Register</h1>
           <p className="text-apple-15 text-secondary mt-1">
-            Tracking remedial commitments, management action plans, and regulatory observations
+            Tracking concluded findings, remedial commitments and management action plans
           </p>
         </div>
 
@@ -62,10 +80,38 @@ export const IssuesRegisterTab: React.FC = () => {
             className="flex items-center gap-2 px-4 py-2 bg-accent text-white font-medium text-apple-13 rounded-xl hover:opacity-90 transition-opacity shadow-xs"
           >
             <Plus className="w-4 h-4 stroke-[1.5]" />
-            <span>Raise Finding</span>
+            <span>Raise Observation</span>
           </button>
         )}
       </div>
+
+      {/* WK-10 (F15): the Patterns view sits beside the issue register. */}
+      <div className="flex items-center gap-1 rounded-xl border border-hairline bg-surface p-1 w-fit" role="tablist" aria-label="Issues and patterns">
+        {([
+          ['register', 'Issue register'],
+          ['patterns', 'Patterns'],
+        ] as const).map(([v, label]) => (
+          <button
+            key={v}
+            type="button"
+            role="tab"
+            aria-selected={view === v}
+            data-testid={`issues-view-${v}`}
+            onClick={() => setView(v)}
+            className={`px-3 py-1.5 rounded-lg text-apple-12 font-semibold ${
+              view === v ? 'bg-surface-hover text-primary' : 'text-secondary'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {view === 'patterns' ? (
+        // WK-10 (F15): a cluster, node or heat-map cell opens the original sealed finding.
+        <PatternsPanel onOpenFinding={(findingId) => openInspector('finding', { findingId })} />
+      ) : (
+        <>
 
       {/* Filter / Search Bar */}
       <div className="flex flex-wrap items-center justify-between gap-4 bg-surface p-4 rounded-2xl border border-hairline shadow-apple">
@@ -104,7 +150,7 @@ export const IssuesRegisterTab: React.FC = () => {
       {/* Issues Table */}
       <div className="bg-surface border border-hairline rounded-2xl shadow-apple overflow-hidden">
         <div className="grid grid-cols-12 px-6 py-3 border-b border-hairline bg-surface-elevated text-apple-11 font-semibold text-secondary uppercase tracking-wider">
-          <div className="col-span-5">Issue / Finding</div>
+          <div className="col-span-5">Issue</div>
           <div className="col-span-2">Department</div>
           <div className="col-span-2">Severity</div>
           <div className="col-span-2">Status</div>
@@ -131,7 +177,7 @@ export const IssuesRegisterTab: React.FC = () => {
                     : ('neutral' as const),
                 dueDate: issue.dueDate,
                 owner: issue.ownerId,
-                hint: 'Click to inspect finding details',
+                hint: 'Click to inspect issue details',
               };
 
               return (
@@ -179,6 +225,46 @@ export const IssuesRegisterTab: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* D10: CAP register for the selected engagement (spec §16). Loaded from src/data/caps.ts. */}
+      <div className="bg-surface border border-hairline rounded-2xl shadow-apple p-6" data-testid="issues-cap-register-section">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <div>
+            <h2 className="text-apple-16 font-semibold text-primary">Corrective Action Plan register</h2>
+            <p className="text-apple-12 text-secondary mt-0.5">
+              Every finding or issue gets one CAP before the report can freeze (§16.1).
+            </p>
+          </div>
+          {engagements.length > 0 && (
+            <label className="flex items-center gap-2 text-apple-12 text-secondary">
+              <span>Engagement</span>
+              <select
+                data-testid="cap-engagement-picker"
+                value={activeCapEngagementId ?? ''}
+                onChange={(e) => setCapEngagementId(e.target.value || null)}
+                className="rounded-lg border border-hairline bg-surface px-3 py-1.5 text-apple-13 text-primary"
+              >
+                {engagements.map((e) => (
+                  <option key={e.id} value={e.id}>
+                    {e.title}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+        </div>
+
+        {activeCapEngagementId ? (
+          <CapRegisterPanel engagementId={activeCapEngagementId} />
+        ) : (
+          <div className="p-6 text-center text-apple-12 text-secondary bg-surface-elevated rounded-xl" data-testid="cap-no-engagement">
+            No engagements are in scope, so there is no CAP register to show. Create or deploy an
+            engagement first.
+          </div>
+        )}
+      </div>
+        </>
+      )}
     </div>
   );
 };

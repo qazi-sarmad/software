@@ -16,10 +16,11 @@ interface SelectProps {
   icon?: React.ReactNode;
   align?: 'left' | 'right';
   className?: string;
+  testId?: string;
 }
 
 /** Accessible listbox dropdown (keyboard: Up/Down/Home/End/Enter/Esc). Tokens only. */
-export const Select: React.FC<SelectProps> = ({ value, options, onChange, ariaLabel, icon, align = 'left', className = '' }) => {
+export const Select: React.FC<SelectProps> = ({ value, options, onChange, ariaLabel, icon, align = 'left', className = '', testId }) => {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
   const root = useRef<HTMLDivElement>(null);
@@ -63,6 +64,7 @@ export const Select: React.FC<SelectProps> = ({ value, options, onChange, ariaLa
     <div ref={root} className={`relative ${className}`} onKeyDown={onKey}>
       <button
         type="button"
+        data-testid={testId}
         aria-label={ariaLabel}
         aria-haspopup="listbox"
         aria-expanded={open}

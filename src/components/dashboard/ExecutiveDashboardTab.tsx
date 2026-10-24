@@ -5,6 +5,7 @@ import { useApp } from '../../context/AppContext';
 import { CapRadialTracker } from './CapRadialTracker';
 import { CapTable } from './CapTable';
 import { EngagementGantt } from './EngagementGantt';
+import { BoardPackPanel } from '../pending/BoardPackPanel';
 import { HoverPreview } from '../common/HoverPreview';
 import {
   Folder,
@@ -24,7 +25,7 @@ export const ExecutiveDashboardTab: React.FC = () => {
     filteredCapItems,
   } = useScopedData();
   const filter = useFilterStore();
-  const { setActiveTab, setSelectedEngagementId } = useApp();
+  const { setActiveTab, setSelectedEngagementId, applyPlanItemDates } = useApp();
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-8 space-y-8 animate-fade-in">
@@ -32,7 +33,7 @@ export const ExecutiveDashboardTab: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-hairline pb-6">
         <div>
           <span className="text-apple-12 font-medium tracking-wide uppercase text-accent">
-            Internal Audit &amp; Risk Governance OS
+            Audit Platform
           </span>
           <h1 className="text-apple-28 font-bold text-primary tracking-tight mt-1">
             Executive Assurance Cockpit
@@ -97,7 +98,7 @@ export const ExecutiveDashboardTab: React.FC = () => {
           content={{
             title: `${stats.inProgressEngagements} Engagements in Progress`,
             category: 'Fieldwork Status',
-            subtitle: `${stats.completedEngagements} Completed and Signed-off`,
+            subtitle: `${stats.completedEngagements} Completed and sealed`,
             status: 'Fieldwork Stage',
             statusType: 'neutral',
             hint: 'Click to open Audit Plan',
@@ -122,17 +123,17 @@ export const ExecutiveDashboardTab: React.FC = () => {
         <HoverPreview
           content={{
             title: `${stats.openIssues} Open Audit Issues`,
-            category: 'Findings Register',
+            category: 'Issues Register',
             subtitle: `${stats.criticalIssues} High/Critical Severity Escalations`,
             status: stats.criticalIssues > 0 ? 'Action Required' : 'On Track',
             statusType: stats.criticalIssues > 0 ? 'cinnabar' : 'verdigris',
-            hint: 'Click to open Issues Register',
+            hint: 'Click to open Issues & CAP Register',
           }}
           onClick={() => setActiveTab('issues')}
         >
           <div className="p-5 rounded-2xl bg-surface border border-hairline shadow-apple hover:bg-surface-hover transition-colors cursor-pointer space-y-1">
             <div className="flex items-center justify-between text-secondary text-apple-12 font-medium">
-              <span>Open Findings</span>
+              <span>Open Issues</span>
               <AlertTriangle className="w-4 h-4 stroke-[1.5] text-cinnabar" />
             </div>
             <div className="font-serif-numeral text-apple-40 font-bold text-primary tabular-nums">
@@ -148,10 +149,10 @@ export const ExecutiveDashboardTab: React.FC = () => {
         {/* Sealed Working Papers */}
         <HoverPreview
           content={{
-            title: `${stats.sealedWorkpapers} Working Papers Cryptographically Sealed`,
-            category: 'Ledger Hash Attestation',
-            subtitle: 'Verified by reviewer four-eyes protocol',
-            status: 'Ledger Attested',
+            title: `${stats.sealedWorkpapers} Working Papers Sealed`,
+            category: 'Ledger Verification',
+            subtitle: 'Verified by a second reviewer',
+            status: 'Verified',
             statusType: 'verdigris',
             hint: 'Click to open Workbench',
           }}
@@ -167,7 +168,7 @@ export const ExecutiveDashboardTab: React.FC = () => {
             </div>
             <div className="text-apple-11 text-verdigris font-medium flex items-center gap-1">
               <ShieldCheck className="w-3.5 h-3.5 stroke-[1.5]" />
-              <span>Attested on Hash-Chain</span>
+              <span>Cryptographically verified</span>
             </div>
           </div>
         </HoverPreview>
@@ -179,6 +180,9 @@ export const ExecutiveDashboardTab: React.FC = () => {
         onSelectEngagement={(id) => {
           setSelectedEngagementId(id);
         }}
+        onRescheduled={({ engagementId, newStart, newDue }) =>
+          applyPlanItemDates(engagementId, newStart, newDue)
+        }
       />
 
       {/* CAP Radial Tracker (§ 3.4: replaces Sunburst with D3 radial chart, outer ring severity, overdue arc) */}
@@ -189,8 +193,11 @@ export const ExecutiveDashboardTab: React.FC = () => {
         overdueCapCount={stats.overdueCapCount}
       />
 
-      {/* CAP Table below chart (§ 3.4 requirement: id, action, owner, dept, severity, due date, aging, status, retest) */}
+      {/* CAP Table below chart (§ 3.4 requirement: id, action, owner, dept, severity, due date, aging, status) */}
       <CapTable capItems={filteredCapItems} />
+
+      {/* Board Pack panel (F10): pack history, Generate, Open and the drillable web view. */}
+      <BoardPackPanel />
     </div>
   );
 };

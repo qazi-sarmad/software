@@ -187,4 +187,55 @@ describe('Task C: Universal Hover Previews Component Tests', () => {
 
     fireEvent.touchEnd(trigger);
   });
+
+  describe('keyboard activation (D13)', () => {
+    it('Enter activates the trigger action', () => {
+      const onClick = vi.fn();
+      render(
+        <HoverPreview content={{ title: 'X' }} onClick={onClick}>
+          <span>Row</span>
+        </HoverPreview>
+      );
+      const trigger = screen.getByTestId('hover-preview-trigger');
+      fireEvent.keyDown(trigger, { key: 'Enter' });
+      expect(onClick).toHaveBeenCalledTimes(1);
+    });
+
+    it('Space activates the trigger action', () => {
+      const onClick = vi.fn();
+      render(
+        <HoverPreview content={{ title: 'X' }} onClick={onClick}>
+          <span>Row</span>
+        </HoverPreview>
+      );
+      const trigger = screen.getByTestId('hover-preview-trigger');
+      fireEvent.keyDown(trigger, { key: ' ' });
+      expect(onClick).toHaveBeenCalledTimes(1);
+    });
+
+    it('a disabled trigger does not activate on Enter', () => {
+      const onClick = vi.fn();
+      render(
+        <HoverPreview content={{ title: 'X' }} onClick={onClick} disabled>
+          <span>Row</span>
+        </HoverPreview>
+      );
+      const trigger = screen.getByTestId('hover-preview-trigger');
+      expect(trigger.getAttribute('aria-disabled')).toBe('true');
+      fireEvent.keyDown(trigger, { key: 'Enter' });
+      expect(onClick).not.toHaveBeenCalled();
+    });
+
+    it('other keys do not activate the trigger', () => {
+      const onClick = vi.fn();
+      render(
+        <HoverPreview content={{ title: 'X' }} onClick={onClick}>
+          <span>Row</span>
+        </HoverPreview>
+      );
+      const trigger = screen.getByTestId('hover-preview-trigger');
+      fireEvent.keyDown(trigger, { key: 'a' });
+      expect(onClick).not.toHaveBeenCalled();
+    });
+  });
 });

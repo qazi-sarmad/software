@@ -5,31 +5,36 @@ import { RIGHTS, rightsForRole } from './rights';
 import type { Role } from '../types';
 
 /**
- * The seed rights matrix is declared in two places that must not drift: migration
- * 0012_rights_closed.sql (the database, authoritative at runtime) and src/lib/rights.ts (the
- * fallback the app uses for demo and test sessions). This test parses the migration's UPDATE
- * statements and asserts they equal the app's per-role defaults, right for right.
+ * The seed rights matrix is declared in two places that must not drift: migrations
+ * 0012_rights_closed.sql (the original eleven keys) and 0050_rights_extended.sql (the fifteen-key
+ * matrix, authoritative at runtime), and src/lib/rights.ts (the fallback the app uses for demo and
+ * test sessions). This test parses the migrations' UPDATE statements in order and asserts the final
+ * per-role defaults equal the app's, right for right.
  */
-const MIGRATION = resolve(process.cwd(), 'supabase/migrations/0012_rights_closed.sql');
+const MIGRATIONS = [
+  resolve(process.cwd(), 'supabase/migrations/0012_rights_closed.sql'),
+  resolve(process.cwd(), 'supabase/migrations/0050_rights_extended.sql'),
+];
 
-function matrixFromMigration(): Record<string, Record<string, boolean>> {
-  const sql = readFileSync(MIGRATION, 'utf-8');
-  const re = /slug = '([a-z_]+)'\s*;\s*$/gm;
+function matrixFromMigrations(): Record<string, Record<string, boolean>> {
   const out: Record<string, Record<string, boolean>> = {};
-  // Each update line carries the rights jsonb and a trailing "where is_seed and slug = '...'".
-  for (const line of sql.split('\n')) {
-    const m = line.match(/set rights = '(\{.*\})'::jsonb where is_seed and slug = '([a-z_]+)'/);
-    if (m) out[m[2]] = JSON.parse(m[1]) as Record<string, boolean>;
+  for (const file of MIGRATIONS) {
+    const sql = readFileSync(file, 'utf-8');
+    // Each update line carries the rights jsonb and a trailing "where is_seed and slug = '...'".
+    for (const line of sql.split('\n')) {
+      const m = line.match(/set rights = '(\{.*\})'::jsonb where is_seed and slug = '([a-z_]+)'/);
+      if (m) out[m[2]] = JSON.parse(m[1]) as Record<string, boolean>;
+    }
   }
   return out;
 }
 
 describe('2F-2b: the seed rights matrix matches src/lib/rights.ts', () => {
-  const migration = matrixFromMigration();
+  const migration = matrixFromMigrations();
   const roles: Role[] = ['org_admin', 'cia', 'audit_manager', 'reviewer', 'preparer', 'observer', 'auditee'];
 
   it('the migration declares all seven seed roles', () => {
-    for (const r of roles) expect(migration[r], `${r} missing from 0012`).toBeDefined();
+    for (const r of roles) expect(migration[r], `${r} missing from 0050`).toBeDefined();
   });
 
   it.each(roles)('%s: every right key agrees with the app defaults', (role) => {

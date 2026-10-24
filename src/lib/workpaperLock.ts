@@ -13,10 +13,10 @@ export function getWorkpaperLock(
 ): WorkpaperLock {
   if (wp.sealed) return { locked: true, reason: 'Sealed workpaper: read-only. Reopen with a justification to edit.' };
   if (wp.isLocked || wp.signedOffAt || wp.status === 'signed_off')
-    return { locked: true, reason: 'Signed off: read-only. Reopen with a justification to edit.' };
+    return { locked: true, reason: 'Sealed: read-only. Reopen with a justification to edit.' };
   if (wp.status === 'completed' || wp.status === 'ready_for_review')
     return { locked: true, reason: 'Submitted for review: read-only until the reviewer returns it.' };
   if (eng && (eng.isLocked || eng.signedOffAt || eng.status === 'signed_off' || eng.status === 'closed'))
-    return { locked: true, reason: 'Audit is signed off: everything is read-only.' };
+    return { locked: true, reason: 'Audit is sealed: everything is read-only.' };
   return { locked: false };
 }

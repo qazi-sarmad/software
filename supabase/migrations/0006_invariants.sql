@@ -159,6 +159,15 @@ declare
   v_canonical text;
   v_payload_hash text;
 begin
+  -- Ledger-copy bypass (F16). A migration runner preserves the source sequence, timestamps and
+  -- hashes, and may bypass this trigger ONLY as the provio_migrator role with provio.migration_mode
+  -- on. An ordinary role setting the setting changes nothing. The check is inlined so this trigger
+  -- never depends on a function defined later in the migration order.
+  if current_user = 'provio_migrator'
+     and coalesce(current_setting('provio.migration_mode', true), '') = 'on' then
+    return new;
+  end if;
+
   perform pg_advisory_xact_lock(hashtext(new.org_id::text));
 
   select e.hash, e.seq into v_prev, v_seq

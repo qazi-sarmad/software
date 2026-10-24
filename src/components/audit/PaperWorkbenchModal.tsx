@@ -36,7 +36,7 @@ export const PaperWorkbenchModal: React.FC = () => {
     { id: 'testing', label: 'Test Program', icon: ClipboardList },
     { id: 'sampling', label: 'Sample Selection', icon: Sliders },
     { id: 'evidence', label: 'Evidence Vault', icon: FileCheck },
-    { id: 'analytics', label: 'Deterministic Analytics', icon: Activity },
+    { id: 'analytics', label: 'Analytics', icon: Activity },
     { id: 'document_review', label: 'Policy Review', icon: FileText },
     { id: 'findings', label: 'Exceptions & Findings', icon: AlertTriangle },
   ];

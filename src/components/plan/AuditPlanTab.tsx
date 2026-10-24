@@ -1,8 +1,12 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useScopedData } from '../../hooks/useScopedData';
 import { useApp } from '../../context/AppContext';
 import { HoverPreview } from '../common/HoverPreview';
 import { InlineError } from '../common/InlineError';
+import { HoldToConfirm } from '../common/HoldToConfirm';
+import { listDeploymentRequests, listGateOutcomes, type DeploymentRequestRow, type GateOutcomeRow } from '../../data/deployment';
+import { latestPlanForUniverse, listPlanItems, planHistory, type PlanItemRow, type PlanVersionRow } from '../../data/plan';
+import { isUuid } from '../../lib/ids';
 import {
   Folder,
   FileText,
@@ -20,6 +24,7 @@ export const AuditPlanTab: React.FC = () => {
     filteredEngagements,
     scopedControls,
     scopedWorkpapers,
+    scopedEntities,
     can,
     currentUser,
     selectedUniverseId,
@@ -36,6 +41,55 @@ export const AuditPlanTab: React.FC = () => {
   const [actionError, setActionError] = useState<string | null>(null);
   const [reopenNote, setReopenNote] = useState('');
   const [reopeningId, setReopeningId] = useState<string | null>(null);
+
+  // R6a: persisted plan, items, versions and gate outcomes for the selected universe, via src/data.
+  const [planItems, setPlanItems] = useState<PlanItemRow[]>([]);
+  const [planVersions, setPlanVersions] = useState<PlanVersionRow[]>([]);
+  const [gateOutcomes, setGateOutcomes] = useState<GateOutcomeRow[]>([]);
+  const [requests, setRequests] = useState<DeploymentRequestRow[]>([]);
+  const [recordsError, setRecordsError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!selectedUniverseId) {
+      setPlanItems([]);
+      setPlanVersions([]);
+      setGateOutcomes([]);
+      setRequests([]);
+      return;
+    }
+    // The development demo seed uses readable universe ids (e.g. `u-gbm`) that are not database ids;
+    // sending one to a uuid column is a Postgres error, so those reads are skipped, not attempted.
+    if (!isUuid(selectedUniverseId)) {
+      setPlanItems([]);
+      setPlanVersions([]);
+      setGateOutcomes([]);
+      setRequests([]);
+      return;
+    }
+    let cancelled = false;
+    setRecordsError(null);
+    (async () => {
+      try {
+        const plan = await latestPlanForUniverse(selectedUniverseId);
+        const [items, versions, gates, reqs] = await Promise.all([
+          plan ? listPlanItems(plan.id) : Promise.resolve([] as PlanItemRow[]),
+          plan ? planHistory(plan.id) : Promise.resolve([] as PlanVersionRow[]),
+          listGateOutcomes(selectedUniverseId),
+          listDeploymentRequests(),
+        ]);
+        if (cancelled) return;
+        setPlanItems(items);
+        setPlanVersions(versions);
+        setGateOutcomes(gates);
+        setRequests(reqs);
+      } catch (err) {
+        if (!cancelled) setRecordsError(err instanceof Error ? err.message : 'Could not load plan records.');
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedUniverseId]);
 
   const selectedEngagement =
     filteredEngagements.find((e) => e.id === selectedEngagementId) ||
@@ -70,6 +124,24 @@ export const AuditPlanTab: React.FC = () => {
     setReopenNote('');
   };
 
+  // D8: the deployment gate needs an entity to deploy. The picker lists the entities in the selected
+  // universe that are approved, matching the gate's own step-2 rule, so a user cannot pick one the
+  // database will refuse on the entity check.
+  const gateEntities = scopedEntities.filter(
+    (e) => (!selectedUniverseId || e.universeId === selectedUniverseId) && e.status === 'active'
+  );
+  const [gateEntityId, setGateEntityId] = useState<string | null>(null);
+  useEffect(() => {
+    setGateEntityId((prev) => (prev && gateEntities.some((e) => e.id === prev) ? prev : gateEntities[0]?.id ?? null));
+  }, [gateEntities]);
+
+  const handleDeployed = (engagementId: string | null) => {
+    if (engagementId) setSelectedEngagementId(engagementId);
+    if (selectedUniverseId) {
+      void listGateOutcomes(selectedUniverseId).then(setGateOutcomes).catch(() => {});
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
       {/* Header */}
@@ -84,7 +156,7 @@ export const AuditPlanTab: React.FC = () => {
           <button
             type="button"
             data-testid="plan-open-items"
-            onClick={() => openInspector('plan_items', { items: [], versions: [] })}
+            onClick={() => openInspector('plan_items', { items: planItems, versions: planVersions })}
             className="px-3 py-1.5 rounded-lg border border-hairline text-apple-12 text-primary hover:bg-surface-hover"
           >
             Plan items &amp; versions
@@ -100,7 +172,19 @@ export const AuditPlanTab: React.FC = () => {
           <button
             type="button"
             data-testid="plan-open-gate"
-            onClick={() => openInspector('deployment_gate', { result: null })}
+            onClick={() =>
+              openInspector('deployment_gate', {
+                result: null,
+                deploy: selectedUniverseId
+                  ? {
+                      universeId: selectedUniverseId,
+                      entityId: gateEntityId,
+                      period: selectedEngagement?.periodStart ?? undefined,
+                    }
+                  : null,
+                onDeployed: handleDeployed,
+              })
+            }
             className="px-3 py-1.5 rounded-lg border border-hairline text-apple-12 text-primary hover:bg-surface-hover"
           >
             Deployment gate
@@ -108,11 +192,44 @@ export const AuditPlanTab: React.FC = () => {
           <button
             type="button"
             data-testid="plan-open-ethics"
-            onClick={() => openInspector('ethics', { members: [] })}
+            onClick={() => openInspector('ethics', { engagementId: selectedEngagement?.id })}
             className="px-3 py-1.5 rounded-lg border border-hairline text-apple-12 text-primary hover:bg-surface-hover"
           >
             Ethics
           </button>
+        </div>
+      </div>
+
+      <InlineError message={recordsError} testId="plan-records-error" />
+
+      {/* R6a: the persisted plan items, version history and gate outcomes for this universe. */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4" data-testid="plan-records">
+        <div className="rounded-2xl bg-surface border border-hairline p-4" data-testid="plan-records-items">
+          <div className="text-apple-11 uppercase tracking-wider text-secondary">Plan items</div>
+          {planItems.length > 0 ? (
+            <p className="mt-1 text-apple-13 text-primary">
+              {planItems.length} item{planItems.length === 1 ? '' : 's'} · {planItems.filter((i) => i.status === 'approved').length} approved
+            </p>
+          ) : (
+            <p className="mt-1 text-apple-13 text-tertiary">No plan items yet.</p>
+          )}
+        </div>
+        <div className="rounded-2xl bg-surface border border-hairline p-4" data-testid="plan-records-versions">
+          <div className="text-apple-11 uppercase tracking-wider text-secondary">Plan versions</div>
+          {planVersions.length > 0 ? (
+            <p className="mt-1 text-apple-13 text-primary">v{planVersions[0].version} latest · {planVersions.length} recorded</p>
+          ) : (
+            <p className="mt-1 text-apple-13 text-tertiary">No versions yet.</p>
+          )}
+        </div>
+        <div className="rounded-2xl bg-surface border border-hairline p-4" data-testid="plan-records-gates">
+          <div className="text-apple-11 uppercase tracking-wider text-secondary">Deployment gates</div>
+          {gateOutcomes.length > 0 ? (
+            <p className="mt-1 text-apple-13 text-primary">{gateOutcomes.length} deployment{gateOutcomes.length === 1 ? '' : 's'} recorded</p>
+          ) : (
+            <p className="mt-1 text-apple-13 text-tertiary">No deployments recorded.</p>
+          )}
+          {requests.length > 0 && <p className="text-apple-11 text-tertiary">{requests.length} deployment request{requests.length === 1 ? '' : 's'}</p>}
         </div>
       </div>
 
@@ -215,12 +332,15 @@ export const AuditPlanTab: React.FC = () => {
                     leadAuditorId: selectedEngagement.leadAuditorId,
                     preparerId: selectedEngagement.leadAuditorId,
                   }).allowed && (
-                    <button
-                      onClick={() => handleSignOff(selectedEngagement.id)}
-                      className="px-4 py-2 bg-accent text-white font-medium text-apple-12 rounded-xl hover:opacity-90 transition-opacity shadow-xs"
+                    <HoldToConfirm
+                      label="Sign off and seal"
+                      testId="engagement-signoff"
+                      durationMs={2000}
+                      onConfirm={() => handleSignOff(selectedEngagement.id)}
+                      className="relative overflow-hidden px-4 py-2 bg-accent text-white font-medium text-apple-12 rounded-xl hover:opacity-90 transition-opacity shadow-xs"
                     >
-                      Sign-off &amp; Seal
-                    </button>
+                      Sign off and seal
+                    </HoldToConfirm>
                   )
                 ) : (
                   <div>

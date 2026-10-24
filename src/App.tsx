@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import { AppProvider, useApp } from './context/AppContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { SignInScreen } from './components/auth/SignInScreen';
+import { NoTenantScreen } from './components/auth/NoTenantScreen';
 import { InlineError } from './components/common/InlineError';
 import type { User } from './types';
 import type { TenantSeed } from './types/seed';
@@ -11,8 +12,10 @@ import { ThemeProvider } from './context/ThemeContext';
 import { HeaderBar } from './components/common/HeaderBar';
 import { NavStrip } from './components/common/NavStrip';
 import { CommandPalette } from './components/common/CommandPalette';
-import { InspectorPanel } from './components/common/InspectorPanel';
+import { FloatingWindowManager, type OpenWindow } from './components/common/FloatingWindowManager';
+import { RecordContent, INSPECTOR_TITLES, RECORD_TYPE_TO_INSPECTOR } from './components/common/RecordContent';
 import { ReviewCommentsGlobalDock } from './components/reviews/ReviewCommentsGlobalDock';
+import { ConsultationBanner } from './components/common/ConsultationBanner';
 
 // React.lazy + Suspense code-splitting of tabs per Requirement 5(b)
 const ExecutiveDashboardTab = lazy(() =>
@@ -55,6 +58,36 @@ const GlassBoxPublicRoute = lazy(() =>
     default: m.GlassBoxPublicRoute,
   }))
 );
+const PublicVerifyRoute = lazy(() =>
+  import('./components/pending/PublicVerifyRoute').then((m) => ({
+    default: m.PublicVerifyRoute,
+  }))
+);
+const ExternalAuditorPortal = lazy(() =>
+  import('./components/pending/ExternalAuditorPortal').then((m) => ({
+    default: m.ExternalAuditorPortal,
+  }))
+);
+const ExternalAuditorAccept = lazy(() =>
+  import('./components/pending/ExternalAuditorAccept').then((m) => ({
+    default: m.ExternalAuditorAccept,
+  }))
+);
+// C2.4: the member invitation acceptance route (/invite/accept?token=…). It is outside the tenant
+// shell because the invitee has no account yet; the screen creates the account and applies the
+// invitation, exactly as the external auditor acceptance does.
+const MemberAccept = lazy(() =>
+  import('./components/pending/MemberAccept').then((m) => ({
+    default: m.MemberAccept,
+  }))
+);
+// C1.1: the Microsoft Graph sign-in callback (OA-11 / SA-04). Kept outside the tenant shell so the
+// platform-level flow also lands here.
+const GraphOauthCallback = lazy(() =>
+  import('./components/auth/GraphOauthCallback').then((m) => ({
+    default: m.GraphOauthCallback,
+  }))
+);
 // Dev-only pages. The conditional is a build-time constant: in a production build the branch and
 // the dynamic imports are removed, so these modules are not emitted into the bundle at all.
 const DevPalettePage = import.meta.env.DEV
@@ -64,24 +97,6 @@ const DevPalettePage = import.meta.env.DEV
       }))
     )
   : null;
-
-// Inspector content
-const ObservationDrilldown = lazy(() => import('./components/issues/ObservationDrilldown').then((m) => ({ default: m.ObservationDrilldown })));
-const EntitySiraRcmModal = lazy(() => import('./components/universe/EntitySiraRcmModal').then((m) => ({ default: m.EntitySiraRcmModal })));
-const AuditFileModal = lazy(() => import('./components/audit/AuditFileModal').then((m) => ({ default: m.AuditFileModal })));
-const PaperWorkbenchModal = lazy(() => import('./components/audit/PaperWorkbenchModal').then((m) => ({ default: m.PaperWorkbenchModal })));
-const GlassBoxShareModal = lazy(() => import('./components/common/GlassBoxShareModal').then((m) => ({ default: m.GlassBoxShareModal })));
-const AccountSettingsModal = lazy(() => import('./components/common/AccountSettingsModal').then((m) => ({ default: m.AccountSettingsModal })));
-const CommentHistoryPanel = lazy(() => import('./components/reviews/CommentHistoryPanel').then((m) => ({ default: m.CommentHistoryPanel })));
-const CapInspector = lazy(() => import('./components/dashboard/CapInspector').then((m) => ({ default: m.CapInspector })));
-const PeopleAdminPanel = lazy(() => import('./components/admin/PeopleAdminPanel').then((m) => ({ default: m.PeopleAdminPanel })));
-const EntityApprovalPanel = lazy(() => import('./components/universe/EntityApprovalPanel').then((m) => ({ default: m.EntityApprovalPanel })));
-const DeploymentGatePanel = lazy(() => import('./components/audit/DeploymentGatePanel').then((m) => ({ default: m.DeploymentGatePanel })));
-const EthicsPanel = lazy(() => import('./components/audit/EthicsPanel').then((m) => ({ default: m.EthicsPanel })));
-const CombinedApprovalPanel = lazy(() => import('./components/plan/CombinedApprovalPanel').then((m) => ({ default: m.CombinedApprovalPanel })));
-const SiraModelEditor = lazy(() => import('./components/sira/SiraModelEditor').then((m) => ({ default: m.SiraModelEditor })));
-const SiraCyclePanel = lazy(() => import('./components/sira/SiraCyclePanel').then((m) => ({ default: m.SiraCyclePanel })));
-const PlanItemsPanel = lazy(() => import('./components/plan/PlanItemsPanel').then((m) => ({ default: m.PlanItemsPanel })));
 
 const LoadingFallback: React.FC = () => (
   <div className="max-w-7xl mx-auto px-6 py-16 flex items-center justify-center text-secondary text-apple-13">
@@ -93,113 +108,41 @@ const LoadingFallback: React.FC = () => (
 );
 
 const AppContent: React.FC = () => {
-  const { activeTab, inspector, closeInspector, ledgerError } = useApp();
+  const { activeTab, inspector, closeInspector, ledgerError, currentUser } = useApp();
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
 
-  const isInspectorOpen = Boolean(inspector.type);
-
-  const getInspectorTitle = () => {
-    switch (inspector.type) {
-      case 'observation':
-        return 'Audit Observation & 5C Analysis';
-      case 'sira':
-        return 'SIRA Risk & RCM Matrix';
-      case 'audit_file':
-        return 'Engagement Audit File';
-      case 'workbench':
-        return 'Working Paper Audit Workbench';
-      case 'glassbox_share':
-        return 'GlassBox — External Upload Portal';
-      case 'account_settings':
-        return 'Settings & Preferences';
-      case 'comment_history':
-        return 'Review Notes & 4-Eyes Discussion';
-      case 'cap_inspector':
-        return 'Corrective Action Plan (CAP) Details';
-      case 'people_admin':
-        return 'People & Roles';
-      case 'entity_approval':
-        return 'Entity Approval';
-      case 'deployment_gate':
-        return 'Deployment Gate';
-      case 'ethics':
-        return 'Ethics Acknowledgement';
-      case 'combined_approval':
-        return 'Combined Approval';
-      case 'sira_model':
-        return 'SIRA Model';
-      case 'sira_cycles':
-        return 'SIRA Cycles & Emergent Risks';
-      case 'plan_items':
-        return 'Audit Plan Items';
-      default:
-        return 'Audit Inspector';
-    }
-  };
-
-  const renderInspectorContent = () => {
-    switch (inspector.type) {
-      case 'observation':
-        return <ObservationDrilldown data={inspector.data} />;
-      case 'sira':
-        return <EntitySiraRcmModal entity={inspector.data?.entity} onClose={closeInspector} />;
-      case 'audit_file':
-        return <AuditFileModal />;
-      case 'workbench':
-        return <PaperWorkbenchModal />;
-      case 'glassbox_share':
-        return <GlassBoxShareModal />;
-      case 'account_settings':
-        return <AccountSettingsModal onClose={closeInspector} />;
-      case 'comment_history':
-        return <CommentHistoryPanel />;
-      case 'cap_inspector':
-        return <CapInspector />;
-      case 'people_admin':
-        return <PeopleAdminPanel />;
-      case 'entity_approval':
-        return <EntityApprovalPanel entity={inspector.data?.entity} onDone={closeInspector} />;
-      case 'deployment_gate':
-        return <DeploymentGatePanel result={inspector.data?.result ?? null} />;
-      case 'ethics':
-        return <EthicsPanel members={inspector.data?.members ?? []} />;
-      case 'combined_approval':
-        return <CombinedApprovalPanel request={inspector.data?.request ?? null} universeId={inspector.data?.universeId} entityId={inspector.data?.entityId} onRequested={closeInspector} />;
-      case 'sira_model':
-        return <SiraModelEditor model={inspector.data?.model ?? null} />;
-      case 'sira_cycles':
-        return <SiraCyclePanel cycles={inspector.data?.cycles ?? []} emergent={inspector.data?.emergent ?? []} />;
-      case 'plan_items':
-        return <PlanItemsPanel items={inspector.data?.items ?? []} versions={inspector.data?.versions ?? []} />;
-      default:
-        return null;
-    }
-  };
-
-  const getInspectorWidth = () => {
-    if (inspector.type === 'workbench' || inspector.type === 'audit_file') {
-      return 'max-w-6xl';
-    }
-    return 'max-w-2xl';
-  };
+  // One floating window for the current inspector record. The window id is derived from the record
+  // so a re-opened record reuses the same window (and the dock restores it, not duplicates it).
+  const inspectorWindow: OpenWindow | null = inspector.type
+    ? {
+        windowId: inspector.data?.engagement?.id
+          ? `audit_file:${inspector.data.engagement.id}`
+          : inspector.data?.workpaperId || inspector.data?.workpaper?.id
+            ? `workbench:${inspector.data.workpaperId ?? inspector.data.workpaper.id}`
+            : inspector.data?.findingId
+              ? `finding:${inspector.data.findingId}`
+              : `${inspector.type}`,
+        recordType: inspector.type,
+        recordId:
+          inspector.data?.engagement?.id ??
+          inspector.data?.workpaperId ??
+          inspector.data?.workpaper?.id ??
+          inspector.data?.findingId ??
+          '',
+        title: inspector.type ? INSPECTOR_TITLES[inspector.type] ?? 'Audit Inspector' : 'Audit Inspector',
+        data: inspector.data,
+      }
+    : null;
 
   return (
     <div className="min-h-screen bg-canvas text-primary relative overflow-x-hidden">
-      {/* Shell scales to 0.98 when sliding inspector is open (⚖ Spec: NO BLOCKING MODALS) */}
-      <motion.div
-        animate={{
-          scale: isInspectorOpen ? 0.98 : 1,
-          opacity: isInspectorOpen ? 0.92 : 1,
-        }}
-        transition={{
-          type: 'spring',
-          stiffness: 300,
-          damping: 30,
-        }}
-        className="min-h-screen flex flex-col origin-center"
-      >
+      {/* The record view is non-blocking (§27.5): no scrim, no shell scaling, no modal attribute. */}
+      <div className="min-h-screen flex flex-col">
         <HeaderBar onOpenCommandPalette={() => setIsCommandPaletteOpen(true)} />
         <NavStrip />
+
+        {/* GL-01 Dual Session banner (F4): a non-blocking strip, never a modal or a scrim. */}
+        <ConsultationBanner orgId={currentUser.orgId} />
 
         {ledgerError && (
           <div className="max-w-7xl mx-auto w-full px-6 pt-4">
@@ -220,18 +163,16 @@ const AppContent: React.FC = () => {
         </main>
 
         <ReviewCommentsGlobalDock />
-      </motion.div>
+      </div>
 
-      {/* Sliding Inspector Panel */}
-      <InspectorPanel
-        isOpen={isInspectorOpen}
-        onClose={closeInspector}
-        title={getInspectorTitle()}
-        width={getInspectorWidth()}
-        tall={inspector.type === 'workbench' || inspector.type === 'audit_file'}
-      >
-        <Suspense fallback={<div className="p-6 text-secondary text-apple-13">Loading…</div>}>{renderInspectorContent()}</Suspense>
-      </InspectorPanel>
+      {/* Record view: non-blocking floating windows (§17.1, §27.5). MODE B, managed by 5C. */}
+      {inspector.type && (
+        <FloatingWindowManager
+          windows={inspectorWindow ? [inspectorWindow] : []}
+          onCloseWindow={closeInspector}
+          width={inspector.type === 'workbench' || inspector.type === 'audit_file' ? 960 : 720}
+        />
+      )}
 
       {/* Command Palette */}
       <CommandPalette
@@ -261,9 +202,16 @@ const EXTERNAL_TOKEN_HOLDER: User = {
 // development-only dynamic import: in a production build this is null and the module is not emitted.
 const loadDemoSeed = import.meta.env.DEV ? () => import('./data/demoSeed').then((m) => m.demoSeed) : null;
 
-const AuthGate: React.FC = () => {
-  const { user } = useAuth();
-  const [seed, setSeed] = useState<TenantSeed | null>(null);
+export interface ViewRecordTarget {
+  recordType: string;
+  recordId: string;
+}
+
+const AuthGate: React.FC<{ viewRecord?: ViewRecordTarget; externalPortal?: boolean }> = ({ viewRecord, externalPortal }) => {
+  const { user, status } = useAuth();
+  // In a production build there is no demo tenant to load, so the shell renders from the empty seed
+  // and every screen shows its designed empty state. In development the flagged demo tenant loads.
+  const [seed, setSeed] = useState<TenantSeed | null>(loadDemoSeed ? null : EMPTY_SEED);
 
   useEffect(() => {
     let live = true;
@@ -274,17 +222,112 @@ const AuthGate: React.FC = () => {
     }
     return () => {
       live = false;
-      setSeed(null);
+      setSeed(loadDemoSeed ? null : EMPTY_SEED);
     };
   }, [user]);
 
-  if (!user) return <SignInScreen />;
+  // Resolve the shell from the session lifecycle, so a signed-in account with no org sees the
+  // welcome screen rather than an indefinite spinner (D4).
+  if (status === 'loading') return <LoadingFallback />;
+  if (status === 'external_auditor') {
+    return (
+      <Suspense fallback={<LoadingFallback />}>
+        <ExternalAuditorPortal />
+      </Suspense>
+    );
+  }
+  if (status === 'no_tenant') return <NoTenantScreen />;
+  if (status === 'signed_out' || status === 'platform' || !user) return <SignInScreen />;
+  // The external portal is only for that principal: a signed-in tenant member who opens /external is
+  // told plainly, never shown the tenant shell.
+  if (externalPortal) {
+    return (
+      <div className="max-w-2xl mx-auto py-16 px-6">
+        <InlineError
+          message="This page is for external auditors. Sign in with the account the organisation invited."
+          testId="external-portal-wrong-principal"
+        />
+      </div>
+    );
+  }
   if (!seed) return <LoadingFallback />;
   return (
     <AppProvider key={user.id} user={user} seed={seed}>
-      <AppContent />
+      {viewRecord ? <RecordPage target={viewRecord} /> : <AppContent />}
     </AppProvider>
   );
+};
+
+/**
+ * Full-page record view (MODE A). A breadcrumb returns to the application; there is no overlay.
+ * The record is opened in the shared content renderer, so both modes show the same component.
+ */
+const RecordPage: React.FC<{ target: ViewRecordTarget }> = ({ target }) => {
+  const { openInspector, closeInspector } = useApp();
+  const type = RECORD_TYPE_TO_INSPECTOR[target.recordType];
+
+  useEffect(() => {
+    if (!type) return;
+    const data =
+      target.recordType === 'engagement'
+        ? { engagement: { id: target.recordId } }
+        : target.recordType === 'finding'
+        ? { findingId: target.recordId }
+        : { id: target.recordId };
+    openInspector(type, data);
+    return () => closeInspector();
+  }, [type, target.recordId]);
+
+  return (
+    <div className="min-h-screen bg-canvas text-primary">
+      <HeaderBar onOpenCommandPalette={() => {}} />
+      <div className="max-w-6xl mx-auto px-6 py-6">
+        <nav aria-label="Breadcrumb" className="mb-4 text-apple-12 text-secondary flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              window.location.href = '/';
+            }}
+            className="hover:text-primary transition-colors"
+          >
+            Dashboard
+          </button>
+          <span aria-hidden>/</span>
+          <span className="text-primary">{INSPECTOR_TITLES[type] ?? 'Record'}</span>
+        </nav>
+        {type ? (
+          <div className="rounded-2xl border border-hairline bg-surface p-6" data-testid="record-page">
+            <RecordContent
+              type={type}
+              data={
+                target.recordType === 'engagement'
+                  ? { engagement: { id: target.recordId } }
+                  : target.recordType === 'finding'
+                  ? { findingId: target.recordId }
+                  : { id: target.recordId }
+              }
+              onClose={() => {}}
+            />
+          </div>
+        ) : (
+          <InlineError message="That record type is not available." testId="record-page-unknown" />
+        )}
+      </div>
+    </div>
+  );
+};
+
+const SuperAdminPortal = lazy(() =>
+  import('./components/superadmin/SuperAdminPortal').then((m) => ({ default: m.SuperAdminPortal }))
+);
+
+/** Shows the sign-in screen for an unauthenticated visitor, else the portal (which re-checks the role). */
+const PlatformGate: React.FC = () => {
+  const { user, isPlatform } = useAuth();
+  // An org member (user) is signed in but not platform staff: render the portal, which denies it in
+  // the database. Platform staff have no org identity, so `user` is null and `isPlatform` is true.
+  if (!user && !isPlatform) return <SignInScreen />;
+  return <SuperAdminPortal />;
 };
 
 const AppRoutes: React.FC = () => {
@@ -300,6 +343,20 @@ const AppRoutes: React.FC = () => {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
+  // Public route /verify/:id (certificate) and /pack/:id (Board Pack). The ONLY anonymous surface
+  // (F11). Needs no session and touches no tenant table as anon.
+  if (currentPath.startsWith('/verify/') || currentPath.startsWith('/pack/')) {
+    const kind = currentPath.startsWith('/verify/') ? 'verify' : 'pack';
+    const id = currentPath.replace(kind === 'verify' ? '/verify/' : '/pack/', '').split('/')[0];
+    return (
+      <Suspense fallback={<LoadingFallback />}>
+        <AppProvider user={EXTERNAL_TOKEN_HOLDER} seed={EMPTY_SEED}>
+          <PublicVerifyRoute kind={kind} idFromUrl={id} />
+        </AppProvider>
+      </Suspense>
+    );
+  }
+
   // Public route /e/:token (GlassBox public upload portal). Needs no session.
   if (currentPath.startsWith('/e/')) {
     const token = currentPath.replace('/e/', '').split('/')[0];
@@ -312,6 +369,47 @@ const AppRoutes: React.FC = () => {
     );
   }
 
+  // Member invitation acceptance (/invite/accept?token=…, C2.4). Outside the tenant shell and
+  // outside the auth gate: the invitee has no account yet, so the screen creates it and applies the
+  // invitation. It renders no tenant data, so it needs no session.
+  if (currentPath.startsWith('/invite/accept')) {
+    const token = new URLSearchParams(window.location.search).get('token') ?? '';
+    return (
+      <Suspense fallback={<LoadingFallback />}>
+        <MemberAccept tokenFromUrl={token} />
+      </Suspense>
+    );
+  }
+
+  // External auditor invitation acceptance (/external/accept?token=...). The visitor must be signed
+  // in; the token is presented to the invite-user Edge Function, which binds the account. Kept
+  // outside the tenant shell, like the portal itself.
+  if (currentPath.startsWith('/external/accept')) {
+    const token = new URLSearchParams(window.location.search).get('token') ?? '';
+    return (
+      <Suspense fallback={<LoadingFallback />}>
+        <ExternalAuditorAccept tokenFromUrl={token} />
+      </Suspense>
+    );
+  }
+
+  // External auditor portal (/external). A separate read-only principal (F13): it needs a session,
+  // so it renders behind the auth gate, but never inside the tenant application shell.
+  if (currentPath.startsWith('/external')) {
+    return <AuthGate externalPortal />;
+  }
+
+  // Microsoft Graph sign-in callback (/oauth/graph, C1.1). Like /external/accept it sits outside the
+  // tenant shell, so the platform-level flow also lands here; the Edge Function verifies the session
+  // from the bearer token before it does anything, so an anonymous visit stores nothing.
+  if (currentPath.startsWith('/oauth/graph')) {
+    return (
+      <Suspense fallback={<LoadingFallback />}>
+        <GraphOauthCallback screenId="oa-11" />
+      </Suspense>
+    );
+  }
+
   // Development-only tooling routes. Absent from production builds (see src/guards/prodBundle.test.ts).
   if (import.meta.env.DEV && DevPalettePage && currentPath === '/dev/palette') {
     return (
@@ -319,6 +417,24 @@ const AppRoutes: React.FC = () => {
         <DevPalettePage />
       </Suspense>
     );
+  }
+
+  // Super Admin portal (/superadmin, spec §24). A separate console for QSCorp platform staff. It
+  // renders the portal for an authenticated session and the sign-in screen otherwise; the portal
+  // itself re-checks the platform role in the database and shows a denial screen without it.
+  if (currentPath === '/superadmin') {
+    return (
+      <Suspense fallback={<LoadingFallback />}>
+        <PlatformGate />
+      </Suspense>
+    );
+  }
+
+  // Full-page record view (/view/:recordType/:id), used by MODE A of the record view and by the
+  // pop-out window (§17.1, §27.5). It needs a session, so it renders behind the auth gate.
+  if (currentPath.startsWith('/view/')) {
+    const [, , recordType, recordId] = currentPath.split('/');
+    return <AuthGate viewRecord={{ recordType, recordId }} />;
   }
 
   return <AuthGate />;

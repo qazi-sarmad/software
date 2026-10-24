@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# Local SQL harness (M6). Installs nothing; assumes postgresql-17 and the cluster are up.
+#   sudo pg_ctlcluster 17 main start
+# Recreates the database, applies the Supabase shim, applies every migration TWICE, then runs every
+# SQL test TWICE. Exits non-zero on the first failure. db name is provio_local (test 15 hardcodes it).
+set -u
+DB=provio_local
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+run() { sudo -n -u postgres psql -q -v ON_ERROR_STOP=1 -d "$DB" "$@"; }
+
+sudo -n -u postgres dropdb --if-exists "$DB" >/dev/null 2>&1
+sudo -n -u postgres createdb "$DB" || exit 1
+run -f "$ROOT/scripts/local-sql-shim.sql" >/dev/null || { echo "shim failed"; exit 1; }
+
+for pass in 1 2; do
+  for f in "$ROOT"/supabase/migrations/*.sql; do
+    if ! run < "$f" > /tmp/h-mig.log 2>&1; then
+      echo "MIGRATION FAILED (pass $pass): $f"; tail -20 /tmp/h-mig.log; exit 1
+    fi
+  done
+done
+echo "migrations applied twice"
+
+fail=0
+for pass in 1 2; do
+  for f in "$ROOT"/supabase/tests/*.sql; do
+    if ! run < "$f" > /tmp/h-test.log 2>&1; then
+      echo "TEST FAILED (pass $pass): $(basename "$f")"; grep -E "ERROR|FAIL" /tmp/h-test.log | head -5; fail=1
+    fi
+  done
+done
+[ "$fail" = 0 ] && echo "all SQL tests passed twice"
+exit $fail

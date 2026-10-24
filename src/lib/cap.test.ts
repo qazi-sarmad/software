@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { transitionCapStatus } from './cap';
+import { ACTION_CAPABILITY, capStatusFromDb, capStatusToDb, DbCapStatus, transitionCapStatus } from './cap';
 import { buildDefaultOrgRoleConfig, canPerformCapability } from './orgCapabilities';
-import { AuditCapItem, CapCapability, OrgRoleConfig, Role, User } from '../types';
+import { AuditCapItem, CapCapability, CapStatus, OrgRoleConfig, Role, User } from '../types';
 
 const user = (role: Role, id?: string): User => ({
   id: id ?? `u-${role}`,
@@ -22,7 +22,6 @@ const baseCap = (over: Partial<AuditCapItem> = {}): AuditCapItem => ({
   severity: 'high',
   dueDate: '2026-10-01',
   status: 'Open',
-  retestStatus: 'Not tested',
   identifiedDate: '2026-09-01',
   entityId: 'e1',
   engagementId: 'eng1',
@@ -40,8 +39,8 @@ describe('default capability matrix', () => {
     expect(canPerformCapability(user('reviewer'), 'cap_verify_close', defaults).allowed).toBe(true);
     expect(canPerformCapability(user('reviewer'), 'cap_change_due_date', defaults).allowed).toBe(false);
   });
-  it('cia and audit_manager can fail retest and change due date', () => {
-    expect(canPerformCapability(user('cia'), 'cap_fail_retest', defaults).allowed).toBe(true);
+  it('cia and audit_manager can change due date; no retest capability exists (spec §28)', () => {
+    expect(canPerformCapability(user('cia'), 'cap_change_due_date', defaults).allowed).toBe(true);
     expect(canPerformCapability(user('audit_manager'), 'cap_change_due_date', defaults).allowed).toBe(true);
   });
 });
@@ -119,7 +118,7 @@ describe('transitionCapStatus', () => {
       orgConfig: defaults,
     });
     expect(r.ok).toBe(false);
-    if (!r.ok) expect(r.reason).toMatch(/Four-eyes/i);
+    if (!r.ok) expect(r.reason).toMatch(/Segregation of duties/i);
   });
 
   it('reviewer verifies close and appends history', () => {
@@ -134,7 +133,6 @@ describe('transitionCapStatus', () => {
     expect(r.ok).toBe(true);
     if (r.ok) {
       expect(r.cap.status).toBe('Closed');
-      expect(r.cap.retestStatus).toBe('Passed');
       expect(r.cap.statusHistory?.[0].fromStatus).toBe('Pending validation');
       expect(r.cap.statusHistory?.[0].toStatus).toBe('Closed');
     }
@@ -159,25 +157,52 @@ describe('transitionCapStatus', () => {
     expect(closed.ok).toBe(false);
   });
 
-  it('fail_retest requires manager capability and note', () => {
-    const prep = transitionCapStatus({
-      cap: baseCap({ status: 'In progress' }),
-      action: 'fail_retest',
-      user: user('preparer'),
-      orgConfig: defaults,
-      note: 'Long enough fail note here',
-    });
-    expect(prep.ok).toBe(false);
+  it('there is no fail_retest transition (spec §28 discards the retest workflow)', () => {
+    // The action set is closed: fail_retest is not a member of CapStatusAction, so the pure
+    // transition function cannot express it. The type system enforces this at build time; this
+    // test records the intent and guards against reintroduction.
+    const actions: string[] = Object.keys(ACTION_CAPABILITY);
+    expect(actions).not.toContain('fail_retest');
+    expect(actions.sort()).toEqual(
+      ['mark_in_progress', 'reject', 'submit_validation', 'verify_close'].sort(),
+    );
+  });
+});
 
-    const mgr = transitionCapStatus({
-      cap: baseCap({ status: 'In progress' }),
-      action: 'fail_retest',
-      user: user('audit_manager'),
-      orgConfig: defaults,
-      note: 'Long enough fail note here',
-      nowIso: '2026-09-30T12:00:00Z',
-    });
-    expect(mgr.ok).toBe(true);
-    if (mgr.ok) expect(mgr.cap.status).toBe('Overdue');
+// D-6D-CAP: the single mapping between the UI vocabulary and the §16.2 database vocabulary.
+describe('cap status mapping (D-6D-CAP)', () => {
+  const pairs: Array<[CapStatus, DbCapStatus]> = [
+    ['Open', 'open'],
+    ['In progress', 'open'],
+    ['Pending validation', 'unverified'],
+    ['Overdue', 'overdue_unverified'],
+    ['Closed', 'verified_closed'],
+  ];
+
+  it('maps every UI status to the database vocabulary', () => {
+    for (const [ui, db] of pairs) {
+      expect(capStatusToDb(ui)).toBe(db);
+    }
+  });
+
+  it('maps every database status back to a UI status', () => {
+    expect(capStatusFromDb('open')).toBe('Open');
+    expect(capStatusFromDb('unverified')).toBe('Pending validation');
+    expect(capStatusFromDb('overdue_unverified')).toBe('Overdue');
+    expect(capStatusFromDb('verified_closed')).toBe('Closed');
+    expect(capStatusFromDb('verified_closed_delay')).toBe('Closed');
+  });
+
+  it('covers every database status exactly once (no divergent status set)', () => {
+    const dbStatuses: DbCapStatus[] = [
+      'open',
+      'verified_closed',
+      'verified_closed_delay',
+      'unverified',
+      'overdue_unverified',
+    ];
+    for (const db of dbStatuses) {
+      expect(capStatusFromDb(db)).toBeTruthy();
+    }
   });
 });

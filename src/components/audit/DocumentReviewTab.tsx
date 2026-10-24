@@ -2,10 +2,29 @@ import React, { useState, useMemo } from 'react';
 import { WorkingPaper } from '../../types';
 import { useApp } from '../../context/AppContext';
 import { runDocumentReview, DocumentReviewCheckResult } from '../../lib/analytics';
+import { runStructuralReview, type DocCheckResult } from '../../lib/documentReview';
 import { FileText, CheckCircle2, AlertTriangle, ShieldCheck } from '../common/Icons';
 
 interface DocumentReviewTabProps {
   workpaper: WorkingPaper;
+}
+
+/** The text checks and the structural checks share a shape; the tab renders both. */
+interface ReviewRow {
+  rule: string;
+  passed: boolean;
+  message: string;
+  findings: string[];
+}
+
+function toRows(checks: Array<DocumentReviewCheckResult | DocCheckResult>): ReviewRow[] {
+  return checks.map((c) => ({
+    rule: c.rule,
+    passed: c.passed,
+    message: c.message,
+    findings: (c.findings as Array<string | { where: string; detail: string }>).map((f) =>
+      typeof f === 'string' ? f : `${f.where}: ${f.detail}`),
+  }));
 }
 
 export const DocumentReviewTab: React.FC<DocumentReviewTabProps> = ({ workpaper }) => {
@@ -14,7 +33,9 @@ export const DocumentReviewTab: React.FC<DocumentReviewTabProps> = ({ workpaper 
   const [docText, setDocText] = useState(documentSample);
 
   const reviewResults = useMemo(() => {
-    return runDocumentReview(docText);
+    // §13.1: the text checks (placeholders, signatures, dates, empty sections) and the structural
+    // checks (cross-footing, numeric consistency, template conformance) always run together.
+    return toRows([...runDocumentReview(docText), ...runStructuralReview(docText)]);
   }, [docText]);
 
   return (
@@ -22,10 +43,10 @@ export const DocumentReviewTab: React.FC<DocumentReviewTabProps> = ({ workpaper 
       <div className="p-4 rounded-xl bg-surface-sunken border border-hairline space-y-2">
         <div className="flex items-center gap-2 text-primary font-medium text-apple-13">
           <FileText className="w-4 h-4 text-verdigris" />
-          <span>Deterministic Document Review Engine (⚖ Law 1 &amp; Law 2)</span>
+          <span>Document Review</span>
         </div>
         <p className="text-apple-12 text-secondary">
-          Extracts and inspects policy text for incomplete placeholders, missing attestation signatures, invalid date ranges, and empty section bodies using deterministic AST token rules. No cloud LLM.
+          Checks policy text for incomplete placeholders, missing signatures, invalid date ranges and empty sections. Runs locally; no cloud AI.
         </p>
       </div>
 

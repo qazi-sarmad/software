@@ -405,7 +405,7 @@ The CAP register and the issued report must match exactly (§15.5). Any mismatch
 - Each open engagement appears as an in-app **floating window** with distinct "Audit File" chrome, so it is clearly separate from the main application.
 - It can be **minimised** to a dock, **moved**, and **dragged out** as its own browser window. A pop-out window shares the origin and session, and stays in sync through Realtime.
 - It is opened by a click, so popup blockers do not interfere.
-- It is **non-blocking.** Inspector panels slide in inside the window.
+- It is **non-blocking.** Records open inside the window as a full-page view or a floating window (the two-mode record view, §27.5).
 
 ### 17.2 Document Viewer
 - Reachable from anywhere in the engagement, as a right-side slide-in or a popup.
@@ -601,7 +601,7 @@ Bespoke 17px inline SVG icons at stroke 1.3. No icon fonts. No third-party icon 
 - Respects `prefers-reduced-motion`.
 
 ### 27.5 Interaction
-- **No blocking modals.** Sliding inspector panels, the Audit File window and the confirmation panel are used instead.
+- **No blocking modals.** A **two-mode record view** replaces the old sliding inspector panel: a record opens either as a **full page** (its own `/view/:recordType/:id` route with a breadcrumb) or in a **floating window** (draggable, minimisable, pop-out — the Audit File window chrome). The mode is the user's stored `record_view_mode` preference. The Audit File window and the confirmation panel are also used. No surface renders a backdrop scrim or `aria-modal`.
 - Every screen has designed empty, loading and error states.
 - WCAG AA contrast is verified.
 
@@ -631,7 +631,7 @@ Never reintroduce:
 
 ## 29. Build and Verification
 
-Builds are carried out with AI builders. Each task closes only after the following checks.
+Each task closes only after the following checks.
 
 - **Type check, unit tests and build:** `tsc --noEmit`, `vitest run` and `vite build` must pass. One commit per task. Stop at the first failed check.
 - **Engine logic:** every deterministic function has unit tests.
@@ -640,7 +640,7 @@ Builds are carried out with AI builders. Each task closes only after the followi
 - **Parity:** `docs/PARITY.md` maps every section of this specification to Present, Partial or Missing, with evidence.
 - **Screenshots:** every changed screen is captured in all three presets, in light and dark, on each task. A full sweep of every screen in every variant is run at each gate boundary.
 - **Per-gate report:** files changed, real test counts, parity status, screenshots, decisions made, and an explicit NOT DONE list.
-- **AI-builder caution:** generated code is verified through the tests above, not by reading it.
+- **Caution:** code is verified through the tests above, not by reading it alone.
 
 ## 30. Phase 2 decisions
 

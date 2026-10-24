@@ -5,6 +5,7 @@ import { AuditObservation, Severity } from '../../types';
 import { departmentsOf, auditsForDepartment, workpapersForAudit } from '../../lib/findingTarget';
 import { AlertCircle, CheckCircle2 } from '../common/Icons';
 import { InlineError } from '../common/InlineError';
+import { AiAssist } from '../common/AiAssist';
 
 interface ObservationDrilldownProps {
   data?: {
@@ -16,7 +17,7 @@ interface ObservationDrilldownProps {
 }
 
 export const ObservationDrilldown: React.FC<ObservationDrilldownProps> = ({ data, onClose }) => {
-  const { addObservation, closeInspector } = useApp();
+  const { addObservation, closeInspector, currentUser } = useApp();
   const { scopedWorkpapers, scopedEntities, scopedEngagements } = useScopedData();
 
   const existingObs = data?.observation;
@@ -95,7 +96,7 @@ export const ObservationDrilldown: React.FC<ObservationDrilldownProps> = ({ data
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <span className="text-apple-11 font-semibold text-cinnabar bg-cinnabar-subtle px-2.5 py-1 rounded uppercase">
-            {existingObs.severity} Severity Finding
+            {existingObs.severity} Severity Observation
           </span>
         </div>
 
@@ -149,7 +150,7 @@ export const ObservationDrilldown: React.FC<ObservationDrilldownProps> = ({ data
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="border-b border-hairline pb-3">
-        <h3 className="text-apple-15 font-semibold text-primary">Raise Formal Audit Finding</h3>
+        <h3 className="text-apple-15 font-semibold text-primary">Raise Audit Observation</h3>
         <p className="text-apple-12 text-secondary mt-0.5">
           Standardized 5C observation structure committed to hash ledger
         </p>
@@ -205,7 +206,7 @@ export const ObservationDrilldown: React.FC<ObservationDrilldownProps> = ({ data
       </div>
 
       <div className="space-y-1.5">
-        <label className="text-apple-12 font-medium text-secondary">Finding Title</label>
+        <label className="text-apple-12 font-medium text-secondary">Observation Title</label>
         <input
           type="text"
           value={title}
@@ -232,7 +233,7 @@ export const ObservationDrilldown: React.FC<ObservationDrilldownProps> = ({ data
       </div>
 
       <div className="space-y-1.5">
-        <label className="text-apple-12 font-medium text-secondary">Condition (Observation)</label>
+        <label className="text-apple-12 font-medium text-secondary">Condition (What was found)</label>
         <textarea
           rows={2}
           value={condition}
@@ -264,6 +265,23 @@ export const ObservationDrilldown: React.FC<ObservationDrilldownProps> = ({ data
         />
       </div>
 
+      <AiAssist
+        orgId={currentUser.orgId ?? ''}
+        useCase="observation_draft"
+        recordType="observation"
+        recordId={'new'}
+        allowedNumbers={[]}
+        buildPrompt={() => [
+          `Draft an audit observation.`,
+          title ? `Title: ${title}` : '',
+          condition ? `Condition: ${condition}` : '',
+          criteria ? `Criteria: ${criteria}` : '',
+          recommendation ? `Considered recommendation: ${recommendation}` : '',
+          `Severity: ${severity}.`,
+        ].filter(Boolean).join('\n')}
+        onAccept={(text) => setCondition((c) => (c ? `${c}\n${text}` : text))}
+      />
+
       <InlineError message={formError} testId="observation-form-error" />
 
       <div className="pt-4 flex justify-end gap-3">
@@ -278,7 +296,7 @@ export const ObservationDrilldown: React.FC<ObservationDrilldownProps> = ({ data
           type="submit"
           className="px-5 py-2 bg-accent text-white font-medium text-apple-12 rounded-xl hover:opacity-90 transition-opacity shadow-xs"
         >
-          Commit Finding
+          Record Observation
         </button>
       </div>
     </form>

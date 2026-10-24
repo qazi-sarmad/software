@@ -201,7 +201,7 @@ export function useScopedData() {
     ).length;
 
     // Greeting subtitle based strictly on scoped items
-    const greetingSubtitle = `${inProgressEngagements} engagement${inProgressEngagements === 1 ? '' : 's'} in progress • ${openIssues} open finding${openIssues === 1 ? '' : 's'} • ${criticalIssues} critical`;
+    const greetingSubtitle = `${inProgressEngagements} engagement${inProgressEngagements === 1 ? '' : 's'} in progress • ${openIssues} open issue${openIssues === 1 ? '' : 's'} • ${criticalIssues} critical`;
 
     // Department breakdown for Sunburst
     const deptMap: Record<string, { total: number; issues: AuditIssue[] }> = {};

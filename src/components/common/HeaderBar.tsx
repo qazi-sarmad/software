@@ -13,10 +13,14 @@ import {
   Moon,
   Laptop,
   Settings,
+  Sliders,
   LogOut,
   ChevronDown,
   Building,
   Users,
+  Upload,
+  Activity,
+  Zap,
 } from './Icons';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -92,7 +96,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ onOpenCommandPalette }) =>
             </span>
           </button>
 
-          {/* Universe Switcher: ONLY if user has access to multiple universes */}
+          {/* Universe Switcher: ONLY if user has access to multiple universes (inline on md+) */}
           {hasMultipleUniverses && (
             <div className="hidden md:flex items-center gap-1.5 pl-3 border-l border-hairline">
               <Select
@@ -122,6 +126,19 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ onOpenCommandPalette }) =>
             </kbd>
           </button>
         </div>
+
+        {/* Center: search icon button on narrow screens (D15) — the full search field reflows away
+            below the `sm` breakpoint, so an icon keeps the entry point reachable at 375px. */}
+        <button
+          type="button"
+          onClick={onOpenCommandPalette}
+          data-testid="header-search-compact"
+          className="sm:hidden p-2 rounded-xl bg-surface-elevated hover:bg-surface-hover border border-hairline text-secondary hover:text-primary transition-colors shadow-xs shrink-0"
+          title="Search or jump to..."
+          aria-label="Search or jump to"
+        >
+          <Search className="w-4 h-4 stroke-[1.5]" />
+        </button>
 
         {/* Right Zone: Header Calendar Icon Button, Theme Toggle, Profile Menu */}
         <div className="flex items-center gap-2.5 shrink-0 relative">
@@ -236,16 +253,65 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ onOpenCommandPalette }) =>
 
                   {/* Menu items */}
                   <div className="py-1">
+                    {/* Universe switcher on narrow screens (D15): the inline switcher is hidden
+                        below `md`, so the same choice is offered here instead of disappearing. */}
+                    {hasMultipleUniverses && (
+                      <div className="md:hidden px-3 py-2 border-b border-hairline mb-1" data-testid="mobile-universe-switcher">
+                        <div className="text-apple-11 text-secondary uppercase font-medium mb-1">
+                          Audit universe
+                        </div>
+                        <Select
+                          ariaLabel="Select audit universe"
+                          value={selectedUniverseId}
+                          onChange={(v) => {
+                            setSelectedUniverseId(v || null);
+                            setIsProfileOpen(false);
+                          }}
+                          icon={<Building className="w-3.5 h-3.5 text-secondary stroke-[1.5]" />}
+                          options={scopedUniverses.map((u) => ({
+                            value: u.id,
+                            label: `${u.name} (${u.code})`,
+                            hint: `${u.totalEntities} entities`,
+                          }))}
+                        />
+                      </div>
+                    )}
                     {(hasRight(currentUser, 'manage_users') || hasRight(currentUser, 'manage_roles')) && (
                       <button
                         onClick={() => {
                           openInspector('people_admin');
                           setIsProfileOpen(false);
                         }}
+                        data-testid="menu-people-admin"
                         className="w-full text-left px-3 py-2 rounded-xl text-primary hover:bg-surface-hover transition-colors flex items-center gap-2.5"
                       >
                         <Users className="w-4 h-4 text-secondary stroke-[1.5]" />
                         <span>People &amp; Roles</span>
+                      </button>
+                    )}
+                    {hasRight(currentUser, 'edit_config') && (
+                      <button
+                        onClick={() => {
+                          openInspector('org_settings');
+                          setIsProfileOpen(false);
+                        }}
+                        className="w-full text-left px-3 py-2 rounded-xl text-primary hover:bg-surface-hover transition-colors flex items-center gap-2.5"
+                      >
+                        <Sliders className="w-4 h-4 text-secondary stroke-[1.5]" />
+                        <span>Organisation settings</span>
+                      </button>
+                    )}
+                    {hasRight(currentUser, 'edit_config') && (
+                      <button
+                        onClick={() => {
+                          openInspector('org_control');
+                          setIsProfileOpen(false);
+                        }}
+                        data-testid="menu-org-control"
+                        className="w-full text-left px-3 py-2 rounded-xl text-primary hover:bg-surface-hover transition-colors flex items-center gap-2.5"
+                      >
+                        <Zap className="w-4 h-4 text-secondary stroke-[1.5]" />
+                        <span>Assurance control plane</span>
                       </button>
                     )}
                     <button
@@ -258,6 +324,32 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ onOpenCommandPalette }) =>
                       <Settings className="w-4 h-4 text-secondary stroke-[1.5]" />
                       <span>Account settings</span>
                     </button>
+                    {hasRight(currentUser, 'manage_engagements') && (
+                      <button
+                        onClick={() => {
+                          openInspector('import_wizard');
+                          setIsProfileOpen(false);
+                        }}
+                        data-testid="menu-import"
+                        className="w-full text-left px-3 py-2 rounded-xl text-primary hover:bg-surface-hover transition-colors flex items-center gap-2.5"
+                      >
+                        <Upload className="w-4 h-4 text-secondary stroke-[1.5]" />
+                        <span>Import</span>
+                      </button>
+                    )}
+                    {hasRight(currentUser, 'manage_engagements') && (
+                      <button
+                        onClick={() => {
+                          openInspector('activity_log');
+                          setIsProfileOpen(false);
+                        }}
+                        data-testid="menu-activity-log"
+                        className="w-full text-left px-3 py-2 rounded-xl text-primary hover:bg-surface-hover transition-colors flex items-center gap-2.5"
+                      >
+                        <Activity className="w-4 h-4 text-secondary stroke-[1.5]" />
+                        <span>Activity log</span>
+                      </button>
+                    )}
                   </div>
 
                   {/* Sign out ends the session. There is no account or role switching. */}

@@ -48,7 +48,7 @@ export const GanttTimeWarp: React.FC<GanttProps> = ({
             <span className="w-2 h-2 rounded-full bg-accent" /> In Progress
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-verdigris" /> Sealed / Signed-off
+            <span className="w-2 h-2 rounded-full bg-verdigris" /> Sealed
           </span>
         </div>
       </div>
@@ -84,7 +84,7 @@ export const GanttTimeWarp: React.FC<GanttProps> = ({
               title: eng.title,
               category: `Stage: ${eng.stage.toUpperCase()}`,
               subtitle: `Progress: ${eng.completionPercent}% complete`,
-              status: isSigned ? 'Signed-off & Sealed' : 'In Fieldwork',
+              status: isSigned ? 'Sealed' : 'In Fieldwork',
               statusType: isSigned ? ('verdigris' as const) : ('neutral' as const),
               dueDate: eng.dueDate,
               metrics: [

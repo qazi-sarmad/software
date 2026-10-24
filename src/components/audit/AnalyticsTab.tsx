@@ -48,10 +48,10 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({ workpaper }) => {
       <div className="p-4 rounded-xl bg-surface-sunken border border-hairline space-y-2">
         <div className="flex items-center gap-2 text-primary font-medium text-apple-13">
           <Activity className="w-4 h-4 text-verdigris" />
-          <span>Deterministic Audit Analytics Engine (⚖ Law 1: Hard-coded Math)</span>
+          <span>Audit Analytics</span>
         </div>
         <p className="text-apple-12 text-secondary">
-          All financial variance, trial balance checks, and anomaly detection rules are executed locally with deterministic mathematical formulas. Zero AI involvement.
+          Variance, trial balance and anomaly checks run locally with fixed formulas. No AI.
         </p>
       </div>
 
@@ -109,7 +109,7 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({ workpaper }) => {
             Analysis Output ({results.length} records • {flaggedCount} flagged)
           </h3>
           <span className="text-apple-11 text-verdigris font-semibold flex items-center gap-1">
-            <ShieldCheck className="w-3.5 h-3.5" /> Deterministic Verification
+            <ShieldCheck className="w-3.5 h-3.5" /> Independently verified
           </span>
         </div>
         <div className="border border-hairline rounded-xl overflow-hidden bg-surface">
@@ -120,7 +120,7 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({ workpaper }) => {
                 <th className="p-3 font-medium text-right">Current Period</th>
                 <th className="p-3 font-medium text-right">Prior / Benchmark</th>
                 <th className="p-3 font-medium text-right">Variance ($)</th>
-                <th className="p-3 font-medium">Flag / Finding</th>
+                <th className="p-3 font-medium">Flag / Observation</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-hairline">

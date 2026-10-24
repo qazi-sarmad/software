@@ -420,7 +420,7 @@ describe('Task A: Scoped Visibility and Rights & Responsibilities', () => {
       preparerId: 'usr-rev-1',
     });
     expect(reviewOwnWork.allowed).toBe(false);
-    expect(reviewOwnWork.reason).toContain('Four-eyes policy');
+    expect(reviewOwnWork.reason).toContain('Segregation of duties');
   });
 
   it('Role gating: Preparer cannot approve audit records or sign-offs', () => {
@@ -457,7 +457,7 @@ describe('Task A: Scoped Visibility and Rights & Responsibilities', () => {
     // Attempting edit on locked item -> disallowed
     const editLocked = canPerformAction(ciaUser, 'edit_workpaper', { isLocked: true });
     expect(editLocked.allowed).toBe(false);
-    expect(editLocked.reason).toContain('sealed and signed-off');
+    expect(editLocked.reason).toContain('sealed');
 
     // Attempting reopen with short note (< 10 chars) -> disallowed
     const reopenShort = canPerformAction(ciaUser, 'reopen', {
@@ -583,6 +583,6 @@ describe('Task A: Scoped Visibility and Rights & Responsibilities', () => {
     // Reviewer reviewing work prepared by themselves -> BLOCKED BY FOUR-EYES
     const reviewSelf = canPerformAction(reviewerUser, 'review_sign_off', { preparerId: 'usr-rev' });
     expect(reviewSelf.allowed).toBe(false);
-    expect(reviewSelf.reason).toContain('Four-eyes policy');
+    expect(reviewSelf.reason).toContain('Segregation of duties');
   });
 });

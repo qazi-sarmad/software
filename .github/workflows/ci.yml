@@ -6,6 +6,13 @@ on:
   pull_request:
   workflow_dispatch:
 
+# The hosted test project is shared. Two runs applying migrations at the same
+# time race on DDL (relation/policy already exists, tuple concurrently updated).
+# Serialise them; never cancel a run mid-migration.
+concurrency:
+  group: provio-test-db
+  cancel-in-progress: false
+
 jobs:
   gates:
     runs-on: ubuntu-24.04
@@ -41,7 +48,20 @@ jobs:
       - name: 5. Shrink check
         run: node scripts/check-shrink.mjs
 
-      - name: 6. Migrations and SQL tests (test project only)
+      - name: 6. Tutorial check
+        env:
+          # CI records nothing live (no backend), so the committed GIFs are placeholders. They are
+          # allowed here only with this flag, and the count is printed; the pre-PR gate runs --strict.
+          TUTORIALS_ALLOW_PLACEHOLDER: '1'
+        run: npm run check-tutorials
+
+      - name: 6b. Edge Function deploy list
+        run: node scripts/check-function-deploy-list.mjs
+
+      - name: 6c. UI contract
+        run: node scripts/check-ui-contract.mjs
+
+      - name: 7. Migrations and SQL tests (test project only)
         if: ${{ hashFiles('supabase/migrations/**') != '' }}
         env:
           TEST_SUPABASE_DB_URL: ${{ secrets.TEST_SUPABASE_DB_URL }}
@@ -57,7 +77,7 @@ jobs:
             psql "$TEST_SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f "$f"
           done
 
-      - name: 7. Playwright
+      - name: 8. Playwright
         env:
           VITE_SUPABASE_URL: ${{ secrets.TEST_SUPABASE_URL }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.TEST_SUPABASE_PUBLISHABLE_KEY }}
@@ -66,7 +86,35 @@ jobs:
           SUPABASE_SECRET_KEY: ${{ secrets.TEST_SUPABASE_SECRET_KEY }}
         run: |
           npx playwright install --with-deps chromium
-          npx playwright test
+          npx playwright test --project=chromium
+
+      - name: 9. Screenshot sweep (all presets and themes)
+        # C5.4 (spec §29). Captures every contract screen in three presets and two themes and
+        # uploads the PNGs as an artifact. Never committed (artifacts/screenshots/ is git-ignored).
+        continue-on-error: true
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          # Seed the synthetic users (writes e2e/.auth/passwords.json, git-ignored).
+          npx tsx e2e/global-setup.ts || true
+          # Start the dev server the sweep drives, wait for it, then run the sweep and stop it.
+          npm run dev > /tmp/screenshots-dev.log 2>&1 &
+          DEV_PID=$!
+          for i in $(seq 1 60); do
+            if curl -sf http://localhost:3000 > /dev/null; then break; fi
+            sleep 1
+          done
+          npm run screenshots || echo "screenshot sweep did not complete; see manifest.json"
+          kill $DEV_PID || true
+      - name: Upload screenshots
+        if: always() && hashFiles('artifacts/screenshots/**') != ''
+        uses: actions/upload-artifact@v7
+        with:
+          name: screenshots
+          path: artifacts/screenshots/
+          retention-days: 14
 
       - name: Upload Playwright report on failure
         if: failure() && hashFiles('playwright-report/**') != ''

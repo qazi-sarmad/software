@@ -85,4 +85,125 @@ describe('source guards for production paths', () => {
   it('TEMP_AUTH is removed: no references anywhere in src', () => {
     expect(offenders(/TEMP_AUTH|tempAuth|TempSignInForm|resolveTempAccount/)).toEqual([]);
   });
+
+  it('never reintroduces a retest workflow (spec §28)', () => {
+    // The capability list, the transition action set and the UI must not mention a retest workflow
+    // or a retest status. "Retry" (a button that re-runs a failed read) is a different word and is
+    // matched only when it appears as retest/re-test/fail_retest.
+    expect(offenders(/fail_retest|retestStatus|RetestStatus|Re-?[Tt]est/i)).toEqual([]);
+  });
+
+  it('keeps Observation, Finding and Issue distinct in user-visible copy (D17, spec §14.1)', () => {
+    // An Observation is the draft working record; a Finding is concluded (readability passed); an
+    // Issue is a thematic group of findings. The three words must not be used interchangeably, so
+    // the action that raises the *draft* must not be labelled a "finding", and the issue register
+    // must not be titled as if it held findings. Only string literals and JSX text are user-visible.
+    const visibleSegments = (line: string): string[] => {
+      const t = line.trim();
+      if (t.startsWith('*') || t.startsWith('//') || t.startsWith('/*')) return [];
+      const segments: string[] = [];
+      for (const m of line.matchAll(/'([^']*)'|"([^"]*)"|`([^`]*)`/g)) {
+        segments.push(m[1] ?? m[2] ?? m[3] ?? '');
+      }
+      for (const m of line.matchAll(/>([^<>{}]+)</g)) segments.push(m[1]);
+      return segments;
+    };
+    // Phrases that call the draft an observation's action a "finding". The separator must be a
+    // space, so RPC/identifier names such as raise_finding_from_result and raiseFinding do not match.
+    const draftCalledFinding =
+      /\b(raise|commit|record|new|create)\s+(formal\s+)?finding\b|\bfinding title\b|\bseverity finding\b/i;
+    const hits = prodFiles
+      .filter((f) =>
+        readFileSync(f, 'utf-8')
+          .split('\n')
+          .some((line) => visibleSegments(line).some((s) => draftCalledFinding.test(s))),
+      )
+      .map((f) => relative(SRC, f));
+    expect(hits).toEqual([]);
+  });
+
+  it('uses "sealed" for the final state in user-visible copy (D18, spec §10.4)', () => {
+    // "Sealed" names the final read-only state; "sign off" is the action that produces it. A
+    // user-visible string must not present "signed off" as a state or spell out "Formally
+    // Signed-Off". Only string literals and JSX text are user-visible; status slugs such as
+    // 'signed_off' and identifiers are not.
+    const visibleSegments = (line: string): string[] => {
+      const t = line.trim();
+      if (t.startsWith('*') || t.startsWith('//') || t.startsWith('/*')) return [];
+      const segments: string[] = [];
+      for (const m of line.matchAll(/'([^']*)'|"([^"]*)"|`([^`]*)`/g)) {
+        segments.push(m[1] ?? m[2] ?? m[3] ?? '');
+      }
+      for (const m of line.matchAll(/>([^<>{}]+)</g)) segments.push(m[1]);
+      return segments;
+    };
+    const sealedMisuse = /\bformally signed[- ]off\b|\bis signed off\b|\bsigned[- ]off and\b|\bsigned off\b|\bsigned-off\b/i;
+    // data-testid / id values are slugs, not prose, so skip any segment that is entirely
+    // lowercase letters, digits and hyphens.
+    const isSlug = (s: string) => /^[a-z0-9-]+$/.test(s.trim());
+    const hits = prodFiles
+      .filter((f) =>
+        readFileSync(f, 'utf-8')
+          .split('\n')
+          .some((line) =>
+            visibleSegments(line).some((s) => !isSlug(s) && sealedMisuse.test(s)),
+          ),
+      )
+      .map((f) => relative(SRC, f));
+    expect(hits).toEqual([]);
+  });
+
+  it('has no marketing jargon in user-visible copy (D19)', () => {
+    // Screen text must be plain English. "Zero-Trust", "Attested on Hash-Chain",
+    // "Internal Audit & Risk Governance OS", "4-Eyes" and friends are jargon; use the plain
+    // replacements instead. Only string literals and JSX text are user-visible.
+    const visibleSegments = (line: string): string[] => {
+      const t = line.trim();
+      if (t.startsWith('*') || t.startsWith('//') || t.startsWith('/*')) return [];
+      const segments: string[] = [];
+      for (const m of line.matchAll(/'([^']*)'|"([^"]*)"|`([^`]*)`/g)) {
+        segments.push(m[1] ?? m[2] ?? m[3] ?? '');
+      }
+      for (const m of line.matchAll(/>([^<>{}]+)</g)) segments.push(m[1]);
+      return segments;
+    };
+    const jargon = /zero[- ]trust|hash[- ]chain|risk governance os|attested on|4-eyes|four-eyes/i;
+    const hits = prodFiles
+      .filter((f) =>
+        readFileSync(f, 'utf-8')
+          .split('\n')
+          .some((line) => visibleSegments(line).some((s) => jargon.test(s))),
+      )
+      .map((f) => relative(SRC, f));
+    expect(hits).toEqual([]);
+  });
+
+  it('never shows an internal right slug to the user (D14)', () => {
+    // Disabled controls must explain themselves in plain language via src/lib/rightLabels.ts; a
+    // user-visible string must never spell out perform_work, review_and_approve, etc. Only the
+    // contents of a string literal or of JSX text are user-visible, so we inspect those segments
+    // and ignore comments, identifiers and object keys such as `right: 'perform_work'`.
+    const slug =
+      /\b(perform_work|review_and_approve|manage_engagements|approve_plan|manage_users|can_reopen|view_all_scopes|edit_config|manage_roles|manage_team)\b/;
+    const rightWord = /\b(right|permission)s?\b/i;
+    const visibleSegments = (line: string): string[] => {
+      const t = line.trim();
+      if (t.startsWith('*') || t.startsWith('//') || t.startsWith('/*')) return [];
+      const segments: string[] = [];
+      for (const m of line.matchAll(/'([^']*)'|"([^"]*)"|`([^`]*)`/g)) {
+        segments.push(m[1] ?? m[2] ?? m[3] ?? '');
+      }
+      for (const m of line.matchAll(/>([^<>{}]+)</g)) segments.push(m[1]);
+      return segments;
+    };
+    const files = prodFiles.filter((f) => !relative(SRC, f).endsWith('lib/rightLabels.ts'));
+    const hits = files
+      .filter((f) =>
+        readFileSync(f, 'utf-8')
+          .split('\n')
+          .some((line) => visibleSegments(line).some((s) => slug.test(s) && rightWord.test(s))),
+      )
+      .map((f) => relative(SRC, f));
+    expect(hits).toEqual([]);
+  });
 });

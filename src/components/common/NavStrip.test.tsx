@@ -17,23 +17,22 @@ describe('Part 4.1 NavStrip Component & Draggable Pill', () => {
     );
 
     const expected = [
-      'Executive Summary',
-      'Pending Tasks',
+      'Dashboard',
+      'Work Queue',
       'Audit Universe',
       'Audit Plan',
       'SIRA',
-      'Audit File',
-      'Issues Register',
+      'Audit Files',
+      'Issues & CAP Register',
     ];
     const buttons = screen.getAllByRole('button');
     expect(buttons.map((b) => b.getAttribute('title'))).toEqual(expected);
     expected.forEach((label) => expect(screen.getByText(label)).toBeDefined());
 
-    // Discarded tabs must not exist (Guide v7 §1.4 / §4.1)
+    // Discarded tabs must not exist (SPEC-v10 §28)
     expect(screen.queryByText('Reports')).toBeNull();
     expect(screen.queryByText('Calendar')).toBeNull();
     expect(screen.queryByText('Workbench')).toBeNull();
-    expect(screen.queryByText('Dashboard')).toBeNull();
   });
 
   it('renders draggable pill container with CSS grid layout and 2px accent underline', () => {

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AuditCapItem, CapStatus, RetestStatus, Severity } from '../../types';
+import { AuditCapItem, CapStatus, Severity } from '../../types';
 import { useFilterStore } from '../../context/FilterStore';
 import { useApp } from '../../context/AppContext';
 import { isCapOverdue } from '../../lib/orgDate';
@@ -21,7 +21,7 @@ interface CapTableProps {
 
 export const CapTable: React.FC<CapTableProps> = ({ capItems }) => {
   const filter = useFilterStore();
-  const { openInspector, updateCapStatus } = useApp();
+  const { openInspector } = useApp();
   const [sortField, setSortField] = useState<keyof AuditCapItem>('agingDays');
   const [sortAsc, setSortAsc] = useState<boolean>(false);
 
@@ -115,35 +115,6 @@ export const CapTable: React.FC<CapTableProps> = ({ capItems }) => {
     }
   };
 
-  const getRetestBadge = (retest: RetestStatus) => {
-    switch (retest) {
-      case 'Passed':
-        return (
-          <span className="px-2 py-0.5 rounded text-apple-11 font-semibold bg-verdigris-subtle text-verdigris">
-            Passed ✓
-          </span>
-        );
-      case 'Failed':
-        return (
-          <span className="px-2 py-0.5 rounded text-apple-11 font-semibold bg-cinnabar-subtle text-cinnabar">
-            Failed ✗
-          </span>
-        );
-      case 'In retest':
-        return (
-          <span className="px-2 py-0.5 rounded text-apple-11 font-medium bg-surface-sunken text-secondary">
-            In Retest
-          </span>
-        );
-      default:
-        return (
-          <span className="px-2 py-0.5 rounded text-apple-11 text-tertiary">
-            Not Tested
-          </span>
-        );
-    }
-  };
-
   return (
     <div className="w-full bg-surface border border-hairline rounded-2xl p-6 shadow-apple space-y-4">
       {/* Header with Search and Clear Filter Chip */}
@@ -158,7 +129,7 @@ export const CapTable: React.FC<CapTableProps> = ({ capItems }) => {
             </span>
           </div>
           <p className="text-apple-12 text-secondary mt-0.5">
-            Operational remediation commitments, aging days, and independent re-test verification
+            Operational remediation commitments, aging days, and independent verification
           </p>
         </div>
 
@@ -212,7 +183,7 @@ export const CapTable: React.FC<CapTableProps> = ({ capItems }) => {
         </div>
       )}
 
-      {/* Table (§ 3.4 requirements: id, action, owner, department, severity, due date, aging in days, status, re-test status) */}
+      {/* Table (§ 3.4 requirements: id, action, owner, department, severity, due date, aging in days, status) */}
       <div className="overflow-x-auto rounded-xl border border-hairline">
         <table className="w-full text-left text-apple-12 border-collapse">
           <thead>
@@ -265,18 +236,12 @@ export const CapTable: React.FC<CapTableProps> = ({ capItems }) => {
               >
                 Status {sortField === 'status' && (sortAsc ? '↑' : '↓')}
               </th>
-              <th
-                onClick={() => handleSort('retestStatus')}
-                className="py-3 px-3 cursor-pointer hover:text-primary transition-colors"
-              >
-                Re-Test {sortField === 'retestStatus' && (sortAsc ? '↑' : '↓')}
-              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-hairline">
             {sortedItems.length === 0 ? (
               <tr>
-                <td colSpan={9} className="py-8 text-center text-apple-12 text-secondary">
+                <td colSpan={8} className="py-8 text-center text-apple-12 text-secondary">
                   No corrective actions match the current scoped filter criteria.
                 </td>
               </tr>
@@ -334,9 +299,6 @@ export const CapTable: React.FC<CapTableProps> = ({ capItems }) => {
                     </td>
                     <td className="py-3 px-3 shrink-0">
                       {getStatusBadge(item.status, item.dueDate)}
-                    </td>
-                    <td className="py-3 px-3 shrink-0">
-                      {getRetestBadge(item.retestStatus)}
                     </td>
                   </tr>
                 );

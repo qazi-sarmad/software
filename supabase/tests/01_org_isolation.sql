@@ -37,7 +37,7 @@ begin
     'org_mismatch', 'cia_A cannot INSERT a universe into org B');
   perform provio_test.assert_raises(
     $q$insert into engagements (org_id, universe_id, entity_id, title) values ('b0000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-0000000000b1','40000000-0000-0000-0000-0000000000b1','injected')$q$,
-    'org_mismatch', 'cia_A cannot INSERT an engagement into org B');
+    'permission denied', 'cia_A cannot INSERT an engagement into org B (direct inserts are closed)');
 end $$;
 
 -- With no org claim at all, a write is refused by the pinning trigger.

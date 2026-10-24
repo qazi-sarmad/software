@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { useScopedData } from '../../hooks/useScopedData';
 import { AuditEngagement } from '../../types';
+import { getDemoNow } from '../../lib/demoTime';
 import {
   ChevronLeft,
   ChevronRight,
@@ -43,8 +44,11 @@ export const HeaderCalendarPanel: React.FC<CalendarPanelProps> = ({
     return () => window.removeEventListener('resize', place);
   }, [isOpen, triggerRef]);
 
-  // Month navigation: default to September 2026
-  const [currentDate, setCurrentDate] = useState<Date>(new Date(2026, 8, 1));
+  // Month navigation: default to the application clock's month (D5).
+  const [currentDate, setCurrentDate] = useState<Date>(() => {
+    const now = getDemoNow();
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+  });
   const [slideDirection, setSlideDirection] = useState<'left' | 'right'>('right');
   const [highlightedAuditId, setHighlightedAuditId] = useState<string | null>(null);
 
@@ -58,6 +62,12 @@ export const HeaderCalendarPanel: React.FC<CalendarPanelProps> = ({
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
+  // The application clock (D5), used for the today cell and overdue tinting.
+  const clockNow = getDemoNow();
+  const clockYear = clockNow.getFullYear();
+  const clockMonth = clockNow.getMonth();
+  const clockDay = clockNow.getDate();
+  const clockTodayIso = `${clockYear}-${String(clockMonth + 1).padStart(2, '0')}-${String(clockDay).padStart(2, '0')}`;
   const monthNames = [
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'
@@ -76,7 +86,8 @@ export const HeaderCalendarPanel: React.FC<CalendarPanelProps> = ({
 
   const jumpToToday = () => {
     setSlideDirection('right');
-    setCurrentDate(new Date(2026, 8, 30)); // 2026-09-30 simulated today
+    const now = getDemoNow();
+    setCurrentDate(new Date(now.getFullYear(), now.getMonth(), 1));
   };
 
   // Native non-passive wheel listener with preventDefault and 260ms cooldown
@@ -155,14 +166,14 @@ export const HeaderCalendarPanel: React.FC<CalendarPanelProps> = ({
       {isOpen && (
         <motion.div
           ref={setPanel}
-          role="dialog"
+          role="region"
           aria-label="Audit Calendar Panel"
           initial={{ opacity: 0, scale: 0.94, y: -8 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.94, y: -8 }}
           transition={{ type: 'spring', stiffness: 300, damping: 30 }}
           style={{ transformOrigin: 'top right', position: 'fixed', top: pos.top, right: pos.right }}
-          className="w-[340px] bg-surface/95 backdrop-blur-xl border border-hairline shadow-apple rounded-2xl p-4 z-[70] select-none text-primary"
+          className="w-[min(340px,calc(100vw-2rem))] bg-surface/95 backdrop-blur-xl border border-hairline shadow-apple rounded-2xl p-4 z-[70] select-none text-primary"
         >
           {/* Header row: Month in serif font, prev/next, and Jump to today */}
           <div className="flex items-center justify-between pb-3 border-b border-hairline">
@@ -242,10 +253,10 @@ export const HeaderCalendarPanel: React.FC<CalendarPanelProps> = ({
                 const dayAudits = getAuditsForDay(day);
                 const hasAudits = dayAudits.length > 0;
                 const isMultiAudit = dayAudits.length > 1;
-                const isToday = year === 2026 && month === 8 && day === 30;
+                const isToday = year === clockYear && month === clockMonth && day === clockDay;
 
                 // Check audit states for tinting
-                const hasOverdue = dayAudits.some((a) => a.dueDate < '2026-09-30' && a.status !== 'signed_off');
+                const hasOverdue = dayAudits.some((a) => a.dueDate < clockTodayIso && a.status !== 'signed_off');
                 const hasInProgress = dayAudits.some((a) => a.status === 'in_progress');
                 const hasCompleted = dayAudits.some((a) => a.status === 'signed_off');
                 const isSelectedAuditDay =

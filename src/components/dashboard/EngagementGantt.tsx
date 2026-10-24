@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { AuditEngagement } from '../../types';
 import { useApp } from '../../context/AppContext';
-import { useScopedData } from '../../hooks/useScopedData';
+import { hasRight } from '../../lib/rights';
 import { HoverPreview } from '../common/HoverPreview';
 import {
   Calendar,
@@ -14,20 +14,26 @@ import {
   AlertCircle,
   X,
 } from '../common/Icons';
+import { getDemoNow } from '../../lib/demoTime';
+import { InlineError } from '../common/InlineError';
+import { HoldToConfirm } from '../common/HoldToConfirm';
+import { planItemForEngagement, updatePlanItemDates } from '../../data/plan';
 
 interface EngagementGanttProps {
   engagements: AuditEngagement[];
   onSelectEngagement?: (id: string) => void;
+  /** D9: called after a reschedule is persisted so the caller can reflect the new dates. */
+  onRescheduled?: (change: { engagementId: string; newStart: string; newDue: string }) => void;
 }
 
 export const EngagementGantt: React.FC<EngagementGanttProps> = ({
   engagements,
   onSelectEngagement,
+  onRescheduled,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const { openInspector, currentUser } = useApp();
-  const { can } = useScopedData();
 
   // Timeline: 2022-2032 at fixed density. Wide enough to behave as continuous; true infinite extension is not built.
   const timelineStart = new Date('2022-01-01').getTime();
@@ -36,9 +42,13 @@ export const EngagementGantt: React.FC<EngagementGanttProps> = ({
   const PX_PER_DAY = 4.77; // same density as before (2600px over ~545 days)
   const timelineWidth = Math.round(((timelineEnd - timelineStart) / 86400000) * PX_PER_DAY);
 
-  // Simulated today: Sept 30, 2026
-  const todayDate = new Date('2026-09-30').getTime();
+  // The today marker follows the application clock (D5): real time normally, injected in tests.
+  const now = getDemoNow();
+  const todayDate = now.getTime();
   const todayX = ((todayDate - timelineStart) / totalDuration) * timelineWidth;
+  const todayLabel = now
+    .toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    .toUpperCase();
 
   // Inertial drag-to-pan state (§ 3.4 requirement)
   const [isPanning, setIsPanning] = useState(false);
@@ -58,6 +68,12 @@ export const EngagementGantt: React.FC<EngagementGanttProps> = ({
     newStart: string;
     newDue: string;
   } | null>(null);
+  // D9: the persist result. A reschedule is recorded on the plan item behind the engagement, so the
+  // handler resolves the item and reports any refusal inline (no blocking modal).
+  const [shiftError, setShiftError] = useState<string | null>(null);
+  const [savingShift, setSavingShift] = useState(false);
+  const dragRef = useRef<{ engagementId: string; startX: number; start: string; due: string; moved: boolean } | null>(null);
+  const canReschedule = hasRight(currentUser, 'manage_engagements') || hasRight(currentUser, 'approve_plan');
 
   // Month generation
   const months: { label: string; year: number; isJan: boolean; startX: number; width: number }[] = [];
@@ -237,6 +253,75 @@ export const EngagementGantt: React.FC<EngagementGanttProps> = ({
     };
   };
 
+  // D9: horizontal drag on a bar stages a reschedule. Movement below a few pixels is treated as a
+  // click so selecting an engagement still works.
+  const addDays = (iso: string, days: number) => {
+    const d = new Date(iso + 'T00:00:00Z');
+    d.setUTCDate(d.getUTCDate() + days);
+    return d.toISOString().split('T')[0];
+  };
+
+  const handleBarPointerDown = (e: React.PointerEvent, eng: AuditEngagement) => {
+    if (!canReschedule) return;
+    dragRef.current = { engagementId: eng.id, startX: e.clientX, start: eng.periodStart, due: eng.dueDate, moved: false };
+    try {
+      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    } catch {
+      // jsdom and some browsers lack pointer capture; the drag still tracks via move events.
+    }
+  };
+
+  const handleBarPointerMove = (e: React.PointerEvent, eng: AuditEngagement) => {
+    const drag = dragRef.current;
+    if (!drag || drag.engagementId !== eng.id) return;
+    const dx = e.clientX - drag.startX;
+    if (Math.abs(dx) < 4) return;
+    drag.moved = true;
+    const days = Math.round(dx / PX_PER_DAY);
+    if (days === 0) return;
+    setPendingDateChange({
+      engagementId: eng.id,
+      title: eng.title,
+      newStart: addDays(drag.start, days),
+      newDue: addDays(drag.due, days),
+    });
+  };
+
+  const handleBarPointerUp = (e: React.PointerEvent) => {
+    try {
+      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+    } catch {
+      // ignore
+    }
+    dragRef.current = null;
+  };
+
+  // D9: persist the staged reschedule. The database decides; a refusal is shown inline.
+  const handleApproveShift = async () => {
+    const pending = pendingDateChange;
+    if (!pending) return;
+    setShiftError(null);
+    setSavingShift(true);
+    try {
+      const item = await planItemForEngagement(pending.engagementId);
+      if (!item) {
+        setShiftError('This engagement has no plan item to reschedule.');
+        return;
+      }
+      const result = await updatePlanItemDates(item.id, pending.newStart, pending.newDue);
+      if (!result.ok) {
+        setShiftError(result.reason);
+        return;
+      }
+      setPendingDateChange(null);
+      onRescheduled?.({ engagementId: pending.engagementId, newStart: pending.newStart, newDue: pending.newDue });
+    } catch (err) {
+      setShiftError(err instanceof Error ? err.message : 'The reschedule could not be saved.');
+    } finally {
+      setSavingShift(false);
+    }
+  };
+
   return (
     <div className="w-full bg-surface border border-hairline rounded-2xl p-6 shadow-apple space-y-4 select-none">
       {/* Header controls: Title, Legend, and "Today" smooth scroll */}
@@ -304,23 +389,32 @@ export const EngagementGantt: React.FC<EngagementGanttProps> = ({
             </div>
             <div className="flex items-center gap-2">
               <button
-                onClick={() => setPendingDateChange(null)}
+                onClick={() => {
+                  setPendingDateChange(null);
+                  setShiftError(null);
+                }}
                 className="px-2.5 py-1 rounded-lg bg-surface border border-hairline text-secondary hover:text-primary text-apple-11"
               >
                 Dismiss
               </button>
-              <button
-                onClick={() => {
-                  setPendingDateChange(null);
-                }}
-                className="px-2.5 py-1 rounded-lg bg-accent text-canvas font-semibold text-apple-11 shadow-xs"
+              <HoldToConfirm
+                label="Approve Shift"
+                testId="gantt-approve-shift"
+                durationMs={2000}
+                onConfirm={() => void handleApproveShift()}
+                disabled={savingShift}
+                className="relative overflow-hidden px-2.5 py-1 rounded-lg bg-accent text-canvas font-semibold text-apple-11 shadow-xs disabled:opacity-60 transition-colors"
               >
-                Approve Shift
-              </button>
+                {savingShift ? 'Saving…' : 'Approve Shift'}
+              </HoldToConfirm>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      {shiftError && (
+        <InlineError message={shiftError} testId="gantt-shift-error" />
+      )}
 
       {/* Timeline Scrollable Viewport with Inertial Drag */}
       <div
@@ -372,7 +466,7 @@ export const EngagementGantt: React.FC<EngagementGanttProps> = ({
             className="absolute top-0 bottom-0 w-[2px] bg-accent z-20 pointer-events-none"
           >
             <div className="absolute top-0 -translate-x-1/2 px-2 py-0.5 bg-accent text-canvas rounded-full text-apple-11 font-bold shadow-xs whitespace-nowrap">
-              TODAY (SEP 30)
+              TODAY ({todayLabel})
             </div>
           </div>
 
@@ -419,6 +513,10 @@ export const EngagementGantt: React.FC<EngagementGanttProps> = ({
                       onDoubleClick={() => {
                         openInspector('audit_file', { engagement: eng });
                       }}
+                      onPointerDown={(e) => handleBarPointerDown(e, eng)}
+                      onPointerMove={(e) => handleBarPointerMove(e, eng)}
+                      onPointerUp={handleBarPointerUp}
+                      data-testid={`gantt-bar-${eng.id}`}
                       className={`gantt-bar-element h-8 px-3 rounded-lg flex items-center justify-between text-apple-12 font-medium cursor-pointer transition-all hover:brightness-105 active:scale-95 shadow-xs overflow-hidden z-10 ${state.colorClass}`}
                     >
                       <span className="truncate pr-2">{eng.title}</span>

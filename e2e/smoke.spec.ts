@@ -1,23 +1,25 @@
 import { test, expect, type Page } from '@playwright/test';
+import { passwordFor } from './password';
 
 const SEVEN_TABS = [
-  'Executive Summary',
-  'Pending Tasks',
+  'Dashboard',
+  'Work Queue',
   'Audit Universe',
   'Audit Plan',
   'SIRA',
-  'Audit File',
-  'Issues Register',
+  'Audit Files',
+  'Issues & CAP Register',
 ];
 
 // Preparer role: NavStrip shows all seven audit tabs to it.
-// org_admin (E2E_EMAIL) sees zero audit tabs by design (Part 2.B).
+// The org_admin account sees zero audit tabs by design (Part 2.B).
 const AUDIT_USER_EMAIL = 'bilal.ahmed@provio-test.invalid';
+const ORG_ADMIN_EMAIL = 'ayesha.khan@provio-test.invalid';
 
-async function signIn(page: Page, email = process.env.E2E_EMAIL ?? '') {
+async function signIn(page: Page, email = ORG_ADMIN_EMAIL) {
   await page.goto('/');
   await page.getByLabel('Email').fill(email);
-  await page.getByLabel('Password').fill(process.env.E2E_PASSWORD ?? '');
+  await page.getByLabel('Password').fill(passwordFor(email));
   await page.getByRole('button', { name: 'Sign in' }).click();
   await expect(page.getByRole('navigation', { name: 'Navigation Strip' })).toBeVisible();
 }
@@ -50,7 +52,7 @@ test.describe('Phase 0: honest prototype', () => {
   });
 
   test('[E2E] org admin sees no audit tabs', async ({ page }) => {
-    await signIn(page); // E2E_EMAIL is the org_admin account
+    await signIn(page); // default account is the org_admin
     const nav = page.getByRole('navigation', { name: 'Navigation Strip' });
     await expect(nav.getByRole('button')).toHaveCount(0);
     await expect(nav).toContainText('Audit workflow tabs are restricted');
@@ -84,13 +86,13 @@ test.describe('Phase 0: honest prototype', () => {
     await expect(page.locator('main')).toBeVisible();
 
     const nav = page.getByRole('navigation', { name: 'Navigation Strip' });
-    await nav.getByTitle('Pending Tasks').click();
+    await nav.getByTitle('Work Queue').click();
     await expect(page.getByTestId('tab-pending')).toBeVisible();
     await nav.getByTitle('SIRA').click();
     await expect(page.getByTestId('tab-sira')).toBeVisible();
-    await nav.getByTitle('Audit File').click();
+    await nav.getByTitle('Audit Files').click();
     await expect(page.getByTestId('tab-audit-file')).toBeVisible();
-    await nav.getByTitle('Executive Summary').click();
+    await nav.getByTitle('Dashboard').click();
     await expect(page.locator('main')).toBeVisible();
 
     expect(errors).toEqual([]);

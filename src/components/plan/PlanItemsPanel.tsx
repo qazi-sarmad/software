@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { hasRight } from '../../lib/rights';
+import { rightReason } from '../../lib/rightLabels';
 import { CheckCircle2, Clock, GitCommit, Plus, XCircle } from '../common/Icons';
 
 export interface PlanItemView {
@@ -120,7 +121,7 @@ export const PlanItemsPanel: React.FC<{
       )}
 
       {!canAdd && !canApprove && (
-        <p className="text-apple-11 text-tertiary">You do not hold the right to change this plan.</p>
+        <p className="text-apple-11 text-tertiary">{rightReason('approve_plan')}</p>
       )}
 
       <div>

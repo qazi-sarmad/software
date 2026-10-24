@@ -7,7 +7,6 @@ import {
   CapStatus,
   CapStatusHistoryEntry,
   OrgRoleConfig,
-  RetestStatus,
   User,
 } from '../types';
 import { canPerformCapability } from './orgCapabilities';
@@ -16,15 +15,13 @@ export type CapStatusAction =
   | 'mark_in_progress'
   | 'submit_validation'
   | 'verify_close'
-  | 'reject'
-  | 'fail_retest';
+  | 'reject';
 
 export const ACTION_CAPABILITY: Record<CapStatusAction, CapCapability> = {
   mark_in_progress: 'cap_mark_in_progress',
   submit_validation: 'cap_submit_validation',
   verify_close: 'cap_verify_close',
   reject: 'cap_reject',
-  fail_retest: 'cap_fail_retest',
 };
 
 export type TransitionCapInput = {
@@ -94,7 +91,6 @@ export function transitionCapStatus(input: TransitionCapInput): TransitionCapRes
 
   const from = cap.status;
   let to: CapStatus = from;
-  let retestStatus: RetestStatus = cap.retestStatus;
   let lastSubmittedByUserId = cap.lastSubmittedByUserId;
   let validationEvidence = cap.validationEvidence;
   const min = minChars(orgConfig);
@@ -105,7 +101,6 @@ export function transitionCapStatus(input: TransitionCapInput): TransitionCapRes
         return { ok: false, reason: `Cannot mark in progress from status ${from}` };
       }
       to = 'In progress';
-      retestStatus = 'In retest';
       break;
     }
     case 'submit_validation': {
@@ -123,7 +118,6 @@ export function transitionCapStatus(input: TransitionCapInput): TransitionCapRes
         return { ok: false, reason: 'At least one evidence reference is required to submit for validation' };
       }
       to = 'Pending validation';
-      retestStatus = 'In retest';
       lastSubmittedByUserId = user.id;
       if (refs.length) validationEvidence = refs.join('; ');
       break;
@@ -133,7 +127,6 @@ export function transitionCapStatus(input: TransitionCapInput): TransitionCapRes
         return { ok: false, reason: 'Only CAPs pending validation can be verified and closed' };
       }
       to = 'Closed';
-      retestStatus = 'Passed';
       break;
     }
     case 'reject': {
@@ -144,15 +137,6 @@ export function transitionCapStatus(input: TransitionCapInput): TransitionCapRes
         return { ok: false, reason: `Rejection reason must be at least ${min} characters` };
       }
       to = rejectTo === 'Open' ? 'Open' : 'In progress';
-      retestStatus = 'Failed';
-      break;
-    }
-    case 'fail_retest': {
-      if (nonWsLen(note) < min) {
-        return { ok: false, reason: `Fail re-test note must be at least ${min} characters` };
-      }
-      to = 'Overdue';
-      retestStatus = 'Failed';
       break;
     }
     default:
@@ -167,10 +151,45 @@ export function transitionCapStatus(input: TransitionCapInput): TransitionCapRes
     cap: {
       ...cap,
       status: to,
-      retestStatus,
       lastSubmittedByUserId,
       validationEvidence,
       statusHistory,
     },
   };
+}
+
+/**
+ * The single canonical mapping between the UI CAP vocabulary and the §16.2 database vocabulary.
+ * D-6D-CAP: the register table `caps` is authoritative; the UI keeps its labels but every read and
+ * write crosses this one boundary, so no second status set survives in the product.
+ */
+export type DbCapStatus =
+  | 'open'
+  | 'verified_closed'
+  | 'verified_closed_delay'
+  | 'unverified'
+  | 'overdue_unverified';
+
+const UI_TO_DB: Record<CapStatus, DbCapStatus> = {
+  Open: 'open',
+  'In progress': 'open',
+  'Pending validation': 'unverified',
+  Overdue: 'overdue_unverified',
+  Closed: 'verified_closed',
+};
+
+const DB_TO_UI: Record<DbCapStatus, CapStatus> = {
+  open: 'Open',
+  verified_closed: 'Closed',
+  verified_closed_delay: 'Closed',
+  unverified: 'Pending validation',
+  overdue_unverified: 'Overdue',
+};
+
+export function capStatusToDb(status: CapStatus): DbCapStatus {
+  return UI_TO_DB[status];
+}
+
+export function capStatusFromDb(status: DbCapStatus): CapStatus {
+  return DB_TO_UI[status];
 }

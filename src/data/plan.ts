@@ -59,6 +59,34 @@ export function approvePlan(planId: string): Promise<DataResult> {
   return callRpc('approve_plan', { p_plan: planId });
 }
 
+/**
+ * D9: persist a reschedule of one plan item. The Gantt's "Approve Shift" action calls this; the
+ * database re-checks the configured create right, refuses an approved plan, validates the range and
+ * writes a new plan version.
+ */
+export function updatePlanItemDates(itemId: string, start: string, end: string): Promise<DataResult> {
+  return callRpc('update_plan_item_dates', { p_item: itemId, p_start: start, p_end: end });
+}
+
+/**
+ * D9: the plan item that reschedules a given engagement, or null when the engagement has no item.
+ * The Gantt drags engagements, but a reschedule is recorded on the plan item, so the handler needs
+ * the item id behind the engagement.
+ */
+export async function planItemForEngagement(engagementId: string): Promise<{ id: string } | null> {
+  const sb = getClient();
+  if (!sb) return null;
+  const { data, error } = await sb
+    .from('plan_items')
+    .select('id')
+    .eq('engagement_id', engagementId)
+    .order('created_at')
+    .limit(1)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return data ? { id: data.id as string } : null;
+}
+
 export function setPlanApproval(createRight: string, approveRight: string): Promise<DataResult> {
   return callRpc('admin_set_plan_approval', { p_create: createRight, p_approve: approveRight });
 }
@@ -120,4 +148,31 @@ export async function planApprovalConfig(orgId: string): Promise<PlanApprovalCon
   const row = data as Record<string, unknown> | null;
   if (!row) return null;
   return { createRight: row.create_right as string, approveRight: row.approve_right as string };
+}
+
+/**
+ * R6a: the most recent plan for a universe, or null when the universe has no plan yet. The SIRA
+ * screen reads this so it can show the persisted plan and its version history instead of nothing.
+ */
+export async function latestPlanForUniverse(universeId: string): Promise<PlanRow | null> {
+  const sb = getClient();
+  if (!sb) return null;
+  const { data, error } = await sb
+    .from('plans')
+    .select('id, universe_id, period, status, current_version, approved_at')
+    .eq('universe_id', universeId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  const p = data as Record<string, unknown> | null;
+  if (!p) return null;
+  return {
+    id: p.id as string,
+    universeId: p.universe_id as string,
+    period: (p.period as string | null) ?? null,
+    status: (p.status as 'draft' | 'approved') ?? 'draft',
+    currentVersion: p.current_version as number,
+    approvedAt: (p.approved_at as string | null) ?? null,
+  };
 }
