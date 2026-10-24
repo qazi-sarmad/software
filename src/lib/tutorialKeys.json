@@ -2143,7 +2143,7 @@
       },
       {
         "text": "Read Tutorials in OA-18.",
-        "testid": "superadmin-tutorials"
+        "testid": "org-tutorials"
       },
       {
         "text": "Check the values shown on OA-18 and confirm they are correct.",

@@ -832,10 +832,11 @@ above. `docs/ACP-TUTORIALS.md` lists every key and its steps.
 - **Route:** Org Admin control plane, tab `Tutorials` (`org-control-tab-tutorials`).
 - **Rights:** any signed-in org member; read-only.
 - **Data:** `listTutorials()` (`src/data/tutorials.ts`), `tutorialHealth(rows, liveHashes)`.
-- **Testids:** `superadmin-tutorials`, `superadmin-tutorials-loading`,
+- **Testids:** `org-tutorials`, `superadmin-tutorials`, `superadmin-tutorials-loading`,
   `superadmin-tutorials-error`, `superadmin-tutorials-empty`, `tutorial-<key>`.
 - **States:** loading, error, empty, ready.
-- **Tutorial key:** `oa.tutorials`.
+- **Tutorial key:** `oa.tutorials` (its step target is OA-18's own `org-tutorials`, not the
+  super-admin library's `superadmin-tutorials`).
 
 ## OA-19 — Go Live health check (S1)
 

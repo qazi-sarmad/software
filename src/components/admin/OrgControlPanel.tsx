@@ -262,7 +262,11 @@ export const OrgControlPanel: React.FC = () => {
       {tab === 'governance' && <OrgGovernancePanel />}
       {tab === 'history' && <OrgConfigHistory />}
       {tab === 'changes' && <ChangeControlPanel mode="settings" />}
-      {tab === 'tutorials' && <SuperAdminTutorials audience="org_admin" />}
+      {tab === 'tutorials' && (
+        <div data-testid="org-tutorials">
+          <SuperAdminTutorials audience="org_admin" />
+        </div>
+      )}
     </div>
   );
 };
