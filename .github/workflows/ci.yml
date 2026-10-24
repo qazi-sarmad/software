@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, feature/board-ai-control-plane]
   pull_request:
   workflow_dispatch:
 
@@ -93,9 +93,9 @@ jobs:
         # uploads the PNGs as an artifact. Never committed (artifacts/screenshots/ is git-ignored).
         continue-on-error: true
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_URL: ${{ secrets.TEST_SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.TEST_SUPABASE_SECRET_KEY }}
+          SUPABASE_ANON_KEY: ${{ secrets.TEST_SUPABASE_PUBLISHABLE_KEY }}
         run: |
           # Seed the synthetic users (writes e2e/.auth/passwords.json, git-ignored).
           npx tsx e2e/global-setup.ts || true
