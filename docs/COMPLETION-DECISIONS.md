@@ -1045,3 +1045,57 @@ IMPROVISE-THEN-DOCUMENT (this file).
 - Reason: the removal must be additive and idempotent, and every dependent must be redefined before
   the object it reads is dropped, or the second apply fails.
 - Reverse: revert migration 0087 and this entry.
+
+## D-A1-1 — the failing step 7 is a stale cron-job name in test 83, not a broken migration (A1-A3)
+
+- Task: A1-A3 (step 7 of CI run 39938223223, reproduced as 40236534345).
+- Point: the owner's report named run `39938223223`, a two-day-old run. The branch has moved on: that
+  run's failure was already fixed by `594ddbd` (anon execute grants in test 72). The fresh run
+  `40236534345` failed at step 7 for a different reason, which is the one fixed here.
+- Options: (a) treat the old run as current and re-fix 72; (b) fix the error the current head produces.
+- Choice: (b). The error on the current head is
+  `psql:supabase/tests/83_scheduled_jobs.sql:155: ERROR: FAIL: the job ai-purge-expired exists in cron.job`.
+- Reason: migration 0087 unschedules `ai-purge-expired` and drops `ai_purge_expired()` when the AI
+  feature is removed, but test 83 still listed the job in three `v_names` arrays and counted six. The
+  `cron.job` block is guarded by `pg_cron` presence, and the local harness has no `pg_cron`, so the
+  mismatch was invisible locally and only the hosted test project (which has `pg_cron`) failed. No
+  migration was changed; no data or table was dropped on the hosted project.
+- Reverse: restore the `ai-purge-expired` entry and the six-counts in test 83 (only correct if the job
+  is scheduled again).
+
+## D-A1-2 — a local guard replays cron.schedule/unschedule so this class fails without pg_cron (A3)
+
+- Task: A3 (keep the fix minimal and make the class visible locally).
+- Point: how to catch a job-name mismatch on a machine without `pg_cron`.
+- Options: (a) require `pg_cron` in the local harness; (b) a vitest guard that reads the migrations and
+  the test and compares the names.
+- Choice: (b). `src/guards/cronJobRegistry.test.ts` replays `cron.schedule`/`cron.unschedule` in
+  migration order and asserts every job test 83 names still survives. It fails when the removed name
+  is restored, which was verified by reverting the name in a scratch edit.
+- Reason: the harness shim is deliberately minimal and does not install `pg_cron`; adding it would
+  change the harness for every test. The guard is scoped to the one invariant and needs no database.
+- Reverse: delete the guard; the SQL test still proves the behaviour on the hosted project.
+
+## D-B1-1 — the recorder must name every key's tab, because the map lookup has a default (T2)
+
+- Task: B (record the tutorial GIFs from the real UI).
+- Point: `oa.governance` (OA-22) is in the frozen key list but had no `ORG_TAB` entry.
+- Options: (a) rely on the recorder's `?? 'features'` fallback; (b) add the entry and guard the map.
+- Choice: (b). `scripts/tutorialCapture.mjs` now maps `oa.governance` to the `governance` tab, and
+  `src/guards/tutorialCaptureMap.test.ts` asserts every key whose plan opens an org or super-admin tab
+  is named in `ORG_TAB`/`SA_TAB` and that each named tab is one the portal declares.
+- Reason: the fallback records a DIFFERENT screen and only fails when that wrong screen renders none of
+  the targets, so a missing entry can ship a GIF of the wrong screen silently. The guard fails when
+  the governance entry is removed.
+- Reverse: remove the entry and the guard (only if `oa.governance` leaves the registry).
+
+## D-B2-1 — the tutorials workflow is already on main; nothing new is merged (B2)
+
+- Task: B2.
+- Point: the task asks to put `.github/workflows/tutorials.yml` on main after owner confirmation.
+- Choice: no merge is needed. `git diff origin/main HEAD -- .github/workflows/tutorials.yml` is empty,
+  so the file is already identical on main (it arrived with `ea9044d`). The rule "do not merge anything
+  into main except the tutorial workflow file" is therefore satisfied without touching main.
+- Reason: `workflow_dispatch` only starts from the default branch, and the file is there already; the
+  run can be dispatched against the feature branch without a main change.
+- Reverse: none; no change was made.

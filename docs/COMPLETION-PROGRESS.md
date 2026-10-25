@@ -57,3 +57,6 @@ Branch: `feature/board-ai-control-plane`. Preconditions recorded before any chan
 | Task | Commit | CI run id | Result |
 |---|---|---|---|
 | P-0 owner decisions | (this commit) | pending | decisions and preconditions recorded |
+| AI-REMOVAL remove the AI feature (0087) and close the tutorial registry gap | ab79306 | 40236534345 (step 7 red), 40239022295 | migration 0087 drops every AI table, column, function, trigger, cron job, registry row, feature key and right; test 94 proves it; oa.governance row added to 0071/0081 so all four key sets agree at 77; vitest, SQL harness and ci-local steps 1-9 green locally |
+| T2 recorder map: oa.governance was absent from ORG_TAB and would have recorded the Features tab | 551bd6d | 40236534345 | scripts/tutorialCapture.mjs maps oa.governance to the governance tab (OA-22); src/guards/tutorialCaptureMap.test.ts pins that every org/super-admin key is named in the map and that each named tab is one the portal declares |
+| A1-A3 step 7 SQL failure: test 83 still expected the removed ai-purge-expired cron job | c6d7552 | 40239022295 | the pg_cron block is skipped locally, so only the hosted project failed ("the job ai-purge-expired exists in cron.job"); test 83 now lists five jobs; src/guards/cronJobRegistry.test.ts replays cron.schedule/unschedule and fails when the removed name is restored |
