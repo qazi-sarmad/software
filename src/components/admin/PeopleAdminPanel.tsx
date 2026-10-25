@@ -41,7 +41,6 @@ const RIGHT_LABELS: Record<Right, string> = {
   manage_team: 'Manage team',
   view_board_pack: 'View Board Pack',
   generate_board_pack: 'Generate Board Pack',
-  use_ai_assist: 'Use AI assist',
   view_insights: 'View insights',
 };
 

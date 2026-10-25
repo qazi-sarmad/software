@@ -190,17 +190,17 @@ function stepsFor(def) {
 }
 
 const WIZARD_STEP_KEYS = {
-  sa: ['sa.readiness', 'sa.email', 'sa.recipients', 'sa.ai', 'sa.hosting', 'sa.rules', 'sa.features', 'sa.tutorials', 'sa.golive'],
-  oa: ['org.profile', 'org.features', 'org.roles', 'org.ai', 'org.presentation', 'org.escalation', 'org.hosting', 'org.email', 'org.golive'],
+  sa: ['sa.readiness', 'sa.email', 'sa.recipients', 'sa.hosting', 'sa.rules', 'sa.features', 'sa.tutorials', 'sa.golive'],
+  oa: ['org.profile', 'org.features', 'org.roles', 'org.presentation', 'org.escalation', 'org.hosting', 'org.email', 'org.golive'],
 };
 const WIZARD_STEP_TITLES = {
   'sa.readiness': 'the platform readiness check', 'sa.email': 'the platform email sender',
-  'sa.recipients': 'the platform notification recipients', 'sa.ai': 'the AI model registry and deny-list',
+  'sa.recipients': 'the platform notification recipients',
   'sa.hosting': 'the hosting catalogue review', 'sa.rules': 'the platform default rules and templates',
   'sa.features': 'the feature catalogue and plans', 'sa.tutorials': 'the tutorial library check',
   'sa.golive': 'the new-tenant defaults and Go Live',
   'org.profile': 'the organisation profile and branding', 'org.features': 'feature enablement',
-  'org.roles': 'roles and permission defaults', 'org.ai': 'the AI settings',
+  'org.roles': 'roles and permission defaults',
   'org.presentation': 'the presentation and certificate templates',
   'org.escalation': 'the escalation and automation rules', 'org.hosting': 'hosting',
   'org.email': 'email', 'org.golive': 'the health check and Go Live',

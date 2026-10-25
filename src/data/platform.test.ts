@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  enableAi, grantSupportAccess, listTenants, listTrail, revokeSupportAccess,
+  grantSupportAccess, listTenants, listTrail, revokeSupportAccess,
   setFeatureFlag, setInviteCap, setTenantStatus,
 } from './platform';
 
@@ -19,7 +19,6 @@ describe('platform data module (not configured)', () => {
   it('writes report that the platform module is not configured', async () => {
     expect(await setTenantStatus('org', 'suspended')).toEqual(notConfigured);
     expect(await setFeatureFlag('org', 'exports', true)).toEqual(notConfigured);
-    expect(await enableAi('org', true, 'http://ai')).toEqual(notConfigured);
     expect(await setInviteCap('org', 5)).toEqual(notConfigured);
     expect(await grantSupportAccess('org', {}, 4)).toEqual(notConfigured);
     expect(await revokeSupportAccess('grant', 'a long enough reason')).toEqual(notConfigured);

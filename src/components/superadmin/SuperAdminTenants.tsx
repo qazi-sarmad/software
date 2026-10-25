@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-  enableAi, listInviteCaps, listTenants, setFeatureFlag, setInviteCap, setTenantStatus,
+  listInviteCaps, listTenants, setFeatureFlag, setInviteCap, setTenantStatus,
   type InviteCapRow, type TenantRow,
 } from '../../data/platform';
 import type { DataResult } from '../../data/db';
@@ -12,13 +12,12 @@ type LoadState = 'loading' | 'ready' | 'error';
 const FLAGS: { key: string; label: string }[] = [
   { key: 'exports', label: 'Exports' },
   { key: 'imports', label: 'Imports' },
-  { key: 'platform_ai', label: 'AI advisory' },
 ];
 
 /**
  * Tenants panel (C4, spec §24). Lists tenants and edits platform-only state: status, feature
- * flags, AI enablement and the invite-cap override. Every write is a platform RPC; a tenant
- * session calling one is refused in the database. Non-blocking: suspend uses an inline confirm.
+ * flags and the invite-cap override. Every write is a platform RPC; a tenant session calling one is
+ * refused in the database. Non-blocking: suspend uses an inline confirm.
  */
 export const SuperAdminTenants: React.FC = () => {
   const [state, setState] = useState<LoadState>('loading');
@@ -160,21 +159,6 @@ export const SuperAdminTenants: React.FC = () => {
                   Set
                 </button>
               </div>
-            </div>
-
-            {/* AI enablement */}
-            <div className="space-y-1.5">
-              <span className="text-apple-11 font-semibold text-secondary uppercase tracking-wide">AI advisory</span>
-              <button
-                type="button"
-                disabled={busyId === t.id}
-                onClick={() => void run(t.id, () => enableAi(t.id, !t.aiEnabled, t.aiEnabled ? null : 'advisory'))}
-                className={`px-2.5 py-1 rounded-lg border text-apple-12 transition-colors disabled:opacity-40 ${
-                  t.aiEnabled ? 'border-verdigris text-verdigris-text' : 'border-hairline text-secondary hover:text-primary'
-                }`}
-              >
-                {t.aiEnabled ? 'Enabled' : 'Disabled'}
-              </button>
             </div>
           </div>
 

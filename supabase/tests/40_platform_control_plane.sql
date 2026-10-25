@@ -50,25 +50,20 @@ begin
     (select feature_flags -> 'exports' from tenant_settings where org_id = 'a0000000-0000-0000-0000-000000000001'),
     'true'::jsonb, 'the platform admin sets a feature flag');
 
-  perform public.platform_enable_ai('a0000000-0000-0000-0000-000000000001', true, 'http://ai.local');
-  perform provio_test.assert_eq(
-    (select ai_enabled from tenant_settings where org_id = 'a0000000-0000-0000-0000-000000000001'),
-    true, 'the platform admin enables advisory features');
-
   perform provio_test.assert_true(
     (select count(*) > 0 from platform_trail where action = 'tenant_status_changed'),
     'the suspension is written to the platform trail');
 end $$;
 
 -- ---------------------------------------------------------------------------
--- 4. A tenant cannot enable advisory features for itself.
+-- 4. A tenant cannot change platform-level tenant state for itself.
 -- ---------------------------------------------------------------------------
 select provio_test.as_user('10000000-0000-0000-0000-0000000000a3', 'a0000000-0000-0000-0000-000000000001', 'org_admin');
 do $$
 begin
   perform provio_test.assert_raises(
-    $q$select public.platform_enable_ai('a0000000-0000-0000-0000-000000000001', true, 'http://x')$q$,
-    'platform administrator only', 'an org admin cannot enable advisory features');
+    $q$select public.platform_set_tenant_status('a0000000-0000-0000-0000-000000000001', 'suspended')$q$,
+    'platform administrator only', 'an org admin cannot suspend its own tenant');
 end $$;
 
 -- ---------------------------------------------------------------------------

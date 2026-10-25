@@ -7,6 +7,11 @@ import { FEATURE_RPC_MAP, featureForRpc, mappedFeatureKeys } from '../lib/featur
  * F25 enforcement rule 5: every feature RPC in the migrations is mapped to a feature key in
  * src/lib/featureMap.ts. A function that gates on has_feature( but has no map entry fails the
  * build, so a new feature RPC cannot be added without declaring which feature it belongs to.
+ *
+ * A function that a later migration drops is not part of the shipped surface, so it needs no map
+ * entry: `drop function if exists public.<name>(...)` anywhere in the migrations removes it from the
+ * set the guard checks. Without this, 0087_remove_ai.sql (which drops the AI RPCs) would leave their
+ * earlier definitions looking unmapped.
  */
 const MIGRATIONS = resolve(process.cwd(), 'supabase/migrations');
 
@@ -28,11 +33,20 @@ function functionsInSql(rawSql: string): Fn[] {
   return out;
 }
 
+/** Every function name a migration drops with `drop function if exists public.<name>(...)`. */
+function droppedFunctions(rawSql: string): string[] {
+  const sql = rawSql.replace(/--[^\n]*/g, '');
+  return [...sql.matchAll(/drop\s+function\s+(?:if\s+exists\s+)?(?:public\.)?([a-z_][a-z0-9_]*)\s*\(/gi)]
+    .map((m) => m[1].toLowerCase());
+}
+
 const files = readdirSync(MIGRATIONS).filter((f) => f.endsWith('.sql')).sort();
-const allFunctions = files.flatMap((f) => functionsInSql(readFileSync(join(MIGRATIONS, f), 'utf-8')));
-// has_feature is the gate itself, not a caller of it.
+const fileText = files.map((f) => readFileSync(join(MIGRATIONS, f), 'utf-8'));
+const dropped = new Set(fileText.flatMap(droppedFunctions));
+const allFunctions = fileText.flatMap(functionsInSql);
+// has_feature is the gate itself, not a caller of it. A function a later migration drops is gone.
 const featureGated = allFunctions.filter(
-  (fn) => fn.name !== 'has_feature' && /has_feature\s*\(/.test(fn.body)
+  (fn) => fn.name !== 'has_feature' && !dropped.has(fn.name) && /has_feature\s*\(/.test(fn.body)
 );
 
 describe('feature map completeness (F25 rule 5)', () => {

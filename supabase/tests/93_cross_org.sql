@@ -56,8 +56,6 @@ do $$ begin
     'permission denied', 'org B cannot snapshot org A''s SIRA model');
   perform provio_test.assert_raises('select public.consultation_sweep()', 'permission denied',
     'a tenant user cannot run the platform-wide consultation sweep');
-  perform provio_test.assert_raises('select public.ai_purge_expired()', 'permission denied',
-    'a tenant user cannot run the platform-wide AI purge');
   perform provio_test.assert_raises('select public.email_expire_stale(7)', 'permission denied',
     'a tenant user cannot expire every org''s email queue');
   perform provio_test.assert_raises('select public.hosting_fit_seed()', 'permission denied',

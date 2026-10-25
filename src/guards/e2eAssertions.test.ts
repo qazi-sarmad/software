@@ -3,14 +3,14 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 
 /**
- * S5 / L2: a security assertion must never be skippable.
+ * A security assertion must never be skippable.
  *
- * `e2e/s5-ai.spec.ts` guarded its L2 check with `if (await result.count()) { expect(...) }`. When
- * the fixture left `ai_assist` unentitled and `ai_enabled` false, the plan refusal fired before the
- * endpoint deny-list, the result element rendered a different message and the guard made the whole
- * assertion pass — an L2 rule (tenant data never reaches a vendor-hosted model) with no test behind
- * it. This guard rejects that shape in every spec: an `if (await ...count())` (or `.isVisible()`)
- * wrapping an `expect` inside a conditional body.
+ * The defect this guards against was first seen in the (since-removed) AI spec, which wrapped its
+ * L2 check in `if (await result.count()) { expect(...) }`: when the fixture left the feature
+ * unentitled the refusal fired first, the result element rendered a different message, and the
+ * guard made the whole assertion pass — a rule with no test behind it. This guard rejects that shape
+ * in every spec: an `if (await ...count())` (or `.isVisible()`) wrapping an `expect` inside a
+ * conditional body.
  */
 
 const SPEC_DIR = resolve(process.cwd(), 'e2e');
@@ -37,11 +37,8 @@ describe('E2E assertions are unconditional (S5 / L2)', () => {
     expect(offenders, `conditional assertion(s): ${offenders.join(', ')}`).toEqual([]);
   });
 
-  it('the L2 vendor-hosted assertion is not guarded', () => {
-    const src = readFileSync(join(SPEC_DIR, 's5-ai.spec.ts'), 'utf8');
-    const test = src.slice(src.indexOf('a vendor-hosted endpoint is refused'));
-    const body = test.slice(0, test.indexOf('});'));
-    expect(body).not.toMatch(/if\s*\(\s*await/);
-    expect(body).toContain("toContainText('vendor-hosted AI service')");
+  it('the escalation refusal assertion is not guarded', () => {
+    const src = readFileSync(join(SPEC_DIR, 's6-escalation.spec.ts'), 'utf8');
+    expect(src).not.toMatch(/if\s*\(\s*await[^)]*\.(count|isVisible)\(\)\s*\)[\s\S]{0,200}expect\(/);
   });
 });

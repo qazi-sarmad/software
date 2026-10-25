@@ -111,7 +111,7 @@ do $$
     v_oid oid;
 begin
   -- Every scheduled function exists and is executable by service_role only.
-  foreach v_fn in array array['cap_notification_sweep','ai_purge_expired','consultation_sweep',
+  foreach v_fn in array array['cap_notification_sweep','consultation_sweep',
                                'deployment_requests_escalate_all','grant_expiry_sweep',
                                'notification_digest_send','platform_job_health']
   loop
@@ -273,13 +273,12 @@ begin
 end $$;
 
 -- ---------------------------------------------------------------------------
--- g. ai_purge_expired and consultation_sweep run without error from the job context.
+-- g. consultation_sweep runs without error from the job context. (ai_purge_expired was removed with
+--    the AI feature in 0087.)
 -- ---------------------------------------------------------------------------
 do $$
 declare v_n int;
 begin
-  v_n := public.ai_purge_expired();
-  perform provio_test.assert_true(v_n >= 0, 'ai_purge_expired returns a count');
   v_n := public.consultation_sweep();
   perform provio_test.assert_true(v_n >= 0, 'consultation_sweep returns a count');
 end $$;

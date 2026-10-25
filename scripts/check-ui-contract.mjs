@@ -13,14 +13,17 @@ import path from 'node:path';
 const ROOT = path.resolve(new URL('..', import.meta.url).pathname);
 const CONTRACT = path.join(ROOT, 'docs/ACP-UI-CONTRACT.md');
 
-// Appendix A: GL-01, TUT-01, SA-01..15, OA-01..21, WK-01..10, EX-01..04.
+// Appendix A: GL-01, TUT-01, SA-01..15, OA-01..21, WK-01..10, EX-01..04, less the four retired AI
+// ids (SA-06, OA-06, OA-07, WK-07) removed on 2026-10-25. The ids keep their numbering; they simply
+// no longer exist as screens, so they need no section.
+const RETIRED = new Set(['SA-06', 'OA-06', 'OA-07', 'WK-07']);
 const APPENDIX_A = [
   'GL-01', 'TUT-01',
   ...Array.from({ length: 15 }, (_, i) => `SA-${String(i + 1).padStart(2, '0')}`),
   ...Array.from({ length: 21 }, (_, i) => `OA-${String(i + 1).padStart(2, '0')}`),
   ...Array.from({ length: 10 }, (_, i) => `WK-${String(i + 1).padStart(2, '0')}`),
   ...Array.from({ length: 4 }, (_, i) => `EX-${String(i + 1).padStart(2, '0')}`),
-];
+].filter((id) => !RETIRED.has(id));
 
 const text = fs.readFileSync(CONTRACT, 'utf8');
 

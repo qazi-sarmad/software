@@ -31,9 +31,9 @@ begin
    where coalesce(s ->> 'text', '') = '';
   perform provio_test.assert_eq(v_generic, 0, 'C4: no step is empty');
 
-  -- 4. The registry is complete (85 Appendix A keys).
+  -- 4. The registry is complete (77 rows: the frozen JSON key list, less the six AI tutorials and the two AI setup steps that 0087 removed).
   select count(*) into v_keys from tutorials;
-  perform provio_test.assert_true(v_keys >= 84, 'C4: the registry holds every Appendix A key');
+  perform provio_test.assert_true(v_keys >= 77, 'C4: the registry holds every Appendix A key');
 
   -- 5. At least one step per key names a control to drive, so a recording shows a real action.
   perform provio_test.assert_eq(

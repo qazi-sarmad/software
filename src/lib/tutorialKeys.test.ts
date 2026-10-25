@@ -5,7 +5,7 @@ import { TUTORIAL_KEYS, TUTORIAL_KEY_NAMES } from './tutorialKeys';
 
 describe('tutorial key registry (F18, S12)', () => {
   it('has a key for every entry and no duplicates', () => {
-    expect(TUTORIAL_KEYS.length).toBeGreaterThan(80);
+    expect(TUTORIAL_KEYS.length).toBeGreaterThanOrEqual(77);
     expect(new Set(TUTORIAL_KEY_NAMES).size).toBe(TUTORIAL_KEY_NAMES.length);
   });
 
@@ -73,9 +73,12 @@ describe('tutorial key registry (F18, S12)', () => {
   });
 
   it('covers the Appendix A setup steps of both wizards', () => {
-    for (let i = 1; i <= 9; i++) {
+    // Eight steps each: the AI step was the fourth and is removed (0087), so the keys run 1..8.
+    for (let i = 1; i <= 8; i++) {
       expect(TUTORIAL_KEY_NAMES).toContain(`oa.setup-${i}`);
       expect(TUTORIAL_KEY_NAMES).toContain(`sa.setup-${i}`);
     }
+    expect(TUTORIAL_KEY_NAMES).not.toContain('oa.setup-9');
+    expect(TUTORIAL_KEY_NAMES).not.toContain('sa.setup-9');
   });
 });

@@ -971,3 +971,77 @@ IMPROVISE-THEN-DOCUMENT (this file).
   - §34: new dated section listing the decisions.
 - Reason: the owner's instructions for this amendment. The exclusions list is left intact.
 - Reverse: revert this commit; the spec returns to the previous text.
+
+## D-A1 — AI-REMOVE inventory, copied from the migrations (A1)
+
+- Task: A1. Every name below is copied from the migration named beside it, not guessed.
+- Re-confirmed with `grep -rniE "ai_|use_ai_assist|org_voice|ai-gateway|ai_gateway"` over
+  `supabase/migrations` and `supabase/tests`.
+
+**Tables**
+- `ai_models` (0059), `ai_endpoint_denylist` (0059), `tenant_ai_models` (0059), `ai_use_cases`
+  (0059), `ai_calls` (0059), `ai_suggestions` (0059).
+- `ai_model_versions` (0051).
+- `org_voice_profile`, `org_voice_terms`, `org_voice_samples` (0059).
+
+**Columns**
+- `tenant_settings.ai_enabled`, `tenant_settings.ai_model_endpoint` (0031).
+- `tenant_settings.ai_access_mode`, `tenant_settings.ai_secret_id` (0059).
+- `org_settings_extra.ai_retention_days` (0051).
+
+**Functions**
+- `platform_enable_ai(uuid, boolean, text)` (0031, redefined 0045).
+- `ai_endpoint_denied(text)`, `ai_model_add(...)`, `ai_model_remove(uuid)`,
+  `ai_model_update(uuid, text, text, text)`, `ai_tenant_set_model(...)`, `ai_denylist_add(text, text)`,
+  `ai_denylist_remove(uuid)`, `ai_require_org_actor(uuid, text)`, `ai_use_case_save(...)`,
+  `ai_voice_profile_save(...)`, `ai_voice_term_add(...)`, `ai_voice_sample_add(...)`,
+  `ai_set_endpoint(uuid, text, text, uuid)` (0059; `ai_set_endpoint` redefined 0083),
+  `ai_call_log(...)` (0059, redefined 0065), `ai_purge_expired()` (0059),
+  `ai_suggestion_save(...)`, `ai_suggestion_decide(...)` (0059).
+- `ai_gateway_authorise(uuid)` (0067).
+- `emit_ai_call_failed()` (0075).
+
+**Triggers**
+- `ai_calls_emit_failed` on `ai_calls` (0075).
+- `cfg_notify_ai_model_versions` on `ai_model_versions` (0059).
+
+**Policies**
+- `ai_models_select`, `ai_endpoint_denylist_select`, `tenant_ai_models_select`, `ai_use_cases_select`,
+  `ai_calls_select`, `ai_suggestions_select`, `org_voice_profile_select`, `org_voice_terms_select`,
+  `org_voice_samples_select` (0059). All dropped with their tables.
+
+**Cron**
+- `'ai-purge-expired'`, `30 3 * * *`, job `select public.ai_purge_expired()` (0074).
+
+**Registry rows**
+- `feature_catalogue`: `ai_assist`, `ai_voice_library`, `ai_board_slides` (0051).
+- `config_areas`: `ai_models` (0051, re-asserted 0059).
+- `plan_definitions`: none name an AI key directly; `included_features` is `{automation_rules}` and
+  `{automation_rules,board_pack,certificates,patterns}` (0051). Nothing to remove, recorded as checked.
+- `tenant_entitlements`: any row whose `feature_key` is one of the three AI keys.
+- `automation_event_fields`: `ai_model.changed` area, area_label (0055).
+- `automation_events_catalogue`: `ai_model.changed`, `ai.call_failed` (0055).
+- `automation_rules`: `platform.ai_model.changed` (0056).
+- `notification_templates`: `ai_model.changed` (0056).
+- `roles.rights`: `use_ai_assist` in every role's JSON (0050).
+- `tutorials`: `oa.ai`, `oa.ai-test`, `oa.ai-usecases`, `oa.voice`, `sa.ai-models`,
+  `sa.ai-denylist` (0071).
+- `secret_store`: no AI-specific kind exists (the table has no kind column; 0054). Recorded as
+  checked; nothing to delete. The `ai_secret_id` column that pointed at it is dropped.
+
+**Dependents to redefine before the drop (read from the highest-numbered definition)**
+- `rights_keys_valid(jsonb)` — latest in 0050; becomes fourteen keys.
+- `config_history_list(int)` — 0053; its `ai_models` UNION branch reads `ai_model_versions`.
+- `config_area_notify()` — 0051; `notify_policy = 'platform_only'` maps to `'ai_model.changed'`, and
+  `ai_models` is the only platform_only area, so the branch goes with it.
+- `platform_list_tenants()` — 0031; returns `ai_enabled`.
+- `get_org_settings_extra(uuid)` — latest in 0073; returns `ai_retention_days`.
+- `admin_set_org_settings_extra(...)` — 0052; writes `ai_retention_days`.
+- `org_settings_extra_get(uuid)` and `org_settings_extra_save(uuid, jsonb)` — 0061; same column.
+- `emit_ai_call_failed()` name removed from the revoke array in 0075 (the array is in a `do` block
+  that runs once; the function drop alone is enough, but the array is corrected for the record).
+- Not touched: the ledger and its hash chain. Old `ai_call` ledger rows stay.
+
+- Reason: the removal must be additive and idempotent, and every dependent must be redefined before
+  the object it reads is dropped, or the second apply fails.
+- Reverse: revert migration 0087 and this entry.

@@ -20,16 +20,6 @@ export const FEATURE_RPC_MAP: Record<string, string> = {
   certificate_config_save: 'certificates',
   verify_certificate: 'public_verification',
   verify_board_pack: 'public_verification',
-  // ai_assist / ai_voice_library / ai_board_slides
-  ai_assist_suggest: 'ai_assist',
-  ai_call_log: 'ai_assist',
-  // R-1: the gateway's authorisation gate. It answers membership + use_ai_assist + the ai_assist
-  // entitlement in one call, so it belongs to ai_assist.
-  ai_gateway_authorise: 'ai_assist',
-  voice_profile_save: 'ai_voice_library',
-  voice_term_save: 'ai_voice_library',
-  voice_sample_add: 'ai_voice_library',
-  ai_board_slides: 'ai_board_slides',
   // patterns
   pattern_clusters: 'patterns',
   pattern_settings_save: 'patterns',
@@ -72,10 +62,6 @@ export const FEATURE_RPC_MAP: Record<string, string> = {
   // S4: the real branding RPCs (0058).
   admin_set_branding: 'branding_custom_fonts',
   admin_upload_pptx_theme: 'pptx_theme_upload',
-  // S5: the AI helper that gates on the feature named by its argument. It is the one function in
-  // 0059 that calls has_feature directly; its callers inherit the gate. Mapped to ai_assist as the
-  // base AI feature (D-S5-ai-featuremap).
-  ai_require_org_actor: 'ai_assist',
   // consultation tiers
   consultation_request: 'consultation_config',
   consultation_propose: 'consultation_full_admin',

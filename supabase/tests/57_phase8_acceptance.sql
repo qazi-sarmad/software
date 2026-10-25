@@ -22,9 +22,6 @@ begin
     $q$select public.platform_set_feature_flag('a0000000-0000-0000-0000-000000000001','exports',true)$q$,
     'platform administrator only', '8E: a tenant user cannot set a feature flag');
   perform provio_test.assert_raises(
-    $q$select public.platform_enable_ai('a0000000-0000-0000-0000-000000000001', true, 'http://ai.local')$q$,
-    'platform administrator only', '8E: a tenant user cannot enable AI');
-  perform provio_test.assert_raises(
     $q$select public.platform_set_invite_cap('a0000000-0000-0000-0000-000000000001', 7)$q$,
     'platform administrator only', '8E: a tenant user cannot set the invite cap');
   perform provio_test.assert_raises(
@@ -57,14 +54,6 @@ begin
     (select feature_flags -> 'exports' from tenant_settings where org_id = 'a0000000-0000-0000-0000-000000000001'),
     'true'::jsonb, '8E: the platform admin sets a feature flag');
 
-  perform public.platform_enable_ai('a0000000-0000-0000-0000-000000000001', true, 'http://ai.local');
-  perform provio_test.assert_eq(
-    (select ai_enabled from tenant_settings where org_id = 'a0000000-0000-0000-0000-000000000001'),
-    true, '8E: the platform admin enables AI');
-  perform provio_test.assert_eq(
-    (select ai_model_endpoint from tenant_settings where org_id = 'a0000000-0000-0000-0000-000000000001'),
-    'http://ai.local', '8E: the AI endpoint is stored');
-
   perform provio_test.assert_raises(
     $q$select public.platform_set_invite_cap('a0000000-0000-0000-0000-000000000001', 101)$q$,
     'between 1 and 100', '8E: an invite cap above 100 is refused');
@@ -74,21 +63,9 @@ begin
     9, '8E: the platform invite-cap override is stored');
 
   perform provio_test.assert_true(
-    (select count(*) > 0 from platform_trail where action = 'ai_enablement_changed'),
-    '8E: the AI enablement is written to the platform trail');
+    (select count(*) > 0 from platform_trail where action = 'invite_cap_set'),
+    '8E: the invite-cap change is written to the platform trail');
 end $$;
-
--- 8C / D-8C-ledger: the enablement is also in the tenant's own ledger (readable by the tenant, not the
--- platform admin, so read it as cia).
-select provio_test.as_user('10000000-0000-0000-0000-0000000000a1', 'a0000000-0000-0000-0000-000000000001', 'cia');
-do $$
-begin
-  perform provio_test.assert_true(
-    (select count(*) > 0 from ledger_entries
-      where org_id = 'a0000000-0000-0000-0000-000000000001' and action = 'ai_enablement_changed'),
-    '8E: the AI enablement is written to the org ledger');
-end $$;
-select provio_test.as_owner();
 
 -- ---------------------------------------------------------------------------
 -- 4. Support access is time-boxed; the platform reads no tenant business table even after granting.

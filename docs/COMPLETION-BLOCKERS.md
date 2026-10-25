@@ -96,9 +96,9 @@ before production use. This cannot be verified from the repository. Owner action
 
 ## Owner action: deploy the Edge Functions and confirm platform services
 
-The Edge Functions in `supabase/functions/` (ai-gateway, email-dispatch, graph-oauth, hosting-test,
+The Edge Functions in `supabase/functions/` (email-dispatch, graph-oauth, hosting-test,
 invite-user, secrets-put, archive-upload, doc-extract) must be deployed:
-`supabase functions deploy ai-gateway email-dispatch graph-oauth hosting-test invite-user secrets-put archive-upload doc-extract`.
+`supabase functions deploy email-dispatch graph-oauth hosting-test invite-user secrets-put archive-upload doc-extract`.
 Also confirm Vault, pg_cron and pg_net are enabled on the project, and set `SECRETS_MASTER_KEY` if
 Vault is absent.
 

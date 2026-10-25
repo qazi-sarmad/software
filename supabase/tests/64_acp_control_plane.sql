@@ -11,7 +11,7 @@ select provio_test.seed();
 do $$
 begin
   perform provio_test.assert_true(
-    (select count(*) >= 21 from feature_catalogue), 'the catalogue holds the seeded features');
+    (select count(*) >= 18 from feature_catalogue), 'the catalogue holds the seeded features');
   perform provio_test.assert_eq((select status from feature_catalogue where key = 'watchers'), 'parked',
     'watchers is parked and not sellable');
   perform provio_test.assert_true(
@@ -233,7 +233,7 @@ begin
   perform provio_test.assert_eq(public.config_write_mode('a0000000-0000-0000-0000-000000000001', 'edit_config'), 'deny',
     'a preparer cannot act on configuration');
   perform provio_test.assert_raises(
-    $q$select public.admin_set_org_settings_extra('https://app.example', null, null, null, null)$q$,
+    $q$select public.admin_set_org_settings_extra('https://app.example', null, null, null)$q$,
     'not allowed', 'a preparer cannot write org settings');
 end $$;
 
@@ -247,14 +247,11 @@ declare
   org_a uuid := 'a0000000-0000-0000-0000-000000000001';
   r record;
 begin
-  perform public.admin_set_org_settings_extra('https://provio.example/app', '2026-09-01', true, true, 30);
+  perform public.admin_set_org_settings_extra('https://provio.example/app', '2026-09-01', true, true);
   select * into r from public.get_org_settings_extra(org_a);
   perform provio_test.assert_eq(r.app_base_url, 'https://provio.example/app', 'the app base URL round-trips');
   perform provio_test.assert_eq(r.certificate_auto_issue, true, 'certificate auto-issue round-trips');
   perform provio_test.assert_eq(r.public_verify_show_title, true, 'public verify title round-trips');
-  perform provio_test.assert_raises(
-    $q$select public.admin_set_org_settings_extra(null,null,null,null,400)$q$,
-    'between 0 and 365', 'an out-of-range AI retention period is refused');
 end $$;
 
 -- ---------------------------------------------------------------------------
@@ -321,9 +318,6 @@ begin
         format('the history table %s has its notify trigger', a.history_table));
     end if;
   end loop;
-  perform provio_test.assert_eq(
-    (select notify_policy from config_areas where key = 'ai_models'), 'platform_only',
-    'the AI model registry area is platform_only');
 end $$;
 
 -- A write to a registered history table emits the right event.
@@ -332,13 +326,6 @@ declare
   v_before int;
   v_after int;
 begin
-  select count(*) into v_before from automation_events where event_key = 'ai_model.changed';
-  insert into ai_model_versions (org_id, entity, entity_id, action, payload)
-  values (null, 'ai_model', 'llama3', 'insert', jsonb_build_object('name', 'llama3'));
-  select count(*) into v_after from automation_events where event_key = 'ai_model.changed';
-  perform provio_test.assert_eq(v_after - v_before, 1,
-    'an AI model change emits exactly one ai_model.changed event');
-
   select count(*) into v_before from automation_events where event_key = 'config.changed';
   insert into config_versions (org_id, key, value, version)
   values ('a0000000-0000-0000-0000-000000000001', 'setting:demo', '{"a":1}'::jsonb, 1);

@@ -13,7 +13,6 @@ export interface TenantRow {
   id: string;
   name: string;
   status: 'active' | 'suspended';
-  aiEnabled: boolean;
   featureFlags: Record<string, boolean>;
   createdAt: string;
 }
@@ -56,7 +55,6 @@ export async function listTenants(): Promise<TenantRow[]> {
     id: t.id as string,
     name: (t.name as string) ?? '',
     status: (t.status as 'active' | 'suspended') ?? 'active',
-    aiEnabled: Boolean(t.ai_enabled),
     featureFlags: (t.feature_flags as Record<string, boolean>) ?? {},
     createdAt: t.created_at as string,
   }));
@@ -83,10 +81,6 @@ export function setTenantStatus(orgId: string, status: 'active' | 'suspended'): 
 
 export function setFeatureFlag(orgId: string, flag: string, value: boolean): Promise<DataResult> {
   return callRpc('platform_set_feature_flag', { p_org: orgId, p_flag: flag, p_value: value }, NOT_CONFIGURED);
-}
-
-export function enableAi(orgId: string, enabled: boolean, endpoint: string | null = null): Promise<DataResult> {
-  return callRpc('platform_enable_ai', { p_org: orgId, p_enabled: enabled, p_endpoint: endpoint }, NOT_CONFIGURED);
 }
 
 export function setInviteCap(orgId: string, perUserDaily: number): Promise<DataResult> {

@@ -19,7 +19,6 @@ export interface OrgSettingsExtra {
   lastBoardMeetingDate: string | null;
   certificateAutoIssue: boolean;
   publicVerifyShowTitle: boolean;
-  aiRetentionDays: number;
 }
 
 interface RawSettings {
@@ -27,7 +26,6 @@ interface RawSettings {
   last_board_meeting_date: string | null;
   certificate_auto_issue: boolean;
   public_verify_show_title: boolean;
-  ai_retention_days: number;
 }
 
 /** The tenant-level settings the Board Pack and the certificate read (app_base_url and friends). */
@@ -43,14 +41,13 @@ export async function getOrgSettingsExtra(orgId: string): Promise<OrgSettingsExt
     lastBoardMeetingDate: raw.last_board_meeting_date,
     certificateAutoIssue: raw.certificate_auto_issue,
     publicVerifyShowTitle: raw.public_verify_show_title,
-    aiRetentionDays: raw.ai_retention_days,
   };
 }
 
 /** Save tenant-level settings. Needs edit_config (or an active consultation session). */
 export function saveOrgSettingsExtra(orgId: string, fields: Partial<{
   appBaseUrl: string; lastBoardMeetingDate: string | null; certificateAutoIssue: boolean;
-  publicVerifyShowTitle: boolean; aiRetentionDays: number;
+  publicVerifyShowTitle: boolean;
 }>): Promise<DataResult> {
   return callRpc('org_settings_extra_save', {
     p_org: orgId,
@@ -59,7 +56,6 @@ export function saveOrgSettingsExtra(orgId: string, fields: Partial<{
       last_board_meeting_date: fields.lastBoardMeetingDate,
       certificate_auto_issue: fields.certificateAutoIssue,
       public_verify_show_title: fields.publicVerifyShowTitle,
-      ai_retention_days: fields.aiRetentionDays,
     },
   }, NOT_CONFIGURED);
 }

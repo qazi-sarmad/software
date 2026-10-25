@@ -25,7 +25,7 @@ These are Partial or Missing in `docs/PARITY.md`, each with the reason in `COMPL
 
 ## Owner actions
 
-- **Deploy the Edge Functions.** `supabase functions deploy ai-gateway email-dispatch graph-oauth
+- **Deploy the Edge Functions.** `supabase functions deploy email-dispatch graph-oauth
   hosting-test invite-user secrets-put archive-upload doc-extract`. Three of these (archive-upload,
   doc-extract, hosting-test) are new in this build.
 - **Confirm platform services.** Vault, pg_cron and pg_net must be enabled on the project. Set

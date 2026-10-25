@@ -246,7 +246,7 @@ against two live databases. Known limitations are stated plainly in that file.
 ## Owner actions
 
 - Deploy the Edge Functions:
-  `supabase functions deploy ai-gateway email-dispatch graph-oauth hosting-test invite-user secrets-put archive-upload doc-extract`
+  `supabase functions deploy email-dispatch graph-oauth hosting-test invite-user secrets-put archive-upload doc-extract`
   (hosting-test, archive-upload and doc-extract are new in this build).
 - Confirm Vault, pg_cron and pg_net on the project; set `SECRETS_MASTER_KEY` if Vault is absent.
 - Enter the Resend and Microsoft app credentials in the platform wizard, never in chat; **revoke the
