@@ -1099,3 +1099,16 @@ IMPROVISE-THEN-DOCUMENT (this file).
 - Reason: `workflow_dispatch` only starts from the default branch, and the file is there already; the
   run can be dispatched against the feature branch without a main change.
 - Reverse: none; no change was made.
+
+## D-B4-1 — the recorder ran once, on the branch, and its own commit carries the GIFs (B3-B4)
+
+- Task: B3, B4.
+- Point: how the GIFs reach the branch and whether a second run is needed.
+- Choice: one `workflow_dispatch` run, `40242187619`, at head `c0d93cc`. It ran every step green and
+  committed `3613ed6` ("tutorials: record GIFs from the real UI", 77 GIFs, 0 placeholders) back to the
+  branch from inside the run. No second run was started.
+- Reason: the workflow already commits its own output, so dispatching again would only re-record the
+  same screens and spend a second run from the one-run budget. The run was queued behind CI
+  `40242173262` because both use the `provio-test-db` concurrency group, so the two never raced on the
+  shared test project.
+- Reverse: revert `3613ed6` to restore the placeholder GIFs; re-dispatch if a recording is needed again.
