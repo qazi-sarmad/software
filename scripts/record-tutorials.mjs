@@ -141,6 +141,49 @@ function passwords() {
   return JSON.parse(fs.readFileSync(file, 'utf8'));
 }
 
+const SUPABASE_URL = process.env.SUPABASE_URL ?? null;
+const SUPABASE_SECRET_KEY = process.env.SUPABASE_SECRET_KEY ?? null;
+/** The org the synthetic fixtures use (e2e/global-setup.ts, ORG_A). */
+const FIXTURE_ORG = '02af9314-9781-5bde-b8a7-d46bfee07783';
+
+/**
+ * GL-01 needs a live Dual Session: the banner renders only while a session is open for the org, and
+ * the two GL-01 keys drive its End and Dismiss controls. Open one for the fixture org before those
+ * keys are recorded, and remove it afterwards, so the recorder leaves no residue. A no-op when the
+ * service credentials are absent (a local run without them); the keys then fail loudly, as before.
+ */
+async function consultationHeaders() {
+  return {
+    apikey: SUPABASE_SECRET_KEY,
+    Authorization: `Bearer ${SUPABASE_SECRET_KEY}`,
+    'Content-Type': 'application/json',
+  };
+}
+
+async function openConsultationFixture() {
+  if (!SUPABASE_URL || !SUPABASE_SECRET_KEY) return;
+  const headers = await consultationHeaders();
+  const open = `${SUPABASE_URL}/rest/v1/consultation_sessions?org_id=eq.${FIXTURE_ORG}&status=in.(requested,active)`;
+  await fetch(open, { method: 'DELETE', headers });
+  await fetch(`${SUPABASE_URL}/rest/v1/consultation_sessions`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify([{
+      org_id: FIXTURE_ORG, kind: 'config', initiated_by_side: 'platform',
+      status: 'active', duration_hours: 2,
+      expires_at: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
+    }]),
+  });
+}
+
+async function closeConsultationFixture() {
+  if (!SUPABASE_URL || !SUPABASE_SECRET_KEY) return;
+  await fetch(
+    `${SUPABASE_URL}/rest/v1/consultation_sessions?org_id=eq.${FIXTURE_ORG}&status=in.(requested,active)`,
+    { method: 'DELETE', headers: await consultationHeaders() },
+  );
+}
+
 const PRINCIPAL = {
   org: 'ayesha.khan@provio-test.invalid',
   superadmin: 'platform.admin@provio-test.invalid',
@@ -151,7 +194,16 @@ const PRINCIPAL = {
 
 async function signIn(page, email, baseUrl, creds) {
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
-  await page.getByLabel('Email').fill(email);
+  const emailField = page.getByLabel('Email');
+  // Wait for the form (a fresh context) or the signed-in shell (a re-open in recordKey). Without
+  // this the idempotency check below would read count() 0 while the session is still resolving and
+  // skip the sign-in entirely.
+  await Promise.race([
+    emailField.waitFor({ timeout: 20000 }),
+    page.getByRole('navigation', { name: 'Navigation Strip' }).waitFor({ timeout: 20000 }),
+  ]).catch(() => undefined);
+  if ((await emailField.count()) === 0) return;
+  await emailField.fill(email);
   await page.getByLabel('Password').fill(creds[email] ?? '');
   await page.getByRole('button', { name: 'Sign in' }).click();
   await page.waitForTimeout(1200);
@@ -194,7 +246,17 @@ async function waitForScreen(page, def) {
   }
 }
 
-/** Open the key's real screen. A screen that does not appear fails the key. */
+/** True when at least one of the key's own step targets is currently on the screen. */
+async function anyTargetPresent(page, def) {
+  for (const selector of def.steps.map((s) => selectorFor(s.testid)).filter(Boolean)) {
+    if ((await page.locator(selector).count()) > 0) return true;
+  }
+  return false;
+}
+
+/**
+ * Open the key's real screen. A screen that does not appear fails the key.
+ */
 async function navigateTo(page, plan, baseUrl, creds) {
   if (plan.kind === 'public') {
     // The only anonymous surface (WK-06): no session, so no sign-in.
@@ -268,9 +330,19 @@ async function goToTab(page, label) {
 async function recordKey(page, def, baseUrl, creds) {
   const frames = [];
   const missing = [];
-  await navigateTo(page, captureFor(def), baseUrl, creds);
+  const plan = captureFor(def);
+  await navigateTo(page, plan, baseUrl, creds);
   await waitForSettled(page);
   await waitForScreen(page, def);
+  // A screen that has rendered none of its own targets is usually a slow first paint: CI runs this
+  // recorder immediately after step 7 has hammered the shared project with the whole SQL suite, so
+  // the first RPCs of a session can wait on a cold schema cache and outlast waitForScreen. Re-open
+  // the screen once before declaring the key broken. A genuinely absent screen still fails twice.
+  if (!(await anyTargetPresent(page, def))) {
+    await navigateTo(page, plan, baseUrl, creds);
+    await waitForSettled(page);
+    await waitForScreen(page, def);
+  }
   await page.waitForTimeout(300);
   // The opening frame: the screen as reached, before any step is performed.
   frames.push(await page.screenshot({ type: 'png' }));
@@ -379,6 +451,11 @@ export async function recordLive(defs, baseUrl, outDir = OUT_DIR) {
   try {
     for (const def of defs) {
       const file = path.join(outDir, `${def.key}.gif`);
+      // GL-01 is the only screen whose control is state-dependent: a session must be open. It is
+      // re-opened before EACH GL-01 key, because the first of them clicks the banner's End button and
+      // would otherwise leave nothing for the second. Other keys never touch consultation state.
+      const needsConsultation = def.key === 'oa.dual-session' || def.key === 'sa.dual-session';
+      if (needsConsultation) await openConsultationFixture();
       // A FRESH context per key. Each key signs in as its own principal, and a reused context keeps
       // the previous key's session, so its sign-in screen never appears and the key fails. The
       // recording rules (F18) require a clean session per key, so one context is created and closed
@@ -402,6 +479,7 @@ export async function recordLive(defs, baseUrl, outDir = OUT_DIR) {
     }
   } finally {
     await browser.close();
+    await closeConsultationFixture();
   }
   return { ok, failed };
 }
