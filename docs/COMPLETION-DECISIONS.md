@@ -941,3 +941,33 @@ IMPROVISE-THEN-DOCUMENT (this file).
 - Reason: a stale remote-tracking ref hides a parallel push and turns a push into a rejected
   non-fast-forward.
 - Reverse: none needed.
+
+## D-SPEC-1 — the specification amendment for AI removal, sharing and the report engine (SPEC-1)
+
+- Task: SPEC-1.
+- Point: which parts of `docs/SPEC-v10.md` change, and what replaces the removed text.
+- Choice, one edit per item:
+  - §0 differentiators: the AI sentence becomes "Guidance is deterministic guided intake: rules and
+    structured prompts, with no model and no generated text."
+  - §1 L1: rewritten to say there is no AI in the product; guidance is deterministic guided intake;
+    no result, score, sample, finding status or gate is produced or influenced by a model.
+  - §1 L2: the "external AI service or model" clause becomes "never go to any external service".
+  - §2 sharing: replaced with the SHARE-DECISION wording (view-only, head-level flag, optional
+    expiry, revocable, engagement with findings and CAPs, cross-organisation deferred).
+  - §13: title becomes "Document Review"; §13.2 "Optional AI assistance" is deleted; §13.1 kept
+    unchanged.
+  - §23: the read-only "AI" administration line is deleted.
+  - §24: "AI enablement per tenant" is removed from the platform function list.
+  - §26: "AI enablement" is removed from the logged-actions sentence; the ledger sentence names
+    `share_granted` and `share_revoked` explicitly.
+  - §28: the discarded list keeps its two AI lines and gains "Any AI feature (removed 2026-10-25)".
+  - §30.1 D1: the closed rights vocabulary is corrected to fourteen keys, `use_ai_assist` named as
+    removed; the stale "eleven keys" list is replaced.
+  - §30.6: AI is removed from the not-yet-built list.
+  - §31: the Ollama row is marked superseded and three rows are added for the 2026-10-25 decisions.
+  - §15.6: new "Report engine guarantees" subsection (refs on every claim, recompute-before-freeze,
+    root hash with versions, reproducible build, coverage reconciliation, no high-consequence
+    wording, claim-level version comparison), with the engine tables and the phrase lifecycle.
+  - §34: new dated section listing the decisions.
+- Reason: the owner's instructions for this amendment. The exclusions list is left intact.
+- Reverse: revert this commit; the spec returns to the previous text.
