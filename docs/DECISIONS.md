@@ -98,3 +98,15 @@ reason and the reversal path. It is appended to, never rewritten.
 - Reason: `docs/PARITY.md` and `docs/COMPLETION-BLOCKERS.md` record §2 as the only whole
   clause with no implementation.
 - Reversal path: the owner may amend §2 to defer the clause instead of building it.
+
+## D-C2.4-timeout. The C2.4 invitation spec gets a raised per-test budget, not weaker assertions
+
+- Decision: `e2e/c2-member-invite.spec.ts` carries `test.setTimeout(90_000)`. No assertion is
+  changed or removed.
+- Reason: the spec is the longest end-to-end path in the suite — three sign-ins, two sign-outs,
+  the invitee's account creation and around ten service-role reads and writes against the shared
+  hosted project. It passed on the base branch at 20.7 seconds (run 40131307073) and tipped over
+  the 30-second default in run 40149119579, where step 7 had just run the whole SQL suite against
+  the same project. That is a load-sensitive budget, not a logic failure, and it is not caused by
+  the tutorial-recorder change in PR #12.
+- Reversal path: remove the `test.setTimeout` line to return to the 30-second default.
