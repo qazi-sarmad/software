@@ -18,7 +18,7 @@ entry is removed only when its resolution is verified on CI.
   the CI-1 push started run `40125698154` (`push`, head `6382125`).
 - Reversal path: recorded as D-CI-1 in `docs/DECISIONS.md`.
 
-## B2. Step 9 could never complete — PARTLY RESOLVED (CI-1), root cause fixed in CI-3
+## B2. Step 9 could never complete — RESOLVED (CI-1, root cause fixed in CI-3)
 
 - Symptom: the screenshot sweep was cancelled by the job timeout on every run that
   reached it, which reddened the whole run.
@@ -34,7 +34,22 @@ entry is removed only when its resolution is verified on CI.
   Supabase client and every one of the 318 capture visits burned its timeouts.
 - CI-3 fix: step 9 sets the `VITE_` variables and carries its own 15-minute limit, so a
   slow sweep fails this step (which is `continue-on-error`) instead of cancelling the run.
+- Verified: run `40183729304` (head `206aba4`) completed every step, step 9 included —
+  the first fully green run in the branch's history. See also B7.
 - Reversal path: recorded as D-CI-3 in `docs/DECISIONS.md`.
+
+## B7. Step 8 (Playwright) failed on C2.4 under load — RESOLVED (CI-4)
+
+- Symptom: run `40149119579` failed at step 8. `e2e/c2-member-invite.spec.ts` C2.4
+  exceeded its 30-second default (`expect(locator).toBeVisible()` on the new member row).
+- Evidence: the same test passed on the base branch in 20.7 seconds (run `40131307073`),
+  and it is the longest end-to-end path in the suite — three sign-ins, two sign-outs, the
+  invitee's account creation and about ten service-role reads and writes. Step 7 runs the
+  whole SQL suite against the same shared project immediately before step 8, so the budget
+  tipped over. It is not caused by PR #12, which only touches the recorder and GIFs.
+- Resolution: CI-4 gives the spec `test.setTimeout(90_000)`. No assertion is changed, so a
+  real failure still fails. Verified green in run `40183729304` step 8.
+- Reversal path: recorded as D-C2.4-timeout in `docs/DECISIONS.md`.
 
 ## B3. T6–T12 were already built — RESOLVED (decision recorded)
 

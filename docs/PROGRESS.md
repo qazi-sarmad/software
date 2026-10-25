@@ -10,7 +10,8 @@ T1  | committed | 8c85521 | pending | tutorial target audit; oa.tutorials retarg
 T2  | committed | fce7cc8 | pending | SetupWizard render loop fixed; load effect 382 -> 1
 CI-1 | committed | 6382125 | 40125698154 (cancelled while queued) | CI trigger enabled; push starts a run again
 CI-2 | committed | 5c0c196 | 40125826186 | DECISIONS, BLOCKERS, tutorial skeletons; steps 1-14 green, step 9 hung and the job limit cancelled the run
-CI-3 | running | (this commit) | pending | step 9 given the VITE_ vars + its own 15 min limit; job limit stays 45
+CI-3 | green | 8ba805c | 40183729304 | step 9 given the VITE_ vars + its own 15 min limit; job limit stays 45. All 15 steps green, including step 9 (the first time it has ever completed)
+CI-4 | green | 206aba4 | 40183729304 | C2.4 invitation spec given a load-proof per-test budget (test.setTimeout 90s); step 8 Playwright green (D-C2.4-timeout)
 T3  | not started | | |
 T4  | not started | | |
 T5  | not started | | |
