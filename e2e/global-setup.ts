@@ -1,8 +1,15 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { randomBytes } from 'node:crypto';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+/**
+ * The frozen Appendix A registry (S12). The recorder, check-tutorials and migration 0071 all read
+ * this same file, so it is the one source of truth for a key's title, audience and ordered steps.
+ */
+const TUTORIAL_KEYS: { key: string; audience: string; title: string; steps: unknown[] }[] =
+  JSON.parse(readFileSync(fileURLToPath(new URL('../src/lib/tutorialKeys.json', import.meta.url)), 'utf8'));
 
 // Synthetic test data only. Fixed ids make every run idempotent.
 const ORG_A = '02af9314-9781-5bde-b8a7-d46bfee07783';
@@ -384,6 +391,24 @@ export default async function globalSetup() {
         risk: 'Fraudulent payment risk.', effect: 'Loss of cash again.' },
     },
   ], { onConflict: 'id' }));
+
+  // ---------------------------------------------------------------------------
+  // Registry fixture (S12). The SQL test seed (supabase/tests/00_lib.sql, provio_test.seed())
+  // TRUNCATES `tutorials`, a platform-level table outside the org graph, and never re-inserts it.
+  // CI runs those tests against this same shared project in its step 7, before this seed, so the
+  // recorder would otherwise record SA-13 against the empty registry, where `superadmin-tutorials`
+  // never renders. Re-seed it here. Idempotent: `ignoreDuplicates` never overwrites a row a live
+  // recording has already generated. (`platform_trail` needs no re-seed: seed() re-inserts one row
+  // of its own, which is why SA-15 renders in CI.)
+  // ---------------------------------------------------------------------------
+  must('tutorials (re-seed: provio_test.seed() truncates the registry)',
+    await sb.from('tutorials').upsert(
+      TUTORIAL_KEYS.map((k) => ({
+        key: k.key, audience: k.audience, title: k.title, steps: k.steps,
+        media_path: `tutorials/${k.key}.gif`,
+      })),
+      { onConflict: 'key', ignoreDuplicates: true },
+    ));
 }
 
 // Run the seed when this file is executed directly (`npx tsx e2e/global-setup.ts`). Playwright calls
