@@ -874,3 +874,70 @@ IMPROVISE-THEN-DOCUMENT (this file).
 - Reverse: revert the three specs and the `escalation_events` fixture block in `e2e/global-setup.ts`.
 - Evidence: `npx playwright test --project=chromium e2e/s2-... e2e/s6-... e2e/s9-...` -> **15 passed
   (30.3s)**; `npx vitest run src/guards/e2eAssertions.test.ts` -> **2 passed**.
+
+## D-P0-1 — owner decisions recorded at the start of the AI-removal run (P-0)
+
+- Task: P-0.
+- Point: the owner's decisions of 2026-10-25 that the rest of this run implements.
+- Decisions, as given by the owner:
+  1. **AI is removed from the product entirely.** Every AI table, column, function, trigger, cron
+     job, edge function, feature key, config area, right, screen and wizard step goes. This is Law
+     L1 after removal: no AI anywhere in this product.
+  2. **Historical AI data is dropped.** The owner states that no AI feature was ever used by a
+     client, so there is no client AI history to preserve. The AI tables are dropped with their
+     rows. The business ledger and its hash chain are NOT touched: old ledger rows of kind
+     `ai_call` stay in place and still verify.
+  3. **The sand timer replaces any AI-work loader.** Where a screen showed an AI-work spinner or
+     animation, the existing sand-timer loader is used for the same screens. No new dependency.
+  4. **The tutorial count drops, and the owner accepts the drop.** Removing AI screens removes
+     their tutorial keys and GIFs; `check-tutorials` will report a lower key count. This is
+     expected and accepted, not a regression.
+  5. **`use_ai_assist` is removed from the rights matrix.** The closed rights vocabulary returns to
+     14 keys, and the key is deleted from every role's `rights` JSON.
+  6. **The "assistant" is deterministic guided intake, not AI.** Where the product offers guidance,
+     it is deterministic guided intake: rules and structured prompts, no model, no inference, no
+     generated text. Nothing labelled or shaped like an AI assistant returns.
+- Reason: these are the owner's decisions; this file records them so the run has a written basis.
+- Reverse: the owner reverses any of them in writing; each is then a new dated decision here.
+
+## D-P0-2 — SHARE-DECISION: sharing within one organisation, across universes (P-0)
+
+- Task: P-0, Group SH.
+- Point: what "sharing" means in this version.
+- Decision:
+  - Sharing happens **within one organisation**, across universes.
+  - The **shareable object is the engagement**, read-only, together with its findings and CAPs.
+  - **"Level-1 Head" and "Level-2 Head" are a flag on the member record** (`head_level`), set by an
+    Org Admin, with values none, 1 or 2.
+  - A share has an **optional expiry** and is **revocable** by the granting Head, a higher Head
+    (lower number) or an Org Admin.
+  - **Recipients see the same record read-only.** Out-of-scope links show "Not available". A
+    recipient cannot export beyond its own rights.
+  - **Cross-organisation sharing (to a linked organisation) is DEFERRED.** It is not built in this
+    version and the spec says so.
+- Reason: the owner's decision. A share is an authority on the member record, not a new right, so
+  the closed rights list does not grow.
+- Reverse: the owner amends the SHARE-DECISION; the spec section and the database then follow it.
+
+## D-P0-3 — the two `openhands` commits stay as they are (P-0)
+
+- Task: P-0.
+- Point: commits `206aba4` and `eab3ca7` on this branch carry author/committer
+  `openhands <openhands@all-hands.dev>` and a `Co-authored-by: openhands` trailer, which conflicts
+  with the standing identity rule for new commits.
+- Choice: they stay exactly as they are. The owner grants an explicit exception and forbids rewriting
+  them; rewriting would need a force push, which is banned.
+- Reason: the owner's instruction. Every commit made from here on carries the required identity and
+  the single `Authored by:` trailer.
+- Reverse: none; the owner may rewrite them itself if it wants to.
+
+## D-P0-4 — one session works this branch (P-0)
+
+- Task: P-0.
+- Point: a second session was pushing to a sibling branch (`fix/tutorial-recorder-fixtures`) during
+  the previous run.
+- Choice: only the openhands session works on `feature/board-ai-control-plane` for this run. Before
+  any push, `git fetch` and compare the remote-tracking ref with `git ls-remote`.
+- Reason: a stale remote-tracking ref hides a parallel push and turns a push into a rejected
+  non-fast-forward.
+- Reverse: none needed.

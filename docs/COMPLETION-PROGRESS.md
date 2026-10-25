@@ -35,3 +35,25 @@ SQL 80 files / 71 migrations / 1683 assertions; Playwright 113 passed / 2 skippe
 | S5-AI the L2 vendor-hosted assertion was vacuous; fixture seeds ai_assist + ai_enabled (S5-AI) | (this commit) | pending | `e2e/s5-ai.spec.ts` 3 passed; new guard `src/guards/e2eAssertions.test.ts` 2 passed; vitest 146 files / 1654 tests green; tsc, build, tokens, shrink, ui-contract, deploy-list, tutorials green |
 | S2/S6/S9 three more conditional assertions fixed and their fixtures seeded (S5-AI-b) | (this commit) | pending | `e2e/s2-... e2e/s6-... e2e/s9-...` 15 passed; escalation_events fixture added to global-setup (M5: cleared first) |
 | C6 final report, draft PR #11, final CI dispatch (C6) | fa84229 | 39748486235, 39748504017 | blocked: platform refuses to start the job (`steps: 0`) on both; head verified locally by the full gate set; PR #11 open as a draft, PR #10 untouched |
+
+## AI-removal, hardening, edge, sharing, report-engine run (2026-10-25)
+
+Branch: `feature/board-ai-control-plane`. Preconditions recorded before any change:
+
+- Head at start: `8ba805c` (matches the owner's verified head). Last three commits:
+  `8ba805c ci: give step 9 the VITE_ vars and its own limit (CI-3)`,
+  `5c0c196 docs: decisions, blockers and tutorial skeletons after CI enablement (CI-2)`,
+  `6382125 ci: enable branch pushes + fix step-9 secrets (CI-1)`.
+- Latest CI on this branch (query returned 5): `40134258676` Tutorial GIFs failure (8ba805c);
+  `40131307073` CI success (8ba805c); `40125826186` CI cancelled (5c0c196); `40125698154` CI
+  cancelled (6382125); `40115550142` CI cancelled (fce7cc8). Last green CI: `40131307073`.
+- Baselines from the last green run `40131307073` (head 8ba805c): vitest **148 files / 1665 tests**;
+  Playwright **127 passed**; check-tokens 168 files 0 violations; check-shrink 58 files; tutorials
+  85 keys; function deploy list 8 functions / 24 references. SQL at 8ba805c: **93 test files /
+  86 migrations** (counted on disk; CI ran them twice).
+- Open item carried forward: PR #12 (`fix/tutorial-recorder-fixtures` -> this branch) is still
+  `open`, not merged. Not a blocker for this run, which works only on this branch.
+
+| Task | Commit | CI run id | Result |
+|---|---|---|---|
+| P-0 owner decisions | (this commit) | pending | decisions and preconditions recorded |
