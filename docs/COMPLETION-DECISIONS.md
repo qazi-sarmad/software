@@ -1112,3 +1112,23 @@ IMPROVISE-THEN-DOCUMENT (this file).
   `40242173262` because both use the `provio-test-db` concurrency group, so the two never raced on the
   shared test project.
 - Reverse: revert `3613ed6` to restore the placeholder GIFs; re-dispatch if a recording is needed again.
+
+## D-MERGE-1 — seven commits lack the required trailer line; recorded, not rewritten (pre-merge review)
+
+- Point: commits `ab79306`, `551bd6d`, `9d43aac`, `c6d7552`, `c0d93cc`, `3613ed6` and `6f784ea` do not carry
+  the line `Authored by: Qazi Sarmad Ali Mahesar` that `claude/commit-rules.md` requires. They carry no
+  forbidden trailer (no Co-Authored-By, no Claude-Session, no reference to an AI model).
+- Choice: they stay as they are. They are pushed to the shared branch, and rewriting would need a force push,
+  which is banned. Every commit after this one carries the line.
+- Reason: same handling as the recorded exception `a7fb323` and the openhands exception D-P0-3.
+- Reverse: none; the owner may rewrite them itself.
+
+## D-MERGE-2 — the AI-removal guard is a source guard, not only a catalog test (pre-merge review)
+
+- Point: the plan required `src/guards/noAi.test.ts`; the build delivered only the SQL catalog test
+  `supabase/tests/94_ai_removed.sql`, which cannot stop AI code or wording returning to `src`.
+- Choice: added `src/guards/noAi.test.ts`. It scans `src`, `supabase/functions`, `e2e`, `scripts` and migrations
+  numbered above 0087 for the removed right, feature keys, components, tables, vendor names and "language
+  model". Explanatory comments are allowed only in five listed files. A detector self-test keeps it from going blind.
+- Found by it: a stale comment naming the deleted `aiGatewayHandler.ts` in `graphOauthHandler.ts`; fixed.
+- Reverse: delete the guard; not recommended.
