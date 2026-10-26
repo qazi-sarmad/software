@@ -78,10 +78,12 @@ decided here), and IMPROVISE-THEN-DOCUMENT (this file).
 - Options: (a) extend `verify_certificate`; (b) add one sibling function `verify_report_root`.
 - Choice: (b). A separate function keeps the certificate contract untouched and returns no tenant
   content: given a graph root it returns only existence, issuance time and the version identifiers.
+  Built in migration `0094_verify_report_root.sql`; the guard now allows exactly three names, test 72
+  is updated and `supabase/tests/99_verify_report_root.sql` is new.
 - Reason: (b) is the smaller change to an existing, tested contract, and the brief names the sibling
-  option explicitly.
-- Reverse: drop the function, revert `src/guards/anonGrantAllowList.test.ts` to the two names, and
-  remove the public page route.
+  option explicitly. Full entry in `docs/ACP-DECISIONS.md` (D-W10.3-verify-report-root).
+- Reverse: drop the function, revert `src/guards/anonGrantAllowList.test.ts` to the two names, remove
+  the public page route and `src/data/certificate.ts` `verifyReportRoot`, and delete test 99.
 
 ## D-W-FORMAT-EDITOR — the report format editor is per client, versioned and role-scoped
 

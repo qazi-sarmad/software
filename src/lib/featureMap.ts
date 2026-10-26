@@ -20,6 +20,7 @@ export const FEATURE_RPC_MAP: Record<string, string> = {
   certificate_config_save: 'certificates',
   verify_certificate: 'public_verification',
   verify_board_pack: 'public_verification',
+  verify_report_root: 'public_verification',
   // patterns
   pattern_clusters: 'patterns',
   pattern_settings_save: 'patterns',

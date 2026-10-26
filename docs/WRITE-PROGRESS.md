@@ -20,6 +20,7 @@ One line per task: task, commit, CI run id or "local", result.
 | Report format editor (owner instruction) | deb95e1 | CI run 40291572648 (steps 7 SQL, 8 Playwright green) | green |
 | W12 registry-gap fix, engine tests, docs | a53876a | local: vitest 1901/165 files, SQL harness twice green | green |
 | W12 report-builder screen mounted in the Audit File window | (this commit) | local: tsc, vitest 1901, guards 618, SQL harness twice, build, all check scripts, e2e full-flow 4 passed | green |
+| W10.3 verify_report_root (migration 0094, guard, tests 72/99, client, /root route) | (this commit) | local: tsc, vitest 1901/164, guards 618, SQL harness twice, build, all check scripts, check-tutorials re-recorded | green |
 
 ## CI dispatches
 

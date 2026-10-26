@@ -343,11 +343,14 @@ const AppRoutes: React.FC = () => {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
-  // Public route /verify/:id (certificate) and /pack/:id (Board Pack). The ONLY anonymous surface
-  // (F11). Needs no session and touches no tenant table as anon.
-  if (currentPath.startsWith('/verify/') || currentPath.startsWith('/pack/')) {
-    const kind = currentPath.startsWith('/verify/') ? 'verify' : 'pack';
-    const id = currentPath.replace(kind === 'verify' ? '/verify/' : '/pack/', '').split('/')[0];
+  // Public route /verify/:id (certificate), /pack/:id (Board Pack) and /root/:hash (report graph
+  // root, W10.3). The ONLY anonymous surface (F11). Needs no session and touches no tenant table as
+  // anon.
+  if (currentPath.startsWith('/verify/') || currentPath.startsWith('/pack/') || currentPath.startsWith('/root/')) {
+    const kind = currentPath.startsWith('/verify/') ? 'verify'
+      : currentPath.startsWith('/pack/') ? 'pack' : 'root';
+    const prefix = kind === 'verify' ? '/verify/' : kind === 'pack' ? '/pack/' : '/root/';
+    const id = currentPath.replace(prefix, '').split('/')[0];
     return (
       <Suspense fallback={<LoadingFallback />}>
         <AppProvider user={EXTERNAL_TOKEN_HOLDER} seed={EMPTY_SEED}>

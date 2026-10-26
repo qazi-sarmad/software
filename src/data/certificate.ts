@@ -150,3 +150,43 @@ export async function verifyBoardPack(packId: string): Promise<{
     organisation: raw.organisation,
   };
 }
+
+export interface ReportRootResult {
+  status: string;
+  issuedAt: string | null;
+  engineVersion: string | null;
+  templateVersion: string | null;
+  phraseLibraryVersion: string | null;
+  modelId: string | null;
+  organisation: string | null;
+}
+
+/**
+ * The anonymous report-root verification call (W10.3). Needs no session: it is the third and last
+ * function callable by role anon (F11, D-W-PUBLIC-ROOT). Given a graph root it returns only
+ * existence, the issuance time and the engine, template and phrase-library versions. It returns no
+ * tenant content.
+ */
+export async function verifyReportRoot(root: string): Promise<ReportRootResult | null> {
+  const sb = getClient();
+  if (!sb || !root) return null;
+  const { data, error } = await sb.rpc('verify_report_root', { p_root: root });
+  if (error) throw new Error(error.message);
+  const raw = (Array.isArray(data) ? data[0] : data) as
+    | {
+        status: string; issued_at: string | null; engine_version: string | null;
+        template_version: string | null; phrase_library_version: string | null;
+        model_id: string | null; organisation: string | null;
+      }
+    | undefined;
+  if (!raw) return null;
+  return {
+    status: raw.status,
+    issuedAt: raw.issued_at,
+    engineVersion: raw.engine_version,
+    templateVersion: raw.template_version,
+    phraseLibraryVersion: raw.phrase_library_version,
+    modelId: raw.model_id,
+    organisation: raw.organisation,
+  };
+}

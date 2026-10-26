@@ -760,7 +760,8 @@ IMPROVISE-THEN-DOCUMENT (this file).
   this repository grants anon on them. 0062 revokes them best-effort (a refusal is swallowed);
   test 72 counts only non-extension functions and raises a notice listing any extension member still
   granted to anon.
-- Reason: the anonymous surface Provio controls is exactly verify_certificate and verify_board_pack;
+- Reason: the anonymous surface Provio controls is exactly verify_certificate, verify_board_pack and
+  verify_report_root (the third added deliberately in WRITE-1, see D-W10.3-verify-report-root);
   the extension functions anon can still reach are dblink helpers no tenant can use through the API,
   and no migration can revoke a grant the migration role does not own.
 - Reverse: if the owner wants the extension grants closed, drop the dblink extension from public
@@ -1302,3 +1303,28 @@ IMPROVISE-THEN-DOCUMENT (this file).
   `on conflict` guard keeps a re-apply clean, and a later recorder run fills `media_path`/`ui_hash`.
 - Reverse: delete the migration's rows; the library falls back to the app-side key list.
 
+
+## D-W10.3-verify-report-root — the anonymous surface grows to three functions (WRITE-1, W10.3)
+
+- Task: W10.3 (WRITE-1).
+- Point: the writing engine commits every report graph to `report_graphs` with a graph root, a render
+  hash and the engine, template and phrase-library versions. W10.3 lets a third party holding a graph
+  root confirm it without a session. The brief permits exactly one deliberate addition to the
+  anonymous surface, with a recorded decision, the allow-list guard updated and a test that nothing
+  else became anonymous-callable.
+- Options: (a) extend `verify_certificate` to accept a root as well as a certificate id; (b) add one
+  sibling function `verify_report_root(p_root)`.
+- Choice: (b). A separate function keeps the certificate contract untouched and returns no tenant
+  content: given a root it returns only the status, the issuance (fixed) timestamp and the four
+  version identifiers (engine, template, phrase library, model). The organisation name appears only
+  when the tenant turned `public_verify_show_title` on, and the root itself is never echoed back.
+  Migration `0094_verify_report_root.sql`; guard `src/guards/anonGrantAllowList.test.ts` now allows
+  exactly the three names; `supabase/tests/72_certificate.sql` and the new `99_verify_report_root.sql`
+  prove nothing else became anonymous.
+- Reason: (b) is the smaller change to an existing, tested contract, and the brief names the sibling
+  option explicitly. The function reuses the certificate rate limiter (`verify_rate_ok`) and the
+  `public_verification` feature gate, so it cannot be used to enumerate roots for a tenant that has
+  the feature off.
+- Reverse: drop `public.verify_report_root`, revert `ANON_CALLABLE` to the two names, remove the
+  `root` branch from `PublicVerifyRoute.tsx` and the `/root/:hash` route from `App.tsx`, and delete
+  `supabase/tests/99_verify_report_root.sql`.

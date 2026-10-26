@@ -457,15 +457,17 @@ under `acp.tutorial.autoplay`), so the same screen never autoplays twice. The e2
 ## WK-06 — Public verification page (S8)
 
 - **Purpose:** the ONLY anonymous surface (F11). A visitor checks a certificate or Board Pack by id
-  and may compare a dropped JSON or PDF hash in the browser.
-- **Route:** `/verify/:id` (certificate) and `/pack/:id` (Board Pack), outside the auth guard.
-- **Rights:** none. The page calls exactly one of the two anon-callable RPCs.
-- **Data:** `verifyCertificate(certificateId)`, `verifyBoardPack(packId)` (`src/data/certificate.ts`);
-  `parseDroppedDocument`, `matchesHash`, `statusLabel` (`src/lib/certificate.ts`).
+  and may compare a dropped JSON or PDF hash in the browser. It also checks a report graph root (W10.3).
+- **Route:** `/verify/:id` (certificate), `/pack/:id` (Board Pack) and `/root/:hash` (report graph root), outside the auth guard.
+- **Rights:** none. The page calls exactly one of the three anon-callable RPCs.
+- **Data:** `verifyCertificate(certificateId)`, `verifyBoardPack(packId)`, `verifyReportRoot(root)`
+  (`src/data/certificate.ts`); `parseDroppedDocument`, `matchesHash`, `statusLabel`
+  (`src/lib/certificate.ts`).
 - **Testids:** `wk-verify`, `wk-verify-loading`, `wk-verify-error`, `wk-verify-status`,
   `wk-verify-not-found`, `wk-verify-rate-limited`, `wk-verify-organisation`, `wk-verify-title`,
   `wk-verify-issued`, `wk-verify-workpapers`, `wk-verify-findings`, `wk-verify-hash`, `wk-verify-drop`,
-  `wk-verify-file`, `wk-verify-drop-error`, `wk-verify-drop-result`.
+  `wk-verify-file`, `wk-verify-drop-error`, `wk-verify-drop-result`, and for the report-root kind
+  (W10.3) `wk-verify-model`, `wk-verify-engine`, `wk-verify-template`, `wk-verify-phrases`.
 - **States:** loading; valid / superseded / revoked / not found / rate limited. Organisation name and
   title appear only when the tenant turned `public_verify_show_title` on.
 - **Tutorial key:** `oa.verify`.
