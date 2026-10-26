@@ -13,10 +13,10 @@ missing piece is named. **Missing** = not built.
 
 | Object | Count |
 |---|---|
-| Migrations | 92 |
+| Migrations | 93 |
 | SQL test files | 96 |
-| SQL assertions (`provio_test.assert_*` calls) | 1583 |
-| Playwright spec files / tests | 25 / 115 |
+| SQL assertions (`provio_test.assert_*` calls) | 1584 |
+| Playwright spec files / tests | 25 / 127 |
 | vitest files / tests | 164 / 1901 |
 | Guards (`src/guards/*.test.ts`) | 19 |
 
