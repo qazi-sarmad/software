@@ -23,6 +23,19 @@ These are Partial or Missing in `docs/PARITY.md`, each with the reason in `COMPL
 6. **§3 / §25.7 mobile viewport smoke** — Partial. The app is responsive; a phone-viewport
    Playwright test for ethics sign-off, simple approvals and report viewing is not present.
 
+## In scope, not yet built (owner instruction, 2026-10-26)
+
+- **Connectors and deterministic continuous monitoring** (spec §35). Supersedes the earlier parking of
+  watchers (F12). Nothing is built yet: no connector framework, no staging tables, no monitor rules,
+  no alert records or triage screen, no emitter for `watcher.signal`. The F7 event interface and the
+  generic `watcher.signal` key already exist and were left ready for this. Decision:
+  `docs/COMPLETION-DECISIONS.md` D-F12-SCOPE. Adapters will be fixture-tested; each stays marked as not
+  verified against a live system until the owner supplies sandbox credentials.
+- When built, these existing artefacts must change with it: the `watchers` row in `feature_catalogue`
+  (status `parked`, migration 0051; asserted by SQL test 64), the `watcher.signal` allow-list entry in
+  SQL test 84, and the note in `docs/COMPLETION-EVENTS.md`. Earlier migrations are not edited; a new
+  migration changes the data.
+
 ## Owner actions
 
 - **Deploy the Edge Functions.** `supabase functions deploy email-dispatch graph-oauth
@@ -48,9 +61,6 @@ These are Partial or Missing in `docs/PARITY.md`, each with the reason in `COMPL
 
 ## Parked (by an earlier decision)
 
-- **Continuous-auditing watchers** (file drop, HTTP polling, database view) are PARKED by F12. The F7
-  event interface stays generic so a future `watcher.signal` event can plug in. `watcher.signal` is
-  the only catalogue key with no emitter and no source, by design.
 - **Migration runner against two live databases.** `tools/migration-runner/` ships its 11
   driver-injected steps with unit tests against `fakeDriver.mjs`. CI cannot provide two reachable
   Postgres databases, so the end-to-end run is left to the owner's runner machine; the step logic,

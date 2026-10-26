@@ -44,7 +44,7 @@ or a row in `event_emitter_allowlist` with a stated reason. The allow-list is de
 | Event key | Reason |
 |---|---|
 | anomaly.raised | Anomaly detection is a pure client-side function over the sample rows (`src/lib/analytics.ts`). There is no server-side anomaly record to emit from; inventing one would break L1 (deterministic audit logic). The rule stays selectable in the editor but cannot fire until a server-side detector exists. Recorded in `event_emitter_allowlist`. |
-| watcher.signal | Reserved for the parked watchers feature (see NOT-DONE). Not in the catalogue; it is in the allow-list so that the list is the complete record of keys without an emitter. |
+| watcher.signal | Reserved for continuous monitoring (spec §35, in scope since 2026-10-26; see NOT-DONE). No emitter exists until it is built. Not in the catalogue; it is in the allow-list so that the list is the complete record of keys without an emitter. |
 
 ## Field catalogue
 

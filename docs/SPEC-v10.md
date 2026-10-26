@@ -475,6 +475,8 @@ Every import has a **parser per format** and a **mapping step**: the user maps s
 
 Migration from TeamMate, AuditBoard and similar tools is not committed in this version. Export is complete.
 
+Data can also arrive through connectors (§35): read-only pulls from a tenant's own systems into that tenant, staged and content-hashed before any use.
+
 ---
 
 ## 20. Evidence and Uploads
@@ -503,6 +505,7 @@ Migration from TeamMate, AuditBoard and similar tools is not committed in this v
 - **Email** is sent through **Microsoft Graph with OAuth.** Each client tenant grants consent for Provio to send mail on its behalf, using a sender mailbox that the client chooses. Basic-auth SMTP is not used, because Microsoft is retiring it.
 - Email is sent from an edge function, so credentials are never exposed to the browser.
 - Each email is logged, with its delivery status.
+- Alerts from continuous monitoring (§35) use the same notification and escalation engine.
 
 ---
 
@@ -720,6 +723,7 @@ Phase 2 built the access layer: identity, rights, RLS, the audit team, the role 
 | AI removed from the product; rights vocabulary returns to 14 keys | Owner decision, 2026-10-25 |
 | Sharing across universes defined (engagement, read-only, head-level authority, optional expiry, revocable) | Owner decision, 2026-10-25 |
 | Report engine guarantees added (§15.6) | Owner decision, 2026-10-25 |
+| Connectors and deterministic continuous monitoring brought into scope (§35); supersedes the earlier parking of watchers (F12) | Owner decision, 2026-10-26 |
 
 ---
 
@@ -746,3 +750,35 @@ Phase 2 built the access layer: identity, rights, RLS, the audit team, the role 
   with its findings and CAPs. Cross-organisation sharing to a linked organisation is deferred.
 - **The report engine guarantees are added.** See §15.6.
 - **The tutorial count drops** with the removed screens. The owner accepts the drop.
+
+---
+
+## 35. Connectors and continuous monitoring
+
+**Status.** In scope from 2026-10-26 by the owner's instruction. This supersedes the earlier decision (F12) that parked continuous-auditing watchers. It is not yet built; see `docs/NOT-DONE.md`.
+
+### 35.1 Principles
+
+- **Pull, read-only, tenant-side (L2).** A connector pulls a tenant's own data from the tenant's own systems into that tenant's database, or receives a signed push from them. It never sends tenant data to a third party and never writes to the source system.
+- **Staged and verifiable.** Everything a connector delivers lands in staging with its source, fetch time, content hash and run. A staged record can be drilled into and promoted to a population, where the verification gate (§11.1, L3) applies.
+- **No automatic findings.** Nothing a connector or a monitor delivers becomes an observation, a claim or a finding without an auditor's review and approval. Reports are built only from final approved observations (§15).
+- **Credentials.** Held only in the secret store (§25.3). Never shown to the browser, logged, or committed.
+- **Configuration, not code.** Connector setup and field mapping are done through selections, not typed JSON.
+
+### 35.2 Connectors
+
+A connector has an identifier, version, kind, authentication method, configuration schema, field mapping, health check and a fetch step that resumes from a stored checkpoint. Ingestion is idempotent by content hash. Each organisation configures its own instances, with a per-tenant allow-list of reachable addresses, timeouts, retries and rate limits. Run history, row counts, errors and health are visible, and failures notify through §22.
+
+The catalogue covers: file drop, secure file pickup, signed webhook, HTTP pull and read-only database view; ERP and finance systems (SAP, Oracle, Microsoft Dynamics 365, NetSuite, QuickBooks Online, Xero); identity and HR (Microsoft Entra ID, Okta, SCIM); IT service and ticketing (ServiceNow, Jira); security and monitoring (Splunk, Microsoft Sentinel, syslog/CEF, Datadog events); productivity (Microsoft Graph, Google Workspace audit logs). Each catalogue entry states whether it has been verified against a live system. An adapter that has only been tested against recorded fixtures says so.
+
+### 35.3 Continuous monitoring
+
+- **Deterministic rules (L1).** A monitor is a rule held as data: threshold, rate over a window, sequence, set membership, expected event missing, or reconciliation across sources. It is evaluated by a pure function whose window and time are arguments. There is no learning and no model.
+- **Alerts.** A triggered rule creates a hash-chained alert record naming the rule and its version and the source records with their hashes. It raises the generic `watcher.signal` event (§22).
+- **Triage.** An auditor dismisses an alert with a reason, snoozes it with an expiry, or escalates it. Escalation creates a draft observation filled from the alert's facts through guided intake.
+- **Reporting.** An alert reaches a report only through an observation that has passed final approval. The alert digest report summarises alerts by rule, period, status and disposition, using only alerts that have a recorded disposition.
+- **Release.** Monitor rules follow the same draft, reviewed and released lifecycle as tests and phrases; release requires a qualified human reviewer.
+
+### 35.4 Out of scope here
+
+Any learning, scoring or inference by a model (§28), writing to a source system, and sending tenant data outside the tenant's boundary.
