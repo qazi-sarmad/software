@@ -71,7 +71,10 @@ language sql immutable as $$
     'evidence_files','document_extractions',
     'report_versions','report_blocks','report_comments','caps','email_queue','exports_log','import_jobs','archive_jobs','prior_year_imports',
     -- C2.9. Appended (never inserted) so the positional consumers of this list are unaffected.
-    'support_access_log'
+    'support_access_log',
+    -- WRITE-1 (0088). The Evidence-Bound Claim Graph tables. Appended, same reason.
+    'report_templates','report_template_versions','report_claims','report_claim_versions',
+    'report_terminology','figure_functions','figure_function_versions','report_graphs'
   ]
 $$;
 
