@@ -105,3 +105,38 @@ decided here), and IMPROVISE-THEN-DOCUMENT (this file).
 - Reverse: drop `report_formats`, `report_format_versions` and `format_audiences`, remove the
   `format_*` RPCs, and delete `src/lib/writing/reportFormat.ts` and `ReportFormatPanel.tsx`. Nothing
   else reads them.
+
+## D-W-TUTREG — the registry gap is fixed by a new seed migration, not by editing 0071
+
+- Task: W12.
+- Point: `oa.connectors` (OA-23) and `oa.formats` (OA-24) were added to
+  `src/lib/tutorialKeys.json` and given GIFs after 0071 was written, but no migration seeds their
+  `tutorials` rows. `check-tutorials` compares the JSON against the GIF files, so it passed; nothing
+  compared the JSON against the migrations. On a fresh database the registry held 77 rows while the
+  app offered 79 keys. The rows appeared locally only because `e2e/global-setup.ts` upserts the JSON
+  for the recorder.
+- Options: (a) edit 0071 in place to add the two rows; (b) add a new migration 0092 that seeds the
+  two rows and re-apply it in test 90; (c) rely on the e2e seed.
+- Choice: (b). 0071 is already applied everywhere and editing it would not reach an existing
+  database; a new migration is the M1/M2-safe repair (grep showed no existing row for either key).
+  A build-time guard (`src/guards/tutorialRegistryCoverage.test.ts`) and two assertions in
+  `supabase/tests/90_tutorial_steps.sql` now fail if any JSON key has no seeding migration.
+- Reason: keeps the "repairs go above the failing statement" rule (M7) and the "one migration per
+  change" habit, and closes the defect class at build time rather than per-key.
+- Reverse: delete `0092_tutorial_registry_gap.sql`, drop the two assertions in test 90 and the guard;
+  the registry then returns to 77 rows on a fresh database.
+
+## D-W-ENGINETESTS — the engine's untested core modules gain direct tests
+
+- Task: W13 (test hardening).
+- Point: `graph`, `observations` and `phrases` had no test file of their own; `planner`, `monitors`
+  and `lineagePanel` were covered only incidentally. The brief requires the graph-root/render-hash
+  invariant, the approved-observation gate, phrase immutability and slot discipline to be tested.
+- Options: (a) leave the incidental coverage; (b) add one focused test file per module, driving the
+  real functions with the shared fixtures.
+- Choice: (b). New files: `src/lib/writing/graph.test.ts` (13 cases),
+  `src/lib/writing/observations.test.ts` (14 cases), `src/lib/writing/phrases.test.ts` (28 cases).
+  No mocks; the tests call the real modules with `fixtures.ts` data.
+- Reason: the invariants are the product; a regression in `claimCanonical` or `applyApprovalGate`
+  would silently corrupt every report. Focused tests make the failure local.
+- Reverse: delete the three test files; nothing in `src/lib/writing/` changes.

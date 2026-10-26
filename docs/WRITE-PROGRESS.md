@@ -17,8 +17,10 @@ One line per task: task, commit, CI run id or "local", result.
 | W11 connectors and monitoring | badfe9e | local: vitest, SQL harness green | green |
 | W2.9 review workbook, W11.4 monitor schema | c6a6a0c | local: vitest, SQL harness green | green |
 | W9 style lint, readability, guided intake | 83bf1a0 | local: vitest 1844/160 files green | green |
-| Report format editor (owner instruction) | (this commit) | local: vitest, SQL harness, guards green | in progress |
+| Report format editor (owner instruction) | deb95e1 | CI run 40291572648 (steps 7 SQL, 8 Playwright green) | green |
+| W12 registry-gap fix, engine tests, docs | (this commit) | local: vitest 1901/165 files, SQL harness twice green | green |
 
 ## CI dispatches
 
-Budget 14. Used: 0.
+Budget 14. Used: 1 (run 40291572648 at head deb95e1: steps 1-8 green, step 9 screenshot sweep is a
+continue-on-error tool and does not gate).
