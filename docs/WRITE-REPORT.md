@@ -56,13 +56,10 @@ third asserts a register or locale change never moves the graph root.
 
 ## CI dispatches
 
-Budget 14. Used: 2. Run 40291572648 at head `deb95e1` reached steps 1 to 8 green (step 9, the
-screenshot sweep, is a continue-on-error tool and does not gate). Run 40314836257 at head `b50b156`
-is the final dispatch: every step green, 1 to 16 (type check, unit tests, build, token, shrink,
-tutorials, function deploy list, UI contract, migrations and SQL tests, Playwright, screenshot sweep,
-screenshot upload). The shared test-database concurrency group
-serialises runs, so a dispatch can wait behind a `main` push; the branch's own push trigger starts it,
-so no manual dispatch was needed.
+Budget 14. Used: 3 (run 40291572648 at head `deb95e1`: steps 1 to 8 green; run 40314836257 at head
+`b50b156`: every step green, 1 to 16; run 40320552310 at head `51c3e3a`: every step green, 1 to 16).
+The shared test-database concurrency group serialises runs, so a dispatch can wait behind a `main`
+push; the branch's own push trigger starts it, so no manual dispatch was needed.
 
 ## Decisions (one line each)
 

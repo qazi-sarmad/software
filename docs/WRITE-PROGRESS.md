@@ -21,9 +21,9 @@ One line per task: task, commit, CI run id or "local", result.
 | W12 registry-gap fix, engine tests, docs | a53876a | local: vitest 1901/165 files, SQL harness twice green | green |
 | W12 report-builder screen mounted in the Audit File window | 5e8bfc9 | local: tsc, vitest 1901, guards 618, SQL harness twice, build, all check scripts, e2e full-flow 4 passed | green |
 | W10.3 verify_report_root (migration 0094, guard, tests 72/99, client, /root route) | b50b156 | CI run 40314836257: every step green, 1 to 16 | green |
-| W15.3 close-out docs (counts, CI run, blocker) | afb8219 | local: docs only, no code change | green |
+| W15.3 close-out docs (counts, CI run, blocker) | 51c3e3a | CI run 40320552310: every step green, 1 to 16 | green |
 
 ## CI dispatches
 
-Budget 14. Used: 2 (run 40291572648 at head deb95e1: steps 1-8 green, step 9 the screenshot sweep is a
-continue-on-error tool; run 40314836257 at head b50b156: every step green, 1 to 16).
+Budget 14. Used: 3 (run 40291572648 at head deb95e1: steps 1-8 green; run 40314836257 at head b50b156:
+every step green, 1 to 16; run 40320552310 at head 51c3e3a: every step green, 1 to 16).
