@@ -41,7 +41,7 @@ The definitions and examples below are the human-authored ones in `src/lib/writi
 en-GB is primary and the default. en-US is the second variant. The default is configurable per
 organisation and overridable per report.
 
-The locale packs are human-authored data (`src/lib/writing/locale.ts`). The lexicon holds 212 variant
+The locale packs are human-authored data (`src/lib/writing/locale.ts`). The lexicon holds 213 variant
 pairs (organisation/organization, programme/program, licence/license (noun), judgement/judgment,
 cheque/check, colour/color, centre/center, analyse/analyze, behaviour/behavior, favour/favor,
 enrolment/enrollment, fulfil/fulfill, travelling/traveling, and so on). Date forms differ: UK
