@@ -78,13 +78,18 @@ export type RhetoricalRole =
   | 'scope'
   | 'limitation'
   | 'alert_summary'
-  | 'numeric_summary';
+  | 'numeric_summary'
+  | 'summary'
+  | 'findings'
+  | 'appendices';
 
 /** A section of the document plan. */
 export interface Section {
   id: string;
   role: RhetoricalRole;
   order: number;
+  /** The rhetorical roles (and so the claim families) that may appear in this section. */
+  roles: RhetoricalRole[];
   /** True when the model declares the section cannot vary by register (a purely numeric section). */
   registerInvariant: boolean;
   heading: string;

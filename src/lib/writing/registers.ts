@@ -51,7 +51,7 @@ export const FORMALITY_DEFINITIONS: Record<Formality, FormalityDefinition> = {
   4: {
     level: 4,
     name: 'Formal',
-    definition: 'Complete sentences, impersonal constructions, defined terms used consistently.',
+    definition: 'Complete sentences, constructions with no named actor, defined terms used consistently.',
     example: 'A sample of 40 payments was examined. In three instances, no evidence of approval '
       + 'was identified.',
   },
