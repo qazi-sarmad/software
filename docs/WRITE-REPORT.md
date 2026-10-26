@@ -58,9 +58,9 @@ third asserts a register or locale change never moves the graph root.
 
 Budget 14. Used: 2. Run 40291572648 at head `deb95e1` reached steps 1 to 8 green (step 9, the
 screenshot sweep, is a continue-on-error tool and does not gate). Run 40314836257 at head `b50b156`
-is the final dispatch: steps 1 to 14 green (type check, unit tests, build, token, shrink, tutorials,
-function deploy list, UI contract, migrations and SQL tests, Playwright), step 15 the screenshot
-sweep is a continue-on-error tool and does not gate. The shared test-database concurrency group
+is the final dispatch: every step green, 1 to 16 (type check, unit tests, build, token, shrink,
+tutorials, function deploy list, UI contract, migrations and SQL tests, Playwright, screenshot sweep,
+screenshot upload). The shared test-database concurrency group
 serialises runs, so a dispatch can wait behind a `main` push; the branch's own push trigger starts it,
 so no manual dispatch was needed.
 
