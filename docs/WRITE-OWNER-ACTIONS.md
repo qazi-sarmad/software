@@ -18,6 +18,10 @@ cannot do for you.
 4. **Supply sandbox credentials for each connector you want live-verified.** Enter them in the
    platform wizard's connector setup, never in chat and never in the repository. Every adapter is
    marked "live-verified: NO" until then. See `docs/CONNECTORS.md`.
-5. **Review and merge the draft pull request.** Do not merge without reading it.
+5. **Open (or review and merge) the draft pull request.** The build could not open it: the supplied
+   `GITHUB_TOKEN` is a GitHub App token without the `pull_requests: write` permission, so
+   `POST /repos/qazi-sarmad/software/pulls` returns HTTP 403 (see `docs/WRITE-BLOCKERS.md`,
+   `B-W-PR-TOKEN`). Open the draft pull request from `feature/writing-engine` into `main`, or grant the
+   permission and re-run the command in the blocker entry. Do not merge without reading it.
 6. **Deploy and set credentials as described in `docs/DEPLOY-RUNBOOK.md`**, where that document
    exists.

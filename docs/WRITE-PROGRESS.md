@@ -19,10 +19,11 @@ One line per task: task, commit, CI run id or "local", result.
 | W9 style lint, readability, guided intake | 83bf1a0 | local: vitest 1844/160 files green | green |
 | Report format editor (owner instruction) | deb95e1 | CI run 40291572648 (steps 7 SQL, 8 Playwright green) | green |
 | W12 registry-gap fix, engine tests, docs | a53876a | local: vitest 1901/165 files, SQL harness twice green | green |
-| W12 report-builder screen mounted in the Audit File window | (this commit) | local: tsc, vitest 1901, guards 618, SQL harness twice, build, all check scripts, e2e full-flow 4 passed | green |
-| W10.3 verify_report_root (migration 0094, guard, tests 72/99, client, /root route) | (this commit) | local: tsc, vitest 1901/164, guards 618, SQL harness twice, build, all check scripts, check-tutorials re-recorded | green |
+| W12 report-builder screen mounted in the Audit File window | 5e8bfc9 | local: tsc, vitest 1901, guards 618, SQL harness twice, build, all check scripts, e2e full-flow 4 passed | green |
+| W10.3 verify_report_root (migration 0094, guard, tests 72/99, client, /root route) | b50b156 | CI run 40314836257: every step green, 1 to 16 | green |
+| W15.3 close-out docs (counts, CI run, blocker) | afb8219 | local: docs only, no code change | green |
 
 ## CI dispatches
 
-Budget 14. Used: 1 (run 40291572648 at head deb95e1: steps 1-8 green, step 9 screenshot sweep is a
-continue-on-error tool and does not gate).
+Budget 14. Used: 2 (run 40291572648 at head deb95e1: steps 1-8 green, step 9 the screenshot sweep is a
+continue-on-error tool; run 40314836257 at head b50b156: every step green, 1 to 16).

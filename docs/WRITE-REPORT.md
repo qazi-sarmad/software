@@ -82,10 +82,15 @@ Full text in `docs/WRITE-DECISIONS.md` (11 entries).
 
 ## Blockers
 
-`docs/WRITE-BLOCKERS.md` is empty: no task hit the break protocol. Two environment issues were fixed
-forward without a `(FIX)` commit because neither was a code defect: the local host had no Postgres 17
-(installed to run the harness, per M6), and `supabase/config.toml` had local test scaffolding that was
-reverted before any commit.
+`docs/WRITE-BLOCKERS.md` records one blocker, `B-W-PR-TOKEN`: the draft pull request cannot be opened
+with the supplied `GITHUB_TOKEN`. It is a GitHub App installation token without the
+`pull_requests: write` permission, so `POST /repos/qazi-sarmad/software/pulls` returns HTTP 403
+"Resource not accessible by integration" (tried twice: the REST API and the `create_pr` tool). No task
+hit the break protocol's code path, so no commit was reverted. The branch is pushed and green; the
+owner opens the draft pull request, or grants the permission and re-runs the command in the blocker
+entry. Two environment issues were fixed forward without a `(FIX)` commit because neither was a code
+defect: the local host had no Postgres 17 (installed to run the harness, per M6), and
+`supabase/config.toml` had local test scaffolding that was reverted before any commit.
 
 ## Not done
 
