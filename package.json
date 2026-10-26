@@ -59,6 +59,7 @@
   },
   "overrides": {
     "source-map-js": "1.2.2",
-    "image-size": "^2.0.2"
+    "image-size": "^2.0.2",
+    "jspdf": "^4.2.1"
   }
 }
