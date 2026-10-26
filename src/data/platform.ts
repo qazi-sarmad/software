@@ -87,6 +87,76 @@ export function setInviteCap(orgId: string, perUserDaily: number): Promise<DataR
   return callRpc('platform_set_invite_cap', { p_org: orgId, p_per_user_daily: perUserDaily }, NOT_CONFIGURED);
 }
 
+/** Create a tenant (WP3). Returns the new org id on success, or a DataResult with the refusal. */
+export async function createTenant(
+  name: string, initialAdminEmail: string, reason: string
+): Promise<{ ok: true; orgId: string } | { ok: false; error: string }> {
+  const sb = getClient();
+  if (!sb) return { ok: false, error: NOT_CONFIGURED };
+  const { data, error } = await sb.rpc('platform_create_tenant', {
+    p_name: name, p_initial_admin_email: initialAdminEmail, p_reason: reason,
+  });
+  if (error) return { ok: false, error: error.message };
+  return { ok: true, orgId: data as string };
+}
+
+export function seedOrgRoles(orgId: string): Promise<DataResult> {
+  return callRpc('platform_seed_org_roles', { p_org: orgId }, NOT_CONFIGURED);
+}
+
+export function configurePlatformEmailSender(
+  displayName: string, fromAddress: string, replyTo: string | null, provider: string, reason: string
+): Promise<DataResult> {
+  return callRpc(
+    'platform_configure_email_sender',
+    {
+      p_display_name: displayName, p_from_address: fromAddress, p_reply_to: replyTo,
+      p_provider: provider, p_reason: reason,
+    },
+    NOT_CONFIGURED
+  );
+}
+
+/** The structured readiness report for one tenant (WP3). Counts and booleans only. */
+export interface ProvisioningStatus {
+  orgId: string;
+  rolesSeeded: number;
+  rolesReady: boolean;
+  status: string;
+  active: boolean;
+  entitlementsEnabled: number;
+  inviteCap: number;
+  invitesSent: number;
+  hasInitialInvite: boolean;
+  platformSenderReady: boolean;
+  engagementCount: number;
+  canCreateEngagement: boolean;
+  ready: boolean;
+}
+
+export async function provisioningStatus(orgId: string): Promise<ProvisioningStatus | null> {
+  const sb = getClient();
+  if (!sb) return null;
+  const { data, error } = await sb.rpc('platform_provisioning_status', { p_org: orgId });
+  if (error) throw new Error(error.message);
+  const r = (data ?? {}) as Record<string, unknown>;
+  return {
+    orgId: (r.org_id as string) ?? orgId,
+    rolesSeeded: Number(r.roles_seeded ?? 0),
+    rolesReady: Boolean(r.roles_ready),
+    status: (r.status as string) ?? 'active',
+    active: Boolean(r.active),
+    entitlementsEnabled: Number(r.entitlements_enabled ?? 0),
+    inviteCap: Number(r.invite_cap ?? 0),
+    invitesSent: Number(r.invites_sent ?? 0),
+    hasInitialInvite: Boolean(r.has_initial_invite),
+    platformSenderReady: Boolean(r.platform_sender_ready),
+    engagementCount: Number(r.engagement_count ?? 0),
+    canCreateEngagement: Boolean(r.can_create_engagement),
+    ready: Boolean(r.ready),
+  };
+}
+
 export function grantSupportAccess(
   orgId: string, scope: Record<string, unknown>, durationHours: number
 ): Promise<DataResult> {

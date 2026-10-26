@@ -10,6 +10,7 @@ import { SuperAdminFeatures } from './SuperAdminFeatures';
 import { SuperAdminRecipients } from './SuperAdminRecipients';
 import { SuperAdminTutorials } from './SuperAdminTutorials';
 import { SuperAdminSetup } from './SuperAdminSetup';
+import { SuperAdminProvisioning } from './SuperAdminProvisioning';
 import { SuperAdminEmail } from './SuperAdminEmail';
 import { SuperAdminAutomation } from './SuperAdminAutomation';
 import { SuperAdminHosting } from './SuperAdminHosting';
@@ -24,12 +25,13 @@ import { TutorialButton } from '../common/TutorialButton';
  * database. This is the sole surface that may know about the platform role (D-PLATFORM-RIGHTS);
  * no org-product code imports it. It renders no blocking modal (spec §27.5).
  */
-type Tab = 'tenants' | 'support' | 'consultation' | 'features' | 'recipients' | 'email' | 'automation' | 'tutorials' | 'setup' | 'trail' | 'hosting' | 'migration';
+type Tab = 'tenants' | 'provisioning' | 'support' | 'consultation' | 'features' | 'recipients' | 'email' | 'automation' | 'tutorials' | 'setup' | 'trail' | 'hosting' | 'migration';
 type Gate = 'checking' | 'allowed' | 'denied';
 
 /** F18: every platform tab carries its own "Show me how" tutorial key (Appendix A). */
 const TAB_TUTORIAL: Record<Tab, { key: string; title: string }> = {
   tenants: { key: 'sa.tenant-hub', title: 'SA-03 tenant hub' },
+  provisioning: { key: 'sa.setup-wizard', title: 'SA-16 guided provisioning' },
   support: { key: 'sa.health', title: 'SA-02 platform health' },
   consultation: { key: 'sa.dual-session', title: 'SA-09 Dual Session console' },
   features: { key: 'sa.features', title: 'SA-14 features and plans' },
@@ -102,6 +104,7 @@ export const SuperAdminPortal: React.FC = () => {
 
   const tabs: { id: Tab; label: string; icon: React.FC<{ className?: string }> }[] = [
     { id: 'tenants', label: 'Tenants', icon: Building },
+    { id: 'provisioning', label: 'Guided setup', icon: Building },
     { id: 'support', label: 'Support access', icon: Shield },
     { id: 'consultation', label: 'Dual Session', icon: Users },
     { id: 'features', label: 'Features & plans', icon: Zap },
@@ -166,6 +169,7 @@ export const SuperAdminPortal: React.FC = () => {
         </div>
 
         {tab === 'tenants' && <SuperAdminTenants />}
+        {tab === 'provisioning' && <SuperAdminProvisioning />}
         {tab === 'support' && <SuperAdminSupport />}
         {tab === 'consultation' && <SuperAdminConsultation />}
         {tab === 'features' && <SuperAdminFeatures />}
