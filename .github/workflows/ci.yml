@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, feature/board-ai-control-plane, feature/writing-engine]
+    branches: [main, feature/board-ai-control-plane, feature/writing-engine, feature/scale-harden-v1]
   pull_request:
   workflow_dispatch:
 
