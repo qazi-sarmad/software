@@ -267,6 +267,23 @@ export function variantLookup(): { gb: Map<string, string>; us: Map<string, stri
   return { gb, us };
 }
 
+/**
+ * W9.1 locale lint: the wrong-locale spellings found in a text. For en-GB output this is every
+ * US-only variant; for en-US output it is every UK-only variant. Proper nouns and quoted client
+ * text are the documented exception, handled by the caller passing only its own prose.
+ */
+export function localeSpellings(text: string, locale: Locale): string[] {
+  // `gb` maps a UK word to its US variant; `us` maps a US word to its UK variant. An en-GB report
+  // must not contain a US-only word, so the wrong set for en-GB is the `us` map's keys.
+  const { gb, us } = variantLookup();
+  const wrong = locale === 'en-GB' ? us : gb;
+  const found: string[] = [];
+  for (const word of text.toLowerCase().match(/[a-z]+/g) ?? []) {
+    if (wrong.has(word)) found.push(word);
+  }
+  return [...new Set(found)];
+}
+
 // ---------------------------------------------------------------------------
 // Date, number, currency and quotation conventions per locale
 // ---------------------------------------------------------------------------
