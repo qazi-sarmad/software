@@ -62,6 +62,8 @@ export function captureFor(def) {
     // WK-05 and WK-09 are Audit File window views, not Dashboard blocks.
     if (key === 'oa.certificate') return { kind: 'audit-file', view: 'certificate' };
     if (key === 'oa.timetravel') return { kind: 'audit-file', view: 'as_of' };
+    // WK-11 is the Report builder view of the Audit File window (WRITE-1).
+    if (key === 'oa.report-builder') return { kind: 'audit-file', view: 'builder' };
     // WK-10 is the Patterns view of the Issues & CAP Register.
     if (key === 'oa.patterns') return { kind: 'issues', view: 'patterns' };
     // WK-08 renders in the Work Queue tab.

@@ -9,16 +9,16 @@ current table.
 behaviour is removed. **Partial** = some of it exists, or it exists without a behaviour test; the
 missing piece is named. **Missing** = not built.
 
-**Counts at this report (branch `feature/board-ai-control-plane`).**
+**Counts at this report (branch `feature/writing-engine`, WRITE-1 run 2026-10-26).**
 
 | Object | Count |
 |---|---|
-| Migrations | 82 |
-| SQL test files | 91 |
-| SQL assertions (`provio_test.assert_*` calls) | 1499 |
-| Playwright spec files / tests | 27 / 130 |
-| vitest files / tests | 144 / 1646 |
-| Guards (`src/guards/*.test.ts`) | 10 |
+| Migrations | 92 |
+| SQL test files | 96 |
+| SQL assertions (`provio_test.assert_*` calls) | 1583 |
+| Playwright spec files / tests | 25 / 115 |
+| vitest files / tests | 164 / 1901 |
+| Guards (`src/guards/*.test.ts`) | 19 |
 
 Baseline at C0 (last green run 39516753943, head a41d46e): vitest 128 files / 1428 tests; SQL 80
 files / 71 migrations / 1683 assertions; Playwright 113 passed / 2 skipped. Every count above is at
@@ -29,7 +29,7 @@ or above its baseline.
 | Spec section | Status | Evidence |
 |---|---|---|
 | 0 Product Summary | Present | Full product, backend and RLS: `0008_rls.sql`; sql `01`,`02`,`03`; `e2e/phase7.spec.ts` |
-| 1 Laws | Present | L1 `0029_analyst_engine.sql` + guard `sourceGuards.test.ts`; L2 `0059_ai.sql`; L3 sql `06`,`34`; L4 Realtime + drilldowns; L5 sql `09`,`10`,`15` |
+| 1 Laws | Present | L1 `0029_analyst_engine.sql`, `0088_claim_graph.sql`,`0089_phrase_library.sql` + guards `sourceGuards.test.ts`,`noAi.test.ts`; L2 sql `06`,`34`, connector egress allow-list `0090`; L4 Realtime + drilldowns + figure lineage panel; L5 sql `09`,`10`,`15`, `0088` issuance hash chain |
 | 2 Structure and Tenancy | Partial | Hierarchy, single-universe engagement, platform-blind all Present (sql `25`,`03`). **Missing:** cross-universe view-only sharing (`COMPLETION-BLOCKERS.md`) |
 | 3 Hosting and Client Access | Partial | Login + RLS isolation + export Present. **Partial:** phone viewport test; dedicated/self-hosted switch is an owner action |
 | 4 Roles, Teams and Access | Present | sql `19`,`20`,`21`,`24`,`11`,`12`,`08`,`16`; guards `noRoleStrings`,`sourceGuards` |
@@ -43,7 +43,7 @@ or above its baseline.
 | 12 Analyst Engine | Present | `0029` + `analytics.ts` + `analytics.test.ts`; sql `37`; `0082` BI ranges |
 | 13 Document Review and AI | Present | `0078` + `doc-extract`; `0059`,`0045`,`0067`; sql `87`,`69`,`76` |
 | 14 Findings, Observations and Issues | Present | `0030`,`0082`; sql `39`,`91`; guard `sourceGuards` |
-| 15 Conclusion, Report and Drafting | Present | `0036`,`0037`,`0040`,`0058`; sql `45`,`46`,`49`,`68`; `src/lib/render/*` |
+| 15 Conclusion, Report and Drafting | Present | `0036`,`0037`,`0040`,`0058`; sql `45`,`46`,`49`,`68`. **WRITE-1:** Evidence-Bound Claim Graph `0088`,`0089`,`0090`; sql `95`,`96`,`97`,`98`; `src/lib/writing/*` (graph, phrases, models, planner, figures, verify, explain, versioning, lint, issue, connectors, monitors); byte-reproducible PDF/DOCX `src/lib/render/*` |
 | 16 CAPs | Present | `0038`; sql `47`; `src/lib/cap.ts` |
 | 17 Audit File Window and Document Viewer | Partial | Window, pop-out, viewer, FTS Present (`FloatingWindow.tsx`, `0035`,`0078`; sql `44`). **Partial:** pop-out Realtime sync test |
 | 18 Export | Present | `0041`,`0079`; sql `50`,`88`; `src/lib/render/*` |

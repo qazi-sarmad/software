@@ -18,7 +18,8 @@ One line per task: task, commit, CI run id or "local", result.
 | W2.9 review workbook, W11.4 monitor schema | c6a6a0c | local: vitest, SQL harness green | green |
 | W9 style lint, readability, guided intake | 83bf1a0 | local: vitest 1844/160 files green | green |
 | Report format editor (owner instruction) | deb95e1 | CI run 40291572648 (steps 7 SQL, 8 Playwright green) | green |
-| W12 registry-gap fix, engine tests, docs | (this commit) | local: vitest 1901/165 files, SQL harness twice green | green |
+| W12 registry-gap fix, engine tests, docs | a53876a | local: vitest 1901/165 files, SQL harness twice green | green |
+| W12 report-builder screen mounted in the Audit File window | (this commit) | local: tsc, vitest 1901, guards 618, SQL harness twice, build, all check scripts, e2e full-flow 4 passed | green |
 
 ## CI dispatches
 

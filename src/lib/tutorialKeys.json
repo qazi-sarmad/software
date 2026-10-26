@@ -2522,5 +2522,45 @@
         "testid": "wk-format-save"
       }
     ]
+  },
+  {
+    "key": "oa.report-builder",
+    "audience": "org_admin",
+    "screenId": "WK-11",
+    "title": "Report builder",
+    "steps": [
+      {
+        "text": "Open WK-11 (report builder).",
+        "testid": "audit-file-view-builder"
+      },
+      {
+        "text": "Choose the report model to compose.",
+        "testid": "wk-report-builder-model"
+      },
+      {
+        "text": "Choose the formality level.",
+        "testid": "wk-report-builder-formality"
+      },
+      {
+        "text": "Choose the tone level.",
+        "testid": "wk-report-builder-tone"
+      },
+      {
+        "text": "Choose the voice.",
+        "testid": "wk-report-builder-voice"
+      },
+      {
+        "text": "Read the first claim and open Why this sentence.",
+        "testid": "wk-report-builder-claim-c-scope-provenance"
+      },
+      {
+        "text": "Open the coverage pane to see the reconciliation.",
+        "testid": "wk-report-builder-pane-coverage"
+      },
+      {
+        "text": "Run the freeze and read every blocker it names.",
+        "testid": "wk-report-builder-freeze-run"
+      }
+    ]
   }
 ]

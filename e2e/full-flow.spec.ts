@@ -124,6 +124,14 @@ test('[E2E] findings and issues, conclusion, certificate, report, CAP and export
   await page.getByTestId('audit-file-view-report').click();
   await expect(page.getByTestId('report-editor')).toBeVisible();
 
+  // The deterministic report builder (WRITE-1, W12) is rights-gated on review_and_approve /
+  // approve_plan. A preparer sees the designed refusal, never the panel (asserted unconditionally;
+  // the full panel walk is its own test below, signed in as the CIA who holds the right).
+  await page.getByTestId('audit-file-view-builder').click();
+  await expect(page.getByTestId('wk-report-builder-denied')).toBeVisible();
+  await expect(page.getByTestId('wk-report-builder-panel')).toHaveCount(0);
+  await expect(page.locator('[aria-modal="true"]')).toHaveCount(0);
+
   await page.getByTestId('audit-file-view-caps').click();
   await expect(page.getByTestId('cap-register')).toBeVisible();
   await expect(
@@ -136,6 +144,38 @@ test('[E2E] findings and issues, conclusion, certificate, report, CAP and export
   await page.getByTestId('audit-file-view-export').click();
   await expect(page.getByTestId('export-panel')).toBeVisible();
   await expect(page.getByTestId('export-controls')).toBeVisible();
+});
+
+test('[E2E] the report builder composes, reconciles, compares and freezes for a holder of the right', async ({ page }) => {
+  // WRITE-1 W12: the deterministic builder. The CIA holds review_and_approve, so the panel renders.
+  await signIn(page, CIA);
+  if (!(await openEngagement(page))) return;
+  await page.getByTestId('audit-file-view-builder').click();
+  await expect(page.getByTestId('wk-report-builder-panel')).toBeVisible();
+  // One graph root for the whole register matrix; the render hash is beside it.
+  await expect(page.getByTestId('wk-report-builder-graph-root')).toBeVisible();
+  await expect(page.getByTestId('wk-report-builder-render-hash')).toBeVisible();
+  // Every claim carries its phrase version and its "Why this sentence" control.
+  await expect(page.locator('[data-testid^="wk-report-builder-claim-c-"]').first()).toBeVisible();
+  await expect(page.locator('[data-testid$="-provenance"]').first()).toBeVisible();
+  // Changing only the register must not move the graph root (W1, W2.2).
+  const rootBefore = await page.getByTestId('wk-report-builder-graph-root').innerText();
+  await page.getByTestId('wk-report-builder-formality').click();
+  await page.getByRole('option', { name: /F5/ }).click();
+  await expect(page.getByTestId('wk-report-builder-graph-root')).toHaveText(rootBefore);
+  // Coverage reconciles; the contradiction pane renders; the freeze names its outcome.
+  await page.getByTestId('wk-report-builder-pane-coverage').click();
+  await expect(page.getByTestId('wk-report-builder-coverage-status')).toBeVisible();
+  await page.getByTestId('wk-report-builder-pane-contradictions').click();
+  await expect(
+    page.getByTestId('wk-report-builder-contradictions-empty')
+      .or(page.locator('[data-testid^="wk-report-builder-contradiction-"]').first())
+  ).toBeVisible();
+  await page.getByTestId('wk-report-builder-pane-compare').click();
+  await expect(page.getByTestId('wk-report-builder-compare-summary')).toBeVisible();
+  await page.getByTestId('wk-report-builder-freeze-run').click();
+  await expect(page.getByTestId('wk-report-builder-freeze-result')).toBeVisible();
+  await expect(page.locator('[aria-modal="true"]')).toHaveCount(0);
 });
 
 test('[E2E] the seal, certificate and public verification path exists end to end', async ({ page }) => {

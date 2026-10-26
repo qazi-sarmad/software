@@ -140,3 +140,39 @@ decided here), and IMPROVISE-THEN-DOCUMENT (this file).
 - Reason: the invariants are the product; a regression in `claimCanonical` or `applyApprovalGate`
   would silently corrupt every report. Focused tests make the failure local.
 - Reverse: delete the three test files; nothing in `src/lib/writing/` changes.
+
+## D-W-BUILDERVIEW — the report builder is a view of the Audit File window (2026-10-26)
+
+- Task: W12 (the report-builder screen), owner instruction to mount it in the Audit File window.
+- Point: W12 lists the report builder among the engine screens, but the spec (§28) forbids a Reports
+  tab and a Workbench tab, and the Audit File window already carries a "Report" view with the
+  free-text report editor. The builder must be reachable without adding a tab.
+- Options: (a) add a top-level navigation tab; (b) add a second view inside the existing Audit File
+  window beside the Report editor; (c) replace the Report editor with the builder.
+- Choice: (b). `AuditFileModal.tsx` gains `phaseView` value `'builder'`, a tab-strip entry "Report
+  builder", and a render branch `<ReportBuilderPanel />` with `data-testid="audit-file-builder"`. The
+  free-text editor stays: it is the auditor-text lane (W5.4), a different thing from a deterministic
+  report.
+- Reason: (a) is forbidden by §28; (c) would delete the auditor-text surface the spec keeps. A view
+  of the window reuses the existing navigation, the existing rights gate and the existing
+  `audit-file-view-<view>` testid convention the recorder already drives.
+- Reverse: remove `'builder'` from the `phaseView` union, the `['builder', 'Report builder']` tab
+  entry and the render branch; `ReportBuilderPanel` becomes unreferenced. Also drop the WK-11 contract
+  section, the `oa.report-builder` tutorial key, migration `0093`, the WK-11 sweep entry and the
+  `WK-11` id in `screenshotCoverage.test.ts`.
+
+## D-W-BUILDERREG — the report-builder tutorial row is a new migration, not an edit of 0092 (2026-10-26)
+
+- Task: W12 (registry row for the new screen).
+- Point: `oa.report-builder` (WK-11) is a new tutorial key. The build-time guard
+  `tutorialRegistryCoverage.test.ts` requires every JSON key to be seeded by some migration, and
+  `supabase/tests/90_tutorial_steps.sql` asserts the post-0071 keys have rows.
+- Options: (a) add the row to 0092; (b) add a new migration 0093 and re-apply it in test 90.
+- Choice: (b). 0093 seeds `oa.report-builder` with its real ordered steps and its GIF path, in the
+  same `insert ... on conflict (key) do nothing` shape as 0071/0092 (M2). Test 90 re-applies 0093 and
+  asserts the row has at least four steps.
+- Reason: 0092 is already applied where it exists; a new migration is the M1/M2-safe repair and keeps
+  one migration per change. M7 (repairs go above the failing statement) is respected because nothing
+  is being repaired — this is a new key.
+- Reverse: delete `0093_tutorial_registry_report_builder.sql`, the `\i` line in test 90 and the
+  `oa.report-builder` assertions in test 90; the registry returns to 79 rows on a fresh database.

@@ -77,5 +77,6 @@
   "ex.verify": "0d9fe8c903cf8ea9903f9608f4e3b1fa",
   "oa.governance": "6f19dfc87325371c0eba7cb65ad7f779",
   "oa.connectors": "d079b7cae98b5b8dba56aa7c6014c110",
-  "oa.formats": "fdf9388a2727dd12274e6377d35f1b11"
+  "oa.formats": "fdf9388a2727dd12274e6377d35f1b11",
+  "oa.report-builder": "7743f88f22e6af8305722db7f469b1e7"
 }

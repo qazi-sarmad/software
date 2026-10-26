@@ -48,9 +48,11 @@ These are Partial or Missing in `docs/PARITY.md`, each with the reason in `COMPL
 
 ## Parked (by an earlier decision)
 
-- **Continuous-auditing watchers** (file drop, HTTP polling, database view) are PARKED by F12. The F7
-  event interface stays generic so a future `watcher.signal` event can plug in. `watcher.signal` is
-  the only catalogue key with no emitter and no source, by design.
+- **Continuous-auditing watchers.** PARKED by F12, then BUILT in the WRITE-1 run (owner instruction
+  2026-10-26, decision `D-W-F12`). The connector framework, the deterministic monitor rules and the
+  alert triage queue are present; the `watcher.signal` catalogue key now has a real emitter. See
+  `docs/CONNECTORS.md` for the adapter table and the per-adapter live-verification status (every
+  adapter is fixture-verified and `live-verified: NO` until the owner supplies credentials).
 - **Migration runner against two live databases.** `tools/migration-runner/` ships its 11
   driver-injected steps with unit tests against `fakeDriver.mjs`. CI cannot provide two reachable
   Postgres databases, so the end-to-end run is left to the owner's runner machine; the step logic,

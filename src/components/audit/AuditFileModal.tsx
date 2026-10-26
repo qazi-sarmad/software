@@ -28,6 +28,7 @@ import { CapRegisterPanel } from '../audit/CapRegisterPanel';
 import { AsOfTimeline } from '../audit/AsOfTimeline';
 import { ExportPanel } from '../admin/ExportPanel';
 import { CertificatePanel } from '../pending/CertificatePanel';
+import { ReportBuilderPanel } from '../writing/ReportBuilderPanel';
 
 /**
  * Audit File: one permanent workspace per engagement.
@@ -41,7 +42,7 @@ export const AuditFileModal: React.FC = () => {
   const requestedId: string | undefined = inspector.data?.engagement?.id;
   const engagement = requestedId ? scopedEngagements.find((e) => e.id === requestedId) : undefined;
   const [tab, setTab] = useState<AuditFileTab>(() => getInitialAuditFileTab(inspector.data));
-  const [phaseView, setPhaseView] = useState<'overview' | 'workspace' | 'findings' | 'conclusion' | 'documents' | 'report' | 'caps' | 'certificate' | 'export' | 'as_of'>('overview');
+  const [phaseView, setPhaseView] = useState<'overview' | 'workspace' | 'findings' | 'conclusion' | 'documents' | 'report' | 'builder' | 'caps' | 'certificate' | 'export' | 'as_of'>('overview');
   const [signOffError, setSignOffError] = useState<string | null>(null);
 
   // Neutral state: does not reveal whether an out-of-scope engagement exists.
@@ -104,6 +105,7 @@ export const AuditFileModal: React.FC = () => {
           ['conclusion', 'Conclusion'],
           ['documents', 'Documents'],
           ['report', 'Report'],
+          ['builder', 'Report builder'],
           ['caps', 'CAP register'],
           ['certificate', 'Certificate'],
           ['export', 'Export'],
@@ -153,6 +155,10 @@ export const AuditFileModal: React.FC = () => {
       ) : phaseView === 'report' ? (
         <div className="space-y-6" data-testid="audit-file-report">
           <ReportEditorPanel engagementId={engagement.id} />
+        </div>
+      ) : phaseView === 'builder' ? (
+        <div className="space-y-6" data-testid="audit-file-builder">
+          <ReportBuilderPanel />
         </div>
       ) : phaseView === 'caps' ? (
         <div className="space-y-6" data-testid="audit-file-caps">

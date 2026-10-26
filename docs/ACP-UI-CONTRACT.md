@@ -990,3 +990,53 @@ database still decides by right at call time. No screen accepts JSON.
 - **States:** loading, error, empty, ready; an inline result line reports a saved change, a publish,
   or the plain refusal; the editor lists every validation issue precisely.
 - **Tutorial key:** `oa.formats`.
+
+## WK-11 — report builder (WRITE-1, W12)
+
+The deterministic report builder, mounted as the "Report builder" view inside the existing Audit File
+window (never a new tab, spec §28). It composes a report from the frozen fixture claim graph through
+the real engine, so the screen and the library agree: choose a model, formality, tone, voice and
+locale; read each claim with its phrase version, claim level and reference count; open "Why this
+sentence" for the provenance trace and the counterfactual; read the coverage reconciliation, the
+contradictions and the excluded observations; compare two versions; and run the freeze-and-issue
+flow, which names every blocker precisely. The graph root is identical for every register and locale;
+only the render hash moves (W1, W2.2, W4, W5, W6, W8, W12).
+
+- **Route:** the Audit File window, view "Report builder" (`audit-file-view-builder`).
+- **Rights:** `review_and_approve` or `approve_plan` to compose; a caller without either sees the
+  plain refusal, never the panel.
+- **Data:** the pure engine in `src/lib/writing/` — `composeReport` (`compose.ts`),
+  `reconcileCoverage`, `findContradictions`, `checkReferenceIntegrity` (`verify.ts`),
+  `compareReportVersions`, `compareRenders` (`versioning.ts`), `applyApprovalGate`, `checkStaleness`
+  (`observations.ts`), `provenanceTrace`, `counterfactualRegister`, `verifyTrace` (`explain.ts`),
+  `lineagePanel` (`lineagePanel.ts`), `FIGURE_FUNCTIONS` (`figures.ts`), `REPORT_MODELS`,
+  `modelById` (`models.ts`), `FORMALITY_DEFINITIONS`, `TONE_DEFINITIONS`, `VOICES`,
+  `DEFAULT_REGISTER` (`registers.ts`), and the frozen fixtures (`fixtures.ts`).
+- **Testids:** `audit-file-builder`, `audit-file-view-builder`, `wk-report-builder-panel`,
+  `wk-report-builder-loading`, `wk-report-builder-error`, `wk-report-builder-error-message`,
+  `wk-report-builder-retry`, `wk-report-builder-denied`, `wk-report-builder-denied-error`,
+  `wk-report-builder-controls`, `wk-report-builder-model`, `wk-report-builder-formality`,
+  `wk-report-builder-tone`, `wk-report-builder-voice`, `wk-report-builder-locale`,
+  `wk-report-builder-hashes`, `wk-report-builder-graph-root`, `wk-report-builder-render-hash`,
+  `wk-report-builder-model-name`, `wk-report-builder-pane-claims`, `wk-report-builder-pane-coverage`,
+  `wk-report-builder-pane-contradictions`, `wk-report-builder-pane-excluded`,
+  `wk-report-builder-pane-compare`, `wk-report-builder-claims`, `wk-report-builder-claim-<id>`,
+  `wk-report-builder-claim-<id>-text`, `wk-report-builder-claim-<id>-phrase`,
+  `wk-report-builder-claim-<id>-provenance`, `wk-report-builder-claim-<id>-lineage`,
+  `wk-report-builder-claim-<id>-provenance-panel`, `wk-report-builder-claim-<id>-trace-ok`,
+  `wk-report-builder-claim-<id>-counterfactual`, `wk-report-builder-lineage-<figureId>`,
+  `wk-report-builder-lineage-<figureId>-description`, `wk-report-builder-lineage-<figureId>-count`,
+  `wk-report-builder-lineage-<figureId>-records`, `wk-report-builder-coverage`,
+  `wk-report-builder-coverage-status`, `wk-report-builder-coverage-missing`,
+  `wk-report-builder-coverage-duplicated`, `wk-report-builder-coverage-orphaned`,
+  `wk-report-builder-contradictions`, `wk-report-builder-contradictions-empty`,
+  `wk-report-builder-contradiction-<ruleId>`, `wk-report-builder-excluded`,
+  `wk-report-builder-excluded-empty`, `wk-report-builder-excluded-<observationId>`,
+  `wk-report-builder-compare`, `wk-report-builder-compare-summary`,
+  `wk-report-builder-compare-changed-<claimId>`, `wk-report-builder-compare-registers`,
+  `wk-report-builder-freeze`, `wk-report-builder-freeze-run`, `wk-report-builder-freeze-result`.
+- **States:** loading ("Composing the report…"); an inline error with a retry; a denied state for a
+  caller without the right; ready, with the five panes and the freeze panel. The coverage pane names
+  each missing, duplicated and orphaned item; the freeze panel lists every blocker or states that the
+  freeze is allowed with the graph root and render hash.
+- **Tutorial key:** `oa.report-builder`.
