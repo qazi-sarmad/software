@@ -23,7 +23,7 @@ const ORG_TAB = {
   'oa.hosting': 'hosting', 'oa.migration': 'hosting', 'oa.deployment-kit': 'hosting',
   'oa.retire-old': 'hosting', 'oa.history': 'history', 'oa.tutorials': 'tutorials',
   'oa.invite': 'tutorials', 'oa.patterns-config': 'features', 'oa.dual-session': 'consultation',
-  'oa.governance': 'governance',
+  'oa.governance': 'governance', 'oa.connectors': 'connectors', 'oa.formats': 'formats',
 };
 
 /** The platform console tab each SA key lives on. */

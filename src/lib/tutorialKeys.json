@@ -2446,5 +2446,81 @@
         "testid": "oa-governance-lifecycle-save"
       }
     ]
+  },
+  {
+    "key": "oa.connectors",
+    "audience": "org_admin",
+    "screenId": "OA-23",
+    "title": "Connectors and monitoring",
+    "steps": [
+      {
+        "text": "Open OA-23 (connectors and monitoring).",
+        "testid": "org-control-panel"
+      },
+      {
+        "text": "Select the Connectors tab.",
+        "testid": "org-control-tab-connectors"
+      },
+      {
+        "text": "Read the connector catalogue and pick the connector to add.",
+        "testid": "wk-connectors-catalogue"
+      },
+      {
+        "text": "Enter a label and the stored credential reference, then save the instance.",
+        "testid": "wk-connectors-save"
+      },
+      {
+        "text": "Open the run history to see row counts and health.",
+        "testid": "wk-connectors-tab-runs"
+      },
+      {
+        "text": "Open the staged-record browser and drill into a record.",
+        "testid": "wk-connectors-tab-staged"
+      },
+      {
+        "text": "Open the alert queue and triage an alert.",
+        "testid": "wk-connectors-tab-alerts"
+      }
+    ]
+  },
+  {
+    "key": "oa.formats",
+    "audience": "org_admin",
+    "screenId": "OA-24",
+    "title": "Report format editor",
+    "steps": [
+      {
+        "text": "Open OA-24 (report format editor).",
+        "testid": "org-control-panel"
+      },
+      {
+        "text": "Select the Report formats tab.",
+        "testid": "org-control-tab-formats"
+      },
+      {
+        "text": "Pick the report format to edit.",
+        "testid": "wk-format-format-pick"
+      },
+      {
+        "text": "Choose the report model the format is built for.",
+        "testid": "wk-format-model-pick"
+      },
+      {
+        "text": "Reorder a block with Up or Down, or hide it.",
+        "testid": "wk-format-block-cover-up"
+      },
+      {
+        "text": "Give a block its own register.",
+        "testid": "wk-format-block-findings-register"
+      },
+      {
+        "text": "Change the print layout and watch the preview update.",
+        "testid": "wk-format-layout-page-size"
+      },
+      {
+        "text": "Save the draft, then publish the version.",
+        "testid": "wk-format-save"
+      }
+    ]
   }
 ]

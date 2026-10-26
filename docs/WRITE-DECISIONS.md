@@ -82,3 +82,26 @@ decided here), and IMPROVISE-THEN-DOCUMENT (this file).
   option explicitly.
 - Reverse: drop the function, revert `src/guards/anonGrantAllowList.test.ts` to the two names, and
   remove the public page route.
+
+## D-W-FORMAT-EDITOR — the report format editor is per client, versioned and role-scoped
+
+- Task: owner instruction 2026-10-26 (a per-client, versioned, role-scoped interactive report format
+  editor).
+- Point: the owner asked for an interactive editor for the look and structure of a report, scoped to
+  a client and versioned, with roles able to view or edit.
+- Options: (a) fold format into the existing `branding` row; (b) a new `report_formats` table with its
+  own hash-chained version log, keyed by `(org_id, format_key, version)`, with `format_audiences`
+  for the role mapping.
+- Choice: (b). "Client" is the tenant organisation, matching spec §3 and every other tenant-scoped
+  table. A format is presentation only: it never carries a claim, so it cannot change a fact, the
+  graph root or a figure. Saving a draft appends the next version; publishing freezes that version
+  (immutable, a trigger refuses an update). A published version is what the renderers use; a draft is
+  editable. The audience list is the client's declared intent stored as data, but the database still
+  decides by right at call time (`edit_config` to save or publish; `view_reports` to read), so the
+  closed 14-right list does not grow.
+- Reason: a separate table keeps the format lifecycle (draft -> published) and its version chain
+  independent of branding, which has its own shape; and a presentation-only object is the only kind
+  that can vary freely without touching the evidence-bound graph.
+- Reverse: drop `report_formats`, `report_format_versions` and `format_audiences`, remove the
+  `format_*` RPCs, and delete `src/lib/writing/reportFormat.ts` and `ReportFormatPanel.tsx`. Nothing
+  else reads them.

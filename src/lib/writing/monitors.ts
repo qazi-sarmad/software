@@ -24,6 +24,11 @@ export type MonitorKind =
 
 export type MonitorStatus = 'draft' | 'released';
 
+/** The closed set of monitor kinds, for the rule editor's dropdown (W11.4). */
+export const MONITOR_KINDS: MonitorKind[] = [
+  'threshold', 'rate', 'sequence', 'set_membership', 'missing_event', 'reconciliation',
+];
+
 export interface SignalRecord {
   /** The staged source: a connector id, or 'internal'. */
   source: string;

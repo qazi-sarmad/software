@@ -925,3 +925,68 @@ above. `docs/ACP-TUTORIALS.md` lists every key and its steps.
 - **States:** loading, error, empty, ready; an inline result line reports a saved change or the plain
   refusal (a value outside the platform range, an unknown role tag, an unsupported format).
 - **Tutorial key:** `oa.governance`.
+
+## OA-23 — connectors and continuous monitoring (WRITE-1, W11.6)
+
+The connector catalogue and instance setup (mapping through dropdowns, never raw JSON), the run
+history and health, the staged-record browser with drill-through, the monitor rules, and the alert
+triage queue with a detail pane showing the alert's lineage. Credentials are a stored reference the
+platform holds, never a value this screen sees.
+
+- **Route:** Org Admin control plane, tab `Connectors` (`org-control-tab-connectors`).
+- **Rights:** `edit_config` to save an instance, rule or triage; `view_insights` to read.
+- **Data:** `listConnectorInstances(orgId)`, `saveConnectorInstance(...)`, `listConnectorRuns(orgId)`,
+  `listStagedRecords(orgId)`, `listMonitorRules(orgId)`, `saveMonitorRule(...)`,
+  `releaseMonitorRule(id, expectedCells)`, `listAlerts(orgId)`, `triageAlert(...)`,
+  `connectorEgressAllowed(orgId, host)` (`src/data/writing.ts`).
+- **Testids:** `wk-connectors-loading`, `wk-connectors-error`, `wk-connectors-retry`,
+  `wk-connectors-panel`, `wk-connectors-tab-<id>`, `wk-connectors-catalogue`, `wk-connectors-label`,
+  `wk-connectors-credential`, `wk-connectors-save`, `wk-connectors-saved`, `wk-connectors-instances`,
+  `wk-connectors-instance-<id>`, `wk-connectors-runs`, `wk-connectors-runs-empty`,
+  `wk-connectors-run-<id>`, `wk-connectors-staged`, `wk-connectors-staged-empty`,
+  `wk-connectors-staged-<id>`, `wk-connectors-rules`, `wk-connectors-rules-empty`,
+  `wk-connectors-rule-id`, `wk-connectors-rule-description`, `wk-connectors-rule-save`,
+  `wk-connectors-alerts`, `wk-connectors-alerts-empty`, `wk-connectors-alerts-list`,
+  `wk-connectors-alert-detail`, `wk-connectors-alert-detail-reason`,
+  `wk-connectors-alert-detail-lineage`, `wk-connectors-alert-triage-form`,
+  `wk-connectors-alert-triage-reason`, `wk-connectors-alert-triage-snooze`,
+  `wk-connectors-alert-triage-save`, `wk-connectors-egress`, `wk-connectors-egress-host`,
+  `wk-connectors-egress-check`, `wk-connectors-egress-result`, `wk-connectors-new`,
+  `wk-connectors-rule-new`, `wk-connectors-empty`.
+- **States:** loading, error, empty, ready; an inline result line reports a saved change or the plain
+  refusal. The egress check shows whether a host is on the tenant's allow-list.
+- **Tutorial key:** `oa.connectors`.
+
+## OA-24 — report format editor (WRITE-1, owner instruction 2026-10-26)
+
+The interactive format editor. A format is held per client (one tenant organisation) and versioned.
+The editor works on a live draft: reorder blocks, hide them, give a block its own register from the
+set the model allows, and change the print layout, watching the page preview update as the controls
+change. A format is presentation only, so the graph root is identical whatever the format and only
+the render hash moves. The audience tab maps each of the client's own roles to view or edit; the
+database still decides by right at call time. No screen accepts JSON.
+
+- **Route:** Org Admin control plane, tab `Report formats` (`org-control-tab-formats`).
+- **Rights:** `edit_config` to save, publish or set audiences; `view_reports` to read.
+- **Data:** `listReportFormats(orgId)`, `saveReportFormat(...)`, `publishReportFormat(id, issueCount)`,
+  `listFormatAudiences(formatId)`, `setFormatAudiences(formatId, audiences)` (`src/data/writing.ts`).
+- **Testids:** `wk-format-loading`, `wk-format-error`, `wk-format-retry`, `wk-format-panel`,
+  `wk-format-controls`, `wk-format-format-pick`, `wk-format-model-pick`, `wk-format-locale-pick`,
+  `wk-format-label-input`, `wk-format-status`, `wk-format-version`, `wk-format-status-value`,
+  `wk-format-issues`, `wk-format-published-note`, `wk-format-pane-tabs`, `wk-format-pane-<pane>`,
+  `wk-format-blocks`, `wk-format-block-<key>`, `wk-format-block-<key>-key`, `wk-format-block-<key>-role`,
+  `wk-format-block-<key>-register`, `wk-format-block-<key>-visible`, `wk-format-block-<key>-up`,
+  `wk-format-block-<key>-down`, `wk-format-add-missing`, `wk-format-issue-list`,
+  `wk-format-issue-<code>`, `wk-format-layout`, `wk-format-layout-page-size`,
+  `wk-format-layout-marginTopMm`, `wk-format-layout-marginRightMm`, `wk-format-layout-marginBottomMm`,
+  `wk-format-layout-marginLeftMm`, `wk-format-layout-font-heading`, `wk-format-layout-font-body`,
+  `wk-format-layout-footer`, `wk-format-layout-tokens`, `wk-format-audiences`,
+  `wk-format-audiences-note`, `wk-format-audiences-empty`, `wk-format-audience-<slug>`,
+  `wk-format-audience-<slug>-view`, `wk-format-audience-<slug>-edit`, `wk-format-audiences-save`,
+  `wk-format-versions`, `wk-format-version-<n>`, `wk-format-version-<n>-load`, `wk-format-preview`,
+  `wk-format-preview-summary`, `wk-format-preview-blocks`, `wk-format-preview-<key>`,
+  `wk-format-preview-hidden`, `wk-format-preview-registers`, `wk-format-save`, `wk-format-publish`,
+  `wk-format-result`, `wk-format-readonly`, `wk-format-create-default`, `wk-format-empty`.
+- **States:** loading, error, empty, ready; an inline result line reports a saved change, a publish,
+  or the plain refusal; the editor lists every validation issue precisely.
+- **Tutorial key:** `oa.formats`.

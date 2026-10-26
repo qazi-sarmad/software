@@ -39,7 +39,7 @@
   "oa.profile": "d1cfd5e0c4cae070dab6bd2e7155a588",
   "oa.branding": "1d311127b37a4557aa3277a9a9690430",
   "oa.pptx-theme": "fe0835c71f994e2a0a29f4f7149bc333",
-  "oa.features": "e84b3b856975f63afe5a7f678860071b",
+  "oa.features": "47a2f63be263060a6b8e5b88965dd930",
   "oa.roles": "e034710ab60e6f86f522b799ef7ce35f",
   "oa.templates": "692cdee7f0b545225cd8de929f9be726",
   "oa.boardpack-config": "63c1e7ae6b0f087d64e556597c860abd",
@@ -58,7 +58,7 @@
   "oa.deployment-kit": "c2eede509b80a987b26f6351092cd916",
   "oa.retire-old": "8939b191a93aeb91e31cacf9a1ce94a4",
   "oa.history": "812c6294fe3d27147db0271f9dffc93c",
-  "oa.tutorials": "f2e692819ec6555b123239d8dcff4ab7",
+  "oa.tutorials": "b3f59bca8dcb556c0afc9cb8850ed1e8",
   "oa.golive": "1bd4d3629b7906b89a9eb647050efbd6",
   "oa.invite": "6dc75e87768013b255951234cf5c27d9",
   "oa.patterns-config": "7a3b833aaf418f9b2a915670cefce710",
@@ -75,5 +75,7 @@
   "ex.home": "1c7dc4c4a37e404a7178d566c4c6192b",
   "ex.engagement": "f7cf40c0ccb37231f52a011af045063b",
   "ex.verify": "0d9fe8c903cf8ea9903f9608f4e3b1fa",
-  "oa.governance": "6f19dfc87325371c0eba7cb65ad7f779"
+  "oa.governance": "6f19dfc87325371c0eba7cb65ad7f779",
+  "oa.connectors": "d079b7cae98b5b8dba56aa7c6014c110",
+  "oa.formats": "fdf9388a2727dd12274e6377d35f1b11"
 }
