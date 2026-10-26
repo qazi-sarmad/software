@@ -153,8 +153,10 @@ alter table preflight_acks add constraint preflight_acks_check_key_chk
 
 alter table preflight_acks enable row level security;
 drop policy if exists preflight_acks_select on preflight_acks;
+-- Tenant data only. The platform administrator has no read path into a tenant's pre-flight
+-- acknowledgements.
 create policy preflight_acks_select on preflight_acks for select to authenticated
-  using (org_id = public.jwt_org_id() or public.is_platform_admin());
+  using (org_id = public.jwt_org_id());
 
 -- Acknowledge one open item with a logged reason. Append-only: it inserts, never updates, so the
 -- history of every acknowledgement is kept. The latest row per (check, item) is the live one.
@@ -289,8 +291,10 @@ create table if not exists share_access_log (
 create index if not exists share_access_log_idx on share_access_log (org_id, share_id);
 alter table share_access_log enable row level security;
 drop policy if exists share_access_log_select on share_access_log;
+-- Tenant data only. The platform administrator has no read path into a tenant's share log: it
+-- records which tenant records a grantee opened, and that never leaves the organisation.
 create policy share_access_log_select on share_access_log for select to authenticated
-  using (org_id = public.jwt_org_id() or public.is_platform_admin());
+  using (org_id = public.jwt_org_id());
 
 -- has_active_share: true when a live share of `p_universe_id` exists for the caller. A share is live
 -- while it is not revoked and not expired. SECURITY DEFINER so the RLS policies below can consult it.

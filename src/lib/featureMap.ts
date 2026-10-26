@@ -66,6 +66,8 @@ export const FEATURE_RPC_MAP: Record<string, string> = {
   // consultation tiers
   consultation_request: 'consultation_config',
   consultation_propose: 'consultation_full_admin',
+  // Item A: integrity anchoring (0096).
+  signature_record: 'integrity_anchoring',
 };
 
 /**

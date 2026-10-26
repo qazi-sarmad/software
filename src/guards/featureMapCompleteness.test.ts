@@ -68,7 +68,14 @@ describe('feature map completeness (F25 rule 5)', () => {
   });
 
   it('every mapped feature key is a real catalogue key', () => {
-    const seed = readFileSync(join(MIGRATIONS, '0051_control_plane_foundations.sql'), 'utf-8');
+    // The catalogue is seeded across migrations: 0051 holds the original set and later migrations add
+    // keys (for example integrity_anchoring in 0096). Reading every migration keeps the rule honest
+    // without pinning it to the file the catalogue first appeared in.
+    const seed = readdirSync(MIGRATIONS)
+      .filter((f) => f.endsWith('.sql'))
+      .sort()
+      .map((f) => readFileSync(join(MIGRATIONS, f), 'utf-8'))
+      .join('\n');
     const known = mappedFeatureKeys();
     // feature_entitlements is not a sellable catalogue feature; it is the entitlement switch itself.
     const expected = known.filter((k) => k !== 'feature_entitlements');
