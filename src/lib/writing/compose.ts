@@ -56,8 +56,9 @@ export interface ComposedReport {
 }
 
 /**
- * The phrase template for a claim at a register: the formality variant, and the passive variant
- * when the register asks for the passive voice. The tone is applied afterwards by the tone rule.
+ * The phrase template for a claim at a register: the formality variant, and a per-cell override when
+ * one is authored. The tone and voice rules are applied afterwards by the realisation step; a
+ * human-authored passive variant is passed to that step as an override rather than substituted here.
  */
 function templateFor(claim: Claim, phrase: Phrase, variants: Record<string, PhraseVariants> | undefined,
   register: Register): string {
@@ -66,9 +67,6 @@ function templateFor(claim: Claim, phrase: Phrase, variants: Record<string, Phra
   const cellKey = registerKey(register, phrase.locale);
   const cell = variant.byCell?.[cellKey];
   if (cell) return cell;
-  if (register.voice === 'passive' && variant.byPassive?.[register.formality]) {
-    return variant.byPassive[register.formality];
-  }
   return variant.byFormality[register.formality] ?? phrase.template;
 }
 
@@ -95,12 +93,15 @@ export async function composeReport(input: ComposerInput): Promise<ComposedRepor
       }
       const template = templateFor(claim, phrase, variants, register);
       const base = renderTemplate(template, claim.slots, ctx);
+      // A human-authored passive variant is rendered with the same slots, then passed as the voice
+      // override, so the passive text is produced once and never transformed a second time.
+      const passiveVariant = variants?.[phrase.id]?.byPassive?.[register.formality];
+      const passiveText = passiveVariant ? renderTemplate(passiveVariant, claim.slots, ctx) : undefined;
       const realisation: RealisationInput = {
         formalityVariant: base,
         register,
         locale,
-        toneOverride: variants?.[phrase.id]?.byCell?.[`${registerKey(register, locale)}-tone`],
-        passiveOverride: variants?.[phrase.id]?.byCell?.[`${registerKey(register, locale)}-voice`],
+        passiveOverride: passiveText,
       };
       const realised = realise(realisation);
       const lead = leadIn(vocabulary, claim.claimLevel, registerKey(register, locale));

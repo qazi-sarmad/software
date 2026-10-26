@@ -326,6 +326,34 @@ export function seedPhrase(spec: SeedPhraseSpec, locale: Locale, version = 1): P
   };
 }
 
+/**
+ * The human-authored passive-voice variants at the default formality (F3). The voice axis is
+ * orthogonal to formality and tone (D-W-VOICE): a phrase keeps its formality variant when the
+ * register asks for the active voice, and reads this variant when it asks for the passive. The
+ * passive form is authored, not transformed, so it always reads as English. Where a phrase has no
+ * entry the active variant is used unchanged and the voice rule does not apply.
+ */
+export const PASSIVE_F3: Record<string, string> = {
+  'condition.test_exceptions': '{tests} {test_noun} were examined and exceptions were identified in {exceptions} of them.',
+  'condition.approval_missing': '{tests} payments were examined and no evidence of approval was identified for {exceptions} of them.',
+  'condition.control_not_operating': '{tests} items were examined and the control was observed not to be operating for {exceptions} of them.',
+  'criteria.policy_requirement': 'The policy requires that {requirement}.',
+  'cause.not_assigned': 'Responsibility for this step had not been assigned to a named individual.',
+  'effect.unapproved_payments': 'Payments totalling {amount} could be released without evidence of approval.',
+  'recommendation.assign_owner': 'A named owner is to be assigned to this step by {due_date}.',
+  'management_response.agreed': 'The recommendation was accepted and {due_date} was recorded as the planned completion date.',
+  'status.open': 'This finding is recorded as open at the date of this report.',
+  'status.closed': 'This finding is recorded as closed. The agreed action was completed and the supporting evidence was reviewed.',
+  'exception_summary.count': 'Exceptions were identified in {exceptions} instances across {controls} controls.',
+  'coverage.reconciliation': 'Coverage was reconciled. {findings} findings, {controls} exception controls and {caps} corrective actions each appear once.',
+  'scope.period': 'The period covered ran from {start_date} to {end_date}.',
+  'limitation.sample_basis': 'The conclusions were based on a sample of {tests} items rather than on the full population.',
+  'alert_summary.by_rule': '{alerts} alerts were triggered by {rules} monitor rules during the period.',
+  'alert_summary.dispositioned': '{dismissed} alerts were dismissed with a recorded reason and {escalated} were escalated to observations.',
+  'numeric_summary.counts': '{findings} findings; {controls} exception controls; {caps} corrective actions.',
+  'lead_in.verified': 'It was confirmed that {statement}.',
+};
+
 /** The formality variants of a seed spec, in the composer's shape. */
 export function seedVariants(spec: SeedPhraseSpec): PhraseVariants {
   const byFormality: Record<number, string> = {};
@@ -333,9 +361,12 @@ export function seedVariants(spec: SeedPhraseSpec): PhraseVariants {
     byFormality[level] = spec.byFormality[level] ?? spec.template;
   }
   const byPassive: Record<number, string> = {};
-  if (spec.byPassive) {
+  const authored = spec.byPassive ?? (PASSIVE_F3[spec.id] ? { 3: PASSIVE_F3[spec.id] } : undefined);
+  if (authored) {
+    // Only the levels a human authored. An unauthored level falls back to the deterministic voice
+    // rule (a human-authored verb table), never to the active text.
     for (const level of [1, 2, 3, 4, 5]) {
-      byPassive[level] = spec.byPassive[level] ?? byFormality[level];
+      if (authored[level] !== undefined) byPassive[level] = authored[level];
     }
   }
   return { byFormality, byPassive };
