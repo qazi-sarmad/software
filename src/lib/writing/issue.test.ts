@@ -82,6 +82,17 @@ describe('W7.1 / W7.2 byte reproducibility', () => {
     expect(ia.pdfHash).not.toBe(ib.pdfHash);
   });
 
+  it('renders byte-identical PDFs across a real second boundary (pdf-lib metadata pin)', async () => {
+    // pdf-lib's constructor calls updateInfoDict(), which stamps new Date() into CreationDate and
+    // ModDate. Two renders of the same report therefore differed whenever they straddled a second
+    // boundary; the full suite caught it in the both-locales test. renderPdf now pins both dates to
+    // the issuance time, so this test waits past a boundary and demands the same bytes.
+    const a = await issue({ formality: 3, tone: 2, voice: 'active' }, 'en-US');
+    await new Promise((r) => setTimeout(r, 1100));
+    const b = await issue({ formality: 3, tone: 2, voice: 'active' }, 'en-US');
+    expect(a.pdfHash).toBe(b.pdfHash);
+  });
+
   it('produces a parseable PDF and a real DOCX archive', async () => {
     const rendered = await issue({ formality: 3, tone: 2, voice: 'active' }, 'en-GB');
     const parsed = await PDFDocument.load(rendered.pdf);

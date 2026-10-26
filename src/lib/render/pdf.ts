@@ -38,7 +38,19 @@ export interface PdfDocumentModel {
   /** Embedded font bytes, when the org uploaded a licensed font (branding_custom_fonts). */
   headingFontBytes?: Uint8Array;
   bodyFontBytes?: Uint8Array;
+  /**
+   * The fixed timestamp for the PDF's own metadata, passed in as an argument.
+   *
+   * pdf-lib's constructor calls `updateInfoDict()`, which writes `new Date()` into CreationDate and
+   * ModDate. Two renders of the same document therefore differ whenever they straddle a second
+   * boundary — the identical class of defect C2.7 fixed for DOCX. Pinning both dates (and the
+   * producer) to an argument makes the bytes reproducible; the engine reads no clock.
+   */
+  timestamp?: string;
 }
+
+/** The fallback stamp when a caller passes none, so the bytes are still reproducible. */
+const FIXED_PDF_EPOCH = '2000-01-01T00:00:00Z';
 
 /** Parse a CSS-ish colour value into rgb() components; falls back to black. Only for rendering. */
 function parseColour(value: string): { r: number; g: number; b: number } {
@@ -82,6 +94,14 @@ export function wrapText(text: string, font: PDFFont, size: number, maxWidth: nu
 export async function renderPdf(spec: BrandingSpec, model: PdfDocumentModel): Promise<Uint8Array> {
   const pdf = await PDFDocument.create();
   pdf.registerFontkit(fontkit);
+
+  // Pin the metadata that pdf-lib would otherwise take from the clock, so the same model always
+  // produces the same bytes (W7.1). The timestamp is an argument; no clock is read here.
+  const stamp = new Date(model.timestamp ?? FIXED_PDF_EPOCH);
+  pdf.setCreationDate(stamp);
+  pdf.setModificationDate(stamp);
+  pdf.setProducer('Provio');
+  pdf.setCreator('Provio');
 
   let heading: PDFFont;
   let body: PDFFont;

@@ -89,8 +89,9 @@ export function footerLine(footer?: FooterContext): string {
   return `${footer.engagement} · exported ${footer.exportedAt} · ${footer.user} · ${footer.contentHash.slice(0, 12)}`;
 }
 
-/** Adapt the shared model to the PDF renderer's own model type. */
-export function toPdfModel(model: DocumentModel): PdfDocumentModel {
+/** Adapt the shared model to the PDF renderer's own model type. `timestamp` pins the PDF metadata
+ *  (creation/modification date) so the bytes are reproducible; it is passed in, never read. */
+export function toPdfModel(model: DocumentModel, timestamp?: string): PdfDocumentModel {
   const sections: PdfSection[] = model.sections.map((s) => {
     const blocks: PdfTextBlock[] = [];
     for (const b of s.blocks) {
@@ -106,5 +107,5 @@ export function toPdfModel(model: DocumentModel): PdfDocumentModel {
   });
   const line = footerLine(model.footer);
   if (line) sections.push({ heading: 'Document control', blocks: [{ kind: 'paragraph', text: line }] });
-  return { title: model.title, subtitle: model.subtitle, sections };
+  return { title: model.title, subtitle: model.subtitle, sections, timestamp };
 }

@@ -111,10 +111,11 @@ function blocksForClaim(claim: Claim, text: string): DocumentSection['blocks'] {
   return [{ kind: 'paragraph', text }];
 }
 
-/** Render the issued report to PDF bytes. */
+/** Render the issued report to PDF bytes. The issuance time pins the PDF's own metadata, so the
+ *  bytes are reproducible (W7.1) and no clock is read. */
 export async function issuePdf(issued: IssuedReport, branding?: BrandingSpec): Promise<Uint8Array> {
   const spec = branding ?? { ...DEFAULT_BRANDING, orgId: 'org' };
-  return renderPdf(spec, toPdfModel(issued.document));
+  return renderPdf(spec, toPdfModel(issued.document, issued.metadata.issuedAt));
 }
 
 /** Render the issued report to DOCX bytes. */
