@@ -26,6 +26,7 @@ const PlanItemsPanel = lazy(() => import('../plan/PlanItemsPanel').then((m) => (
 const ImportWizardPanel = lazy(() => import('../admin/ImportWizardPanel').then((m) => ({ default: m.ImportWizardPanel })));
 const ActivityLogPanel = lazy(() => import('../admin/ActivityLogPanel').then((m) => ({ default: m.ActivityLogPanel })));
 const OrgControlPanel = lazy(() => import('../admin/OrgControlPanel').then((m) => ({ default: m.OrgControlPanel })));
+const SharedWithMePanel = lazy(() => import('../admin/SharePanel').then((m) => ({ default: m.SharePanel })));
 const FindingDrilldown = lazy(() => import('../issues/FindingDrilldown').then((m) => ({ default: m.FindingDrilldown })));
 
 export const INSPECTOR_TITLES: Record<InspectorType, string> = {
@@ -50,6 +51,7 @@ export const INSPECTOR_TITLES: Record<InspectorType, string> = {
   import_wizard: 'Import',
   activity_log: 'Activity Log',
   org_control: 'Assurance control plane',
+  shared_with_me: 'Shared with you',
   finding: 'Audit Finding',
 };
 
@@ -122,6 +124,8 @@ export const RecordContent: React.FC<RecordContentProps> = ({ type, data, onClos
           return <ActivityLogPanel />;
         case 'org_control':
           return <OrgControlPanel />;
+        case 'shared_with_me':
+          return <SharedWithMePanel mode="grantee" />;
         case 'finding':
           return <FindingDrilldown findingId={data?.findingId} />;
         default:

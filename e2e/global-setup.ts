@@ -87,7 +87,8 @@ const USERS = [
   { email: 'ayesha.khan@provio-test.invalid', name: 'Ayesha Khan', org: ORG_A, role: 'org_admin', roleIds: ROLE_IDS_A, universes: [A_U1] },
   // CIA: holds all four assurance rights (F3) plus edit_config, so the Board Pack panel, its section
   // editor is reachable. The Org Admin holds none of the four by F3.
-  { email: 'kamran.sheikh@provio-test.invalid', name: 'Kamran Sheikh', org: ORG_A, role: 'cia', roleIds: ROLE_IDS_A, universes: [] },
+  // Kamran is a Level-1 Head (WP6): §2 sharing is granted by a Level-1 or Level-2 Head.
+  { email: 'kamran.sheikh@provio-test.invalid', name: 'Kamran Sheikh', org: ORG_A, role: 'cia', roleIds: ROLE_IDS_A, universes: [], head: 1 },
   { email: 'bilal.ahmed@provio-test.invalid', name: 'Bilal Ahmed', org: ORG_A, role: 'preparer', roleIds: ROLE_IDS_A, universes: [] },
   // Audit manager: holds manage_engagements, which the Phase 7 import/activity/prior-year flows need.
   { email: 'zara.malik@provio-test.invalid', name: 'Zara Malik', org: ORG_A, role: 'audit_manager', roleIds: ROLE_IDS_A, universes: [] },
@@ -213,6 +214,7 @@ export default async function globalSetup() {
       user_id: authId,
       role_id: u.roleIds[u.role],
       display_name: u.name,
+      head_level: u.head ?? null,
     }, { onConflict: 'org_id,user_id' }));
   }
 

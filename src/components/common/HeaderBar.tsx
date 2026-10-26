@@ -21,6 +21,7 @@ import {
   Upload,
   Activity,
   Zap,
+  Eye,
 } from './Icons';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -289,6 +290,18 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ onOpenCommandPalette }) =>
                         <span>People &amp; Roles</span>
                       </button>
                     )}
+                    {/* Every signed-in member can see what a Head shared with them (WP2/WP6). */}
+                    <button
+                      onClick={() => {
+                        openInspector('shared_with_me');
+                        setIsProfileOpen(false);
+                      }}
+                      data-testid="menu-shared-with-me"
+                      className="w-full text-left px-3 py-2 rounded-xl text-primary hover:bg-surface-hover transition-colors flex items-center gap-2.5"
+                    >
+                      <Eye className="w-4 h-4 text-secondary stroke-[1.5]" />
+                      <span>Shared with you</span>
+                    </button>
                     {hasRight(currentUser, 'edit_config') && (
                       <button
                         onClick={() => {

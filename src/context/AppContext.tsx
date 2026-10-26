@@ -46,6 +46,7 @@ export type InspectorType =
   | 'import_wizard'
   | 'activity_log'
   | 'org_control'
+  | 'shared_with_me'
   | 'finding';
 
 export interface InspectorState {

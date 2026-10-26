@@ -20,10 +20,11 @@ import { OrgEscalationPanel } from './OrgEscalationPanel';
 import { ExternalAuditorsPanel } from './ExternalAuditorsPanel';
 import { OrgHostingPanel } from './OrgHostingPanel';
 import { OrgGovernancePanel } from './OrgGovernancePanel';
+import { SharePanel } from './SharePanel';
 import { InlineError } from '../common/InlineError';
 import { Check, Lock, Zap, Sliders, Users, Shield, History, Database } from '../common/Icons';
 
-type Tab = 'features' | 'branding' | 'email' | 'automation' | 'escalation' | 'setup' | 'consultation' | 'auditors' | 'hosting' | 'governance' | 'history' | 'changes' | 'tutorials' | 'connectors' | 'formats';
+type Tab = 'features' | 'branding' | 'email' | 'automation' | 'escalation' | 'setup' | 'consultation' | 'auditors' | 'hosting' | 'governance' | 'history' | 'changes' | 'tutorials' | 'connectors' | 'formats' | 'sharing';
 type LoadState = 'loading' | 'ready' | 'error';
 
 /** F18: every configuration tab carries its own "Show me how" tutorial key (Appendix A). */
@@ -43,6 +44,7 @@ const TAB_TUTORIAL: Record<Tab, { key: string; title: string }> = {
   tutorials: { key: 'oa.tutorials', title: 'OA-18 tutorial library' },
   connectors: { key: 'oa.connectors', title: 'OA-23 connectors and monitoring' },
   formats: { key: 'oa.formats', title: 'OA-24 report format editor' },
+  sharing: { key: 'oa.governance', title: 'OA-22 governance settings' },
 };
 
 /**
@@ -145,6 +147,7 @@ export const OrgControlPanel: React.FC = () => {
           { id: 'tutorials', label: 'Tutorials', icon: History },
           { id: 'connectors', label: 'Connectors', icon: Database },
           { id: 'formats', label: 'Report formats', icon: Sliders },
+          { id: 'sharing', label: 'Sharing', icon: Users },
         ] as { id: Tab; label: string; icon: React.FC<{ className?: string }> }[]).map((t) => {
           const Icon = t.icon;
           return (
@@ -262,6 +265,7 @@ export const OrgControlPanel: React.FC = () => {
 
       {tab === 'connectors' && <ConnectorMonitorPanel />}
       {tab === 'formats' && <ReportFormatPanel />}
+      {tab === 'sharing' && <SharePanel />}
       {tab === 'hosting' && <OrgHostingPanel />}
       {tab === 'governance' && <OrgGovernancePanel />}
       {tab === 'history' && <OrgConfigHistory />}
