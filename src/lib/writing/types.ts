@@ -152,6 +152,8 @@ export interface Claim {
   figures: FigureBinding[];
   modelId: string;
   sectionId: string;
+  /** Automatic cross-references to other claims by id (W3.3). A broken one blocks the freeze. */
+  crossReferences?: string[];
   /** The approval of the observation this claim derives from, when it derives from one (W3.2). */
   approval: ClaimApproval | null;
   /** Present for auditor text; the wording is the auditor's own. */

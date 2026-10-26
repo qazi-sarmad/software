@@ -62,7 +62,7 @@ export const REPORT_MODELS: ReportModel[] = [
     version: 1,
     title: 'Full engagement report',
     description: 'The complete report: scope, findings, coverage, limitation and appendices.',
-    plan: plan('X', [
+    plan: plan('M1', [
       { id: 'cover', heading: 'Cover', role: 'lead_in', roles: ['lead_in'] },
       { id: 'scope', heading: 'Scope and period', role: 'scope', roles: ['scope', 'limitation'] },
       { id: 'exec', heading: 'Executive summary', role: 'summary', roles: ['summary', 'exception_summary', 'lead_in'] },
@@ -79,7 +79,7 @@ export const REPORT_MODELS: ReportModel[] = [
     version: 1,
     title: 'Audit committee and board report',
     description: 'A board-facing report: assurance, findings and coverage in board-register form.',
-    plan: plan('X', [
+    plan: plan('M2', [
       { id: 'exec', heading: 'Assurance summary', role: 'summary', roles: ['summary', 'lead_in'] },
       { id: 'findings', heading: 'Findings and actions', role: 'findings', roles: ['condition', 'effect', 'recommendation', 'management_response', 'status'] },
       { id: 'coverage', heading: 'Coverage', role: 'coverage', roles: ['coverage'] },
@@ -94,7 +94,7 @@ export const REPORT_MODELS: ReportModel[] = [
     version: 1,
     title: 'Executive summary',
     description: 'A one-page summary of the engagement outcome.',
-    plan: plan('X', [
+    plan: plan('M3', [
       { id: 'exec', heading: 'Executive summary', role: 'summary', roles: ['summary', 'exception_summary', 'lead_in'] },
       { id: 'appendices', heading: 'Key figures', role: 'appendices', roles: ['numeric_summary'], registerInvariant: true },
     ]),
@@ -107,7 +107,7 @@ export const REPORT_MODELS: ReportModel[] = [
     version: 1,
     title: 'Management letter',
     description: 'A letter to management: the observations, the effects and the actions agreed.',
-    plan: plan('X', [
+    plan: plan('M4', [
       { id: 'cover', heading: 'Introduction', role: 'lead_in', roles: ['lead_in'] },
       { id: 'findings', heading: 'Observations', role: 'findings', roles: ['condition', 'criteria', 'cause', 'effect', 'recommendation', 'management_response', 'status'] },
       { id: 'coverage', heading: 'Coverage', role: 'coverage', roles: ['coverage'] },
@@ -121,7 +121,7 @@ export const REPORT_MODELS: ReportModel[] = [
     version: 1,
     title: 'Single finding memo',
     description: 'One finding in full: condition, criteria, cause, effect, recommendation and response.',
-    plan: plan('X', [
+    plan: plan('M5', [
       { id: 'findings', heading: 'Finding', role: 'findings', roles: ['condition', 'criteria', 'cause', 'effect', 'recommendation', 'management_response', 'status'] },
       { id: 'appendices', heading: 'Figures', role: 'appendices', roles: ['numeric_summary'], registerInvariant: true },
     ]),
@@ -134,7 +134,7 @@ export const REPORT_MODELS: ReportModel[] = [
     version: 1,
     title: 'CAP and follow-up status report',
     description: 'The corrective action plans and their current status.',
-    plan: plan('X', [
+    plan: plan('M6', [
       { id: 'exec', heading: 'Summary', role: 'summary', roles: ['summary', 'exception_summary', 'lead_in'] },
       { id: 'findings', heading: 'Actions and status', role: 'findings', roles: ['recommendation', 'management_response', 'status'] },
       { id: 'coverage', heading: 'Coverage', role: 'coverage', roles: ['coverage'] },
@@ -149,7 +149,7 @@ export const REPORT_MODELS: ReportModel[] = [
     version: 1,
     title: 'Control deficiency evaluation report',
     description: 'Counts, ratings and evidence for control deficiencies. No opinion is expressed.',
-    plan: plan('X', [
+    plan: plan('M7', [
       { id: 'findings', heading: 'Deficiencies', role: 'findings', roles: ['condition', 'criteria', 'cause', 'effect'] },
       { id: 'coverage', heading: 'Coverage', role: 'coverage', roles: ['coverage'] },
       { id: 'appendices', heading: 'Counts and ratings', role: 'appendices', roles: ['numeric_summary'], registerInvariant: true },
@@ -163,7 +163,7 @@ export const REPORT_MODELS: ReportModel[] = [
     version: 1,
     title: 'Compliance and regulatory submission report',
     description: 'A regulatory submission: scope, criteria, findings and coverage.',
-    plan: plan('X', [
+    plan: plan('M8', [
       { id: 'scope', heading: 'Scope and criteria', role: 'scope', roles: ['scope', 'criteria', 'limitation'] },
       { id: 'findings', heading: 'Findings against the criteria', role: 'findings', roles: ['condition', 'criteria', 'cause', 'effect', 'recommendation'] },
       { id: 'coverage', heading: 'Coverage', role: 'coverage', roles: ['coverage'] },
@@ -177,7 +177,7 @@ export const REPORT_MODELS: ReportModel[] = [
     version: 1,
     title: 'Special review fact report',
     description: 'Facts and records only. No conclusions are expressed.',
-    plan: plan('X', [
+    plan: plan('M9', [
       { id: 'scope', heading: 'Scope and period', role: 'scope', roles: ['scope', 'limitation'] },
       { id: 'findings', heading: 'Facts established', role: 'findings', roles: ['condition', 'criteria'] },
       { id: 'coverage', heading: 'Records examined', role: 'coverage', roles: ['coverage'] },
@@ -191,7 +191,7 @@ export const REPORT_MODELS: ReportModel[] = [
     version: 1,
     title: 'Annual audit plan and coverage report',
     description: 'The plan and the coverage achieved against it.',
-    plan: plan('X', [
+    plan: plan('M10', [
       { id: 'exec', heading: 'Plan summary', role: 'summary', roles: ['summary', 'lead_in'] },
       { id: 'scope', heading: 'Scope and period', role: 'scope', roles: ['scope', 'limitation'] },
       { id: 'coverage', heading: 'Coverage against the plan', role: 'coverage', roles: ['coverage'] },
@@ -206,7 +206,7 @@ export const REPORT_MODELS: ReportModel[] = [
     version: 1,
     title: 'Quarterly activity and trend report',
     description: 'Activity and trends over the quarter, with the figures that support them.',
-    plan: plan('X', [
+    plan: plan('M11', [
       { id: 'exec', heading: 'Quarter summary', role: 'summary', roles: ['summary', 'exception_summary', 'lead_in'] },
       { id: 'findings', heading: 'Activity', role: 'findings', roles: ['status', 'recommendation', 'management_response'] },
       { id: 'appendices', heading: 'Trend figures', role: 'appendices', roles: ['numeric_summary'], registerInvariant: true },
@@ -220,7 +220,7 @@ export const REPORT_MODELS: ReportModel[] = [
     version: 1,
     title: 'Continuous-monitoring alert digest',
     description: 'A digest of alerts by rule, period, status and disposition (W11.4).',
-    plan: plan('X', [
+    plan: plan('M12', [
       { id: 'exec', heading: 'Alert summary', role: 'summary', roles: ['alert_summary', 'lead_in'] },
       { id: 'findings', heading: 'Dispositions and escalations', role: 'findings', roles: ['condition', 'status', 'recommendation', 'management_response'] },
       { id: 'appendices', heading: 'Counts', role: 'appendices', roles: ['numeric_summary'], registerInvariant: true },
