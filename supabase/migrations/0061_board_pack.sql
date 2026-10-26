@@ -390,14 +390,18 @@ end $$;
 --     (app_base_url, last_board_meeting_date, certificate_auto_issue, public_verify_show_title, AI
 --     retention). Configurable through the wizards, never by SQL (product law C1).
 -- ---------------------------------------------------------------------------
+-- M2: dropped first because 0087 changes this function's OUT columns (ai_retention_days is removed
+-- with the rest of the AI feature); a repeat apply would otherwise fail with "cannot change return
+-- type".
+drop function if exists public.org_settings_extra_get(uuid);
 create or replace function public.org_settings_extra_get(p_org uuid)
 returns table (
   app_base_url text, last_board_meeting_date date, certificate_auto_issue boolean,
-  public_verify_show_title boolean, ai_retention_days int
+  public_verify_show_title boolean
 )
 language sql stable security definer set search_path = public as $$
   select e.app_base_url, e.last_board_meeting_date, e.certificate_auto_issue,
-         e.public_verify_show_title, e.ai_retention_days
+         e.public_verify_show_title
     from org_settings_extra e
    where e.org_id = p_org
      and (public.is_platform_admin() or p_org = public.jwt_org_id())

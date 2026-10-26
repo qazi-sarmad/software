@@ -874,3 +874,261 @@ IMPROVISE-THEN-DOCUMENT (this file).
 - Reverse: revert the three specs and the `escalation_events` fixture block in `e2e/global-setup.ts`.
 - Evidence: `npx playwright test --project=chromium e2e/s2-... e2e/s6-... e2e/s9-...` -> **15 passed
   (30.3s)**; `npx vitest run src/guards/e2eAssertions.test.ts` -> **2 passed**.
+
+## D-P0-1 — owner decisions recorded at the start of the AI-removal run (P-0)
+
+- Task: P-0.
+- Point: the owner's decisions of 2026-10-25 that the rest of this run implements.
+- Decisions, as given by the owner:
+  1. **AI is removed from the product entirely.** Every AI table, column, function, trigger, cron
+     job, edge function, feature key, config area, right, screen and wizard step goes. This is Law
+     L1 after removal: no AI anywhere in this product.
+  2. **Historical AI data is dropped.** The owner states that no AI feature was ever used by a
+     client, so there is no client AI history to preserve. The AI tables are dropped with their
+     rows. The business ledger and its hash chain are NOT touched: old ledger rows of kind
+     `ai_call` stay in place and still verify.
+  3. **The sand timer replaces any AI-work loader.** Where a screen showed an AI-work spinner or
+     animation, the existing sand-timer loader is used for the same screens. No new dependency.
+  4. **The tutorial count drops, and the owner accepts the drop.** Removing AI screens removes
+     their tutorial keys and GIFs; `check-tutorials` will report a lower key count. This is
+     expected and accepted, not a regression.
+  5. **`use_ai_assist` is removed from the rights matrix.** The closed rights vocabulary returns to
+     14 keys, and the key is deleted from every role's `rights` JSON.
+  6. **The "assistant" is deterministic guided intake, not AI.** Where the product offers guidance,
+     it is deterministic guided intake: rules and structured prompts, no model, no inference, no
+     generated text. Nothing labelled or shaped like an AI assistant returns.
+- Reason: these are the owner's decisions; this file records them so the run has a written basis.
+- Reverse: the owner reverses any of them in writing; each is then a new dated decision here.
+
+## D-P0-2 — SHARE-DECISION: sharing within one organisation, across universes (P-0)
+
+- Task: P-0, Group SH.
+- Point: what "sharing" means in this version.
+- Decision:
+  - Sharing happens **within one organisation**, across universes.
+  - The **shareable object is the engagement**, read-only, together with its findings and CAPs.
+  - **"Level-1 Head" and "Level-2 Head" are a flag on the member record** (`head_level`), set by an
+    Org Admin, with values none, 1 or 2.
+  - A share has an **optional expiry** and is **revocable** by the granting Head, a higher Head
+    (lower number) or an Org Admin.
+  - **Recipients see the same record read-only.** Out-of-scope links show "Not available". A
+    recipient cannot export beyond its own rights.
+  - **Cross-organisation sharing (to a linked organisation) is DEFERRED.** It is not built in this
+    version and the spec says so.
+- Reason: the owner's decision. A share is an authority on the member record, not a new right, so
+  the closed rights list does not grow.
+- Reverse: the owner amends the SHARE-DECISION; the spec section and the database then follow it.
+
+## D-P0-3 — the two `openhands` commits stay as they are (P-0)
+
+- Task: P-0.
+- Point: commits `206aba4` and `eab3ca7` on this branch carry author/committer
+  `openhands <openhands@all-hands.dev>` and a `Co-authored-by: openhands` trailer, which conflicts
+  with the standing identity rule for new commits.
+- Choice: they stay exactly as they are. The owner grants an explicit exception and forbids rewriting
+  them; rewriting would need a force push, which is banned.
+- Reason: the owner's instruction. Every commit made from here on carries the required identity and
+  the single `Authored by:` trailer.
+- Reverse: none; the owner may rewrite them itself if it wants to.
+
+## D-P0-4 — one session works this branch (P-0)
+
+- Task: P-0.
+- Point: a second session was pushing to a sibling branch (`fix/tutorial-recorder-fixtures`) during
+  the previous run.
+- Choice: only the openhands session works on `feature/board-ai-control-plane` for this run. Before
+  any push, `git fetch` and compare the remote-tracking ref with `git ls-remote`.
+- Reason: a stale remote-tracking ref hides a parallel push and turns a push into a rejected
+  non-fast-forward.
+- Reverse: none needed.
+
+## D-SPEC-1 — the specification amendment for AI removal, sharing and the report engine (SPEC-1)
+
+- Task: SPEC-1.
+- Point: which parts of `docs/SPEC-v10.md` change, and what replaces the removed text.
+- Choice, one edit per item:
+  - §0 differentiators: the AI sentence becomes "Guidance is deterministic guided intake: rules and
+    structured prompts, with no model and no generated text."
+  - §1 L1: rewritten to say there is no AI in the product; guidance is deterministic guided intake;
+    no result, score, sample, finding status or gate is produced or influenced by a model.
+  - §1 L2: the "external AI service or model" clause becomes "never go to any external service".
+  - §2 sharing: replaced with the SHARE-DECISION wording (view-only, head-level flag, optional
+    expiry, revocable, engagement with findings and CAPs, cross-organisation deferred).
+  - §13: title becomes "Document Review"; §13.2 "Optional AI assistance" is deleted; §13.1 kept
+    unchanged.
+  - §23: the read-only "AI" administration line is deleted.
+  - §24: "AI enablement per tenant" is removed from the platform function list.
+  - §26: "AI enablement" is removed from the logged-actions sentence; the ledger sentence names
+    `share_granted` and `share_revoked` explicitly.
+  - §28: the discarded list keeps its two AI lines and gains "Any AI feature (removed 2026-10-25)".
+  - §30.1 D1: the closed rights vocabulary is corrected to fourteen keys, `use_ai_assist` named as
+    removed; the stale "eleven keys" list is replaced.
+  - §30.6: AI is removed from the not-yet-built list.
+  - §31: the Ollama row is marked superseded and three rows are added for the 2026-10-25 decisions.
+  - §15.6: new "Report engine guarantees" subsection (refs on every claim, recompute-before-freeze,
+    root hash with versions, reproducible build, coverage reconciliation, no high-consequence
+    wording, claim-level version comparison), with the engine tables and the phrase lifecycle.
+  - §34: new dated section listing the decisions.
+- Reason: the owner's instructions for this amendment. The exclusions list is left intact.
+- Reverse: revert this commit; the spec returns to the previous text.
+
+## D-A1 — AI-REMOVE inventory, copied from the migrations (A1)
+
+- Task: A1. Every name below is copied from the migration named beside it, not guessed.
+- Re-confirmed with `grep -rniE "ai_|use_ai_assist|org_voice|ai-gateway|ai_gateway"` over
+  `supabase/migrations` and `supabase/tests`.
+
+**Tables**
+- `ai_models` (0059), `ai_endpoint_denylist` (0059), `tenant_ai_models` (0059), `ai_use_cases`
+  (0059), `ai_calls` (0059), `ai_suggestions` (0059).
+- `ai_model_versions` (0051).
+- `org_voice_profile`, `org_voice_terms`, `org_voice_samples` (0059).
+
+**Columns**
+- `tenant_settings.ai_enabled`, `tenant_settings.ai_model_endpoint` (0031).
+- `tenant_settings.ai_access_mode`, `tenant_settings.ai_secret_id` (0059).
+- `org_settings_extra.ai_retention_days` (0051).
+
+**Functions**
+- `platform_enable_ai(uuid, boolean, text)` (0031, redefined 0045).
+- `ai_endpoint_denied(text)`, `ai_model_add(...)`, `ai_model_remove(uuid)`,
+  `ai_model_update(uuid, text, text, text)`, `ai_tenant_set_model(...)`, `ai_denylist_add(text, text)`,
+  `ai_denylist_remove(uuid)`, `ai_require_org_actor(uuid, text)`, `ai_use_case_save(...)`,
+  `ai_voice_profile_save(...)`, `ai_voice_term_add(...)`, `ai_voice_sample_add(...)`,
+  `ai_set_endpoint(uuid, text, text, uuid)` (0059; `ai_set_endpoint` redefined 0083),
+  `ai_call_log(...)` (0059, redefined 0065), `ai_purge_expired()` (0059),
+  `ai_suggestion_save(...)`, `ai_suggestion_decide(...)` (0059).
+- `ai_gateway_authorise(uuid)` (0067).
+- `emit_ai_call_failed()` (0075).
+
+**Triggers**
+- `ai_calls_emit_failed` on `ai_calls` (0075).
+- `cfg_notify_ai_model_versions` on `ai_model_versions` (0059).
+
+**Policies**
+- `ai_models_select`, `ai_endpoint_denylist_select`, `tenant_ai_models_select`, `ai_use_cases_select`,
+  `ai_calls_select`, `ai_suggestions_select`, `org_voice_profile_select`, `org_voice_terms_select`,
+  `org_voice_samples_select` (0059). All dropped with their tables.
+
+**Cron**
+- `'ai-purge-expired'`, `30 3 * * *`, job `select public.ai_purge_expired()` (0074).
+
+**Registry rows**
+- `feature_catalogue`: `ai_assist`, `ai_voice_library`, `ai_board_slides` (0051).
+- `config_areas`: `ai_models` (0051, re-asserted 0059).
+- `plan_definitions`: none name an AI key directly; `included_features` is `{automation_rules}` and
+  `{automation_rules,board_pack,certificates,patterns}` (0051). Nothing to remove, recorded as checked.
+- `tenant_entitlements`: any row whose `feature_key` is one of the three AI keys.
+- `automation_event_fields`: `ai_model.changed` area, area_label (0055).
+- `automation_events_catalogue`: `ai_model.changed`, `ai.call_failed` (0055).
+- `automation_rules`: `platform.ai_model.changed` (0056).
+- `notification_templates`: `ai_model.changed` (0056).
+- `roles.rights`: `use_ai_assist` in every role's JSON (0050).
+- `tutorials`: `oa.ai`, `oa.ai-test`, `oa.ai-usecases`, `oa.voice`, `sa.ai-models`,
+  `sa.ai-denylist` (0071).
+- `secret_store`: no AI-specific kind exists (the table has no kind column; 0054). Recorded as
+  checked; nothing to delete. The `ai_secret_id` column that pointed at it is dropped.
+
+**Dependents to redefine before the drop (read from the highest-numbered definition)**
+- `rights_keys_valid(jsonb)` — latest in 0050; becomes fourteen keys.
+- `config_history_list(int)` — 0053; its `ai_models` UNION branch reads `ai_model_versions`.
+- `config_area_notify()` — 0051; `notify_policy = 'platform_only'` maps to `'ai_model.changed'`, and
+  `ai_models` is the only platform_only area, so the branch goes with it.
+- `platform_list_tenants()` — 0031; returns `ai_enabled`.
+- `get_org_settings_extra(uuid)` — latest in 0073; returns `ai_retention_days`.
+- `admin_set_org_settings_extra(...)` — 0052; writes `ai_retention_days`.
+- `org_settings_extra_get(uuid)` and `org_settings_extra_save(uuid, jsonb)` — 0061; same column.
+- `emit_ai_call_failed()` name removed from the revoke array in 0075 (the array is in a `do` block
+  that runs once; the function drop alone is enough, but the array is corrected for the record).
+- Not touched: the ledger and its hash chain. Old `ai_call` ledger rows stay.
+
+- Reason: the removal must be additive and idempotent, and every dependent must be redefined before
+  the object it reads is dropped, or the second apply fails.
+- Reverse: revert migration 0087 and this entry.
+
+## D-A1-1 — the failing step 7 is a stale cron-job name in test 83, not a broken migration (A1-A3)
+
+- Task: A1-A3 (step 7 of CI run 39938223223, reproduced as 40236534345).
+- Point: the owner's report named run `39938223223`, a two-day-old run. The branch has moved on: that
+  run's failure was already fixed by `594ddbd` (anon execute grants in test 72). The fresh run
+  `40236534345` failed at step 7 for a different reason, which is the one fixed here.
+- Options: (a) treat the old run as current and re-fix 72; (b) fix the error the current head produces.
+- Choice: (b). The error on the current head is
+  `psql:supabase/tests/83_scheduled_jobs.sql:155: ERROR: FAIL: the job ai-purge-expired exists in cron.job`.
+- Reason: migration 0087 unschedules `ai-purge-expired` and drops `ai_purge_expired()` when the AI
+  feature is removed, but test 83 still listed the job in three `v_names` arrays and counted six. The
+  `cron.job` block is guarded by `pg_cron` presence, and the local harness has no `pg_cron`, so the
+  mismatch was invisible locally and only the hosted test project (which has `pg_cron`) failed. No
+  migration was changed; no data or table was dropped on the hosted project.
+- Reverse: restore the `ai-purge-expired` entry and the six-counts in test 83 (only correct if the job
+  is scheduled again).
+
+## D-A1-2 — a local guard replays cron.schedule/unschedule so this class fails without pg_cron (A3)
+
+- Task: A3 (keep the fix minimal and make the class visible locally).
+- Point: how to catch a job-name mismatch on a machine without `pg_cron`.
+- Options: (a) require `pg_cron` in the local harness; (b) a vitest guard that reads the migrations and
+  the test and compares the names.
+- Choice: (b). `src/guards/cronJobRegistry.test.ts` replays `cron.schedule`/`cron.unschedule` in
+  migration order and asserts every job test 83 names still survives. It fails when the removed name
+  is restored, which was verified by reverting the name in a scratch edit.
+- Reason: the harness shim is deliberately minimal and does not install `pg_cron`; adding it would
+  change the harness for every test. The guard is scoped to the one invariant and needs no database.
+- Reverse: delete the guard; the SQL test still proves the behaviour on the hosted project.
+
+## D-B1-1 — the recorder must name every key's tab, because the map lookup has a default (T2)
+
+- Task: B (record the tutorial GIFs from the real UI).
+- Point: `oa.governance` (OA-22) is in the frozen key list but had no `ORG_TAB` entry.
+- Options: (a) rely on the recorder's `?? 'features'` fallback; (b) add the entry and guard the map.
+- Choice: (b). `scripts/tutorialCapture.mjs` now maps `oa.governance` to the `governance` tab, and
+  `src/guards/tutorialCaptureMap.test.ts` asserts every key whose plan opens an org or super-admin tab
+  is named in `ORG_TAB`/`SA_TAB` and that each named tab is one the portal declares.
+- Reason: the fallback records a DIFFERENT screen and only fails when that wrong screen renders none of
+  the targets, so a missing entry can ship a GIF of the wrong screen silently. The guard fails when
+  the governance entry is removed.
+- Reverse: remove the entry and the guard (only if `oa.governance` leaves the registry).
+
+## D-B2-1 — the tutorials workflow is already on main; nothing new is merged (B2)
+
+- Task: B2.
+- Point: the task asks to put `.github/workflows/tutorials.yml` on main after owner confirmation.
+- Choice: no merge is needed. `git diff origin/main HEAD -- .github/workflows/tutorials.yml` is empty,
+  so the file is already identical on main (it arrived with `ea9044d`). The rule "do not merge anything
+  into main except the tutorial workflow file" is therefore satisfied without touching main.
+- Reason: `workflow_dispatch` only starts from the default branch, and the file is there already; the
+  run can be dispatched against the feature branch without a main change.
+- Reverse: none; no change was made.
+
+## D-B4-1 — the recorder ran once, on the branch, and its own commit carries the GIFs (B3-B4)
+
+- Task: B3, B4.
+- Point: how the GIFs reach the branch and whether a second run is needed.
+- Choice: one `workflow_dispatch` run, `40242187619`, at head `c0d93cc`. It ran every step green and
+  committed `3613ed6` ("tutorials: record GIFs from the real UI", 77 GIFs, 0 placeholders) back to the
+  branch from inside the run. No second run was started.
+- Reason: the workflow already commits its own output, so dispatching again would only re-record the
+  same screens and spend a second run from the one-run budget. The run was queued behind CI
+  `40242173262` because both use the `provio-test-db` concurrency group, so the two never raced on the
+  shared test project.
+- Reverse: revert `3613ed6` to restore the placeholder GIFs; re-dispatch if a recording is needed again.
+
+## D-MERGE-1 — seven commits lack the required trailer line; recorded, not rewritten (pre-merge review)
+
+- Point: commits `ab79306`, `551bd6d`, `9d43aac`, `c6d7552`, `c0d93cc`, `3613ed6` and `6f784ea` do not carry
+  the line `Authored by: Qazi Sarmad Ali Mahesar` that `claude/commit-rules.md` requires. They carry no
+  forbidden trailer (no Co-Authored-By, no Claude-Session, no reference to an AI model).
+- Choice: they stay as they are. They are pushed to the shared branch, and rewriting would need a force push,
+  which is banned. Every commit after this one carries the line.
+- Reason: same handling as the recorded exception `a7fb323` and the openhands exception D-P0-3.
+- Reverse: none; the owner may rewrite them itself.
+
+## D-MERGE-2 — the AI-removal guard is a source guard, not only a catalog test (pre-merge review)
+
+- Point: the plan required `src/guards/noAi.test.ts`; the build delivered only the SQL catalog test
+  `supabase/tests/94_ai_removed.sql`, which cannot stop AI code or wording returning to `src`.
+- Choice: added `src/guards/noAi.test.ts`. It scans `src`, `supabase/functions`, `e2e`, `scripts` and migrations
+  numbered above 0087 for the removed right, feature keys, components, tables, vendor names and "language
+  model". Explanatory comments are allowed only in five listed files. A detector self-test keeps it from going blind.
+- Found by it: a stale comment naming the deleted `aiGatewayHandler.ts` in `graphOauthHandler.ts`; fixed.
+- Reverse: delete the guard; not recommended.

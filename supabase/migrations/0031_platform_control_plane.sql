@@ -106,13 +106,16 @@ create policy icap_settings_platform_select on invite_cap_settings for select to
 -- ---------------------------------------------------------------------------
 -- Super Admin RPCs.
 -- ---------------------------------------------------------------------------
+-- M2: dropped first because 0087 changes this function's OUT columns (ai_enabled is removed with
+-- the rest of the AI feature); a repeat apply would otherwise fail with "cannot change return type".
+drop function if exists public.platform_list_tenants();
 create or replace function public.platform_list_tenants()
-returns table (id uuid, name text, status text, ai_enabled boolean, feature_flags jsonb, created_at timestamptz)
+returns table (id uuid, name text, status text, feature_flags jsonb, created_at timestamptz)
 language plpgsql security definer set search_path = public as $$
 begin
   perform public.require_platform_admin();
   return query
-    select o.id, o.name, coalesce(ts.status, 'active'), coalesce(ts.ai_enabled, false),
+    select o.id, o.name, coalesce(ts.status, 'active'),
            coalesce(ts.feature_flags, '{}'::jsonb), o.created_at
     from orgs o
     left join tenant_settings ts on ts.org_id = o.id

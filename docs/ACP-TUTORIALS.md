@@ -9,7 +9,7 @@ and warns on a stale `ui_hash`.
 
 ## The key list
 
-`src/lib/tutorialKeys.json` is the frozen list of all **85** Appendix A keys (key, audience, screen
+`src/lib/tutorialKeys.json` is the frozen list of all **77** Appendix A keys (key, audience, screen
 id, title). It is the single source of truth: `src/lib/tutorialKeys.ts` reads it for the app,
 `supabase/migrations/0071_tutorial_registry_seed.sql` seeds one `tutorials` row per key from it, and
 `scripts/record-tutorials.mjs` and `scripts/check-tutorials.mjs` read the same JSON. Adding a key

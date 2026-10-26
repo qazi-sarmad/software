@@ -8,19 +8,15 @@ insert into secret_store (id, org_id, label, ciphertext, masked) values
   ('70000000-0000-0000-0000-0000000000b1', 'b0000000-0000-0000-0000-000000000001', 'org B secret', 'ct-b', '•••• b');
 insert into hosting_connections (id, org_id, kind, ssl_mode) values
   ('80000000-0000-0000-0000-0000000000a1', 'a0000000-0000-0000-0000-000000000001', 'managed_postgres', 'require');
-insert into tenant_settings (org_id, ai_enabled, status, feature_flags, usage_quota, ai_access_mode)
-  values ('a0000000-0000-0000-0000-000000000001', true, 'active', '{}', '{}', 'server')
-  on conflict (org_id) do update set ai_enabled = true;
+insert into tenant_settings (org_id, status, feature_flags, usage_quota)
+  values ('a0000000-0000-0000-0000-000000000001', 'active', '{}', '{}')
+  on conflict (org_id) do update set status = 'active';
 -- An approved plan for universe A-U1 that includes entity A-E1, so the gated deployment path can succeed.
 update plans set status = 'approved', approved_at = now()
   where id = 'a2000000-0000-0000-0000-0000000000a1';
 insert into plan_items (org_id, plan_id, entity_id, title, is_adhoc, status) values
   ('a0000000-0000-0000-0000-000000000001', 'a2000000-0000-0000-0000-0000000000a1',
    '40000000-0000-0000-0000-0000000000a1', 'A-E1 in the plan', false, 'approved');
--- The AI feature must be on for org A, so the secret check is what refuses the request (not the plan gate).
-insert into tenant_entitlements (org_id, feature_key, enabled, effective_from) values
-  ('a0000000-0000-0000-0000-000000000001', 'ai_assist', true, now() - interval '1 day');
-
 -- 1. A CIA user cannot insert an engagement directly on an unapproved entity (spec §6, §7).
 select provio_test.as_user('10000000-0000-0000-0000-0000000000a1', 'a0000000-0000-0000-0000-000000000001', 'cia');
 do $$ begin
@@ -52,14 +48,9 @@ do $$ begin
     'permission denied', 'org_admin cannot INSERT engagements directly');
 end $$;
 
--- 4. An org A admin cannot attach an org B secret to an AI endpoint (cross-tenant credential).
-do $$ begin
-  perform provio_test.assert_raises(
-    $q$select public.ai_set_endpoint('a0000000-0000-0000-0000-000000000001', 'https://ai.internal.example', 'server', '70000000-0000-0000-0000-0000000000b1')$q$,
-    'does not belong', 'ai_set_endpoint refuses another org''s secret');
-end $$;
-
--- 5. An org A CIA cannot attach an org B secret to a hosting connection.
+-- 4. An org A CIA cannot attach an org B secret to a hosting connection. (The equivalent AI-endpoint
+--    probe was removed with ai_set_endpoint in 0087; this is the remaining cross-tenant credential
+--    path.)
 select provio_test.as_user('10000000-0000-0000-0000-0000000000a1', 'a0000000-0000-0000-0000-000000000001', 'cia');
 do $$ begin
   perform provio_test.assert_raises(

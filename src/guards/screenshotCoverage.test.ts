@@ -7,8 +7,10 @@ import { resolve } from 'node:path';
  * an unreachable screen is recorded in the manifest rather than failing the run — but a screen the
  * sweep never attempts to capture is a silent gap, which is what this guard prevents.
  *
- * Appendix A: GL-01, TUT-01, SA-01..15, OA-01..21, WK-01..10, EX-01..04, plus OA-22 (C3.2-B).
+ * Appendix A: GL-01, TUT-01, SA-01..15, OA-01..21, WK-01..10, EX-01..04, plus OA-22 (C3.2-B), less
+ * the four retired AI ids (SA-06, OA-06, OA-07, WK-07) removed on 2026-10-25.
  */
+const RETIRED = new Set(['SA-06', 'OA-06', 'OA-07', 'WK-07']);
 const APPENDIX_A = [
   'GL-01',
   'TUT-01',
@@ -17,7 +19,7 @@ const APPENDIX_A = [
   ...Array.from({ length: 10 }, (_, i) => `WK-${String(i + 1).padStart(2, '0')}`),
   ...Array.from({ length: 4 }, (_, i) => `EX-${String(i + 1).padStart(2, '0')}`),
   'OA-22',
-];
+].filter((id) => !RETIRED.has(id));
 
 describe('screenshot sweep coverage (C5.4)', () => {
   const script = readFileSync(resolve(process.cwd(), 'scripts/screenshot-all.mjs'), 'utf8');

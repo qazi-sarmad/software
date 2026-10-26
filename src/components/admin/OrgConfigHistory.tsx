@@ -7,7 +7,7 @@ type LoadState = 'loading' | 'ready' | 'error';
 
 /**
  * OA-17 configuration history. One story for every configuration change in the organisation:
- * roles and rights, entitlements, AI models and settings, newest first, hash-chained. A change a
+ * roles and rights, entitlements and settings, newest first, hash-chained. A change a
  * QSCorp consultant made during a Dual Session is labelled "platform consultant". Read-only and
  * non-blocking.
  */

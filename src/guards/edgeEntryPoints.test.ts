@@ -1,11 +1,13 @@
 /**
  * C1.2: every Edge Function entry point verifies the caller before it does anything privileged.
  *
- * This is the lesson of the earlier ai-gateway defect, where an org id was read from the request
- * body and used straight away with the service role. The guard is a static check over the source:
- * inside each request handler, a named authorisation call must appear before the first privileged
- * call. An entry point that is pure wiring (it only builds dependencies for a _shared handler) is
- * accepted only when the handler it delegates to contains the gate, so the check follows the code.
+ * This is the lesson of the earlier ai-gateway defect (that function has since been removed with the
+ * rest of AI, but the shape it had is still the one to guard against): an org id was read from the
+ * request body and used straight away with the service role. The guard is a static check over the
+ * source: inside each request handler, a named authorisation call must appear before the first
+ * privileged call. An entry point that is pure wiring (it only builds dependencies for a _shared
+ * handler) is accepted only when the handler it delegates to contains the gate, so the check follows
+ * the code.
  *
  * Deliberately simple and text-based, like the other source guards: it fails loudly if someone
  * writes a new entry point that reaches for a service client or a privileged RPC first.
@@ -46,7 +48,7 @@ function importedHandlers(name: string): string[] {
 }
 
 const AUTH_PATTERNS = [
-  'auth.getUser', 'ai_gateway_authorise', 'oauth_state_consume',
+  'auth.getUser', 'oauth_state_consume',
   'invite_authorise', 'dispatch_token_check', 'graph_oauth_authorise', 'tokenMatches',
 ];
 
@@ -69,7 +71,7 @@ describe('Edge Function entry points (C1.2)', () => {
 
   it('there is at least the known set of Edge Functions', () => {
     expect(dirs.length).toBeGreaterThanOrEqual(5);
-    for (const known of ['ai-gateway', 'email-dispatch', 'graph-oauth', 'invite-user', 'secrets-put']) {
+    for (const known of ['email-dispatch', 'graph-oauth', 'invite-user', 'secrets-put']) {
       expect(dirs).toContain(known);
     }
   });

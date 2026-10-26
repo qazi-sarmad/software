@@ -11,7 +11,6 @@ import { SuperAdminRecipients } from './SuperAdminRecipients';
 import { SuperAdminTutorials } from './SuperAdminTutorials';
 import { SuperAdminSetup } from './SuperAdminSetup';
 import { SuperAdminEmail } from './SuperAdminEmail';
-import { SuperAdminAi } from './SuperAdminAi';
 import { SuperAdminAutomation } from './SuperAdminAutomation';
 import { SuperAdminHosting } from './SuperAdminHosting';
 import { SuperAdminMigration, DeploymentKitPanel } from './SuperAdminMigration';
@@ -25,7 +24,7 @@ import { TutorialButton } from '../common/TutorialButton';
  * database. This is the sole surface that may know about the platform role (D-PLATFORM-RIGHTS);
  * no org-product code imports it. It renders no blocking modal (spec §27.5).
  */
-type Tab = 'tenants' | 'support' | 'consultation' | 'features' | 'recipients' | 'email' | 'automation' | 'ai' | 'tutorials' | 'setup' | 'trail' | 'hosting' | 'migration';
+type Tab = 'tenants' | 'support' | 'consultation' | 'features' | 'recipients' | 'email' | 'automation' | 'tutorials' | 'setup' | 'trail' | 'hosting' | 'migration';
 type Gate = 'checking' | 'allowed' | 'denied';
 
 /** F18: every platform tab carries its own "Show me how" tutorial key (Appendix A). */
@@ -37,7 +36,6 @@ const TAB_TUTORIAL: Record<Tab, { key: string; title: string }> = {
   recipients: { key: 'sa.recipients', title: 'SA-05 notification recipients' },
   email: { key: 'sa.email-default', title: 'SA-04 email sender profiles' },
   automation: { key: 'sa.automation', title: 'SA-07 automation templates' },
-  ai: { key: 'sa.ai-models', title: 'SA-06 AI model registry' },
   tutorials: { key: 'sa.tutorials', title: 'SA-13 tutorial library' },
   setup: { key: 'sa.setup-wizard', title: 'SA-01 platform setup wizard' },
   hosting: { key: 'sa.hosting-fit', title: 'SA-10 hosting fit check' },
@@ -110,7 +108,6 @@ export const SuperAdminPortal: React.FC = () => {
     { id: 'recipients', label: 'Recipients', icon: Users },
     { id: 'email', label: 'Email senders', icon: Send },
     { id: 'automation', label: 'Automation', icon: Zap },
-    { id: 'ai', label: 'AI models', icon: Database },
     { id: 'tutorials', label: 'Tutorials', icon: Eye },
     { id: 'setup', label: 'Setup', icon: History },
     { id: 'hosting', label: 'Hosting fit', icon: Database },
@@ -175,7 +172,6 @@ export const SuperAdminPortal: React.FC = () => {
         {tab === 'recipients' && <SuperAdminRecipients />}
         {tab === 'email' && <SuperAdminEmail />}
         {tab === 'automation' && <SuperAdminAutomation />}
-        {tab === 'ai' && <SuperAdminAi />}
         {tab === 'tutorials' && <SuperAdminTutorials />}
         {tab === 'setup' && <SuperAdminSetup />}
         {tab === 'hosting' && <SuperAdminHosting />}

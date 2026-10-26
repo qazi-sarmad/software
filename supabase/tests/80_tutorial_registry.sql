@@ -24,22 +24,21 @@ begin
   select count(*) into v_missing
   from (values
     ('oa.dual-session'),('sa.dual-session'),('sa.setup-wizard'),('sa.setup-1'),('sa.setup-2'),
-    ('sa.setup-3'),('sa.setup-4'),('sa.setup-5'),('sa.setup-6'),('sa.setup-7'),('sa.setup-8'),
-    ('sa.setup-9'),('sa.health'),('sa.tenant-hub'),('sa.email-resend'),('sa.email-microsoft'),
-    ('sa.email-smtp'),('sa.email-default'),('sa.email-force-tenant'),('sa.recipients'),
-    ('sa.ai-models'),('sa.ai-denylist'),('sa.automation'),('sa.templates'),('sa.hosting-fit'),
-    ('sa.hosting-rules'),('sa.migration'),('sa.tutorials'),('sa.features'),('sa.plans'),('sa.trail'),
-    ('oa.setup-wizard'),('oa.setup-1'),('oa.setup-2'),('oa.setup-3'),('oa.setup-4'),('oa.setup-5'),
-    ('oa.setup-6'),('oa.setup-7'),('oa.setup-8'),('oa.setup-9'),('oa.profile'),('oa.branding'),
-    ('oa.pptx-theme'),('oa.features'),('oa.roles'),('oa.ai'),('oa.ai-test'),('oa.ai-usecases'),
-    ('oa.voice'),('oa.templates'),('oa.boardpack-config'),('oa.certificate-config'),('oa.email-resend'),
-    ('oa.email-microsoft'),('oa.email-smtp'),('oa.email-test'),('oa.automation'),('oa.templates-email'),
-    ('oa.escalation'),('oa.auditors'),('oa.auditor-matrix'),('oa.hosting'),('oa.migration'),
-    ('oa.deployment-kit'),('oa.retire-old'),('oa.history'),('oa.tutorials'),('oa.golive'),('oa.invite'),
-    ('oa.patterns-config'),('oa.boardpack-use'),('oa.boardpack-generate'),('oa.boardpack-view'),
-    ('oa.boardpack-download'),('oa.certificate'),('oa.verify'),
-    ('oa.escalation-cards'),('oa.timetravel'),('oa.patterns'),('ex.accept'),('ex.home'),
-    ('ex.engagement'),('ex.verify')
+    ('sa.setup-3'),('sa.setup-4'),('sa.setup-5'),('sa.setup-6'),('sa.setup-7'),
+    ('sa.setup-8'),('sa.health'),('sa.tenant-hub'),('sa.email-resend'),('sa.email-microsoft'),
+    ('sa.email-smtp'),('sa.email-default'),('sa.email-force-tenant'),('sa.recipients'),('sa.automation'),
+    ('sa.templates'),('sa.hosting-fit'),('sa.hosting-rules'),('sa.migration'),('sa.tutorials'),
+    ('sa.features'),('sa.plans'),('sa.trail'),('oa.setup-wizard'),('oa.setup-1'),
+    ('oa.setup-2'),('oa.setup-3'),('oa.setup-4'),('oa.setup-5'),('oa.setup-6'),
+    ('oa.setup-7'),('oa.setup-8'),('oa.profile'),('oa.branding'),('oa.pptx-theme'),
+    ('oa.features'),('oa.roles'),('oa.templates'),('oa.boardpack-config'),('oa.certificate-config'),
+    ('oa.email-resend'),('oa.email-microsoft'),('oa.email-smtp'),('oa.email-test'),('oa.automation'),
+    ('oa.templates-email'),('oa.escalation'),('oa.auditors'),('oa.auditor-matrix'),('oa.hosting'),
+    ('oa.migration'),('oa.deployment-kit'),('oa.retire-old'),('oa.history'),('oa.tutorials'),
+    ('oa.golive'),('oa.invite'),('oa.patterns-config'),('oa.boardpack-use'),('oa.boardpack-generate'),
+    ('oa.boardpack-view'),('oa.boardpack-download'),('oa.certificate'),('oa.verify'),('oa.escalation-cards'),
+    ('oa.timetravel'),('oa.patterns'),('ex.accept'),('ex.home'),('ex.engagement'),
+    ('ex.verify'),('oa.governance')
   ) as expected(key)
   where not exists (select 1 from public.tutorials t where t.key = expected.key);
 
@@ -58,7 +57,7 @@ select provio_test.as_user('10000000-0000-0000-0000-0000000000f0', null, 'platfo
 do $$
 begin
   perform provio_test.assert_true(
-    (select count(*) from public.list_tutorials()) >= 84,
+    (select count(*) from public.list_tutorials()) >= 77,
     'F18: a platform admin reads the whole tutorial registry');
 end $$;
 

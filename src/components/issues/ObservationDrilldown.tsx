@@ -5,7 +5,6 @@ import { AuditObservation, Severity } from '../../types';
 import { departmentsOf, auditsForDepartment, workpapersForAudit } from '../../lib/findingTarget';
 import { AlertCircle, CheckCircle2 } from '../common/Icons';
 import { InlineError } from '../common/InlineError';
-import { AiAssist } from '../common/AiAssist';
 
 interface ObservationDrilldownProps {
   data?: {
@@ -17,7 +16,7 @@ interface ObservationDrilldownProps {
 }
 
 export const ObservationDrilldown: React.FC<ObservationDrilldownProps> = ({ data, onClose }) => {
-  const { addObservation, closeInspector, currentUser } = useApp();
+  const { addObservation, closeInspector } = useApp();
   const { scopedWorkpapers, scopedEntities, scopedEngagements } = useScopedData();
 
   const existingObs = data?.observation;
@@ -264,23 +263,6 @@ export const ObservationDrilldown: React.FC<ObservationDrilldownProps> = ({ data
           className="w-full p-2.5 rounded-xl bg-surface-elevated border border-hairline text-apple-13 text-primary outline-none"
         />
       </div>
-
-      <AiAssist
-        orgId={currentUser.orgId ?? ''}
-        useCase="observation_draft"
-        recordType="observation"
-        recordId={'new'}
-        allowedNumbers={[]}
-        buildPrompt={() => [
-          `Draft an audit observation.`,
-          title ? `Title: ${title}` : '',
-          condition ? `Condition: ${condition}` : '',
-          criteria ? `Criteria: ${criteria}` : '',
-          recommendation ? `Considered recommendation: ${recommendation}` : '',
-          `Severity: ${severity}.`,
-        ].filter(Boolean).join('\n')}
-        onAccept={(text) => setCondition((c) => (c ? `${c}\n${text}` : text))}
-      />
 
       <InlineError message={formError} testId="observation-form-error" />
 

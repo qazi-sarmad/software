@@ -32,21 +32,17 @@ begin
   select count(*) into v_before from platform_trail;
 
   perform public.platform_set_feature_flag('a0000000-0000-0000-0000-000000000001', 'beta_reports', true);
-  perform public.platform_enable_ai('a0000000-0000-0000-0000-000000000001', true, 'https://model.example/v1');
   perform public.platform_set_invite_cap('a0000000-0000-0000-0000-000000000001', 25);
   v_grant := public.platform_grant_support_access(
     'a0000000-0000-0000-0000-000000000001', '{"read":true}'::jsonb, 4);
   perform public.platform_revoke_support_access(v_grant, 'ticket 12345 closed by the owner');
 
   select count(*) into v_after from platform_trail;
-  perform provio_test.assert_eq(v_after - v_before, 5,
-    'the five platform control calls each wrote a platform_trail row');
+  perform provio_test.assert_eq(v_after - v_before, 4,
+    'the four platform control calls each wrote a platform_trail row');
   perform provio_test.assert_true(
     exists (select 1 from platform_trail where action = 'feature_flag_set'),
     'the feature-flag action is on the platform trail');
-  perform provio_test.assert_true(
-    exists (select 1 from platform_trail where action = 'ai_enablement_changed'),
-    'the AI-enablement action is on the platform trail');
   perform provio_test.assert_true(
     exists (select 1 from platform_trail where action = 'support_access_granted'),
     'the support-access grant is on the platform trail');
@@ -76,9 +72,6 @@ begin
   perform provio_test.assert_raises(
     $q$select public.platform_set_invite_cap('a0000000-0000-0000-0000-000000000001', 50)$q$,
     'platform administrator only', 'an org user cannot set the invite cap');
-  perform provio_test.assert_raises(
-    $q$select public.platform_enable_ai('a0000000-0000-0000-0000-000000000001', true, null)$q$,
-    'platform administrator only', 'an org user cannot enable AI');
 end $$;
 
 select provio_test.as_owner();

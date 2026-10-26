@@ -35,3 +35,32 @@ SQL 80 files / 71 migrations / 1683 assertions; Playwright 113 passed / 2 skippe
 | S5-AI the L2 vendor-hosted assertion was vacuous; fixture seeds ai_assist + ai_enabled (S5-AI) | (this commit) | pending | `e2e/s5-ai.spec.ts` 3 passed; new guard `src/guards/e2eAssertions.test.ts` 2 passed; vitest 146 files / 1654 tests green; tsc, build, tokens, shrink, ui-contract, deploy-list, tutorials green |
 | S2/S6/S9 three more conditional assertions fixed and their fixtures seeded (S5-AI-b) | (this commit) | pending | `e2e/s2-... e2e/s6-... e2e/s9-...` 15 passed; escalation_events fixture added to global-setup (M5: cleared first) |
 | C6 final report, draft PR #11, final CI dispatch (C6) | fa84229 | 39748486235, 39748504017 | blocked: platform refuses to start the job (`steps: 0`) on both; head verified locally by the full gate set; PR #11 open as a draft, PR #10 untouched |
+
+## AI-removal, hardening, edge, sharing, report-engine run (2026-10-25)
+
+Branch: `feature/board-ai-control-plane`. Preconditions recorded before any change:
+
+- Head at start: `8ba805c` (matches the owner's verified head). Last three commits:
+  `8ba805c ci: give step 9 the VITE_ vars and its own limit (CI-3)`,
+  `5c0c196 docs: decisions, blockers and tutorial skeletons after CI enablement (CI-2)`,
+  `6382125 ci: enable branch pushes + fix step-9 secrets (CI-1)`.
+- Latest CI on this branch (query returned 5): `40134258676` Tutorial GIFs failure (8ba805c);
+  `40131307073` CI success (8ba805c); `40125826186` CI cancelled (5c0c196); `40125698154` CI
+  cancelled (6382125); `40115550142` CI cancelled (fce7cc8). Last green CI: `40131307073`.
+- Baselines from the last green run `40131307073` (head 8ba805c): vitest **148 files / 1665 tests**;
+  Playwright **127 passed**; check-tokens 168 files 0 violations; check-shrink 58 files; tutorials
+  85 keys; function deploy list 8 functions / 24 references. SQL at 8ba805c: **93 test files /
+  86 migrations** (counted on disk; CI ran them twice).
+- Open item carried forward: PR #12 (`fix/tutorial-recorder-fixtures` -> this branch) is still
+  `open`, not merged. Not a blocker for this run, which works only on this branch.
+
+| Task | Commit | CI run id | Result |
+|---|---|---|---|
+| P-0 owner decisions | (this commit) | pending | decisions and preconditions recorded |
+| AI-REMOVAL remove the AI feature (0087) and close the tutorial registry gap | ab79306 | 40236534345 (step 7 red), 40239022295 | migration 0087 drops every AI table, column, function, trigger, cron job, registry row, feature key and right; test 94 proves it; oa.governance row added to 0071/0081 so all four key sets agree at 77; vitest, SQL harness and ci-local steps 1-9 green locally |
+| T2 recorder map: oa.governance was absent from ORG_TAB and would have recorded the Features tab | 551bd6d | 40236534345 | scripts/tutorialCapture.mjs maps oa.governance to the governance tab (OA-22); src/guards/tutorialCaptureMap.test.ts pins that every org/super-admin key is named in the map and that each named tab is one the portal declares |
+| A1-A3 step 7 SQL failure: test 83 still expected the removed ai-purge-expired cron job | c6d7552 | 40239022295 | the pg_cron block is skipped locally, so only the hosted project failed ("the job ai-purge-expired exists in cron.job"); test 83 now lists five jobs; src/guards/cronJobRegistry.test.ts replays cron.schedule/unschedule and fails when the removed name is restored |
+| A1-A3 verify: CI green on the fix | c6d7552 | 40239022295 | all 9 steps success; step 7 (migrations and SQL tests) success, step 8 Playwright 124 passed, step 9 screenshot sweep success |
+| B1-B4 tutorials: record every GIF from the real UI | 3613ed6 (written by the workflow) | 40242187619 | all 11 steps success; 78 files changed, 77 GIFs recorded from the live UI (0 placeholders, real frame blocks: oa.governance 9 frames, sa.templates 11, ex.accept 12); `npm run check-tutorials` without TUTORIALS_ALLOW_PLACEHOLDER: 77 present, 0 missing, 0 placeholders, 0 stale |
+| C1-C3 CI on the branch | c0d93cc | 40242173262 | all 9 steps success; 124 Playwright tests passed; step 9 sweep success |
+| D local gate before any CI | 3613ed6 | n/a (local) | ci-local steps 1-9 PASS (tsc, 1573 unit tests, build, tokens, shrink, tutorials 77/0 placeholders, deploy list, UI contract, SQL twice); step 10 not run, no Supabase credentials in the sandbox |

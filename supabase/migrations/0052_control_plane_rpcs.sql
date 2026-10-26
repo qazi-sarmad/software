@@ -292,45 +292,45 @@ end $$;
 -- ---------------------------------------------------------------------------
 -- 2. org_settings_extra read/write.
 -- ---------------------------------------------------------------------------
+-- M2: dropped first because 0087 changes this function's OUT columns (ai_retention_days is removed
+-- with the rest of the AI feature); a repeat apply would otherwise fail with "cannot change return
+-- type".
+drop function if exists public.get_org_settings_extra(uuid);
 create or replace function public.get_org_settings_extra(p_org uuid default null)
 returns table (app_base_url text, last_board_meeting_date date, certificate_auto_issue boolean,
-               public_verify_show_title boolean, ai_retention_days int)
+               public_verify_show_title boolean)
 language sql stable security definer set search_path = public as $$
   select coalesce(e.app_base_url, null), e.last_board_meeting_date,
-         coalesce(e.certificate_auto_issue, false), coalesce(e.public_verify_show_title, false),
-         coalesce(e.ai_retention_days, 30)
+         coalesce(e.certificate_auto_issue, false), coalesce(e.public_verify_show_title, false)
     from (select coalesce(p_org, public.jwt_org_id()) as org_id) q
     left join org_settings_extra e on e.org_id = q.org_id
 $$;
 
+-- M2: the AI retention parameter is gone with the AI feature (0087), so the old five-argument
+-- signature is dropped first and the four-argument form is created.
+drop function if exists public.admin_set_org_settings_extra(text, date, boolean, boolean, int);
 create or replace function public.admin_set_org_settings_extra(
   p_app_base_url text default null,
   p_last_board_meeting_date date default null,
   p_certificate_auto_issue boolean default null,
-  p_public_verify_show_title boolean default null,
-  p_ai_retention_days int default null
+  p_public_verify_show_title boolean default null
 ) returns void
 language plpgsql security definer set search_path = public as $$
 declare
   v_org uuid := public.jwt_org_id();
 begin
   perform public.require_config_actor(v_org, 'edit_config');
-  if p_ai_retention_days is not null and (p_ai_retention_days < 0 or p_ai_retention_days > 365) then
-    raise exception 'the AI retention period must be between 0 and 365 days' using errcode = 'P0001';
-  end if;
   insert into org_settings_extra (org_id) values (v_org) on conflict (org_id) do nothing;
   update org_settings_extra
      set app_base_url = coalesce(p_app_base_url, app_base_url),
          last_board_meeting_date = coalesce(p_last_board_meeting_date, last_board_meeting_date),
          certificate_auto_issue = coalesce(p_certificate_auto_issue, certificate_auto_issue),
          public_verify_show_title = coalesce(p_public_verify_show_title, public_verify_show_title),
-         ai_retention_days = coalesce(p_ai_retention_days, ai_retention_days),
          updated_at = now()
    where org_id = v_org;
   perform public.admin_log_change(v_org, 'setting:org_extra',
     jsonb_build_object('app_base_url', p_app_base_url, 'certificate_auto_issue', p_certificate_auto_issue,
-                       'public_verify_show_title', p_public_verify_show_title,
-                       'ai_retention_days', p_ai_retention_days),
+                       'public_verify_show_title', p_public_verify_show_title),
     'setting_changed', 'config', null);
 end $$;
 

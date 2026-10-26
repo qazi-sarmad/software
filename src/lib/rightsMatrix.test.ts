@@ -6,7 +6,7 @@ import type { Role } from '../types';
 
 /**
  * The seed rights matrix is declared in two places that must not drift: migrations
- * 0012_rights_closed.sql (the original eleven keys) and 0050_rights_extended.sql (the fifteen-key
+ * 0012_rights_closed.sql (the original eleven keys) and 0050_rights_extended.sql (the fourteen-key
  * matrix, authoritative at runtime), and src/lib/rights.ts (the fallback the app uses for demo and
  * test sessions). This test parses the migrations' UPDATE statements in order and asserts the final
  * per-role defaults equal the app's, right for right.

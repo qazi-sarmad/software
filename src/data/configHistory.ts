@@ -2,7 +2,7 @@
  * Configuration history (OA-17, F4, L5).
  *
  * One read over the organisation's configuration history, so every change is visible in one story:
- * roles and rights, entitlements, AI models and org settings. Rows written by a QSCorp consultant
+ * roles and rights, entitlements and org settings. Rows written by a QSCorp consultant
  * during a Dual Session carry `actorIsPlatform`, and the screen labels them "platform consultant".
  * Read-only: the history tables are append-only and hash-chained (L5). Components never import the
  * database client.

@@ -98,13 +98,6 @@ export const EVENT_CATALOGUE: EventDef[] = [
     ],
   },
   {
-    eventKey: 'ai_model.changed', label: 'An AI model changed', category: 'ai',
-    fields: [
-      { field: 'area', label: 'Area', kind: 'text' },
-      { field: 'area_label', label: 'Area name', kind: 'text' },
-    ],
-  },
-  {
     eventKey: 'anomaly.raised', label: 'An anomaly was raised', category: 'anomaly',
     fields: [
       { field: 'severity', label: 'Severity', kind: 'select' },

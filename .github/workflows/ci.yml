@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, feature/board-ai-control-plane]
   pull_request:
   workflow_dispatch:
 
@@ -92,10 +92,18 @@ jobs:
         # C5.4 (spec §29). Captures every contract screen in three presets and two themes and
         # uploads the PNGs as an artifact. Never committed (artifacts/screenshots/ is git-ignored).
         continue-on-error: true
+        # The sweep drives the dev server below, and the app reads only VITE_SUPABASE_*: without
+        # them src/data/client.ts returns null, every sign-in times out, and 53 captures x 6
+        # preset/theme combinations grind through their timeouts until the job's own limit cancels
+        # the whole run. The step keeps its own smaller limit so a slow sweep fails this step
+        # instead of cancelling the run.
+        timeout-minutes: 15
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          VITE_SUPABASE_URL: ${{ secrets.TEST_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.TEST_SUPABASE_PUBLISHABLE_KEY }}
+          SUPABASE_URL: ${{ secrets.TEST_SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.TEST_SUPABASE_SECRET_KEY }}
+          SUPABASE_ANON_KEY: ${{ secrets.TEST_SUPABASE_PUBLISHABLE_KEY }}
         run: |
           # Seed the synthetic users (writes e2e/.auth/passwords.json, git-ignored).
           npx tsx e2e/global-setup.ts || true

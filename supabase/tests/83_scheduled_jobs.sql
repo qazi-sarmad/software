@@ -105,13 +105,13 @@ end $$;
 
 do $$
   declare
-    v_jobs text[] := array['cap-notification-sweep','ai-purge-expired','consultation-sweep',
+    v_jobs text[] := array['cap-notification-sweep','consultation-sweep',
                             'deployment-escalation-sweep','grant-expiry-sweep','notification-digest'];
     v_fn text;
     v_oid oid;
 begin
   -- Every scheduled function exists and is executable by service_role only.
-  foreach v_fn in array array['cap_notification_sweep','ai_purge_expired','consultation_sweep',
+  foreach v_fn in array array['cap_notification_sweep','consultation_sweep',
                                'deployment_requests_escalate_all','grant_expiry_sweep',
                                'notification_digest_send','platform_job_health']
   loop
@@ -129,7 +129,7 @@ begin
     perform provio_test.assert_true(not has_function_privilege('anon', v_oid, 'execute'),
       format('anon may not execute %s', v_fn));
   end loop;
-  perform provio_test.assert_true(array_length(v_jobs, 1) = 6, 'six new jobs are named');
+  perform provio_test.assert_true(array_length(v_jobs, 1) = 5, 'five new jobs are named');
 end $$;
 
 -- ---------------------------------------------------------------------------
@@ -140,7 +140,7 @@ end $$;
 do $$
 declare
   v_job text;
-  v_names text[] := array['cap-notification-sweep','ai-purge-expired','consultation-sweep',
+  v_names text[] := array['cap-notification-sweep','consultation-sweep',
                           'deployment-escalation-sweep','grant-expiry-sweep','notification-digest'];
 begin
   if not exists (select 1 from pg_extension where extname = 'pg_cron') then
@@ -154,13 +154,13 @@ begin
   end loop;
 end $$;
 
--- platform_job_health is platform-only. It returns the six scheduled jobs when pg_cron is present and
+-- platform_job_health is platform-only. It returns the five scheduled jobs when pg_cron is present and
 -- an empty set when it is absent (the hosted test project has pg_cron; a bare local Postgres does
 -- not), so the expectation is conditional on the extension, never a fixed count.
 do $$
 declare
   v_present boolean := exists (select 1 from pg_extension where extname = 'pg_cron');
-  v_names text[] := array['cap-notification-sweep','ai-purge-expired','consultation-sweep',
+  v_names text[] := array['cap-notification-sweep','consultation-sweep',
                           'deployment-escalation-sweep','grant-expiry-sweep','notification-digest'];
   v_found int;
 begin
@@ -172,7 +172,7 @@ begin
   if v_present then
     select count(*) into v_found from public.platform_job_health() h where h.job_name = any(v_names);
     perform provio_test.assert_eq(
-      v_found, 6, 'the platform admin reads the six scheduled jobs when pg_cron is present');
+      v_found, 5, 'the platform admin reads the five scheduled jobs when pg_cron is present');
   else
     perform provio_test.assert_eq(
       (select count(*) from public.platform_job_health()), 0::bigint,
@@ -273,13 +273,12 @@ begin
 end $$;
 
 -- ---------------------------------------------------------------------------
--- g. ai_purge_expired and consultation_sweep run without error from the job context.
+-- g. consultation_sweep runs without error from the job context. (ai_purge_expired was removed with
+--    the AI feature in 0087.)
 -- ---------------------------------------------------------------------------
 do $$
 declare v_n int;
 begin
-  v_n := public.ai_purge_expired();
-  perform provio_test.assert_true(v_n >= 0, 'ai_purge_expired returns a count');
   v_n := public.consultation_sweep();
   perform provio_test.assert_true(v_n >= 0, 'consultation_sweep returns a count');
 end $$;

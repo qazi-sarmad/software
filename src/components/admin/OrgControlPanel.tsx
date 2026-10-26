@@ -14,7 +14,6 @@ import { ChangeControlPanel } from './ChangeControlPanel';
 import { OrgEmailPanel } from './OrgEmailPanel';
 import { OrgAutomationPanel } from './OrgAutomationPanel';
 import { OrgBrandingPanel } from './OrgBrandingPanel';
-import { OrgAiPanel } from './OrgAiPanel';
 import { OrgEscalationPanel } from './OrgEscalationPanel';
 import { ExternalAuditorsPanel } from './ExternalAuditorsPanel';
 import { OrgHostingPanel } from './OrgHostingPanel';
@@ -22,7 +21,7 @@ import { OrgGovernancePanel } from './OrgGovernancePanel';
 import { InlineError } from '../common/InlineError';
 import { Check, Lock, Zap, Sliders, Users, Shield, History, Database } from '../common/Icons';
 
-type Tab = 'features' | 'branding' | 'email' | 'automation' | 'escalation' | 'ai' | 'setup' | 'consultation' | 'auditors' | 'hosting' | 'governance' | 'history' | 'changes' | 'tutorials';
+type Tab = 'features' | 'branding' | 'email' | 'automation' | 'escalation' | 'setup' | 'consultation' | 'auditors' | 'hosting' | 'governance' | 'history' | 'changes' | 'tutorials';
 type LoadState = 'loading' | 'ready' | 'error';
 
 /** F18: every configuration tab carries its own "Show me how" tutorial key (Appendix A). */
@@ -32,7 +31,6 @@ const TAB_TUTORIAL: Record<Tab, { key: string; title: string }> = {
   email: { key: 'oa.email-resend', title: 'OA-11 email sender' },
   automation: { key: 'oa.automation', title: 'OA-12 notification rules' },
   escalation: { key: 'oa.escalation', title: 'OA-13 escalation rules' },
-  ai: { key: 'oa.ai', title: 'OA-06 AI settings' },
   setup: { key: 'oa.setup-wizard', title: 'OA-01 setup wizard' },
   consultation: { key: 'oa.dual-session', title: 'OA-16 Dual Session' },
   auditors: { key: 'oa.auditors', title: 'OA-14 external auditors' },
@@ -133,7 +131,6 @@ export const OrgControlPanel: React.FC = () => {
           { id: 'email', label: 'Email', icon: Check },
           { id: 'automation', label: 'Rules', icon: Zap },
           { id: 'escalation', label: 'Escalation', icon: Shield },
-          { id: 'ai', label: 'AI', icon: Zap },
           { id: 'setup', label: 'Setup', icon: Sliders },
           { id: 'consultation', label: 'Dual Session', icon: Users },
           { id: 'auditors', label: 'External auditors', icon: Shield },
@@ -204,7 +201,6 @@ export const OrgControlPanel: React.FC = () => {
       {tab === 'email' && <OrgEmailPanel />}
       {tab === 'automation' && <OrgAutomationPanel />}
       {tab === 'escalation' && <OrgEscalationPanel orgId={currentUser.orgId ?? ''} />}
-      {tab === 'ai' && <OrgAiPanel orgId={currentUser.orgId ?? ''} />}
       {tab === 'setup' && (
         <div data-testid="org-setup">
           <SetupWizard scope="org_admin" enabledFeatures={[...enabled]} />

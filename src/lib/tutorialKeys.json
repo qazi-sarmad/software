@@ -175,46 +175,14 @@
     "key": "sa.setup-4",
     "audience": "super_admin",
     "screenId": "SA-01",
-    "title": "AI model registry and deny-list",
-    "steps": [
-      {
-        "text": "Open SA-01, setup step 4: the AI model registry and deny-list.",
-        "testid": "super_admin-wizard"
-      },
-      {
-        "text": "Select step 4 (the AI model registry and deny-list) in the step list.",
-        "testid": "super_admin-wizard-step-sa.ai"
-      },
-      {
-        "text": "Open the the AI model registry and deny-list step.",
-        "testid": "super_admin-wizard-show-sa.ai"
-      },
-      {
-        "text": "Fill in the AI model registry and deny-list.",
-        "testid": "super_admin-wizard-content-sa.ai"
-      },
-      {
-        "text": "Click Save this step.",
-        "testid": "super_admin-wizard-save"
-      },
-      {
-        "text": "Click Next to move to the following step.",
-        "testid": "super_admin-wizard-next"
-      }
-    ]
-  },
-  {
-    "key": "sa.setup-5",
-    "audience": "super_admin",
-    "screenId": "SA-01",
     "title": "Hosting catalogue review",
     "steps": [
       {
-        "text": "Open SA-01, setup step 5: the hosting catalogue review.",
+        "text": "Open SA-01, setup step 4: the hosting catalogue review.",
         "testid": "super_admin-wizard"
       },
       {
-        "text": "Select step 5 (the hosting catalogue review) in the step list.",
+        "text": "Select step 4 (the hosting catalogue review) in the step list.",
         "testid": "super_admin-wizard-step-sa.hosting"
       },
       {
@@ -236,17 +204,17 @@
     ]
   },
   {
-    "key": "sa.setup-6",
+    "key": "sa.setup-5",
     "audience": "super_admin",
     "screenId": "SA-01",
     "title": "Platform default rules and templates",
     "steps": [
       {
-        "text": "Open SA-01, setup step 6: the platform default rules and templates.",
+        "text": "Open SA-01, setup step 5: the platform default rules and templates.",
         "testid": "super_admin-wizard"
       },
       {
-        "text": "Select step 6 (the platform default rules and templates) in the step list.",
+        "text": "Select step 5 (the platform default rules and templates) in the step list.",
         "testid": "super_admin-wizard-step-sa.rules"
       },
       {
@@ -268,17 +236,17 @@
     ]
   },
   {
-    "key": "sa.setup-7",
+    "key": "sa.setup-6",
     "audience": "super_admin",
     "screenId": "SA-01",
     "title": "Feature catalogue and plans",
     "steps": [
       {
-        "text": "Open SA-01, setup step 7: the feature catalogue and plans.",
+        "text": "Open SA-01, setup step 6: the feature catalogue and plans.",
         "testid": "super_admin-wizard"
       },
       {
-        "text": "Select step 7 (the feature catalogue and plans) in the step list.",
+        "text": "Select step 6 (the feature catalogue and plans) in the step list.",
         "testid": "super_admin-wizard-step-sa.features"
       },
       {
@@ -300,17 +268,17 @@
     ]
   },
   {
-    "key": "sa.setup-8",
+    "key": "sa.setup-7",
     "audience": "super_admin",
     "screenId": "SA-01",
     "title": "Tutorial library check",
     "steps": [
       {
-        "text": "Open SA-01, setup step 8: the tutorial library check.",
+        "text": "Open SA-01, setup step 7: the tutorial library check.",
         "testid": "super_admin-wizard"
       },
       {
-        "text": "Select step 8 (the tutorial library check) in the step list.",
+        "text": "Select step 7 (the tutorial library check) in the step list.",
         "testid": "super_admin-wizard-step-sa.tutorials"
       },
       {
@@ -332,17 +300,17 @@
     ]
   },
   {
-    "key": "sa.setup-9",
+    "key": "sa.setup-8",
     "audience": "super_admin",
     "screenId": "SA-01",
     "title": "New-tenant defaults and Go Live",
     "steps": [
       {
-        "text": "Open SA-01, setup step 9: the new-tenant defaults and Go Live.",
+        "text": "Open SA-01, setup step 8: the new-tenant defaults and Go Live.",
         "testid": "super_admin-wizard"
       },
       {
-        "text": "Select step 9 (the new-tenant defaults and Go Live) in the step list.",
+        "text": "Select step 8 (the new-tenant defaults and Go Live) in the step list.",
         "testid": "super_admin-wizard-step-sa.golive"
       },
       {
@@ -632,78 +600,6 @@
       {
         "text": "Fill in Recipients input in SA-05.",
         "testid": "superadmin-recipients-input"
-      }
-    ]
-  },
-  {
-    "key": "sa.ai-models",
-    "audience": "super_admin",
-    "screenId": "SA-06",
-    "title": "AI model registry",
-    "steps": [
-      {
-        "text": "Open SA-06 (AI model registry).",
-        "testid": null
-      },
-      {
-        "text": "Read AI in SA-06.",
-        "testid": "superadmin-ai"
-      },
-      {
-        "text": "Click AI model add in SA-06.",
-        "testid": "sa-ai-model-add"
-      },
-      {
-        "text": "Find the first AI model in SA-06.",
-        "testid": "sa-ai-model-<id>"
-      },
-      {
-        "text": "Click AI pattern add in SA-06.",
-        "testid": "sa-ai-pattern-add"
-      },
-      {
-        "text": "Read AI result in SA-06.",
-        "testid": "sa-ai-result"
-      },
-      {
-        "text": "Read AI denylist in SA-06.",
-        "testid": "sa-ai-denylist"
-      }
-    ]
-  },
-  {
-    "key": "sa.ai-denylist",
-    "audience": "super_admin",
-    "screenId": "SA-06",
-    "title": "AI endpoint deny-list",
-    "steps": [
-      {
-        "text": "Open SA-06 (AI endpoint deny-list).",
-        "testid": null
-      },
-      {
-        "text": "Read AI in SA-06.",
-        "testid": "superadmin-ai"
-      },
-      {
-        "text": "Click AI model add in SA-06.",
-        "testid": "sa-ai-model-add"
-      },
-      {
-        "text": "Find the first AI model in SA-06.",
-        "testid": "sa-ai-model-<id>"
-      },
-      {
-        "text": "Click AI pattern add in SA-06.",
-        "testid": "sa-ai-pattern-add"
-      },
-      {
-        "text": "Read AI result in SA-06.",
-        "testid": "sa-ai-result"
-      },
-      {
-        "text": "Read AI denylist in SA-06.",
-        "testid": "sa-ai-denylist"
       }
     ]
   },
@@ -1111,46 +1007,14 @@
     "key": "oa.setup-4",
     "audience": "org_admin",
     "screenId": "OA-01",
-    "title": "AI settings",
-    "steps": [
-      {
-        "text": "Open OA-01, setup step 4: the AI settings.",
-        "testid": "org_admin-wizard"
-      },
-      {
-        "text": "Select step 4 (the AI settings) in the step list.",
-        "testid": "org_admin-wizard-step-org.ai"
-      },
-      {
-        "text": "Open the the AI settings step.",
-        "testid": "org_admin-wizard-show-org.ai"
-      },
-      {
-        "text": "Fill in the AI settings.",
-        "testid": "org_admin-wizard-content-org.ai"
-      },
-      {
-        "text": "Click Save this step.",
-        "testid": "org_admin-wizard-save"
-      },
-      {
-        "text": "Click Next to move to the following step.",
-        "testid": "org_admin-wizard-next"
-      }
-    ]
-  },
-  {
-    "key": "oa.setup-5",
-    "audience": "org_admin",
-    "screenId": "OA-01",
     "title": "Presentation and certificate templates",
     "steps": [
       {
-        "text": "Open OA-01, setup step 5: the presentation and certificate templates.",
+        "text": "Open OA-01, setup step 4: the presentation and certificate templates.",
         "testid": "org_admin-wizard"
       },
       {
-        "text": "Select step 5 (the presentation and certificate templates) in the step list.",
+        "text": "Select step 4 (the presentation and certificate templates) in the step list.",
         "testid": "org_admin-wizard-step-org.presentation"
       },
       {
@@ -1172,17 +1036,17 @@
     ]
   },
   {
-    "key": "oa.setup-6",
+    "key": "oa.setup-5",
     "audience": "org_admin",
     "screenId": "OA-01",
     "title": "Escalation and automation rules",
     "steps": [
       {
-        "text": "Open OA-01, setup step 6: the escalation and automation rules.",
+        "text": "Open OA-01, setup step 5: the escalation and automation rules.",
         "testid": "org_admin-wizard"
       },
       {
-        "text": "Select step 6 (the escalation and automation rules) in the step list.",
+        "text": "Select step 5 (the escalation and automation rules) in the step list.",
         "testid": "org_admin-wizard-step-org.escalation"
       },
       {
@@ -1204,17 +1068,17 @@
     ]
   },
   {
-    "key": "oa.setup-7",
+    "key": "oa.setup-6",
     "audience": "org_admin",
     "screenId": "OA-01",
     "title": "Hosting",
     "steps": [
       {
-        "text": "Open OA-01, setup step 7: hosting.",
+        "text": "Open OA-01, setup step 6: hosting.",
         "testid": "org_admin-wizard"
       },
       {
-        "text": "Select step 7 (hosting) in the step list.",
+        "text": "Select step 6 (hosting) in the step list.",
         "testid": "org_admin-wizard-step-org.hosting"
       },
       {
@@ -1236,17 +1100,17 @@
     ]
   },
   {
-    "key": "oa.setup-8",
+    "key": "oa.setup-7",
     "audience": "org_admin",
     "screenId": "OA-01",
     "title": "Email",
     "steps": [
       {
-        "text": "Open OA-01, setup step 8: email.",
+        "text": "Open OA-01, setup step 7: email.",
         "testid": "org_admin-wizard"
       },
       {
-        "text": "Select step 8 (email) in the step list.",
+        "text": "Select step 7 (email) in the step list.",
         "testid": "org_admin-wizard-step-org.email"
       },
       {
@@ -1268,17 +1132,17 @@
     ]
   },
   {
-    "key": "oa.setup-9",
+    "key": "oa.setup-8",
     "audience": "org_admin",
     "screenId": "OA-01",
     "title": "Health check and Go Live",
     "steps": [
       {
-        "text": "Open OA-01, setup step 9: the health check and Go Live.",
+        "text": "Open OA-01, setup step 8: the health check and Go Live.",
         "testid": "org_admin-wizard"
       },
       {
-        "text": "Select step 9 (the health check and Go Live) in the step list.",
+        "text": "Select step 8 (the health check and Go Live) in the step list.",
         "testid": "org_admin-wizard-step-org.golive"
       },
       {
@@ -1436,150 +1300,6 @@
       {
         "text": "Check the values shown on OA-05 and confirm they are correct.",
         "testid": null
-      }
-    ]
-  },
-  {
-    "key": "oa.ai",
-    "audience": "org_admin",
-    "screenId": "OA-06",
-    "title": "AI settings",
-    "steps": [
-      {
-        "text": "Open OA-06 (AI settings).",
-        "testid": null
-      },
-      {
-        "text": "Read AI panel in OA-06.",
-        "testid": "org-ai-panel"
-      },
-      {
-        "text": "Click AI endpoint save in OA-06.",
-        "testid": "oa-ai-endpoint-save"
-      },
-      {
-        "text": "Find the first AI usecase in OA-06.",
-        "testid": "oa-ai-usecase-<key>"
-      },
-      {
-        "text": "Read AI result in OA-06.",
-        "testid": "oa-ai-result"
-      },
-      {
-        "text": "Read AI endpoint in OA-06.",
-        "testid": "oa-ai-endpoint"
-      },
-      {
-        "text": "Fill in AI endpoint URL in OA-06.",
-        "testid": "oa-ai-endpoint-url"
-      }
-    ]
-  },
-  {
-    "key": "oa.ai-test",
-    "audience": "org_admin",
-    "screenId": "OA-06",
-    "title": "AI test button",
-    "steps": [
-      {
-        "text": "Open OA-06 (AI test button).",
-        "testid": null
-      },
-      {
-        "text": "Read AI panel in OA-06.",
-        "testid": "org-ai-panel"
-      },
-      {
-        "text": "Click AI endpoint save in OA-06.",
-        "testid": "oa-ai-endpoint-save"
-      },
-      {
-        "text": "Find the first AI usecase in OA-06.",
-        "testid": "oa-ai-usecase-<key>"
-      },
-      {
-        "text": "Read AI result in OA-06.",
-        "testid": "oa-ai-result"
-      },
-      {
-        "text": "Read AI endpoint in OA-06.",
-        "testid": "oa-ai-endpoint"
-      },
-      {
-        "text": "Fill in AI endpoint URL in OA-06.",
-        "testid": "oa-ai-endpoint-url"
-      }
-    ]
-  },
-  {
-    "key": "oa.ai-usecases",
-    "audience": "org_admin",
-    "screenId": "OA-06",
-    "title": "AI use-cases",
-    "steps": [
-      {
-        "text": "Open OA-06 (AI use-cases).",
-        "testid": null
-      },
-      {
-        "text": "Read AI panel in OA-06.",
-        "testid": "org-ai-panel"
-      },
-      {
-        "text": "Click AI endpoint save in OA-06.",
-        "testid": "oa-ai-endpoint-save"
-      },
-      {
-        "text": "Find the first AI usecase in OA-06.",
-        "testid": "oa-ai-usecase-<key>"
-      },
-      {
-        "text": "Read AI result in OA-06.",
-        "testid": "oa-ai-result"
-      },
-      {
-        "text": "Read AI endpoint in OA-06.",
-        "testid": "oa-ai-endpoint"
-      },
-      {
-        "text": "Fill in AI endpoint URL in OA-06.",
-        "testid": "oa-ai-endpoint-url"
-      }
-    ]
-  },
-  {
-    "key": "oa.voice",
-    "audience": "org_admin",
-    "screenId": "OA-07",
-    "title": "Voice library",
-    "steps": [
-      {
-        "text": "Open OA-07 (Voice library).",
-        "testid": null
-      },
-      {
-        "text": "Read Voice in OA-07.",
-        "testid": "oa-voice"
-      },
-      {
-        "text": "Click Voice save in OA-07.",
-        "testid": "oa-voice-save"
-      },
-      {
-        "text": "Find the first Voice term in OA-07.",
-        "testid": "oa-voice-term-<id>"
-      },
-      {
-        "text": "Click Voice term add in OA-07.",
-        "testid": "oa-voice-term-add"
-      },
-      {
-        "text": "Click Voice sample add in OA-07.",
-        "testid": "oa-voice-sample-add"
-      },
-      {
-        "text": "Read Voice tone in OA-07.",
-        "testid": "oa-voice-tone"
       }
     ]
   },

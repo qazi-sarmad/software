@@ -20,7 +20,6 @@ declare
   -- fails here.
   v_map jsonb := jsonb_build_object(
     'config.changed',               'config_area_notify',
-    'ai_model.changed',             'config_area_notify',
     'cap.due_soon',                 'cap_notification_sweep',
     'cap.overdue',                  'cap_notification_sweep',
     'hosting.migration.started',    'migration_job_create',
@@ -37,7 +36,6 @@ declare
     'auditor.revoked',              'emit_auditor_revoked',
     'auditor.accessed',             'emit_auditor_accessed',
     'email.failed',                 'emit_email_failed',
-    'ai.call_failed',               'emit_ai_call_failed',
     'feature.changed',              'emit_feature_changed',
     'setup.completed',              'emit_setup_completed',
     'consultation.requested',       'emit_consultation_event',
@@ -95,7 +93,6 @@ declare
   v_pack uuid := 'e0000000-0000-0000-0000-000000000001';
   v_rv uuid := 'e1000000-0000-0000-0000-000000000001';
   v_email uuid := 'e2000000-0000-0000-0000-000000000001';
-  v_ai uuid := 'e3000000-0000-0000-0000-000000000001';
   v_sess uuid := 'e4000000-0000-0000-0000-000000000001';
   v_n bigint;
 begin
@@ -195,18 +192,6 @@ begin
   perform provio_test.assert_eq(
     (select payload ->> 'error_text' from automation_events where event_key = 'email.failed' limit 1),
     'smtp refused', 'email.failed carries the error text (masked)');
-
-  -- ai.call_failed: only a row whose flags say ok = false.
-  insert into ai_calls (id, org_id, use_case, model_name, flags)
-  values (v_ai, v_org, 'observation_draft', 'local-1', '{"ok":false,"error":"timeout"}'::jsonb);
-  insert into ai_calls (id, org_id, use_case, model_name, flags)
-  values ('e3000000-0000-0000-0000-000000000002', v_org, 'observation_draft', 'local-1', '{"ok":true}'::jsonb);
-  perform provio_test.assert_eq(
-    (select count(*) from automation_events where event_key = 'ai.call_failed'), 1::bigint,
-    'ai.call_failed emitted once, only for the failed call');
-  perform provio_test.assert_eq(
-    (select payload ->> 'error' from automation_events where event_key = 'ai.call_failed' limit 1),
-    'timeout', 'ai.call_failed carries the redacted error');
 
   -- feature.changed.
   insert into tenant_entitlements (org_id, feature_key, enabled)

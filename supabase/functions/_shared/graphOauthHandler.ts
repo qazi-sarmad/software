@@ -1,7 +1,7 @@
 /**
  * graph-oauth handler (C1.1, F5, F6, F21). The body of the Edge Function, with every dependency
  * injected so it can be tested without Deno, a network or a database — the same pattern as
- * aiGatewayHandler.ts.
+ * hostingTestHandler.ts.
  *
  * The defects this handler removes (found in review at a41d46e):
  *   - the old HTTP `refresh` action returned a LIVE Microsoft access token to any signed-in user who

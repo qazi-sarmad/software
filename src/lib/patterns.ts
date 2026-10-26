@@ -3,16 +3,15 @@
  *
  * Deterministic (L1): TF-IDF cosine similarity over finding text plus shared tags, then a
  * deterministic agglomerative clustering and a deterministic seeded graph layout. There is no
- * randomness of any kind, no AI, and no network call anywhere in this module. The similarity maths reuses the
- * one TF-IDF engine the product already has (`supabase/functions/_shared/aiPrompt`), so a finding
- * cluster and a voice sample rank agree by construction.
+ * randomness of any kind, no AI, and no network call anywhere in this module. The similarity maths
+ * lives in `src/lib/tfidf.ts`, so a finding cluster and a voice sample rank agree by construction.
  */
 import {
   cosineSimilarity,
   inverseDocumentFrequency,
   termFrequency,
   tokenise,
-} from '../../supabase/functions/_shared/aiPrompt';
+} from './tfidf';
 
 /** One finding, as `pattern_findings` returns it (0068). */
 export interface PatternFinding {

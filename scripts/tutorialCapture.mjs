@@ -12,29 +12,29 @@
 /** The Org Admin control-plane tab each OA key lives on. */
 const ORG_TAB = {
   'oa.setup-wizard': 'setup', 'oa.setup-1': 'setup', 'oa.setup-2': 'setup', 'oa.setup-3': 'setup',
-  'oa.setup-4': 'setup', 'oa.setup-5': 'setup', 'oa.setup-6': 'setup', 'oa.setup-7': 'setup',
-  'oa.setup-8': 'setup', 'oa.setup-9': 'setup', 'oa.golive': 'setup',
+  'oa.setup-4': 'setup', 'oa.setup-5': 'setup', 'oa.setup-6': 'setup',
+  'oa.setup-7': 'setup', 'oa.setup-8': 'setup', 'oa.golive': 'setup',
   'oa.profile': 'branding', 'oa.branding': 'branding', 'oa.pptx-theme': 'branding',
   'oa.boardpack-config': 'branding', 'oa.certificate-config': 'branding',
-  'oa.features': 'features', 'oa.ai': 'ai', 'oa.ai-test': 'ai', 'oa.ai-usecases': 'ai',
-  'oa.voice': 'ai', 'oa.templates': 'automation', 'oa.automation': 'automation',
+  'oa.features': 'features', 'oa.templates': 'automation', 'oa.automation': 'automation',
   'oa.templates-email': 'automation', 'oa.escalation': 'escalation',
   'oa.email-resend': 'email', 'oa.email-microsoft': 'email', 'oa.email-smtp': 'email',
   'oa.email-test': 'email', 'oa.auditors': 'auditors', 'oa.auditor-matrix': 'auditors',
   'oa.hosting': 'hosting', 'oa.migration': 'hosting', 'oa.deployment-kit': 'hosting',
   'oa.retire-old': 'hosting', 'oa.history': 'history', 'oa.tutorials': 'tutorials',
   'oa.invite': 'tutorials', 'oa.patterns-config': 'features', 'oa.dual-session': 'consultation',
+  'oa.governance': 'governance',
 };
 
 /** The platform console tab each SA key lives on. */
 const SA_TAB = {
   'sa.setup-wizard': 'setup', 'sa.setup-1': 'setup', 'sa.setup-2': 'setup', 'sa.setup-3': 'setup',
-  'sa.setup-4': 'setup', 'sa.setup-5': 'setup', 'sa.setup-6': 'setup', 'sa.setup-7': 'setup',
-  'sa.setup-8': 'setup', 'sa.setup-9': 'setup',
+  'sa.setup-4': 'setup', 'sa.setup-5': 'setup', 'sa.setup-6': 'setup',
+  'sa.setup-7': 'setup', 'sa.setup-8': 'setup',
   'sa.health': 'support', 'sa.tenant-hub': 'tenants', 'sa.dual-session': 'consultation',
   'sa.email-resend': 'email', 'sa.email-microsoft': 'email', 'sa.email-smtp': 'email',
   'sa.email-default': 'email', 'sa.email-force-tenant': 'email',
-  'sa.recipients': 'recipients', 'sa.ai-models': 'ai', 'sa.ai-denylist': 'ai',
+  'sa.recipients': 'recipients',
   'sa.automation': 'automation', 'sa.templates': 'automation',
   'sa.hosting-fit': 'hosting', 'sa.hosting-rules': 'hosting', 'sa.migration': 'migration',
   'sa.tutorials': 'tutorials', 'sa.features': 'features', 'sa.plans': 'features',

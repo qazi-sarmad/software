@@ -2,16 +2,16 @@ import { describe, expect, it } from 'vitest';
 import { ORG_WIZARD_STEPS, SA_WIZARD_STEPS, visibleSteps, wizardSteps } from './wizardSteps';
 
 describe('wizard step registry (F17)', () => {
-  it('has the nine Org Admin steps in order', () => {
-    expect(ORG_WIZARD_STEPS).toHaveLength(9);
+  it('has the eight Org Admin steps in order', () => {
+    expect(ORG_WIZARD_STEPS).toHaveLength(8);
     expect(ORG_WIZARD_STEPS[0].key).toBe('org.profile');
-    expect(ORG_WIZARD_STEPS[8].key).toBe('org.golive');
+    expect(ORG_WIZARD_STEPS[7].key).toBe('org.golive');
   });
 
-  it('has the nine Super Admin steps in order', () => {
-    expect(SA_WIZARD_STEPS).toHaveLength(9);
+  it('has the eight Super Admin steps in order', () => {
+    expect(SA_WIZARD_STEPS).toHaveLength(8);
     expect(SA_WIZARD_STEPS[0].key).toBe('sa.readiness');
-    expect(SA_WIZARD_STEPS[8].key).toBe('sa.golive');
+    expect(SA_WIZARD_STEPS[7].key).toBe('sa.golive');
   });
 
   it('every step has a tutorial key and plain-language what/why/skip text', () => {
@@ -33,11 +33,11 @@ describe('wizard step registry (F17)', () => {
     expect(wizardSteps('super_admin')).toBe(SA_WIZARD_STEPS);
   });
 
-  it('visibleSteps hides an optional step whose feature is off', () => {
-    const withAi = visibleSteps('org_admin', new Set(['ai_assist']));
-    const withoutAi = visibleSteps('org_admin', new Set());
-    expect(withAi).toHaveLength(ORG_WIZARD_STEPS.length);
-    expect(withoutAi).toHaveLength(ORG_WIZARD_STEPS.length - 1);
-    expect(withoutAi.find((s) => s.key === 'org.ai')).toBeUndefined();
+  it('visibleSteps hides a step whose required feature is off', () => {
+    // The AI step was the only feature-gated step and is removed (0087), so no step is gated now and
+    // the filter is a no-op. The mechanism stays for the steps later slices add.
+    expect(ORG_WIZARD_STEPS.some((s) => s.requiresFeature)).toBe(false);
+    expect(visibleSteps('org_admin', new Set())).toHaveLength(ORG_WIZARD_STEPS.length);
+    expect(visibleSteps('super_admin', new Set())).toHaveLength(SA_WIZARD_STEPS.length);
   });
 });

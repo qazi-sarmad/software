@@ -51,15 +51,12 @@ describe('guided setup wizard (F17)', () => {
     await waitFor(() => expect(screen.getByTestId('tutorial-drawer')).toBeTruthy());
   });
 
-  it('hides an optional step whose feature is off', async () => {
+  it('renders every step now that no step is feature-gated', async () => {
     render(<SetupWizard scope="org_admin" />);
     await waitFor(() => expect(screen.getByTestId('org_admin-wizard-steps')).toBeTruthy());
+    expect(screen.getByTestId('org_admin-wizard-step-org.presentation')).toBeTruthy();
+    // The AI step and its key are gone entirely (0087).
     expect(screen.queryByTestId('org_admin-wizard-step-org.ai')).toBeNull();
-  });
-
-  it('shows the AI step when ai_assist is enabled', async () => {
-    render(<SetupWizard scope="org_admin" enabledFeatures={['ai_assist']} />);
-    await waitFor(() => expect(screen.getByTestId('org_admin-wizard-step-org.ai')).toBeTruthy());
   });
 
   it('shows a resume banner when steps were already saved', async () => {

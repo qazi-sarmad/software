@@ -4,8 +4,9 @@
  * Every permission decision in the app is made against a *right* held by the session, never
  * against a role name. A role is only a bag of rights: the role→rights mapping below is data
  * that seeds a session, and the database keeps the same mapping in `roles.rights`
- * (migration 0050_rights_extended.sql, which grew the list from 0012_rights_closed.sql to fifteen
- * keys). The fifteen keys are the closed vocabulary the database accepts (rights_keys_valid).
+ * (migration 0050_rights_extended.sql, which grew the list from 0012_rights_closed.sql; migration
+ * 0087_remove_ai.sql removed use_ai_assist, so the list is fourteen keys). The fourteen keys are the
+ * closed vocabulary the database accepts (rights_keys_valid).
  *
  * Defaults are chosen to reproduce, right for right, the behaviour the app had when it compared
  * role names, so this task changes no observable behaviour (recorded in docs/ROLE-CHECKS.md).
@@ -26,7 +27,6 @@ export const RIGHTS = [
   'manage_team',
   'view_board_pack',
   'generate_board_pack',
-  'use_ai_assist',
   'view_insights',
 ] as const;
 
@@ -53,7 +53,6 @@ const RIGHTS_BY_ROLE: Record<Role, RightsMap> = {
     view_all_scopes: true,
     view_board_pack: true,
     generate_board_pack: true,
-    use_ai_assist: true,
     view_insights: true,
   },
   audit_manager: {
@@ -62,11 +61,10 @@ const RIGHTS_BY_ROLE: Record<Role, RightsMap> = {
     perform_work: true,
     view_all_scopes: true,
     view_board_pack: true,
-    use_ai_assist: true,
     view_insights: true,
   },
-  reviewer: { review_and_approve: true, perform_work: true, use_ai_assist: true },
-  preparer: { perform_work: true, use_ai_assist: true },
+  reviewer: { review_and_approve: true, perform_work: true },
+  preparer: { perform_work: true },
   observer: { read_only: true, view_all_scopes: true, view_board_pack: true },
   auditee: { read_only: true },
 };

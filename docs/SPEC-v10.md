@@ -11,7 +11,7 @@
 Provio is a multi-tenant audit management platform. Organisations of different sizes, regulatory environments and methodologies run their internal audit function in it: universes and entities, risk assessment, audit planning, engagement lifecycle (Planning, Testing, Conclusion), deterministic analytics, findings, reports and corrective action plans (CAPs).
 
 Its differentiators:
-- **Deterministic analytics.** Testing, sampling, scoring, gating and reconciliation are code that can be tested and explained. AI is optional and advisory only.
+- **Deterministic analytics.** Testing, sampling, scoring, gating and reconciliation are code that can be tested and explained. Guidance is deterministic guided intake: rules and structured prompts, with no model and no generated text.
 - **One interconnected record.** Every object links to every other, statuses are live, and filters apply across views.
 - **Configuration, not code.** Almost every rule, field, role, workflow, scale and template is configurable visually and versioned.
 - **Auditable by design.** Sign-offs and issuance are hash-chained. Every action is logged.
@@ -22,8 +22,8 @@ Provio is sold as a subscription per organisation. Clients log in to their own i
 
 ## 1. Laws
 
-- **L1 Deterministic analytics.** All testing logic (sample size, selection, anomalies, scoring, gating, reconciliation, document checks) is deterministic code. AI never executes, determines or influences that logic. Where an organisation has enabled AI, it may produce advisory summaries and suggestions. That AI runs only on tenant-hosted infrastructure, is labelled as AI-generated, and never changes a test result, score, sample, finding status or gate.
-- **L2 Data stays tenant-side.** Raw financial data and personal data never leave the tenant's hosting boundary, and never go to an external AI service or model. The platform owner has no interface path to tenant business content.
+- **L1 Deterministic analytics.** All testing logic (sample size, selection, anomalies, scoring, gating, reconciliation, document checks) is deterministic code. There is no AI in the product: nothing infers, generates or advises. Guidance is deterministic guided intake, which is rules and structured prompts. No result, score, sample, finding status or gate is ever produced or influenced by a model.
+- **L2 Data stays tenant-side.** Raw financial data and personal data never leave the tenant's hosting boundary and never go to any external service. The platform owner has no interface path to tenant business content.
 - **L3 No path around the population gate.** No population-based test proceeds without a verified population, enforced in the database. Non-population tests (inquiry, observation, document review) are documented procedures mapped to a control.
 - **L4 One interconnected record.** Statuses update in real time. Every object is drillable. Filters apply across views.
 - **L5 Accountability.** Every action is logged. Sign-offs, freezes, plan versions, report issuance and ledger verification are hash-chained. Configuration changes are versioned and logged.
@@ -35,7 +35,7 @@ Provio is sold as a subscription per organisation. Clients log in to their own i
 - **Hierarchy:** Tenant → Universe → Entity (approved) → Engagement.
 - An **engagement belongs to exactly one Universe.**
 - An **Entity** can be audited in many engagements over time and can be linked to many Findings.
-- **Sharing outside a Universe** is view-only, granted by a Level-1 or Level-2 Head, with in-app and email notification.
+- **Sharing outside a Universe** is view-only. It is granted by a Level-1 or Level-2 Head, where "Level-1 Head" and "Level-2 Head" are a flag on the member record (none, 1 or 2) set by an Org Admin. A share carries in-app and email notification, an optional expiry, and is revocable by the granting Head, a higher Head or an Org Admin. The shared object is the engagement with its findings and CAPs. Sharing with another organisation (a linked organisation) is not included in this version.
 - A **tenant** is one client organisation. Each tenant's data is isolated from every other tenant's data.
 - **Platform owner:** QSCorp. The platform owner operates the platform and the platform portal but has no access to tenant business content (§24).
 
@@ -279,7 +279,7 @@ All checks are deterministic, parameterised within admin-set ranges, and unit-te
 
 ---
 
-## 13. Document Review and AI
+## 13. Document Review
 
 ### 13.1 Rule-based document review (deterministic)
 - **Text extraction:** DOCX, PPTX, XLSX, CSV and text-based PDF.
@@ -288,17 +288,6 @@ All checks are deterministic, parameterised within admin-set ranges, and unit-te
 - **Consistency checks:** numeric inconsistencies across sections and documents; matching document facts to sample rows.
 
 Legacy binary formats (.doc, .ppt, .xls) are stored as evidence but not extracted (§20).
-
-### 13.2 Optional AI assistance
-- **Deployment:** a self-hosted model (for example, Ollama) installed per client. QSCorp packages the installer, installs it and maintains it. No data leaves the client's environment.
-- **Off by default.** QSCorp enables it per organisation.
-- **Scope:** advisory summaries of documents, suggestions for wording, and key-point extraction from long documents.
-- **Labelling:** all AI output is labelled as AI-generated and kept separate from the deterministic record until a user accepts it.
-- **Restrictions (L1):** AI output never changes a test result, score, sample, finding status, gate or deterministic check.
-- **Excluded:** vendor-hosted AI models. These would breach L2.
-- **Hardware guidance** (indicative, confirmed in a spike before release): a quantised 7–8B-parameter model needs about 16 GB of RAM for CPU-only operation, and a GPU with about 8 GB of VRAM for reasonable speed. Summarisation runs asynchronously, so slower responses are acceptable. Clients must meet this guidance to use AI.
-
----
 
 ## 14. Findings, Observations and Issues
 
@@ -375,6 +364,36 @@ The freeze happens only after:
 - management comments are resolved,
 - CAP content and due dates are reconciled with the final report,
 - the issued report and the CAP register match exactly.
+
+### 15.6 Report engine guarantees
+
+The report engine is deterministic. Every guarantee below is enforced in code and covered by a test
+that fails if the behaviour is removed.
+
+- **Every claim carries references.** Each claim in a report references the records it derives from
+  (the finding, control, sample row, workpaper or figure), by type, id and content hash.
+- **Calculated figures are recomputed before freeze.** Freezing recomputes every calculated figure
+  from the records and compares it with the stored value. A mismatch blocks the freeze and lists the
+  differing figures.
+- **A root hash is committed to the ledger.** The report has a root hash over its blocks, committed
+  to the ledger with the engine version, the template version and the phrase-library version.
+- **The same inputs rebuild an identical report.** The same document model, the same engine,
+  template and phrase-library versions and a fixed timestamp produce a byte-identical PDF and DOCX.
+- **Coverage reconciliation.** Every finding, every exception control and every CAP appears exactly
+  once. No claim is without references and no claim is orphaned. A failure blocks the freeze.
+- **No high-consequence wording is generated.** The engine never generates "fraud", "misstatement"
+  or "non-compliance". Such a conclusion requires the auditor's own written text, which is labelled
+  as auditor text.
+- **Versions compare claim by claim.** Two versions can be compared claim by claim, showing added,
+  changed and removed claims and changed figures.
+
+**Tables.** The engine stores its report structure in `report_templates`, `report_versions`,
+`report_blocks`, `report_claims`, `phrases` and `report_terminology`, each hash-chained where it is
+versioned.
+
+**Phrase library lifecycle.** A phrase moves through `draft`, `reviewed` and `released`. A released
+phrase is immutable; a change creates a new version. Every sentence in a composed report comes from
+a released phrase.
 
 ---
 
@@ -505,7 +524,6 @@ The Org Admin portal is visual. It requires no code or JSON.
 - **Rights:** the rights matrix.
 - **Configuration history:** every change, versioned and logged.
 - **Export and retention:** export schedules and activity-log archival settings.
-- **AI:** shown read-only, with a status message. Enabling AI is done by QSCorp (§13.2).
 
 **Every save** passes through a confirmation panel and writes a versioned, logged change.
 
@@ -517,7 +535,7 @@ Used by QSCorp only.
 
 - **Separate login with mandatory MFA.**
 - **Data-blind:** it has no read access to tenant business tables. This is proven by SQL tests.
-- **Functions:** tenant management, provisioning, feature flags, usage and quotas, health monitoring, platform trail (metadata only), announcements, and AI enablement per tenant.
+- **Functions:** tenant management, provisioning, feature flags, usage and quotas, health monitoring, platform trail (metadata only) and announcements.
 - **Support access** to tenant content is off by default. A tenant administrator can create a time-boxed, read-only grant.
 
 ---
@@ -567,9 +585,9 @@ Used by QSCorp only.
 
 ## 26. Logging
 
-Every meaningful action is logged: create, edit, view, approve, sign-off, status change, configuration change, export, import, deployment and AI enablement. Navigation and object interactions (open, expand, filter, download, search) are batched in the background. Pointer movement is not logged.
+Every meaningful action is logged: create, edit, view, approve, sign-off, status change, configuration change, export, import and deployment. Navigation and object interactions (open, expand, filter, download, search) are batched in the background. Pointer movement is not logged.
 
-- **Business ledger:** hash-chained. It records sign-offs, freezes, plan versions, report issuance, SIRA publication, approvals, ethics acknowledgements and ledger verification. Sequence numbers, timestamps and hashes are computed by the database. The ledger is append-only and verifiable.
+- **Business ledger:** hash-chained. It records sign-offs, freezes, plan versions, report issuance, SIRA publication, approvals, ethics acknowledgements, `share_granted`, `share_revoked`, and ledger verification. Sequence numbers, timestamps and hashes are computed by the database. The ledger is append-only and verifiable.
 - **Activity log:** append-only and **kept permanently.** The tenant sees and exports its own history. The platform trail is metadata only.
 - **Archival:** archived activity is recorded in the ledger. Archival never deletes data without a hash record of what was archived.
 
@@ -612,6 +630,7 @@ Bespoke 17px inline SVG icons at stroke 1.3. No icon fonts. No third-party icon 
 Never reintroduce:
 
 - AI in testing, scoring, gating or any deterministic check.
+- Any AI feature (removed 2026-10-25).
 - Vendor-hosted AI models.
 - Mock or persona login, and "simulate viewpoint."
 - Hardcoded or demo data in production tenants.
@@ -648,7 +667,7 @@ Phase 2 built the access layer: identity, rights, RLS, the audit team, the role 
 
 ### 30.1 Rights, not role names
 
-- **D1 (2026-10-14). A role is a bag of rights.** Every permission decision, in the database and in the app, is a test of a right (`caller_has_right` / `hasRight`). No policy or component compares a role name. The closed vocabulary is eleven keys: `manage_users`, `manage_roles`, `edit_config`, `manage_engagements`, `approve_plan`, `review_and_approve`, `perform_work`, `can_reopen`, `view_all_scopes`, `read_only`, `manage_team`. Enforced by migration `0012_rights_closed.sql` (`rights_keys_valid`) and by the guard test `src/guards/noRoleStrings.test.ts`.
+- **D1 (2026-10-14; amended 2026-10-25). A role is a bag of rights.** Every permission decision, in the database and in the app, is a test of a right (`caller_has_right` / `hasRight`). No policy or component compares a role name. The closed vocabulary is **fourteen keys**: `manage_users`, `manage_roles`, `edit_config`, `manage_engagements`, `approve_plan`, `review_and_approve`, `perform_work`, `can_reopen`, `view_all_scopes`, `read_only`, `manage_team`, `view_board_pack`, `generate_board_pack`, `view_insights`. `use_ai_assist` was removed on 2026-10-25 with the rest of the AI feature. Enforced by migration `0012_rights_closed.sql` and its extensions (`rights_keys_valid`) and by the guard test `src/guards/noRoleStrings.test.ts`.
 - **D2 (2026-10-14). The seed matrix implements §4.1.** The matrix is declared in migration `0012_rights_closed.sql` and mirrored in `src/lib/rights.ts`. `src/lib/rightsMatrix.test.ts` fails if the two drift. `is_cia()`, `is_org_admin()` and `can_read_all_scopes()` keep their names because policies reference them; their bodies read rights.
 - **D3 (2026-10-14). The JWT carries identity, not permission.** The auth hook (`0010`) stamps `org_id` and `user_role`. A permission decision resolves the right from the role named by the claim, in the caller's organisation. This matters only for a forged token; a real login is membership-checked. Recorded as B1 in `docs/ROLE-CHECKS.md`.
 
@@ -677,7 +696,7 @@ Phase 2 built the access layer: identity, rights, RLS, the audit team, the role 
 
 - **§4.1.** No change: the seed matrix now implements it.
 - **§4.4.** No change: four-eyes is an id comparison, not a role name; sealed means read-only; the ledger is append-only.
-- **§23.** The portal is now built; its scope is the list in §23. Items not yet built (organisation settings, structure, controls, methodology, risk model, workflow, notifications, BI, templates, export, AI) are recorded as not done in `docs/NOT-DONE.md`.
+- **§23.** The portal is now built; its scope is the list in §23. Items not yet built (organisation settings, structure, controls, methodology, risk model, workflow, notifications, BI, templates, export) are recorded as not done in `docs/NOT-DONE.md`.
 - **§25.2.** No change: tenancy and scope are enforced by RLS, proven by SQL tests.
 - **§28.** No change: no blocking modal, no Reports tab, no Workbench tab. The admin panel is an inspector.
 
@@ -693,11 +712,14 @@ Phase 2 built the access layer: identity, rights, RLS, the audit team, the role 
 | Email through Microsoft Graph with OAuth; client-chosen sender mailbox | Decision |
 | Legacy binary formats stored as evidence only, not extracted or sampled | Decision |
 | Activity log archival to Storage export files | Decision |
-| Ollama installed and maintained by QSCorp; hardware guidance required | Decision |
+| Ollama installed and maintained by QSCorp; hardware guidance required | Decision (superseded 2026-10-25) |
 | Readability roles: Context, Condition, Effect and Risk mandatory; Criteria, Cause and Recommendation optional; section names renameable | Decision |
 | Screenshot policy: changed screens per task, full sweep at gate boundaries | Decision |
 | Severity palette amendment (text labels always shown) | Decision |
 | Supabase limits flagged for verification before use | Decision |
+| AI removed from the product; rights vocabulary returns to 14 keys | Owner decision, 2026-10-25 |
+| Sharing across universes defined (engagement, read-only, head-level authority, optional expiry, revocable) | Owner decision, 2026-10-25 |
+| Report engine guarantees added (§15.6) | Owner decision, 2026-10-25 |
 
 ---
 
@@ -706,3 +728,21 @@ Phase 2 built the access layer: identity, rights, RLS, the audit team, the role 
 1. **Supabase limits.** I have not checked the current free-tier figures. Verify them on Supabase's pricing page before the build starts, and update §25.4.
 2. **Microsoft status.** Confirm current Microsoft guidance on basic-auth SMTP retirement and the Graph consent process before Gate 5.
 3. **Schedule.** This specification is the full product. Delivering it on 30 November 2026 would require a much larger team or a much later date. Confirm whether that date is fixed, or whether it moves to match the full scope.
+
+---
+
+## 34. Decisions 2026-10-25
+
+- **AI is removed from the product.** Every AI table, column, function, trigger, cron job, edge
+  function, feature key, config area, right, screen and wizard step is removed. The business ledger
+  and its hash chain are not touched; historical ledger rows remain and still verify. No AI feature
+  was ever used by a client, so no client AI history is lost. Guidance in the product is
+  deterministic guided intake, not AI.
+- **The rights vocabulary returns to fourteen keys.** `use_ai_assist` is removed from the closed
+  list and from every role's rights.
+- **Sharing across universes is defined.** See §2: view-only, granted by a Level-1 or Level-2 Head
+  (a flag on the member record), with in-app and email notification, an optional expiry, and
+  revocable by the granting Head, a higher Head or an Org Admin. The shared object is the engagement
+  with its findings and CAPs. Cross-organisation sharing to a linked organisation is deferred.
+- **The report engine guarantees are added.** See §15.6.
+- **The tutorial count drops** with the removed screens. The owner accepts the drop.

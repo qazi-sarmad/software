@@ -80,8 +80,8 @@ export const SuperAdminRecipients: React.FC = () => {
       <div className="rounded-2xl border border-hairline bg-surface p-4 space-y-2">
         <h3 className="text-apple-14 font-semibold text-primary">Platform notification recipients</h3>
         <p className="text-apple-12 text-secondary">
-          These addresses receive platform alerts (an AI model change, a hosting migration event, a
-          feature change) and are copied on tenant configuration changes.
+          These addresses receive platform alerts (a hosting migration event, a feature change) and
+          are copied on tenant configuration changes.
         </p>
         <div className="flex items-center gap-2">
           <input

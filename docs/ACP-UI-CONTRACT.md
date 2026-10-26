@@ -16,6 +16,11 @@ Rules that hold for every screen below:
 Screens marked **(S1)** exist on this branch. The rest of Appendix A is S2 onward and is registered
 as its slice lands.
 
+Appendix A ids **SA-06**, **OA-06**, **OA-07** and **WK-07** are retired: they were the AI model
+registry, the AI settings and voice library, and the AI drafting aid, all removed on 2026-10-25
+(owner decision D-P0-1, migration `0087_remove_ai.sql`). The id space keeps its numbering so every
+other screen id is unchanged; the four retired ids have no section and no tutorial key.
+
 ---
 
 ## GL-01 — consultation banner (S1)
@@ -144,8 +149,8 @@ under `acp.tutorial.autoplay`), so the same screen never autoplays twice. The e2
   `sa.features`, `sa.tutorials`, `sa.golive`.
 - **States:** loading, error (with Retry), empty, ready; a resume banner when a later step is open.
   A step whose `requiresFeature` is not entitled is hidden (F25).
-- **Tutorial key:** `oa.setup-wizard` (+ `oa.setup-1` … `oa.setup-9`), `sa.setup-wizard`
-  (+ `sa.setup-1` … `sa.setup-9`).
+- **Tutorial key:** `oa.setup-wizard` (+ `oa.setup-1` … `oa.setup-8`), `sa.setup-wizard`
+  (+ `sa.setup-1` … `sa.setup-8`).
 
 ## OA-04 — features, read-only (S1)
 
@@ -327,47 +332,6 @@ under `acp.tutorial.autoplay`), so the same screen never autoplays twice. The e2
   a plain notice). A save refusal (rights or entitlement) is shown in `oa-branding-error` in the
   server's own words. An over-size asset is refused by the RPC.
 - **Tutorial keys:** `oa.branding`, `oa.pptx-theme`.
-
----
-
-## OA-06 / OA-07 — AI settings and voice library (S5)
-
-- **Purpose:** the Org Admin sets the model endpoint, the access mode, the use-case toggles, the
-  parameters and the voice library. It can never add, remove, change or choose a model: that is the
-  Super Admin's registry, and the server refuses an attempt (F8). A vendor-hosted endpoint is
-  refused with the L2 message.
-- **Route:** Org Admin control plane, tab `AI`.
-- **Rights:** `edit_config`; feature-gated `ai_assist` (endpoint, use cases), `ai_voice_library`
-  (voice profile, terms, samples) (F25).
-- **Data:** `listUseCases(orgId)`, `saveUseCase(...)`, `setEndpoint(orgId, url, mode, secretId?)`,
-  `getVoiceProfile(orgId)`, `saveVoiceProfile(...)`, `listVoiceTerms(orgId)`, `addVoiceTerm(...)`,
-  `listVoiceSamples(orgId)`, `addVoiceSample(...)`, `isEndpointDenied(url)` (`src/data/ai.ts`).
-- **Testids:** `org-ai-panel`, `oa-ai-loading`, `oa-ai-error`, `oa-ai-result`, `oa-ai-endpoint`,
-  `oa-ai-endpoint-url`, `oa-ai-endpoint-mode`, `oa-ai-endpoint-save`, `oa-ai-usecases`,
-  `oa-ai-usecase-<key>`, `oa-ai-usecase-toggle-<key>`, `oa-voice`, `oa-voice-tone`, `oa-voice-save`,
-  `oa-voice-term-<id>`, `oa-voice-term-preferred`, `oa-voice-term-avoid`, `oa-voice-term-add`,
-  `oa-voice-sample-<id>`, `oa-voice-sample-kind`, `oa-voice-sample-text`, `oa-voice-sample-add`.
-- **States:** loading ("Loading the AI settings…"); ready; error (`InlineError`); a save refusal
-  (rights, entitlement, deny-list) is shown in `oa-ai-result` in the server's own words.
-- **Tutorial keys:** `oa.ai`, `oa.ai-test`, `oa.ai-usecases`, `oa.voice`.
-
----
-
-## SA-06 — AI model registry and endpoint deny-list (S5)
-
-- **Purpose:** the Super Admin adds, removes or changes a model, and edits the deny-list of
-  vendor-hosted hosts (F8). Only the Super Admin writes `ai_models` and `ai_endpoint_denylist`.
-- **Route:** platform portal, tab `AI models`.
-- **Rights:** platform admin (`require_platform_admin`).
-- **Data:** `listAiModels()`, `addAiModel(name, modelRef, notes?)`, `updateAiModel(id, name,
-  modelRef, status)`, `removeAiModel(id)`, `listDenyPatterns()`, `addDenyPattern(pattern, label?)`,
-  `removeDenyPattern(id)` (`src/data/ai.ts`).
-- **Testids:** `superadmin-ai`, `sa-ai-loading`, `sa-ai-error`, `sa-ai-result`, `sa-ai-models`,
-  `sa-ai-models-empty`, `sa-ai-model-<id>`, `sa-ai-model-toggle-<id>`, `sa-ai-model-remove-<id>`,
-  `sa-ai-model-name`, `sa-ai-model-ref`, `sa-ai-model-add`, `sa-ai-denylist`,
-  `sa-ai-pattern-<id>`, `sa-ai-pattern-remove-<id>`, `sa-ai-pattern-input`, `sa-ai-pattern-add`.
-- **States:** loading; ready; error (`InlineError`); a save refusal is shown in `sa-ai-result`.
-- **Tutorial keys:** `sa.ai-models`, `sa.ai-denylist`.
 
 ---
 
@@ -886,24 +850,6 @@ above. `docs/ACP-TUTORIALS.md` lists every key and its steps.
   `wk-boardpack-figure-sealed`, `wk-boardpack-source-<path>`.
 - **States:** loading, error, empty (no packs yet), ready; sealed figures.
 - **Tutorial key:** `oa.boardpack-view`.
-
-## WK-07 — AI assist (S5, M-4a)
-
-- **Purpose:** the drafting aid beside any editor: "Suggest wording" sends the current text and the
-  numbers in it to the tenant's own AI endpoint and returns a draft the person may accept, edit or
-  reject. The draft is never a test result, a sample, a score or a finding status (L1).
-- **Route:** rendered inside the observation editor and any other editor that opts in; not a route.
-- **Rights:** `perform_work`; the AI feature must be enabled for the organisation
-  (`has_feature(org,'ai_assist')`).
-- **Data:** `runAiAssist(orgId, useCase, prompt, recordType, recordId, allowedNumbers)`
-  (`src/data/ai.ts`), through the caller-verified `ai-gateway` Edge Function.
-- **Testids:** the component takes a prefix prop (default ai-assist) and exposes
-  `ai-assist-suggest`, `ai-assist-draft`, `ai-assist-text`, `ai-assist-accept`, `ai-assist-reject`,
-  `ai-assist-retry`, `ai-assist-label`, `ai-assist-test`, `ai-assist-probe`, `ai-assist-figures`,
-  `ai-assist-figure-<token>`, `ai-assist-figure-confirm-<token>`, `ai-assist-error`.
-- **States:** idle, suggesting, draft shown, accepted, rejected, error with Retry; a figure the
-  model invented is listed for confirmation and is never written into the record unconfirmed.
-- **Tutorial key:** n/a (no guided recording; the panel needs a live AI endpoint).
 
 ## EX-02 — portal home (S9)
 

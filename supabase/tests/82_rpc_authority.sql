@@ -11,13 +11,13 @@ values ('a1000000-0000-4000-8000-000000000001','a0000000-0000-0000-0000-00000000
 insert into notification_templates (id, org_id, event_key, subject, blocks, is_platform_template)
 values ('a2000000-0000-4000-8000-000000000001','a0000000-0000-0000-0000-000000000001','finding.sealed','Org A secret template','[]',false);
 insert into tenant_entitlements (org_id, feature_key, enabled, plan_name, reason)
-values ('a0000000-0000-0000-0000-000000000001','ai_assist',true,'Assurance','org a secret');
+values ('a0000000-0000-0000-0000-000000000001','board_pack',true,'Assurance','org a secret');
 insert into email_sender_profiles (id, org_id, scope, provider, display_name, from_address, enabled, is_default)
 values ('a3000000-0000-4000-8000-000000000001','a0000000-0000-0000-0000-000000000001','tenant','resend','Org A secret sender','secret-a@a.invalid',true,true);
 insert into secret_store (id, org_id, label, masked, ciphertext)
 values ('a4000000-0000-4000-8000-000000000001','a0000000-0000-0000-0000-000000000001','org-a-key','MASKED-AAAA','xyz');
-insert into org_settings_extra (org_id, app_base_url, ai_retention_days)
-values ('a0000000-0000-0000-0000-000000000001','https://org-a.example', 999);
+insert into org_settings_extra (org_id, app_base_url)
+values ('a0000000-0000-0000-0000-000000000001','https://org-a.example');
 insert into hosting_connections (id, org_id, label, kind, host, port, database_name, username)
 values ('a5000000-0000-4000-8000-000000000001','a0000000-0000-0000-0000-000000000001','Org A conn','supabase_self_hosted','a.invalid',5432,'a','a');
 insert into board_pack_history (id, org_id, scope_key, scope_description, boundary_kind, snapshot, data_hash)

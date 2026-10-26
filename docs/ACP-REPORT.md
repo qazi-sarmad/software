@@ -128,8 +128,8 @@ sign-in race unrelated to S12; the retry is Playwright's configured `retries: 1`
 
 ## Owner actions still open (F23)
 
-- Run `supabase functions deploy` for `email-dispatch`, `ai-gateway`, `graph-oauth`, `invite-user`,
-  `hosting-test`.
+- Run `supabase functions deploy` for `email-dispatch`, `graph-oauth`, `invite-user`,
+  `hosting-test`, `secrets-put`, `archive-upload`, `doc-extract`.
 - Confirm Vault and pg_cron exist on the project (S2.1 verified Vault; the platform wizard SA-01 also
   checks these).
 - Create a Resend account and key, or use per-client Microsoft Graph or SMTP.
@@ -158,7 +158,6 @@ Fail the build if any Appendix A key has no GIF:
 Deploy the Edge Functions (owner; not done by CI):
 
     supabase functions deploy email-dispatch
-    supabase functions deploy ai-gateway
     supabase functions deploy graph-oauth
     supabase functions deploy invite-user
     supabase functions deploy hosting-test

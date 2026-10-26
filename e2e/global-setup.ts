@@ -1,8 +1,15 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { randomBytes } from 'node:crypto';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+/**
+ * The frozen Appendix A registry (S12). The recorder, check-tutorials and migration 0071 all read
+ * this same file, so it is the one source of truth for a key's title, audience and ordered steps.
+ */
+const TUTORIAL_KEYS: { key: string; audience: string; title: string; steps: unknown[] }[] =
+  JSON.parse(readFileSync(fileURLToPath(new URL('../src/lib/tutorialKeys.json', import.meta.url)), 'utf8'));
 
 // Synthetic test data only. Fixed ids make every run idempotent.
 const ORG_A = '02af9314-9781-5bde-b8a7-d46bfee07783';
@@ -33,21 +40,22 @@ const ROLE_NAMES: [string, string][] = [
   ['Auditee', 'auditee'],
 ];
 
-// The seed rights matrix from migration 0050_rights_extended.sql (fifteen keys; 0012 grew into it).
+// The seed rights matrix from migration 0050_rights_extended.sql (fourteen keys; 0087 removed
+// use_ai_assist, so the closed vocabulary is fourteen).
 // these rights (caller_has_right), so the synthetic roles must carry them, not an empty map.
 const RIGHTS_BY_ROLE: Record<string, Record<string, boolean>> = {
-  org_admin: { manage_users: true, manage_roles: true, edit_config: true, manage_engagements: false, approve_plan: false, review_and_approve: false, perform_work: false, can_reopen: false, view_all_scopes: false, read_only: false, manage_team: false, view_board_pack: false, generate_board_pack: false, use_ai_assist: false, view_insights: false },
-  cia: { manage_roles: true, edit_config: true, manage_engagements: true, approve_plan: true, review_and_approve: true, perform_work: true, can_reopen: true, view_all_scopes: true, view_board_pack: true, generate_board_pack: true, use_ai_assist: true, view_insights: true },
-  audit_manager: { manage_engagements: true, review_and_approve: true, perform_work: true, view_all_scopes: true, view_board_pack: true, use_ai_assist: true, view_insights: true },
+  org_admin: { manage_users: true, manage_roles: true, edit_config: true, manage_engagements: false, approve_plan: false, review_and_approve: false, perform_work: false, can_reopen: false, view_all_scopes: false, read_only: false, manage_team: false, view_board_pack: false, generate_board_pack: false, view_insights: false },
+  cia: { manage_roles: true, edit_config: true, manage_engagements: true, approve_plan: true, review_and_approve: true, perform_work: true, can_reopen: true, view_all_scopes: true, view_board_pack: true, generate_board_pack: true, view_insights: true },
+  audit_manager: { manage_engagements: true, review_and_approve: true, perform_work: true, view_all_scopes: true, view_board_pack: true, view_insights: true },
   observer: { read_only: true, view_all_scopes: true, view_board_pack: true },
-  reviewer: { review_and_approve: true, perform_work: true, use_ai_assist: true },
-  preparer: { perform_work: true, use_ai_assist: true },
+  reviewer: { review_and_approve: true, perform_work: true },
+  preparer: { perform_work: true },
   auditee: { read_only: true },
 };
 
-/** The full fifteen-key matrix, false-filled, so every role row carries every key (as 0050 does). */
+/** The full fourteen-key matrix, false-filled, so every role row carries every key (as 0050 does). */
 function rightsFor(slug: string): Record<string, boolean> {
-  const keys = ['manage_users', 'manage_roles', 'edit_config', 'manage_engagements', 'approve_plan', 'review_and_approve', 'perform_work', 'can_reopen', 'view_all_scopes', 'read_only', 'manage_team', 'view_board_pack', 'generate_board_pack', 'use_ai_assist', 'view_insights'];
+  const keys = ['manage_users', 'manage_roles', 'edit_config', 'manage_engagements', 'approve_plan', 'review_and_approve', 'perform_work', 'can_reopen', 'view_all_scopes', 'read_only', 'manage_team', 'view_board_pack', 'generate_board_pack', 'view_insights'];
   const held = RIGHTS_BY_ROLE[slug] ?? {};
   return Object.fromEntries(keys.map((k) => [k, held[k] === true]));
 }
@@ -78,7 +86,7 @@ const ROLE_IDS_B: Record<string, string> = {
 const USERS = [
   { email: 'ayesha.khan@provio-test.invalid', name: 'Ayesha Khan', org: ORG_A, role: 'org_admin', roleIds: ROLE_IDS_A, universes: [A_U1] },
   // CIA: holds all four assurance rights (F3) plus edit_config, so the Board Pack panel, its section
-  // editor and the AI assist are reachable. The Org Admin holds none of the four by F3.
+  // editor is reachable. The Org Admin holds none of the four by F3.
   { email: 'kamran.sheikh@provio-test.invalid', name: 'Kamran Sheikh', org: ORG_A, role: 'cia', roleIds: ROLE_IDS_A, universes: [] },
   { email: 'bilal.ahmed@provio-test.invalid', name: 'Bilal Ahmed', org: ORG_A, role: 'preparer', roleIds: ROLE_IDS_A, universes: [] },
   // Audit manager: holds manage_engagements, which the Phase 7 import/activity/prior-year flows need.
@@ -345,20 +353,6 @@ export default async function globalSetup() {
     plan_name: 'Assurance', reason: 'e2e fixture', effective_from: new Date().toISOString(), effective_to: null,
   }, { onConflict: 'org_id,feature_key' }));
 
-  // S5 fixture (F8, L2). The AI panel's save path is gated by has_feature('ai_assist') and
-  // tenant_settings.ai_enabled BEFORE the endpoint deny-list runs (ai_require_org_actor in
-  // 0059_ai.sql). Without both the vendor-hosted refusal is unreachable and the L2 assertion in
-  // e2e/s5-ai.spec.ts passed vacuously: the panel rendered the plan refusal instead. Seeded
-  // directly, like every other fixture here; the Super Admin console exercises the RPC path in
-  // acp-control-plane.spec.ts.
-  must('tenant_entitlements ai_assist', await sb.from('tenant_entitlements').upsert({
-    org_id: ORG_A, feature_key: 'ai_assist', enabled: true,
-    plan_name: 'Assurance', reason: 'e2e fixture', effective_from: new Date().toISOString(), effective_to: null,
-  }, { onConflict: 'org_id,feature_key' }));
-  must('tenant_settings ai_enabled', await sb.from('tenant_settings').upsert({
-    org_id: ORG_A, ai_enabled: true, updated_at: new Date().toISOString(),
-  }, { onConflict: 'org_id' }));
-
   // S6 fixture (F12). The Work Queue escalation block renders only when the caller has escalations
   // or proposals. One escalation targeting audit_manager (zara.malik) is seeded so
   // e2e/s6-escalation.spec.ts can assert the deterministic wording unconditionally instead of
@@ -384,6 +378,24 @@ export default async function globalSetup() {
         risk: 'Fraudulent payment risk.', effect: 'Loss of cash again.' },
     },
   ], { onConflict: 'id' }));
+
+  // ---------------------------------------------------------------------------
+  // Registry fixture (S12). The SQL test seed (supabase/tests/00_lib.sql, provio_test.seed())
+  // TRUNCATES `tutorials`, a platform-level table outside the org graph, and never re-inserts it.
+  // CI runs those tests against this same shared project in its step 7, before this seed, so the
+  // recorder would otherwise record SA-13 against the empty registry, where `superadmin-tutorials`
+  // never renders. Re-seed it here. Idempotent: `ignoreDuplicates` never overwrites a row a live
+  // recording has already generated. (`platform_trail` needs no re-seed: seed() re-inserts one row
+  // of its own, which is why SA-15 renders in CI.)
+  // ---------------------------------------------------------------------------
+  must('tutorials (re-seed: provio_test.seed() truncates the registry)',
+    await sb.from('tutorials').upsert(
+      TUTORIAL_KEYS.map((k) => ({
+        key: k.key, audience: k.audience, title: k.title, steps: k.steps,
+        media_path: `tutorials/${k.key}.gif`,
+      })),
+      { onConflict: 'key', ignoreDuplicates: true },
+    ));
 }
 
 // Run the seed when this file is executed directly (`npx tsx e2e/global-setup.ts`). Playwright calls
