@@ -161,9 +161,30 @@ is healthy; otherwise the local results are the evidence and are recorded verbat
 
 ## Hard limits discovered (filled in by WP4)
 
-To be completed in WP4 from what the tests actually measure. Nothing here is guessed.
+Measured by `supabase/tests/103_scale_isolation.sql`, not guessed. These are the bounds the code
+actually enforces today; nothing here invents infrastructure.
 
-- _(WP4 fills this in.)_
+- **Invitation cap is 1..100 per user per day.** `platform_set_invite_cap` raises outside that range
+  (migration 0031). The cap is stored per org in `invite_cap_settings`, so one org's cap never
+  applies to another. Verified: C=3, D=50, A keeps the default 20.
+- **A Head is Level-1 or Level-2, nothing else.** `admin_set_head_level` refuses any other value, and
+  `is_head(1)` is satisfied by a Level-2 Head (higher authority covers lower).
+- **Sharing is intra-organisation.** `universe_shares.org_id = jwt_org_id()` is in every read policy
+  and every RPC, so a share can never make one tenant's universe visible to another. Verified: an
+  Org B user reads zero Org A share rows and cannot reach an Org A universe.
+- **RLS filters a refused write silently.** A grantee's `update` of a shared universe changes 0 rows
+  and raises nothing (the write policy keeps `org_id = jwt_org_id()` and the grantee is scoped out).
+  The test asserts `row_count = 0` and that the value is unchanged, rather than an exception.
+- **`platform_list_trail(p_limit)` honours the limit exactly** under volume (10 of 60 rows returned
+  for limit 10) and returns the full trail when the limit is large. It is the platform role's only
+  read of the trail, and it never returns tenant content.
+- **The support-grant surface is per org and per grant.** `support_list_engagements` returns rows
+  only for the granted org and only while the grant is live; an ungranted org returns 0 rows and the
+  refusal is logged as `denied` against the refused org. A tenant session cannot open a support
+  session at all.
+- **Volume in the test is modest by design** (5 tenants, 41 universes in one org, 60 trail rows).
+  The test proves correctness of the list and RLS paths at that volume; it does not claim a
+  throughput figure, and no load-testing infrastructure is invented here.
 
 ## WP1 performance budget (measured, recorded)
 
