@@ -22,8 +22,8 @@ Baselines were recorded at the branch point in `docs/WRITE-PLAN.md`. This is the
 
 | Object | Baseline | Now | Command |
 |---|---|---|---|
-| Migrations | 87 (highest `0087`) | 93 (highest `0093_tutorial_registry_report_builder.sql`) | `ls supabase/migrations/*.sql \| wc -l` |
-| SQL test files | 92 (highest `94`) | 96 (highest `98_report_formats.sql`) | `ls supabase/tests/*.sql \| wc -l` |
+| Migrations | 87 (highest `0087`) | 94 (highest `0094_verify_report_root.sql`) | `ls supabase/migrations/*.sql \| wc -l` |
+| SQL test files | 92 (highest `94`) | 97 (highest `99_verify_report_root.sql`) | `ls supabase/tests/*.sql \| wc -l` |
 | vitest files / tests | 144 / 1577 | 164 / 1901 | `npx vitest run` |
 | Playwright spec files | 25 | 25 | `ls e2e/*.spec.ts` |
 | Guards | 18 | 19 | `ls src/guards/*.test.ts` |
@@ -57,9 +57,12 @@ third asserts a register or locale change never moves the graph root.
 ## CI dispatches
 
 Budget 14. Used: 2. Run 40291572648 at head `deb95e1` reached steps 1 to 8 green (step 9, the
-screenshot sweep, is a continue-on-error tool and does not gate). Run 40310991632 at head `5e8bfc9`
-is the final dispatch. The shared test-database concurrency group serialises runs, so a dispatch can
-wait behind a `main` push; the branch's own push trigger starts it, so no manual dispatch was needed.
+screenshot sweep, is a continue-on-error tool and does not gate). Run 40314836257 at head `b50b156`
+is the final dispatch: steps 1 to 14 green (type check, unit tests, build, token, shrink, tutorials,
+function deploy list, UI contract, migrations and SQL tests, Playwright), step 15 the screenshot
+sweep is a continue-on-error tool and does not gate. The shared test-database concurrency group
+serialises runs, so a dispatch can wait behind a `main` push; the branch's own push trigger starts it,
+so no manual dispatch was needed.
 
 ## Decisions (one line each)
 
