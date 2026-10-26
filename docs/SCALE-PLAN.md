@@ -164,3 +164,11 @@ is healthy; otherwise the local results are the evidence and are recorded verbat
 To be completed in WP4 from what the tests actually measure. Nothing here is guessed.
 
 - _(WP4 fills this in.)_
+
+## WP1 performance budget (measured, recorded)
+
+The 500-claim fixture in `src/lib/writing/scale.test.ts` realises in **59.9 ms** (composition plus
+both hashes) and hashes in **44.6 ms** on the head commit in this sandbox. The asserted ceiling is
+10,000 ms, which carries headroom for a slow CI runner while still catching a real regression. The
+test prints the measured number so a future run can be compared. Command:
+`npx vitest run src/lib/writing/scale.test.ts --reporter=verbose`.
