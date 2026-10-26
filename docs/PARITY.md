@@ -61,6 +61,7 @@ or above its baseline.
 | 30 Phase 2 decisions D1–D12 | Present | sql `19`,`21`,`22`,`23`,`24`; `rightsMatrix.test.ts` |
 | 31 Changes from v9 | Present | reflected throughout |
 | 32 Open Items | Partial | §25.4 limit verification and Microsoft guidance are owner actions |
+| 35 Connectors and continuous monitoring | Missing (in scope since 2026-10-26) | Not built. Added by owner instruction; supersedes the F12 parking of watchers. The F7 event interface and the `watcher.signal` key exist; no connector framework, staging, monitor rules, alerts or triage. See `docs/NOT-DONE.md` and `docs/COMPLETION-DECISIONS.md` D-F12-SCOPE. |
 
 ## Partial and Missing, in one place
 

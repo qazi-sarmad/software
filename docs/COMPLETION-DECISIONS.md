@@ -1132,3 +1132,17 @@ IMPROVISE-THEN-DOCUMENT (this file).
   model". Explanatory comments are allowed only in five listed files. A detector self-test keeps it from going blind.
 - Found by it: a stale comment naming the deleted `aiGatewayHandler.ts` in `graphOauthHandler.ts`; fixed.
 - Reverse: delete the guard; not recommended.
+
+## D-F12-SCOPE — connectors and continuous monitoring are in scope; the F12 parking is superseded (2026-10-26)
+
+- Point: earlier records (`docs/NOT-DONE.md`, `docs/ACP-REPORT.md`, `docs/COMPLETION-REPORT.md`,
+  migrations 0051 and 0060, `docs/COMPLETION-EVENTS.md`) say continuous-auditing watchers are PARKED by F12.
+- Owner instruction, 2026-10-26: bring connectors and continuous-monitoring alerts into scope.
+- Choice: spec §35 added; `docs/NOT-DONE.md` and `docs/PARITY.md` updated; `docs/COMPLETION-EVENTS.md`
+  note updated. The earlier reports and migration comments are historical and are not edited; this entry
+  is the record that they are superseded. Alert rules stay deterministic (L1). Connectors only pull a
+  tenant's own data into that tenant (L2). Nothing reaches a report except through a final approved
+  observation. Adapters are fixture-tested and marked as not live-verified until credentials exist.
+- Still to change when it is built: the `watchers` feature row (parked, 0051) and SQL tests 64 and 84,
+  through a new migration and test updates, not by editing old migrations.
+- Reverse: the owner may park it again in writing; §35 and this entry then get a new dated decision.
