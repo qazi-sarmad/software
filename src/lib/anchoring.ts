@@ -77,7 +77,9 @@ export interface CryptoLike {
       extractable: boolean, keyUsages: string[]
     ): Promise<unknown>;
     sign(algorithm: { name: string } | null, key: unknown, data: Uint8Array): Promise<ArrayBuffer>;
-    verify(algorithm: { name: string } | null, key: unknown, data: Uint8Array): Promise<boolean>;
+    verify(
+      algorithm: { name: string } | null, key: unknown, signature: Uint8Array, data: Uint8Array
+    ): Promise<boolean>;
   };
 }
 

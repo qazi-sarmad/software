@@ -28,11 +28,13 @@ function subject(over: Partial<SignatureSubject> = {}): SignatureSubject {
   };
 }
 
-async function keypair(): Promise<{ priv: Uint8Array; pub: Uint8Array }> {
-  const pair = await webcrypto.subtle.generateKey({ name: 'Ed25519' }, true, ['sign', 'verify']);
-  const raw = await webcrypto.subtle.exportKey('raw', pair.publicKey);
-  const jwk = await webcrypto.subtle.exportKey('jwk', pair.privateKey);
-  return { priv: jwk as unknown as Uint8Array, pub: new Uint8Array(raw) };
+async function keypair(): Promise<{ priv: JsonWebKey; pub: Uint8Array }> {
+  const pair = (await webcrypto.subtle.generateKey(
+    { name: 'Ed25519' }, true, ['sign', 'verify']
+  )) as CryptoKeyPair;
+  const raw = (await webcrypto.subtle.exportKey('raw', pair.publicKey)) as ArrayBuffer;
+  const jwk = (await webcrypto.subtle.exportKey('jwk', pair.privateKey)) as JsonWebKey;
+  return { priv: jwk, pub: new Uint8Array(raw) };
 }
 
 describe('canonical signing input', () => {
