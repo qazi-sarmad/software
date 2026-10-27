@@ -214,7 +214,8 @@ w('  member (no `edit_config` needed). Same `share-panel` testid in `mode="grant
 w('  `share-panel-with-me`, `share-with-me-empty`, `share-with-me-<id>`.');
 w('- **Data:** `src/data/shares.ts` — `listJointShares`, `listJointSharesWithMe`, `grantJointShare`,');
 w('  `revokeJointShare`, `listAssociatedOrgs`, `listConfigDistributions`, `distributeConfig`,');
-w('  `adoptConfig`.');
+w('  `adoptConfig`, `listShareableEngagements` (an RLS-scoped `engagements` select: the listbox offers');
+w('  only the real database ids the session may share).');
 w('- **RPCs:** `joint_shares_get`, `joint_shares_with_me`, `joint_share_grant`, `joint_share_revoke`,');
 w('  `my_associated_orgs`, `group_config_distributions`, `group_distribute_config`,');
 w('  `group_adopt_config`. Tables: `engagement_joint_shares`, `org_associations`, `org_groups`,');

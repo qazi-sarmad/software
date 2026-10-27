@@ -1546,7 +1546,8 @@ These are not Appendix A ids; they are the surfaces SCALE-1 added and a redesign
   `share-panel-with-me`, `share-with-me-empty`, `share-with-me-<id>`.
 - **Data:** `src/data/shares.ts` — `listJointShares`, `listJointSharesWithMe`, `grantJointShare`,
   `revokeJointShare`, `listAssociatedOrgs`, `listConfigDistributions`, `distributeConfig`,
-  `adoptConfig`.
+  `adoptConfig`, `listShareableEngagements` (an RLS-scoped `engagements` select: the listbox offers
+  only the real database ids the session may share).
 - **RPCs:** `joint_shares_get`, `joint_shares_with_me`, `joint_share_grant`, `joint_share_revoke`,
   `my_associated_orgs`, `group_config_distributions`, `group_distribute_config`,
   `group_adopt_config`. Tables: `engagement_joint_shares`, `org_associations`, `org_groups`,
