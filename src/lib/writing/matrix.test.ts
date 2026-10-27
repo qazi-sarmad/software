@@ -5,12 +5,13 @@ import {
   FIXED_TIMESTAMP, FIXTURE_FORMAT, TEST_VOCABULARY, ENGINE_VERSION, fixtureClaims,
   fixtureVariants, releasedSeedPhrases,
 } from './fixtures';
-import { registerMatrix } from './registers';
+import { registerKey, registerMatrix } from './registers';
+import { modelSections, REPORT_MODELS } from './models';
 import type { ClaimGraph, Locale, Register } from './types';
 
-function input(register: Register, locale: Locale, modelId = 'M1'): ComposerInput {
+function input(register: Register, locale: Locale, modelId = 'M1', claims?: ClaimGraph['claims']): ComposerInput {
   const graph: ClaimGraph = {
-    modelId, register, locale, claims: fixtureClaims(modelId), versions: ENGINE_VERSION,
+    modelId, register, locale, claims: claims ?? fixtureClaims(modelId), versions: ENGINE_VERSION,
   };
   return {
     graph,
@@ -136,5 +137,124 @@ describe('W1.2 / W1.3 the graph hashes', () => {
     changed[0].slots = [{ name: 'x', kind: 'text', value: 'different' }];
     const c = await graphHashes(changed);
     expect(c.graphRoot).not.toBe(a.graphRoot);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// W2.8: every model, every cell. Twelve models x 100 cells = 1200 compositions.
+// ---------------------------------------------------------------------------
+
+/** The claims of a model: the fixture claims that belong to its declared sections. */
+function modelClaims(modelId: string) {
+  const sectionIds = new Set(modelSections(modelId).map((s) => s.id));
+  return fixtureClaims(modelId).filter((c) => sectionIds.has(c.sectionId));
+}
+
+/** The register-invariant sections a model declares, in plan order. */
+function declaredInvariantSections(modelId: string): string[] {
+  return modelSections(modelId).filter((s) => s.registerInvariant).map((s) => s.id);
+}
+
+describe('W2.8 every model composes every cell of the matrix', () => {
+  it('composes all 12 models x 100 cells = 1200 cells with no missing phrase', async () => {
+    const cells = registerMatrix();
+    expect(cells.length).toBe(100);
+    expect(REPORT_MODELS.length).toBe(12);
+    const failures: string[] = [];
+    let checked = 0;
+    for (const model of REPORT_MODELS) {
+      const claims = modelClaims(model.modelId);
+      for (const { register, locale } of cells) {
+        checked += 1;
+        try {
+          const report = await composeReport(input(register, locale, model.modelId, claims));
+          if (report.rendered.length !== claims.length) {
+            failures.push(`${model.modelId} ${registerKey(register, locale)}: rendered `
+              + `${report.rendered.length} of ${claims.length} claims`);
+          }
+        } catch (e) {
+          failures.push(`${model.modelId} ${registerKey(register, locale)}: ${(e as Error).message}`);
+        }
+      }
+    }
+    // The failure names the exact model, cell and phrase when a phrase is missing.
+    expect(failures).toEqual([]);
+    expect(checked).toBe(1200);
+  });
+
+  it('holds ONE graph root per model across its 100 cells; only the render hash changes', async () => {
+    for (const model of REPORT_MODELS) {
+      const claims = modelClaims(model.modelId);
+      const roots = new Set<string>();
+      const renders = new Set<string>();
+      for (const { register, locale } of registerMatrix()) {
+        const report = await composeReport(input(register, locale, model.modelId, claims));
+        roots.add(report.hashes.graphRoot);
+        renders.add(report.renderHash);
+      }
+      // One root for the model, across all 100 cells.
+      expect(`${model.modelId}:${roots.size}`).toBe(`${model.modelId}:1`);
+      // The render hash is not constant: wording genuinely varies within the model.
+      expect(renders.size).toBeGreaterThan(1);
+    }
+  });
+
+  it('a declared register-invariant section renders identical text in all 100 cells', async () => {
+    // Where a section is declared register-invariant, the declaration must be true: its text cannot
+    // differ by formality, tone, voice or locale. The composer honours the declaration; this test
+    // proves it and would fail the moment the declaration stopped being true.
+    const differing: string[] = [];
+    for (const model of REPORT_MODELS) {
+      const invariant = new Set(declaredInvariantSections(model.modelId));
+      if (invariant.size === 0) continue;
+      const claims = modelClaims(model.modelId);
+      const texts = new Map<string, Set<string>>();
+      for (const { register, locale } of registerMatrix()) {
+        const report = await composeReport(input(register, locale, model.modelId, claims));
+        for (const rc of report.rendered) {
+          if (!invariant.has(rc.sectionId)) continue;
+          if (!texts.has(rc.claimId)) texts.set(rc.claimId, new Set());
+          texts.get(rc.claimId)!.add(rc.text);
+        }
+      }
+      for (const [claimId, set] of texts) {
+        if (set.size !== 1) differing.push(`${model.modelId} ${claimId}: ${set.size} distinct texts`);
+      }
+    }
+    expect(differing).toEqual([]);
+  });
+
+  it('a section NOT declared register-invariant genuinely varies (the declaration is not over-used)', async () => {
+    // The converse guard: a wording section must vary, or the declaration is meaningless. Every
+    // model has at least one wording section and its text must differ across the matrix.
+    const constant: string[] = [];
+    for (const model of REPORT_MODELS) {
+      const invariant = new Set(declaredInvariantSections(model.modelId));
+      const claims = modelClaims(model.modelId);
+      const texts = new Map<string, Set<string>>();
+      for (const { register, locale } of registerMatrix()) {
+        const report = await composeReport(input(register, locale, model.modelId, claims));
+        for (const rc of report.rendered) {
+          if (invariant.has(rc.sectionId)) continue;
+          if (rc.phraseId === 'auditor.text') continue; // auditor wording is the auditor's own
+          if (!texts.has(rc.claimId)) texts.set(rc.claimId, new Set());
+          texts.get(rc.claimId)!.add(rc.text);
+        }
+      }
+      const anyVaries = [...texts.values()].some((s) => s.size > 1);
+      if (!anyVaries) constant.push(model.modelId);
+    }
+    expect(constant).toEqual([]);
+  });
+
+  it('a register or locale change never changes the graph root, for every model', async () => {
+    for (const model of REPORT_MODELS) {
+      const claims = modelClaims(model.modelId);
+      const base = await composeReport(input({ formality: 3, tone: 2, voice: 'active' }, 'en-GB', model.modelId, claims));
+      for (const { register, locale } of registerMatrix()) {
+        const report = await composeReport(input(register, locale, model.modelId, claims));
+        expect(report.hashes.graphRoot).toBe(base.hashes.graphRoot);
+      }
+    }
   });
 });

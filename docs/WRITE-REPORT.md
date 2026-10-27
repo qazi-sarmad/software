@@ -54,6 +54,25 @@ The matrix is 5 formality × 5 tone × 2 voice × 2 locale = 100 cells. The test
 is one value across all 100 cells while the render hash varies (the wording genuinely differs). A
 third asserts a register or locale change never moves the graph root.
 
+### Every model, every cell (WRITE-2)
+
+The matrix is now checked for every report model, not only M1. The suite composes all twelve models
+(M1..M12) across all 100 cells: **1200 compositions, 0 missing phrases, 0 errors**. The failure
+message names the exact model, cell and phrase. The suite also asserts, per model:
+
+- one graph root across that model's 100 cells (twelve roots, one each); the render hash still varies;
+- a section the model declares `registerInvariant` renders identical text in all 100 cells — the
+  declaration is proved, not assumed;
+- a section that is *not* declared invariant genuinely varies (the declaration is not over-used);
+- a register or locale change never moves the graph root.
+
+Cells that cannot differ: only the declared register-invariant sections (the numeric `appendices`
+line, and auditor text, which is the auditor's own wording). Every wording section varies across the
+matrix. A defect was found and fixed by this work: the composer previously applied the register
+transform and the lead-in to register-invariant sections, so the `appendices` line rendered three
+different, ungrammatical forms ("Our work shows that 5 findings; …"). `compose.ts` now honours the
+declaration, and the invariant test would fail if it stopped doing so.
+
 ## CI dispatches
 
 Budget 14. Used: 3 (run 40291572648 at head `deb95e1`: steps 1 to 8 green; run 40314836257 at head

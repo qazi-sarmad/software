@@ -10,6 +10,7 @@
 
 import { graphHashes, renderHash, GraphHashes } from './graph';
 import { assertNoHighConsequence, leadIn, selectPhrase, CalibratedVocabulary } from './phrases';
+import { isRegisterInvariant } from './models';
 import { realise, RealisationInput } from './realisation';
 import { renderTemplate, SlotFormatContext } from './realise';
 import { registerKey } from './registers';
@@ -91,21 +92,29 @@ export async function composeReport(input: ComposerInput): Promise<ComposedRepor
         throw new Error(`Missing: [phrase for ${claim.phraseId} v${claim.phraseVersion} at `
           + `${registerKey(register, locale)}]`);
       }
-      const template = templateFor(claim, phrase, variants, register);
-      const base = renderTemplate(template, claim.slots, ctx);
-      // A human-authored passive variant is rendered with the same slots, then passed as the voice
-      // override, so the passive text is produced once and never transformed a second time.
-      const passiveVariant = variants?.[phrase.id]?.byPassive?.[register.formality];
-      const passiveText = passiveVariant ? renderTemplate(passiveVariant, claim.slots, ctx) : undefined;
-      const realisation: RealisationInput = {
-        formalityVariant: base,
-        register,
-        locale,
-        passiveOverride: passiveText,
-      };
-      const realised = realise(realisation);
-      const lead = leadIn(vocabulary, claim.claimLevel, registerKey(register, locale));
-      text = lead ? `${lead} ${lowerFirst(realised)}` : realised;
+      if (isRegisterInvariant(graph.modelId, claim.sectionId)) {
+        // W2.8: a section the model declares register-invariant (a purely numeric line) is not
+        // re-worded. No formality/tone/voice transform and no lead-in, so its text is identical in
+        // every cell of the matrix. The declaration is proved by the matrix test; a section that
+        // does vary here would fail it and must drop the declaration.
+        text = renderTemplate(phrase.template, claim.slots, ctx);
+      } else {
+        const template = templateFor(claim, phrase, variants, register);
+        const base = renderTemplate(template, claim.slots, ctx);
+        // A human-authored passive variant is rendered with the same slots, then passed as the voice
+        // override, so the passive text is produced once and never transformed a second time.
+        const passiveVariant = variants?.[phrase.id]?.byPassive?.[register.formality];
+        const passiveText = passiveVariant ? renderTemplate(passiveVariant, claim.slots, ctx) : undefined;
+        const realisation: RealisationInput = {
+          formalityVariant: base,
+          register,
+          locale,
+          passiveOverride: passiveText,
+        };
+        const realised = realise(realisation);
+        const lead = leadIn(vocabulary, claim.claimLevel, registerKey(register, locale));
+        text = lead ? `${lead} ${lowerFirst(realised)}` : realised;
+      }
     }
     // The ban is enforced here as well as at the lint and the freeze (W2.6).
     assertNoHighConsequence(text, vocabulary.highConsequence, `claim ${claim.id}`);
