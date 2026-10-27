@@ -33,7 +33,7 @@ RPC catalogue at the end lists every `platform_*` and tenant-facing RPC with par
 - **Data modules:** `src/data/consultation.ts`
 - **RPCs reachable via those modules:** `consultation_active`
 - **Testids (5):** `consultation-banner`, `consultation-banner-time`, `consultation-banner-end`, `consultation-banner-dismiss`, `consultation-banner-error`
-- **States:** hidden when there is no active session or when dismissed; visible strip otherwise. Polls every 5 s as the fallback for the Realtime stream.
+- **States:** hidden when there is no active session or when dismissed; visible strip otherwise. Delivered live: a Supabase Realtime subscription on the published tables, with a 5 s poll as the documented fallback when Realtime is unavailable (`src/lib/liveSync.ts` decides the transport).
 - **Tutorial key:** `oa.dual-session`, `sa.dual-session`
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
   named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
@@ -48,6 +48,22 @@ RPC catalogue at the end lists every `platform_*` and tenant-facing RPC with par
 - **RPCs reachable via those modules:** `list_tutorials`
 - **Testids (9):** `tutorial-drawer`, `tutorial-drawer-close`, `tutorial-drawer-media`, `tutorial-drawer-missing`, `tutorial-drawer-steps`, `tutorial-drawer-copy`, `tutorial-drawer-feedback`, `tutorial-drawer-yes`, `tutorial-drawer-no`
 - **States:** media present (`tutorial-drawer-media`) or missing (`tutorial-drawer-missing`). `role="complementary"`, never a modal, never a scrim.
+- **Tutorial key:** — (no key)
+- **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
+  named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
+
+## Other
+
+### `GL-02` — in-app notifications and pop-out live sync (§17.1, §22)
+
+- **Purpose:** (a) the header bell lists the signed-in member's own in-app notifications and counts the unread ones; (b) a record opened as a same-origin pop-out (`/view/:recordType/:id`) stays in sync with the window that opened it through the shared origin storage.
+- **Route / location:** the bell sits in the header on every authenticated screen (not a route). The pop-out is the `/view/:recordType/:id` route, opened by the floating-window pop-out button.
+- **Rights required:** none beyond an authenticated session. A member sees only its own notifications; the `notifications_list` RPC and the `notifications` RLS policy bound the read to `org_id = jwt_org_id() and user_id = auth.uid()`.
+- **Data functions (`src/data/*.ts`):** `chooseTransport`, `listNotifications`, `markNotificationRead`, `pollDue`, `pollInterval`, `subscribeNotifications`, `useLiveNotifications`, `useRecordRevisionSync`
+- **Data modules:** `src/data/notifications.ts`
+- **RPCs reachable via those modules:** `notifications_list`
+- **Testids (17):** `notification-bell`, `notification-bell-count`, `notification-panel`, `notification-transport`, `notification-empty`, `notification-list`, `notification-<id>`, `notification-mark-read-<id>`, `wk-notifications`, `wk-notifications-transport`, `wk-notifications-unread`, `wk-notifications-empty`, `wk-notifications-list`, `wk-notification-<id>`, `wk-notification-mark-read-<id>`, `record-page-revision`, `record-page-refresh`
+- **States:** bell badge hidden at zero unread; the panel shows `Live` or `Polling` from the chosen transport; an empty list renders "Nothing new."; the pop-out shows its current revision and a refresh control that publishes a new revision to the parent window.
 - **Tutorial key:** — (no key)
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
   named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
@@ -523,7 +539,7 @@ RPC catalogue at the end lists every `platform_*` and tenant-facing RPC with par
 - **Data modules:** `src/data/writing.ts`
 - **RPCs reachable via those modules:** `alert_list`, `connector_egress_allowed`, `format_audience_list`, `format_list`, `phrase_list`
 - **Tables reachable via those modules:** `connector_instances`, `connector_runs`, `monitor_rules`, `phrase_reviews`, `staged_records`
-- **Testids (59):** `wk-format-loading`, `wk-format-error`, `wk-format-retry`, `wk-format-panel`, `wk-format-controls`, `wk-format-format-pick`, `wk-format-model-pick`, `wk-format-locale-pick`, `wk-format-label-input`, `wk-format-status`, `wk-format-version`, `wk-format-status-value`, `wk-format-issues`, `wk-format-published-note`, `wk-format-pane-tabs`, `wk-format-pane-<pane>`, `wk-format-blocks`, `wk-format-block-<key>`, `wk-format-block-<key>-key`, `wk-format-block-<key>-role`, `wk-format-block-<key>-register`, `wk-format-block-<key>-visible`, `wk-format-block-<key>-up`, `wk-format-block-<key>-down`, `wk-format-add-missing`, `wk-format-issue-list`, `wk-format-issue-<code>`, `wk-format-layout`, `wk-format-layout-page-size`, `wk-format-layout-marginTopMm`, `wk-format-layout-marginRightMm`, `wk-format-layout-marginBottomMm`, `wk-format-layout-marginLeftMm`, `wk-format-layout-font-heading`, `wk-format-layout-font-body`, `wk-format-layout-footer`, `wk-format-layout-tokens`, `wk-format-audiences`, `wk-format-audiences-note`, `wk-format-audiences-empty`, `wk-format-audience-<slug>`, `wk-format-audience-<slug>-view`, `wk-format-audience-<slug>-edit`, `wk-format-audiences-save`, `wk-format-versions`, `wk-format-version-<n>`, `wk-format-version-<n>-load`, `wk-format-preview`, `wk-format-preview-summary`, `wk-format-preview-blocks`, `wk-format-preview-<key>`, `wk-format-preview-hidden`, `wk-format-preview-registers`, `wk-format-save`, `wk-format-publish`, `wk-format-result`, `wk-format-readonly`, `wk-format-create-default`, `wk-format-empty`
+- **Testids (69):** `wk-format-loading`, `wk-format-error`, `wk-format-retry`, `wk-format-panel`, `wk-format-controls`, `wk-format-format-pick`, `wk-format-model-pick`, `wk-format-locale-pick`, `wk-format-label-input`, `wk-format-status`, `wk-format-version`, `wk-format-status-value`, `wk-format-issues`, `wk-format-published-note`, `wk-format-pane-tabs`, `wk-format-pane-<pane>`, `wk-format-blocks`, `wk-format-block-<key>`, `wk-format-block-<key>-key`, `wk-format-block-<key>-role`, `wk-format-block-<key>-register`, `wk-format-block-<key>-visible`, `wk-format-block-<key>-up`, `wk-format-block-<key>-down`, `wk-format-add-missing`, `wk-format-issue-list`, `wk-format-issue-<code>`, `wk-format-layout`, `wk-format-layout-page-size`, `wk-format-layout-marginTopMm`, `wk-format-layout-marginRightMm`, `wk-format-layout-marginBottomMm`, `wk-format-layout-marginLeftMm`, `wk-format-layout-font-heading`, `wk-format-layout-font-body`, `wk-format-layout-footer`, `wk-format-layout-tokens`, `wk-format-block-<key>-label`, `wk-format-contents`, `wk-format-contents-note`, `wk-format-contents-enabled`, `wk-format-contents-title`, `wk-format-contents-depth`, `wk-format-contents-title-scale`, `wk-format-contents-numbered`, `wk-format-contents-dot-leaders`, `wk-format-contents-indent`, `wk-format-audiences`, `wk-format-audiences-note`, `wk-format-audiences-empty`, `wk-format-audience-<slug>`, `wk-format-audience-<slug>-view`, `wk-format-audience-<slug>-edit`, `wk-format-audiences-save`, `wk-format-versions`, `wk-format-version-<n>`, `wk-format-version-<n>-load`, `wk-format-preview`, `wk-format-preview-summary`, `wk-format-preview-blocks`, `wk-format-preview-<key>`, `wk-format-preview-hidden`, `wk-format-preview-registers`, `wk-format-save`, `wk-format-publish`, `wk-format-result`, `wk-format-readonly`, `wk-format-create-default`, `wk-format-empty`
 - **States:** loading, error, empty, ready; an inline result line reports a saved change, a publish, or the plain refusal; the editor lists every validation issue precisely.
 - **Tutorial key:** `oa.formats`
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
@@ -831,7 +847,6 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 | `platform_whoami` | `src/data/platform.ts` | — | platform |
 | `populate_planning_suggestions` | `src/data/planning.ts` | `p_engagement_id` | tenant |
 | `population_archive_due` | `src/data/archival.ts` | `p_org_id` | tenant |
-| `preflight_acknowledge` | `src/data/preflight.ts` | `p_engagement_id`, `p_check_key`, `p_item_id`, `p_reason` | tenant |
 | `preflight_acks_get` | `src/data/preflight.ts` | `p_engagement_id` | tenant |
 | `request_change` | `src/data/changeControl.ts` | `p_engagement_id`, `p_change_class`, `p_title`, `p_payload`, `p_klass` | tenant |
 | `request_extraction` | `src/data/documents.ts` | `p_file_id` | tenant |
@@ -860,10 +875,10 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 
 ## Coverage cross-check
 
-- Appendix A screens documented: 47 (contract sections).
+- Appendix A screens documented: 48 (contract sections).
 - Tutorial keys: 80.
-- RPCs catalogued: 108.
-- Data modules: 51; exported data functions: 335.
-- Contract testids not found verbatim in `src/` (placeholder or dynamic): 152.
+- RPCs catalogued: 107.
+- Data modules: 53; exported data functions: 341.
+- Contract testids not found verbatim in `src/` (placeholder or dynamic): 161.
   - audit-file-view-builder, audit-file-view-certificate, hosting-test, invite-user, issues-view-patterns, oa-branding-colour-accent, oa-branding-colour-background, oa-branding-colour-primary, oa-branding-colour-text, oa-branding-margin-0, oa-branding-margin-3, oa-certificate-enabled-verification, oa-escalation-result, oa-escalation-saved, oa-governance-signoff-conclusion, oa-governance-signoff-planning, oa-governance-signoff-testing, org-control-tab-auditors, org-control-tab-automation, org-control-tab-branding, org-control-tab-connectors, org-control-tab-features, org-control-tab-formats, org-control-tab-governance, org-control-tab-hosting, org-control-tab-people, org-control-tab-setup, org-control-tab-tutorials, prefers-reduced-motion, sa-hosting-tab-check, sa-hosting-tab-rules, superadmin-automation-tab-rules, superadmin-automation-tab-templates, superadmin-tab-support, superadmin-tab-tenants, superadmin-tab-trail, superadmin-tab-tutorials, wk-boardpack-tab-generator, wk-connectors-alert-detail, wk-connectors-alert-detail-lineage …
 
