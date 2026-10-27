@@ -165,3 +165,43 @@ the permission. The exact body to use is `docs/SCALE-REPORT.md` on the branch.
    target (both are external-service actions; the code paths are Present).
 
 Authored by: Qazi Sarmad Ali Mahesar
+
+## SCALE-1 §2 reconciliation (2026-10-27)
+
+A later session on `feature/security-harden-v1` (which contains `feature/scale-harden-v1` as an
+ancestor) found the §2 sharing surface broken end to end and corrected the model.
+
+- **Defect.** `SharePanel` populated the grant listbox from the client-side demo seed
+  (`eng-treas-1`, `eng-…`), which is not a uuid. `joint_share_grant` therefore refused every grant
+  with `invalid input syntax for type uuid`. The Playwright `[WP6] joint audit` spec caught it.
+- **Fix.** New `listShareableEngagements()` reads the `engagements` table through the session's RLS
+  (`select id, title from engagements order by title`), so the listbox offers exactly the real
+  database ids the caller may share. `SharePanel` no longer reads `rawEngagements` from the demo
+  seed. `src/data/shares.test.ts` and `SharePanel.test.tsx` cover the new path.
+- **Model correction.** §2 is group / joint-audit sharing (edit rights to both associated parties),
+  not the earlier intra-tenant view-only `universe_shares` model. Migration `0102` removes the
+  superseded objects and restores the three read policies to their rights-only (0016) definition.
+  `docs/PARITY.md`, `docs/NOT-DONE.md` and `docs/SCALE-DECISIONS.md` (`D-S2-JOINT-AUDIT-RLS`) now
+  describe what the code actually builds.
+- **e2e honesty.** `e2e/rls.spec.ts` keeps an absolute "own org only" bound on the tables with no
+  crossing path (`org_members`, `universes`, `roles`, `user_scopes`, `orgs`) and bounds `entities`
+  to own-or-associated, because a live joint share legitimately exposes the shared engagement's
+  entity. A row from a third org is still a failure.
+
+**Gate evidence for the reconciliation (code head `babb009`, branch `feature/security-harden-v1`).**
+
+| Gate | Command | Result |
+|---|---|---|
+| tsc | `npx tsc --noEmit` | PASS |
+| vitest | `env -u VITE_SUPABASE_* -u SUPABASE_* npx vitest run` | 210 files / 2435 tests PASS |
+| build | `npx vite build` | built OK |
+| tokens | `node scripts/check-tokens.mjs` | PASS (185 files, 0 violations) |
+| shrink | `node scripts/check-shrink.mjs` | PASS (58 files) |
+| tutorials | `TUTORIALS_ALLOW_PLACEHOLDER=1 npm run check-tutorials` | PASS (76 current, 4 stale) |
+| deploy list | `node scripts/check-function-deploy-list.mjs` | PASS (7 functions) |
+| ui contract | `node scripts/check-ui-contract.mjs` | PASS (48 screens) |
+| SQL harness | `bash scripts/local-sql-harness.sh` | migrations twice, all tests twice |
+| Playwright | `npx playwright test --project=chromium` | 145 passed, 2 skipped, 0 failed |
+
+The commits are `0935610` (fix), `a9e8b9c` (rls bound), `fd10a23` (decision record),
+`babb009` (inventory) and this report. Branch `feature/scale-harden-v1` remains at `c898269`.
