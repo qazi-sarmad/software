@@ -20,6 +20,7 @@
  * migration 0091; the screen is ReportFormatPanel.
  */
 import { canonicalise, hashCanonical, normaliseText } from './canonical';
+import { DEFAULT_FONT_BODY, DEFAULT_FONT_HEADING, isAllowedFontFamily, resolveWeight } from '../render/fonts';
 import type { Formality, Locale, RhetoricalRole, Tone, Voice } from './types';
 
 /** Every rhetorical role a plan section may carry. The editor offers exactly these. */
@@ -60,15 +61,62 @@ export interface FormatLayout {
   marginRightMm: number;
   marginBottomMm: number;
   marginLeftMm: number;
-  /** A design-token name, never a hex literal (the token guard enforces this). */
+  /** A design-token name, or a curated palette value. Never a bare hex literal in a component. */
   colourPrimary: string;
   colourAccent: string;
   colourText: string;
   colourBackground: string;
   fontHeading: string;
   fontBody: string;
+  /** Body text size in points (WP-C1). The heading size is this × headingScale. */
+  fontSizePt: number;
+  /** Line height as an integer percentage of the font size (140 = 1.4). Integer, because the
+   *  canonical ledger has no floats: the scale is explicit, not implied. */
+  lineHeightPct: number;
+  /** The heading size as an integer percentage of the body size (160 = 1.6). */
+  headingScalePct: number;
+  /** Heading and body weights, chosen from the weights the font family ships (WP-C1). */
+  fontWeightHeading: number;
+  fontWeightBody: number;
   /** Whether the footer line carrying the hashes is printed. */
   showFooter: boolean;
+}
+
+/** The bounds a format's typography may take. Outside these the page stops being readable, so the
+ *  editor and the validator agree on one set of numbers (WP-C1). */
+export const TYPOGRAPHY_LIMITS = {
+  fontSizePt: { min: 8, max: 16 },
+  /** Percent. 100% = single spacing; 250% = the loosest the page allows. */
+  lineHeightPct: { min: 100, max: 250 },
+  /** Percent. 100% = a heading the same size as the body; 250% = the largest. */
+  headingScalePct: { min: 100, max: 250 },
+  fontWeight: [400, 500, 600, 700] as number[],
+} as const;
+
+/**
+ * A curated palette of pickable colours (WP-C1). The report format's four colours default to the
+ * design tokens (`brand-*`); a client may instead pick one of these values, or type a value of their
+ * own. The values live here, in a pure module, so a component never writes a colour literal — the
+ * token guard would reject one in a component. This is what makes the editor's colour picker real
+ * without weakening the "colours are data" rule.
+ */
+export const REPORT_PALETTE: { name: string; value: string }[] = [
+  { name: 'Ink', value: '#14161B' },
+  { name: 'Graphite', value: '#3A3F4A' },
+  { name: 'Slate', value: '#5F6573' },
+  { name: 'Verdigris', value: '#2F6F5E' },
+  { name: 'Deep verdigris', value: '#1F4A3E' },
+  { name: 'Cinnabar', value: '#C2410C' },
+  { name: 'Brass', value: '#C9A227' },
+  { name: 'Bone', value: '#F6F5F2' },
+  { name: 'Porcelain', value: '#EFEDE8' },
+  { name: 'Paper', value: '#FFFFFF' },
+];
+
+/** A colour is valid when it is a design token name or a hex value. */
+export function isValidColour(value: string): boolean {
+  const v = (value || '').trim();
+  return /^brand-[a-z]+$/.test(v) || /^#[0-9a-fA-F]{3}$/.test(v) || /^#[0-9a-fA-F]{6}$/.test(v);
 }
 
 /** One role that may apply a format, and whether it may edit it. Rights, never role names, gate
@@ -192,6 +240,40 @@ export function validateFormat(format: ReportFormat, scope: FormatModelScope): F
       issues.push({ code: 'bad_measure', field: `layout.${k}`, message: `${k} must be zero or more` });
     }
   }
+  // Typography bounds (WP-C1). The editor and the validator share TYPOGRAPHY_LIMITS.
+  const typo = TYPOGRAPHY_LIMITS;
+  if (typeof l.fontSizePt === 'number' && (l.fontSizePt < typo.fontSizePt.min || l.fontSizePt > typo.fontSizePt.max)) {
+    issues.push({ code: 'font_size_out_of_range', field: 'layout.fontSizePt', message: `the body size must be between ${typo.fontSizePt.min} and ${typo.fontSizePt.max} pt` });
+  }
+  if (typeof l.lineHeightPct === 'number' && (l.lineHeightPct < typo.lineHeightPct.min || l.lineHeightPct > typo.lineHeightPct.max)) {
+    issues.push({ code: 'line_height_out_of_range', field: 'layout.lineHeightPct', message: `the line height must be between ${typo.lineHeightPct.min}% and ${typo.lineHeightPct.max}%` });
+  }
+  if (typeof l.headingScalePct === 'number' && (l.headingScalePct < typo.headingScalePct.min || l.headingScalePct > typo.headingScalePct.max)) {
+    issues.push({ code: 'heading_scale_out_of_range', field: 'layout.headingScalePct', message: `the heading scale must be between ${typo.headingScalePct.min}% and ${typo.headingScalePct.max}%` });
+  }
+  for (const key of ['fontSizePt', 'lineHeightPct', 'headingScalePct'] as const) {
+    if (typeof l[key] === 'number' && !Number.isInteger(l[key])) {
+      issues.push({ code: 'non_integer_measure', field: `layout.${key}`, message: `${key} must be a whole number` });
+    }
+  }
+  for (const key of ['fontWeightHeading', 'fontWeightBody'] as const) {
+    if (typeof l[key] === 'number' && !typo.fontWeight.includes(l[key])) {
+      issues.push({ code: 'font_weight_not_available', field: `layout.${key}`, message: `${l[key]} is not one of the available weights` });
+    }
+  }
+  // A colour must be a token name or a hex value, never arbitrary text.
+  for (const key of ['colourPrimary', 'colourAccent', 'colourText', 'colourBackground'] as const) {
+    if (typeof l[key] === 'string' && !isValidColour(l[key])) {
+      issues.push({ code: 'bad_colour', field: `layout.${key}`, message: `"${l[key]}" is not a colour token or hex value` });
+    }
+  }
+  // A font must be one of the self-hosted families, so the canvas and the PDF agree and nothing is
+  // fetched from an external host (WP-F, WP-C1).
+  for (const key of ['fontHeading', 'fontBody'] as const) {
+    if (typeof l[key] === 'string' && l[key] !== '' && !isAllowedFontFamily(l[key])) {
+      issues.push({ code: 'font_not_available', field: `layout.${key}`, message: `"${l[key]}" is not one of the self-hosted fonts` });
+    }
+  }
   format.audiences.forEach((a, i) => {
     if (a.canEdit && !a.canView) {
       issues.push({ code: 'audience_contradiction', field: `audiences[${i}]`, message: `role "${a.roleSlug}" may edit but not view` });
@@ -280,8 +362,13 @@ export const DEFAULT_FORMAT_LAYOUT: FormatLayout = {
   colourAccent: 'brand-accent',
   colourText: 'brand-text',
   colourBackground: 'brand-background',
-  fontHeading: 'Helvetica',
-  fontBody: 'Helvetica',
+  fontHeading: DEFAULT_FONT_HEADING,
+  fontBody: DEFAULT_FONT_BODY,
+  fontSizePt: 11,
+  lineHeightPct: 140,
+  headingScalePct: 160,
+  fontWeightHeading: 600,
+  fontWeightBody: 400,
   showFooter: true,
 };
 
@@ -291,8 +378,41 @@ export function formatCanonicalKey(format: ReportFormat): string {
 }
 
 /**
- * The format hash used in a report's metadata: the published version's body hash. A report records
- * which format produced it, so an old report can be re-rendered from the format it was built with
+ * The resolved typography for a layout (WP-C1): the heading and body sizes, weights and line height,
+ * with the weight snapped to what the chosen family actually ships. The canvas and the PDF renderer
+ * both read this, so what the editor shows is what the document prints. Pure; no clock, no IO.
+ */
+export interface ResolvedTypography {
+  bodyPt: number;
+  headingPt: number;
+  bodyWeight: number;
+  headingWeight: number;
+  lineHeight: number;
+}
+
+export function resolveTypography(layout: FormatLayout): ResolvedTypography {
+  const bodyPt = clamp(layout.fontSizePt, TYPOGRAPHY_LIMITS.fontSizePt.min, TYPOGRAPHY_LIMITS.fontSizePt.max);
+  const scalePct = clamp(layout.headingScalePct, TYPOGRAPHY_LIMITS.headingScalePct.min, TYPOGRAPHY_LIMITS.headingScalePct.max);
+  const linePct = clamp(layout.lineHeightPct, TYPOGRAPHY_LIMITS.lineHeightPct.min, TYPOGRAPHY_LIMITS.lineHeightPct.max);
+  return {
+    bodyPt,
+    headingPt: round1(bodyPt * (scalePct / 100)),
+    bodyWeight: resolveWeight(layout.fontBody, layout.fontWeightBody),
+    headingWeight: resolveWeight(layout.fontHeading, layout.fontWeightHeading),
+    lineHeight: linePct / 100,
+  };
+}
+
+function clamp(n: number, min: number, max: number): number {
+  return Math.min(Math.max(n, min), max);
+}
+
+function round1(n: number): number {
+  return Math.round(n * 10) / 10;
+}
+
+/** The format hash used in a report's metadata: the published version's body hash. A report records
+ *  which format produced it, so an old report can be re-rendered from the format it was built with
  * (W8.2), exactly as it records its phrase and engine versions.
  */
 export async function formatHashForReport(format: ReportFormat): Promise<string> {

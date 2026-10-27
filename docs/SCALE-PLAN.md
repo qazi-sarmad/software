@@ -193,3 +193,51 @@ both hashes) and hashes in **44.6 ms** on the head commit in this sandbox. The a
 10,000 ms, which carries headroom for a slow CI runner while still catching a real regression. The
 test prints the measured number so a future run can be compared. Command:
 `npx vitest run src/lib/writing/scale.test.ts --reporter=verbose`.
+
+## Re-prioritised backlog (owner instruction 2026-10-26: Canva-like, fonts, free links)
+
+Owner asked for a Canva-like report editor, self-hosted Google Fonts, and that anything touching an
+external source be free to run. The backlog is re-sorted so the highest-visibility work lands first
+and the close-out stays last. `docs/UX-GAP-ANALYSIS.md` is the gap analysis behind this order.
+
+| # | Work package | Why here | Status |
+|---|---|---|---|
+| 0 | WP0–WP7 (SCALE-1 core) | Already committed on this branch | done |
+| 1 | **WP-F fonts** | Blocks the editor's typography control; fixes the silent font fallback app-wide | this session |
+| 2 | **WP-C1 format typography + colour model (pure)** | The data model the canvas edits; validated, hashed, tested | this session |
+| 3 | **WP-C2 live A4 canvas, drag-drop, colour pickers, undo/redo** | The Canva surface itself | this session |
+| 4 | **WP-C3 renderer honours the new fields** | The PDF/DOCX must print what the canvas shows | this session |
+| 5 | **WP-V visual upgrades** | The flat surfaces (issues, CAPs, analytics, SIRA, trail, empty states) | this session |
+| 6 | WP8 close-out | Docs, full gate set, push | last |
+
+Ordering rule: a dependency is built before what depends on it (fonts before the font picker; the
+pure model before the canvas; the canvas before the renderer wiring). Everything in WP-F, WP-C1..C3
+and WP-V is presentation only and must keep the graph-root invariant: the format and the fonts never
+change a fact, only the render hash.
+
+### WP-F: self-hosted Google Fonts, zero operational cost
+
+`@fontsource/*` packages ship the font files in the bundle. No `fonts.googleapis.com` request, no API
+key, no per-render fee, works offline and inside the tenant boundary. The UI font becomes a real
+`@font-face` instead of a name that falls back to the system font; the report font list gains the
+same families so the canvas preview and the PDF agree.
+
+### WP-C1: the format typography and colour model
+
+`FormatLayout` gains: `fontHeading`, `fontBody` (from the self-hosted set), `fontSizePt` (body),
+`headingScale`, `lineHeight`, `fontWeight`, and the four colours become pickable values while staying
+token-derived. Every new field is validated (range, allowed family) and enters the format body hash,
+so a format change is still a versioned, hashed event. Pure, unit-tested.
+
+### WP-C2: the Canva surface
+
+One screen: the block list on the left, a live A4 page on the right, updating as controls change.
+Drag-and-drop reordering with a keyboard fallback, real colour pickers, typography controls, and an
+undo/redo stack on the draft. The existing testids are preserved so the UI contract and the e2e specs
+keep passing; new testids are added for the new controls and documented in `docs/UI-INVENTORY.md`.
+
+### WP-C3: the renderer
+
+`src/lib/render/pdf.ts` consumes the new fields (it already takes a `BrandingSpec` and embedded font
+bytes), so the printed page matches the canvas. The graph root is asserted unchanged; only the render
+hash moves.

@@ -831,6 +831,8 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 | `platform_whoami` | `src/data/platform.ts` | — | platform |
 | `populate_planning_suggestions` | `src/data/planning.ts` | `p_engagement_id` | tenant |
 | `population_archive_due` | `src/data/archival.ts` | `p_org_id` | tenant |
+| `preflight_acknowledge` | `src/data/preflight.ts` | `p_engagement_id`, `p_check_key`, `p_item_id`, `p_reason` | tenant |
+| `preflight_acks_get` | `src/data/preflight.ts` | `p_engagement_id` | tenant |
 | `request_change` | `src/data/changeControl.ts` | `p_engagement_id`, `p_change_class`, `p_title`, `p_payload`, `p_klass` | tenant |
 | `request_extraction` | `src/data/documents.ts` | `p_file_id` | tenant |
 | `revert_prior_year_item` | `src/data/imports.ts` | `p_import_id` | tenant |
@@ -860,7 +862,7 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 
 - Appendix A screens documented: 47 (contract sections).
 - Tutorial keys: 80.
-- RPCs catalogued: 106.
+- RPCs catalogued: 108.
 - Data modules: 51; exported data functions: 335.
 - Contract testids not found verbatim in `src/` (placeholder or dynamic): 152.
   - audit-file-view-builder, audit-file-view-certificate, hosting-test, invite-user, issues-view-patterns, oa-branding-colour-accent, oa-branding-colour-background, oa-branding-colour-primary, oa-branding-colour-text, oa-branding-margin-0, oa-branding-margin-3, oa-certificate-enabled-verification, oa-escalation-result, oa-escalation-saved, oa-governance-signoff-conclusion, oa-governance-signoff-planning, oa-governance-signoff-testing, org-control-tab-auditors, org-control-tab-automation, org-control-tab-branding, org-control-tab-connectors, org-control-tab-features, org-control-tab-formats, org-control-tab-governance, org-control-tab-hosting, org-control-tab-people, org-control-tab-setup, org-control-tab-tutorials, prefers-reduced-motion, sa-hosting-tab-check, sa-hosting-tab-rules, superadmin-automation-tab-rules, superadmin-automation-tab-templates, superadmin-tab-support, superadmin-tab-tenants, superadmin-tab-trail, superadmin-tab-tutorials, wk-boardpack-tab-generator, wk-connectors-alert-detail, wk-connectors-alert-detail-lineage …

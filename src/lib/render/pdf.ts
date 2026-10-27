@@ -73,6 +73,29 @@ function toRgb(value: string) {
   return rgb(r, g, b);
 }
 
+/**
+ * Embed a caller-supplied font (a self-hosted WOFF2, or an org-uploaded licensed face).
+ *
+ * pdf-lib's subsetter only understands raw TrueType; a WOFF2 container throws inside fontkit. So we
+ * try the subset first (smallest bytes, the right choice for an uploaded TTF/OTF) and fall back to a
+ * full embed, which fontkit handles for WOFF2. Either way the face is embedded, so the printed page
+ * uses the font the canvas showed. If both fail, fall back to the standard font rather than fail the
+ * render: a report must always be producible.
+ */
+async function embedCustomFont(
+  pdf: PDFDocument, bytes: Uint8Array, fallback: StandardFonts,
+): Promise<PDFFont> {
+  try {
+    return await pdf.embedFont(bytes, { subset: true });
+  } catch {
+    try {
+      return await pdf.embedFont(bytes, { subset: false });
+    } catch {
+      return pdf.embedFont(fallback);
+    }
+  }
+}
+
 /** Wrap a string to a width in points, using the font's own metrics. Deterministic. */
 export function wrapText(text: string, font: PDFFont, size: number, maxWidth: number): string[] {
   const words = text.split(/\s+/).filter(Boolean);
@@ -106,12 +129,12 @@ export async function renderPdf(spec: BrandingSpec, model: PdfDocumentModel): Pr
   let heading: PDFFont;
   let body: PDFFont;
   if (model.headingFontBytes) {
-    heading = await pdf.embedFont(model.headingFontBytes, { subset: true });
+    heading = await embedCustomFont(pdf, model.headingFontBytes, StandardFonts.HelveticaBold);
   } else {
     heading = await pdf.embedFont(StandardFonts.HelveticaBold);
   }
   if (model.bodyFontBytes) {
-    body = await pdf.embedFont(model.bodyFontBytes, { subset: true });
+    body = await embedCustomFont(pdf, model.bodyFontBytes, StandardFonts.Helvetica);
   } else {
     body = await pdf.embedFont(StandardFonts.Helvetica);
   }

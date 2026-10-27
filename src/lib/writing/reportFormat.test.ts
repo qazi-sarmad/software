@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
-  DEFAULT_FORMAT_LAYOUT, applyFormat, defaultFormat, formatBodyHash, formatCanonicalKey,
-  resolvedRegisters, validateFormat, type FormatLayout, type FormatModelScope, type ReportFormat,
+  DEFAULT_FORMAT_LAYOUT, REPORT_PALETTE, TYPOGRAPHY_LIMITS, applyFormat, defaultFormat, formatBodyHash,
+  formatCanonicalKey, isValidColour, resolveTypography, resolvedRegisters, validateFormat,
+  type FormatLayout, type FormatModelScope, type ReportFormat,
 } from './reportFormat';
 
 const PLAN = [
@@ -181,5 +182,72 @@ describe('reportFormat: layout defaults use design tokens, never a hex literal',
       expect(v.startsWith('brand-')).toBe(true);
       expect(/#/.test(v)).toBe(false);
     }
+  });
+});
+
+describe('reportFormat: typography and colour model (WP-C1)', () => {
+  it('defaults to self-hosted fonts and in-range typography', () => {
+    const l = DEFAULT_FORMAT_LAYOUT;
+    expect(l.fontHeading).toBe('Source Serif 4');
+    expect(l.fontBody).toBe('Inter');
+    expect(validateFormat(makeFormat(), SCOPE)).toEqual([]);
+  });
+
+  it('rejects an out-of-range body size, line height and heading scale', () => {
+    const tooSmall = makeFormat(); tooSmall.layout = { ...DEFAULT_FORMAT_LAYOUT, fontSizePt: 4 };
+    expect(validateFormat(tooSmall, SCOPE).some((i) => i.code === 'font_size_out_of_range')).toBe(true);
+    const tooBig = makeFormat(); tooBig.layout = { ...DEFAULT_FORMAT_LAYOUT, fontSizePt: 40 };
+    expect(validateFormat(tooBig, SCOPE).some((i) => i.code === 'font_size_out_of_range')).toBe(true);
+    const tight = makeFormat(); tight.layout = { ...DEFAULT_FORMAT_LAYOUT, lineHeightPct: 50 };
+    expect(validateFormat(tight, SCOPE).some((i) => i.code === 'line_height_out_of_range')).toBe(true);
+    const flat = makeFormat(); flat.layout = { ...DEFAULT_FORMAT_LAYOUT, headingScalePct: 50 };
+    expect(validateFormat(flat, SCOPE).some((i) => i.code === 'heading_scale_out_of_range')).toBe(true);
+  });
+
+  it('rejects a weight the font cannot take and a font outside the catalogue', () => {
+    const badWeight = makeFormat(); badWeight.layout = { ...DEFAULT_FORMAT_LAYOUT, fontWeightBody: 350 };
+    expect(validateFormat(badWeight, SCOPE).some((i) => i.code === 'font_weight_not_available')).toBe(true);
+    const badFont = makeFormat(); badFont.layout = { ...DEFAULT_FORMAT_LAYOUT, fontHeading: 'Comic Sans MS' };
+    expect(validateFormat(badFont, SCOPE).some((i) => i.code === 'font_not_available')).toBe(true);
+  });
+
+  it('rejects a colour that is neither a token nor a hex value', () => {
+    const bad = makeFormat(); bad.layout = { ...DEFAULT_FORMAT_LAYOUT, colourPrimary: 'not-a-colour' };
+    expect(validateFormat(bad, SCOPE).some((i) => i.code === 'bad_colour')).toBe(true);
+    expect(isValidColour('brand-primary')).toBe(true);
+    expect(isValidColour('#2F6F5E')).toBe(true);
+    expect(isValidColour('#abc')).toBe(true);
+    expect(isValidColour('rgb(1,2,3)')).toBe(false);
+    expect(isValidColour('')).toBe(false);
+  });
+
+  it('every curated palette entry is a valid colour', () => {
+    expect(REPORT_PALETTE.length).toBeGreaterThan(5);
+    for (const p of REPORT_PALETTE) expect(isValidColour(p.value)).toBe(true);
+  });
+
+  it('resolves typography: heading is body × headingScale, weights snap to the family', () => {
+    const t = resolveTypography(DEFAULT_FORMAT_LAYOUT);
+    expect(t.bodyPt).toBe(11);
+    expect(t.headingPt).toBeCloseTo(17.6, 1);
+    expect(t.bodyWeight).toBe(400);
+    expect(t.headingWeight).toBe(600);
+    // A weight the family does not ship snaps to the nearest it does.
+    const snap = resolveTypography({ ...DEFAULT_FORMAT_LAYOUT, fontBody: 'Libre Baskerville', fontWeightBody: 700 });
+    expect(snap.bodyWeight).toBe(400);
+  });
+
+  it('clamps out-of-range values rather than producing an unreadable page', () => {
+    const t = resolveTypography({ ...DEFAULT_FORMAT_LAYOUT, fontSizePt: 99, headingScalePct: 900, lineHeightPct: 900 });
+    expect(t.bodyPt).toBe(TYPOGRAPHY_LIMITS.fontSizePt.max);
+    expect(t.lineHeight).toBe(TYPOGRAPHY_LIMITS.lineHeightPct.max / 100);
+    expect(t.headingPt).toBeLessThanOrEqual(TYPOGRAPHY_LIMITS.fontSizePt.max * (TYPOGRAPHY_LIMITS.headingScalePct.max / 100));
+  });
+
+  it('a typography change moves the format body hash (it is a real, versioned change)', async () => {
+    const a = makeFormat();
+    const b = makeFormat(); b.layout = { ...DEFAULT_FORMAT_LAYOUT, fontSizePt: 12 };
+    const body = (f: ReportFormat) => ({ ...f, audiences: f.audiences });
+    expect(await formatBodyHash(body(a))).not.toBe(await formatBodyHash(body(b)));
   });
 });

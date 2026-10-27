@@ -16,6 +16,7 @@ import {
   fixtureVariants, releasedSeedPhrases,
 } from './fixtures';
 import { DEFAULT_REGISTER } from './registers';
+import { DEFAULT_FORMAT_LAYOUT } from './reportFormat';
 import type { Claim, ClaimGraph, Register, Slot } from './types';
 
 /**
@@ -125,6 +126,40 @@ describe('WP1 large-graph realisation', () => {
     // A proof against the wrong root must fail (the tree genuinely binds the claims).
     const proof = claimProof(hashes, 0);
     expect(await verifyClaim(proof, claims[0], 'f'.repeat(64))).toBe(false);
+  });
+});
+
+/**
+ * WP-C boundary (owner condition): presentation never changes a fact. A format's layout — margins,
+ * colours, fonts, sizes, weights — must leave the graph root identical, because the root binds the
+ * claims, not the page. This sweeps the layout fields and asserts the root never moves. Only the
+ * render hash may differ (the words are unchanged; the page is not).
+ */
+describe('WP-C1 the layout never changes the graph root', () => {
+  it('sweeps every layout field and holds the graph root invariant', async () => {
+    const claims = largeGraph(60);
+    const base = inputFor(claims);
+    const baseReport = await composeReport(base);
+
+    const sweeps: Record<string, unknown>[] = [
+      { marginTopMm: 10 }, { marginLeftMm: 40 }, { marginRightMm: 5 }, { marginBottomMm: 30 },
+      { pageSize: 'Letter' },
+      { colourPrimary: '#2F6F5E' }, { colourAccent: '#C2410C' },
+      { colourText: '#14161B' }, { colourBackground: '#FFFFFF' },
+      { fontHeading: 'Lora' }, { fontBody: 'IBM Plex Sans' },
+      { fontSizePt: 13 }, { lineHeightPct: 190 }, { headingScalePct: 220 },
+      { fontWeightHeading: 700 }, { fontWeightBody: 500 },
+      { showFooter: false },
+    ];
+
+    for (const patch of sweeps) {
+      const layout = { ...DEFAULT_FORMAT_LAYOUT, ...patch } as typeof DEFAULT_FORMAT_LAYOUT;
+      const format = { ...base.format, layout } as typeof base.format;
+      const report = await composeReport({ ...base, format });
+      expect(report.hashes.graphRoot, `layout ${JSON.stringify(patch)} changed the graph root`).toBe(baseReport.hashes.graphRoot);
+      // The rendered words are also unchanged: a layout is presentation only.
+      expect(report.rendered.map((r) => r.text)).toEqual(baseReport.rendered.map((r) => r.text));
+    }
   });
 });
 
