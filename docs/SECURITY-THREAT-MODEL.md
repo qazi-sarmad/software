@@ -51,6 +51,8 @@ fails if a named control file, RPC or test disappears. This document is the sour
 | An org admin reaches `/superadmin` | The path is configurable and unlisted; `platform_security_settings.admin_path`; the portal route checks `is_platform_admin()`. |
 | A platform action is unlogged | Every `platform_*` RPC writes a reason-stamped ledger row. |
 | A stolen platform session is reused | `platform_security_settings.require_platform_mfa` forces `aal2`; `require_platform_admin()` refuses until MFA is satisfied. |
+| A second platform admin reads or changes the control plane | The console is the owner's alone: `require_platform_admin()` additionally requires the `platform_owners` row, so a non-owner admin gets the tenant-facing refusal from every platform RPC. Ownership is claimed once through `platform_owner_claim`; after that the bootstrap is closed. Sql test 108 proves both. |
+| An org member reaches the tenant with a password when the org requires a factor | `custom_access_token_hook` withholds `org_id`/`user_role` (stamping `mfa_required`) for any session below `aal2` when `org_security_settings.require_mfa` is set, so RLS shows that session nothing. Sql test 108 proves it. |
 
 ### B5 — Signed-in ↔ Anonymous
 

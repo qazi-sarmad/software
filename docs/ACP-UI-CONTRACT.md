@@ -1241,8 +1241,8 @@ The shell around every /superadmin tab: it proves the caller is a platform admin
 - **Route:** `/superadmin`.
 - **Rights:** platform admin (`is_platform_admin()`); a caller without it sees the denied state.
 - **Data:** none beyond the session check.
-- **Testids:** `superadmin-checking`, `superadmin-denied`, `superadmin-portal`, `superadmin-tabs`, `superadmin-tab-<tab>`
-- **States:** checking; denied; ready.
+- **Testids:** `superadmin-checking`, `superadmin-denied`, `superadmin-bootstrap`, `superadmin-bootstrap-reason`, `superadmin-bootstrap-claim`, `superadmin-portal`, `superadmin-tabs`, `superadmin-tab-<tab>`
+- **States:** checking; denied; bootstrap (a platform admin and no owner exists yet); ready.
 - **Tutorial key:** —
 
 
@@ -1704,3 +1704,38 @@ only the render hash moves (W1, W2.2, W4, W5, W6, W8, W12).
   `erasure-list`, `erasure-row-<id>`, `erasure-hold-<id>`, `erasure-execute-<id>`.
 - **States:** loading / error / ready / empty; each action shows an inline ok or refusal.
 - **Tutorial key:** `oa.governance`
+
+## SEC-05 — organisation multi-factor policy (0103)
+
+- **Purpose:** require a second factor for every member of the organisation. When enforcement is on,
+  the access-token hook withholds the org claims from a session that has not completed a factor, so
+  RLS shows that session no tenant data until it does.
+- **Route:** Org Admin control plane, tab `Multi-factor` (`org-control-tab-mfa`).
+- **Rights:** `edit_config` to change; read-only otherwise. The database enforces `edit_config` and a
+  reason, and writes an append-only version row.
+- **Data:** `getOrgSecurityStatus()`, `listOrgSecurityVersions()`, `setRequireMfa(required, reason)`
+  (`src/data/orgSecurity.ts`).
+- **RPCs / tables:** `org_security_status()`, `admin_set_require_mfa(p_required, p_reason)`;
+  `org_security_settings`, `org_security_versions`.
+- **Testids:** `mfa-panel`, `mfa-panel-loading`, `mfa-panel-error`, `mfa-current`, `mfa-readonly`,
+  `mfa-form`, `mfa-required`, `mfa-reason`, `mfa-save-error`, `mfa-saved`, `mfa-save`, `mfa-history`,
+  `mfa-history-empty`.
+- **States:** loading / error / ready; read-only when the caller lacks `edit_config`; empty history.
+- **Tutorial key:** `oa.governance`
+
+## SEC-06 — withheld session (0100 SSO, 0103 second factor)
+
+- **Purpose:** the screen shown when a session exists but the organisation's security policy withheld
+  its tenant claims. It either offers the second-factor challenge or tells the member to sign in
+  through the organisation's identity provider. RLS already shows such a session no tenant data.
+- **Route:** rendered by the shell in place of the workspace (and by the platform gate) when the token
+  carries `mfa_required` or `sso_required`.
+- **Rights:** none; the screen exists precisely because the session has no tenant claims.
+- **Data:** `sessionClaims()` (`src/data/client.ts`), decoded by `withheldReason()`
+  (`src/lib/claims.ts`); the MFA challenge uses `src/data/mfa.ts`.
+- **RPCs / tables:** Supabase Auth MFA (`auth.mfa.*`); none tenant-facing.
+- **Testids:** `withheld-screen`, `withheld-retry`, `withheld-signout`; the MFA path reuses
+  `mfa-challenge` and its children.
+- **States:** mfa_required (challenge) / sso_required (guidance) / busy.
+- **Tutorial key:** — (no key)
+
