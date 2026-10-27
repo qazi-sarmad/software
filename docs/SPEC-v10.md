@@ -35,9 +35,25 @@ Provio is sold as a subscription per organisation. Clients log in to their own i
 - **Hierarchy:** Tenant → Universe → Entity (approved) → Engagement.
 - An **engagement belongs to exactly one Universe.**
 - An **Entity** can be audited in many engagements over time and can be linked to many Findings.
-- **Sharing outside a Universe** is view-only. It is granted by a Level-1 or Level-2 Head, where "Level-1 Head" and "Level-2 Head" are a flag on the member record (none, 1 or 2) set by an Org Admin. A share carries in-app and email notification, an optional expiry, and is revocable by the granting Head, a higher Head or an Org Admin. The shared object is the engagement with its findings and CAPs. Sharing with another organisation (a linked organisation) is not included in this version.
-- A **tenant** is one client organisation. Each tenant's data is isolated from every other tenant's data.
-- **Platform owner:** QSCorp. The platform owner operates the platform and the platform portal but has no access to tenant business content (§24).
+- An **audit universe** is a sub-department scope inside one tenant, for example IT audit or
+  management audit. A universe never crosses a tenant boundary.
+- **Group companies.** Two tenants are *associated* when the platform owner records them as members
+  of one group, one as the group parent and the other as its member. Association is the precondition
+  for every form of cross-tenant sharing. Without an association there is no sharing, ever.
+- **A joint audit** is an engagement worked by two parties. It is rare. When a joint audit spans
+  associated (group) companies, it is shared with **edit rights to both** parties: each party reads
+  and writes the engagement and its working papers, and neither party's other data is exposed. There
+  is no other cross-tenant path. A share never exists without an association, and no engagement is
+  shared outside the group.
+- **Group configuration.** The group parent can distribute a configuration version to a member
+  tenant. A distribution is a snapshot: the member keeps its own version and its own history, and a
+  later change at the parent never silently changes the member.
+- **Sharing inside one tenant**, across that tenant's own universes, is governed by rights: a member
+  with `view_all_scopes` or a scope grant reads a universe directly, with no share row.
+- A **tenant** is one client organisation. Each tenant's data is isolated from every other tenant's
+  data. The only exception is an association plus an explicit, revocable, logged joint-audit share.
+- **Platform owner:** QSCorp. The platform owner operates the platform and the platform portal but
+  has no access to tenant business content (§24).
 
 ---
 
@@ -740,9 +756,10 @@ Phase 2 built the access layer: identity, rights, RLS, the audit team, the role 
   deterministic guided intake, not AI.
 - **The rights vocabulary returns to fourteen keys.** `use_ai_assist` is removed from the closed
   list and from every role's rights.
-- **Sharing across universes is defined.** See §2: view-only, granted by a Level-1 or Level-2 Head
-  (a flag on the member record), with in-app and email notification, an optional expiry, and
-  revocable by the granting Head, a higher Head or an Org Admin. The shared object is the engagement
-  with its findings and CAPs. Cross-organisation sharing to a linked organisation is deferred.
+- **Sharing follows the corrected §2 model.** A joint audit may span associated (group) companies
+  and is shared with edit rights to both parties; without a platform-recorded association there is no
+  sharing, ever. Sharing inside one tenant, across its own universes, is rights-driven
+  (`view_all_scopes` or a scope grant) and needs no share row. Cross-organisation sharing to an
+  unassociated organisation remains out of scope by design, not deferred.
 - **The report engine guarantees are added.** See §15.6.
 - **The tutorial count drops** with the removed screens. The owner accepts the drop.

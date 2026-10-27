@@ -74,7 +74,10 @@ language sql immutable as $$
     'support_access_log',
     -- WRITE-1 (0088). The Evidence-Bound Claim Graph tables. Appended, same reason.
     'report_templates','report_template_versions','report_claims','report_claim_versions',
-    'report_terminology','figure_functions','figure_function_versions','report_graphs'
+    'report_terminology','figure_functions','figure_function_versions','report_graphs',
+    -- SCALE-1 (0102). The group association row carries org_id and is tenant-readable, so it is
+    -- held to the same isolation, anon-refusal and platform-blind proofs as every other tenant table.
+    'org_associations'
   ]
 $$;
 
@@ -116,6 +119,9 @@ begin
       truncate notification_preferences;
       truncate automation_webhook_outbox;
       truncate automation_event_processed;
+      -- SCALE-1 (0102). org_groups has no FK to orgs (it is referenced BY org_associations), so
+      -- `truncate orgs cascade` does not reach it. The association and joint-share rows do cascade.
+      truncate org_groups cascade;
       delete from automation_rules where org_id is not null;
       delete from notification_templates where org_id is not null;
       -- S3 (F6, F13). invite_cap_events and auth_invites cascade from orgs, but the invitation email
