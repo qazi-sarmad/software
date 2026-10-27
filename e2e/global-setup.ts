@@ -234,6 +234,10 @@ export default async function globalSetup() {
   const platformId = await findOrCreateUser(sb, PLATFORM_EMAIL);
   must('setPassword ' + PLATFORM_EMAIL, await sb.auth.admin.updateUserById(platformId, { password: passwordFor(PLATFORM_EMAIL) }));
   must('platform_admins', await sb.from('platform_admins').upsert({ user_id: platformId }, { onConflict: 'user_id' }));
+  // 0103: the console is the owner's alone. The seeded platform admin claims ownership exactly as
+  // the first real operator does through the portal bootstrap, so the owner-only RPCs answer it.
+  must('platform_owners', await sb.from('platform_owners').upsert(
+    { user_id: platformId, note: 'seeded platform owner' }, { onConflict: 'user_id' }));
 
   // S9 (F13): an external auditor principal. It is NOT an org member. The access row makes the
   // access-token hook stamp user_role = 'external_auditor' and org_id, and one grant lets it read a
