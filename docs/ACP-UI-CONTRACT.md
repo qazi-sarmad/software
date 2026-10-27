@@ -192,7 +192,7 @@ under `acp.tutorial.autoplay`), so the same screen never autoplays twice. The e2
 - **Data:** `listFeatureCatalogue()`, `listTenantEntitlements(orgId)` (`src/data/entitlements.ts`).
 - **Testids:** `org-control-panel`, `org-control-denied`, `org-control-tabs`,
   `org-control-tab-features`, `org-features`, `org-features-loading`, `org-features-error`,
-  `org-features-list`, `org-feature-<key>`.
+  `org-features-list`, `org-feature-<key>`., `org-control-no-right`, `org-setup`
 - **States:** loading, error, ready. No toggle exists on this screen; it is read-only by design.
 - **Tutorial key:** `oa.features`.
 
@@ -243,7 +243,7 @@ under `acp.tutorial.autoplay`), so the same screen never autoplays twice. The e2
   `superadmin-email-display-name`, `superadmin-email-from`, `superadmin-email-secret`,
   `superadmin-email-save`, `superadmin-email-list`, `sender-<id>`, `sender-test-<id>`,
   `sender-default-<id>`, `superadmin-email-org`, `superadmin-email-tenant-empty`,
-  `superadmin-email-tenant-list`, `tenant-allow-<id>`, `tenant-deny-<id>`.
+  `superadmin-email-tenant-list`, `tenant-allow-<id>`, `tenant-deny-<id>`., `superadmin-email-saved`, `superadmin-email-connect-graph`
 - **States:** loading, error (with Retry), empty ("No platform sender is set yet. Email is queued and
   not sent."), ready.
 - **Tutorial keys:** `sa.email-resend`, `sa.email-microsoft`, `sa.email-smtp`, `sa.email-default`,
@@ -286,7 +286,7 @@ under `acp.tutorial.autoplay`), so the same screen never autoplays twice. The e2
 - **Testids:** `org-email`, `org-email-loading`, `org-email-error`, `org-email-result`,
   `org-email-saved`, `org-email-denied`, `org-email-provider`, `org-email-display-name`,
   `org-email-from`, `org-email-save`, `org-email-empty`, `org-email-list`, `org-sender-<id>`,
-  `org-sender-test-<id>`.
+  `org-sender-test-<id>`., `org-email-connect-graph`
 - **States:** loading, error (with Retry), denied (the platform sends instead), empty ("You have no
   sending address yet. Notifications are waiting, not lost."), ready.
 - **Tutorial keys:** `oa.email-resend`, `oa.email-microsoft`, `oa.email-smtp`, `oa.email-test`.
@@ -603,7 +603,7 @@ under `acp.tutorial.autoplay`), so the same screen never autoplays twice. The e2
   `wk-timetravel-handle`, `wk-timetravel-prev`, `wk-timetravel-next`, `wk-timetravel-date`,
   `wk-timetravel-now`, `wk-timetravel-compare`, `wk-timetravel-state`, `wk-timetravel-workpapers`,
   `wk-timetravel-not-recorded`, `wk-timetravel-diff`, `wk-timetravel-diff-empty`,
-  `wk-timetravel-diff-<id>`, `wk-timetravel-event-<action>`.
+  `wk-timetravel-diff-<id>`, `wk-timetravel-event-<action>`., `wk-timetravel-asof`, `wk-timetravel-seal`
 - **States:** loading; an as-of state with the banner; "Not recorded before <date>" when the entity
   kept no history; a diff region that lists added, changed and removed records. Animation respects
   `prefers-reduced-motion`.
@@ -739,6 +739,513 @@ under `acp.tutorial.autoplay`), so the same screen never autoplays twice. The e2
 
 ---
 
+---
+
+## Appendix B — the core audit workspace, auth and chrome
+
+The Appendix A ids above cover the Super Admin, Org Admin, Board Pack, Certificate and External auditor
+surfaces. Appendix B documents the screens those ids never covered: the core audit workspace built in
+Phases 3 onward (Dashboard, Work Queue, Audit Universe, Audit Plan, SIRA, the Audit File and its views,
+the Issues & CAP Register), the auth screens, the shared chrome, and the admin/Super Admin panels added
+by SCALE-1 (cross-universe sharing, guided provisioning, activity/export, import, org settings).
+They follow the same rules as Appendix A: every interactive element carries
+data-testid="<screenId>-<element>", data comes through src/data/*.ts, and no screen is a blocking modal.
+
+## DB-01 — Executive Dashboard (S1)
+
+The landing tab: portfolio tiles (engagements, CAPs, findings, seals), a CAP radial tracker, the CAP table, the engagement Gantt and the Board Pack block, all scoped to the session's universes.
+
+- **Route:** Tab `executive` (nav strip "Dashboard"). Not a route.
+- **Rights:** any signed-in member; each tile degrades to its empty state when the scope holds no records.
+- **Data:** `AlertCircle`, `CheckCircle2`, `ChevronRight`, `Clock`, `ExternalLink`, `ShieldCheck`, `X`, `motion`, `updatePlanItemDates` — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `gantt-approve-shift`, `gantt-shift-error`
+- **States:** loading (skeleton tiles); empty (no engagements in scope); ready; the Board Pack block carries its own loading/empty/error states.
+- **Tutorial key:** oa.boardpack-use (the Board Pack block)
+
+## WQ-01 — Work Queue (S1)
+
+The user-specific queue: my workpapers, what awaits my sign-off, what awaits my approval and (for a manager) the team's open work, built by the pure `src/lib/workQueue.ts` module.
+
+- **Route:** Tab `pending` (nav strip "Work Queue").
+- **Rights:** any signed-in member; each section is filtered by the caller's rights.
+- **Data:** none (pure/UI only) — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `pending-comments`, `tab-pending`
+- **States:** loading; empty per section ("Nothing awaiting you"); ready; error inline.
+- **Tutorial key:** —
+
+## AU-01 — Audit Universe (S1)
+
+The universe and entity heatmap (spec §6): every entity card shows its approval status and opens the entity-approval inspector.
+
+- **Route:** Tab `universe` (nav strip "Audit Universe").
+- **Rights:** any member reads; `edit_config` to add an entity.
+- **Data:** `Activity`, `AlertTriangle`, `ArrowRight`, `EntityRow`, `Layers` — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `add-entity-form`, `add-entity-open`, `db-entities`
+- **States:** loading; empty (no universes/entities); ready; denied on the add form without `edit_config`.
+- **Tutorial key:** —
+
+## AU-02 — Entity approval inspector (S1)
+
+Submit an entity for approval, approve or reject it, and read its append-only approval history; the decision is re-checked in the database.
+
+- **Route:** The `entity_approval` inspector window, opened from an entity card.
+- **Rights:** `perform_work` to submit; `manage_engagements`/`approve_plan`/`review_and_approve` to decide.
+- **Data:** `EntityHistoryEntry`, `EntityRow`, `entityHistory`, `submitEntity` — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `entity-approval`, `entity-approval-error`, `entity-approve`, `entity-check-status`, `entity-history`, `entity-history-empty`, `entity-history-loading`, `entity-pending-waiting`, `entity-reject`, `entity-status`, `entity-submit`
+- **States:** loading; waiting (`entity-pending-waiting`); ready; history loading/empty; error inline.
+- **Tutorial key:** —
+
+## AP-01 — Audit Plan (S1)
+
+The plan register for a universe: items, versions, gate outcomes, and the entry points to the planning panel, the plan-items inspector, the combined-approval inspector and the ethics sign-off.
+
+- **Route:** Tab `plan` (nav strip "Audit Plan").
+- **Rights:** any member reads; the open buttons appear only with the matching right.
+- **Data:** `DeploymentRequestRow`, `GateOutcomeRow`, `PlanItemRow`, `PlanVersionRow`, `latestPlanForUniverse`, `listGateOutcomes`, `listPlanItems`, `planHistory` — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `engagement-signoff`, `plan-action-error`, `plan-open-combined`, `plan-open-ethics`, `plan-open-gate`, `plan-open-items`, `plan-records`, `plan-records-error`, `plan-records-gates`, `plan-records-items`, `plan-records-versions`
+- **States:** loading; empty; ready.
+- **Tutorial key:** —
+
+## AP-02 — Plan items inspector (S1)
+
+Add a plan item with a justification, see each item's approval status, and read the plan version history.
+
+- **Route:** The `plan_items` inspector window.
+- **Rights:** `manage_engagements` to add; `approve_plan` to approve an ad-hoc item.
+- **Data:** none (pure/UI only) — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `plan-add`, `plan-add-button`, `plan-item-list`, `plan-items`, `plan-items-empty`, `plan-justification-hint`, `plan-versions`, `plan-versions-empty`
+- **States:** loading; empty (`plan-items-empty`, `plan-versions-empty`); ready.
+- **Tutorial key:** —
+
+## AP-03 — Combined approval inspector (S1)
+
+Raise a combined deployment request across an entity's engagements, decide it, and see the SLA and escalation state.
+
+- **Route:** The `combined_approval` inspector window.
+- **Rights:** `perform_work` to raise; `approve_plan` to decide.
+- **Data:** `requestCombinedDeployment` — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `combined-approval`, `combined-approval-error`, `combined-approve`, `combined-decide-reason`, `combined-entity-empty`, `combined-entity-picker`, `combined-escalated`, `combined-escalated-next`, `combined-next-action`, `combined-raise`, `combined-raised`, `combined-reject`, `combined-request`, `combined-sla`, `combined-status`
+- **States:** loading; empty entity picker; ready; escalated banner; error inline.
+- **Tutorial key:** —
+
+## AP-04 — Planning panel (S1)
+
+The planning phase of an engagement: deterministic suggestions, accept/reject each, the reconciliation check, discrepancy acknowledgement with a reason, and the planning sign-off.
+
+- **Route:** The planning view inside the Audit File window.
+- **Rights:** `review_and_approve` to sign off; a caller without it sees the refusal.
+- **Data:** `PlanningSuggestion`, `ReconciliationDetail`, `acknowledgeDiscrepancy`, `checkReconciliation`, `decideSuggestion`, `isPlanningSignedOff`, `reconciliationDetail`, `signPlanning` — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `planning-ack`, `planning-ack-reason`, `planning-error`, `planning-go-sira`, `planning-import-rcm`, `planning-loading`, `planning-mismatch`, `planning-mismatch-item`, `planning-panel`, `planning-reconciliation`, `planning-signed-off`, `planning-signoff`, `planning-signoff-reason`, `planning-suggestions-empty`
+- **States:** loading; suggestions empty; mismatch list; signed-off; error inline.
+- **Tutorial key:** —
+
+## AP-05 — Prior-year import inspector (S1)
+
+Bring last year's findings forward: confirm or revert each unconfirmed prior-year item, each with its own status.
+
+- **Route:** The `import_wizard`/prior-year inspector window.
+- **Rights:** `manage_engagements`.
+- **Data:** `PriorYearImportRow`, `PriorYearItemType`, `importPriorYearItem`, `listPriorYearImports`, `revertPriorYearItem`, `unconfirmedPriorYearImports` — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `prior-year-controls`, `prior-year-empty`, `prior-year-error`, `prior-year-import`, `prior-year-loading`, `prior-year-panel`, `prior-year-unconfirmed`
+- **States:** loading; empty; unconfirmed list; ready.
+- **Tutorial key:** —
+
+## SR-01 — SIRA (S1)
+
+The Strategic Internal Risk Assessment (spec §7): the risk table, the persisted model/cycles/plan snapshot, and the entry points to the model editor and cycle inspector.
+
+- **Route:** Tab `sira` (nav strip "SIRA").
+- **Rights:** any member reads; the open buttons gate on the matching right.
+- **Data:** `PlanRow`, `PlanVersionRow`, `SiraCycle`, `SiraEmergentRisk`, `SiraModel`, `latestPlanForUniverse`, `listEmergentRisks`, `planHistory`, `siraModelSnapshot` — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `sira-load-error`, `sira-open-cycles`, `sira-open-model`, `sira-persisted`, `sira-persisted-cycles`, `sira-persisted-model`, `sira-persisted-plan`, `sira-table`, `tab-sira`
+- **States:** loading; empty; persisted/not-persisted banner; ready.
+- **Tutorial key:** —
+
+## SR-02 — SIRA model editor (S1)
+
+Edit the SIRA model: aggregation, factors and bands; a locked model is read-only.
+
+- **Route:** The `sira_model` inspector window.
+- **Rights:** `edit_config`.
+- **Data:** none (pure/UI only) — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `sira-aggregation`, `sira-bands`, `sira-factors`, `sira-model`, `sira-model-empty`, `sira-model-locked`, `sira-model-version`
+- **States:** loading; empty (`sira-model-empty`); locked (`sira-model-locked`); ready.
+- **Tutorial key:** —
+
+## SR-03 — SIRA cycles inspector (S1)
+
+Create a SIRA cycle, record scores, publish the cycle, and decide emergent risks with a reason.
+
+- **Route:** The `sira_cycles` inspector window.
+- **Rights:** `manage_engagements` to create/publish; `review_and_approve` to decide an emergent risk.
+- **Data:** none (pure/UI only) — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `emergent-empty`, `emergent-risks`, `sira-create-cycle`, `sira-cycle-panel`, `sira-cycles`, `sira-cycles-empty`
+- **States:** loading; empty (`sira-cycles-empty`, `emergent-empty`); ready.
+- **Tutorial key:** —
+
+## AF-01 — Audit File window (S1)
+
+The engagement workspace: a floating, non-modal window whose view switch opens Planning, Execution, Review, Population, Sampling, Row testing, Conclusion, Ethics, Findings, Documents, the Deployment gate, the Analyst engine, the Certificate, the Report editor, the Report builder, the CAPs and the Time-Travel/As-of view.
+
+- **Route:** The `audit_file` floating window, opened from an engagement card; the tab is `audit_file`.
+- **Rights:** any member reads; each view gates on its own right and shows the refusal otherwise.
+- **Data:** none (pure/UI only) — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `audit-file`, `audit-file-as-of`, `audit-file-builder`, `audit-file-caps`, `audit-file-certificate`, `audit-file-conclusion`, `audit-file-documents`, `audit-file-export`, `audit-file-findings`, `audit-file-report`, `audit-file-stage`, `audit-file-unavailable`, `audit-file-workspace`, `tab-audit-file`, `workbench-action-error`, `workbench-signoff`
+- **States:** loading; unavailable (`audit-file-unavailable`); ready; per-view empty states.
+- **Tutorial key:** —
+
+## AF-02 — Audit File — Planning view (S1)
+
+The planning view: the RCM rows, SIRA coverage and any coverage gap.
+
+- **Route:** Audit File window, view "Planning" (`audit-file-view-planning`).
+- **Rights:** any member reads.
+- **Data:** none (pure/UI only) — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `audit-file-planning`, `planning-coverage-summary`, `planning-empty`, `planning-no-entity`, `planning-sira`
+- **States:** loading; no-entity (`planning-no-entity`); empty; ready.
+- **Tutorial key:** —
+
+## AF-03 — Audit File — Execution view (S1)
+
+The execution view: workpaper rows and their status.
+
+- **Route:** Audit File window, view "Execution" (`audit-file-view-execution`).
+- **Rights:** any member reads.
+- **Data:** none (pure/UI only) — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `audit-file-execution`, `execution-empty`
+- **States:** loading; empty (`execution-empty`); ready.
+- **Tutorial key:** —
+
+## AF-04 — Audit File — Review view (S1)
+
+The review view: the sign-off gate count, the signed-off note, the sign-off reason, the report-pack placeholder and the change-control panel.
+
+- **Route:** Audit File window, view "Review" (`audit-file-view-review`).
+- **Rights:** `review_and_approve`.
+- **Data:** none (pure/UI only) — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `audit-file-review`, `gate-count`, `report-pack-placeholder`, `signed-off-note`, `signoff-button`, `signoff-error`, `signoff-reason`, `wk-changes`
+- **States:** loading; ready; the change-control panel carries its own states.
+- **Tutorial key:** —
+
+## AF-05 — Population panel (S1)
+
+Register a population file, show its SHA-256 hash, and lock the population (hold-to-confirm); a locked population is immutable.
+
+- **Route:** Audit File window, view "Population" (`audit-file-view-population`).
+- **Rights:** `perform_work`.
+- **Data:** `PopulationRow`, `lockPopulation`, `registerPopulation`, `sha256Hex` — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `population-browse`, `population-dropzone`, `population-empty`, `population-error`, `population-file-input`, `population-hash`, `population-loading`, `population-panel`, `population-register`, `population-gate`, `population-status`, `control-total`, `population-errors`, `gate-message`, `finalize-test`
+- **States:** loading; empty; hashed; locked; error inline.
+- **Tutorial key:** —
+
+## AF-06 — Sampling panel (S1)
+
+Compute a deterministic sample (seed preview, mode, floor), paste an id list, and lock the sample; a locked sample is read-only.
+
+- **Route:** Audit File window, view "Sampling" (`audit-file-view-sampling`).
+- **Rights:** `perform_work`.
+- **Data:** `SampleMode`, `SampleRow`, `SamplingRuleRow`, `computeSample`, `getSample`, `getSampleSize`, `lockSample` — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `sampling-compute`, `sampling-current`, `sampling-error`, `sampling-floor`, `sampling-loading`, `sampling-lock`, `sampling-locked`, `sampling-panel`, `sampling-paste`, `sampling-paste-count`, `sampling-rules-empty`, `sampling-seed-preview`
+- **States:** loading; no rules (`sampling-rules-empty`); computed; locked (`sampling-locked`); error inline.
+- **Tutorial key:** —
+
+## AF-07 — Row testing panel (S1)
+
+Record each sampled row's result and rationale, mark an exception, sign off the workpaper with a reason, and reopen it.
+
+- **Route:** Audit File window, view "Row testing" (`audit-file-view-rowtesting`).
+- **Rights:** `perform_work` to record; `review_and_approve` to sign off; `can_reopen` to reopen.
+- **Data:** `RowResult`, `WorkpaperRowRow`, `getWorkpaper`, `recordRow`, `reopenWorkpaper`, `signOffWorkpaper` — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `rowtesting-empty`, `rowtesting-error`, `rowtesting-justification`, `rowtesting-loading`, `rowtesting-panel`, `rowtesting-preflight`, `rowtesting-reopen`, `rowtesting-signed-off`, `rowtesting-signoff`, `rowtesting-signoff-reason`
+- **States:** loading; empty; signed-off; preflight note; error inline.
+- **Tutorial key:** —
+
+## AF-08 — Conclusion panel (S1)
+
+Pull the testing exceptions, read the pulled-at stamp and the pre-flight state, and sign the conclusion (hold-to-confirm) with a reason; a locked conclusion is immutable.
+
+- **Route:** Audit File window, view "Conclusion" (`audit-file-view-conclusion`).
+- **Rights:** `review_and_approve`.
+- **Data:** `ConclusionRecord`, `pullExceptions`, `signConclusion`, `testingSignedOff` — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `conclusion-error`, `conclusion-exceptions`, `conclusion-exceptions-empty`, `conclusion-loading`, `conclusion-locked`, `conclusion-panel`, `conclusion-preflight`, `conclusion-pull`, `conclusion-pulled-at`, `conclusion-sign`, `conclusion-sign-reason`
+- **States:** loading; exceptions empty; locked; error inline.
+- **Tutorial key:** —
+
+## AF-09 — Ethics panel (S1)
+
+The ethics independence declaration: every listed member acknowledges; the panel shows who is still pending.
+
+- **Route:** Audit File window, view "Ethics" (`audit-file-view-ethics`); also the `ethics` inspector.
+- **Rights:** `perform_work` to acknowledge.
+- **Data:** `ethicsStatus` — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `ethics-empty`, `ethics-error`, `ethics-members`, `ethics-panel`
+- **States:** loading; empty; pending members; ready.
+- **Tutorial key:** —
+
+## AF-10 — Findings panel (S1)
+
+Turn observations into findings: create an observation, promote it to a finding, and raise an issue; the severity legend is shown.
+
+- **Route:** Audit File window, views "Findings"/"Documents" (`audit-file-view-findings`, `audit-file-view-documents`).
+- **Rights:** `perform_work`.
+- **Data:** `IssueRow`, `MANDATORY_SECTIONS`, `ObservationRow`, `SeverityLevelRow`, `createIssue`, `listIssues`, `listSeverityLevels`, `missingReadabilitySections`, `promoteToFinding` — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `findings-empty`, `findings-error`, `findings-loading`, `findings-panel`, `issue-create`, `issue-title`, `issues-empty`, `severity-legend`
+- **States:** loading; empty (`issues-empty`); ready; error inline.
+- **Tutorial key:** —
+
+## AF-11 — Document viewer (S1)
+
+Search the engagement's evidence documents, extract text on request, and read the extraction hits.
+
+- **Route:** Audit File window, view "Documents" (`audit-file-view-documents`).
+- **Rights:** any member reads.
+- **Data:** `DocumentHit`, `DocumentStage`, `EvidenceFileRow`, `isDocumentStage`, `listEvidenceFiles`, `requestExtraction`, `searchDocuments` — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `document-empty`, `document-error`, `document-list`, `document-list-empty`, `document-list-toggle`, `document-loading`, `document-results`, `document-search`, `document-viewer`
+- **States:** loading; empty; search results; error inline.
+- **Tutorial key:** —
+
+## AF-12 — Deployment gate (S1)
+
+Run the deployment gate for an engagement: the ordered steps, each outcome, the required right, and the next action.
+
+- **Route:** The `deployment_gate` inspector window.
+- **Rights:** `manage_engagements`.
+- **Data:** `GateResult` — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `deployment-gate`, `deployment-gate-empty`, `deployment-gate-run`, `gate-deploy`, `gate-deploy-error`, `gate-go-plan`, `gate-go-universe`, `gate-next-action`, `gate-open-combined`, `gate-outcome`, `gate-required-right`, `gate-step`, `gate-view-engagement`
+- **States:** loading; empty (`deployment-gate-empty`); running; outcome; error inline.
+- **Tutorial key:** —
+
+## AF-13 — Analyst engine (S1)
+
+Run the deterministic analytics checks over the population and raise a finding from a result.
+
+- **Route:** The `analytics` inspector window.
+- **Rights:** `perform_work`.
+- **Data:** `AnalysisResultRow`, `raiseFinding` — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `analyst-empty`, `analyst-error`, `analyst-loading`, `analyst-panel`
+- **States:** loading; empty (`analyst-empty`); result per check; error inline.
+- **Tutorial key:** —
+
+## AF-14 — Report editor (S1)
+
+Compose the engagement report from its sections and blocks, comment on a block, incorporate or reject each comment, read the central pre-flight (comments, CAPs, acknowledgements), acknowledge a blocker with a reason, freeze the report and render the PDF/DOCX files.
+
+- **Route:** Audit File window, view "Report" (`audit-file-view-report`).
+- **Rights:** `perform_work` to compose/comment; `approve_plan` to freeze.
+- **Data:** `CapRow`, `ReportBlockRow`, `ReportCommentRow`, `ReportVersionRow`, `StoredReportFiles`, `acknowledgePreflight`, `addReportComment`, `checkCapReconciliation`, `freezeReport`, `getActiveReportLayout`, `issueReport`, `listCaps`, `listPreflightAcknowledgements`, `listReportBlocks`, `listReportComments`, `listReportVersions`, `openReportCommentCount`, `renderAndStoreReportFiles`, `resolveReportComment` — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `report-caps-note`, `report-comment-add`, `report-comment-input`, `report-comments`, `report-comments-empty`, `report-compose`, `report-editor`, `report-empty`, `report-error`, `report-file-docx`, `report-file-pdf`, `report-files`, `report-freeze`, `report-freeze-blocked`, `report-freeze-panel`, `report-issue`, `report-loading`, `report-notice`, `report-open-comments`, `report-placeholder-count`, `report-preflight-ack-check`, `report-preflight-ack-form`, `report-preflight-ack-item`, `report-preflight-ack-reason`, `report-preflight-ack-submit`, `report-preflight-acks`, `report-preflight-caps`, `report-preflight-comments`, `report-rights-note`, `report-section-empty`, `report-versions`
+- **States:** loading; empty; comments; pre-flight; freeze blocked; frozen; error inline.
+- **Tutorial key:** —
+
+## IR-01 — Issues & CAP Register (S1)
+
+The issue register: the heat matrix (severity by age, by department), the CAP register section, and the view switch to Patterns.
+
+- **Route:** Tab `issues` (nav strip "Issues & CAP Register"); views via `issues-view-<view>`.
+- **Rights:** any member reads; patterns configuration needs `edit_config`.
+- **Data:** none (pure/UI only) — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `cap-engagement-picker`, `cap-no-engagement`, `issues-cap-register-section`
+- **States:** loading; empty; ready; per-view states.
+- **Tutorial key:** oa.patterns-config (the Patterns view)
+
+## IR-02 — CAP register panel (S1)
+
+Read every corrective action for an engagement: its status, the action to transition it, the evidence attachment and the reconciliation check.
+
+- **Route:** Inside the Issues & CAP Register, the CAP register section (`issues-cap-register-section`).
+- **Rights:** `perform_work` to act; `review_and_approve` to close.
+- **Data:** `CapRow`, `CapStatus`, `closeCap`, `updateCap` — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `cap-empty`, `cap-error`, `cap-loading`, `cap-register`
+- **States:** loading; empty; no-engagement picker; ready; error inline.
+- **Tutorial key:** —
+
+## IR-03 — Finding drilldown (S1)
+
+The full finding: severity, title, entity, and the links back to the department, the audit and the workpaper.
+
+- **Route:** The `finding` inspector window.
+- **Rights:** any member reads.
+- **Data:** `FindingDetailRow`, `getFindingDetail` — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `finding-drilldown`, `finding-drilldown-entity`, `finding-drilldown-error`, `finding-drilldown-loading`, `finding-drilldown-severity`, `finding-drilldown-title`, `finding-drilldown-unavailable`
+- **States:** loading; unavailable; ready.
+- **Tutorial key:** —
+
+## IR-04 — Observation drilldown (S1)
+
+The observation drill-down: the department, the audit and the workpaper behind it.
+
+- **Route:** The `observation` inspector window.
+- **Rights:** any member reads.
+- **Data:** none (pure/UI only) — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `finding-audit`, `finding-department`, `finding-workpaper`, `observation-form-error`
+- **States:** loading; ready.
+- **Tutorial key:** —
+
+## IR-05 — CAP inspector (S1)
+
+Inspect a single CAP: attach evidence and edit it, with the form error surfaced inline.
+
+- **Route:** The `cap_inspector` inspector window.
+- **Rights:** `perform_work`.
+- **Data:** none (pure/UI only) — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `cap-confirm-close`, `cap-evidence-file`, `cap-form-error`
+- **States:** ready; form error.
+- **Tutorial key:** —
+
+## AX-01 — Sign-in screen (S1)
+
+The single sign-in form for every audience; a session with no org lands on the no-tenant screen instead.
+
+- **Route:** The unauthenticated shell (any route with no session).
+- **Rights:** none (unauthenticated).
+- **Data:** none (pure/UI only) — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `signin-error`, `signin-form`, `signin-screen`
+- **States:** ready; submitting; error inline.
+- **Tutorial key:** —
+
+## AX-02 — No-tenant screen (S1)
+
+Shown to a signed-in account that belongs to no organisation: it explains the state and offers a refresh.
+
+- **Route:** The authenticated shell when the session has no org.
+- **Rights:** any signed-in account with no org.
+- **Data:** none (pure/UI only) — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `no-tenant-refresh`, `no-tenant-screen`
+- **States:** ready; refreshing.
+- **Tutorial key:** —
+
+## CH-01 — Navigation strip (S1)
+
+The primary tab bar: Dashboard, Work Queue, Audit Universe, Audit Plan, SIRA, Audit Files, Issues & CAP Register; tabs are reorderable and collapse to icons at narrow widths.
+
+- **Route:** Rendered on every authenticated screen below the header.
+- **Rights:** each tab is shown only when the session has the right for it.
+- **Data:** none (pure/UI only) — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `nav-draggable-pill`, `nav-strip-track`
+- **States:** ready; tabs filtered by rights.
+- **Tutorial key:** —
+
+## CH-02 — Header bar (S1)
+
+The header: the compact search that opens the command palette, the profile menu (activity log, import, org control, people admin, shared with me), the notification bell, the calendar and the universe switcher.
+
+- **Route:** Rendered on every authenticated screen.
+- **Rights:** menu entries appear only with the matching right.
+- **Data:** none (pure/UI only) — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `header-search-compact`, `menu-activity-log`, `menu-import`, `menu-org-control`, `menu-people-admin`, `menu-shared-with-me`, `mobile-universe-switcher`
+- **States:** ready; menu closed/open; badge hidden at zero unread.
+- **Tutorial key:** —
+
+## CH-03 — Command palette (S1)
+
+The keyboard palette for jumping to a screen or a record.
+
+- **Route:** A non-blocking overlay opened from the header search.
+- **Rights:** any signed-in member.
+- **Data:** none (pure/UI only) — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `command-palette`
+- **States:** hidden; open with results; no results.
+- **Tutorial key:** —
+
+## CH-04 — Floating windows and dock (S1)
+
+The non-modal record window (drag, resize, pop out, dock) that hosts every inspector; the dock lists minimised windows.
+
+- **Route:** Rendered above the shell; a pop-out uses the `/view/:recordType/:id` route.
+- **Rights:** the hosted inspector enforces its own right.
+- **Data:** none (pure/UI only) — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `floating-window-dock`
+- **States:** open; docked; popped out; revision/refresh indicators.
+- **Tutorial key:** —
+
+## CH-05 — Presentation primitives (S1)
+
+The shared presentation primitives: the hover preview popover, the hold-to-confirm control, the inline error and the labelled select.
+
+- **Route:** Not a screen; used inside many screens.
+- **Rights:** inherited from the host screen.
+- **Data:** none (pure/UI only) — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `hover-preview-popover`, `hover-preview-trigger`
+- **States:** trigger; popover shown.
+- **Tutorial key:** —
+
+## CH-06 — Calendar (S1)
+
+The audit calendar: the day detail panel opened from the header calendar.
+
+- **Route:** The header calendar panel (not a tab).
+- **Rights:** any member reads.
+- **Data:** none (pure/UI only) — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `calendar-day-detail`
+- **States:** loading; day detail; empty.
+- **Tutorial key:** —
+
+## OA-25 — Cross-universe view-only sharing (SCALE-1, §2)
+
+Grant, view and revoke an intra-organisation, view-only share of a universe to a same-tenant member, and (in grantee mode) read the universes shared with me.
+
+- **Route:** The Assurance control plane (`org_control` inspector), tab `sharing`; the grantee view is the `shared_with_me` inspector from `menu-shared-with-me`.
+- **Rights:** `edit_config` (or a Level-1/Level-2 Head) to grant; any member to read what is shared with them.
+- **Data:** `MemberRow`, `ShareRow`, `ShareWithMeRow`, `SharedUniverseView`, `UniverseRow`, `grantShare`, `listMembers`, `listShares`, `listSharesWithMe`, `listUniverses`, `revokeShare`, `setHeadLevel`, `viewSharedUniverse` — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `share-grant-expiry`, `share-grant-grantee`, `share-grant-submit`, `share-grant-universe`, `share-granted-empty`, `share-panel`, `share-panel-error`, `share-panel-grant`, `share-panel-granted`, `share-panel-loading`, `share-panel-result`, `share-panel-retry`, `share-panel-view`, `share-panel-with-me`, `share-view-engagements`, `share-view-entities`, `share-view-not-live`, `share-with-me-empty`
+- **States:** loading; empty (`share-granted-empty`, `share-with-me-empty`); ready; result; not-live (`share-view-not-live`); error with retry.
+- **Tutorial key:** —
+
+## OA-26 — Activity log and export (S1)
+
+Read and filter the activity log, run an archive by period, and export a record set (with the export confirmation hash and the export history).
+
+- **Route:** The `activity_log` inspector window and the export panel.
+- **Rights:** `manage_engagements`/`perform_work`; the export panel refuses without the right.
+- **Data:** `ActivityLogRow`, `ArchiveJobRow`, `ExportFormat`, `ExportLogRow`, `exportActivityLog`, `exportCapRegister`, `exportEngagementBundle`, `exportFullTenant`, `exportLedger`, `exportSiraResults`, `exportWorkpaper`, `listActivityLog`, `listArchiveJobs`, `listExports`, `logExport` — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `activity-archive`, `activity-archived-notice`, `activity-empty`, `activity-error`, `activity-export`, `activity-filter`, `activity-filters`, `activity-loading`, `activity-log-panel`, `activity-since`, `activity-table`, `activity-until`, `archive-jobs`, `archive-jobs-empty`, `export-confirmation`, `export-confirmation-hash`, `export-controls`, `export-denied`, `export-error`, `export-history`, `export-history-empty`, `export-history-loading`, `export-no-right`, `export-panel`, `export-run`
+- **States:** loading; empty; table; export confirmation; history loading/empty; no-right.
+- **Tutorial key:** —
+
+## OA-27 — Import wizard (S1)
+
+Import a workpaper source (upload, choose file, DOCX tables), map it, validate it, preview the valid/invalid counts, and commit it; the job history is listed.
+
+- **Route:** The `import_wizard` inspector window.
+- **Rights:** `manage_engagements`; a caller without it sees `import-no-right`.
+- **Data:** `ImportJobRow`, `ImportType`, `ImportValidation`, `listImportJobs`, `startImport`, `validateImport` — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `import-choose-file`, `import-commit`, `import-confirm`, `import-denied`, `import-docx-tables`, `import-done`, `import-error`, `import-errors`, `import-file-input`, `import-history`, `import-history-empty`, `import-invalid-count`, `import-mapping`, `import-no-right`, `import-preview`, `import-steps`, `import-upload`, `import-valid-count`, `import-validate`, `import-wizard`
+- **States:** no-right; upload; mapping; validated; preview; done; history loading/empty.
+- **Tutorial key:** —
+
+## OA-28 — Org settings inspector (S1)
+
+The organisation settings inspector: sampling, severity levels and email provider tabs.
+
+- **Route:** The `org_settings` inspector window, from the profile menu.
+- **Rights:** `edit_config`; a caller without it sees `org-settings-no-right`.
+- **Data:** `EMAIL_PROVIDERS`, `EmailSettingsRow`, `SEVERITY_COLOR_TOKENS`, `SamplingRuleRow`, `SeverityLevelRow`, `deleteSeverityLevel`, `getEmailSettings`, `listSamplingRules`, `listSeverityLevels`, `setEmailProvider`, `upsertSamplingRule`, `upsertSeverityLevel` — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `org-settings-denied`, `org-settings-email`, `org-settings-error`, `org-settings-loading`, `org-settings-no-right`, `org-settings-panel`, `org-settings-result`, `org-settings-sampling`, `org-settings-severity`, `org-settings-tabs`
+- **States:** no-right; loading; tabs; ready.
+- **Tutorial key:** —
+
+## SA-16 — Guided provisioning (SCALE-1, WP3)
+
+The guided zero-to-first-report path: create an organisation, set its entitlements and invite cap, configure the platform email sender, read the readiness checks (roles, status, invite, sender, engagement) and activate the tenant.
+
+- **Route:** `/superadmin`, tab `provisioning`; the setup wizard is `sa-setup`.
+- **Rights:** platform admin (`is_platform_admin()`), re-checked by every `platform_*` RPC.
+- **Data:** `FeatureRow`, `ProvisioningStatus`, `TenantRow`, `configurePlatformEmailSender`, `createTenant`, `listFeatureCatalogue`, `listTenants`, `provisioningStatus`, `seedOrgRoles`, `setEntitlement`, `setInviteCap`, `setTenantStatus` — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `sa-provisioning`, `sa-provisioning-activate`, `sa-provisioning-admin-email`, `sa-provisioning-cap`, `sa-provisioning-cap-input`, `sa-provisioning-cap-reason`, `sa-provisioning-cap-submit`, `sa-provisioning-check-engagement`, `sa-provisioning-check-invite`, `sa-provisioning-check-ready`, `sa-provisioning-check-roles`, `sa-provisioning-check-sender`, `sa-provisioning-check-status`, `sa-provisioning-create`, `sa-provisioning-create-error`, `sa-provisioning-create-reason`, `sa-provisioning-create-submit`, `sa-provisioning-created`, `sa-provisioning-done`, `sa-provisioning-entitlement-disable`, `sa-provisioning-entitlement-enable`, `sa-provisioning-entitlement-reason`, `sa-provisioning-entitlements`, `sa-provisioning-error`, `sa-provisioning-feature-select`, `sa-provisioning-finish`, `sa-provisioning-loading`, `sa-provisioning-org-name`, `sa-provisioning-readiness`, `sa-provisioning-recheck`, `sa-provisioning-repair-roles`, `sa-provisioning-result`, `sa-provisioning-retry`, `sa-provisioning-sender`, `sa-provisioning-sender-from`, `sa-provisioning-sender-name`, `sa-provisioning-sender-reason`, `sa-provisioning-sender-reply`, `sa-provisioning-sender-submit`, `sa-provisioning-target`, `sa-provisioning-tenant-select`, `sa-setup`
+- **States:** loading; empty (no tenant selected); readiness checks; created; done; error with retry.
+- **Tutorial key:** —
+## SA-17 — Super Admin portal shell (S1)
+
+The shell around every /superadmin tab: it proves the caller is a platform admin before it renders any tab, and shows a checking state, a denied state, or the tab strip.
+
+- **Route:** `/superadmin`.
+- **Rights:** platform admin (`is_platform_admin()`); a caller without it sees the denied state.
+- **Data:** none beyond the session check.
+- **Testids:** `superadmin-checking`, `superadmin-denied`, `superadmin-portal`, `superadmin-tabs`, `superadmin-tab-<tab>`
+- **States:** checking; denied; ready.
+- **Tutorial key:** —
+
+
 ## Tutorials regenerated
 
 `npm run tutorials:record` regenerates every GIF (S12). The recorder binds only to the testids listed
@@ -793,7 +1300,7 @@ above. `docs/ACP-TUTORIALS.md` lists every key and its steps.
 - **Data:** `listRoles()` (`src/data/admin.ts`), `rightsOfRoleRow(row)`, `createRole(name, slug,
   rights)`, `updateRoleRights(slug, rights)`, `deleteRole(slug)`; `RIGHTS` (`src/lib/rights.ts`).
 - **Testids:** `people-admin-panel`, `admin-roles`, `admin-roles-readonly`, `admin-create-role`,
-  `role-<slug>`.
+  `role-<slug>`., `admin-loading`, `admin-people-empty`, `admin-provision`, `admin-scopes`, `admin-grant-scope`, `admin-set-cap`
 - **States:** loading, load error (`admin-load-error`), read-only without `edit_config`
   (`admin-roles-readonly`), ready; an inline error on a refused write (`admin-error`).
 - **Tutorial key:** `oa.roles`.
@@ -963,7 +1470,7 @@ above. `docs/ACP-TUTORIALS.md` lists every key and its steps.
   `oa-governance-bi-value-<checkKey>`, `oa-governance-bi-save-<checkKey>`, `oa-governance-uploads`,
   `oa-governance-max-file-mb`, `oa-governance-ext-<ext>`, `oa-governance-uploads-save`,
   `oa-governance-retention`, `oa-governance-export-schedule`, `oa-governance-activity-retention`,
-  `oa-governance-population-retention`, `oa-governance-retention-save`.
+  `oa-governance-population-retention`, `oa-governance-retention-save`., `oa-governance-grace-hours`
 - **States:** loading, error, empty, ready; an inline result line reports a saved change or the plain
   refusal (a value outside the platform range, an unknown role tag, an unsupported format).
 - **Tutorial key:** `oa.governance`.

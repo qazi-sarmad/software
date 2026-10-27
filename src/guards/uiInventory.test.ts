@@ -27,6 +27,19 @@ const APPENDIX_A = [
   ...Array.from({ length: 4 }, (_, i) => `EX-${String(i + 1).padStart(2, '0')}`),
 ].filter((id) => !RETIRED.has(id));
 
+// Appendix B: the core audit workspace, auth and chrome the Appendix A ids never covered.
+const APPENDIX_B = [
+  'DB-01', 'WQ-01',
+  'AU-01', 'AU-02',
+  ...Array.from({ length: 5 }, (_, i) => `AP-${String(i + 1).padStart(2, '0')}`),
+  ...Array.from({ length: 3 }, (_, i) => `SR-${String(i + 1).padStart(2, '0')}`),
+  ...Array.from({ length: 14 }, (_, i) => `AF-${String(i + 1).padStart(2, '0')}`),
+  ...Array.from({ length: 5 }, (_, i) => `IR-${String(i + 1).padStart(2, '0')}`),
+  'AX-01', 'AX-02',
+  ...Array.from({ length: 6 }, (_, i) => `CH-${String(i + 1).padStart(2, '0')}`),
+  'SA-16', 'OA-25', 'OA-26', 'OA-27', 'OA-28',
+];
+
 /** Screen ids named in the inventory's section headers. */
 function documentedIds(): Set<string> {
   const out = new Set<string>();
@@ -40,6 +53,12 @@ describe('UI inventory covers every Appendix A screen (WP7)', () => {
   it('every Appendix A id has an entry', () => {
     const documented = documentedIds();
     const missing = APPENDIX_A.filter((id) => !documented.has(id));
+    expect(missing, `missing from docs/UI-INVENTORY.md: ${missing.join(', ')}`).toEqual([]);
+  });
+
+  it('every Appendix B id has an entry', () => {
+    const documented = documentedIds();
+    const missing = APPENDIX_B.filter((id) => !documented.has(id));
     expect(missing, `missing from docs/UI-INVENTORY.md: ${missing.join(', ')}`).toEqual([]);
   });
 
