@@ -30,10 +30,15 @@ for (const block of rawSections) {
   const header = block.split('\n')[0].trim();
   const ids = header.match(/[A-Z]{2,3}-\d{2}/g) ?? [];
   if (ids.length === 0) continue;
+  // Appendix A marks the purpose with `**Purpose:**`; Appendix B states it as the first paragraph.
+  const firstPara = block
+    .split('\n')
+    .slice(1)
+    .find((l) => l.trim() && !l.trim().startsWith('-') && !l.trim().startsWith('|') && !l.trim().startsWith('#'));
   sections.push({
     header,
     ids,
-    purpose: field('Purpose', block).replace(/\s+/g, ' ').trim(),
+    purpose: (field('Purpose', block) || firstPara || '').replace(/\s+/g, ' ').trim(),
     route: field('Route', block).replace(/\s+/g, ' ').trim(),
     rights: field('Rights', block).replace(/\s+/g, ' ').trim(),
     data: field('Data', block),

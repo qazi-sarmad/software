@@ -72,7 +72,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 
 ### `AX-01` — Sign-in screen (S1)
 
-- **Purpose:** see docs/ACP-UI-CONTRACT.md
+- **Purpose:** The single sign-in form for every audience; a session with no org lands on the no-tenant screen instead.
 - **Route / location:** The unauthenticated shell (any route with no session).
 - **Rights required:** none (unauthenticated).
 - **Data functions (`src/data/*.ts`):** none (pure/UI only)
@@ -84,7 +84,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 
 ### `AX-02` — No-tenant screen (S1)
 
-- **Purpose:** see docs/ACP-UI-CONTRACT.md
+- **Purpose:** Shown to a signed-in account that belongs to no organisation: it explains the state and offers a refresh.
 - **Route / location:** The authenticated shell when the session has no org.
 - **Rights required:** any signed-in account with no org.
 - **Data functions (`src/data/*.ts`):** none (pure/UI only)
@@ -239,7 +239,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 
 ### `SA-16` — Guided provisioning (SCALE-1, WP3)
 
-- **Purpose:** see docs/ACP-UI-CONTRACT.md
+- **Purpose:** The guided zero-to-first-report path: create an organisation, set its entitlements and invite cap, configure the platform email sender, read the readiness checks (roles, status, invite, sender, engagement) and activate the tenant.
 - **Route / location:** `/superadmin`, tab `provisioning`; the setup wizard is `sa-setup`.
 - **Rights required:** platform admin (`is_platform_admin()`), re-checked by every `platform_*` RPC.
 - **Data functions (`src/data/*.ts`):** `FeatureRow`, `ProvisioningStatus`, `TenantRow`, `configurePlatformEmailSender`, `createTenant`, `listFeatureCatalogue`, `listTenants`, `provisioningStatus`, `seedOrgRoles`, `setEntitlement`, `setInviteCap`, `setTenantStatus`
@@ -254,7 +254,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 
 ### `SA-17` — Super Admin portal shell (S1)
 
-- **Purpose:** see docs/ACP-UI-CONTRACT.md
+- **Purpose:** The shell around every /superadmin tab: it proves the caller is a platform admin before it renders any tab, and shows a checking state, a denied state, or the tab strip.
 - **Route / location:** `/superadmin`.
 - **Rights required:** platform admin (`is_platform_admin()`); a caller without it sees the denied state.
 - **Data functions (`src/data/*.ts`):** none (pure/UI only)
@@ -484,7 +484,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 
 ### `OA-25` — Cross-universe view-only sharing (SCALE-1, §2)
 
-- **Purpose:** see docs/ACP-UI-CONTRACT.md
+- **Purpose:** Grant, view and revoke an intra-organisation, view-only share of a universe to a same-tenant member, and (in grantee mode) read the universes shared with me.
 - **Route / location:** The Assurance control plane (`org_control` inspector), tab `sharing`; the grantee view is the `shared_with_me` inspector from `menu-shared-with-me`.
 - **Rights required:** `edit_config` (or a Level-1/Level-2 Head) to grant; any member to read what is shared with them.
 - **Data functions (`src/data/*.ts`):** `MemberRow`, `ShareRow`, `ShareWithMeRow`, `SharedUniverseView`, `UniverseRow`, `grantShare`, `listMembers`, `listShares`, `listSharesWithMe`, `listUniverses`, `revokeShare`, `setHeadLevel`, `viewSharedUniverse`
@@ -499,7 +499,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 
 ### `OA-26` — Activity log and export (S1)
 
-- **Purpose:** see docs/ACP-UI-CONTRACT.md
+- **Purpose:** Read and filter the activity log, run an archive by period, and export a record set (with the export confirmation hash and the export history).
 - **Route / location:** The `activity_log` inspector window and the export panel.
 - **Rights required:** `manage_engagements`/`perform_work`; the export panel refuses without the right.
 - **Data functions (`src/data/*.ts`):** `ActivityLogRow`, `ArchiveJobRow`, `ExportFormat`, `ExportLogRow`, `exportActivityLog`, `exportCapRegister`, `exportEngagementBundle`, `exportFullTenant`, `exportLedger`, `exportSiraResults`, `exportWorkpaper`, `listActivityLog`, `listArchiveJobs`, `listExports`, `logExport`
@@ -514,7 +514,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 
 ### `OA-27` — Import wizard (S1)
 
-- **Purpose:** see docs/ACP-UI-CONTRACT.md
+- **Purpose:** Import a workpaper source (upload, choose file, DOCX tables), map it, validate it, preview the valid/invalid counts, and commit it; the job history is listed.
 - **Route / location:** The `import_wizard` inspector window.
 - **Rights required:** `manage_engagements`; a caller without it sees `import-no-right`.
 - **Data functions (`src/data/*.ts`):** `ImportJobRow`, `ImportType`, `ImportValidation`, `listImportJobs`, `startImport`, `validateImport`
@@ -529,7 +529,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 
 ### `OA-28` — Org settings inspector (S1)
 
-- **Purpose:** see docs/ACP-UI-CONTRACT.md
+- **Purpose:** The organisation settings inspector: sampling, severity levels and email provider tabs.
 - **Route / location:** The `org_settings` inspector window, from the profile menu.
 - **Rights required:** `edit_config`; a caller without it sees `org-settings-no-right`.
 - **Data functions (`src/data/*.ts`):** `EMAIL_PROVIDERS`, `EmailSettingsRow`, `SEVERITY_COLOR_TOKENS`, `SamplingRuleRow`, `SeverityLevelRow`, `deleteSeverityLevel`, `getEmailSettings`, `listSamplingRules`, `listSeverityLevels`, `setEmailProvider`, `upsertSamplingRule`, `upsertSeverityLevel`
@@ -630,7 +630,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 
 ### `OA-23` — connectors and continuous monitoring (WRITE-1, W11.6)
 
-- **Purpose:** see docs/ACP-UI-CONTRACT.md
+- **Purpose:** The connector catalogue and instance setup (mapping through dropdowns, never raw JSON), the run
 - **Route / location:** Org Admin control plane, tab `Connectors` (`org-control-tab-connectors`).
 - **Rights required:** `edit_config` to save an instance, rule or triage; `view_insights` to read.
 - **Data functions (`src/data/*.ts`):** `connectorEgressAllowed`, `listAlerts`, `listConnectorInstances`, `listConnectorRuns`, `listMonitorRules`, `listStagedRecords`, `releaseMonitorRule`, `saveConnectorInstance`, `saveMonitorRule`, `triageAlert`
@@ -645,7 +645,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 
 ### `OA-24` — report format editor (WRITE-1, owner instruction 2026-10-26)
 
-- **Purpose:** see docs/ACP-UI-CONTRACT.md
+- **Purpose:** The interactive format editor. A format is held per client (one tenant organisation) and versioned.
 - **Route / location:** Org Admin control plane, tab `Report formats` (`org-control-tab-formats`).
 - **Rights required:** `edit_config` to save, publish or set audiences; `view_reports` to read.
 - **Data functions (`src/data/*.ts`):** `listFormatAudiences`, `listReportFormats`, `publishReportFormat`, `saveReportFormat`, `setFormatAudiences`
@@ -776,7 +776,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 
 ### `WK-11` — report builder (WRITE-1, W12)
 
-- **Purpose:** see docs/ACP-UI-CONTRACT.md
+- **Purpose:** The deterministic report builder, mounted as the "Report builder" view inside the existing Audit File
 - **Route / location:** the Audit File window, view "Report builder" (`audit-file-view-builder`).
 - **Rights required:** `review_and_approve` or `approve_plan` to compose; a caller without either sees the plain refusal, never the panel.
 - **Data functions (`src/data/*.ts`):** `DEFAULT_REGISTER`, `FIGURE_FUNCTIONS`, `FORMALITY_DEFINITIONS`, `REPORT_MODELS`, `TONE_DEFINITIONS`, `VOICES`, `applyApprovalGate`, `checkReferenceIntegrity`, `checkStaleness`, `compareRenders`, `compareReportVersions`, `composeReport`, `counterfactualRegister`, `figureChart`, `figureError`, `figurePng`, `figureSvg`, `findContradictions`, `lineagePanel`, `modelById`, `provenanceTrace`, `reconcileCoverage`, `verifyTrace`
@@ -837,7 +837,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 
 ### `DB-01` — Executive Dashboard (S1)
 
-- **Purpose:** see docs/ACP-UI-CONTRACT.md
+- **Purpose:** The landing tab: portfolio tiles (engagements, CAPs, findings, seals), a CAP radial tracker, the CAP table, the engagement Gantt and the Board Pack block, all scoped to the session's universes.
 - **Route / location:** Tab `executive` (nav strip "Dashboard"). Not a route.
 - **Rights required:** any signed-in member; each tile degrades to its empty state when the scope holds no records.
 - **Data functions (`src/data/*.ts`):** `AlertCircle`, `CheckCircle2`, `ChevronRight`, `Clock`, `ExternalLink`, `ShieldCheck`, `X`, `motion`, `updatePlanItemDates`
@@ -852,7 +852,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 
 ### `WQ-01` — Work Queue (S1)
 
-- **Purpose:** see docs/ACP-UI-CONTRACT.md
+- **Purpose:** The user-specific queue: my workpapers, what awaits my sign-off, what awaits my approval and (for a manager) the team's open work, built by the pure `src/lib/workQueue.ts` module.
 - **Route / location:** Tab `pending` (nav strip "Work Queue").
 - **Rights required:** any signed-in member; each section is filtered by the caller's rights.
 - **Data functions (`src/data/*.ts`):** none (pure/UI only)
@@ -864,7 +864,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 
 ### `AU-01` — Audit Universe (S1)
 
-- **Purpose:** see docs/ACP-UI-CONTRACT.md
+- **Purpose:** The universe and entity heatmap (spec §6): every entity card shows its approval status and opens the entity-approval inspector.
 - **Route / location:** Tab `universe` (nav strip "Audit Universe").
 - **Rights required:** any member reads; `edit_config` to add an entity.
 - **Data functions (`src/data/*.ts`):** `Activity`, `AlertTriangle`, `ArrowRight`, `EntityRow`, `Layers`
@@ -876,7 +876,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 
 ### `AU-02` — Entity approval inspector (S1)
 
-- **Purpose:** see docs/ACP-UI-CONTRACT.md
+- **Purpose:** Submit an entity for approval, approve or reject it, and read its append-only approval history; the decision is re-checked in the database.
 - **Route / location:** The `entity_approval` inspector window, opened from an entity card.
 - **Rights required:** `perform_work` to submit; `manage_engagements`/`approve_plan`/`review_and_approve` to decide.
 - **Data functions (`src/data/*.ts`):** `EntityHistoryEntry`, `EntityRow`, `entityHistory`, `submitEntity`
@@ -891,7 +891,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 
 ### `AP-01` — Audit Plan (S1)
 
-- **Purpose:** see docs/ACP-UI-CONTRACT.md
+- **Purpose:** The plan register for a universe: items, versions, gate outcomes, and the entry points to the planning panel, the plan-items inspector, the combined-approval inspector and the ethics sign-off.
 - **Route / location:** Tab `plan` (nav strip "Audit Plan").
 - **Rights required:** any member reads; the open buttons appear only with the matching right.
 - **Data functions (`src/data/*.ts`):** `DeploymentRequestRow`, `GateOutcomeRow`, `PlanItemRow`, `PlanVersionRow`, `latestPlanForUniverse`, `listGateOutcomes`, `listPlanItems`, `planHistory`
@@ -906,7 +906,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 
 ### `AP-02` — Plan items inspector (S1)
 
-- **Purpose:** see docs/ACP-UI-CONTRACT.md
+- **Purpose:** Add a plan item with a justification, see each item's approval status, and read the plan version history.
 - **Route / location:** The `plan_items` inspector window.
 - **Rights required:** `manage_engagements` to add; `approve_plan` to approve an ad-hoc item.
 - **Data functions (`src/data/*.ts`):** none (pure/UI only)
@@ -918,7 +918,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 
 ### `AP-03` — Combined approval inspector (S1)
 
-- **Purpose:** see docs/ACP-UI-CONTRACT.md
+- **Purpose:** Raise a combined deployment request across an entity's engagements, decide it, and see the SLA and escalation state.
 - **Route / location:** The `combined_approval` inspector window.
 - **Rights required:** `perform_work` to raise; `approve_plan` to decide.
 - **Data functions (`src/data/*.ts`):** `requestCombinedDeployment`
@@ -933,7 +933,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 
 ### `AP-04` — Planning panel (S1)
 
-- **Purpose:** see docs/ACP-UI-CONTRACT.md
+- **Purpose:** The planning phase of an engagement: deterministic suggestions, accept/reject each, the reconciliation check, discrepancy acknowledgement with a reason, and the planning sign-off.
 - **Route / location:** The planning view inside the Audit File window.
 - **Rights required:** `review_and_approve` to sign off; a caller without it sees the refusal.
 - **Data functions (`src/data/*.ts`):** `PlanningSuggestion`, `ReconciliationDetail`, `acknowledgeDiscrepancy`, `checkReconciliation`, `decideSuggestion`, `isPlanningSignedOff`, `reconciliationDetail`, `signPlanning`
@@ -948,7 +948,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 
 ### `AP-05` — Prior-year import inspector (S1)
 
-- **Purpose:** see docs/ACP-UI-CONTRACT.md
+- **Purpose:** Bring last year's findings forward: confirm or revert each unconfirmed prior-year item, each with its own status.
 - **Route / location:** The `import_wizard`/prior-year inspector window.
 - **Rights required:** `manage_engagements`.
 - **Data functions (`src/data/*.ts`):** `PriorYearImportRow`, `PriorYearItemType`, `importPriorYearItem`, `listPriorYearImports`, `revertPriorYearItem`, `unconfirmedPriorYearImports`
@@ -963,7 +963,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 
 ### `SR-01` — SIRA (S1)
 
-- **Purpose:** see docs/ACP-UI-CONTRACT.md
+- **Purpose:** The Strategic Internal Risk Assessment (spec §7): the risk table, the persisted model/cycles/plan snapshot, and the entry points to the model editor and cycle inspector.
 - **Route / location:** Tab `sira` (nav strip "SIRA").
 - **Rights required:** any member reads; the open buttons gate on the matching right.
 - **Data functions (`src/data/*.ts`):** `PlanRow`, `PlanVersionRow`, `SiraCycle`, `SiraEmergentRisk`, `SiraModel`, `latestPlanForUniverse`, `listEmergentRisks`, `planHistory`, `siraModelSnapshot`
@@ -978,7 +978,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 
 ### `SR-02` — SIRA model editor (S1)
 
-- **Purpose:** see docs/ACP-UI-CONTRACT.md
+- **Purpose:** Edit the SIRA model: aggregation, factors and bands; a locked model is read-only.
 - **Route / location:** The `sira_model` inspector window.
 - **Rights required:** `edit_config`.
 - **Data functions (`src/data/*.ts`):** none (pure/UI only)
@@ -990,7 +990,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 
 ### `SR-03` — SIRA cycles inspector (S1)
 
-- **Purpose:** see docs/ACP-UI-CONTRACT.md
+- **Purpose:** Create a SIRA cycle, record scores, publish the cycle, and decide emergent risks with a reason.
 - **Route / location:** The `sira_cycles` inspector window.
 - **Rights required:** `manage_engagements` to create/publish; `review_and_approve` to decide an emergent risk.
 - **Data functions (`src/data/*.ts`):** none (pure/UI only)
@@ -1002,7 +1002,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 
 ### `AF-01` — Audit File window (S1)
 
-- **Purpose:** see docs/ACP-UI-CONTRACT.md
+- **Purpose:** The engagement workspace: a floating, non-modal window whose view switch opens Planning, Execution, Review, Population, Sampling, Row testing, Conclusion, Ethics, Findings, Documents, the Deployment gate, the Analyst engine, the Certificate, the Report editor, the Report builder, the CAPs and the Time-Travel/As-of view.
 - **Route / location:** The `audit_file` floating window, opened from an engagement card; the tab is `audit_file`.
 - **Rights required:** any member reads; each view gates on its own right and shows the refusal otherwise.
 - **Data functions (`src/data/*.ts`):** none (pure/UI only)
@@ -1014,7 +1014,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 
 ### `AF-02` — Audit File — Planning view (S1)
 
-- **Purpose:** see docs/ACP-UI-CONTRACT.md
+- **Purpose:** The planning view: the RCM rows, SIRA coverage and any coverage gap.
 - **Route / location:** Audit File window, view "Planning" (`audit-file-view-planning`).
 - **Rights required:** any member reads.
 - **Data functions (`src/data/*.ts`):** none (pure/UI only)
@@ -1026,7 +1026,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 
 ### `AF-03` — Audit File — Execution view (S1)
 
-- **Purpose:** see docs/ACP-UI-CONTRACT.md
+- **Purpose:** The execution view: workpaper rows and their status.
 - **Route / location:** Audit File window, view "Execution" (`audit-file-view-execution`).
 - **Rights required:** any member reads.
 - **Data functions (`src/data/*.ts`):** none (pure/UI only)
@@ -1038,7 +1038,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 
 ### `AF-04` — Audit File — Review view (S1)
 
-- **Purpose:** see docs/ACP-UI-CONTRACT.md
+- **Purpose:** The review view: the sign-off gate count, the signed-off note, the sign-off reason, the report-pack placeholder and the change-control panel.
 - **Route / location:** Audit File window, view "Review" (`audit-file-view-review`).
 - **Rights required:** `review_and_approve`.
 - **Data functions (`src/data/*.ts`):** none (pure/UI only)
@@ -1050,7 +1050,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 
 ### `AF-05` — Population panel (S1)
 
-- **Purpose:** see docs/ACP-UI-CONTRACT.md
+- **Purpose:** Register a population file, show its SHA-256 hash, and lock the population (hold-to-confirm); a locked population is immutable.
 - **Route / location:** Audit File window, view "Population" (`audit-file-view-population`).
 - **Rights required:** `perform_work`.
 - **Data functions (`src/data/*.ts`):** `PopulationRow`, `lockPopulation`, `registerPopulation`, `sha256Hex`
@@ -1064,7 +1064,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 
 ### `AF-06` — Sampling panel (S1)
 
-- **Purpose:** see docs/ACP-UI-CONTRACT.md
+- **Purpose:** Compute a deterministic sample (seed preview, mode, floor), paste an id list, and lock the sample; a locked sample is read-only.
 - **Route / location:** Audit File window, view "Sampling" (`audit-file-view-sampling`).
 - **Rights required:** `perform_work`.
 - **Data functions (`src/data/*.ts`):** `SampleMode`, `SampleRow`, `SamplingRuleRow`, `computeSample`, `getSample`, `getSampleSize`, `lockSample`
@@ -1079,7 +1079,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 
 ### `AF-07` — Row testing panel (S1)
 
-- **Purpose:** see docs/ACP-UI-CONTRACT.md
+- **Purpose:** Record each sampled row's result and rationale, mark an exception, sign off the workpaper with a reason, and reopen it.
 - **Route / location:** Audit File window, view "Row testing" (`audit-file-view-rowtesting`).
 - **Rights required:** `perform_work` to record; `review_and_approve` to sign off; `can_reopen` to reopen.
 - **Data functions (`src/data/*.ts`):** `RowResult`, `WorkpaperRowRow`, `getWorkpaper`, `recordRow`, `reopenWorkpaper`, `signOffWorkpaper`
@@ -1093,7 +1093,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 
 ### `AF-08` — Conclusion panel (S1)
 
-- **Purpose:** see docs/ACP-UI-CONTRACT.md
+- **Purpose:** Pull the testing exceptions, read the pulled-at stamp and the pre-flight state, and sign the conclusion (hold-to-confirm) with a reason; a locked conclusion is immutable.
 - **Route / location:** Audit File window, view "Conclusion" (`audit-file-view-conclusion`).
 - **Rights required:** `review_and_approve`.
 - **Data functions (`src/data/*.ts`):** `ConclusionRecord`, `pullExceptions`, `signConclusion`, `testingSignedOff`
@@ -1108,7 +1108,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 
 ### `AF-09` — Ethics panel (S1)
 
-- **Purpose:** see docs/ACP-UI-CONTRACT.md
+- **Purpose:** The ethics independence declaration: every listed member acknowledges; the panel shows who is still pending.
 - **Route / location:** Audit File window, view "Ethics" (`audit-file-view-ethics`); also the `ethics` inspector.
 - **Rights required:** `perform_work` to acknowledge.
 - **Data functions (`src/data/*.ts`):** `ethicsStatus`
@@ -1123,7 +1123,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 
 ### `AF-10` — Findings panel (S1)
 
-- **Purpose:** see docs/ACP-UI-CONTRACT.md
+- **Purpose:** Turn observations into findings: create an observation, promote it to a finding, and raise an issue; the severity legend is shown.
 - **Route / location:** Audit File window, views "Findings"/"Documents" (`audit-file-view-findings`, `audit-file-view-documents`).
 - **Rights required:** `perform_work`.
 - **Data functions (`src/data/*.ts`):** `IssueRow`, `MANDATORY_SECTIONS`, `ObservationRow`, `SeverityLevelRow`, `createIssue`, `listIssues`, `listSeverityLevels`, `missingReadabilitySections`, `promoteToFinding`
@@ -1138,7 +1138,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 
 ### `AF-11` — Document viewer (S1)
 
-- **Purpose:** see docs/ACP-UI-CONTRACT.md
+- **Purpose:** Search the engagement's evidence documents, extract text on request, and read the extraction hits.
 - **Route / location:** Audit File window, view "Documents" (`audit-file-view-documents`).
 - **Rights required:** any member reads.
 - **Data functions (`src/data/*.ts`):** `DocumentHit`, `DocumentStage`, `EvidenceFileRow`, `isDocumentStage`, `listEvidenceFiles`, `requestExtraction`, `searchDocuments`
@@ -1153,7 +1153,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 
 ### `AF-12` — Deployment gate (S1)
 
-- **Purpose:** see docs/ACP-UI-CONTRACT.md
+- **Purpose:** Run the deployment gate for an engagement: the ordered steps, each outcome, the required right, and the next action.
 - **Route / location:** The `deployment_gate` inspector window.
 - **Rights required:** `manage_engagements`.
 - **Data functions (`src/data/*.ts`):** `GateResult`
@@ -1165,7 +1165,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 
 ### `AF-13` — Analyst engine (S1)
 
-- **Purpose:** see docs/ACP-UI-CONTRACT.md
+- **Purpose:** Run the deterministic analytics checks over the population and raise a finding from a result.
 - **Route / location:** The `analytics` inspector window.
 - **Rights required:** `perform_work`.
 - **Data functions (`src/data/*.ts`):** `AnalysisResultRow`, `raiseFinding`
@@ -1179,7 +1179,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 
 ### `AF-14` — Report editor (S1)
 
-- **Purpose:** see docs/ACP-UI-CONTRACT.md
+- **Purpose:** Compose the engagement report from its sections and blocks, comment on a block, incorporate or reject each comment, read the central pre-flight (comments, CAPs, acknowledgements), acknowledge a blocker with a reason, freeze the report and render the PDF/DOCX files.
 - **Route / location:** Audit File window, view "Report" (`audit-file-view-report`).
 - **Rights required:** `perform_work` to compose/comment; `approve_plan` to freeze.
 - **Data functions (`src/data/*.ts`):** `CapRow`, `ReportBlockRow`, `ReportCommentRow`, `ReportVersionRow`, `StoredReportFiles`, `acknowledgePreflight`, `addReportComment`, `checkCapReconciliation`, `freezeReport`, `getActiveReportLayout`, `issueReport`, `listCaps`, `listPreflightAcknowledgements`, `listReportBlocks`, `listReportComments`, `listReportVersions`, `openReportCommentCount`, `renderAndStoreReportFiles`, `resolveReportComment`
@@ -1194,7 +1194,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 
 ### `IR-01` — Issues & CAP Register (S1)
 
-- **Purpose:** see docs/ACP-UI-CONTRACT.md
+- **Purpose:** The issue register: the heat matrix (severity by age, by department), the CAP register section, and the view switch to Patterns.
 - **Route / location:** Tab `issues` (nav strip "Issues & CAP Register"); views via `issues-view-<view>`.
 - **Rights required:** any member reads; patterns configuration needs `edit_config`.
 - **Data functions (`src/data/*.ts`):** none (pure/UI only)
@@ -1206,7 +1206,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 
 ### `IR-02` — CAP register panel (S1)
 
-- **Purpose:** see docs/ACP-UI-CONTRACT.md
+- **Purpose:** Read every corrective action for an engagement: its status, the action to transition it, the evidence attachment and the reconciliation check.
 - **Route / location:** Inside the Issues & CAP Register, the CAP register section (`issues-cap-register-section`).
 - **Rights required:** `perform_work` to act; `review_and_approve` to close.
 - **Data functions (`src/data/*.ts`):** `CapRow`, `CapStatus`, `closeCap`, `updateCap`
@@ -1221,7 +1221,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 
 ### `IR-03` — Finding drilldown (S1)
 
-- **Purpose:** see docs/ACP-UI-CONTRACT.md
+- **Purpose:** The full finding: severity, title, entity, and the links back to the department, the audit and the workpaper.
 - **Route / location:** The `finding` inspector window.
 - **Rights required:** any member reads.
 - **Data functions (`src/data/*.ts`):** `FindingDetailRow`, `getFindingDetail`
@@ -1236,7 +1236,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 
 ### `IR-04` — Observation drilldown (S1)
 
-- **Purpose:** see docs/ACP-UI-CONTRACT.md
+- **Purpose:** The observation drill-down: the department, the audit and the workpaper behind it.
 - **Route / location:** The `observation` inspector window.
 - **Rights required:** any member reads.
 - **Data functions (`src/data/*.ts`):** none (pure/UI only)
@@ -1248,7 +1248,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 
 ### `IR-05` — CAP inspector (S1)
 
-- **Purpose:** see docs/ACP-UI-CONTRACT.md
+- **Purpose:** Inspect a single CAP: attach evidence and edit it, with the form error surfaced inline.
 - **Route / location:** The `cap_inspector` inspector window.
 - **Rights required:** `perform_work`.
 - **Data functions (`src/data/*.ts`):** none (pure/UI only)
@@ -1262,7 +1262,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 
 ### `CH-01` — Navigation strip (S1)
 
-- **Purpose:** see docs/ACP-UI-CONTRACT.md
+- **Purpose:** The primary tab bar: Dashboard, Work Queue, Audit Universe, Audit Plan, SIRA, Audit Files, Issues & CAP Register; tabs are reorderable and collapse to icons at narrow widths.
 - **Route / location:** Rendered on every authenticated screen below the header.
 - **Rights required:** each tab is shown only when the session has the right for it.
 - **Data functions (`src/data/*.ts`):** none (pure/UI only)
@@ -1274,7 +1274,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 
 ### `CH-02` — Header bar (S1)
 
-- **Purpose:** see docs/ACP-UI-CONTRACT.md
+- **Purpose:** The header: the compact search that opens the command palette, the profile menu (activity log, import, org control, people admin, shared with me), the notification bell, the calendar and the universe switcher.
 - **Route / location:** Rendered on every authenticated screen.
 - **Rights required:** menu entries appear only with the matching right.
 - **Data functions (`src/data/*.ts`):** none (pure/UI only)
@@ -1286,7 +1286,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 
 ### `CH-03` — Command palette (S1)
 
-- **Purpose:** see docs/ACP-UI-CONTRACT.md
+- **Purpose:** The keyboard palette for jumping to a screen or a record.
 - **Route / location:** A non-blocking overlay opened from the header search.
 - **Rights required:** any signed-in member.
 - **Data functions (`src/data/*.ts`):** none (pure/UI only)
@@ -1298,7 +1298,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 
 ### `CH-04` — Floating windows and dock (S1)
 
-- **Purpose:** see docs/ACP-UI-CONTRACT.md
+- **Purpose:** The non-modal record window (drag, resize, pop out, dock) that hosts every inspector; the dock lists minimised windows.
 - **Route / location:** Rendered above the shell; a pop-out uses the `/view/:recordType/:id` route.
 - **Rights required:** the hosted inspector enforces its own right.
 - **Data functions (`src/data/*.ts`):** none (pure/UI only)
@@ -1310,7 +1310,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 
 ### `CH-05` — Presentation primitives (S1)
 
-- **Purpose:** see docs/ACP-UI-CONTRACT.md
+- **Purpose:** The shared presentation primitives: the hover preview popover, the hold-to-confirm control, the inline error and the labelled select.
 - **Route / location:** Not a screen; used inside many screens.
 - **Rights required:** inherited from the host screen.
 - **Data functions (`src/data/*.ts`):** none (pure/UI only)
@@ -1322,7 +1322,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 
 ### `CH-06` — Calendar (S1)
 
-- **Purpose:** see docs/ACP-UI-CONTRACT.md
+- **Purpose:** The audit calendar: the day detail panel opened from the header calendar.
 - **Route / location:** The header calendar panel (not a tab).
 - **Rights required:** any member reads.
 - **Data functions (`src/data/*.ts`):** none (pure/UI only)
