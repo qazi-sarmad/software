@@ -160,6 +160,9 @@ describe('Phase 6 UI panels (6H)', () => {
     it('§11.4 records a pre-flight acknowledgement with a reason and shows it', async () => {
       listAcksFn.mockResolvedValue([{ check: 'missing_evidence', itemId: 'ev-1', reason: 'waived by the manager', acknowledgedBy: 'u1', acknowledgedAt: '2026-10-26T00:00:00Z' }]);
       render(<ReportEditorPanel engagementId="e1" />);
+      // The panel loads twice (see the note above): wait for both loads so the form is not unmounted
+      // for `report-loading` between the change events, which loses the item value on a slow runner.
+      await waitFor(() => expect(listCapsFn).toHaveBeenCalledTimes(2));
       await waitFor(() => expect(screen.getByTestId('report-preflight-ack-form')).toBeTruthy());
       // The count reflects the store.
       expect(screen.getByTestId('report-preflight-acks').textContent).toContain('1 acknowledged');
@@ -172,6 +175,7 @@ describe('Phase 6 UI panels (6H)', () => {
 
     it('§11.4 keeps the acknowledgement disabled until a long-enough reason is present', async () => {
       render(<ReportEditorPanel engagementId="e1" />);
+      await waitFor(() => expect(listCapsFn).toHaveBeenCalledTimes(2));
       const submit = await screen.findByTestId('report-preflight-ack-submit');
       expect((submit as HTMLButtonElement).disabled).toBe(true);
       fireEvent.change(screen.getByTestId('report-preflight-ack-item'), { target: { value: 'f-1' } });
