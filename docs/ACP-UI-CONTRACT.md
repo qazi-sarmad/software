@@ -1180,15 +1180,15 @@ The audit calendar: the day detail panel opened from the header calendar.
 - **States:** loading; day detail; empty.
 - **Tutorial key:** —
 
-## OA-25 — Cross-universe view-only sharing (SCALE-1, §2)
+## OA-25 — Group sharing and joint audits (SCALE-1, §2)
 
-Grant, view and revoke an intra-organisation, view-only share of a universe to a same-tenant member, and (in grantee mode) read the universes shared with me.
+Start a joint audit between associated group companies, view and revoke the joint-audit shares, distribute and adopt a group configuration snapshot, and (in grantee mode) read the joint audits shared with me. A joint audit carries edit rights to both parties and exposes only the shared engagement and its working papers.
 
 - **Route:** The Assurance control plane (`org_control` inspector), tab `sharing`; the grantee view is the `shared_with_me` inspector from `menu-shared-with-me`.
-- **Rights:** `edit_config` (or a Level-1/Level-2 Head) to grant; any member to read what is shared with them.
-- **Data:** `MemberRow`, `ShareRow`, `ShareWithMeRow`, `SharedUniverseView`, `UniverseRow`, `grantShare`, `listMembers`, `listShares`, `listSharesWithMe`, `listUniverses`, `revokeShare`, `setHeadLevel`, `viewSharedUniverse` — through `src/data/*.ts`; components never import the database client (rule M8).
-- **Testids:** `share-grant-expiry`, `share-grant-grantee`, `share-grant-submit`, `share-grant-universe`, `share-granted-empty`, `share-panel`, `share-panel-error`, `share-panel-grant`, `share-panel-granted`, `share-panel-loading`, `share-panel-result`, `share-panel-retry`, `share-panel-view`, `share-panel-with-me`, `share-view-engagements`, `share-view-entities`, `share-view-not-live`, `share-with-me-empty`
-- **States:** loading; empty (`share-granted-empty`, `share-with-me-empty`); ready; result; not-live (`share-view-not-live`); error with retry.
+- **Rights:** `manage_engagements` to share or distribute; any member to read what is shared with them. A grant additionally requires a platform-recorded group association.
+- **Data:** `AssociatedOrg`, `ConfigDistributionRow`, `JointShareRow`, `JointShareWithMeRow`, `adoptConfig`, `distributeConfig`, `grantJointShare`, `listAssociatedOrgs`, `listConfigDistributions`, `listJointShares`, `listJointSharesWithMe`, `revokeJointShare` — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `share-config-adopt-<id>`, `share-config-distribute`, `share-config-empty`, `share-config-member`, `share-config-row-<id>`, `share-grant-counterparty`, `share-grant-engagement`, `share-grant-expiry`, `share-grant-submit`, `share-granted-empty`, `share-no-counterparties`, `share-panel`, `share-panel-config`, `share-panel-error`, `share-panel-grant`, `share-panel-granted`, `share-panel-loading`, `share-panel-result`, `share-panel-retry`, `share-panel-with-me`, `share-revoke-<id>`, `share-revoke-reason-<id>`, `share-row-<id>`, `share-with-me-<id>`, `share-with-me-empty`
+- **States:** loading; empty (`share-granted-empty`, `share-with-me-empty`, `share-config-empty`, `share-no-counterparties`); ready; result; error with retry.
 - **Tutorial key:** —
 
 ## OA-26 — Activity log and export (S1)

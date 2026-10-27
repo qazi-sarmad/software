@@ -87,8 +87,9 @@ const USERS = [
   { email: 'ayesha.khan@provio-test.invalid', name: 'Ayesha Khan', org: ORG_A, role: 'org_admin', roleIds: ROLE_IDS_A, universes: [A_U1] },
   // CIA: holds all four assurance rights (F3) plus edit_config, so the Board Pack panel, its section
   // editor is reachable. The Org Admin holds none of the four by F3.
-  // Kamran is a Level-1 Head (WP6): §2 sharing is granted by a Level-1 or Level-2 Head.
-  { email: 'kamran.sheikh@provio-test.invalid', name: 'Kamran Sheikh', org: ORG_A, role: 'cia', roleIds: ROLE_IDS_A, universes: [], head: 1 },
+  // Kamran (CIA) holds manage_engagements, which the corrected §2 model requires to start a joint
+  // audit (a Head flag is no longer the gate).
+  { email: 'kamran.sheikh@provio-test.invalid', name: 'Kamran Sheikh', org: ORG_A, role: 'cia', roleIds: ROLE_IDS_A, universes: [] },
   { email: 'bilal.ahmed@provio-test.invalid', name: 'Bilal Ahmed', org: ORG_A, role: 'preparer', roleIds: ROLE_IDS_A, universes: [] },
   // Audit manager: holds manage_engagements, which the Phase 7 import/activity/prior-year flows need.
   { email: 'zara.malik@provio-test.invalid', name: 'Zara Malik', org: ORG_A, role: 'audit_manager', roleIds: ROLE_IDS_A, universes: [] },
@@ -155,6 +156,18 @@ export default async function globalSetup() {
   ];
   must('roles', await sb.from('roles').upsert(roles, { onConflict: 'id' }));
 
+  // SCALE-1 (0102): Org A and Org B are one group, so a joint audit may be shared between them.
+  // Org A is the parent. This is platform configuration; the e2e database has no platform session,
+  // so the seed writes it directly through the service client.
+  const groupId = 'f1000000-0000-0000-0000-000000000001';
+  must('org_groups', await sb.from('org_groups').upsert([
+    { id: groupId, name: 'Synthetic Group (Test)' },
+  ], { onConflict: 'id' }));
+  must('org_associations', await sb.from('org_associations').upsert([
+    { id: 'f2000000-0000-0000-0000-0000000000a1', group_id: groupId, org_id: ORG_A, parent: true },
+    { id: 'f2000000-0000-0000-0000-0000000000b1', group_id: groupId, org_id: ORG_B, parent: false },
+  ], { onConflict: 'org_id' }));
+
   must('universes', await sb.from('universes').upsert([
     { id: A_U1, org_id: ORG_A, name: 'Operations Audit (Test)', domain: 'Operations' },
     { id: B_U1, org_id: ORG_B, name: 'Financial Audit (Test)', domain: 'Finance' },
@@ -214,7 +227,6 @@ export default async function globalSetup() {
       user_id: authId,
       role_id: u.roleIds[u.role],
       display_name: u.name,
-      head_level: u.head ?? null,
     }, { onConflict: 'org_id,user_id' }));
   }
 

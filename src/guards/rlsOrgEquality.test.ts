@@ -12,8 +12,11 @@ import { resolve } from 'node:path';
  * tenant table gains a select policy that is not org-scoped, so tenant isolation cannot be widened
  * by accident.
  *
- * The cross-universe share path (`shared_universe_view`) is a `security definer` projection, not a
- * policy, so it never appears here and never weakens a normal tenant read.
+ * The cross-universe share path is superseded: the corrected §2 model shares a whole *engagement*
+ * between associated (group) companies with edit rights to both, through `joint_share_active()`.
+ * That helper is itself org-scoped (it matches only the caller's org as owner or counterparty), so a
+ * select policy that reaches through it is still bounded to the caller's own tenant. It is listed as
+ * an approved helper below, and a test asserts the helper's own definition carries `jwt_org_id()`.
  */
 
 const MIGRATIONS = resolve(process.cwd(), 'supabase/migrations');
@@ -28,6 +31,12 @@ const ALLOWED: Record<string, string> = {
   email_queue_platform_select: 'platform-admin view of the queue (is_platform_admin())',
   np_select: 'per-user preference row (user_id = auth.uid())',
 };
+
+/**
+ * Helpers that are themselves org-scoped and may therefore bound a select policy. Each one must
+ * reference `jwt_org_id()` in its own definition, which the last test in this file proves.
+ */
+const APPROVED_HELPERS = ['public.joint_share_active'];
 
 function allSql(): string {
   return readdirSync(MIGRATIONS)
@@ -74,9 +83,19 @@ describe('tenant isolation: RLS read path (WP12)', () => {
     const violations = policies
       .filter((p) => tables.has(p.table))
       .filter((p) => !/jwt_org_id\(\)/.test(p.body))
+      .filter((p) => !APPROVED_HELPERS.some((h) => p.body.includes(h)))
       .filter((p) => !(p.name in ALLOWED))
       .map((p) => `${p.table}.${p.name}`);
     expect(violations, 'select policies that could read across tenants').toEqual([]);
+  });
+
+  it('every approved helper is itself org-scoped', () => {
+    const violations = APPROVED_HELPERS.filter((h) => {
+      const name = h.split('.').pop() as string;
+      const def = sql.match(new RegExp(`create or replace function ${h.replace('.', '\\.')}\\([\\s\\S]*?\\$\\$;`));
+      return !def || !/jwt_org_id\(\)/.test(def[0]);
+    });
+    expect(violations, 'approved helpers that are not themselves org-scoped').toEqual([]);
   });
 
   it('every listed exception still exists (no stale allow-list entry)', () => {

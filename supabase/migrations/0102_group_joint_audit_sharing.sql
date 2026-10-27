@@ -68,6 +68,17 @@ language sql stable security definer set search_path = public as $$
   where a1.org_id = public.jwt_org_id() and a2.org_id <> a1.org_id
 $$;
 
+-- The associated organisations of the caller's org, with names. A tenant must know who its group
+-- companies are to start a joint audit. This exposes only the caller's own group; nothing else.
+create or replace function public.my_associated_orgs() returns jsonb
+language sql stable security definer set search_path = public as $$
+  select coalesce(jsonb_agg(jsonb_build_object('id', o.id, 'name', o.name) order by o.name), '[]'::jsonb)
+  from org_associations a1
+  join org_associations a2 on a2.group_id = a1.group_id and a2.org_id <> a1.org_id
+  join orgs o on o.id = a2.org_id
+  where a1.org_id = public.jwt_org_id()
+$$;
+
 create or replace function public.are_associated(p_org_a uuid, p_org_b uuid) returns boolean
 language sql stable security definer set search_path = public as $$
   select exists (
@@ -262,7 +273,7 @@ end $$;
 create or replace function public.joint_shares_get() returns jsonb
 language sql stable security definer set search_path = public as $$
   select coalesce(jsonb_agg(jsonb_build_object(
-           'id', s.id, 'engagement_id', s.engagement_id,
+           'id', s.id, 'engagement_id', s.engagement_id, 'engagement_title', e.title,
            'owner_org_id', s.owner_org_id, 'counterparty_org_id', s.counterparty_org_id,
            'counterparty_name', co.name, 'rights', s.rights,
            'granted_at', s.granted_at, 'expires_at', s.expires_at,
@@ -271,6 +282,7 @@ language sql stable security definer set search_path = public as $$
          order by s.granted_at desc, s.id), '[]'::jsonb)
   from engagement_joint_shares s
   join orgs co on co.id = s.counterparty_org_id
+  join engagements e on e.id = s.engagement_id
   where s.owner_org_id = public.jwt_org_id()
 $$;
 
@@ -487,6 +499,7 @@ end $$;
 
 revoke execute on function public.associated_org_ids() from public, anon;
 revoke execute on function public.are_associated(uuid, uuid) from public, anon;
+revoke execute on function public.my_associated_orgs() from public, anon;
 revoke execute on function public.joint_share_active(uuid) from public, anon;
 revoke execute on function public.joint_share_grant(uuid, uuid, timestamptz) from public, anon;
 revoke execute on function public.joint_share_revoke(uuid, text) from public, anon;
@@ -499,3 +512,39 @@ revoke execute on function public.platform_create_group(text) from public, anon;
 revoke execute on function public.platform_link_org(uuid, uuid, boolean) from public, anon;
 revoke execute on function public.platform_unlink_org(uuid) from public, anon;
 revoke execute on function public.platform_list_associations() from public, anon;
+
+-- ===========================================================================
+-- 8. Supersede the view-only intra-tenant universe share (0095 §2).
+--    The corrected §2 model makes intra-tenant access rights-driven
+--    (`view_all_scopes` or a scope grant) and moves all sharing to the
+--    group / joint-audit path above. The 0095 share objects are removed and the
+--    three read policies are restored to their pre-0095 (0016) definition, so no
+--    dormant share path remains and the read policies hold only the rights clause.
+-- ===========================================================================
+drop policy if exists universes_select on universes;
+create policy universes_select on universes for select to authenticated
+  using (org_id = public.jwt_org_id()
+         and (public.can_read_all_scopes() or public.has_scope(id, null, null)));
+
+drop policy if exists entities_select on entities;
+create policy entities_select on entities for select to authenticated
+  using (org_id = public.jwt_org_id()
+         and (public.can_read_all_scopes() or public.has_scope(universe_id, id, null)));
+
+drop policy if exists engagements_select on engagements;
+create policy engagements_select on engagements for select to authenticated
+  using (org_id = public.jwt_org_id()
+         and (public.can_read_all_scopes() or public.has_scope(universe_id, entity_id, id)));
+
+drop function if exists public.shared_universe_view(uuid);
+drop function if exists public.shares_with_me();
+drop function if exists public.shares_get();
+drop function if exists public.share_revoke(uuid, text);
+drop function if exists public.share_grant(uuid, uuid, timestamptz);
+drop function if exists public.share_covers(uuid, uuid, uuid);
+drop function if exists public.has_active_share(uuid);
+drop table if exists public.share_access_log;
+drop table if exists public.universe_shares;
+-- The Head machinery (`head_level`, `caller_head_level()`, `is_head()`, `admin_set_head_level()`)
+-- stays: 0096 uses a Head level for signing authority, which the corrected §2 does not change. Only
+-- the view-only share objects above are removed.

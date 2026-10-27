@@ -138,42 +138,37 @@ test('[WP6] an export bundle is produced from the Audit File', async ({ page }) 
   await expect(page.locator('[aria-modal="true"]')).toHaveCount(0);
 });
 
-test('[WP6] cross-universe view-only share: a Head grants, the grantee reads it, and it is read-only', async ({ page, browser }) => {
-  // The Head (CIA) grants a share through the Org Admin sharing screen.
+test('[WP6] joint audit: a group company shares an engagement with edit rights to both', async ({ page, browser }) => {
+  // The CIA (which holds manage_engagements) starts a joint audit through the Org Admin sharing tab.
   await signIn(page, CIA);
   await openOrgControl(page, 'sharing');
   await expect(page.getByTestId('share-panel')).toBeVisible();
-  await expect(page.getByTestId('share-grant-universe')).toBeVisible();
+  await expect(page.getByTestId('share-grant-engagement')).toBeVisible();
 
-  const universeSelect = page.getByTestId('share-grant-universe');
-  const granteeSelect = page.getByTestId('share-grant-grantee');
-  const universeId = await universeSelect.locator('option').nth(1).getAttribute('value');
-  const granteeId = await granteeSelect.locator('option').nth(1).getAttribute('value');
-  expect(universeId).toBeTruthy();
-  expect(granteeId).toBeTruthy();
-  await universeSelect.selectOption(universeId!);
-  await granteeSelect.selectOption(granteeId!);
+  const engagementSelect = page.getByTestId('share-grant-engagement');
+  const counterpartySelect = page.getByTestId('share-grant-counterparty');
+  const engagementId = await engagementSelect.locator('option').nth(1).getAttribute('value');
+  const counterpartyId = await counterpartySelect.locator('option').nth(1).getAttribute('value');
+  expect(engagementId).toBeTruthy();
+  expect(counterpartyId).toBeTruthy();
+  await engagementSelect.selectOption(engagementId!);
+  await counterpartySelect.selectOption(counterpartyId!);
   await page.getByTestId('share-grant-submit').click();
-  // The grant is a real platform action: on a fresh database it either lands ("Saved") or the
-  // database refuses it and says exactly why. Both are designed states, never a blocking modal.
+  // The grant is a real database action: on the seeded group it lands ("Saved"). A refusal would
+  // render inline, never as a blocking modal.
   await expect(page.getByTestId('share-panel-result')).toContainText(/Saved|not allowed/);
   await expect(page.locator('[aria-modal="true"]')).toHaveCount(0);
-  // A share that landed shows up in the granted list; a refused one shows the reason instead.
   const result = await page.getByTestId('share-panel-result').textContent();
   if (result && /Saved/.test(result)) {
     await expect(page.locator('[data-testid^="share-row-"]').first()).toBeVisible();
   }
 
-  // The grant surface is a rights-gated admin surface: a Preparer holds no edit_config, so the
-  // control plane (and therefore the granting screen) is unreachable from that session.
+  // The counterparty (Org B) sees the joint audit on its "Shared with you" surface. Every member
+  // reaches that surface, so it does not need edit_config.
   const ctx = await browser.newContext();
   const p2 = await ctx.newPage();
-  await signIn(p2, PREPARER);
+  await signIn(p2, ORG_B_ADMIN);
   await p2.getByLabel('Open user profile menu').click();
-  await expect(p2.getByTestId('menu-org-control')).toHaveCount(0);
-
-  // But every member reaches the read-only "Shared with you" surface, so a grantee can open what a
-  // Head shared without holding edit_config.
   await p2.getByTestId('menu-shared-with-me').click();
   await expect(p2.getByTestId('share-panel')).toBeVisible();
   await expect(p2.getByTestId('share-panel-with-me')).toBeVisible();

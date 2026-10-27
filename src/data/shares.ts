@@ -1,117 +1,196 @@
 /**
- * Cross-universe view-only sharing (§2, SCALE-1 WP2).
+ * Group / joint-audit sharing data module (§2, SCALE-1 WP2).
  *
- * A share is granted by a Level-1 or Level-2 Head, carries an optional expiry, and is revocable by
- * the granting Head, a higher Head or an Org Admin. Every rule is enforced in the database
- * (migration 0095): this module is the only place the UI reaches them. Components never import the
- * Supabase client.
+ * The corrected §2 model: a joint audit may span associated (group) companies and is shared with
+ * edit rights to both. Association is platform-owned; a share needs the `manage_engagements` right
+ * and a recorded association. Every rule is enforced in the database (migration 0102); this module
+ * is the only place the UI reaches them. Components never import the Supabase client.
  */
 import { callRpc, getClient, type DataResult } from './db';
 
-export interface ShareRow {
+/** A joint-audit share this organisation has granted out. */
+export interface JointShareRow {
   id: string;
-  universeId: string;
-  universeName: string;
-  granteeUserId: string;
-  grantedBy: string | null;
+  engagementId: string;
+  engagementTitle: string;
+  ownerOrgId: string;
+  counterpartyOrgId: string;
+  counterpartyName: string;
+  rights: string;
   grantedAt: string;
   expiresAt: string | null;
   revokedAt: string | null;
   revokeReason: string | null;
+  live: boolean;
 }
 
-/** A share granted to the caller: the grantee's own view. */
-export interface ShareWithMeRow {
+/** A joint-audit share granted to this organisation. */
+export interface JointShareWithMeRow {
   id: string;
-  universeId: string;
-  universeName: string;
-  grantedBy: string | null;
+  engagementId: string;
+  engagementTitle: string;
+  ownerOrgId: string;
+  ownerName: string;
+  rights: string;
   grantedAt: string;
   expiresAt: string | null;
   live: boolean;
 }
 
-export interface SharedUniverseView {
-  universeId: string;
-  live: boolean;
-  entities: Array<{ id: string; name: string; status: string }>;
-  engagements: Array<{ id: string; title: string; stage: string }>;
+/** A configuration distribution from the group parent to a member. */
+export interface ConfigDistributionRow {
+  id: string;
+  parentOrgId: string;
+  parentName: string;
+  memberOrgId: string;
+  memberName: string;
+  keys: string[];
+  distributedAt: string;
+  revokedAt: string | null;
 }
 
-function toShare(row: Record<string, unknown>): ShareRow {
+const NOT_CONFIGURED = 'The data module is not configured.';
+
+function mapShare(row: Record<string, unknown>): JointShareRow {
   return {
     id: row.id as string,
-    universeId: row.universe_id as string,
-    universeName: (row.universe_name as string) ?? '',
-    granteeUserId: row.grantee_user_id as string,
-    grantedBy: (row.granted_by as string | null) ?? null,
+    engagementId: row.engagement_id as string,
+    engagementTitle: (row.engagement_title as string) ?? '',
+    ownerOrgId: row.owner_org_id as string,
+    counterpartyOrgId: row.counterparty_org_id as string,
+    counterpartyName: (row.counterparty_name as string) ?? '',
+    rights: (row.rights as string) ?? 'edit',
     grantedAt: row.granted_at as string,
     expiresAt: (row.expires_at as string | null) ?? null,
     revokedAt: (row.revoked_at as string | null) ?? null,
     revokeReason: (row.revoke_reason as string | null) ?? null,
+    live: row.live === true,
   };
 }
 
-/** The shares this organisation has granted. Empty when the module is not configured. */
-export async function listShares(): Promise<ShareRow[]> {
+/** The joint-audit shares this organisation has granted. Empty when the module is not configured. */
+export async function listJointShares(): Promise<JointShareRow[]> {
   const sb = getClient();
   if (!sb) return [];
-  const { data, error } = await sb.rpc('shares_get');
+  const { data, error } = await sb.rpc('joint_shares_get');
   if (error || !Array.isArray(data)) return [];
-  return (data as Array<Record<string, unknown>>).map(toShare);
+  return (data as Array<Record<string, unknown>>).map(mapShare);
 }
 
-/** The shares granted to the signed-in user. */
-export async function listSharesWithMe(): Promise<ShareWithMeRow[]> {
+/** The joint-audit shares granted to this organisation. */
+export async function listJointSharesWithMe(): Promise<JointShareWithMeRow[]> {
   const sb = getClient();
   if (!sb) return [];
-  const { data, error } = await sb.rpc('shares_with_me');
+  const { data, error } = await sb.rpc('joint_shares_with_me');
   if (error || !Array.isArray(data)) return [];
   return (data as Array<Record<string, unknown>>).map((row) => ({
     id: row.id as string,
-    universeId: row.universe_id as string,
-    universeName: (row.universe_name as string) ?? '',
-    grantedBy: (row.granted_by as string | null) ?? null,
+    engagementId: row.engagement_id as string,
+    engagementTitle: (row.engagement_title as string) ?? '',
+    ownerOrgId: row.owner_org_id as string,
+    ownerName: (row.owner_name as string) ?? '',
+    rights: (row.rights as string) ?? 'edit',
     grantedAt: row.granted_at as string,
     expiresAt: (row.expires_at as string | null) ?? null,
     live: row.live === true,
   }));
 }
 
-/** Grant a view-only share. Returns the new share id, or a reason. */
-export async function grantShare(
-  universeId: string, granteeUserId: string, expiresAt: string | null
+/** Share one engagement with an associated counterparty, with edit rights to both. */
+export async function grantJointShare(
+  engagementId: string, counterpartyOrgId: string, expiresAt: string | null
 ): Promise<DataResult & { id?: string }> {
   const sb = getClient();
-  if (!sb) return { ok: false, reason: 'The data module is not configured.' };
-  const { data, error } = await sb.rpc('share_grant', {
-    p_universe_id: universeId, p_grantee_user_id: granteeUserId, p_expires_at: expiresAt,
+  if (!sb) return { ok: false, reason: NOT_CONFIGURED };
+  const { data, error } = await sb.rpc('joint_share_grant', {
+    p_engagement_id: engagementId, p_counterparty_org_id: counterpartyOrgId, p_expires_at: expiresAt,
   });
   if (error) return { ok: false, reason: error.message };
   return { ok: true, id: (data as string) ?? undefined };
 }
 
-/** Revoke a share. The reason is required by the database. */
-export async function revokeShare(shareId: string, reason: string): Promise<DataResult> {
-  return callRpc('share_revoke', { p_share_id: shareId, p_reason: reason });
+/** Revoke a joint-audit share. The reason is recorded. */
+export async function revokeJointShare(shareId: string, reason: string): Promise<DataResult> {
+  return callRpc('joint_share_revoke', { p_share_id: shareId, p_reason: reason }, NOT_CONFIGURED);
 }
 
-/** The read-only projection of a shared universe. Throws nothing; returns an empty view on refusal. */
-export async function viewSharedUniverse(shareId: string): Promise<SharedUniverseView | null> {
+/** An engagement this organisation may share into a joint audit (an RLS-scoped read). */
+export interface ShareableEngagement {
+  id: string;
+  title: string;
+}
+
+/**
+ * The engagements the caller may start a joint audit on. This reads the `engagements` table directly,
+ * so the row set is exactly what RLS admits for the session (own org, or a live joint share). The
+ * listbox must offer real database ids: a client-side demo id is not a uuid and the grant RPC
+ * refuses it.
+ */
+export async function listShareableEngagements(): Promise<ShareableEngagement[]> {
   const sb = getClient();
-  if (!sb) return null;
-  const { data, error } = await sb.rpc('shared_universe_view', { p_share_id: shareId });
-  if (error || !data) return null;
-  const d = data as Record<string, unknown>;
-  return {
-    universeId: d.universe_id as string,
-    live: d.live === true,
-    entities: (d.entities as SharedUniverseView['entities']) ?? [],
-    engagements: (d.engagements as SharedUniverseView['engagements']) ?? [],
-  };
+  if (!sb) return [];
+  const { data, error } = await sb.from('engagements').select('id, title').order('title');
+  if (error || !Array.isArray(data)) return [];
+  return (data as Array<Record<string, unknown>>).map((r) => ({
+    id: r.id as string,
+    title: (r.title as string) ?? '',
+  }));
 }
 
-/** Set the Head flag on a member (none, 1 or 2). Org Admin only, enforced in the database. */
-export async function setHeadLevel(userId: string, level: number | null): Promise<DataResult> {
-  return callRpc('admin_set_head_level', { p_user: userId, p_level: level });
+/** An organisation associated with the caller's org (a group company). */
+export interface AssociatedOrg {
+  id: string;
+  name: string;
+}
+
+/** The associated organisations (group companies) of the caller's org. */
+export async function listAssociatedOrgs(): Promise<AssociatedOrg[]> {
+  const sb = getClient();
+  if (!sb) return [];
+  const { data, error } = await sb.rpc('my_associated_orgs');
+  if (error || !Array.isArray(data)) return [];
+  return (data as Array<Record<string, unknown>>).map((row) => ({
+    id: row.id as string,
+    name: (row.name as string) ?? '',
+  }));
+}
+
+/** The configuration distributions this organisation has sent or received. */
+export async function listConfigDistributions(): Promise<ConfigDistributionRow[]> {
+  const sb = getClient();
+  if (!sb) return [];
+  const { data, error } = await sb.rpc('group_config_distributions');
+  if (error || !Array.isArray(data)) return [];
+  return (data as Array<Record<string, unknown>>).map((row) => ({
+    id: row.id as string,
+    parentOrgId: row.parent_org_id as string,
+    parentName: (row.parent_name as string) ?? '',
+    memberOrgId: row.member_org_id as string,
+    memberName: (row.member_name as string) ?? '',
+    keys: (row.keys as string[]) ?? [],
+    distributedAt: row.distributed_at as string,
+    revokedAt: (row.revoked_at as string | null) ?? null,
+  }));
+}
+
+/** Distribute the current configuration snapshot to a member of the caller's group (parent only). */
+export async function distributeConfig(
+  memberOrgId: string, keys: string[] | null
+): Promise<DataResult & { id?: string }> {
+  const sb = getClient();
+  if (!sb) return { ok: false, reason: NOT_CONFIGURED };
+  const { data, error } = await sb.rpc('group_distribute_config', {
+    p_member_org_id: memberOrgId, p_keys: keys,
+  });
+  if (error) return { ok: false, reason: error.message };
+  return { ok: true, id: (data as string) ?? undefined };
+}
+
+/** Adopt a distribution into this organisation's own configuration history. Returns the key count. */
+export async function adoptConfig(distributionId: string): Promise<DataResult & { keys?: number }> {
+  const sb = getClient();
+  if (!sb) return { ok: false, reason: NOT_CONFIGURED };
+  const { data, error } = await sb.rpc('group_adopt_config', { p_distribution_id: distributionId });
+  if (error) return { ok: false, reason: error.message };
+  return { ok: true, keys: (data as number) ?? 0 };
 }

@@ -195,28 +195,34 @@ for (const [n, d] of chrome) w(`| ${n} | ${d} |`);
 w();
 
 // ---- Notifications ----------------------------------------------------------
-w('## Notifications and cross-universe sharing (the two newest flows)');
+w('## Notifications and group sharing (the two newest flows)');
 w();
 w('These are not Appendix A ids; they are the surfaces SCALE-1 added and a redesign must draw.');
 w();
-w('### Cross-universe view-only sharing (`share-panel`)');
+w('### Group sharing and joint audits (`share-panel`)');
 w();
 w('- **Granting screen:** the Assurance control plane (`org_control` inspector), tab `sharing`,');
-w('  reached from `menu-org-control`. Requires `edit_config`. Testids: `share-panel`,');
+w('  reached from `menu-org-control`. Requires `manage_engagements`. Testids: `share-panel`,');
 w('  `share-panel-loading`, `share-panel-error`, `share-panel-retry`, `share-panel-grant`,');
-w('  `share-grant-universe`, `share-grant-grantee`, `share-grant-expiry`, `share-grant-submit`,');
-w('  `share-panel-granted`, `share-granted-empty`, `share-row-<id>`, `share-revoke-reason-<id>`,');
-w('  `share-revoke-<id>`, `share-panel-result`.');
+w('  `share-grant-engagement`, `share-grant-counterparty`, `share-grant-expiry`, `share-grant-submit`,');
+w('  `share-no-counterparties`, `share-panel-granted`, `share-granted-empty`, `share-row-<id>`,');
+w('  `share-revoke-reason-<id>`, `share-revoke-<id>`, `share-panel-config`, `share-config-member`,');
+w('  `share-config-distribute`, `share-config-empty`, `share-config-row-<id>`,');
+w('  `share-config-adopt-<id>`, `share-panel-result`.');
 w('- **Grantee screen:** the "Shared with you" inspector, reached from `menu-shared-with-me` by any');
 w('  member (no `edit_config` needed). Same `share-panel` testid in `mode="grantee"`:');
-w('  `share-panel-with-me`, `share-with-me-empty`, `share-with-me-<id>`, `share-view-<id>`,');
-w('  `share-panel-view`, `share-view-not-live`, `share-view-entities`, `share-view-engagements`.');
-w('- **Data:** `src/data/shares.ts` — `listShares`, `listSharesWithMe`, `grantShare`, `revokeShare`,');
-w('  `viewSharedUniverse`, `setHeadLevel`.');
-w('- **RPCs:** `shares_get`, `shares_with_me`, `share_grant`, `share_revoke`, `shared_universe_view`,');
-w('  `admin_set_head_level`. Table: `universe_shares`.');
-w('- **Rights:** grant/revoke require a Level-1 or Level-2 Head (or an Org Admin); read requires a');
-w('  live share for `auth.uid()` with `jwt_org_id()` equality. Documented in `docs/SCALE-REPORT.md`.');
+w('  `share-panel-with-me`, `share-with-me-empty`, `share-with-me-<id>`.');
+w('- **Data:** `src/data/shares.ts` — `listJointShares`, `listJointSharesWithMe`, `grantJointShare`,');
+w('  `revokeJointShare`, `listAssociatedOrgs`, `listConfigDistributions`, `distributeConfig`,');
+w('  `adoptConfig`.');
+w('- **RPCs:** `joint_shares_get`, `joint_shares_with_me`, `joint_share_grant`, `joint_share_revoke`,');
+w('  `my_associated_orgs`, `group_config_distributions`, `group_distribute_config`,');
+w('  `group_adopt_config`. Tables: `engagement_joint_shares`, `org_associations`, `org_groups`,');
+w('  `config_distributions`.');
+w('- **Rights:** grant/revoke require `manage_engagements` and a platform-recorded group association');
+w('  between the two orgs; a joint share carries edit rights to both parties and extends the read and');
+w('  write policies of only the shared engagement and its working papers. `jwt_org_id()` equality is');
+w('  kept everywhere. Documented in `docs/SCALE-REPORT.md` and `docs/SPEC-v10.md` §2.');
 w();
 
 // ---- RPC catalogue ----------------------------------------------------------

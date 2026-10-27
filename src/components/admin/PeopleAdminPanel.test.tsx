@@ -49,7 +49,7 @@ describe('People admin invite (D20)', () => {
     fireEvent.change(screen.getByLabelText('Enter email address'), {
       target: { value: 'new.auditor@example.test' },
     });
-    fireEvent.click(screen.getByLabelText('Select role'));
+    fireEvent.click(screen.getByLabelText(/^Select role/));
     fireEvent.click(screen.getByText('Audit Manager'));
     fireEvent.click(screen.getByTestId('admin-invite'));
 
