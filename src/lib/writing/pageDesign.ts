@@ -53,12 +53,14 @@ export interface ChromeSpec {
 export const PAGE_NUMBER_STYLES = ['none', 'n', 'page-n', 'n-of-total', 'page-n-of-total'] as const;
 export type PageNumberStyle = (typeof PAGE_NUMBER_STYLES)[number];
 
+/** The header and footer defaults. Both are OFF, so a format that has not been through the designer
+ *  renders exactly as before; the designer turns them on and the templates below are pre-filled. */
 export const DEFAULT_CHROME: ChromeSpec = {
-  headerEnabled: true,
+  headerEnabled: false,
   headerLeft: '',
   headerCentre: '{engagement}',
   headerRight: '{classification}',
-  footerEnabled: true,
+  footerEnabled: false,
   footerLeft: '{org}',
   footerCentre: '',
   footerRight: 'Page {page} of {pages}',

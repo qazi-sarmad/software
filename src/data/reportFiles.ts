@@ -11,10 +11,12 @@
  */
 import { getClient } from './db';
 import { renderPdf } from '../lib/render/pdf';
+import { renderDesignedPdf } from '../lib/render/designedPdf';
 import { renderDocx } from '../lib/render/docx';
 import { documentFromReportBlocks, toPdfModel, footerLine, type DocumentModel, type ReportBlockInput } from '../lib/render/document';
-import { DEFAULT_BRANDING, type BrandingSpec } from '../lib/render/branding';
+import { DEFAULT_BRANDING, resolveHexColour, type BrandingSpec } from '../lib/render/branding';
 import { DEFAULT_FORMAT_LAYOUT, toContentsSpec, toPdfTypography, type FormatLayout } from '../lib/writing/reportFormat';
+import { designFromFormat, hasDesign } from '../lib/writing/renderDesign';
 import { sha256Hex } from '../lib/population';
 
 export const REPORT_BUCKET = 'reports';
@@ -32,6 +34,8 @@ export interface ReportFileInput {
   /** The report format's print layout (WP-C3). Its resolved typography decides the PDF's printed
    *  sizes and line height, so the frozen PDF matches the live canvas. Absent means the defaults. */
   layout?: FormatLayout;
+  /** The classification the chrome prints (`Internal`, `Confidential`). Absent means `Internal`. */
+  classification?: string;
 }
 
 export interface StoredReportFiles {
@@ -54,6 +58,16 @@ export function buildReportModel(input: ReportFileInput, contentHashForFooter: s
     // the format asks for. One model, so the two files cannot disagree.
     typography: toPdfTypography(layout),
     contents: toContentsSpec(layout),
+    // WP-D: the page design (chrome, columns, shapes, placement, links, table shades). Both the PDF
+    // and the DOCX print it. Only a format that asks for a design carries one, so an old format
+    // renders exactly as before.
+    design: hasDesign(layout) ? designFromFormat(layout, resolveHexColour, {
+      org: input.engagementLabel,
+      engagement: input.engagementLabel,
+      classification: input.classification ?? 'Internal',
+      date: frozenLabel,
+      user: input.userLabel,
+    }) : undefined,
   };
 }
 
@@ -80,7 +94,11 @@ export async function renderAndStoreReportFiles(input: ReportFileInput): Promise
   const docxHash = await hashOf(docxBytes);
 
   const pdfModel = buildReportModel(input, docxHash, frozenLabel);
-  const pdfBytes = await renderPdf(spec, toPdfModel(pdfModel, undefined, toPdfTypography(input.layout ?? DEFAULT_FORMAT_LAYOUT)));
+  // WP-D: a format that asks for a designed page prints through the designed renderer; every other
+  // format keeps the plain flow, so an old format renders exactly as before.
+  const pdfBytes = pdfModel.design && hasDesign(input.layout ?? DEFAULT_FORMAT_LAYOUT)
+    ? await renderDesignedPdf(spec, pdfModel)
+    : await renderPdf(spec, toPdfModel(pdfModel, undefined, toPdfTypography(input.layout ?? DEFAULT_FORMAT_LAYOUT)));
   const pdfHash = await hashOf(pdfBytes);
 
   const base = `${input.orgId}/reports/${input.reportVersionId}`;

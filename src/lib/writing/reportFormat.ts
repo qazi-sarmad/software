@@ -592,7 +592,7 @@ export const DEFAULT_FORMAT_LAYOUT: FormatLayout = {
   columnGapMm: 6,
   grid: { ...DEFAULT_GRID },
   chrome: { ...DEFAULT_CHROME },
-  numberedHeadings: true,
+  numberedHeadings: false,
   placed: [],
   shapes: [],
   links: [],

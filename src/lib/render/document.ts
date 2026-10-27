@@ -11,6 +11,12 @@
  */
 import type { PdfBlock, PdfDocumentModel, PdfSection, PdfTextBlock } from './pdf';
 import { figurePng, FIGURE_SIZE_PT } from './figure';
+import type { ChromeSpec, PageSetup, PlacedBlock } from '../writing/pageDesign';
+import type { GridSpec } from '../writing/grid';
+import type { DesignTheme } from '../writing/designTheme';
+import type { ShapeSpec } from '../writing/shapes';
+import type { CrossReferenceSpec, HyperlinkSpec } from '../writing/links';
+import type { TableStyleName } from '../writing/tableStyleDefaults';
 
 export interface DocumentBlock {
   kind: 'heading' | 'paragraph' | 'table' | 'figure';
@@ -43,6 +49,9 @@ export interface FormulaFigure {
 export interface DocumentSection {
   heading: string;
   blocks: DocumentBlock[];
+  /** WP-D: the format block key this section came from, so placement, table styles and
+   *  cross-references can name a section stably even when two sections share a heading. */
+  key?: string;
 }
 
 export interface DocumentModel {
@@ -56,6 +65,34 @@ export interface DocumentModel {
   typography?: DocumentTypography;
   /** The format's table-of-contents choice (WP-T). Absent means the model carries no TOC. */
   contents?: ContentsSpec;
+  /** The page design (WP-D): page setup, chrome, columns, shapes, placement, links, references and
+   *  table styles. Present means the renderers print the designed page; absent means the plain flow. */
+  design?: DocumentDesign;
+}
+
+/**
+ * The page design a renderer prints (WP-D). Every value is derived data from the org's branding and
+ * the format's layout; the renderers read it and compute nothing about the brand themselves.
+ */
+export interface DocumentDesign {
+  setup: PageSetup;
+  grid: GridSpec;
+  chrome: ChromeSpec;
+  /** The derived colours: heading, rule, link, reference, surfaces, table shades. */
+  theme: DesignTheme;
+  columns: number;
+  columnGapMm: number;
+  numberedHeadings: boolean;
+  placed: PlacedBlock[];
+  shapes: ShapeSpec[];
+  links: HyperlinkSpec[];
+  crossReferences: CrossReferenceSpec[];
+  tableStyles: { key: string; style: TableStyleName }[];
+  defaultTableStyle: TableStyleName;
+  tableBorder: string;
+  tableRowAlternate: string;
+  /** The header/footer template variables (org, engagement, classification, date). */
+  chromeVars: Record<string, string | number>;
 }
 
 /** The resolved print typography every renderer agrees on, produced by `toPdfTypography` (WP-C3). */

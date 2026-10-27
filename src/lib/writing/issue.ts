@@ -8,11 +8,13 @@
  * random source: the timestamp is an argument.
  */
 
-import { DEFAULT_BRANDING, type BrandingSpec } from '../render/branding';
+import { DEFAULT_BRANDING, resolveHexColour, type BrandingSpec } from '../render/branding';
 import { renderPdf } from '../render/pdf';
+import { renderDesignedPdf } from '../render/designedPdf';
 import { renderDocx, documentPlainText } from '../render/docx';
 import { toPdfModel, type DocumentModel, type DocumentSection } from '../render/document';
 import { DEFAULT_FORMAT_LAYOUT, applyFormat, toContentsSpec, toPdfTypography, type AppliedFormat, type FormatLayout, type RegisterChoice, type ReportFormat } from './reportFormat';
+import { designFromFormat, hasDesign } from './renderDesign';
 import { sha256Hex } from '../population';
 import { planReport, type PlannedReport } from './planner';
 import { composedText, type ComposedReport } from './compose';
@@ -120,6 +122,15 @@ export function issueDocument(input: IssueInput): IssuedReport {
     sections: [...sections, { heading: 'Document control', blocks: [{ kind: 'paragraph', text: reportFooterLine(metadata) }] }],
     typography: toPdfTypography(layout),
     contents: toContentsSpec(layout),
+    // WP-D: the page design the designer set, so the issued file prints the designed page. Only a
+    // format that asks for a design carries one, so a plain format renders exactly as before.
+    design: hasDesign(layout) ? designFromFormat(layout, resolveHexColour, {
+      org: input.title,
+      engagement: input.title,
+      classification: 'Internal',
+      date: input.issuedAt,
+      user: '',
+    }) : undefined,
   };
   return { document, metadata };
 }
@@ -164,7 +175,10 @@ export function applyIssuedFormat(
  *  printed typography so the frozen PDF matches the live canvas. */
 export async function issuePdf(issued: IssuedReport, branding?: BrandingSpec, layout?: FormatLayout): Promise<Uint8Array> {
   const spec = branding ?? { ...DEFAULT_BRANDING, orgId: 'org' };
-  return renderPdf(spec, toPdfModel(issued.document, issued.metadata.issuedAt, toPdfTypography(layout ?? DEFAULT_FORMAT_LAYOUT)));
+  const l = layout ?? DEFAULT_FORMAT_LAYOUT;
+  // WP-D: a designed format prints through the designed renderer.
+  if (issued.document.design && hasDesign(l)) return renderDesignedPdf(spec, issued.document);
+  return renderPdf(spec, toPdfModel(issued.document, issued.metadata.issuedAt, toPdfTypography(l)));
 }
 
 /** Render the issued report to DOCX bytes. */
