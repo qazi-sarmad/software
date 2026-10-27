@@ -10,8 +10,14 @@ import {
 import { listRoles, type RoleRow } from '../../data/admin';
 import { REPORT_MODELS } from '../../lib/writing/models';
 import { FORMALITY_DEFINITIONS, TONE_DEFINITIONS, VOICES } from '../../lib/writing/registers';
+import { buildCanvas } from '../../lib/writing/canvas';
+import { resolveHexColour } from '../../lib/render/branding';
+import { canRedo, canUndo, initHistory, moveItem, pushHistory, redo, undo, type History } from '../../lib/writing/formatHistory';
+import { REPORT_FONT_FAMILIES, REPORT_FONT_NAMES } from '../../lib/render/fonts';
+import { FormatCanvas } from './FormatCanvas';
 import {
-  DEFAULT_FORMAT_LAYOUT, RHETORICAL_ROLES, applyFormat, defaultFormat, formatBodyHash, validateFormat,
+  DEFAULT_FORMAT_LAYOUT, REPORT_PALETTE, RHETORICAL_ROLES, TYPOGRAPHY_LIMITS, applyFormat,
+  defaultFormat, formatBodyHash, validateFormat,
   type BlockRole, type FormatBlock, type FormatLayout, type RegisterChoice, type ReportFormat,
 } from '../../lib/writing/reportFormat';
 
@@ -53,6 +59,8 @@ export const ReportFormatPanel: React.FC<{ prefix?: string }> = ({ prefix = 'wk-
   // The live draft the editor mutates. It starts from the newest version of the selected format.
   const [draft, setDraft] = useState<ReportFormat | null>(null);
   const [audiences, setAudiences] = useState<FormatAudienceRow[]>([]);
+  // Undo/redo for the draft (WP-C2). Each edit pushes the previous draft; undo/redo move the cursor.
+  const [history, setHistory] = useState<History<ReportFormat> | null>(null);
 
   const load = useCallback(async () => {
     if (!orgId) { setState('ready'); return; }
@@ -93,6 +101,7 @@ export const ReportFormatPanel: React.FC<{ prefix?: string }> = ({ prefix = 'wk-
       defaultLocale: newest.defaultLocale, audiences: [], createdBy: '', createdAt: newest.createdAt,
       bodyHash: newest.bodyHash,
     });
+    setHistory(null);
     void listFormatAudiences(newest.id).then(setAudiences).catch(() => setAudiences([]));
   }, [keys, selectedKey, versions, orgId]);
 
@@ -115,7 +124,41 @@ export const ReportFormatPanel: React.FC<{ prefix?: string }> = ({ prefix = 'wk-
     [draft, plan, model.defaultRegister],
   );
 
-  const mutate = (patch: Partial<ReportFormat>) => setDraft((d) => (d ? { ...d, ...patch } : d));
+  /** The live page model the canvas draws (WP-C2). Pure: the same draft always yields the same page. */
+  const canvasPage = useMemo(
+    () => (draft ? buildCanvas({ format: draft, plan, modelDefault: model.defaultRegister as RegisterChoice }) : null),
+    [draft, plan, model.defaultRegister],
+  );
+
+  const mutate = (patch: Partial<ReportFormat>) => setDraft((d) => {
+    if (!d) return d;
+    const next = { ...d, ...patch };
+    setHistory((h) => pushHistory(h ?? initHistory(d), next));
+    return next;
+  });
+
+  const undoEdit = () => {
+    if (!history) return;
+    const next = undo(history);
+    setHistory(next);
+    setDraft(next.present);
+  };
+
+  const redoEdit = () => {
+    if (!history) return;
+    const next = redo(history);
+    setHistory(next);
+    setDraft(next.present);
+  };
+
+  /** Reorder blocks by dragging one block key onto another (WP-C2). */
+  const reorderBlocks = (fromKey: string, toKey: string) => {
+    if (!draft) return;
+    const from = draft.blocks.findIndex((b) => b.key === fromKey);
+    const to = draft.blocks.findIndex((b) => b.key === toKey);
+    if (from < 0 || to < 0) return;
+    mutate({ blocks: moveItem(draft.blocks, from, to) });
+  };
 
   const moveBlock = (index: number, delta: number) => {
     if (!draft) return;
@@ -307,40 +350,102 @@ export const ReportFormatPanel: React.FC<{ prefix?: string }> = ({ prefix = 'wk-
       )}
 
       {pane === 'layout' && (
-        <div className="p-4 rounded-2xl border border-hairline bg-surface grid grid-cols-2 gap-3 md:grid-cols-4" data-testid={`${prefix}-layout`}>
-          <label className="space-y-1 text-apple-11 text-secondary">
-            Page size
-            <Select ariaLabel="Page size" value={draft.layout.pageSize} testId={`${prefix}-layout-page-size`}
-              options={[{ value: 'A4', label: 'A4' }, { value: 'Letter', label: 'Letter' }]}
-              onChange={(v) => mutate({ layout: { ...draft.layout, pageSize: v as 'A4' | 'Letter' } })} />
-          </label>
-          {([['marginTopMm', 'Top margin'], ['marginRightMm', 'Right margin'], ['marginBottomMm', 'Bottom margin'], ['marginLeftMm', 'Left margin']] as const).map(([k, name]) => (
-            <label key={k} className="space-y-1 text-apple-11 text-secondary">
-              {name} (mm)
-              <input type="number" min={0} className="w-full px-2 py-1 rounded-lg bg-surface-hover text-apple-13 text-primary"
-                data-testid={`${prefix}-layout-${k}`} value={draft.layout[k]}
-                onChange={(e) => mutate({ layout: { ...draft.layout, [k]: Number(e.target.value) } })} />
+        <div className="space-y-3" data-testid={`${prefix}-layout`}>
+          <div className="flex items-center gap-2 flex-wrap" data-testid={`${prefix}-history-bar`}>
+            <button type="button" disabled={!history || !canUndo(history)} data-testid={`${prefix}-undo`}
+              className="px-2 py-1 rounded-lg bg-surface-hover text-apple-12 text-primary disabled:opacity-40"
+              onClick={undoEdit}>Undo</button>
+            <button type="button" disabled={!history || !canRedo(history)} data-testid={`${prefix}-redo`}
+              className="px-2 py-1 rounded-lg bg-surface-hover text-apple-12 text-primary disabled:opacity-40"
+              onClick={redoEdit}>Redo</button>
+            <span className="text-apple-11 text-secondary" data-testid={`${prefix}-history-depth`}>
+              {history ? `${history.past.length} undo · ${history.future.length} redo` : 'no edits yet'}
+            </span>
+          </div>
+
+          <div className="p-4 rounded-2xl border border-hairline bg-surface grid grid-cols-2 gap-3 md:grid-cols-4" data-testid={`${prefix}-layout-grid`}>
+            <label className="space-y-1 text-apple-11 text-secondary">
+              Page size
+              <Select ariaLabel="Page size" value={draft.layout.pageSize} testId={`${prefix}-layout-page-size`}
+                options={[{ value: 'A4', label: 'A4' }, { value: 'Letter', label: 'Letter' }]}
+                onChange={(v) => mutate({ layout: { ...draft.layout, pageSize: v as 'A4' | 'Letter' } })} />
             </label>
-          ))}
-          <label className="space-y-1 text-apple-11 text-secondary">
-            Heading font
-            <Select ariaLabel="Heading font" value={draft.layout.fontHeading} testId={`${prefix}-layout-font-heading`}
-              options={['Helvetica', 'Georgia', 'Times New Roman', 'Courier New', 'Arial'].map((f) => ({ value: f, label: f }))}
-              onChange={(v) => mutate({ layout: { ...draft.layout, fontHeading: v } })} />
-          </label>
-          <label className="space-y-1 text-apple-11 text-secondary">
-            Body font
-            <Select ariaLabel="Body font" value={draft.layout.fontBody} testId={`${prefix}-layout-font-body`}
-              options={['Helvetica', 'Georgia', 'Times New Roman', 'Courier New', 'Arial'].map((f) => ({ value: f, label: f }))}
-              onChange={(v) => mutate({ layout: { ...draft.layout, fontBody: v } })} />
-          </label>
-          <label className="inline-flex items-center gap-2 text-apple-12 text-secondary mt-5">
-            <input type="checkbox" checked={draft.layout.showFooter} data-testid={`${prefix}-layout-footer`}
-              onChange={(e) => mutate({ layout: { ...draft.layout, showFooter: e.target.checked } })} />
-            Print the footer line with the hashes
-          </label>
-          <div className="col-span-2 md:col-span-4 text-apple-11 text-secondary" data-testid={`${prefix}-layout-tokens`}>
-            Colours come from design tokens: {draft.layout.colourPrimary}, {draft.layout.colourAccent}, {draft.layout.colourText}, {draft.layout.colourBackground}
+            {([['marginTopMm', 'Top margin'], ['marginRightMm', 'Right margin'], ['marginBottomMm', 'Bottom margin'], ['marginLeftMm', 'Left margin']] as const).map(([k, name]) => (
+              <label key={k} className="space-y-1 text-apple-11 text-secondary">
+                {name} (mm)
+                <input type="number" min={0} className="w-full px-2 py-1 rounded-lg bg-surface-hover text-apple-13 text-primary"
+                  data-testid={`${prefix}-layout-${k}`} value={draft.layout[k]}
+                  onChange={(e) => mutate({ layout: { ...draft.layout, [k]: Number(e.target.value) } })} />
+              </label>
+            ))}
+            <label className="space-y-1 text-apple-11 text-secondary">
+              Heading font
+              <Select ariaLabel="Heading font" value={draft.layout.fontHeading} testId={`${prefix}-layout-font-heading`}
+                options={REPORT_FONT_NAMES.map((f) => ({ value: f, label: f }))}
+                onChange={(v) => mutate({ layout: { ...draft.layout, fontHeading: v } })} />
+            </label>
+            <label className="space-y-1 text-apple-11 text-secondary">
+              Body font
+              <Select ariaLabel="Body font" value={draft.layout.fontBody} testId={`${prefix}-layout-font-body`}
+                options={REPORT_FONT_NAMES.map((f) => ({ value: f, label: f }))}
+                onChange={(v) => mutate({ layout: { ...draft.layout, fontBody: v } })} />
+            </label>
+            <label className="space-y-1 text-apple-11 text-secondary">
+              Body size (pt)
+              <input type="number" min={TYPOGRAPHY_LIMITS.fontSizePt.min} max={TYPOGRAPHY_LIMITS.fontSizePt.max}
+                className="w-full px-2 py-1 rounded-lg bg-surface-hover text-apple-13 text-primary"
+                data-testid={`${prefix}-layout-font-size`} value={draft.layout.fontSizePt}
+                onChange={(e) => mutate({ layout: { ...draft.layout, fontSizePt: Number(e.target.value) } })} />
+            </label>
+            <label className="space-y-1 text-apple-11 text-secondary">
+              Heading size (%)
+              <input type="number" min={TYPOGRAPHY_LIMITS.headingScalePct.min} max={TYPOGRAPHY_LIMITS.headingScalePct.max}
+                className="w-full px-2 py-1 rounded-lg bg-surface-hover text-apple-13 text-primary"
+                data-testid={`${prefix}-layout-heading-scale`} value={draft.layout.headingScalePct}
+                onChange={(e) => mutate({ layout: { ...draft.layout, headingScalePct: Number(e.target.value) } })} />
+            </label>
+            <label className="space-y-1 text-apple-11 text-secondary">
+              Line height (%)
+              <input type="number" min={TYPOGRAPHY_LIMITS.lineHeightPct.min} max={TYPOGRAPHY_LIMITS.lineHeightPct.max}
+                className="w-full px-2 py-1 rounded-lg bg-surface-hover text-apple-13 text-primary"
+                data-testid={`${prefix}-layout-line-height`} value={draft.layout.lineHeightPct}
+                onChange={(e) => mutate({ layout: { ...draft.layout, lineHeightPct: Number(e.target.value) } })} />
+            </label>
+            <label className="space-y-1 text-apple-11 text-secondary">
+              Body weight
+              <Select ariaLabel="Body weight" value={String(draft.layout.fontWeightBody)} testId={`${prefix}-layout-weight-body`}
+                options={TYPOGRAPHY_LIMITS.fontWeight.map((w) => ({ value: String(w), label: String(w) }))}
+                onChange={(v) => mutate({ layout: { ...draft.layout, fontWeightBody: Number(v) } })} />
+            </label>
+            <label className="space-y-1 text-apple-11 text-secondary">
+              Heading weight
+              <Select ariaLabel="Heading weight" value={String(draft.layout.fontWeightHeading)} testId={`${prefix}-layout-weight-heading`}
+                options={TYPOGRAPHY_LIMITS.fontWeight.map((w) => ({ value: String(w), label: String(w) }))}
+                onChange={(v) => mutate({ layout: { ...draft.layout, fontWeightHeading: Number(v) } })} />
+            </label>
+            <label className="inline-flex items-center gap-2 text-apple-12 text-secondary mt-5">
+              <input type="checkbox" checked={draft.layout.showFooter} data-testid={`${prefix}-layout-footer`}
+                onChange={(e) => mutate({ layout: { ...draft.layout, showFooter: e.target.checked } })} />
+              Print the footer line with the hashes
+            </label>
+          </div>
+
+          <div className="p-4 rounded-2xl border border-hairline bg-surface space-y-3" data-testid={`${prefix}-colours`}>
+            <div className="text-apple-12 text-primary">Colours</div>
+            {([['colourPrimary', 'Primary'], ['colourAccent', 'Accent'], ['colourText', 'Text'], ['colourBackground', 'Background']] as const).map(([key, name]) => (
+              <div key={key} className="flex items-center gap-2 flex-wrap" data-testid={`${prefix}-colour-${key}`}>
+                <span className="w-24 text-apple-12 text-secondary">{name}</span>
+                <input type="color" aria-label={`${name} colour`} value={resolveHexColour(draft.layout[key])}
+                  data-testid={`${prefix}-colour-${key}-input`}
+                  onChange={(e) => mutate({ layout: { ...draft.layout, [key]: e.target.value.toUpperCase() } })} />
+                {REPORT_PALETTE.map((p) => (
+                  <button key={p.value} type="button" title={p.name} aria-label={`${name}: ${p.name}`}
+                    data-testid={`${prefix}-colour-${key}-swatch-${p.name.toLowerCase().replace(/\s+/g, '-')}`}
+                    className="w-5 h-5 rounded-md border border-hairline"
+                    style={{ background: p.value }} onClick={() => mutate({ layout: { ...draft.layout, [key]: p.value } })} />
+                ))}
+              </div>
+            ))}
           </div>
         </div>
       )}
@@ -390,23 +495,44 @@ export const ReportFormatPanel: React.FC<{ prefix?: string }> = ({ prefix = 'wk-
         </div>
       )}
 
-      <div className="p-4 rounded-2xl border border-hairline bg-surface space-y-2" data-testid={`${prefix}-preview`}>
-        <div className="text-apple-12 text-primary">Page preview</div>
-        <div className="text-apple-11 text-secondary" data-testid={`${prefix}-preview-summary`}>
-          {applied?.blocks.length ?? 0} block(s) shown · {applied?.hidden.length ?? 0} hidden
+      <div className="grid gap-4 lg:grid-cols-2" data-testid={`${prefix}-preview`}>
+        <div className="p-4 rounded-2xl border border-hairline bg-surface space-y-2">
+          <div className="text-apple-12 text-primary">Page preview</div>
+          <div className="text-apple-11 text-secondary" data-testid={`${prefix}-preview-summary`}>
+            {applied?.blocks.length ?? 0} block(s) shown · {applied?.hidden.length ?? 0} hidden
+          </div>
+          <ol className="space-y-1 text-apple-12 text-secondary" data-testid={`${prefix}-preview-blocks`}>
+            {applied?.blocks.map((b) => (
+              <li key={b.key} data-testid={`${prefix}-preview-${b.key}`}>
+                {b.label} — F{b.register.formality} {FORMALITY_DEFINITIONS[b.register.formality].name} · T{b.register.tone} · {b.register.voice}
+              </li>
+            ))}
+          </ol>
+          {applied && applied.hidden.length > 0 && (
+            <div className="text-apple-11 text-secondary" data-testid={`${prefix}-preview-hidden`}>Hidden: {applied.hidden.join(', ')}</div>
+          )}
+          <div className="text-apple-11 text-secondary" data-testid={`${prefix}-preview-registers`}>
+            Registers in use: {VOICES.join(', ')}
+          </div>
         </div>
-        <ol className="space-y-1 text-apple-12 text-secondary" data-testid={`${prefix}-preview-blocks`}>
-          {applied?.blocks.map((b) => (
-            <li key={b.key} data-testid={`${prefix}-preview-${b.key}`}>
-              {b.label} — F{b.register.formality} {FORMALITY_DEFINITIONS[b.register.formality].name} · T{b.register.tone} · {b.register.voice}
-            </li>
-          ))}
-        </ol>
-        {applied && applied.hidden.length > 0 && (
-          <div className="text-apple-11 text-secondary" data-testid={`${prefix}-preview-hidden`}>Hidden: {applied.hidden.join(', ')}</div>
-        )}
-        <div className="text-apple-11 text-secondary" data-testid={`${prefix}-preview-registers`}>
-          Registers in use: {VOICES.join(', ')}
+        <div className="space-y-2" data-testid={`${prefix}-canvas-pane`}>
+          <div className="text-apple-12 text-primary">Live page</div>
+          <div className="text-apple-11 text-secondary" data-testid={`${prefix}-canvas-summary`}>
+            {canvasPage ? `${canvasPage.pageSize} · ${canvasPage.blocks.length} block(s)${canvasPage.overflowsFirstPage ? ' · continues past page 1' : ''}` : 'no page'}
+          </div>
+          {canvasPage && (
+            <FormatCanvas
+              page={canvasPage}
+              colours={{
+                primary: draft.layout.colourPrimary, accent: draft.layout.colourAccent,
+                text: draft.layout.colourText, background: draft.layout.colourBackground,
+              }}
+              fonts={{ heading: draft.layout.fontHeading, body: draft.layout.fontBody }}
+              onReorder={reorderBlocks}
+              prefix={`${prefix}-canvas`}
+            />
+          )}
+          <div className="text-apple-11 text-secondary">Drag a block onto another to reorder the report.</div>
         </div>
       </div>
 
