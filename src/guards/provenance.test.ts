@@ -61,11 +61,22 @@ describe('provenance guard', () => {
     expect(migration).toMatch(/api\.open/);
   });
 
-  it('new commits are authored by the owner identity', () => {
-    const name = execSync('git config user.name', { encoding: 'utf8' }).trim();
-    const email = execSync('git config user.email', { encoding: 'utf8' }).trim();
-    expect(name).toBe('Qazi Sarmad Ali Mahesar');
-    expect(email).toBe('qazisarmadalimahesar@gmail.com');
+  it('commits are authored by the owner identity', () => {
+    // Read the commit metadata, not the machine-local config: the config is unset on CI runners and
+    // a config check would pass on a machine that simply happens to be configured, while the author
+    // recorded in the commit is the artefact that actually travels with the repository. The shallow
+    // CI clone has a single commit, so `git log -3` (never `HEAD~1`) keeps this safe at depth 1.
+    const owner = 'Qazi Sarmad Ali Mahesar <qazisarmadalimahesar@gmail.com>';
+    // %x09 is a literal tab, so the format string carries no shell metacharacter.
+    const authors = execSync('git log -3 --format=%an%x09%ae', { encoding: 'utf8' })
+      .split('\n')
+      .filter(Boolean)
+      .map((line) => {
+        const [name, email] = line.split('\t');
+        return `${name} <${email}>`;
+      });
+    expect(authors.length).toBeGreaterThan(0);
+    for (const author of authors) expect(author).toBe(owner);
   });
 
   it('the most recent commit message carries no provenance trailer', () => {
