@@ -25,7 +25,7 @@ Every row carries the commit hash, the CI run ID and the result, as the brief re
 | Task | Commit | CI run | Result | Notes |
 |---|---|---|---|---|
 | H0 preflight + docs | `48a329a` | — (docs only, pushed with H1) | done | branch from main; numbering locked at migration 0024 / test 32 |
-| H1 Grok housekeeping | `244bb3e` | 38891659906 | green | PR #9 desc retargeted; singleClient guard green (3 tests) |
+| H1 provenance housekeeping | `244bb3e` | 38891659906 | green | PR #9 desc retargeted; singleClient guard green (3 tests) |
 | H2 nav labels | `8500602` | 38892526322 | green | labels aligned to SPEC-v10 §5 (D-H2) |
 | H3a preferences + guard | `ae92f3b` | 38894103600 | green | migration 0024, `src/data/preferences.ts`, guard skeleton, SQL test 32 |
 | H3b RecordView + routing | `97b1c3e` | 38895012166 | green | RecordView + `/view` route (D-H3b) |

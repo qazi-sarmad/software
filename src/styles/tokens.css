@@ -14,6 +14,7 @@
   --text-primary: #14161B;
   --text-secondary: #5F6573;
   --text-tertiary: #666B78;
+  --on-accent: #F6F5F2;
 
   --border-hairline: rgba(20,22,27, 0.09);
   --border-strong: rgba(20,22,27, 0.16);
@@ -24,7 +25,7 @@
   --accent-verdigris: #2F6F5E;
   --accent-verdigris-subtle: rgba(47, 111, 94, 0.12);
 
-  --accent-cinnabar: #C2410C;
+  --accent-cinnabar: #A93408;
   --accent-cinnabar-subtle: rgba(194, 65, 12, 0.12);
 
   /* Brass: money and financial figures ONLY (Guide v7 11.2) */
@@ -52,6 +53,7 @@
   --text-primary: #ECECEE;
   --text-secondary: #9497A0;
   --text-tertiary: #82858F;
+  --on-accent: #141518;
 
   --border-hairline: rgba(255,255,255, 0.08);
   --border-strong: rgba(255,255,255, 0.16);
@@ -62,7 +64,7 @@
   --accent-verdigris: #58A08C;
   --accent-verdigris-subtle: rgba(88, 160, 140, 0.16);
 
-  --accent-cinnabar: #E2683A;
+  --accent-cinnabar: #EE7B4E;
   --accent-cinnabar-subtle: rgba(226, 104, 58, 0.16);
 
   /* Brass: money and financial figures ONLY (Guide v7 11.2) */
@@ -91,6 +93,7 @@
   --text-primary: #0F1115;
   --text-secondary: #5C6370;
   --text-tertiary: #626875;
+  --on-accent: #F6F5F2;
 
   --border-hairline: rgba(15,17,21, 0.09);
   --border-strong: rgba(15,17,21, 0.16);
@@ -101,7 +104,7 @@
   --accent-verdigris: #2F6F5E;
   --accent-verdigris-subtle: rgba(47, 111, 94, 0.12);
 
-  --accent-cinnabar: #C2410C;
+  --accent-cinnabar: #A93408;
   --accent-cinnabar-subtle: rgba(194, 65, 12, 0.12);
 
   /* Brass: money and financial figures ONLY (Guide v7 11.2) */
@@ -129,6 +132,7 @@
   --text-primary: #ECEDEF;
   --text-secondary: #9497A0;
   --text-tertiary: #82858F;
+  --on-accent: #141518;
 
   --border-hairline: rgba(255,255,255, 0.08);
   --border-strong: rgba(255,255,255, 0.16);
@@ -139,7 +143,7 @@
   --accent-verdigris: #58A08C;
   --accent-verdigris-subtle: rgba(88, 160, 140, 0.16);
 
-  --accent-cinnabar: #E2683A;
+  --accent-cinnabar: #EE7B4E;
   --accent-cinnabar-subtle: rgba(226, 104, 58, 0.16);
 
   /* Brass: money and financial figures ONLY (Guide v7 11.2) */
@@ -168,6 +172,7 @@
   --text-primary: #1A1712;
   --text-secondary: #645E52;
   --text-tertiary: #675F54;
+  --on-accent: #F6F5F2;
 
   --border-hairline: rgba(26,23,18, 0.09);
   --border-strong: rgba(26,23,18, 0.16);
@@ -178,7 +183,7 @@
   --accent-verdigris: #2F6F5E;
   --accent-verdigris-subtle: rgba(47, 111, 94, 0.12);
 
-  --accent-cinnabar: #C2410C;
+  --accent-cinnabar: #A93408;
   --accent-cinnabar-subtle: rgba(194, 65, 12, 0.12);
 
   /* Brass: money and financial figures ONLY (Guide v7 11.2) */
@@ -206,6 +211,7 @@
   --text-primary: #EDEBE6;
   --text-secondary: #9C978B;
   --text-tertiary: #928D83;
+  --on-accent: #141518;
 
   --border-hairline: rgba(255,255,255, 0.08);
   --border-strong: rgba(255,255,255, 0.16);
@@ -216,7 +222,7 @@
   --accent-verdigris: #58A08C;
   --accent-verdigris-subtle: rgba(88, 160, 140, 0.16);
 
-  --accent-cinnabar: #E2683A;
+  --accent-cinnabar: #EE7B4E;
   --accent-cinnabar-subtle: rgba(226, 104, 58, 0.16);
 
   /* Brass: money and financial figures ONLY (Guide v7 11.2) */
@@ -251,21 +257,31 @@
 .bg-cinnabar-subtle { background-color: var(--accent-cinnabar-subtle); }
 
 .bg-accent { background-color: var(--accent-primary); }
+.bg-accent-hover:hover { background-color: var(--accent-primary); filter: brightness(0.92); }
+.bg-primary { background-color: var(--accent-primary); }
 .bg-verdigris { background-color: var(--accent-verdigris); }
 .bg-cinnabar { background-color: var(--accent-cinnabar); }
 .bg-brass-subtle { background-color: var(--accent-brass-subtle); }
+
+/* Foreground for a solid accent fill. The value is the light canvas on light presets and the
+   dark canvas on dark presets, so a filled button keeps WCAG AA in all six variants. */
+.text-canvas { color: var(--on-accent); }
 
 .text-primary { color: var(--text-primary); }
 .text-secondary { color: var(--text-secondary); }
 .text-tertiary { color: var(--text-tertiary); }
 .text-accent { color: var(--accent-primary); }
+.text-accent-foreground { color: var(--on-accent); }
 .text-verdigris { color: var(--accent-verdigris); }
+.text-verdigris-text { color: var(--accent-verdigris); }
 .text-cinnabar { color: var(--accent-cinnabar); }
 .text-brass { color: var(--accent-brass-text); }
 
 .border-hairline { border-color: var(--border-hairline); }
 .border-strong { border-color: var(--border-strong); }
 .border-accent { border-color: var(--accent-primary); }
+.border-accent-subtle { border-color: var(--accent-primary-subtle); }
+.border-canvas { border-color: var(--canvas); }
 .border-verdigris { border-color: var(--accent-verdigris); }
 .border-cinnabar { border-color: var(--accent-cinnabar); }
 

@@ -1673,6 +1673,19 @@ only the render hash moves (W1, W2.2, W4, W5, W6, W8, W12).
 - **States:** loading / error / ready; read-only when the caller lacks `edit_config`.
 - **Tutorial key:** `oa.governance`
 
+## CHR-01 — live region (a11y announcer, WP12)
+
+- **Purpose:** announce state changes to assistive technology without moving focus. A polite region
+  carries routine confirmations; a refusal escalates the same region to `assertive` so a screen reader
+  interrupts with the error. It renders no visible chrome.
+- **Route:** global, mounted once in `App.tsx` (`LiveAnnouncerProvider`); present on every screen.
+- **Rights:** none; it only mirrors messages the app already decided to show.
+- **Data:** none; `src/lib/liveRegion.ts` is the pure policy (message → politeness).
+- **RPCs / tables:** none.
+- **Testids:** `live-announcer`.
+- **States:** idle (empty text) / polite / assertive.
+- **Tutorial key:** none (chrome, not a numbered screen).
+
 ## SEC-04 — data erasure register (WP15)
 
 - **Purpose:** raise and action right-to-erasure requests. Execution replaces the subject's

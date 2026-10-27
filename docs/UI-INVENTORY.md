@@ -1482,6 +1482,21 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
   named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
 
+### `CHR-01` — live region (a11y announcer, WP12)
+
+- **Purpose:** announce state changes to assistive technology without moving focus. A polite region carries routine confirmations; a refusal escalates the same region to `assertive` so a screen reader interrupts with the error. It renders no visible chrome.
+- **Route / location:** global, mounted once in `App.tsx` (`LiveAnnouncerProvider`); present on every screen.
+- **Rights required:** none; it only mirrors messages the app already decided to show.
+- **Data functions (`src/data/*.ts`):** none (pure/UI only)
+- **Data modules:** none (pure/UI only)
+- **RPCs reachable via those modules:** none
+- **Tables reachable via those modules:** none
+- **Testids (1):** `live-announcer`
+- **States:** idle (empty text) / polite / assertive.
+- **Tutorial key:** — (no key)
+- **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
+  named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
+
 ### `SEC-04` — data erasure register (WP15)
 
 - **Purpose:** raise and action right-to-erasure requests. Execution replaces the subject's identifiers in place and leaves the sealed, hash-chained record intact, so a sealed report stays independently verifiable. A legal hold blocks execution.
@@ -1661,7 +1676,7 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 
 ## Coverage cross-check
 
-- Screens documented: 97 (contract sections: 48 Appendix A + 44 Appendix B).
+- Screens documented: 98 (contract sections: 48 Appendix A + 44 Appendix B).
 - Tutorial keys: 80.
 - RPCs catalogued: 115.
 - Data modules: 56; exported data functions: 365.

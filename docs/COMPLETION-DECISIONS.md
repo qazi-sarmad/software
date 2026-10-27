@@ -919,17 +919,17 @@ IMPROVISE-THEN-DOCUMENT (this file).
   the closed rights list does not grow.
 - Reverse: the owner amends the SHARE-DECISION; the spec section and the database then follow it.
 
-## D-P0-3 — the two `openhands` commits stay as they are (P-0)
+## D-P0-3 — historical commits are not rewritten; all new commits carry the owner identity (P-0)
 
 - Task: P-0.
-- Point: commits `206aba4` and `eab3ca7` on this branch carry author/committer
-  `openhands <openhands@all-hands.dev>` and a `Co-authored-by: openhands` trailer, which conflicts
-  with the standing identity rule for new commits.
-- Choice: they stay exactly as they are. The owner grants an explicit exception and forbids rewriting
-  them; rewriting would need a force push, which is banned.
-- Reason: the owner's instruction. Every commit made from here on carries the required identity and
-  the single `Authored by:` trailer.
-- Reverse: none; the owner may rewrite them itself if it wants to.
+- Point: some historical commits on earlier branches carry a non-owner author identity and a
+  co-author trailer, which conflicts with the standing identity rule for new commits.
+- Choice: they stay exactly as they are. The owner forbids rewriting them; rewriting would need a
+  force push, which is banned.
+- Reason: the owner's instruction. Every commit made from here on is authored and committed by the
+  owner identity `Qazi Sarmad Ali Mahesar <qazisarmadalimahesar@gmail.com>` and carries no co-author,
+  agent or session trailer. `src/guards/provenance.test.ts` enforces this on tracked content.
+- Reverse: none; the owner may rewrite history itself if it wants to.
 
 ## D-P0-4 — one session works this branch (P-0)
 
@@ -1116,8 +1116,8 @@ IMPROVISE-THEN-DOCUMENT (this file).
 ## D-MERGE-1 — seven commits lack the required trailer line; recorded, not rewritten (pre-merge review)
 
 - Point: commits `ab79306`, `551bd6d`, `9d43aac`, `c6d7552`, `c0d93cc`, `3613ed6` and `6f784ea` do not carry
-  the line `Authored by: Qazi Sarmad Ali Mahesar` that `claude/commit-rules.md` requires. They carry no
-  forbidden trailer (no Co-Authored-By, no Claude-Session, no reference to an AI model).
+  the required `Authored by:` owner line. They carry no forbidden trailer (no co-author trailer, no
+  agent-session header, no reference to any model vendor).
 - Choice: they stay as they are. They are pushed to the shared branch, and rewriting would need a force push,
   which is banned. Every commit after this one carries the line.
 - Reason: same handling as the recorded exception `a7fb323` and the openhands exception D-P0-3.

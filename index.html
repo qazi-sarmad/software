@@ -3,11 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- Security headers (WP10). The header set in public/_headers and vite.config.ts is the
-         authority; these meta tags carry the subset that also works in a document. `frame-ancestors`
-         is header-only and lives in _headers. Fonts are self-hosted (@fontsource, see src/index.css),
-         so the policy allows no external origin at all; the only external connection is Supabase. -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; worker-src 'self' blob:; manifest-src 'self'; upgrade-insecure-requests" />
+    <!-- Security headers (WP10). The full policy — including Content-Security-Policy — is set as a
+         response header in public/_headers (static hosts) and vite.config.ts (preview). It is NOT a
+         meta tag here: a meta CSP would also apply to the Vite dev server, whose inline React-refresh
+         preamble a strict `script-src 'self'` blocks, and the browser would never mount the app.
+         Fonts are self-hosted (@fontsource, see src/index.css), so the policy allows no external
+         origin at all; the only external connection is the Supabase project. -->
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <meta name="robots" content="noindex, nofollow" />
     <meta name="color-scheme" content="light dark" />

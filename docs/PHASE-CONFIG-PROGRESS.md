@@ -23,7 +23,8 @@ Every line carries the commit hash and the CI run ID, not only "green".
 ## C3 ownership
 
 - New commits on this branch use the owner identity `Qazi Sarmad Ali Mahesar <qazisarmadalimahesar@gmail.com>`.
-- No `Co-Authored-By` trailer, no session-URL trailer, no agent or model-vendor names in tracked content.
+- No co-author trailer, no session-URL trailer, no agent or model-vendor names in tracked content;
+  enforced by `src/guards/provenance.test.ts`.
 - Historical commit messages already on `main` / earlier branches are **not** rewritten (no force-push).
 
 ## Tasks

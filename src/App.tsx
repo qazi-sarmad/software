@@ -7,6 +7,7 @@ import { MfaChallenge } from './components/auth/MfaChallenge';
 import { isPlatformAdminPath } from './lib/platformPath';
 import { NoTenantScreen } from './components/auth/NoTenantScreen';
 import { InlineError } from './components/common/InlineError';
+import { LiveAnnouncerProvider } from './components/common/LiveAnnouncer';
 import type { User } from './types';
 import type { TenantSeed } from './types/seed';
 import { EMPTY_SEED } from './data/emptySeed';
@@ -470,9 +471,11 @@ const AppRoutes: React.FC = () => {
 export default function App() {
   return (
     <ThemeProvider>
-      <AuthProvider>
-        <AppRoutes />
-      </AuthProvider>
+      <LiveAnnouncerProvider>
+        <AuthProvider>
+          <AppRoutes />
+        </AuthProvider>
+      </LiveAnnouncerProvider>
     </ThemeProvider>
   );
 }
