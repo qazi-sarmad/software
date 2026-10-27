@@ -5,23 +5,26 @@ Rebuilt for the completion build (C5.3). Resolved items from earlier phases are 
 owner), owner actions, and parked items. Cross-references: `docs/PARITY.md` (status by section),
 `docs/COMPLETION-BLOCKERS.md` (full text of each blocker), `docs/COMPLETION-SPEC-AUDIT.md` (evidence).
 
-## Real gaps (owner decision requested)
+## Real gaps — all closed by SCALE-1
 
-These are Partial or Missing in `docs/PARITY.md`, each with the reason in `COMPLETION-BLOCKERS.md`.
+Closed on `feature/scale-harden-v1` (WP2). Each former Partial/Missing item is now Present in
+`docs/PARITY.md` with working code and tests. No item below is parked or awaiting a decision.
 
-1. **§2 cross-universe view-only sharing** — Missing. No share table, RPC, read-only projection,
-   notification or screen. This is the one whole clause with no implementation. Owner decision: build
-   it, or amend §2 to defer it.
-2. **§10.1 configurable grace period before the Testing hard lock** — Partial. The hard lock is
-   present and tested; the configurable overlap is not.
-3. **§11.4 central pre-flight** — Partial. The eight checks exist across the testing panels and
-   `src/lib/`; a single named module with an acknowledge-with-a-logged-reason path is not present.
-4. **§17.1 pop-out Realtime sync test** — Partial. The pop-out window and the poll fallback exist; a
-   test that proves the pop-out stays in sync is not present.
-5. **§22 Realtime in-app notification delivery test** — Partial. Notifications are delivered and
-   visible in the Work Queue; a Realtime-delivery test is not present.
-6. **§3 / §25.7 mobile viewport smoke** — Partial. The app is responsive; a phone-viewport
-   Playwright test for ethics sign-off, simple approvals and report viewing is not present.
+1. **§2 cross-universe view-only sharing** — Present. `universe_shares` table, `share_grant` /
+   `share_revoke` RPCs (Level-1/Level-2 Head or Org Admin), `shared_universe_read` read-only
+   projection, in-app + email notification, `src/components/admin/SharePanel.tsx`, sql `100`,`103`,
+   `e2e/wp6-system.spec.ts`. RLS shape documented in `docs/SCALE-DECISIONS.md`.
+2. **§10.1 configurable grace period before the Testing hard lock** — Present.
+   `org_lifecycle_settings.testing_grace_hours`, `testing_lock_active` grace window, `src/lib/lifecycle.ts`,
+   `src/data/governance.ts`, sql `100`.
+3. **§11.4 central pre-flight** — Present. `src/lib/preflight.ts` (eight checks, structured report),
+   `src/data/preflight.ts` (append-only `preflight_acknowledgements` + logged acknowledge RPC, `0095`),
+   unit + sql `100`.
+4. **§17.1 pop-out Realtime sync test** — Present. `e2e/s14-popout-sync.spec.ts`.
+5. **§22 Realtime in-app notification delivery test** — Present. `e2e/s15-notifications.spec.ts`; the
+   per-subscriber Realtime channel fix is `0098`; sql `104`.
+6. **§3 / §25.7 mobile viewport smoke** — Present. `e2e/s16-mobile.spec.ts` (phone viewport: ethics
+   sign-off, simple approval, report viewing).
 
 ## Owner actions
 

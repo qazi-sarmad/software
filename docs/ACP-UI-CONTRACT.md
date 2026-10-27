@@ -421,10 +421,14 @@ under `acp.tutorial.autoplay`), so the same screen never autoplays twice. The e2
 - **Data:** `listBoardPackSections(orgId)`, `saveBoardPackSections(orgId, sections)`
   (`src/data/boardPack.ts`).
 - **Testids:** `wk-boardpack`, `wk-boardpack-tab-config`, `oa-boardpack-config`,
-  `oa-boardpack-section-<key>`, `oa-boardpack-up-<key>`, `oa-boardpack-down-<key>`,
-  `oa-boardpack-enabled-<key>`, `wk-boardpack-error`, `wk-boardpack-result`.
+  `oa-boardpack-section-<key>`, `oa-boardpack-label-<key>`, `oa-boardpack-up-<key>`,
+  `oa-boardpack-down-<key>`, `oa-boardpack-enabled-<key>`, `oa-boardpack-roles-<key>`,
+  `oa-boardpack-roles-panel-<key>`, `oa-boardpack-role-<key>-<slug>`, `wk-boardpack-error`,
+  `wk-boardpack-result`.
 - **States:** loading; a section list, or an inline error. The first section's Up button and the last
-  section's Down button are disabled.
+  section's Down button are disabled. A section label is editable in place (saved on blur) and a
+  per-section role list is opened with the Roles button; an empty role list means every role with
+  `view_board_pack`.
 - **Tutorial key:** `oa.boardpack-config`.
 
 ---
@@ -449,12 +453,17 @@ under `acp.tutorial.autoplay`), so the same screen never autoplays twice. The e2
   `wk-boardpack-empty`, `wk-boardpack-<id>`, `wk-boardpack-open-<id>`, `wk-boardpack-view`,
   `wk-boardpack-pdf`, `wk-boardpack-pptx`, `wk-boardpack-url-missing`, `wk-boardpack-missing-refs`,
   `wk-boardpack-verify-chip`, `wk-boardpack-section-sira`, `wk-boardpack-section-issues`,
-  `wk-boardpack-section-sealed`, `wk-boardpack-section-changes`, `wk-boardpack-section-sources`,
-  `wk-boardpack-figure-sira-<i>`, `wk-boardpack-figure-cap-<band>`, `wk-boardpack-figure-sealed`,
-  `wk-boardpack-delta`, `wk-boardpack-source-<path>`.
+  `wk-boardpack-section-plan`, `wk-boardpack-section-sealed`, `wk-boardpack-section-changes`,
+  `wk-boardpack-section-sources`, `wk-boardpack-figure-sira-<i>`, `wk-boardpack-figure-cap-<band>`,
+  `wk-boardpack-figure-sealed`, `wk-boardpack-delta`, `wk-boardpack-source-<path>`,
+  `wk-boardpack-source-link-<path>`, `wk-boardpack-heatmap`, `wk-boardpack-heatmap-row-<entity>`,
+  `wk-boardpack-heatmap-<entity>-<band>`, `wk-boardpack-gantt`, `wk-boardpack-gantt-window`,
+  `wk-boardpack-gantt-row-<i>`, `wk-boardpack-gantt-bar-<i>`, `wk-boardpack-gantt-legend`.
 - **States:** a role without `view_board_pack` sees nothing. Loading, an empty history ("No pack yet"),
   an inline error, and the open pack. The PDF and PPTX buttons are disabled until `app_base_url` is
-  set, with `wk-boardpack-url-missing` shown.
+  set, with `wk-boardpack-url-missing` shown. The SIRA section renders the entity x band heatmap
+  (migration 0099) and the plan section renders the dated Gantt; a source figure with a resolvable ref
+  becomes a drill-down link.
 - **Tutorial keys:** `oa.boardpack-use` (WK-01), `oa.boardpack-generate` (WK-02),
   `oa.boardpack-view` (WK-03), `oa.boardpack-download` (WK-04).
 

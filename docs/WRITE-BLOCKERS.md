@@ -2,6 +2,15 @@
 
 Full text of each blocker: the error, the attempts, the commit hash. Empty when nothing is blocked.
 
+## Re-check at SCALE-1 WP0 (2026-10-26): still present
+
+`B-W-PR-TOKEN` is unchanged on `feature/scale-harden-v1`. `GET /repos/qazi-sarmad/software/pulls`
+returns HTTP 404 and `POST .../pulls` returns HTTP 403 "Resource not accessible by integration": the
+`GITHUB_TOKEN` is a GitHub App installation token without `pull_requests: write`. Read access works
+(`gh api repos/qazi-sarmad/software --jq .private` returns `false`) and pushes work, so the gap is
+exactly PR creation. The branch is pushed and green; the owner opens the pull request or grants the
+permission. The body to use for the SCALE-1 branch is `docs/SCALE-REPORT.md` on the branch.
+
 ## B-W-PR-TOKEN — the draft pull request cannot be opened with the supplied token (2026-10-26)
 
 Not a code defect, and not under the break protocol's revert rule: the build is green and the branch

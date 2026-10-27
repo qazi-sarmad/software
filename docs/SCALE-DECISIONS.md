@@ -68,3 +68,35 @@ never basic-auth SMTP (which Microsoft is retiring). The build must not add or r
 **Zero-cost precision.** "No per-seat fee" for Graph SSO and Graph mail holds **only if the tenant
 already has Microsoft 365**. Where it does not, the cost is the tenant's to acquire, not the platform's
 to absorb. The platform itself adds no per-seat or per-render charge for any of the above.
+
+## D-S1-SHARE-RLS — the cross-universe share RLS shape (WP2, §2)
+
+**Decision.** Cross-universe view-only sharing is **intra-organisation**. A share moves read access
+between two *universes of the same tenant*, for a grantee who is already a member of that tenant. The
+law "data never leaves the tenant" is untouched: the share is never a cross-*org* read path.
+
+**The shape (migration `0095_scale_harden_sharing_preflight.sql`).**
+
+- `universe_shares(id, org_id, universe_id, grantee_user_id, granted_by, expires_at, revoked_at,
+  revoke_reason, created_at)`, org-scoped, RLS on. The select policy keeps `org_id = jwt_org_id()`
+  **and** the row must belong to the caller (`grantee_user_id = auth.uid()` or `granted_by = auth.uid()`).
+- The existing read policies (`universes_select`, `entities_select`, `engagements_select`) keep their
+  `org_id = jwt_org_id()` clause **verbatim** and add one disjunct:
+  `or public.has_active_share(<universe_id>)`. Because the org equality is still required, the share
+  is an *additional restriction* on which same-tenant rows are visible, never a relaxation of the
+  tenant boundary. `has_active_share` is `security definer`, checks `revoked_at is null` and
+  `(expires_at is null or expires_at > now())`, and matches `grantee_user_id = auth.uid()`.
+- **No write policy is touched.** A share is view-only by construction: the grantee gains no insert,
+  update or delete path. Verified by sql `100_scale_harden.sql` (a grantee's update changes 0 rows and
+  raises nothing).
+- **Rights checks.** `share_grant(p_universe_id, p_grantee_user_id, p_expires_at)` requires
+  `is_head(1)` (a Level-1 or Level-2 Head, since `is_head(1)` is satisfied by Level-2 too) **or** an
+  Org Admin, requires the grantee to be an active member of the same org, and refuses self-sharing.
+  `share_revoke(p_share_id, p_reason)` requires the granting Head, a higher Head, or an Org Admin.
+  Both are `security definer`, both append a ledger entry and an `activity_log` row.
+
+**What it constrains.** A future cross-*org* share is a new decision, not a tweak: it would break the
+`org_id = jwt_org_id()` equality that every policy relies on and must be designed as a separate,
+explicitly-scoped read path with its own audit. The `shared_universe_read(p_universe_id)` projection
+is the only tenant-content read that is not keyed on `jwt_org_id()` equality, and it is itself
+`security definer` and checks `jwt_org_id()` equality plus a live share row for `auth.uid()`.
