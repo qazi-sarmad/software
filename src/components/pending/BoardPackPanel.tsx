@@ -7,14 +7,18 @@ import {
 } from '../../data/boardPack';
 import { getBranding } from '../../data/branding';
 import {
-  collectFigures, deltaAgainst, excludedNote, figuresWithoutRefs, visibleSections,
+  collectFigures, deltaAgainst, excludedNote, figureDrillDownUrl, figuresWithoutRefs, visibleSections,
   type BoardPackRow, type BoardPackSection, type BoardPackSnapshot,
 } from '../../lib/boardPack';
+import {
+  barPercentages, ganttLayout, ganttLegend, heatmapGrid,
+} from '../../lib/boardPackVisuals';
 import { buildBoardPackPdf, buildBoardPackPptx, capAgingRows } from '../../lib/boardPackDocuments';
 import { renderPdf } from '../../lib/render/pdf';
 import { renderPptx } from '../../lib/render/pptx';
 import { renderQrDataUrl, verificationUrl } from '../../lib/render/qr';
 import type { BrandingSpec } from '../../lib/render/branding';
+import { resolveHexColour } from '../../lib/render/branding';
 import type { DataResult } from '../../data/db';
 import { InlineError } from '../common/InlineError';
 import { TutorialButton } from '../common/TutorialButton';
@@ -28,6 +32,17 @@ const BOUNDARIES: { value: BoundaryKind; label: string }[] = [
   { value: 'since_last', label: 'Since the last pack of this scope' },
   { value: 'custom', label: 'Custom date range' },
   { value: 'since_meeting', label: 'Since the last board meeting' },
+];
+
+/** The roles a section may be limited to. An empty list means every role with view_board_pack. */
+const ROLE_CHOICES: { slug: string; label: string }[] = [
+  { slug: 'cia', label: 'Chief Internal Auditor' },
+  { slug: 'audit_manager', label: 'Audit Manager' },
+  { slug: 'reviewer', label: 'Reviewer' },
+  { slug: 'preparer', label: 'Preparer' },
+  { slug: 'observer', label: 'Observer' },
+  { slug: 'org_admin', label: 'Org Admin' },
+  { slug: 'auditee', label: 'Auditee' },
 ];
 
 function download(bytes: Uint8Array, filename: string, mime: string) {
@@ -73,6 +88,7 @@ export const BoardPackPanel: React.FC = () => {
   const [openPack, setOpenPack] = useState<{ row: BoardPackRow; snapshot: BoardPackSnapshot } | null>(null);
   const [previousSnapshot, setPreviousSnapshot] = useState<BoardPackSnapshot | null>(null);
   const [qrDataUrl, setQrDataUrl] = useState('');
+  const [rolesFor, setRolesFor] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!orgId) { setState('ready'); return; }
@@ -115,6 +131,30 @@ export const BoardPackPanel: React.FC = () => {
     () => visibleSections(sections, [roleSlug]).map((s) => s.sectionKey),
     [sections, roleSlug]
   );
+  const heatmap = useMemo(() => heatmapGrid(openPack?.snapshot.sira?.heatmap), [openPack]);
+  const gantt = useMemo(
+    () => ganttLayout(openPack?.snapshot.plan?.gantt, openPack?.row.generatedAt ?? ''),
+    [openPack]
+  );
+  const ganttCounts = useMemo(() => ganttLegend(openPack?.snapshot.plan?.gantt), [openPack]);
+  // Chart colours come from the org's branding, so the printed chart matches the tenant's palette.
+  const chartColours = useMemo(() => {
+    if (!branding) return undefined;
+    return {
+      background: resolveHexColour(branding.colourBackground),
+      axis: resolveHexColour(branding.colourText),
+      text: resolveHexColour(branding.colourText),
+    };
+  }, [branding]);
+  const bandColours = useMemo(() => {
+    if (!branding) return {} as Record<string, string>;
+    const colour = resolveHexColour(branding.colourAccent);
+    const map: Record<string, string> = {};
+    for (const b of openPack?.snapshot.sira?.bands ?? []) {
+      if (typeof b.band === 'string') map[b.band] = colour;
+    }
+    return map;
+  }, [branding, openPack]);
 
   const generate = async () => {
     setBusy(true);
@@ -158,6 +198,7 @@ export const BoardPackPanel: React.FC = () => {
       const model = buildBoardPackPdf({
         title: openPack.row.scopeDescription, snapshot: openPack.snapshot, branding,
         appBaseUrl, dataHash: openPack.row.dataHash, generatedAt: openPack.row.generatedAt,
+        bandColours, chartColours,
       });
       const qr = await renderQrDataUrl(verificationUrl(appBaseUrl, 'pack', openPack.row.id));
       const bytes = await renderPdf(branding, { ...model, qrDataUrl: qr });
@@ -176,6 +217,7 @@ export const BoardPackPanel: React.FC = () => {
       const model = buildBoardPackPptx({
         title: openPack.row.scopeDescription, snapshot: openPack.snapshot, branding,
         appBaseUrl, dataHash: openPack.row.dataHash, generatedAt: openPack.row.generatedAt,
+        bandColours, chartColours,
       });
       const bytes = await renderPptx(branding, model);
       download(bytes, `board-pack-${openPack.row.id}.pptx`,
@@ -200,13 +242,30 @@ export const BoardPackPanel: React.FC = () => {
     setResult(r);
   };
 
+  /** Persist the current section list as is (used by the label field on blur and the role toggles). */
+  const saveSections = async (list: BoardPackSection[]) => {
+    const r = await saveBoardPackSections(orgId, list.map((s) => ({
+      sectionKey: s.sectionKey, ordinal: s.ordinal, enabled: s.enabled, visibleRoles: s.visibleRoles,
+      label: s.label,
+    })));
+    setResult(r);
+  };
+
+  /** Turn a role's visibility of one section on or off, then persist immediately. */
+  const toggleRole = async (sectionKey: string, slug: string) => {
+    const next = sections.map((s) => {
+      if (s.sectionKey !== sectionKey) return s;
+      const has = s.visibleRoles.includes(slug);
+      return { ...s, visibleRoles: has ? s.visibleRoles.filter((r) => r !== slug) : [...s.visibleRoles, slug] };
+    });
+    setSections(next);
+    await saveSections(next);
+  };
+
   const toggleSection = async (index: number) => {
     const next = sections.map((s, i) => (i === index ? { ...s, enabled: !s.enabled } : s));
     setSections(next);
-    const r = await saveBoardPackSections(orgId, next.map((s) => ({
-      sectionKey: s.sectionKey, ordinal: s.ordinal, enabled: s.enabled, visibleRoles: s.visibleRoles,
-    })));
-    setResult(r);
+    await saveSections(next);
   };
 
   if (!canView) {
@@ -332,7 +391,14 @@ export const BoardPackPanel: React.FC = () => {
           {sections.map((s, i) => (
             <div key={s.sectionKey} data-testid={`oa-boardpack-section-${s.sectionKey}`}
               className="flex items-center justify-between gap-2 rounded-xl border border-hairline bg-surface px-4 py-2">
-              <span className="text-apple-13 text-primary">{s.label}</span>
+              <input
+                data-testid={`oa-boardpack-label-${s.sectionKey}`}
+                value={s.label}
+                onChange={(e) => setSections((prev) => prev.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)))}
+                onBlur={() => void saveSections(sections)}
+                aria-label={`Section label for ${s.sectionKey}`}
+                className="text-apple-13 text-primary bg-transparent border-b border-transparent hover:border-hairline focus:border-accent focus:outline-none flex-1 min-w-0"
+              />
               <span className="flex items-center gap-2">
                 <button type="button" data-testid={`oa-boardpack-up-${s.sectionKey}`} onClick={() => void moveSection(i, -1)}
                   disabled={i === 0} className="px-2 py-0.5 rounded-lg border border-hairline text-apple-12 disabled:opacity-40">Up</button>
@@ -343,9 +409,31 @@ export const BoardPackPanel: React.FC = () => {
                     onChange={() => void toggleSection(i)} />
                   {s.enabled ? 'On' : 'Off'}
                 </label>
+                <button type="button" data-testid={`oa-boardpack-roles-${s.sectionKey}`}
+                  onClick={() => setRolesFor(rolesFor === s.sectionKey ? null : s.sectionKey)}
+                  className={`px-2 py-0.5 rounded-lg border text-apple-12 ${rolesFor === s.sectionKey ? 'border-accent text-accent' : 'border-hairline text-secondary'}`}>
+                  Roles
+                </button>
               </span>
             </div>
           ))}
+          {rolesFor && (
+            <div data-testid={`oa-boardpack-roles-panel-${rolesFor}`}
+              className="rounded-xl border border-hairline bg-surface px-4 py-3 space-y-1">
+              <p className="text-apple-12 text-secondary">Which roles may see this section? An empty list means everyone with view_board_pack.</p>
+              {ROLE_CHOICES.map((r) => {
+                const section = sections.find((s) => s.sectionKey === rolesFor);
+                const on = section?.visibleRoles.includes(r.slug) ?? false;
+                return (
+                  <label key={r.slug} className="flex items-center gap-2 text-apple-13 text-primary">
+                    <input type="checkbox" data-testid={`oa-boardpack-role-${rolesFor}-${r.slug}`} checked={on}
+                      onChange={() => void toggleRole(rolesFor, r.slug)} />
+                    {r.label}
+                  </label>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
@@ -392,6 +480,38 @@ export const BoardPackPanel: React.FC = () => {
                   <span className="text-primary font-medium">{b.value}</span>
                 </div>
               ))}
+              {heatmap.total > 0 && (
+                <div className="mt-3 overflow-x-auto" data-testid="wk-boardpack-heatmap">
+                  <table className="w-full text-apple-12 border-collapse">
+                    <thead>
+                      <tr>
+                        <th className="text-left text-secondary font-medium py-1 pr-2">Entity</th>
+                        {heatmap.bands.map((band) => (
+                          <th key={band} className="text-right text-secondary font-medium py-1 px-2">{band}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {heatmap.entities.map((entity) => (
+                        <tr key={entity} data-testid={`wk-boardpack-heatmap-row-${entity}`} className="border-t border-hairline">
+                          <td className="text-left text-primary py-1 pr-2">{entity}</td>
+                          {heatmap.bands.map((band) => {
+                            const v = heatmap.value(entity, band);
+                            const intensity = heatmap.max > 0 ? v / heatmap.max : 0;
+                            return (
+                              <td key={band} className="text-right py-1 px-2"
+                                data-testid={`wk-boardpack-heatmap-${entity}-${band}`}
+                                data-heat={intensity >= 0.66 ? 'high' : intensity >= 0.33 ? 'medium' : v > 0 ? 'low' : 'none'}>
+                                <span className="text-primary">{v}</span>
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </section>
           )}
 
@@ -405,6 +525,37 @@ export const BoardPackPanel: React.FC = () => {
                   <span className="text-primary font-medium">{r.value}</span>
                 </div>
               ))}
+            </section>
+          )}
+
+          {visible.includes('plan') && gantt.bars.length > 0 && (
+            <section data-testid="wk-boardpack-section-plan" className="rounded-2xl border border-hairline bg-surface p-4">
+              <h3 className="text-apple-14 font-semibold text-primary mb-2">Audit plan window</h3>
+              <p className="text-apple-12 text-secondary mb-2" data-testid="wk-boardpack-gantt-window">
+                {gantt.minStart} to {gantt.maxEnd} · {gantt.bars.length} planned item{gantt.bars.length === 1 ? '' : 's'}
+              </p>
+              <div data-testid="wk-boardpack-gantt" className="space-y-1.5">
+                {gantt.bars.map((bar, i) => {
+                  const pct = barPercentages(bar, gantt.spanDays);
+                  return (
+                    <div key={i} className="flex items-center gap-2" data-testid={`wk-boardpack-gantt-row-${i}`}>
+                      <span className="text-apple-11 text-secondary w-40 shrink-0 truncate" title={bar.title}>{bar.title}</span>
+                      <span className="relative h-3 flex-1 rounded-full bg-accent-subtle overflow-hidden">
+                        <span
+                          data-testid={`wk-boardpack-gantt-bar-${i}`}
+                          data-status={bar.status}
+                          className={`absolute top-0 h-3 rounded-full ${bar.open ? 'bg-accent' : 'bg-verdant'}`}
+                          style={{ left: `${pct.left}%`, width: `${pct.width}%` }}
+                        />
+                      </span>
+                      <span className="text-apple-11 text-secondary w-20 shrink-0 text-right">{bar.start}</span>
+                    </div>
+                  );
+                })}
+              </div>
+              <p className="text-apple-11 text-secondary mt-2" data-testid="wk-boardpack-gantt-legend">
+                {ganttCounts.map((c) => `${c.status}: ${c.count}`).join(' · ')}
+              </p>
             </section>
           )}
 
@@ -433,12 +584,24 @@ export const BoardPackPanel: React.FC = () => {
             <h3 className="text-apple-14 font-semibold text-primary mb-2">Sources index</h3>
             <p className="text-apple-12 text-secondary">{excludedNote(openPack.snapshot)}</p>
             <ul className="mt-2 space-y-1">
-              {collectFigures(openPack.snapshot).map((f) => (
-                <li key={f.path} data-testid={`wk-boardpack-source-${f.path}`} className="text-apple-12 text-secondary">
-                  <FileText className="w-3 h-3 inline mr-1" />
-                  {f.label}: {f.value} · {f.refs.length} record{f.refs.length === 1 ? '' : 's'}
-                </li>
-              ))}
+              {collectFigures(openPack.snapshot).map((f) => {
+                const ref = f.refs.length > 0 ? f.refs[0] : null;
+                const href = ref && appBaseUrl ? figureDrillDownUrl(appBaseUrl, ref) : null;
+                return (
+                  <li key={f.path} data-testid={`wk-boardpack-source-${f.path}`} className="text-apple-12 text-secondary">
+                    <FileText className="w-3 h-3 inline mr-1" />
+                    {href ? (
+                      <a href={href} data-testid={`wk-boardpack-source-link-${f.path}`}
+                        className="text-accent underline-offset-2 hover:underline">
+                        {f.label}: {f.value}
+                      </a>
+                    ) : (
+                      <span>{f.label}: {f.value}</span>
+                    )}
+                    {' · '}{f.refs.length} record{f.refs.length === 1 ? '' : 's'}
+                  </li>
+                );
+              })}
             </ul>
           </section>
 

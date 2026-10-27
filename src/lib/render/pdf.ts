@@ -34,10 +34,18 @@ export interface PdfLink {
   url: string;
 }
 
+/** A native table in the PDF (F10): the heatmap grid and the Gantt rows print as real tables, so a
+ *  figure's value sits in a cell the reader can scan, not in a sentence. */
+export interface PdfTable {
+  header: string[];
+  rows: string[][];
+}
+
 export interface PdfSection {
   heading: string;
   blocks: PdfBlock[];
   links?: PdfLink[];
+  table?: PdfTable;
 }
 
 export interface PdfDocumentModel {
@@ -274,6 +282,42 @@ export async function renderPdf(spec: BrandingSpec, model: PdfDocumentModel): Pr
         cursorY -= lineHeight;
       }
       cursorY -= 2;
+    }
+    if (section.table && section.table.rows.length > 0) {
+      // A native table: a header row, then the rows. Columns are equal width and text is clipped to
+      // its column with an ellipsis, so a long title never overruns the next column.
+      const header = section.table.header;
+      const cols = Math.max(1, header.length);
+      const colWidth = contentWidth / cols;
+      const rowHeight = 14;
+      const cellText = (text: string) => {
+        const maxW = colWidth - 6;
+        if (body.widthOfTextAtSize(text, 9) <= maxW) return text;
+        let t = text;
+        while (t.length > 1 && body.widthOfTextAtSize(`${t}…`, 9) > maxW) t = t.slice(0, -1);
+        return `${t}…`;
+      };
+      ensureSpace(rowHeight + 4);
+      for (let c = 0; c < cols; c++) {
+        page.drawText(cellText(header[c] ?? ''), {
+          x: marginLeft + c * colWidth, y: cursorY - 10, size: 9, font: heading, color: toRgb('#000000'),
+        });
+      }
+      cursorY -= rowHeight;
+      page.drawLine({
+        start: { x: marginLeft, y: cursorY }, end: { x: marginLeft + contentWidth, y: cursorY },
+        thickness: 0.5, color: toRgb('#cccccc'),
+      });
+      for (const row of section.table.rows) {
+        ensureSpace(rowHeight);
+        for (let c = 0; c < cols; c++) {
+          page.drawText(cellText(row[c] ?? ''), {
+            x: marginLeft + c * colWidth, y: cursorY - 10, size: 9, font: body, color: toRgb('#222222'),
+          });
+        }
+        cursorY -= rowHeight;
+      }
+      cursorY -= 4;
     }
     if (section.links?.length) {
       for (const link of section.links) {
