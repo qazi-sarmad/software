@@ -53,7 +53,7 @@ describe('OA-22 governance settings (C3.2-B)', () => {
   beforeEach(() => {
     getLifecycleSettings.mockResolvedValue({
       testingMode: 'two_stage', signoffRolePlanning: 'reviewer', signoffRoleTesting: 'reviewer',
-      signoffRoleConclusion: 'reviewer', reportOpinionRequired: false,
+      signoffRoleConclusion: 'reviewer', reportOpinionRequired: false, testingGraceHours: 0,
     });
     getWorkflowSettings.mockResolvedValue({ approvalChain: [], slaHours: 48, escalationRole: 'cia', escalationHours: 72 });
     getExportRetention.mockResolvedValue({ exportSchedule: 'manual', activityRetentionDays: 365, populationRetentionMonths: 6 });
@@ -98,9 +98,11 @@ describe('OA-22 governance settings (C3.2-B)', () => {
     render(<OrgGovernancePanel />);
     await waitFor(() => expect(screen.getByTestId('oa-governance-lifecycle-save')).toBeTruthy());
     fireEvent.change(screen.getByTestId('oa-governance-testing-mode'), { target: { value: 'one_stage' } });
+    fireEvent.change(screen.getByTestId('oa-governance-grace-hours'), { target: { value: '24' } });
     fireEvent.click(screen.getByTestId('oa-governance-lifecycle-save'));
     await waitFor(() => expect(saveLifecycleSettings).toHaveBeenCalled());
     expect(saveLifecycleSettings.mock.calls[0][0].testingMode).toBe('one_stage');
+    expect(saveLifecycleSettings.mock.calls[0][0].testingGraceHours).toBe(24);
     await waitFor(() => expect(screen.getByTestId('oa-governance-result').textContent).toContain('Saved'));
   });
 

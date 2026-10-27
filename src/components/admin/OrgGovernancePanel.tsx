@@ -136,6 +136,18 @@ export const OrgGovernancePanel: React.FC = () => {
             />
             <span>The overall opinion is required at Conclusion</span>
           </label>
+          <label className="text-apple-12 text-secondary space-y-1">
+            <span>Testing grace period (hours, 0–336)</span>
+            <input
+              type="number"
+              min={0}
+              max={336}
+              value={lifecycle.testingGraceHours}
+              onChange={(e) => setLifecycle({ ...lifecycle, testingGraceHours: Number(e.target.value) })}
+              data-testid="oa-governance-grace-hours"
+              className={field}
+            />
+          </label>
         </div>
         <button
           type="button" disabled={busy} onClick={() => void run(() => saveLifecycleSettings(lifecycle))}

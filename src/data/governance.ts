@@ -29,6 +29,8 @@ export interface LifecycleSettings {
   signoffRoleTesting: string;
   signoffRoleConclusion: string;
   reportOpinionRequired: boolean;
+  /** §10.1 hours of overlap before the Testing hard lock applies, 0..336. */
+  testingGraceHours: number;
 }
 
 export interface WorkflowSettings {
@@ -104,6 +106,7 @@ export async function getLifecycleSettings(): Promise<LifecycleSettings> {
     signoffRoleTesting: (r?.signoff_role_testing as string) ?? 'reviewer',
     signoffRoleConclusion: (r?.signoff_role_conclusion as string) ?? 'reviewer',
     reportOpinionRequired: Boolean(r?.report_opinion_required),
+    testingGraceHours: Number(r?.testing_grace_hours ?? 0),
   };
 }
 
@@ -114,6 +117,7 @@ export function saveLifecycleSettings(s: LifecycleSettings): Promise<DataResult>
     p_signoff_role_testing: s.signoffRoleTesting,
     p_signoff_role_conclusion: s.signoffRoleConclusion,
     p_report_opinion_required: s.reportOpinionRequired,
+    p_testing_grace_hours: s.testingGraceHours,
   }, NOT_CONFIGURED);
 }
 
