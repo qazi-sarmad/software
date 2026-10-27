@@ -2,7 +2,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 import type { User } from '../types';
 import { signIn as clientSignIn, signOut as clientSignOut, loadCurrentUser, refreshAuthToken } from '../data/client';
 import { isExternalAuditorSession } from '../data/externalAuditors';
-import { platformWhoami } from '../data/platform';
+import { platformWhoami, getSecurityStatus } from '../data/platform';
 
 export type SignInResult = { ok: true } | { ok: false; reason: string };
 
@@ -23,6 +23,13 @@ interface AuthContextType {
    * in any org, so they have no tenant identity; only the /superadmin route acts on this.
    */
   isPlatform: boolean;
+  /**
+   * True when the platform requires a second factor (WP9) and this session has not completed one.
+   * The platform gate renders the MFA challenge instead of the portal while this is true.
+   */
+  platformNeedsMfa: boolean;
+  /** Re-resolve the platform second-factor requirement after a successful verification. */
+  refreshPlatformMfa: () => Promise<void>;
   signInWithPassword: (email: string, password: string) => Promise<SignInResult>;
   /** Re-resolve the session. The NoTenantScreen uses this so an account added to an org need not sign out. */
   refreshSession: () => Promise<void>;
@@ -38,7 +45,23 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isPlatform, setIsPlatform] = useState(false);
+  const [platformNeedsMfa, setPlatformNeedsMfa] = useState(false);
   const [status, setStatus] = useState<AuthStatus>('loading');
+
+  /**
+   * Resolve whether the platform requires a second factor this session has not completed (WP9).
+   * `platform_security_status` is readable at any AAL, so this tells the gate to show the challenge
+   * rather than the portal. Any failure resolves to "not needed", so a transient error never locks
+   * an owner out; the database still refuses the RPCs if the factor is genuinely missing.
+   */
+  const resolvePlatformMfa = useCallback(async () => {
+    try {
+      const s = await getSecurityStatus();
+      setPlatformNeedsMfa(Boolean(s?.requirePlatformMfa) && !Boolean(s?.mfaSatisfied));
+    } catch {
+      setPlatformNeedsMfa(false);
+    }
+  }, []);
 
   // Resolve the session from the database. loadCurrentUser returns null when there is no session
   // (signed out) and throws when there is a session but no org membership. The second case resolves
@@ -69,6 +92,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null);
       setIsPlatform(true);
       setStatus('platform');
+      await resolvePlatformMfa();
       return;
     }
     // A signed-in account with no org membership may be an external auditor (F13). The database
@@ -116,6 +140,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (who.isPlatformAdmin) {
         setIsPlatform(true);
         setStatus('platform');
+        await resolvePlatformMfa();
         return { ok: true };
       }
       // Or an external auditor (F13): the database decides through ext_me, and the shell then shows
@@ -139,13 +164,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = useCallback(async () => {
     setUser(null);
     setIsPlatform(false);
+    setPlatformNeedsMfa(false);
     setStatus('signed_out');
     await clientSignOut();
   }, []);
 
   const value = useMemo(
-    () => ({ user, status, isPlatform, signInWithPassword, refreshSession, signOut }),
-    [user, status, isPlatform, signInWithPassword, refreshSession, signOut]
+    () => ({ user, status, isPlatform, platformNeedsMfa, refreshPlatformMfa: resolvePlatformMfa, signInWithPassword, refreshSession, signOut }),
+    [user, status, isPlatform, platformNeedsMfa, resolvePlatformMfa, signInWithPassword, refreshSession, signOut]
   );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

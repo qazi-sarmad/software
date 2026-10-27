@@ -3,6 +3,8 @@ import { motion } from 'motion/react';
 import { AppProvider, useApp } from './context/AppContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { SignInScreen } from './components/auth/SignInScreen';
+import { MfaChallenge } from './components/auth/MfaChallenge';
+import { isPlatformAdminPath } from './lib/platformPath';
 import { NoTenantScreen } from './components/auth/NoTenantScreen';
 import { InlineError } from './components/common/InlineError';
 import type { User } from './types';
@@ -339,10 +341,14 @@ const SuperAdminPortal = lazy(() =>
 
 /** Shows the sign-in screen for an unauthenticated visitor, else the portal (which re-checks the role). */
 const PlatformGate: React.FC = () => {
-  const { user, isPlatform } = useAuth();
+  const { user, isPlatform, platformNeedsMfa, refreshPlatformMfa } = useAuth();
   // An org member (user) is signed in but not platform staff: render the portal, which denies it in
   // the database. Platform staff have no org identity, so `user` is null and `isPlatform` is true.
   if (!user && !isPlatform) return <SignInScreen />;
+  // WP9: when the platform requires a second factor and the session has not completed one, show the
+  // MFA challenge instead of the portal. The database refuses every platform RPC until AAL2, so this
+  // is the honest UI for a state the database already enforces.
+  if (platformNeedsMfa) return <MfaChallenge onSatisfied={() => void refreshPlatformMfa()} />;
   return <SuperAdminPortal />;
 };
 
@@ -438,10 +444,12 @@ const AppRoutes: React.FC = () => {
     );
   }
 
-  // Super Admin portal (/superadmin, spec §24). A separate console for QSCorp platform staff. It
-  // renders the portal for an authenticated session and the sign-in screen otherwise; the portal
-  // itself re-checks the platform role in the database and shows a denial screen without it.
-  if (currentPath === '/superadmin') {
+  // Super Admin portal (spec §24). A separate console for QSCorp platform staff, reached only on the
+  // unlisted path in VITE_PLATFORM_ADMIN_PATH (WP9; default /superadmin). It renders the portal for
+  // an authenticated session and the sign-in screen otherwise; the portal itself re-checks the
+  // platform role in the database and shows a denial screen without it. No navigation link points
+  // here, and the path is not a constant in the bundle, so an attacker must know it already.
+  if (isPlatformAdminPath(currentPath)) {
     return (
       <Suspense fallback={<LoadingFallback />}>
         <PlatformGate />

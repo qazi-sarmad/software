@@ -1605,3 +1605,89 @@ only the render hash moves (W1, W2.2, W4, W5, W6, W8, W12).
   each missing, duplicated and orphaned item; the freeze panel lists every blocker or states that the
   freeze is allowed with the graph root and render hash.
 - **Tutorial key:** `oa.report-builder`.
+
+## SEC-01 — platform MFA challenge (WP9, spec §24)
+
+- **Purpose:** the second-factor screen shown inside the platform gate when the platform requires MFA
+  and the session has not completed one. It enrols a TOTP factor or challenges an existing one, and
+  raises the session to AAL2 so the platform RPCs answer. It renders no tenant data.
+- **Route:** the unlisted platform console path (`VITE_PLATFORM_ADMIN_PATH`), rendered by the platform
+  gate in place of the portal. Not a route of its own.
+- **Rights:** none beyond an authenticated platform session. The database refuses every platform RPC
+  until the session is AAL2 (`require_platform_admin`).
+- **Data:** `listMfaFactors()`, `enrollTotp(name)`, `verifyTotp(factorId, code)`,
+  `currentAssuranceLevel()` (`src/data/mfa.ts`); `getSecurityStatus()` (`src/data/platform.ts`).
+- **RPCs / tables:** Supabase Auth MFA (`auth.mfa.*`); `platform_security_status()`.
+- **Testids:** `mfa-challenge`, `mfa-enroll`, `mfa-enrolment`, `mfa-secret`, `mfa-code`,
+  `mfa-verify`, `mfa-error`.
+- **States:** enrol (no verified factor) / challenge (a verified factor exists) / busy / error.
+- **Tutorial key:** — (no key)
+
+## SEC-02 — Super Admin security console (WP9, WP14, WP16)
+
+- **Purpose:** the platform security posture in one tab: the second-factor switch and the unlisted
+  console path; the backup/PITR/DR record with the next recovery-test due date; and the
+  signing-algorithm registry with the keys due for rotation. Every change is a reason-stamped,
+  ledgered platform RPC that the database gates on the platform role and AAL2.
+- **Route:** Super Admin portal, tab `Security` (`superadmin-tab-security`).
+- **Rights:** platform administrator, and AAL2 when the second factor is armed.
+- **Data:** `getSecurityStatus()`, `setSecuritySetting(key, value, reason)`, `getDrSettings()`,
+  `setDrSetting(key, value, reason)`, `logRecoveryTest(note, at)`, `listSigningAlgorithms()`,
+  `signingKeysDue(at)`, `rotateSigningKey(keyId, newKeyId, newPublicKey, algorithm, reason, at)`
+  (`src/data/platform.ts`).
+- **RPCs / tables:** `platform_security_status()`, `platform_set_security_setting(...)`,
+  `platform_get_dr_settings()`, `platform_set_dr_setting(...)`, `platform_record_restore_test(...)`,
+  `platform_list_signing_algorithms()`, `platform_signing_keys_due(p_now)`,
+  `platform_rotate_signing_key(...)`; `platform_security_settings`, `platform_dr_settings`,
+  `signing_algorithms`, `signing_keys`.
+- **Testids:** `superadmin-security`, `superadmin-security-loading`, `superadmin-security-error`,
+  `superadmin-security-action-error`, `superadmin-security-action-ok`, `superadmin-security-mfa`,
+  `superadmin-security-mfa-box`, `superadmin-security-mfa-reason`, `superadmin-security-mfa-toggle`,
+  `superadmin-security-path-box`, `superadmin-security-path`, `superadmin-security-path-reason`,
+  `superadmin-security-path-save`, `superadmin-security-dr`, `superadmin-security-dr-pitr`,
+  `superadmin-security-dr-retention`, `superadmin-security-dr-next`,
+  `superadmin-security-dr-pitr-toggle`, `superadmin-security-dr-recovery-test`,
+  `superadmin-security-crypto`, `superadmin-security-algorithms`,
+  `superadmin-security-algorithm-<code>`, `superadmin-security-due`,
+  `superadmin-security-rotate-box`, `superadmin-security-rotate-keyId`,
+  `superadmin-security-rotate-newKeyId`, `superadmin-security-rotate-publicKey`,
+  `superadmin-security-rotate-reason`, `superadmin-security-rotate-algorithm`,
+  `superadmin-security-rotate`.
+- **States:** loading / error / ready; each action shows an inline ok or refusal.
+- **Tutorial key:** `sa.health`
+
+## SEC-03 — organisation SSO policy (WP11)
+
+- **Purpose:** connect the organisation to a SAML or OIDC identity provider: choose the provider and
+  the email domain that routes to the org, and enforce SSO so a password session carries no
+  organisation claim and sees no tenant data.
+- **Route:** Org Admin control plane, tab `Single sign-on` (`org-control-tab-sso`).
+- **Rights:** `edit_config` to change; read-only otherwise. The database enforces `edit_config` and a
+  reason.
+- **Data:** `listSsoProviders()`, `getSsoSettings(orgId)`, `setSsoProvider(orgId, provider, domain,
+  enforced, reason)`, `ssoOrgForDomain(domain)`, `signInWithSso(domain)` (`src/data/sso.ts`).
+- **RPCs / tables:** `sso_get_settings(p_org)`, `sso_set_provider(...)`, `sso_org_for_domain(p_domain)`;
+  `sso_providers`, `org_sso_settings`, `org_sso_versions`.
+- **Testids:** `sso-panel`, `sso-loading`, `sso-error`, `sso-current`, `sso-readonly`, `sso-form`,
+  `sso-provider`, `sso-domain`, `sso-enforced`, `sso-reason`, `sso-save-error`, `sso-saved`, `sso-save`.
+- **States:** loading / error / ready; read-only when the caller lacks `edit_config`.
+- **Tutorial key:** `oa.governance`
+
+## SEC-04 — data erasure register (WP15)
+
+- **Purpose:** raise and action right-to-erasure requests. Execution replaces the subject's
+  identifiers in place and leaves the sealed, hash-chained record intact, so a sealed report stays
+  independently verifiable. A legal hold blocks execution.
+- **Route:** Org Admin control plane, tab `Data erasure` (`org-control-tab-data`).
+- **Rights:** `manage_users` to raise; `edit_config` to hold or execute. The database enforces both
+  and requires a reason.
+- **Data:** `listErasureRequests(orgId)`, `requestErasure(orgId, subjectEmail, reason)`,
+  `setErasureLegalHold(requestId, hold, reason)`, `executeErasure(requestId, reason)`
+  (`src/data/erasure.ts`).
+- **RPCs / tables:** `erasure_list(p_org)`, `erasure_request(...)`, `erasure_set_legal_hold(...)`,
+  `erasure_execute(...)`; `data_erasure_requests`, `data_erasure_events`.
+- **Testids:** `erasure-panel`, `erasure-loading`, `erasure-error`, `erasure-form`, `erasure-email`,
+  `erasure-reason`, `erasure-request`, `erasure-action-error`, `erasure-action-ok`, `erasure-empty`,
+  `erasure-list`, `erasure-row-<id>`, `erasure-hold-<id>`, `erasure-execute-<id>`.
+- **States:** loading / error / ready / empty; each action shows an inline ok or refusal.
+- **Tutorial key:** `oa.governance`

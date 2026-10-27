@@ -112,7 +112,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Rights required:** platform admin (`is_platform_admin()`); a session never grants audit content.
 - **Data functions (`src/data/*.ts`):** `acknowledgeConsultation`, `endConsultation`, `getActiveConsultation`, `listTenants`, `requestConsultation`
 - **Data modules:** `src/data/consultation.ts`, `src/data/platform.ts`
-- **RPCs reachable via those modules:** `consultation_active`, `platform_create_tenant`, `platform_get_invite_caps`, `platform_job_health`, `platform_list_support_grants`, `platform_list_tenants`, `platform_list_trail`, `platform_provisioning_status`, `platform_whoami`, `support_access_log_list`, `support_grant_active`, `support_list_engagements`, `support_read_object`
+- **RPCs reachable via those modules:** `consultation_active`, `platform_create_tenant`, `platform_get_dr_settings`, `platform_get_invite_caps`, `platform_job_health`, `platform_list_residency_regions`, `platform_list_signing_algorithms`, `platform_list_support_grants`, `platform_list_tenants`, `platform_list_trail`, `platform_provisioning_status`, `platform_security_status`, `platform_signing_keys_due`, `platform_whoami`, `support_access_log_list`, `support_grant_active`, `support_list_engagements`, `support_read_object`
 - **Tables reachable via those modules:** none
 - **Testids (10):** `superadmin-consultation`, `superadmin-consultation-loading`, `superadmin-consultation-error`, `superadmin-consultation-result`, `superadmin-consultation-hours`, `superadmin-consultation-request`, `superadmin-consultation-empty`, `superadmin-consultation-<tenantId>`, `superadmin-consultation-ack-<tenantId>`, `superadmin-consultation-end-<tenantId>`
 - **States:** loading, error (with Retry), empty (no tenants), ready.
@@ -127,7 +127,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Rights required:** platform admin only. A tenant never writes entitlements.
 - **Data functions (`src/data/*.ts`):** `listFeatureCatalogue`, `listTenantEntitlements`, `listTenants`, `setEntitlement`
 - **Data modules:** `src/data/entitlements.ts`, `src/data/platform.ts`
-- **RPCs reachable via those modules:** `list_feature_catalogue`, `list_plans`, `list_tenant_entitlements`, `platform_create_tenant`, `platform_get_invite_caps`, `platform_job_health`, `platform_list_support_grants`, `platform_list_tenants`, `platform_list_trail`, `platform_provisioning_status`, `platform_whoami`, `support_access_log_list`, `support_grant_active`, `support_list_engagements`, `support_read_object`
+- **RPCs reachable via those modules:** `list_feature_catalogue`, `list_plans`, `list_tenant_entitlements`, `platform_create_tenant`, `platform_get_dr_settings`, `platform_get_invite_caps`, `platform_job_health`, `platform_list_residency_regions`, `platform_list_signing_algorithms`, `platform_list_support_grants`, `platform_list_tenants`, `platform_list_trail`, `platform_provisioning_status`, `platform_security_status`, `platform_signing_keys_due`, `platform_whoami`, `support_access_log_list`, `support_grant_active`, `support_list_engagements`, `support_read_object`
 - **Tables reachable via those modules:** none
 - **Testids (11):** `superadmin-features`, `superadmin-features-loading`, `superadmin-features-error`, `superadmin-features-result`, `superadmin-features-empty`, `superadmin-feature-catalogue`, `feature-catalogue-<key>`, `superadmin-entitlements`, `entitlement-<key>`, `entitlement-reason-<key>`, `entitlement-toggle-<key>`
 - **States:** loading, error (with Retry), empty (no tenants), ready. A toggle without a reason shows "A reason is required when you change a feature." and sends nothing.
@@ -232,7 +232,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Rights required:** platform admin only.
 - **Data functions (`src/data/*.ts`):** `listMigrationJobs`, `listTenants`
 - **Data modules:** `src/data/hostingFit.ts`, `src/data/platform.ts`
-- **RPCs reachable via those modules:** `hosting_connection_list`, `hosting_connection_save`, `hosting_connection_set_secret`, `hosting_fit_get`, `hosting_fit_rule_save`, `migration_job_create`, `migration_job_list`, `platform_create_tenant`, `platform_get_invite_caps`, `platform_job_health`, `platform_list_support_grants`, `platform_list_tenants`, `platform_list_trail`, `platform_provisioning_status`, `platform_whoami`, `support_access_log_list`, `support_grant_active`, `support_list_engagements`, `support_read_object`
+- **RPCs reachable via those modules:** `hosting_connection_list`, `hosting_connection_save`, `hosting_connection_set_secret`, `hosting_fit_get`, `hosting_fit_rule_save`, `migration_job_create`, `migration_job_list`, `platform_create_tenant`, `platform_get_dr_settings`, `platform_get_invite_caps`, `platform_job_health`, `platform_list_residency_regions`, `platform_list_signing_algorithms`, `platform_list_support_grants`, `platform_list_tenants`, `platform_list_trail`, `platform_provisioning_status`, `platform_security_status`, `platform_signing_keys_due`, `platform_whoami`, `support_access_log_list`, `support_grant_active`, `support_list_engagements`, `support_read_object`
 - **Tables reachable via those modules:** none
 - **Testids (12):** `sa-migration`, `sa-migration-loading`, `sa-migration-error`, `sa-migration-tenant`, `sa-migration-refresh`, `sa-migration-jobs-loading`, `sa-migration-jobs-error`, `sa-migration-empty`, `sa-migration-job-<id>`, `sa-migration-job-error-<id>`, `sa-migration-steps-<id>`, `sa-deployment-kit`
 - **States:** loading tenants; loading jobs; an empty jobs list; an inline job error; a failed job is flagged in cinnabar, an awaiting-cutover or retired job in verdigris.
@@ -247,7 +247,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Rights required:** platform admin (`is_platform_admin()`, `require_platform_admin()` in the database). The session additionally requires a live, unrevoked, unexpired `content_read` grant for the tenant.
 - **Data functions (`src/data/*.ts`):** `grantSupportAccess`, `listJobHealth`, `listSupportGrants`, `platform_job_health`, `platform_list_support_grants`, `revokeSupportAccess`, `supportAccessLog`, `supportGrantActive`, `supportListEngagements`, `supportReadObject`, `support_access_log_list`, `support_grant_active`, `support_list_engagements`, `support_read_object`
 - **Data modules:** `src/data/platform.ts`
-- **RPCs reachable via those modules:** `platform_create_tenant`, `platform_get_invite_caps`, `platform_job_health`, `platform_list_support_grants`, `platform_list_tenants`, `platform_list_trail`, `platform_provisioning_status`, `platform_whoami`, `support_access_log_list`, `support_grant_active`, `support_list_engagements`, `support_read_object`
+- **RPCs reachable via those modules:** `platform_create_tenant`, `platform_get_dr_settings`, `platform_get_invite_caps`, `platform_job_health`, `platform_list_residency_regions`, `platform_list_signing_algorithms`, `platform_list_support_grants`, `platform_list_tenants`, `platform_list_trail`, `platform_provisioning_status`, `platform_security_status`, `platform_signing_keys_due`, `platform_whoami`, `support_access_log_list`, `support_grant_active`, `support_list_engagements`, `support_read_object`
 - **Tables reachable via those modules:** none
 - **Testids (24):** `superadmin-support`, `superadmin-support-loading`, `superadmin-support-error`, `superadmin-support-result`, `superadmin-support-empty`, `superadmin-support-session`, `superadmin-support-session-org`, `superadmin-support-session-open`, `superadmin-support-session-error`, `superadmin-support-session-open-panel`, `superadmin-support-session-count`, `superadmin-support-session-empty`, `superadmin-support-session-list`, `superadmin-support-session-read-result`, `superadmin-support-session-trail`, `support-engagement-<id>`, `support-read-<id>`, `superadmin-job-health`, `superadmin-job-health-error`, `superadmin-job-health-empty`, `superadmin-job-health-list`, `job-<jobName>`, `job-status-<jobName>`, `grant-<grantId>`
 - **States:** loading grants; loading jobs; an empty jobs list (the scheduler is absent); an inline job error; a session that stays closed when no live grant exists, with the reason inline; an open session with the granted engagements; an inline refusal when the database rejects the call. No blocking modal.
@@ -262,7 +262,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Rights required:** platform admin (`is_platform_admin()`), re-checked by every `platform_*` RPC.
 - **Data functions (`src/data/*.ts`):** `FeatureRow`, `ProvisioningStatus`, `TenantRow`, `configurePlatformEmailSender`, `createTenant`, `listFeatureCatalogue`, `listTenants`, `provisioningStatus`, `seedOrgRoles`, `setEntitlement`, `setInviteCap`, `setTenantStatus`
 - **Data modules:** `src/data/admin.ts`, `src/data/entitlements.ts`, `src/data/platform.ts`
-- **RPCs reachable via those modules:** `invite_status`, `invite_user_capped`, `list_feature_catalogue`, `list_plans`, `list_tenant_entitlements`, `platform_create_tenant`, `platform_get_invite_caps`, `platform_job_health`, `platform_list_support_grants`, `platform_list_tenants`, `platform_list_trail`, `platform_provisioning_status`, `platform_whoami`, `support_access_log_list`, `support_grant_active`, `support_list_engagements`, `support_read_object`
+- **RPCs reachable via those modules:** `invite_status`, `invite_user_capped`, `list_feature_catalogue`, `list_plans`, `list_tenant_entitlements`, `platform_create_tenant`, `platform_get_dr_settings`, `platform_get_invite_caps`, `platform_job_health`, `platform_list_residency_regions`, `platform_list_signing_algorithms`, `platform_list_support_grants`, `platform_list_tenants`, `platform_list_trail`, `platform_provisioning_status`, `platform_security_status`, `platform_signing_keys_due`, `platform_whoami`, `support_access_log_list`, `support_grant_active`, `support_list_engagements`, `support_read_object`
 - **Tables reachable via those modules:** `org_members`, `roles`, `user_scopes`
 - **Testids (42):** `sa-provisioning`, `sa-provisioning-activate`, `sa-provisioning-admin-email`, `sa-provisioning-cap`, `sa-provisioning-cap-input`, `sa-provisioning-cap-reason`, `sa-provisioning-cap-submit`, `sa-provisioning-check-engagement`, `sa-provisioning-check-invite`, `sa-provisioning-check-ready`, `sa-provisioning-check-roles`, `sa-provisioning-check-sender`, `sa-provisioning-check-status`, `sa-provisioning-create`, `sa-provisioning-create-error`, `sa-provisioning-create-reason`, `sa-provisioning-create-submit`, `sa-provisioning-created`, `sa-provisioning-done`, `sa-provisioning-entitlement-disable`, `sa-provisioning-entitlement-enable`, `sa-provisioning-entitlement-reason`, `sa-provisioning-entitlements`, `sa-provisioning-error`, `sa-provisioning-feature-select`, `sa-provisioning-finish`, `sa-provisioning-loading`, `sa-provisioning-org-name`, `sa-provisioning-readiness`, `sa-provisioning-recheck`, `sa-provisioning-repair-roles`, `sa-provisioning-result`, `sa-provisioning-retry`, `sa-provisioning-sender`, `sa-provisioning-sender-from`, `sa-provisioning-sender-name`, `sa-provisioning-sender-reason`, `sa-provisioning-sender-reply`, `sa-provisioning-sender-submit`, `sa-provisioning-target`, `sa-provisioning-tenant-select`, `sa-setup`
 - **States:** loading; empty (no tenant selected); readiness checks; created; done; error with retry.
@@ -292,7 +292,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Rights required:** platform admin (`is_platform_admin()`); every write is a platform-only RPC.
 - **Data functions (`src/data/*.ts`):** `enableAi`, `listInviteCaps`, `listTenants`, `setFeatureFlag`, `setInviteCap`, `setTenantStatus`
 - **Data modules:** `src/data/admin.ts`, `src/data/platform.ts`
-- **RPCs reachable via those modules:** `invite_status`, `invite_user_capped`, `platform_create_tenant`, `platform_get_invite_caps`, `platform_job_health`, `platform_list_support_grants`, `platform_list_tenants`, `platform_list_trail`, `platform_provisioning_status`, `platform_whoami`, `support_access_log_list`, `support_grant_active`, `support_list_engagements`, `support_read_object`
+- **RPCs reachable via those modules:** `invite_status`, `invite_user_capped`, `platform_create_tenant`, `platform_get_dr_settings`, `platform_get_invite_caps`, `platform_job_health`, `platform_list_residency_regions`, `platform_list_signing_algorithms`, `platform_list_support_grants`, `platform_list_tenants`, `platform_list_trail`, `platform_provisioning_status`, `platform_security_status`, `platform_signing_keys_due`, `platform_whoami`, `support_access_log_list`, `support_grant_active`, `support_list_engagements`, `support_read_object`
 - **Tables reachable via those modules:** `org_members`, `roles`, `user_scopes`
 - **Testids (8):** `superadmin-tenants`, `superadmin-tenants-loading`, `superadmin-tenants-error`, `superadmin-tenants-result`, `superadmin-tenants-empty`, `tenant-<id>`, `tenant-allow-<id>`, `tenant-deny-<id>`
 - **States:** loading, error (with Retry), empty (no tenants), ready; an inline result when a write is refused.
@@ -322,7 +322,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Rights required:** platform admin (`is_platform_admin()`); read-only.
 - **Data functions (`src/data/*.ts`):** `listTrail`
 - **Data modules:** `src/data/platform.ts`
-- **RPCs reachable via those modules:** `platform_create_tenant`, `platform_get_invite_caps`, `platform_job_health`, `platform_list_support_grants`, `platform_list_tenants`, `platform_list_trail`, `platform_provisioning_status`, `platform_whoami`, `support_access_log_list`, `support_grant_active`, `support_list_engagements`, `support_read_object`
+- **RPCs reachable via those modules:** `platform_create_tenant`, `platform_get_dr_settings`, `platform_get_invite_caps`, `platform_job_health`, `platform_list_residency_regions`, `platform_list_signing_algorithms`, `platform_list_support_grants`, `platform_list_tenants`, `platform_list_trail`, `platform_provisioning_status`, `platform_security_status`, `platform_signing_keys_due`, `platform_whoami`, `support_access_log_list`, `support_grant_active`, `support_list_engagements`, `support_read_object`
 - **Tables reachable via those modules:** none
 - **Testids (4):** `superadmin-trail`, `superadmin-trail-loading`, `superadmin-trail-error`, `superadmin-trail-empty`
 - **States:** loading, error (with Retry), empty, ready.
@@ -1435,6 +1435,68 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
   named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
 
+## Other
+
+### `SEC-01` — platform MFA challenge (WP9, spec §24)
+
+- **Purpose:** the second-factor screen shown inside the platform gate when the platform requires MFA and the session has not completed one. It enrols a TOTP factor or challenges an existing one, and raises the session to AAL2 so the platform RPCs answer. It renders no tenant data.
+- **Route / location:** the unlisted platform console path (`VITE_PLATFORM_ADMIN_PATH`), rendered by the platform gate in place of the portal. Not a route of its own.
+- **Rights required:** none beyond an authenticated platform session. The database refuses every platform RPC until the session is AAL2 (`require_platform_admin`).
+- **Data functions (`src/data/*.ts`):** `currentAssuranceLevel`, `enrollTotp`, `getSecurityStatus`, `listMfaFactors`, `verifyTotp`
+- **Data modules:** `src/data/mfa.ts`, `src/data/platform.ts`
+- **RPCs reachable via those modules:** `platform_create_tenant`, `platform_get_dr_settings`, `platform_get_invite_caps`, `platform_job_health`, `platform_list_residency_regions`, `platform_list_signing_algorithms`, `platform_list_support_grants`, `platform_list_tenants`, `platform_list_trail`, `platform_provisioning_status`, `platform_security_status`, `platform_signing_keys_due`, `platform_whoami`, `support_access_log_list`, `support_grant_active`, `support_list_engagements`, `support_read_object`
+- **Tables reachable via those modules:** none
+- **Testids (7):** `mfa-challenge`, `mfa-enroll`, `mfa-enrolment`, `mfa-secret`, `mfa-code`, `mfa-verify`, `mfa-error`
+- **States:** enrol (no verified factor) / challenge (a verified factor exists) / busy / error.
+- **Tutorial key:** — (no key)
+- **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
+  named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
+
+### `SEC-02` — Super Admin security console (WP9, WP14, WP16)
+
+- **Purpose:** the platform security posture in one tab: the second-factor switch and the unlisted console path; the backup/PITR/DR record with the next recovery-test due date; and the signing-algorithm registry with the keys due for rotation. Every change is a reason-stamped, ledgered platform RPC that the database gates on the platform role and AAL2.
+- **Route / location:** Super Admin portal, tab `Security` (`superadmin-tab-security`).
+- **Rights required:** platform administrator, and AAL2 when the second factor is armed.
+- **Data functions (`src/data/*.ts`):** `getDrSettings`, `getSecurityStatus`, `listSigningAlgorithms`, `logRecoveryTest`, `rotateSigningKey`, `setDrSetting`, `setSecuritySetting`, `signingKeysDue`
+- **Data modules:** `src/data/platform.ts`
+- **RPCs reachable via those modules:** `platform_create_tenant`, `platform_get_dr_settings`, `platform_get_invite_caps`, `platform_job_health`, `platform_list_residency_regions`, `platform_list_signing_algorithms`, `platform_list_support_grants`, `platform_list_tenants`, `platform_list_trail`, `platform_provisioning_status`, `platform_security_status`, `platform_signing_keys_due`, `platform_whoami`, `support_access_log_list`, `support_grant_active`, `support_list_engagements`, `support_read_object`
+- **Tables reachable via those modules:** none
+- **Testids (30):** `superadmin-security`, `superadmin-security-loading`, `superadmin-security-error`, `superadmin-security-action-error`, `superadmin-security-action-ok`, `superadmin-security-mfa`, `superadmin-security-mfa-box`, `superadmin-security-mfa-reason`, `superadmin-security-mfa-toggle`, `superadmin-security-path-box`, `superadmin-security-path`, `superadmin-security-path-reason`, `superadmin-security-path-save`, `superadmin-security-dr`, `superadmin-security-dr-pitr`, `superadmin-security-dr-retention`, `superadmin-security-dr-next`, `superadmin-security-dr-pitr-toggle`, `superadmin-security-dr-recovery-test`, `superadmin-security-crypto`, `superadmin-security-algorithms`, `superadmin-security-algorithm-<code>`, `superadmin-security-due`, `superadmin-security-rotate-box`, `superadmin-security-rotate-keyId`, `superadmin-security-rotate-newKeyId`, `superadmin-security-rotate-publicKey`, `superadmin-security-rotate-reason`, `superadmin-security-rotate-algorithm`, `superadmin-security-rotate`
+- **States:** loading / error / ready; each action shows an inline ok or refusal.
+- **Tutorial key:** — (no key)
+- **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
+  named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
+
+### `SEC-03` — organisation SSO policy (WP11)
+
+- **Purpose:** connect the organisation to a SAML or OIDC identity provider: choose the provider and the email domain that routes to the org, and enforce SSO so a password session carries no organisation claim and sees no tenant data.
+- **Route / location:** Org Admin control plane, tab `Single sign-on` (`org-control-tab-sso`).
+- **Rights required:** `edit_config` to change; read-only otherwise. The database enforces `edit_config` and a reason.
+- **Data functions (`src/data/*.ts`):** `getSsoSettings`, `listSsoProviders`, `setSsoProvider`, `signInWithSso`, `ssoOrgForDomain`
+- **Data modules:** `src/data/sso.ts`
+- **RPCs reachable via those modules:** `sso_get_settings`, `sso_org_for_domain`
+- **Tables reachable via those modules:** `sso_providers`
+- **Testids (13):** `sso-panel`, `sso-loading`, `sso-error`, `sso-current`, `sso-readonly`, `sso-form`, `sso-provider`, `sso-domain`, `sso-enforced`, `sso-reason`, `sso-save-error`, `sso-saved`, `sso-save`
+- **States:** loading / error / ready; read-only when the caller lacks `edit_config`.
+- **Tutorial key:** — (no key)
+- **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
+  named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
+
+### `SEC-04` — data erasure register (WP15)
+
+- **Purpose:** raise and action right-to-erasure requests. Execution replaces the subject's identifiers in place and leaves the sealed, hash-chained record intact, so a sealed report stays independently verifiable. A legal hold blocks execution.
+- **Route / location:** Org Admin control plane, tab `Data erasure` (`org-control-tab-data`).
+- **Rights required:** `manage_users` to raise; `edit_config` to hold or execute. The database enforces both and requires a reason.
+- **Data functions (`src/data/*.ts`):** `executeErasure`, `listErasureRequests`, `requestErasure`, `setErasureLegalHold`
+- **Data modules:** `src/data/erasure.ts`
+- **RPCs reachable via those modules:** `erasure_list`
+- **Tables reachable via those modules:** none
+- **Testids (14):** `erasure-panel`, `erasure-loading`, `erasure-error`, `erasure-form`, `erasure-email`, `erasure-reason`, `erasure-request`, `erasure-action-error`, `erasure-action-ok`, `erasure-empty`, `erasure-list`, `erasure-row-<id>`, `erasure-hold-<id>`, `erasure-execute-<id>`
+- **States:** loading / error / ready / empty; each action shows an inline ok or refusal.
+- **Tutorial key:** — (no key)
+- **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
+  named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
+
 ## Chrome behaviour reference
 
 The chrome is present on every authenticated screen and is the only thing that moves the user
@@ -1508,6 +1570,7 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 | `engagement_as_of_events` | `src/data/timeTravel.ts` | `p_engagement_id`, `p_ts` | tenant |
 | `entity_approval_config` | `src/data/universe.ts` | `p_org` | tenant |
 | `entity_history` | `src/data/universe.ts` | `p_entity_id` | tenant |
+| `erasure_list` | `src/data/erasure.ts` | `p_org` | tenant |
 | `escalation_event_list` | `src/data/escalation.ts` | `p_org` | tenant |
 | `ethics_status` | `src/data/deployment.ts` | `p_engagement` | tenant |
 | `ext_engagement_summary` | `src/data/externalAuditors.ts` | `p_engagement_id` | tenant |
@@ -1553,13 +1616,18 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 | `planning_reconciliation_detail` | `src/data/planning.ts` | `p_engagement_id` | tenant |
 | `planning_signed_off` | `src/data/planning.ts` | `p_engagement_id` | tenant |
 | `platform_create_tenant` | `src/data/platform.ts` | `p_name`, `p_initial_admin_email`, `p_reason` | platform |
+| `platform_get_dr_settings` | `src/data/platform.ts` | — | platform |
 | `platform_get_invite_caps` | `src/data/platform.ts` | — | platform |
 | `platform_job_health` | `src/data/platform.ts` | — | platform |
 | `platform_list_recipients` | `src/data/platformSettings.ts` | — | platform |
+| `platform_list_residency_regions` | `src/data/platform.ts` | — | platform |
+| `platform_list_signing_algorithms` | `src/data/platform.ts` | — | platform |
 | `platform_list_support_grants` | `src/data/platform.ts` | — | platform |
 | `platform_list_tenants` | `src/data/platform.ts` | — | platform |
 | `platform_list_trail` | `src/data/platform.ts` | `p_limit` | platform |
 | `platform_provisioning_status` | `src/data/platform.ts` | `p_org` | platform |
+| `platform_security_status` | `src/data/platform.ts` | — | platform |
+| `platform_signing_keys_due` | `src/data/platform.ts` | `p_now` | platform |
 | `platform_whoami` | `src/data/platform.ts` | — | platform |
 | `populate_planning_suggestions` | `src/data/planning.ts` | `p_engagement_id` | tenant |
 | `population_archive_due` | `src/data/archival.ts` | `p_org_id` | tenant |
@@ -1575,6 +1643,8 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 | `shares_get` | `src/data/shares.ts` | — | tenant |
 | `shares_with_me` | `src/data/shares.ts` | — | tenant |
 | `sira_model_snapshot` | `src/data/sira.ts` | `p_org` | tenant |
+| `sso_get_settings` | `src/data/sso.ts` | `p_org` | tenant |
+| `sso_org_for_domain` | `src/data/sso.ts` | `p_domain` | tenant |
 | `start_import` | `src/data/imports.ts` | `p_import_type`, `p_source_filename` | tenant |
 | `store_report_file` | `src/data/reportFiles.ts` | `p_report_version_id`, `p_kind`, `p_storage_path`, `p_sha256`, `p_byte_size` | tenant |
 | `support_access_log_list` | `src/data/platform.ts` | `p_org`, `p_limit` | tenant |
@@ -1591,10 +1661,10 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 
 ## Coverage cross-check
 
-- Screens documented: 93 (contract sections: 48 Appendix A + 44 Appendix B).
+- Screens documented: 97 (contract sections: 48 Appendix A + 44 Appendix B).
 - Tutorial keys: 80.
-- RPCs catalogued: 107.
-- Data modules: 53; exported data functions: 341.
-- Contract testids not found verbatim in `src/` (placeholder or dynamic): 190.
-  - audit-file-view-builder, audit-file-view-certificate, audit-file-view-conclusion, audit-file-view-documents, audit-file-view-ethics, audit-file-view-execution, audit-file-view-findings, audit-file-view-planning, audit-file-view-population, audit-file-view-report, audit-file-view-review, audit-file-view-rowtesting, audit-file-view-sampling, hosting-test, invite-user, issues-view-patterns, oa-branding-colour-accent, oa-branding-colour-background, oa-branding-colour-primary, oa-branding-colour-text, oa-branding-margin-0, oa-branding-margin-3, oa-certificate-enabled-verification, oa-escalation-result, oa-escalation-saved, oa-governance-signoff-conclusion, oa-governance-signoff-planning, oa-governance-signoff-testing, org-control-tab-auditors, org-control-tab-automation, org-control-tab-branding, org-control-tab-connectors, org-control-tab-features, org-control-tab-formats, org-control-tab-governance, org-control-tab-hosting, org-control-tab-people, org-control-tab-setup, org-control-tab-tutorials, prefers-reduced-motion …
+- RPCs catalogued: 115.
+- Data modules: 56; exported data functions: 365.
+- Contract testids not found verbatim in `src/` (placeholder or dynamic): 194.
+  - audit-file-view-builder, audit-file-view-certificate, audit-file-view-conclusion, audit-file-view-documents, audit-file-view-ethics, audit-file-view-execution, audit-file-view-findings, audit-file-view-planning, audit-file-view-population, audit-file-view-report, audit-file-view-review, audit-file-view-rowtesting, audit-file-view-sampling, hosting-test, invite-user, issues-view-patterns, oa-branding-colour-accent, oa-branding-colour-background, oa-branding-colour-primary, oa-branding-colour-text, oa-branding-margin-0, oa-branding-margin-3, oa-certificate-enabled-verification, oa-escalation-result, oa-escalation-saved, oa-governance-signoff-conclusion, oa-governance-signoff-planning, oa-governance-signoff-testing, org-control-tab-auditors, org-control-tab-automation, org-control-tab-branding, org-control-tab-connectors, org-control-tab-data, org-control-tab-features, org-control-tab-formats, org-control-tab-governance, org-control-tab-hosting, org-control-tab-people, org-control-tab-setup, org-control-tab-sso …
 
