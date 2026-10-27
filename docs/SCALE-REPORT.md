@@ -36,15 +36,27 @@ shell that exports `VITE_SUPABASE_*` makes those suites connect instead (see "En
 | Gate | Command | Result |
 |---|---|---|
 | TypeScript | `npx tsc --noEmit` | `TSC_EXIT=0` |
-| Unit tests | `env -u VITE_SUPABASE_URL -u VITE_SUPABASE_PUBLISHABLE_KEY -u SUPABASE_URL -u SUPABASE_SECRET_KEY -u SUPABASE_PUBLISHABLE_KEY -u TUTORIALS_BASE_URL npx vitest run` | **201 files / 2376 tests passed** (0 failed) |
+| Unit tests | `env -u VITE_SUPABASE_URL -u VITE_SUPABASE_PUBLISHABLE_KEY -u SUPABASE_URL -u SUPABASE_SECRET_KEY -u SUPABASE_PUBLISHABLE_KEY -u TUTORIALS_BASE_URL npx vitest run` | **202 files / 2378 tests passed** (0 failed) |
 | Build | `npx vite build` | built, `BUILD_EXIT=0` (chunk-size advisory only) |
 | Design tokens | `node scripts/check-tokens.mjs` | PASS, 179 files, 0 violations |
 | Shrink | `node scripts/check-shrink.mjs` | PASS, 58 files, no >10% shrink |
 | UI contract | `node scripts/check-ui-contract.mjs` | PASS, 48 Appendix A screens, all contract testids present |
+| UI inventory | `npx vitest run src/guards/uiInventory.test.ts src/guards/uiContractDrift.test.ts` | PASS, 2 files / 5 tests; 93 screens, 107 RPCs, 0 undocumented static testids |
 | Function deploy list | `node scripts/check-function-deploy-list.mjs` | PASS, 7 functions, 20 deploy references |
 | Tutorials | `npm run check-tutorials` | PASS, 80 GIFs present, 0 missing, 0 placeholders, **0 stale** |
 | SQL harness | `bash scripts/local-sql-harness.sh` | `migrations applied twice` / `all SQL tests passed twice` (EXIT=0) |
 | Playwright | `npx playwright test --project=chromium` | **142 passed, 2 skipped** (144 tests, 4.8m) |
+
+### CI evidence (run 40485222778)
+
+The GitHub run on `feature/scale-harden-v1` reached **steps 1–14 all green** (type check, unit
+tests, build, tokens, shrink, tutorials, function deploy list, UI contract, migrations + SQL tests,
+Playwright) and then **cancelled step 15**, the screenshot sweep, at 14.1m. The cause was the *job*
+limit, not the step: step 13 (migrations and SQL tests against the hosted test project) took 23.2m
+of the 45m budget, so only ~14m was left when the sweep began and the job timeout cut it off. The
+sweep's own `timeout-minutes: 15` never got to fire. The job limit is now **75m** so the sweep always
+gets its full budget; every other step is unchanged. This is a CI-configuration defect, not a code
+defect — the local gate set above is green end to end.
 
 ### Tutorial GIFs regenerated
 
