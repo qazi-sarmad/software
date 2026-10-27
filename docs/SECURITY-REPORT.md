@@ -9,7 +9,7 @@ the command is named. CI is green end to end on the pushed head.
 
 - Branch: `feature/security-harden-v1`.
 - Base: `7749484` (the SCALE-1 close-out, which itself descends from `feature/writing-engine`).
-- Head: recorded at the end of this file after the close-out commit.
+- Head: `24ee4d6f20e7efbc574e75b9bf80e9c4b5c1ec39` (pushed; CI run 40564211934 green on all 15 steps).
 
 ## Counts against the baselines
 
@@ -66,12 +66,12 @@ suites deliberately assert the unconfigured path).
 | Load test | `node scripts/load-test.mjs` | `8 orgs, 32 reads, p50=741.4ms p95=788.1ms`; **zero cross-tenant leakage** |
 | Playwright | CI step 8 | **145 passed, 2 skipped, 0 failed** (6.3m) |
 
-### CI evidence (run 40556087679, head `e58a332`)
+### CI evidence
 
-The first push of this branch failed at step 2 (unit tests): the provenance guard asserted
-`git config user.name`, which is set in the working clone but never on a CI runner. Fixed in
-`e58a332` to read the commit author instead (and shallow-clone safe). The re-run is **green on all
-15 steps**:
+**Run 40556087679, head `e58a332`** — the first push of this branch failed at step 2 (unit tests): the
+provenance guard asserted `git config user.name`, which is set in the working clone but never on a CI
+runner. Fixed in `e58a332` to read the commit author instead (and shallow-clone safe). The re-run is
+**green on all 15 steps**:
 
 ```
 ✓ Set up job  ✓ Checkout  ✓ Set up Node  ✓ Install dependencies
@@ -82,6 +82,9 @@ The first push of this branch failed at step 2 (unit tests): the provenance guar
 ✓ 8. Playwright            ✓ 9. Screenshot sweep (all presets and themes)
 ✓ Upload screenshots       ✓ Complete job
 ```
+
+**Run 40564211934, head `24ee4d6`** (this report) — same 15 steps, all green. The final head is
+`24ee4d6f20e7efbc574e75b9bf80e9c4b5c1ec39`.
 
 The screenshot sweep hits its own 15-minute `timeout-minutes` and is `continue-on-error`, so it is
 reported as a timeout while the job stays green — the same behaviour recorded in `SCALE-REPORT.md`.
