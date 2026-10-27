@@ -158,9 +158,11 @@ for (const [area, list] of byArea) {
     const rpcs = [...new Set(mods.flatMap((m) => modules[m].rpcs))].sort();
     const tables = [...new Set(mods.flatMap((m) => modules[m].tables))].sort();
     w(`- **Data functions (\`src/data/*.ts\`):** ${datafns.map((f) => '`' + f + '`').join(', ') || 'none (pure/UI only)'}`);
-    if (mods.length) w(`- **Data modules:** ${mods.map((m) => '`src/data/' + m + '`').join(', ')}`);
-    if (rpcs.length) w(`- **RPCs reachable via those modules:** ${rpcs.map((r) => '`' + r + '`').join(', ')}`);
-    if (tables.length) w(`- **Tables reachable via those modules:** ${tables.map((t) => '`' + t + '`').join(', ')}`);
+    // Emit these lines even when empty: a designer must be able to tell "this screen touches no
+    // module" from "the generator dropped the line", so every screen carries the same field set.
+    w(`- **Data modules:** ${mods.map((m) => '`src/data/' + m + '`').join(', ') || 'none (pure/UI only)'}`);
+    w(`- **RPCs reachable via those modules:** ${rpcs.map((r) => '`' + r + '`').join(', ') || 'none'}`);
+    w(`- **Tables reachable via those modules:** ${tables.map((t) => '`' + t + '`').join(', ') || 'none'}`);
     const tids = [...s.testids.matchAll(/`([^`]+)`/g)].map((m) => m[1]);
     w(`- **Testids (${tids.length}):** ${tids.map((t) => '`' + t + '`').join(', ') || '—'}`);
     w(`- **States:** ${s.states || 'loading / empty / error / ready / denied'}`);

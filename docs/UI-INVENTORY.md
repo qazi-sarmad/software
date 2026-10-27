@@ -36,6 +36,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Data functions (`src/data/*.ts`):** `endConsultation`, `formatRemaining`, `getActiveConsultation`, `secondsLeft`
 - **Data modules:** `src/data/consultation.ts`
 - **RPCs reachable via those modules:** `consultation_active`
+- **Tables reachable via those modules:** none
 - **Testids (5):** `consultation-banner`, `consultation-banner-time`, `consultation-banner-end`, `consultation-banner-dismiss`, `consultation-banner-error`
 - **States:** hidden when there is no active session or when dismissed; visible strip otherwise. Delivered live: a Supabase Realtime subscription on the published tables, with a 5 s poll as the documented fallback when Realtime is unavailable (`src/lib/liveSync.ts` decides the transport).
 - **Tutorial key:** `oa.dual-session`, `sa.dual-session`
@@ -50,6 +51,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Data functions (`src/data/*.ts`):** `chooseTransport`, `listNotifications`, `markNotificationRead`, `pollDue`, `pollInterval`, `subscribeNotifications`, `useLiveNotifications`, `useRecordRevisionSync`
 - **Data modules:** `src/data/notifications.ts`
 - **RPCs reachable via those modules:** `notifications_list`
+- **Tables reachable via those modules:** none
 - **Testids (17):** `notification-bell`, `notification-bell-count`, `notification-panel`, `notification-transport`, `notification-empty`, `notification-list`, `notification-<id>`, `notification-mark-read-<id>`, `wk-notifications`, `wk-notifications-transport`, `wk-notifications-unread`, `wk-notifications-empty`, `wk-notifications-list`, `wk-notification-<id>`, `wk-notification-mark-read-<id>`, `record-page-revision`, `record-page-refresh`
 - **States:** bell badge hidden at zero unread; the panel shows `Live` or `Polling` from the chosen transport; an empty list renders "Nothing new."; the pop-out shows its current revision and a refresh control that publishes a new revision to the parent window.
 - **Tutorial key:** — (no key)
@@ -64,6 +66,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Data functions (`src/data/*.ts`):** `listTutorials`, `recordTutorialView`
 - **Data modules:** `src/data/tutorials.ts`
 - **RPCs reachable via those modules:** `list_tutorials`
+- **Tables reachable via those modules:** none
 - **Testids (9):** `tutorial-drawer`, `tutorial-drawer-close`, `tutorial-drawer-media`, `tutorial-drawer-missing`, `tutorial-drawer-steps`, `tutorial-drawer-copy`, `tutorial-drawer-feedback`, `tutorial-drawer-yes`, `tutorial-drawer-no`
 - **States:** media present (`tutorial-drawer-media`) or missing (`tutorial-drawer-missing`). `role="complementary"`, never a modal, never a scrim.
 - **Tutorial key:** — (no key)
@@ -76,6 +79,9 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Route / location:** The unauthenticated shell (any route with no session).
 - **Rights required:** none (unauthenticated).
 - **Data functions (`src/data/*.ts`):** none (pure/UI only)
+- **Data modules:** none (pure/UI only)
+- **RPCs reachable via those modules:** none
+- **Tables reachable via those modules:** none
 - **Testids (3):** `signin-error`, `signin-form`, `signin-screen`
 - **States:** ready; submitting; error inline.
 - **Tutorial key:** — (no key)
@@ -88,6 +94,9 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Route / location:** The authenticated shell when the session has no org.
 - **Rights required:** any signed-in account with no org.
 - **Data functions (`src/data/*.ts`):** none (pure/UI only)
+- **Data modules:** none (pure/UI only)
+- **RPCs reachable via those modules:** none
+- **Tables reachable via those modules:** none
 - **Testids (2):** `no-tenant-refresh`, `no-tenant-screen`
 - **States:** ready; refreshing.
 - **Tutorial key:** — (no key)
@@ -104,6 +113,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Data functions (`src/data/*.ts`):** `acknowledgeConsultation`, `endConsultation`, `getActiveConsultation`, `listTenants`, `requestConsultation`
 - **Data modules:** `src/data/consultation.ts`, `src/data/platform.ts`
 - **RPCs reachable via those modules:** `consultation_active`, `platform_create_tenant`, `platform_get_invite_caps`, `platform_job_health`, `platform_list_support_grants`, `platform_list_tenants`, `platform_list_trail`, `platform_provisioning_status`, `platform_whoami`, `support_access_log_list`, `support_grant_active`, `support_list_engagements`, `support_read_object`
+- **Tables reachable via those modules:** none
 - **Testids (10):** `superadmin-consultation`, `superadmin-consultation-loading`, `superadmin-consultation-error`, `superadmin-consultation-result`, `superadmin-consultation-hours`, `superadmin-consultation-request`, `superadmin-consultation-empty`, `superadmin-consultation-<tenantId>`, `superadmin-consultation-ack-<tenantId>`, `superadmin-consultation-end-<tenantId>`
 - **States:** loading, error (with Retry), empty (no tenants), ready.
 - **Tutorial key:** — (no key)
@@ -118,6 +128,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Data functions (`src/data/*.ts`):** `listFeatureCatalogue`, `listTenantEntitlements`, `listTenants`, `setEntitlement`
 - **Data modules:** `src/data/entitlements.ts`, `src/data/platform.ts`
 - **RPCs reachable via those modules:** `list_feature_catalogue`, `list_plans`, `list_tenant_entitlements`, `platform_create_tenant`, `platform_get_invite_caps`, `platform_job_health`, `platform_list_support_grants`, `platform_list_tenants`, `platform_list_trail`, `platform_provisioning_status`, `platform_whoami`, `support_access_log_list`, `support_grant_active`, `support_list_engagements`, `support_read_object`
+- **Tables reachable via those modules:** none
 - **Testids (11):** `superadmin-features`, `superadmin-features-loading`, `superadmin-features-error`, `superadmin-features-result`, `superadmin-features-empty`, `superadmin-feature-catalogue`, `feature-catalogue-<key>`, `superadmin-entitlements`, `entitlement-<key>`, `entitlement-reason-<key>`, `entitlement-toggle-<key>`
 - **States:** loading, error (with Retry), empty (no tenants), ready. A toggle without a reason shows "A reason is required when you change a feature." and sends nothing.
 - **Tutorial key:** `sa.features`, `sa.plans`
@@ -132,6 +143,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Data functions (`src/data/*.ts`):** `listTutorials`, `tutorialHealth`
 - **Data modules:** `src/data/tutorials.ts`
 - **RPCs reachable via those modules:** `list_tutorials`
+- **Tables reachable via those modules:** none
 - **Testids (4):** `superadmin-tutorials`, `superadmin-tutorials-loading`, `superadmin-tutorials-empty`, `tutorial-<key>`
 - **States:** loading, empty, ready.
 - **Tutorial key:** `sa.tutorials`
@@ -146,6 +158,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Data functions (`src/data/*.ts`):** `addRecipient`, `listRecipients`, `looksLikeEmail`, `removeRecipient`
 - **Data modules:** `src/data/platformSettings.ts`
 - **RPCs reachable via those modules:** `platform_list_recipients`
+- **Tables reachable via those modules:** none
 - **Testids (7):** `superadmin-recipients`, `superadmin-recipients-loading`, `superadmin-recipients-empty`, `superadmin-recipients-input`, `superadmin-recipients-add`, `recipient-<address>`, `recipient-remove-<address>`
 - **States:** loading, empty, ready. An invalid address is refused with a plain message.
 - **Tutorial key:** `sa.recipients`
@@ -160,6 +173,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Data functions (`src/data/*.ts`):** `listSetupSteps`, `saveSetupStep`, `setupProgress`, `visibleSteps`
 - **Data modules:** `src/data/setup.ts`
 - **RPCs reachable via those modules:** `setup_list`
+- **Tables reachable via those modules:** none
 - **Testids (48):** `org_admin-wizard`, `org_admin-wizard-loading`, `org_admin-wizard-error`, `org_admin-wizard-empty`, `org_admin-wizard-resume`, `org_admin-wizard-progress`, `org_admin-wizard-steps`, `org_admin-wizard-body`, `org_admin-wizard-back`, `org_admin-wizard-skip`, `org_admin-wizard-save`, `org_admin-wizard-next`, `super_admin-wizard`, `super_admin-wizard-loading`, `super_admin-wizard-error`, `super_admin-wizard-resume`, `super_admin-wizard-progress`, `super_admin-wizard-steps`, `super_admin-wizard-body`, `super_admin-wizard-back`, `super_admin-wizard-save`, `super_admin-wizard-next`, `<scope>-wizard-step-<stepKey>`, `<scope>-wizard-show-<stepKey>`, `<scope>-wizard-content-<stepKey>`, `org_admin-wizard-step-org.profile`, `org_admin-wizard-show-org.profile`, `org_admin-wizard-content-org.golive`, `super_admin-wizard-step-sa.readiness`, `super_admin-wizard-show-sa.readiness`, `org.profile`, `org.features`, `org.roles`, `org.ai`, `org.presentation`, `org.escalation`, `org.hosting`, `org.email`, `org.golive`, `sa.readiness`, `sa.email`, `sa.recipients`, `sa.ai`, `sa.hosting`, `sa.rules`, `sa.features`, `sa.tutorials`, `sa.golive`
 - **States:** loading, error (with Retry), empty, ready; a resume banner when a later step is open. A step whose `requiresFeature` is not entitled is hidden (F25).
 - **Tutorial key:** `sa.setup-wizard`, `sa.setup-1`, `sa.setup-2`, `sa.setup-3`, `sa.setup-4`, `sa.setup-5`, `sa.setup-6`, `sa.setup-7`, `sa.setup-8`, `oa.setup-wizard`, `oa.setup-1`, `oa.setup-2`, `oa.setup-3`, `oa.setup-4`, `oa.setup-5`, `oa.setup-6`, `oa.setup-7`, `oa.setup-8`
@@ -174,6 +188,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Data functions (`src/data/*.ts`):** `forceProfile`, `listSenderProfiles`, `recordTestResult`, `saveSenderProfile`, `setDefaultProfile`
 - **Data modules:** `src/data/senderProfiles.ts`
 - **RPCs reachable via those modules:** `email_sender_profiles_list`
+- **Tables reachable via those modules:** none
 - **Testids (21):** `superadmin-email`, `superadmin-email-loading`, `superadmin-email-error`, `superadmin-email-result`, `superadmin-email-empty`, `superadmin-email-provider`, `superadmin-email-display-name`, `superadmin-email-from`, `superadmin-email-secret`, `superadmin-email-save`, `superadmin-email-list`, `sender-<id>`, `sender-test-<id>`, `sender-default-<id>`, `superadmin-email-org`, `superadmin-email-tenant-empty`, `superadmin-email-tenant-list`, `tenant-allow-<id>`, `tenant-deny-<id>`, `superadmin-email-saved`, `superadmin-email-connect-graph`
 - **States:** loading, error (with Retry), empty ("No platform sender is set yet. Email is queued and not sent."), ready.
 - **Tutorial key:** `sa.email-resend`, `sa.email-microsoft`, `sa.email-smtp`, `sa.email-default`, `sa.email-force-tenant`
@@ -203,6 +218,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Data functions (`src/data/*.ts`):** `evaluateFit`, `getHostingCatalogue`, `requiredChecklist`, `saveHostingRule`, `searchStacks`
 - **Data modules:** `src/data/hostingFit.ts`
 - **RPCs reachable via those modules:** `hosting_connection_list`, `hosting_connection_save`, `hosting_connection_set_secret`, `hosting_fit_get`, `hosting_fit_rule_save`, `migration_job_create`, `migration_job_list`
+- **Tables reachable via those modules:** none
 - **Testids (26):** `sa-hosting`, `sa-hosting-loading`, `sa-hosting-error`, `sa-hosting-tabs`, `sa-hosting-tab-check`, `sa-hosting-tab-rules`, `sa-hosting-fit`, `sa-hosting-search`, `sa-hosting-search-empty`, `sa-hosting-search-results`, `sa-hosting-stack-<key>`, `sa-hosting-field-<field>`, `sa-hosting-verdict`, `sa-hosting-verdict-value`, `sa-hosting-cost`, `sa-hosting-reasons`, `sa-hosting-checklist`, `sa-hosting-rules`, `sa-hosting-rule-saved`, `sa-hosting-rule-<key>`, `sa-hosting-rule-enabled-<key>`, `sa-hosting-rule-field-<key>`, `sa-hosting-rule-op-<key>`, `sa-hosting-rule-value-<key>`, `sa-hosting-rule-sev-<key>`, `sa-hosting-rule-cost-<key>`
 - **States:** loading; error (with Retry); a rule edit that fails reloads the catalogue and shows the error; the verdict region always renders.
 - **Tutorial key:** `sa.hosting-fit`, `sa.hosting-rules`
@@ -217,6 +233,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Data functions (`src/data/*.ts`):** `listMigrationJobs`, `listTenants`
 - **Data modules:** `src/data/hostingFit.ts`, `src/data/platform.ts`
 - **RPCs reachable via those modules:** `hosting_connection_list`, `hosting_connection_save`, `hosting_connection_set_secret`, `hosting_fit_get`, `hosting_fit_rule_save`, `migration_job_create`, `migration_job_list`, `platform_create_tenant`, `platform_get_invite_caps`, `platform_job_health`, `platform_list_support_grants`, `platform_list_tenants`, `platform_list_trail`, `platform_provisioning_status`, `platform_whoami`, `support_access_log_list`, `support_grant_active`, `support_list_engagements`, `support_read_object`
+- **Tables reachable via those modules:** none
 - **Testids (12):** `sa-migration`, `sa-migration-loading`, `sa-migration-error`, `sa-migration-tenant`, `sa-migration-refresh`, `sa-migration-jobs-loading`, `sa-migration-jobs-error`, `sa-migration-empty`, `sa-migration-job-<id>`, `sa-migration-job-error-<id>`, `sa-migration-steps-<id>`, `sa-deployment-kit`
 - **States:** loading tenants; loading jobs; an empty jobs list; an inline job error; a failed job is flagged in cinnabar, an awaiting-cutover or retired job in verdigris.
 - **Tutorial key:** `sa.migration`
@@ -231,6 +248,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Data functions (`src/data/*.ts`):** `grantSupportAccess`, `listJobHealth`, `listSupportGrants`, `platform_job_health`, `platform_list_support_grants`, `revokeSupportAccess`, `supportAccessLog`, `supportGrantActive`, `supportListEngagements`, `supportReadObject`, `support_access_log_list`, `support_grant_active`, `support_list_engagements`, `support_read_object`
 - **Data modules:** `src/data/platform.ts`
 - **RPCs reachable via those modules:** `platform_create_tenant`, `platform_get_invite_caps`, `platform_job_health`, `platform_list_support_grants`, `platform_list_tenants`, `platform_list_trail`, `platform_provisioning_status`, `platform_whoami`, `support_access_log_list`, `support_grant_active`, `support_list_engagements`, `support_read_object`
+- **Tables reachable via those modules:** none
 - **Testids (24):** `superadmin-support`, `superadmin-support-loading`, `superadmin-support-error`, `superadmin-support-result`, `superadmin-support-empty`, `superadmin-support-session`, `superadmin-support-session-org`, `superadmin-support-session-open`, `superadmin-support-session-error`, `superadmin-support-session-open-panel`, `superadmin-support-session-count`, `superadmin-support-session-empty`, `superadmin-support-session-list`, `superadmin-support-session-read-result`, `superadmin-support-session-trail`, `support-engagement-<id>`, `support-read-<id>`, `superadmin-job-health`, `superadmin-job-health-error`, `superadmin-job-health-empty`, `superadmin-job-health-list`, `job-<jobName>`, `job-status-<jobName>`, `grant-<grantId>`
 - **States:** loading grants; loading jobs; an empty jobs list (the scheduler is absent); an inline job error; a session that stays closed when no live grant exists, with the reason inline; an open session with the granted engagements; an inline refusal when the database rejects the call. No blocking modal.
 - **Tutorial key:** `sa.health`
@@ -258,6 +276,9 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Route / location:** `/superadmin`.
 - **Rights required:** platform admin (`is_platform_admin()`); a caller without it sees the denied state.
 - **Data functions (`src/data/*.ts`):** none (pure/UI only)
+- **Data modules:** none (pure/UI only)
+- **RPCs reachable via those modules:** none
+- **Tables reachable via those modules:** none
 - **Testids (5):** `superadmin-checking`, `superadmin-denied`, `superadmin-portal`, `superadmin-tabs`, `superadmin-tab-<tab>`
 - **States:** checking; denied; ready.
 - **Tutorial key:** — (no key)
@@ -287,6 +308,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Data functions (`src/data/*.ts`):** `listTutorials`, `tutorialHealth`
 - **Data modules:** `src/data/tutorials.ts`
 - **RPCs reachable via those modules:** `list_tutorials`
+- **Tables reachable via those modules:** none
 - **Testids (5):** `superadmin-tutorials`, `superadmin-tutorials-loading`, `superadmin-tutorials-error`, `superadmin-tutorials-empty`, `tutorial-<key>`
 - **States:** loading, error, empty (registry empty), ready.
 - **Tutorial key:** `sa.tutorials`
@@ -301,6 +323,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Data functions (`src/data/*.ts`):** `listTrail`
 - **Data modules:** `src/data/platform.ts`
 - **RPCs reachable via those modules:** `platform_create_tenant`, `platform_get_invite_caps`, `platform_job_health`, `platform_list_support_grants`, `platform_list_tenants`, `platform_list_trail`, `platform_provisioning_status`, `platform_whoami`, `support_access_log_list`, `support_grant_active`, `support_list_engagements`, `support_read_object`
+- **Tables reachable via those modules:** none
 - **Testids (4):** `superadmin-trail`, `superadmin-trail-loading`, `superadmin-trail-error`, `superadmin-trail-empty`
 - **States:** loading, error (with Retry), empty, ready.
 - **Tutorial key:** `sa.trail`
@@ -317,6 +340,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Data functions (`src/data/*.ts`):** `listFeatureCatalogue`, `listTenantEntitlements`
 - **Data modules:** `src/data/entitlements.ts`
 - **RPCs reachable via those modules:** `list_feature_catalogue`, `list_plans`, `list_tenant_entitlements`
+- **Tables reachable via those modules:** none
 - **Testids (11):** `org-control-panel`, `org-control-denied`, `org-control-tabs`, `org-control-tab-features`, `org-features`, `org-features-loading`, `org-features-error`, `org-features-list`, `org-feature-<key>`, `org-control-no-right`, `org-setup`
 - **States:** loading, error, ready. No toggle exists on this screen; it is read-only by design.
 - **Tutorial key:** `oa.features`
@@ -331,6 +355,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Data functions (`src/data/*.ts`):** `acknowledgeConsultation`, `endConsultation`, `getActiveConsultation`, `requestConsultation`
 - **Data modules:** `src/data/consultation.ts`
 - **RPCs reachable via those modules:** `consultation_active`
+- **Tables reachable via those modules:** none
 - **Testids (5):** `org-consultation`, `org-consultation-session`, `org-consultation-acknowledge`, `org-consultation-invite`, `org-consultation-result`
 - **States:** no session (the invite button only), requested (an Acknowledge button when the platform side initiated), active.
 - **Tutorial key:** — (no key)
@@ -345,6 +370,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Data functions (`src/data/*.ts`):** `config_history_list`, `listConfigHistory`
 - **Data modules:** `src/data/configHistory.ts`
 - **RPCs reachable via those modules:** `config_history_list`
+- **Tables reachable via those modules:** none
 - **Testids (7):** `org-history`, `org-history-loading`, `org-history-error`, `org-history-empty`, `org-history-table`, `org-history-row-<index>`, `org-history-platform-<index>`
 - **States:** loading, error (with Retry), empty ("No configuration has changed yet."), ready. Read-only: the screen exposes no write control.
 - **Tutorial key:** `oa.history`
@@ -359,6 +385,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Data functions (`src/data/*.ts`):** `listSenderProfiles`, `recordTestResult`, `saveSenderProfile`
 - **Data modules:** `src/data/senderProfiles.ts`
 - **RPCs reachable via those modules:** `email_sender_profiles_list`
+- **Tables reachable via those modules:** none
 - **Testids (15):** `org-email`, `org-email-loading`, `org-email-error`, `org-email-result`, `org-email-saved`, `org-email-denied`, `org-email-provider`, `org-email-display-name`, `org-email-from`, `org-email-save`, `org-email-empty`, `org-email-list`, `org-sender-<id>`, `org-sender-test-<id>`, `org-email-connect-graph`
 - **States:** loading, error (with Retry), denied (the platform sends instead), empty ("You have no sending address yet. Notifications are waiting, not lost."), ready.
 - **Tutorial key:** `oa.email-resend`, `oa.email-microsoft`, `oa.email-smtp`, `oa.email-test`
@@ -448,6 +475,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Data functions (`src/data/*.ts`):** `SIGNUP_DISABLED_HINT`, `describeExpiry`, `grantIsLive`, `inviteExternalAuditor`, `listExternalAccessLog`, `listExternalAuditors`, `normaliseEngagementIds`, `permissionMatrix`, `permissionsOf`, `revokeExternalAuditor`, `saveExternalAuditorGrants`
 - **Data modules:** `src/data/externalAuditors.ts`
 - **RPCs reachable via those modules:** `ext_engagement_summary`, `ext_latest_board_pack`, `ext_latest_certificate`, `ext_list_engagements`, `ext_me`, `ext_verify_certificate`, `external_access_log_list`, `external_auditor_list`
+- **Tables reachable via those modules:** none
 - **Testids (21):** `oa-auditors`, `oa-auditors-loading`, `oa-auditors-error`, `oa-auditors-result-error`, `oa-auditors-result-ok`, `oa-auditors-email`, `oa-auditors-expiry-kind`, `oa-auditors-days`, `oa-auditors-permanent-warning`, `oa-auditors-engagements`, `oa-auditors-engagement-<id>`, `oa-auditors-no-engagements`, `oa-auditors-invite`, `oa-auditors-matrix`, `oa-auditors-matrix-empty`, `oa-auditors-row-<userId>`, `oa-auditors-cell-<userId>-<permission>`, `oa-auditors-expiry-<userId>`, `oa-auditors-revoke-<userId>`, `oa-auditors-log`, `oa-auditors-log-empty`
 - **States:** loading; an empty matrix ("No external auditors yet."); an empty log; an inline error. Choosing "Permanent" shows a plain warning. Revoking a whole account is a hold-to-confirm. The invitation result is "Invitation queued…", never "sent" (D20).
 - **Tutorial key:** `oa.auditors`, `oa.auditor-matrix`
@@ -462,6 +490,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Data functions (`src/data/*.ts`):** `getPatternSettings`, `savePatternSettings`
 - **Data modules:** `src/data/patterns.ts`
 - **RPCs reachable via those modules:** `pattern_findings`, `pattern_settings_get`, `pattern_settings_save`
+- **Tables reachable via those modules:** none
 - **Testids (9):** `oa-patterns-config`, `oa-patterns-config-readonly`, `oa-patterns-threshold`, `oa-patterns-min-size`, `oa-patterns-years`, `oa-patterns-visibility`, `oa-patterns-save`, `oa-patterns-result`, `oa-patterns-result-error`
 - **States:** loading; read-only for a caller without `edit_config`; an inline error; a plain result line after a save. Every control is a slider, a number input or a select — never a JSON box.
 - **Tutorial key:** `oa.patterns-config`
@@ -476,6 +505,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Data functions (`src/data/*.ts`):** `createMigrationJob`, `listHostingConnections`, `migrationRunnerCommand`, `saveHostingConnection`, `setConnectionSecret`, `storeSecret`, `testHostingConnection`
 - **Data modules:** `src/data/hostingFit.ts`, `src/data/secrets.ts`
 - **RPCs reachable via those modules:** `hosting_connection_list`, `hosting_connection_save`, `hosting_connection_set_secret`, `hosting_fit_get`, `hosting_fit_rule_save`, `migration_job_create`, `migration_job_list`, `secret_display`
+- **Tables reachable via those modules:** none
 - **Testids (27):** `oa-hosting`, `oa-hosting-loading`, `oa-hosting-error`, `oa-hosting-action-error`, `oa-hosting-notice`, `oa-hosting-label`, `oa-hosting-kind`, `oa-hosting-host`, `oa-hosting-port`, `oa-hosting-database`, `oa-hosting-username`, `oa-hosting-ssl`, `oa-hosting-password`, `oa-hosting-save`, `oa-hosting-runner-command`, `oa-hosting-empty`, `oa-hosting-connection-<id>`, `oa-hosting-mask-<id>`, `oa-hosting-test-<id>`, `oa-hosting-test-run-<id>`, `oa-hosting-report-<id>`, `oa-hosting-report-reachable-<id>`, `oa-hosting-report-messages-<id>`, `oa-hosting-report-extensions-<id>`, `oa-hosting-report-roles-<id>`, `oa-hosting-migrate-<id>`, `oa-hosting-retire-<id>`
 - **States:** loading; error (with Retry); an incomplete form refused inline before any call; an empty connections list; a runner command panel after a job starts. No blocking modal; retire uses hold-to-confirm.
 - **Tutorial key:** `oa.hosting`, `oa.migration`, `oa.deployment-kit`, `oa.retire-old`
@@ -580,6 +610,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Data functions (`src/data/*.ts`):** `certificateVerifyUrl`, `enabledFields`, `getCertificateConfig`, `saveCertificateConfig`
 - **Data modules:** `src/data/certificate.ts`
 - **RPCs reachable via those modules:** `certificate_config_get`, `certificate_get`, `certificate_list`, `verify_board_pack`, `verify_certificate`, `verify_report_root`
+- **Tables reachable via those modules:** none
 - **Testids (15):** `oa-certificate-config`, `oa-certificate-field-<key>`, `oa-certificate-enabled-<key>`, `engagement_id`, `engagement_title`, `organisation`, `engagement_root_hash`, `issued_at`, `sealed_workpapers`, `findings_count`, `sealing_actors`, `verification`, `free_text`, `oa-certificate-field-engagement_id`, `oa-certificate-enabled-verification`
 - **States:** loading, error, ready; the read-only view without `edit_config`.
 - **Tutorial key:** `oa.certificate-config`
@@ -594,6 +625,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Data functions (`src/data/*.ts`):** `listTutorials`, `tutorialHealth`
 - **Data modules:** `src/data/tutorials.ts`
 - **RPCs reachable via those modules:** `list_tutorials`
+- **Tables reachable via those modules:** none
 - **Testids (6):** `org-tutorials`, `superadmin-tutorials`, `superadmin-tutorials-loading`, `superadmin-tutorials-error`, `superadmin-tutorials-empty`, `tutorial-<key>`
 - **States:** loading, error, empty, ready.
 - **Tutorial key:** `oa.tutorials`
@@ -608,6 +640,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Data functions (`src/data/*.ts`):** `listSetupSteps`, `saveSetupStep`, `setupProgress`
 - **Data modules:** `src/data/setup.ts`
 - **RPCs reachable via those modules:** `setup_list`
+- **Tables reachable via those modules:** none
 - **Testids (5):** `org_admin-wizard`, `org_admin-wizard-step-org.golive`, `org_admin-wizard-content-org.golive`, `org_admin-wizard-save`, `org_admin-wizard-next`
 - **States:** loading, error, empty, ready; a resume banner when a later step is open.
 - **Tutorial key:** `oa.golive`
@@ -621,6 +654,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Rights required:** `edit_config`.
 - **Data functions (`src/data/*.ts`):** `deleteFindingSection`, `getExportRetention`, `getLifecycleSettings`, `getUploadLimits`, `getWorkflowSettings`, `listBiParameters`, `listFindingSections`, `listFsliMappings`, `listMethodologyScales`, `listNotificationRules`, `saveExportRetention`, `saveLifecycleSettings`, `saveUploadLimits`, `saveWorkflowSettings`, `setBiParameter`, `upsertFindingSection`, `upsertFsliMapping`, `upsertMethodologyScale`, `upsertNotificationRule`
 - **Data modules:** `src/data/governance.ts`
+- **RPCs reachable via those modules:** none
 - **Tables reachable via those modules:** `bi_check_ranges`, `bi_parameters`, `finding_sections`, `fsli_mappings`, `methodology_scales`, `notification_rules`
 - **Testids (61):** `oa-governance`, `oa-governance-loading`, `oa-governance-error`, `oa-governance-empty`, `oa-governance-result`, `oa-governance-lifecycle`, `oa-governance-testing-mode`, `oa-governance-signoff-planning`, `oa-governance-signoff-testing`, `oa-governance-signoff-conclusion`, `oa-governance-opinion-required`, `oa-governance-lifecycle-save`, `oa-governance-findings`, `oa-governance-findings-list`, `oa-governance-findings-empty`, `oa-governance-section-<roleTag>`, `oa-governance-section-delete-<roleTag>`, `oa-governance-section-tag`, `oa-governance-section-label`, `oa-governance-section-position`, `oa-governance-section-add`, `oa-governance-methodology`, `oa-governance-scales-list`, `oa-governance-scale-<key>`, `oa-governance-scale-key`, `oa-governance-scale-label`, `oa-governance-scale-add`, `oa-governance-fsli-list`, `oa-governance-fsli-<code>`, `oa-governance-fsli-code`, `oa-governance-fsli-label`, `oa-governance-fsli-category`, `oa-governance-fsli-add`, `oa-governance-workflow`, `oa-governance-sla-hours`, `oa-governance-escalation-hours`, `oa-governance-escalation-role`, `oa-governance-workflow-save`, `oa-governance-notifications`, `oa-governance-rules-list`, `oa-governance-rules-empty`, `oa-governance-rule-<eventKey>`, `oa-governance-rule-event`, `oa-governance-rule-roles`, `oa-governance-rule-supervisor`, `oa-governance-rule-add`, `oa-governance-bi`, `oa-governance-bi-list`, `oa-governance-bi-<checkKey>`, `oa-governance-bi-value-<checkKey>`, `oa-governance-bi-save-<checkKey>`, `oa-governance-uploads`, `oa-governance-max-file-mb`, `oa-governance-ext-<ext>`, `oa-governance-uploads-save`, `oa-governance-retention`, `oa-governance-export-schedule`, `oa-governance-activity-retention`, `oa-governance-population-retention`, `oa-governance-retention-save`, `oa-governance-grace-hours`
 - **States:** loading, error, empty, ready; an inline result line reports a saved change or the plain refusal (a value outside the platform range, an unknown role tag, an unsupported format).
@@ -668,6 +702,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Data functions (`src/data/*.ts`):** `convertProposal`, `decideProposal`, `listEscalations`, `listProposals`
 - **Data modules:** `src/data/consultation.ts`, `src/data/escalation.ts`
 - **RPCs reachable via those modules:** `consultation_active`, `escalation_event_list`, `work_queue_proposal_list`
+- **Tables reachable via those modules:** none
 - **Testids (9):** `wk-escalation`, `wk-escalation-error`, `wk-escalation-result`, `wk-proposal-list`, `wk-proposal-<id>`, `wk-proposal-convert-<id>`, `wk-proposal-dismiss-<id>`, `wk-escalation-list`, `wk-escalation-<id>`
 - **States:** the block renders nothing when the caller has no escalation and no proposal; otherwise it lists them. A conversion refusal is shown in `wk-escalation-result`.
 - **Tutorial key:** `oa.escalation-cards`
@@ -712,6 +747,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Data functions (`src/data/*.ts`):** `matchesHash`, `parseDroppedDocument`, `statusLabel`, `verifyBoardPack`, `verifyCertificate`, `verifyReportRoot`
 - **Data modules:** `src/data/certificate.ts`, `src/data/senderProfiles.ts`
 - **RPCs reachable via those modules:** `certificate_config_get`, `certificate_get`, `certificate_list`, `email_sender_profiles_list`, `verify_board_pack`, `verify_certificate`, `verify_report_root`
+- **Tables reachable via those modules:** none
 - **Testids (20):** `wk-verify`, `wk-verify-loading`, `wk-verify-error`, `wk-verify-status`, `wk-verify-not-found`, `wk-verify-rate-limited`, `wk-verify-organisation`, `wk-verify-title`, `wk-verify-issued`, `wk-verify-workpapers`, `wk-verify-findings`, `wk-verify-hash`, `wk-verify-drop`, `wk-verify-file`, `wk-verify-drop-error`, `wk-verify-drop-result`, `wk-verify-model`, `wk-verify-engine`, `wk-verify-template`, `wk-verify-phrases`
 - **States:** loading; valid / superseded / revoked / not found / rate limited. Organisation name and title appear only when the tenant turned `public_verify_show_title` on.
 - **Tutorial key:** `oa.verify`
@@ -726,6 +762,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Data functions (`src/data/*.ts`):** `diffStates`, `formatAsOf`, `getEngagementAsOf`, `isBeforeEarliest`, `listAsOfEvents`, `snapToEvent`
 - **Data modules:** `src/data/timeTravel.ts`
 - **RPCs reachable via those modules:** `engagement_as_of`, `engagement_as_of_events`
+- **Tables reachable via those modules:** none
 - **Testids (19):** `wk-timetravel`, `wk-timetravel-loading`, `wk-timetravel-banner`, `wk-timetravel-track`, `wk-timetravel-handle`, `wk-timetravel-prev`, `wk-timetravel-next`, `wk-timetravel-date`, `wk-timetravel-now`, `wk-timetravel-compare`, `wk-timetravel-state`, `wk-timetravel-workpapers`, `wk-timetravel-not-recorded`, `wk-timetravel-diff`, `wk-timetravel-diff-empty`, `wk-timetravel-diff-<id>`, `wk-timetravel-event-<action>`, `wk-timetravel-asof`, `wk-timetravel-seal`
 - **States:** loading; an as-of state with the banner; "Not recorded before <date>" when the entity kept no history; a diff region that lists added, changed and removed records. Animation respects `prefers-reduced-motion`.
 - **Tutorial key:** `oa.timetravel`
@@ -768,6 +805,9 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Route / location:** WK-01 Board Pack panel (`wk-boardpack`), tab `View` (`wk-boardpack-tab-view`), then a pack from the history (`wk-boardpack-open-<id>`).
 - **Rights required:** `approve_plan`; a figure the caller may not read is shown sealed (`wk-boardpack-figure-sealed`), not silently omitted.
 - **Data functions (`src/data/*.ts`):** none (pure/UI only)
+- **Data modules:** none (pure/UI only)
+- **RPCs reachable via those modules:** none
+- **Tables reachable via those modules:** none
 - **Testids (16):** `wk-boardpack`, `wk-boardpack-tab-view`, `wk-boardpack-view`, `wk-boardpack-history`, `wk-boardpack-open-<id>`, `wk-boardpack-verify-chip`, `wk-boardpack-delta`, `wk-boardpack-section-sira`, `wk-boardpack-section-issues`, `wk-boardpack-section-changes`, `wk-boardpack-section-sealed`, `wk-boardpack-section-sources`, `wk-boardpack-figure-sira-<i>`, `wk-boardpack-figure-cap-<band>`, `wk-boardpack-figure-sealed`, `wk-boardpack-source-<path>`
 - **States:** loading, error, empty (no packs yet), ready; sealed figures.
 - **Tutorial key:** `oa.boardpack-view`
@@ -799,6 +839,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Data functions (`src/data/*.ts`):** `acceptExternalInvite`, `external_auditor_accept`, `getEngagementSummary`, `getLatestCertificate`, `getLatestPack`, `getMyAccess`, `listMyEngagements`, `verifyExternalCertificate`
 - **Data modules:** `src/data/externalAuditors.ts`
 - **RPCs reachable via those modules:** `ext_engagement_summary`, `ext_latest_board_pack`, `ext_latest_certificate`, `ext_list_engagements`, `ext_me`, `ext_verify_certificate`, `external_access_log_list`, `external_auditor_list`
+- **Tables reachable via those modules:** none
 - **Testids (25):** `ex-accept`, `ex-accept-token`, `ex-accept-submit`, `ex-accept-error`, `ex-accept-done`, `ex-accept-continue`, `ex-accept-hint`, `ex-portal`, `ex-portal-loading`, `ex-portal-inactive`, `ex-portal-error`, `ex-portal-empty`, `ex-portal-engagements`, `ex-portal-engagement-<id>`, `ex-portal-summary`, `ex-portal-downloads`, `ex-portal-pack-hash`, `ex-portal-cert-hash`, `ex-portal-verify`, `ex-portal-verify-result`, `ex-portal-drop`, `ex-portal-drop-input`, `ex-portal-drop-error`, `ex-portal-drop-result`, `external-portal-wrong-principal`
 - **States:** loading; inactive ("Your access is not active"); an empty engagement list; an inline error; a drop that matches or does not match. There is no write control anywhere.
 - **Tutorial key:** `ex.accept`, `ex.verify`
@@ -813,6 +854,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Data functions (`src/data/*.ts`):** `SIGNUP_DISABLED_HINT`, `describeExpiry`, `getMyAccess`, `listMyEngagements`
 - **Data modules:** `src/data/externalAuditors.ts`
 - **RPCs reachable via those modules:** `ext_engagement_summary`, `ext_latest_board_pack`, `ext_latest_certificate`, `ext_list_engagements`, `ext_me`, `ext_verify_certificate`, `external_access_log_list`, `external_auditor_list`
+- **Tables reachable via those modules:** none
 - **Testids (14):** `ex-portal`, `ex-portal-loading`, `ex-portal-error`, `ex-portal-inactive`, `ex-portal-empty`, `ex-portal-engagements`, `ex-portal-engagement-<id>`, `ex-portal-summary`, `ex-portal-downloads`, `ex-portal-cert-hash`, `ex-portal-pack-hash`, `ex-portal-verify`, `ex-portal-verify-result`, `external-portal-wrong-principal`
 - **States:** loading, error, inactive (no live grant, with the reason), empty (no engagements), ready.
 - **Tutorial key:** `ex.home`
@@ -827,6 +869,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Data functions (`src/data/*.ts`):** `getEngagementSummary`, `getLatestCertificate`, `getLatestPack`, `matchesHash`, `parseDroppedDocument`, `verifyExternalCertificate`
 - **Data modules:** `src/data/externalAuditors.ts`
 - **RPCs reachable via those modules:** `ext_engagement_summary`, `ext_latest_board_pack`, `ext_latest_certificate`, `ext_list_engagements`, `ext_me`, `ext_verify_certificate`, `external_access_log_list`, `external_auditor_list`
+- **Tables reachable via those modules:** none
 - **Testids (10):** `ex-portal`, `ex-portal-summary`, `ex-portal-cert-hash`, `ex-portal-pack-hash`, `ex-portal-drop`, `ex-portal-drop-input`, `ex-portal-drop-result`, `ex-portal-drop-error`, `ex-portal-verify`, `ex-portal-verify-result`
 - **States:** loading, error, ready; a returned document that does not match the recorded hash is refused with the plain reason.
 - **Tutorial key:** `ex.engagement`
@@ -856,6 +899,9 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Route / location:** Tab `pending` (nav strip "Work Queue").
 - **Rights required:** any signed-in member; each section is filtered by the caller's rights.
 - **Data functions (`src/data/*.ts`):** none (pure/UI only)
+- **Data modules:** none (pure/UI only)
+- **RPCs reachable via those modules:** none
+- **Tables reachable via those modules:** none
 - **Testids (2):** `pending-comments`, `tab-pending`
 - **States:** loading; empty per section ("Nothing awaiting you"); ready; error inline.
 - **Tutorial key:** — (no key)
@@ -868,6 +914,9 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Route / location:** Tab `universe` (nav strip "Audit Universe").
 - **Rights required:** any member reads; `edit_config` to add an entity.
 - **Data functions (`src/data/*.ts`):** `Activity`, `AlertTriangle`, `ArrowRight`, `EntityRow`, `Layers`
+- **Data modules:** none (pure/UI only)
+- **RPCs reachable via those modules:** none
+- **Tables reachable via those modules:** none
 - **Testids (3):** `add-entity-form`, `add-entity-open`, `db-entities`
 - **States:** loading; empty (no universes/entities); ready; denied on the add form without `edit_config`.
 - **Tutorial key:** — (no key)
@@ -910,6 +959,9 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Route / location:** The `plan_items` inspector window.
 - **Rights required:** `manage_engagements` to add; `approve_plan` to approve an ad-hoc item.
 - **Data functions (`src/data/*.ts`):** none (pure/UI only)
+- **Data modules:** none (pure/UI only)
+- **RPCs reachable via those modules:** none
+- **Tables reachable via those modules:** none
 - **Testids (8):** `plan-add`, `plan-add-button`, `plan-item-list`, `plan-items`, `plan-items-empty`, `plan-justification-hint`, `plan-versions`, `plan-versions-empty`
 - **States:** loading; empty (`plan-items-empty`, `plan-versions-empty`); ready.
 - **Tutorial key:** — (no key)
@@ -982,6 +1034,9 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Route / location:** The `sira_model` inspector window.
 - **Rights required:** `edit_config`.
 - **Data functions (`src/data/*.ts`):** none (pure/UI only)
+- **Data modules:** none (pure/UI only)
+- **RPCs reachable via those modules:** none
+- **Tables reachable via those modules:** none
 - **Testids (7):** `sira-aggregation`, `sira-bands`, `sira-factors`, `sira-model`, `sira-model-empty`, `sira-model-locked`, `sira-model-version`
 - **States:** loading; empty (`sira-model-empty`); locked (`sira-model-locked`); ready.
 - **Tutorial key:** — (no key)
@@ -994,6 +1049,9 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Route / location:** The `sira_cycles` inspector window.
 - **Rights required:** `manage_engagements` to create/publish; `review_and_approve` to decide an emergent risk.
 - **Data functions (`src/data/*.ts`):** none (pure/UI only)
+- **Data modules:** none (pure/UI only)
+- **RPCs reachable via those modules:** none
+- **Tables reachable via those modules:** none
 - **Testids (6):** `emergent-empty`, `emergent-risks`, `sira-create-cycle`, `sira-cycle-panel`, `sira-cycles`, `sira-cycles-empty`
 - **States:** loading; empty (`sira-cycles-empty`, `emergent-empty`); ready.
 - **Tutorial key:** — (no key)
@@ -1006,6 +1064,9 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Route / location:** The `audit_file` floating window, opened from an engagement card; the tab is `audit_file`.
 - **Rights required:** any member reads; each view gates on its own right and shows the refusal otherwise.
 - **Data functions (`src/data/*.ts`):** none (pure/UI only)
+- **Data modules:** none (pure/UI only)
+- **RPCs reachable via those modules:** none
+- **Tables reachable via those modules:** none
 - **Testids (16):** `audit-file`, `audit-file-as-of`, `audit-file-builder`, `audit-file-caps`, `audit-file-certificate`, `audit-file-conclusion`, `audit-file-documents`, `audit-file-export`, `audit-file-findings`, `audit-file-report`, `audit-file-stage`, `audit-file-unavailable`, `audit-file-workspace`, `tab-audit-file`, `workbench-action-error`, `workbench-signoff`
 - **States:** loading; unavailable (`audit-file-unavailable`); ready; per-view empty states.
 - **Tutorial key:** — (no key)
@@ -1018,6 +1079,9 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Route / location:** Audit File window, view "Planning" (`audit-file-view-planning`).
 - **Rights required:** any member reads.
 - **Data functions (`src/data/*.ts`):** none (pure/UI only)
+- **Data modules:** none (pure/UI only)
+- **RPCs reachable via those modules:** none
+- **Tables reachable via those modules:** none
 - **Testids (5):** `audit-file-planning`, `planning-coverage-summary`, `planning-empty`, `planning-no-entity`, `planning-sira`
 - **States:** loading; no-entity (`planning-no-entity`); empty; ready.
 - **Tutorial key:** — (no key)
@@ -1030,6 +1094,9 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Route / location:** Audit File window, view "Execution" (`audit-file-view-execution`).
 - **Rights required:** any member reads.
 - **Data functions (`src/data/*.ts`):** none (pure/UI only)
+- **Data modules:** none (pure/UI only)
+- **RPCs reachable via those modules:** none
+- **Tables reachable via those modules:** none
 - **Testids (2):** `audit-file-execution`, `execution-empty`
 - **States:** loading; empty (`execution-empty`); ready.
 - **Tutorial key:** — (no key)
@@ -1042,6 +1109,9 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Route / location:** Audit File window, view "Review" (`audit-file-view-review`).
 - **Rights required:** `review_and_approve`.
 - **Data functions (`src/data/*.ts`):** none (pure/UI only)
+- **Data modules:** none (pure/UI only)
+- **RPCs reachable via those modules:** none
+- **Tables reachable via those modules:** none
 - **Testids (8):** `audit-file-review`, `gate-count`, `report-pack-placeholder`, `signed-off-note`, `signoff-button`, `signoff-error`, `signoff-reason`, `wk-changes`
 - **States:** loading; ready; the change-control panel carries its own states.
 - **Tutorial key:** — (no key)
@@ -1055,6 +1125,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Rights required:** `perform_work`.
 - **Data functions (`src/data/*.ts`):** `PopulationRow`, `lockPopulation`, `registerPopulation`, `sha256Hex`
 - **Data modules:** `src/data/population.ts`
+- **RPCs reachable via those modules:** none
 - **Tables reachable via those modules:** `populations`
 - **Testids (15):** `population-browse`, `population-dropzone`, `population-empty`, `population-error`, `population-file-input`, `population-hash`, `population-loading`, `population-panel`, `population-register`, `population-gate`, `population-status`, `control-total`, `population-errors`, `gate-message`, `finalize-test`
 - **States:** loading; empty; hashed; locked; error inline.
@@ -1084,6 +1155,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Rights required:** `perform_work` to record; `review_and_approve` to sign off; `can_reopen` to reopen.
 - **Data functions (`src/data/*.ts`):** `RowResult`, `WorkpaperRowRow`, `getWorkpaper`, `recordRow`, `reopenWorkpaper`, `signOffWorkpaper`
 - **Data modules:** `src/data/rowTesting.ts`
+- **RPCs reachable via those modules:** none
 - **Tables reachable via those modules:** `workpaper_rows`, `workpapers`
 - **Testids (10):** `rowtesting-empty`, `rowtesting-error`, `rowtesting-justification`, `rowtesting-loading`, `rowtesting-panel`, `rowtesting-preflight`, `rowtesting-reopen`, `rowtesting-signed-off`, `rowtesting-signoff`, `rowtesting-signoff-reason`
 - **States:** loading; empty; signed-off; preflight note; error inline.
@@ -1157,6 +1229,9 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Route / location:** The `deployment_gate` inspector window.
 - **Rights required:** `manage_engagements`.
 - **Data functions (`src/data/*.ts`):** `GateResult`
+- **Data modules:** none (pure/UI only)
+- **RPCs reachable via those modules:** none
+- **Tables reachable via those modules:** none
 - **Testids (13):** `deployment-gate`, `deployment-gate-empty`, `deployment-gate-run`, `gate-deploy`, `gate-deploy-error`, `gate-go-plan`, `gate-go-universe`, `gate-next-action`, `gate-open-combined`, `gate-outcome`, `gate-required-right`, `gate-step`, `gate-view-engagement`
 - **States:** loading; empty (`deployment-gate-empty`); running; outcome; error inline.
 - **Tutorial key:** — (no key)
@@ -1170,6 +1245,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Rights required:** `perform_work`.
 - **Data functions (`src/data/*.ts`):** `AnalysisResultRow`, `raiseFinding`
 - **Data modules:** `src/data/analytics.ts`
+- **RPCs reachable via those modules:** none
 - **Tables reachable via those modules:** `analysis_results`
 - **Testids (4):** `analyst-empty`, `analyst-error`, `analyst-loading`, `analyst-panel`
 - **States:** loading; empty (`analyst-empty`); result per check; error inline.
@@ -1198,6 +1274,9 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Route / location:** Tab `issues` (nav strip "Issues & CAP Register"); views via `issues-view-<view>`.
 - **Rights required:** any member reads; patterns configuration needs `edit_config`.
 - **Data functions (`src/data/*.ts`):** none (pure/UI only)
+- **Data modules:** none (pure/UI only)
+- **RPCs reachable via those modules:** none
+- **Tables reachable via those modules:** none
 - **Testids (3):** `cap-engagement-picker`, `cap-no-engagement`, `issues-cap-register-section`
 - **States:** loading; empty; ready; per-view states.
 - **Tutorial key:** — (no key)
@@ -1240,6 +1319,9 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Route / location:** The `observation` inspector window.
 - **Rights required:** any member reads.
 - **Data functions (`src/data/*.ts`):** none (pure/UI only)
+- **Data modules:** none (pure/UI only)
+- **RPCs reachable via those modules:** none
+- **Tables reachable via those modules:** none
 - **Testids (4):** `finding-audit`, `finding-department`, `finding-workpaper`, `observation-form-error`
 - **States:** loading; ready.
 - **Tutorial key:** — (no key)
@@ -1252,6 +1334,9 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Route / location:** The `cap_inspector` inspector window.
 - **Rights required:** `perform_work`.
 - **Data functions (`src/data/*.ts`):** none (pure/UI only)
+- **Data modules:** none (pure/UI only)
+- **RPCs reachable via those modules:** none
+- **Tables reachable via those modules:** none
 - **Testids (3):** `cap-confirm-close`, `cap-evidence-file`, `cap-form-error`
 - **States:** ready; form error.
 - **Tutorial key:** — (no key)
@@ -1266,6 +1351,9 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Route / location:** Rendered on every authenticated screen below the header.
 - **Rights required:** each tab is shown only when the session has the right for it.
 - **Data functions (`src/data/*.ts`):** none (pure/UI only)
+- **Data modules:** none (pure/UI only)
+- **RPCs reachable via those modules:** none
+- **Tables reachable via those modules:** none
 - **Testids (2):** `nav-draggable-pill`, `nav-strip-track`
 - **States:** ready; tabs filtered by rights.
 - **Tutorial key:** — (no key)
@@ -1278,6 +1366,9 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Route / location:** Rendered on every authenticated screen.
 - **Rights required:** menu entries appear only with the matching right.
 - **Data functions (`src/data/*.ts`):** none (pure/UI only)
+- **Data modules:** none (pure/UI only)
+- **RPCs reachable via those modules:** none
+- **Tables reachable via those modules:** none
 - **Testids (7):** `header-search-compact`, `menu-activity-log`, `menu-import`, `menu-org-control`, `menu-people-admin`, `menu-shared-with-me`, `mobile-universe-switcher`
 - **States:** ready; menu closed/open; badge hidden at zero unread.
 - **Tutorial key:** — (no key)
@@ -1290,6 +1381,9 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Route / location:** A non-blocking overlay opened from the header search.
 - **Rights required:** any signed-in member.
 - **Data functions (`src/data/*.ts`):** none (pure/UI only)
+- **Data modules:** none (pure/UI only)
+- **RPCs reachable via those modules:** none
+- **Tables reachable via those modules:** none
 - **Testids (1):** `command-palette`
 - **States:** hidden; open with results; no results.
 - **Tutorial key:** — (no key)
@@ -1302,6 +1396,9 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Route / location:** Rendered above the shell; a pop-out uses the `/view/:recordType/:id` route.
 - **Rights required:** the hosted inspector enforces its own right.
 - **Data functions (`src/data/*.ts`):** none (pure/UI only)
+- **Data modules:** none (pure/UI only)
+- **RPCs reachable via those modules:** none
+- **Tables reachable via those modules:** none
 - **Testids (1):** `floating-window-dock`
 - **States:** open; docked; popped out; revision/refresh indicators.
 - **Tutorial key:** — (no key)
@@ -1314,6 +1411,9 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Route / location:** Not a screen; used inside many screens.
 - **Rights required:** inherited from the host screen.
 - **Data functions (`src/data/*.ts`):** none (pure/UI only)
+- **Data modules:** none (pure/UI only)
+- **RPCs reachable via those modules:** none
+- **Tables reachable via those modules:** none
 - **Testids (2):** `hover-preview-popover`, `hover-preview-trigger`
 - **States:** trigger; popover shown.
 - **Tutorial key:** — (no key)
@@ -1326,6 +1426,9 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Route / location:** The header calendar panel (not a tab).
 - **Rights required:** any member reads.
 - **Data functions (`src/data/*.ts`):** none (pure/UI only)
+- **Data modules:** none (pure/UI only)
+- **RPCs reachable via those modules:** none
+- **Tables reachable via those modules:** none
 - **Testids (1):** `calendar-day-detail`
 - **States:** loading; day detail; empty.
 - **Tutorial key:** — (no key)
