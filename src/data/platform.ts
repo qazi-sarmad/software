@@ -176,16 +176,35 @@ export function revokeSupportAccess(grantId: string, reason: string): Promise<Da
 }
 
 /** The signed-in session's platform identity, read from the JWT by the database. */
-export async function platformWhoami(): Promise<{ userId: string | null; isPlatformAdmin: boolean }> {
+export interface PlatformIdentity {
+  userId: string | null;
+  isPlatformAdmin: boolean;
+  /** True only for the single owner row. A platform admin who is not the owner is refused by every RPC. */
+  isPlatformOwner: boolean;
+  /** True when ownership has been claimed at all. False on a fresh install, which opens the bootstrap. */
+  ownerExists: boolean;
+}
+
+export async function platformWhoami(): Promise<PlatformIdentity> {
   const sb = getClient();
-  if (!sb) return { userId: null, isPlatformAdmin: false };
+  if (!sb) return { userId: null, isPlatformAdmin: false, isPlatformOwner: false, ownerExists: false };
   const { data, error } = await sb.rpc('platform_whoami');
   if (error) throw new Error(error.message);
   const row = (data ?? [])[0] as Record<string, unknown> | undefined;
   return {
     userId: (row?.user_id as string | null) ?? null,
     isPlatformAdmin: Boolean(row?.is_platform_admin),
+    isPlatformOwner: Boolean(row?.is_platform_owner),
+    ownerExists: Boolean(row?.owner_exists),
   };
+}
+
+/** Claim platform ownership. Succeeds once, before any owner exists; refused permanently after. */
+export async function claimPlatformOwnership(reason: string): Promise<DataResult> {
+  const sb = getClient();
+  if (!sb) return { ok: false, reason: 'The platform console is not configured.' };
+  const { error } = await sb.rpc('platform_owner_claim', { p_reason: reason });
+  return error ? { ok: false, reason: error.message } : { ok: true };
 }
 
 export async function listInviteCaps(): Promise<InviteCapRow[]> {

@@ -6,6 +6,7 @@ import { SignInScreen } from './components/auth/SignInScreen';
 import { MfaChallenge } from './components/auth/MfaChallenge';
 import { isPlatformAdminPath } from './lib/platformPath';
 import { NoTenantScreen } from './components/auth/NoTenantScreen';
+import { WithheldScreen } from './components/auth/WithheldScreen';
 import { InlineError } from './components/common/InlineError';
 import { LiveAnnouncerProvider } from './components/common/LiveAnnouncer';
 import type { User } from './types';
@@ -241,6 +242,9 @@ const AuthGate: React.FC<{ viewRecord?: ViewRecordTarget; externalPortal?: boole
     );
   }
   if (status === 'no_tenant') return <NoTenantScreen />;
+  // The organisation's security policy withheld the tenant claims (0100 SSO, 0103 second factor).
+  // RLS already shows this member nothing; the screen offers the challenge or the SSO guidance.
+  if (status === 'withheld') return <WithheldScreen />;
   if (status === 'signed_out' || status === 'platform' || !user) return <SignInScreen />;
   // The external portal is only for that principal: a signed-in tenant member who opens /external is
   // told plainly, never shown the tenant shell.
@@ -342,9 +346,10 @@ const SuperAdminPortal = lazy(() =>
 
 /** Shows the sign-in screen for an unauthenticated visitor, else the portal (which re-checks the role). */
 const PlatformGate: React.FC = () => {
-  const { user, isPlatform, platformNeedsMfa, refreshPlatformMfa } = useAuth();
+  const { user, isPlatform, platformNeedsMfa, refreshPlatformMfa, withheld } = useAuth();
   // An org member (user) is signed in but not platform staff: render the portal, which denies it in
   // the database. Platform staff have no org identity, so `user` is null and `isPlatform` is true.
+  if (withheld) return <WithheldScreen />;
   if (!user && !isPlatform) return <SignInScreen />;
   // WP9: when the platform requires a second factor and the session has not completed one, show the
   // MFA challenge instead of the portal. The database refuses every platform RPC until AAL2, so this

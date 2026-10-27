@@ -15,7 +15,9 @@ import { enrollTotp, listMfaFactors, verifyTotp, type MfaFactor } from '../../da
  *     Supabase Auth; the secret is shown once for manual entry, and is never stored by the app.
  *   - challenge: a factor exists; the admin enters the six-digit code to raise the session to AAL2.
  */
-export const MfaChallenge: React.FC<{ onSatisfied: () => void }> = ({ onSatisfied }) => {
+export const MfaChallenge: React.FC<{ onSatisfied: () => void; title?: string; friendlyName?: string }> = ({
+  onSatisfied, title = 'Platform verification', friendlyName = 'Provio platform console',
+}) => {
   const [factors, setFactors] = useState<MfaFactor[]>([]);
   const [enrolment, setEnrolment] = useState<{ factorId: string; qrCodeSvg: string; secret: string } | null>(null);
   const [code, setCode] = useState('');
@@ -40,7 +42,7 @@ export const MfaChallenge: React.FC<{ onSatisfied: () => void }> = ({ onSatisfie
     setError(null);
     setBusy(true);
     try {
-      const e = await enrollTotp('Provio platform console');
+      const e = await enrollTotp(friendlyName);
       setEnrolment({ factorId: e.factorId, qrCodeSvg: e.qrCodeSvg, secret: e.secret });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not start enrolment.');
@@ -70,7 +72,7 @@ export const MfaChallenge: React.FC<{ onSatisfied: () => void }> = ({ onSatisfie
       <div className="w-full max-w-md space-y-5 p-8 rounded-2xl bg-surface border border-hairline">
         <div className="flex items-center gap-2 text-accent">
           <Shield className="w-5 h-5" />
-          <h1 className="text-apple-20 font-bold">Platform verification</h1>
+          <h1 className="text-apple-20 font-bold">{title}</h1>
         </div>
         <p className="text-apple-13 text-secondary">
           {enrolment || verified.length === 0

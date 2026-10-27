@@ -7,11 +7,12 @@ import { render, screen, cleanup, fireEvent, waitFor } from '@testing-library/re
 vi.mock('./data/client', () => ({
   loadCurrentUser: vi.fn().mockRejectedValue(new Error('This account is not provisioned in an organisation.')),
   refreshAuthToken: vi.fn().mockResolvedValue(true),
+  sessionClaims: vi.fn().mockResolvedValue(null),
   signIn: vi.fn(),
   signOut: vi.fn(),
 }));
 vi.mock('./data/platform', () => ({
-  platformWhoami: vi.fn().mockResolvedValue({ userId: null, isPlatformAdmin: false }),
+  platformWhoami: vi.fn().mockResolvedValue({ userId: null, isPlatformAdmin: false, isPlatformOwner: false, ownerExists: false }),
 }));
 
 import App from './App';

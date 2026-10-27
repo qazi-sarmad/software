@@ -22,11 +22,12 @@ import { OrgHostingPanel } from './OrgHostingPanel';
 import { OrgGovernancePanel } from './OrgGovernancePanel';
 import { SharePanel } from './SharePanel';
 import { SsoPanel } from './SsoPanel';
+import { MfaPanel } from './MfaPanel';
 import { DataLifecyclePanel } from './DataLifecyclePanel';
 import { InlineError } from '../common/InlineError';
 import { Check, Lock, Zap, Sliders, Users, Shield, History, Database } from '../common/Icons';
 
-type Tab = 'features' | 'branding' | 'email' | 'automation' | 'escalation' | 'setup' | 'consultation' | 'auditors' | 'hosting' | 'governance' | 'history' | 'changes' | 'tutorials' | 'connectors' | 'formats' | 'sharing' | 'sso' | 'data';
+type Tab = 'features' | 'branding' | 'email' | 'automation' | 'escalation' | 'setup' | 'consultation' | 'auditors' | 'hosting' | 'governance' | 'history' | 'changes' | 'tutorials' | 'connectors' | 'formats' | 'sharing' | 'sso' | 'mfa' | 'data';
 type LoadState = 'loading' | 'ready' | 'error';
 
 /** F18: every configuration tab carries its own "Show me how" tutorial key (Appendix A). */
@@ -48,6 +49,7 @@ const TAB_TUTORIAL: Record<Tab, { key: string; title: string }> = {
   formats: { key: 'oa.formats', title: 'OA-24 report format editor' },
   sharing: { key: 'oa.governance', title: 'OA-22 governance settings' },
   sso: { key: 'oa.governance', title: 'OA-22 governance settings' },
+  mfa: { key: 'oa.governance', title: 'OA-22 governance settings' },
   data: { key: 'oa.governance', title: 'OA-22 governance settings' },
 };
 
@@ -153,6 +155,7 @@ export const OrgControlPanel: React.FC = () => {
           { id: 'formats', label: 'Report formats', icon: Sliders },
           { id: 'sharing', label: 'Sharing', icon: Users },
           { id: 'sso', label: 'Single sign-on', icon: Shield },
+          { id: 'mfa', label: 'Multi-factor', icon: Shield },
           { id: 'data', label: 'Data erasure', icon: Database },
         ] as { id: Tab; label: string; icon: React.FC<{ className?: string }> }[]).map((t) => {
           const Icon = t.icon;
@@ -273,6 +276,7 @@ export const OrgControlPanel: React.FC = () => {
       {tab === 'formats' && <ReportFormatPanel />}
       {tab === 'sharing' && <SharePanel />}
       {tab === 'sso' && <SsoPanel />}
+      {tab === 'mfa' && <MfaPanel />}
       {tab === 'data' && <DataLifecyclePanel />}
       {tab === 'hosting' && <OrgHostingPanel />}
       {tab === 'governance' && <OrgGovernancePanel />}
