@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Minus, ExternalLink } from './Icons';
+import { useRecordRevisionSync } from '../../hooks/useRecordRevisionSync';
 
 /**
  * Floating window chrome (MODE B of the record view, spec §17.1, §27.5).
@@ -24,6 +25,12 @@ export interface FloatingWindowProps {
   footer?: React.ReactNode;
   /** When set, a pop-out button opens this same-origin URL as its own browser window. */
   popOutUrl?: string;
+  /**
+   * When set, the window participates in the same-origin record-sync channel (§17.1): it shows the
+   * current revision and a refresh control, and re-renders its content when either this window or a
+   * popped-out sibling publishes a new revision. The identity is the record, not the window.
+   */
+  liveSync?: { recordType: string; recordId: string };
 }
 
 export const FloatingWindow: React.FC<FloatingWindowProps> = ({
@@ -39,10 +46,13 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
   children,
   footer,
   popOutUrl,
+  liveSync,
 }) => {
   const [pos, setPos] = useState(initial ?? { top: 96, right: 24 });
   const dragRef = useRef<{ startX: number; startY: number; startTop: number; startRight: number } | null>(null);
   const winRef = useRef<HTMLDivElement>(null);
+  // Always call the hook (rules of hooks); a null identity leaves it inert.
+  const sync = useRecordRevisionSync(liveSync?.recordType ?? '', liveSync?.recordId ?? '');
 
   const onPointerDown = useCallback((e: React.PointerEvent) => {
     if ((e.target as HTMLElement).closest('button')) return;
@@ -112,6 +122,26 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
               {subtitle && <p className="text-apple-11 text-secondary truncate mt-0.5">{subtitle}</p>}
             </div>
             <div className="flex items-center gap-1 shrink-0">
+              {liveSync && (
+                <>
+                  <span
+                    data-testid={`floating-window-${windowId}-revision`}
+                    className="text-apple-11 text-tertiary tabular-nums px-1"
+                  >
+                    Revision {sync.revision}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={sync.bump}
+                    data-testid={`floating-window-${windowId}-refresh`}
+                    className="p-1.5 rounded-lg text-secondary hover:text-primary bg-surface-hover transition-colors text-apple-11"
+                    title="Publish a new revision to every window"
+                    aria-label="Refresh record"
+                  >
+                    Refresh
+                  </button>
+                </>
+              )}
               {popOutUrl && (
                 <button
                   type="button"

@@ -5,6 +5,7 @@ import { CheckCircle2 } from '../common/Icons';
 import { buildWorkQueue, myComments } from '../../lib/workQueue';
 import { getOrgLocalToday } from '../../lib/orgDate';
 import { EscalationCards } from './EscalationCards';
+import { NotificationsCard } from './NotificationsCard';
 
 /**
  * Work Queue (SPEC-v10 §5), user-specific: my workpapers, what awaits my sign-off, what awaits my
@@ -41,6 +42,8 @@ export const PendingTasksTab: React.FC = () => {
       </div>
 
       <EscalationCards />
+
+      <NotificationsCard />
 
       <div className="rounded-2xl bg-surface border border-hairline shadow-apple p-5 space-y-3" data-testid="pending-comments">
         <h2 className="text-apple-15 font-semibold text-primary">Review comments to address</h2>

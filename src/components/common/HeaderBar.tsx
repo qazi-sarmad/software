@@ -6,6 +6,7 @@ import { useScopedData } from '../../hooks/useScopedData';
 import { hasRight } from '../../lib/rights';
 import { Select } from './Select';
 import { HeaderCalendarPanel } from '../calendar/HeaderCalendarPanel';
+import { NotificationBell } from './NotificationBell';
 import {
   Calendar as CalendarIcon,
   Search,
@@ -143,6 +144,8 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ onOpenCommandPalette }) =>
 
         {/* Right Zone: Header Calendar Icon Button, Theme Toggle, Profile Menu */}
         <div className="flex items-center gap-2.5 shrink-0 relative">
+          {/* §22 in-app notifications: a live bell, non-blocking popover. */}
+          <NotificationBell />
           {/* Header Calendar Icon Button (§ 3.3) */}
           <div className="relative">
             <button

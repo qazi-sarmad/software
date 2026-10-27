@@ -34,8 +34,39 @@ other screen id is unchanged; the four retired ids have no section and no tutori
 - **Testids:** `consultation-banner`, `consultation-banner-time`, `consultation-banner-end`,
   `consultation-banner-dismiss`, `consultation-banner-error`.
 - **States:** hidden when there is no active session or when dismissed; visible strip otherwise.
-  Polls every 5 s as the fallback for the Realtime stream.
-- **Tutorial key:** `oa.dual-session` / `sa.dual-session`.
+  Delivered live: a Supabase Realtime subscription on the published tables, with a 5 s poll as the
+  documented fallback when Realtime is unavailable (`src/lib/liveSync.ts` decides the transport).
+- **Tutorial key:** `oa.dual-session` / `sa.dual-session`
+
+## GL-02 — in-app notifications and pop-out live sync (§17.1, §22)
+
+Two always-available chrome surfaces that close §22 (Realtime in-app notification delivery) and
+§17.1 (a pop-out window that stays in sync). Neither is a blocking modal.
+
+- **Purpose:** (a) the header bell lists the signed-in member's own in-app notifications and counts
+  the unread ones; (b) a record opened as a same-origin pop-out (`/view/:recordType/:id`) stays in
+  sync with the window that opened it through the shared origin storage.
+- **Route:** the bell sits in the header on every authenticated screen (not a route). The pop-out is
+  the `/view/:recordType/:id` route, opened by the floating-window pop-out button.
+- **Rights:** none beyond an authenticated session. A member sees only its own notifications; the
+  `notifications_list` RPC and the `notifications` RLS policy bound the read to
+  `org_id = jwt_org_id() and user_id = auth.uid()`.
+- **Data:** `listNotifications()` (`src/data/notifications.ts`), `markNotificationRead(id)`,
+  `subscribeNotifications(orgId, onChange)`, `chooseTransport`/`pollDue`/`pollInterval`
+  (`src/lib/liveSync.ts`), `useLiveNotifications(orgId)` (`src/hooks/useLiveNotifications.ts`),
+  `useRecordRevisionSync(recordType, recordId)` (`src/hooks/useRecordRevisionSync.ts`).
+- **RPCs / tables:** `notifications_list()`, `notification_mark_read(p_id)`; the `notifications`
+  table on the `supabase_realtime` publication. `notification_emit(...)` is the server-side raise.
+- **Testids:** `notification-bell`, `notification-bell-count`, `notification-panel`,
+  `notification-transport`, `notification-empty`, `notification-list`, `notification-<id>`,
+  `notification-mark-read-<id>`, `wk-notifications`, `wk-notifications-transport`,
+  `wk-notifications-unread`, `wk-notifications-empty`, `wk-notifications-list`,
+  `wk-notification-<id>`, `wk-notification-mark-read-<id>`, `record-page-revision`,
+  `record-page-refresh`.
+- **States:** bell badge hidden at zero unread; the panel shows `Live` or `Polling` from the chosen
+  transport; an empty list renders "Nothing new."; the pop-out shows its current revision and a
+  refresh control that publishes a new revision to the parent window.
+- **Tutorial key:** none (chrome, not a numbered screen).
 
 ## TUT-01 — tutorial drawer (S1)
 

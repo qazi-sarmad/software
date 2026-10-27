@@ -74,6 +74,9 @@ export const FloatingWindowManager: React.FC<FloatingWindowManagerProps> = ({
           onMinimise={() => toggle(w.windowId, true)}
           onClose={() => onCloseWindow(w.windowId)}
           popOutUrl={`/view/${recordTypeToPath(w.recordType)}/${w.recordId}`}
+          // The sync identity must match the pop-out's, which reads the URL segment, so the same
+          // record resolves to one key in both windows.
+          liveSync={{ recordType: recordTypeToPath(w.recordType), recordId: w.recordId }}
         >
           {renderWindow ? (
             renderWindow(w)

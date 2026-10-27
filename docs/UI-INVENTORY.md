@@ -809,6 +809,7 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 | `migration_job_list` | `src/data/hostingFit.ts` | `p_org` | tenant |
 | `missing_readability_sections` | `src/data/observations.ts` | `p_observation_id` | tenant |
 | `notification_template_list` | `src/data/automation.ts` | `p_org` | tenant |
+| `notifications_list` | `src/data/notifications.ts` | — | tenant |
 | `open_report_comment_count` | `src/data/reports.ts` | `p_report_version_id` | tenant |
 | `org_settings_extra_get` | `src/data/boardPack.ts` | `p_org` | tenant |
 | `pattern_findings` | `src/data/patterns.ts` | `p_org` | tenant |
@@ -859,8 +860,8 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 
 - Appendix A screens documented: 47 (contract sections).
 - Tutorial keys: 80.
-- RPCs catalogued: 105.
-- Data modules: 50; exported data functions: 331.
+- RPCs catalogued: 106.
+- Data modules: 51; exported data functions: 335.
 - Contract testids not found verbatim in `src/` (placeholder or dynamic): 152.
   - audit-file-view-builder, audit-file-view-certificate, hosting-test, invite-user, issues-view-patterns, oa-branding-colour-accent, oa-branding-colour-background, oa-branding-colour-primary, oa-branding-colour-text, oa-branding-margin-0, oa-branding-margin-3, oa-certificate-enabled-verification, oa-escalation-result, oa-escalation-saved, oa-governance-signoff-conclusion, oa-governance-signoff-planning, oa-governance-signoff-testing, org-control-tab-auditors, org-control-tab-automation, org-control-tab-branding, org-control-tab-connectors, org-control-tab-features, org-control-tab-formats, org-control-tab-governance, org-control-tab-hosting, org-control-tab-people, org-control-tab-setup, org-control-tab-tutorials, prefers-reduced-motion, sa-hosting-tab-check, sa-hosting-tab-rules, superadmin-automation-tab-rules, superadmin-automation-tab-templates, superadmin-tab-support, superadmin-tab-tenants, superadmin-tab-trail, superadmin-tab-tutorials, wk-boardpack-tab-generator, wk-connectors-alert-detail, wk-connectors-alert-detail-lineage …
 

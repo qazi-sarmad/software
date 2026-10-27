@@ -16,6 +16,7 @@ import { FloatingWindowManager, type OpenWindow } from './components/common/Floa
 import { RecordContent, INSPECTOR_TITLES, RECORD_TYPE_TO_INSPECTOR } from './components/common/RecordContent';
 import { ReviewCommentsGlobalDock } from './components/reviews/ReviewCommentsGlobalDock';
 import { ConsultationBanner } from './components/common/ConsultationBanner';
+import { useRecordRevisionSync } from './hooks/useRecordRevisionSync';
 
 // React.lazy + Suspense code-splitting of tabs per Requirement 5(b)
 const ExecutiveDashboardTab = lazy(() =>
@@ -265,6 +266,9 @@ const AuthGate: React.FC<{ viewRecord?: ViewRecordTarget; externalPortal?: boole
 const RecordPage: React.FC<{ target: ViewRecordTarget }> = ({ target }) => {
   const { openInspector, closeInspector } = useApp();
   const type = RECORD_TYPE_TO_INSPECTOR[target.recordType];
+  // §17.1 pop-out live sync: this page and the window that opened it share localStorage; a write in
+  // either window re-reads the record here. The revision is shown so the sync is observable.
+  const { revision, bump } = useRecordRevisionSync(target.recordType, target.recordId);
 
   useEffect(() => {
     if (!type) return;
@@ -276,7 +280,7 @@ const RecordPage: React.FC<{ target: ViewRecordTarget }> = ({ target }) => {
         : { id: target.recordId };
     openInspector(type, data);
     return () => closeInspector();
-  }, [type, target.recordId]);
+  }, [type, target.recordId, revision]);
 
   return (
     <div className="min-h-screen bg-canvas text-primary">
@@ -294,6 +298,18 @@ const RecordPage: React.FC<{ target: ViewRecordTarget }> = ({ target }) => {
           </button>
           <span aria-hidden>/</span>
           <span className="text-primary">{INSPECTOR_TITLES[type] ?? 'Record'}</span>
+          <span className="flex-1" />
+          <span className="text-apple-11 text-tertiary tabular-nums" data-testid="record-page-revision">
+            Revision {revision}
+          </span>
+          <button
+            type="button"
+            onClick={bump}
+            data-testid="record-page-refresh"
+            className="px-2 py-0.5 rounded-lg text-apple-12 text-accent border border-hairline hover:bg-surface"
+          >
+            Refresh
+          </button>
         </nav>
         {type ? (
           <div className="rounded-2xl border border-hairline bg-surface p-6" data-testid="record-page">
