@@ -14,7 +14,7 @@ import { renderPdf } from '../lib/render/pdf';
 import { renderDocx } from '../lib/render/docx';
 import { documentFromReportBlocks, toPdfModel, footerLine, type DocumentModel, type ReportBlockInput } from '../lib/render/document';
 import { DEFAULT_BRANDING, type BrandingSpec } from '../lib/render/branding';
-import { DEFAULT_FORMAT_LAYOUT, toPdfTypography, type FormatLayout } from '../lib/writing/reportFormat';
+import { DEFAULT_FORMAT_LAYOUT, toContentsSpec, toPdfTypography, type FormatLayout } from '../lib/writing/reportFormat';
 import { sha256Hex } from '../lib/population';
 
 export const REPORT_BUCKET = 'reports';
@@ -42,12 +42,19 @@ export interface StoredReportFiles {
 /** Build the one model the PDF and the DOCX both render. The footer carries engagement, time, user
  *  and hash (spec §18); for the frozen PDF the freeze date is added (spec §15.5). */
 export function buildReportModel(input: ReportFileInput, contentHashForFooter: string, frozenLabel: string): DocumentModel {
-  return documentFromReportBlocks(input.title, input.blocks, {
-    engagement: input.engagementLabel,
-    exportedAt: frozenLabel,
-    user: input.userLabel,
-    contentHash: contentHashForFooter,
-  });
+  const layout = input.layout ?? DEFAULT_FORMAT_LAYOUT;
+  return {
+    ...documentFromReportBlocks(input.title, input.blocks, {
+      engagement: input.engagementLabel,
+      exportedAt: frozenLabel,
+      user: input.userLabel,
+      contentHash: contentHashForFooter,
+    }),
+    // WP-C3/C4/T: both the PDF and the DOCX print the format's typography, and the contents page
+    // the format asks for. One model, so the two files cannot disagree.
+    typography: toPdfTypography(layout),
+    contents: toContentsSpec(layout),
+  };
 }
 
 async function hashOf(bytes: Uint8Array): Promise<string> {

@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
-  DEFAULT_FORMAT_LAYOUT, REPORT_PALETTE, TYPOGRAPHY_LIMITS, applyFormat, defaultFormat, formatBodyHash,
-  formatCanonicalKey, isValidColour, layoutFromRow, resolveTypography, resolvedRegisters, toPdfTypography, validateFormat,
+  CONTENTS_LIMITS, DEFAULT_CONTENTS_STYLE, DEFAULT_FORMAT_LAYOUT, HEADING_LABEL_LIMITS, REPORT_PALETTE,
+  TYPOGRAPHY_LIMITS, applyFormat, defaultFormat, formatBodyHash,
+  formatCanonicalKey, isValidColour, layoutFromRow, resolveTypography, resolvedRegisters, toContentsSpec, toPdfTypography,
+  validateFormat, validateHeadingLabel,
   type FormatLayout, type FormatModelScope, type ReportFormat,
 } from './reportFormat';
 
@@ -286,5 +288,85 @@ describe('reportFormat: the printed typography the renderer consumes (WP-C3)', (
   it('snaps a stored weight to one the chosen family actually ships', () => {
     const layout = layoutFromRow({ fontBody: 'Inter', fontWeightBody: 550 });
     expect([400, 500, 600, 700]).toContain(layout.fontWeightBody);
+  });
+});
+
+describe('WP-H: a client may set a block heading, under one plain-text rule', () => {
+  it('accepts a short, single-line, plain label', () => {
+    expect(validateHeadingLabel('Observations and actions')).toEqual({ ok: true });
+  });
+
+  it.each([
+    ['', 'a heading needs a label'],
+    ['   ', 'a heading needs a label'],
+    ['<b>Findings</b>', 'a heading must be plain text, without markup'],
+    ['two\nlines', 'a heading must be a single line'],
+    ['x'.repeat(HEADING_LABEL_LIMITS.maxLength + 1), `a heading may be at most ${HEADING_LABEL_LIMITS.maxLength} characters`],
+  ])('rejects %j with a reason', (label, reason) => {
+    const r = validateHeadingLabel(label);
+    expect(r.ok).toBe(false);
+    expect(r.reason).toBe(reason);
+  });
+
+  it('reports a bad heading label from validateFormat', () => {
+    const f = makeFormat();
+    f.blocks = f.blocks.map((b) => (b.key === 'findings' ? { ...b, label: '<b>Findings</b>' } : b));
+    const issues = validateFormat(f, SCOPE);
+    expect(issues.some((i) => i.code === 'bad_heading_label')).toBe(true);
+  });
+
+  it('keeps the heading label out of the fact ledger: it changes the body hash, never a claim', async () => {
+    const a = makeFormat();
+    const b = makeFormat();
+    b.blocks = b.blocks.map((x) => (x.key === 'findings' ? { ...x, label: 'Observations' } : x));
+    expect(await formatBodyHash(a)).not.toBe(await formatBodyHash(b));
+  });
+});
+
+describe('WP-T: the contents design is validated and hashed', () => {
+  it('defaults to an enabled, numbered, depth-2 contents page', () => {
+    expect(DEFAULT_FORMAT_LAYOUT.contents).toEqual(DEFAULT_CONTENTS_STYLE);
+    expect(DEFAULT_CONTENTS_STYLE.enabled).toBe(true);
+    expect(DEFAULT_CONTENTS_STYLE.depth).toBe(2);
+  });
+
+  it('rejects a contents title that is empty or carries markup', () => {
+    const f = makeFormat();
+    f.layout = { ...f.layout, contents: { ...f.layout.contents, title: '<i>Index</i>' } };
+    expect(validateFormat(f, SCOPE).some((i) => i.code === 'bad_contents_title')).toBe(true);
+  });
+
+  it('rejects a contents title size outside its bounds', () => {
+    const f = makeFormat();
+    f.layout = { ...f.layout, contents: { ...f.layout.contents, titleScalePct: CONTENTS_LIMITS.titleScalePct.max + 1 } };
+    expect(validateFormat(f, SCOPE).some((i) => i.code === 'contents_title_out_of_range')).toBe(true);
+  });
+
+  it('merges a stored contents design onto the defaults', () => {
+    const layout = layoutFromRow({ contents: { enabled: true, depth: 1, title: 'Index', titleScalePct: 999 } });
+    expect(layout.contents.depth).toBe(1);
+    expect(layout.contents.title).toBe('Index');
+    expect(layout.contents.titleScalePct).toBe(CONTENTS_LIMITS.titleScalePct.max);
+  });
+
+  it('maps an enabled contents design to the renderer spec, and a disabled one to nothing', () => {
+    expect(toContentsSpec(DEFAULT_FORMAT_LAYOUT)?.depth).toBe(2);
+    const off: FormatLayout = { ...DEFAULT_FORMAT_LAYOUT, contents: { ...DEFAULT_CONTENTS_STYLE, enabled: false } };
+    expect(toContentsSpec(off)).toBeUndefined();
+  });
+
+  it('puts the contents design in the format body hash', async () => {
+    const a = makeFormat();
+    const b = makeFormat();
+    b.layout = { ...b.layout, contents: { ...b.layout.contents, depth: 1 } };
+    expect(await formatBodyHash(a)).not.toBe(await formatBodyHash(b));
+  });
+});
+
+describe('WP-C4: the typography adapter carries the families to the renderers', () => {
+  it('includes the heading and body families', () => {
+    const t = toPdfTypography({ ...DEFAULT_FORMAT_LAYOUT, fontHeading: 'Georgia', fontBody: 'Inter' });
+    expect(t.headingFamily).toBe('Georgia');
+    expect(t.bodyFamily).toBe('Inter');
   });
 });

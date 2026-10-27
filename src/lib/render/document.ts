@@ -29,6 +29,34 @@ export interface DocumentModel {
   sections: DocumentSection[];
   /** The footer line every export carries (§18): engagement, export time, user and hash. */
   footer?: FooterContext;
+  /** The report format's resolved print typography (WP-C3/C4). Present means every renderer prints
+   *  the format's sizes and line height; absent means each renderer keeps its own defaults. */
+  typography?: DocumentTypography;
+  /** The format's table-of-contents choice (WP-T). Absent means the model carries no TOC. */
+  contents?: ContentsSpec;
+}
+
+/** The resolved print typography every renderer agrees on, produced by `toPdfTypography` (WP-C3). */
+export interface DocumentTypography {
+  headingPt: number;
+  bodyPt: number;
+  headingWeight: number;
+  bodyWeight: number;
+  lineHeight: number;
+  /** The heading and body families, from the self-hosted set. Absent means the renderer default. */
+  headingFamily?: string;
+  bodyFamily?: string;
+}
+
+/** The table-of-contents the format asks for (WP-T): depth, title and whether it numbers entries. */
+export interface ContentsSpec {
+  title: string;
+  depth: number;
+  numbered: boolean;
+  /** Include the level-1 entries themselves (the section headings). */
+  includeSections: boolean;
+  /** Include the level-2 entries (a section's sub-headings). */
+  includeSubheadings: boolean;
 }
 
 export interface FooterContext {
@@ -89,6 +117,38 @@ export function footerLine(footer?: FooterContext): string {
   return `${footer.engagement} · exported ${footer.exportedAt} · ${footer.user} · ${footer.contentHash.slice(0, 12)}`;
 }
 
+/**
+ * Build the table-of-contents entries for a model (WP-T). Pure and deterministic: the entries are the
+ * model's own headings, in model order, so the contents can never disagree with the body. A depth of
+ * 1 lists only section headings; depth 2 also lists each section's own sub-headings.
+ */
+export function buildContents(model: DocumentModel): ContentsEntry[] {
+  const spec = model.contents;
+  if (!spec || spec.depth < 1) return [];
+  const out: ContentsEntry[] = [];
+  let n = 0;
+  for (const section of model.sections) {
+    if (spec.includeSections !== false) {
+      n += 1;
+      out.push({ level: 1, label: section.heading, number: spec.numbered ? String(n) : '' });
+    }
+    if (spec.depth >= 2 && spec.includeSubheadings) {
+      for (const block of section.blocks) {
+        if (block.kind !== 'heading' || !block.text) continue;
+        out.push({ level: 2, label: block.text, number: '' });
+      }
+    }
+  }
+  return out;
+}
+
+export interface ContentsEntry {
+  level: 1 | 2;
+  label: string;
+  /** The printed entry number when the format numbers its contents, otherwise an empty string. */
+  number: string;
+}
+
 /** Adapt the shared model to the PDF renderer's own model type. `timestamp` pins the PDF metadata
  *  (creation/modification date) so the bytes are reproducible; it is passed in, never read. The
  *  optional `typography` carries the report format's resolved sizes to the printer (WP-C3). */
@@ -97,7 +157,19 @@ export function toPdfModel(
   timestamp?: string,
   typography?: PdfDocumentModel['typography'],
 ): PdfDocumentModel {
-  const sections: PdfSection[] = model.sections.map((s) => {
+  const sections: PdfSection[] = [];
+  // WP-T: the contents page comes first, before the body, exactly as the format ordered it.
+  const contents = buildContents(model);
+  if (contents.length > 0) {
+    sections.push({
+      heading: model.contents?.title ?? 'Contents',
+      blocks: contents.map((e) => ({
+        kind: 'paragraph' as const,
+        text: `${e.number ? `${e.number}. ` : ''}${e.level === 2 ? '   ' : ''}${e.label}`,
+      })),
+    });
+  }
+  for (const s of model.sections) {
     const blocks: PdfTextBlock[] = [];
     for (const b of s.blocks) {
       if (b.kind === 'table' && b.table) {
@@ -108,8 +180,8 @@ export function toPdfModel(
         blocks.push({ kind: b.kind === 'heading' ? 'heading' : 'paragraph', text: b.text ?? '' });
       }
     }
-    return { heading: s.heading, blocks };
-  });
+    sections.push({ heading: s.heading, blocks });
+  }
   const line = footerLine(model.footer);
   if (line) sections.push({ heading: 'Document control', blocks: [{ kind: 'paragraph', text: line }] });
   return { title: model.title, subtitle: model.subtitle, sections, timestamp, typography };

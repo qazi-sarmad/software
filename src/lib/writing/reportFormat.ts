@@ -22,6 +22,7 @@
 import { canonicalise, hashCanonical, normaliseText } from './canonical';
 import { DEFAULT_FONT_BODY, DEFAULT_FONT_HEADING, isAllowedFontFamily, resolveWeight } from '../render/fonts';
 import type { Formality, Locale, RhetoricalRole, Tone, Voice } from './types';
+import type { ContentsSpec } from '../render/document';
 
 /** Every rhetorical role a plan section may carry. The editor offers exactly these. */
 export const RHETORICAL_ROLES: RhetoricalRole[] = [
@@ -80,6 +81,67 @@ export interface FormatLayout {
   fontWeightBody: number;
   /** Whether the footer line carrying the hashes is printed. */
   showFooter: boolean;
+  /** The table of contents (WP-T). A formal report carries one; a format decides its design. */
+  contents: ContentsStyle;
+}
+
+/**
+ * The design of the printed table of contents (WP-T). Every field is presentation only: the entries
+ * themselves are always the report's own headings, in the report's own order, so the contents page
+ * can never disagree with the body.
+ */
+export interface ContentsStyle {
+  /** Whether the format prints a contents page at all. */
+  enabled: boolean;
+  /** The contents page's own title. */
+  title: string;
+  /** 1 lists section headings only; 2 also lists each section's own sub-headings. */
+  depth: 1 | 2;
+  /** Print an entry number against each level-1 entry. */
+  numbered: boolean;
+  /** Dot leaders, so a printed page reads as a formal contents page. */
+  dotLeaders: boolean;
+  /** Indent level-2 entries under their section. */
+  indentSubheadings: boolean;
+  /** The contents title's size as a percentage of the report's heading size. */
+  titleScalePct: number;
+}
+
+export const CONTENTS_LIMITS = {
+  titleMaxLength: 60,
+  titleScalePct: { min: 80, max: 200 },
+} as const;
+
+export const DEFAULT_CONTENTS_STYLE: ContentsStyle = {
+  enabled: true,
+  title: 'Contents',
+  depth: 2,
+  numbered: true,
+  dotLeaders: true,
+  indentSubheadings: true,
+  titleScalePct: 120,
+};
+
+/** A heading a client may put on a block (WP-H). Presentation only: the label names the section, it
+ *  never states a fact, and it is validated against the same rules whether typed or chosen. */
+export const HEADING_LABEL_LIMITS = {
+  maxLength: 80,
+} as const;
+
+/**
+ * Whether a heading label is acceptable (WP-H). A label is presentation, so it must be plain words:
+ * non-empty, short, one line, and free of markup. Returns the reason when it is not, so the editor
+ * can say precisely what is wrong. Pure.
+ */
+export function validateHeadingLabel(label: string): { ok: boolean; reason?: string } {
+  const v = (label ?? '').trim();
+  if (v === '') return { ok: false, reason: 'a heading needs a label' };
+  if (v.length > HEADING_LABEL_LIMITS.maxLength) {
+    return { ok: false, reason: `a heading may be at most ${HEADING_LABEL_LIMITS.maxLength} characters` };
+  }
+  if (/[\r\n\t]/.test(v)) return { ok: false, reason: 'a heading must be a single line' };
+  if (/[<>{}]/.test(v)) return { ok: false, reason: 'a heading must be plain text, without markup' };
+  return { ok: true };
 }
 
 /** The bounds a format's typography may take. Outside these the page stops being readable, so the
@@ -224,6 +286,13 @@ export function validateFormat(format: ReportFormat, scope: FormatModelScope): F
     if (b.visible && normaliseText(b.label).trim() === '') {
       issues.push({ code: 'empty_label', field: `blocks[${i}].label`, message: `a visible block needs a label` });
     }
+    // WP-H: a client may set a block's heading. It must be plain, short, single-line text.
+    if (b.visible && normaliseText(b.label).trim() !== '') {
+      const label = validateHeadingLabel(b.label);
+      if (!label.ok) {
+        issues.push({ code: 'bad_heading_label', field: `blocks[${i}].label`, message: label.reason ?? 'the heading is not usable' });
+      }
+    }
   });
   if (format.defaultLocale !== 'en-GB' && format.defaultLocale !== 'en-US') {
     issues.push({ code: 'bad_locale', field: 'defaultLocale', message: `locale must be en-GB or en-US, not "${format.defaultLocale}"` });
@@ -272,6 +341,25 @@ export function validateFormat(format: ReportFormat, scope: FormatModelScope): F
   for (const key of ['fontHeading', 'fontBody'] as const) {
     if (typeof l[key] === 'string' && l[key] !== '' && !isAllowedFontFamily(l[key])) {
       issues.push({ code: 'font_not_available', field: `layout.${key}`, message: `"${l[key]}" is not one of the self-hosted fonts` });
+    }
+  }
+  // WP-T: the contents design. Its numbers are bounded, and its title obeys the same plain-text rule
+  // as a heading label, so a contents page can never carry markup or an unreadable size.
+  const c = l.contents;
+  if (c) {
+    const t = validateHeadingLabel(c.title);
+    if (!t.ok) {
+      issues.push({ code: 'bad_contents_title', field: 'layout.contents.title', message: t.reason ?? 'the contents title is not usable' });
+    }
+    if (c.depth !== 1 && c.depth !== 2) {
+      issues.push({ code: 'bad_contents_depth', field: 'layout.contents.depth', message: 'the contents depth must be 1 or 2' });
+    }
+    if (typeof c.titleScalePct === 'number'
+      && (c.titleScalePct < CONTENTS_LIMITS.titleScalePct.min || c.titleScalePct > CONTENTS_LIMITS.titleScalePct.max)) {
+      issues.push({ code: 'contents_title_out_of_range', field: 'layout.contents.titleScalePct', message: `the contents title size must be between ${CONTENTS_LIMITS.titleScalePct.min}% and ${CONTENTS_LIMITS.titleScalePct.max}%` });
+    }
+    if (typeof c.titleScalePct === 'number' && !Number.isInteger(c.titleScalePct)) {
+      issues.push({ code: 'non_integer_measure', field: 'layout.contents.titleScalePct', message: 'titleScalePct must be a whole number' });
     }
   }
   format.audiences.forEach((a, i) => {
@@ -347,7 +435,7 @@ export function defaultFormat(
   return {
     orgId, formatKey, version: 1, label: formatKey, status: 'draft', modelId,
     blocks: plan.map((p) => ({ key: p.key, label: p.label, role: p.role, visible: true, register: null })),
-    layout, defaultLocale, audiences: [],
+    layout: { ...layout, contents: { ...layout.contents } }, defaultLocale, audiences: [],
   };
 }
 
@@ -370,6 +458,7 @@ export const DEFAULT_FORMAT_LAYOUT: FormatLayout = {
   fontWeightHeading: 600,
   fontWeightBody: 400,
   showFooter: true,
+  contents: { ...DEFAULT_CONTENTS_STYLE },
 };
 
 /** A stable, canonical key for the report-format review/compare surfaces. */
@@ -418,6 +507,7 @@ function round1(n: number): number {
  */
 export function toPdfTypography(layout: FormatLayout): {
   headingPt: number; bodyPt: number; headingWeight: number; bodyWeight: number; lineHeight: number;
+  headingFamily: string; bodyFamily: string;
 } {
   const t = resolveTypography(layout);
   return {
@@ -426,6 +516,21 @@ export function toPdfTypography(layout: FormatLayout): {
     headingWeight: t.headingWeight,
     bodyWeight: t.bodyWeight,
     lineHeight: t.lineHeight,
+    headingFamily: layout.fontHeading,
+    bodyFamily: layout.fontBody,
+  };
+}
+
+/** The format's contents design in the shape the renderers consume (WP-T). Pure. */
+export function toContentsSpec(layout: FormatLayout): ContentsSpec | undefined {
+  const c = layout.contents;
+  if (!c || !c.enabled) return undefined;
+  return {
+    title: c.title,
+    depth: c.depth,
+    numbered: c.numbered,
+    includeSections: true,
+    includeSubheadings: c.depth >= 2,
   };
 }
 
@@ -435,7 +540,7 @@ export function toPdfTypography(layout: FormatLayout): {
  * ignored. Used by the report editor to hand the printed typography to the renderer (WP-C3).
  */
 export function layoutFromRow(row: Record<string, unknown> | null | undefined): FormatLayout {
-  const out: FormatLayout = { ...DEFAULT_FORMAT_LAYOUT };
+  const out: FormatLayout = { ...DEFAULT_FORMAT_LAYOUT, contents: { ...DEFAULT_CONTENTS_STYLE } };
   if (!row) return out;
   const str = (k: keyof FormatLayout, allowed?: readonly string[]) => {
     const v = row[k as string];
@@ -457,6 +562,22 @@ export function layoutFromRow(row: Record<string, unknown> | null | undefined): 
   if (typeof row.fontWeightHeading === 'number') out.fontWeightHeading = resolveWeight(out.fontHeading, row.fontWeightHeading);
   if (typeof row.fontWeightBody === 'number') out.fontWeightBody = resolveWeight(out.fontBody, row.fontWeightBody);
   if (typeof row.showFooter === 'boolean') out.showFooter = row.showFooter;
+  // WP-T: merge a stored contents design onto the defaults, field by field, so a format saved before
+  // a field existed still yields a complete, valid contents style.
+  const rawContents = row.contents;
+  if (rawContents && typeof rawContents === 'object') {
+    const c = rawContents as Record<string, unknown>;
+    const out2 = out.contents;
+    if (typeof c.enabled === 'boolean') out2.enabled = c.enabled;
+    if (typeof c.title === 'string' && c.title.trim() !== '') out2.title = c.title.slice(0, HEADING_LABEL_LIMITS.maxLength);
+    if (c.depth === 1 || c.depth === 2) out2.depth = c.depth;
+    if (typeof c.numbered === 'boolean') out2.numbered = c.numbered;
+    if (typeof c.dotLeaders === 'boolean') out2.dotLeaders = c.dotLeaders;
+    if (typeof c.indentSubheadings === 'boolean') out2.indentSubheadings = c.indentSubheadings;
+    if (typeof c.titleScalePct === 'number' && Number.isFinite(c.titleScalePct)) {
+      out2.titleScalePct = clamp(c.titleScalePct, CONTENTS_LIMITS.titleScalePct.min, CONTENTS_LIMITS.titleScalePct.max);
+    }
+  }
   return out;
 }
 

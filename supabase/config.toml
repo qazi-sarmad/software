@@ -29,7 +29,7 @@ enabled = true
 uri = "pg-functions://postgres/public/custom_access_token_hook"
 
 [auth.email]
-enable_signup = false
+enable_signup = true
 enable_confirmations = false
 
 [storage]

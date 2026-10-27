@@ -12,13 +12,13 @@ import { DEFAULT_BRANDING, type BrandingSpec } from '../render/branding';
 import { renderPdf } from '../render/pdf';
 import { renderDocx, documentPlainText } from '../render/docx';
 import { toPdfModel, type DocumentModel, type DocumentSection } from '../render/document';
-import { DEFAULT_FORMAT_LAYOUT, toPdfTypography, type FormatLayout } from './reportFormat';
+import { DEFAULT_FORMAT_LAYOUT, applyFormat, toContentsSpec, toPdfTypography, type AppliedFormat, type FormatLayout, type RegisterChoice, type ReportFormat } from './reportFormat';
 import { sha256Hex } from '../population';
 import { planReport, type PlannedReport } from './planner';
 import { composedText, type ComposedReport } from './compose';
 import { registerKey } from './registers';
 import { modelById } from './models';
-import type { Claim, ClaimGraph } from './types';
+import type { Claim, ClaimGraph, Register } from './types';
 
 export interface IssueInput {
   composed: ComposedReport;
@@ -31,6 +31,13 @@ export interface IssueInput {
   /** The report format's print layout (WP-C3). Its resolved typography decides the PDF's printed
    *  sizes and line height, so the issued PDF matches the live canvas. Absent means the defaults. */
   layout?: FormatLayout;
+  /**
+   * The report format itself (WP-C4). When present its order, its hidden sections, its heading labels
+   * and its contents design are applied to the issued report, so a published format genuinely changes
+   * the document — not only the preview. It changes presentation only: the graph root is unaffected
+   * and every claim is still present unless the format hides its section.
+   */
+  format?: ReportFormat;
 }
 
 export interface IssuedReport {
@@ -79,10 +86,16 @@ export function issueDocument(input: IssueInput): IssuedReport {
   });
 
   const renderedByClaim = new Map(input.composed.rendered.map((r) => [r.claimId, r]));
-  const sections: DocumentSection[] = planned.bySection
-    .filter((entry) => entry.claims.length > 0)
+  const byKey = new Map(planned.bySection.map((e) => [e.section.id, e]));
+  const applied = applyIssuedFormat(input.format, planned.bySection, model.defaultRegister);
+
+  // WP-C4: the format decides the document's section order and which sections are hidden. A hidden
+  // section is dropped from the file and recorded, exactly as the canvas shows it.
+  const sections: DocumentSection[] = applied.blocks
+    .map((b) => byKey.get(b.key))
+    .filter((e): e is NonNullable<typeof e> => Boolean(e) && e!.claims.length > 0)
     .map((entry) => ({
-      heading: entry.section.heading,
+      heading: applied.blocks.find((b) => b.key === entry.section.id)?.label || entry.section.heading,
       blocks: entry.claims.flatMap((claim) => blocksForClaim(claim, renderedByClaim.get(claim.id)?.text ?? '')),
     }));
 
@@ -100,10 +113,13 @@ export function issueDocument(input: IssueInput): IssuedReport {
     issuedAt: input.issuedAt,
   };
 
+  const layout = input.layout ?? input.format?.layout ?? DEFAULT_FORMAT_LAYOUT;
   const document: DocumentModel = {
     title: input.title,
     subtitle: `${model.title} · ${registerKey(input.graph.register, input.graph.locale)}`,
     sections: [...sections, { heading: 'Document control', blocks: [{ kind: 'paragraph', text: reportFooterLine(metadata) }] }],
+    typography: toPdfTypography(layout),
+    contents: toContentsSpec(layout),
   };
   return { document, metadata };
 }
@@ -113,6 +129,34 @@ function blocksForClaim(claim: Claim, text: string): DocumentSection['blocks'] {
     return [{ kind: 'paragraph', text: `[Auditor text, ${claim.auditorAuthor ?? 'unknown'}] ${text}` }];
   }
   return [{ kind: 'paragraph', text }];
+}
+
+/**
+ * Apply a published format to the planned sections (WP-C4). The format's order and its hidden set
+ * decide the document's sections and their order; a format's heading label replaces the model's
+ * heading. A section the format never mentions is kept in plan order, exactly as `applyFormat` does
+ * for the canvas, so a format never silently loses content. Presentation only: the claims themselves
+ * are unchanged, so the graph root is unaffected. Pure.
+ */
+export function applyIssuedFormat(
+  format: ReportFormat | undefined,
+  bySection: PlannedReport['bySection'],
+  modelDefault: Register,
+): AppliedFormat {
+  const plan = bySection.map((e) => ({ key: e.section.id, role: e.section.role, label: e.section.heading }));
+  const defaultRegister: RegisterChoice = {
+    formality: modelDefault.formality,
+    tone: modelDefault.tone,
+    voice: modelDefault.voice,
+  };
+  if (!format) {
+    return {
+      blocks: plan.map((p) => ({ key: p.key, label: p.label, role: p.role, register: defaultRegister })),
+      hidden: [],
+      untouched: plan.map((p) => p.key),
+    };
+  }
+  return applyFormat(format, plan, defaultRegister);
 }
 
 /** Render the issued report to PDF bytes. The issuance time pins the PDF's own metadata, so the

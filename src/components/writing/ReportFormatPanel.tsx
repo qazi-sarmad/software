@@ -16,7 +16,7 @@ import { canRedo, canUndo, initHistory, moveItem, pushHistory, redo, undo, type 
 import { REPORT_FONT_FAMILIES, REPORT_FONT_NAMES } from '../../lib/render/fonts';
 import { FormatCanvas } from './FormatCanvas';
 import {
-  DEFAULT_FORMAT_LAYOUT, REPORT_PALETTE, RHETORICAL_ROLES, TYPOGRAPHY_LIMITS, applyFormat,
+  CONTENTS_LIMITS, DEFAULT_FORMAT_LAYOUT, HEADING_LABEL_LIMITS, REPORT_PALETTE, RHETORICAL_ROLES, TYPOGRAPHY_LIMITS, applyFormat,
   defaultFormat, formatBodyHash, validateFormat,
   type BlockRole, type FormatBlock, type FormatLayout, type RegisterChoice, type ReportFormat,
 } from '../../lib/writing/reportFormat';
@@ -311,7 +311,13 @@ export const ReportFormatPanel: React.FC<{ prefix?: string }> = ({ prefix = 'wk-
         <div className="space-y-2" data-testid={`${prefix}-blocks`}>
           {draft.blocks.map((b, i) => (
             <div key={b.key} className="p-3 rounded-xl border border-hairline bg-surface grid grid-cols-2 gap-2 md:grid-cols-5 items-center" data-testid={`${prefix}-block-${b.key}`}>
-              <span className="text-apple-13 text-primary" data-testid={`${prefix}-block-${b.key}-key`}>{b.label || b.key}</span>
+              <span className="flex items-center gap-2">
+                <span className="text-apple-11 text-secondary" data-testid={`${prefix}-block-${b.key}-key`}>{b.key}</span>
+                <input className="flex-1 min-w-0 px-2 py-1 rounded-lg bg-surface-hover text-apple-13 text-primary"
+                  aria-label={`Heading for ${b.key}`} data-testid={`${prefix}-block-${b.key}-label`}
+                  value={b.label} maxLength={HEADING_LABEL_LIMITS.maxLength}
+                  onChange={(e) => setBlock(i, { label: e.target.value })} />
+              </span>
               <Select ariaLabel={`Role for ${b.key}`} value={b.role} testId={`${prefix}-block-${b.key}-role`}
                 options={ROLE_OPTIONS} onChange={(v) => setBlock(i, { role: v as BlockRole })} />
               <Select ariaLabel={`Register for ${b.key}`} value={b.register ? `${b.register.formality}-${b.register.tone}-${b.register.voice}` : 'default'}
@@ -428,6 +434,55 @@ export const ReportFormatPanel: React.FC<{ prefix?: string }> = ({ prefix = 'wk-
                 onChange={(e) => mutate({ layout: { ...draft.layout, showFooter: e.target.checked } })} />
               Print the footer line with the hashes
             </label>
+          </div>
+
+          <div className="p-4 rounded-2xl border border-hairline bg-surface space-y-3" data-testid={`${prefix}-contents`}>
+            <div className="text-apple-12 text-primary">Table of contents</div>
+            <div className="text-apple-11 text-secondary" data-testid={`${prefix}-contents-note`}>
+              The entries are always the report's own headings, in the report's own order, so the contents page can never disagree with the body.
+            </div>
+            <label className="inline-flex items-center gap-2 text-apple-12 text-secondary">
+              <input type="checkbox" checked={draft.layout.contents.enabled} data-testid={`${prefix}-contents-enabled`}
+                onChange={(e) => mutate({ layout: { ...draft.layout, contents: { ...draft.layout.contents, enabled: e.target.checked } } })} />
+              Print a contents page
+            </label>
+            <label className="space-y-1 text-apple-11 text-secondary">
+              Title
+              <input className="w-full px-2 py-1 rounded-lg bg-surface-hover text-apple-13 text-primary"
+                maxLength={HEADING_LABEL_LIMITS.maxLength}
+                data-testid={`${prefix}-contents-title`} value={draft.layout.contents.title}
+                onChange={(e) => mutate({ layout: { ...draft.layout, contents: { ...draft.layout.contents, title: e.target.value } } })} />
+            </label>
+            <label className="space-y-1 text-apple-11 text-secondary">
+              Depth
+              <Select ariaLabel="Contents depth" value={String(draft.layout.contents.depth)} testId={`${prefix}-contents-depth`}
+                options={[{ value: '1', label: 'Sections only' }, { value: '2', label: 'Sections and sub-headings' }]}
+                onChange={(v) => mutate({ layout: { ...draft.layout, contents: { ...draft.layout.contents, depth: Number(v) as 1 | 2 } } })} />
+            </label>
+            <label className="space-y-1 text-apple-11 text-secondary">
+              Title size (%)
+              <input type="number" min={CONTENTS_LIMITS.titleScalePct.min} max={CONTENTS_LIMITS.titleScalePct.max}
+                className="w-full px-2 py-1 rounded-lg bg-surface-hover text-apple-13 text-primary"
+                data-testid={`${prefix}-contents-title-scale`} value={draft.layout.contents.titleScalePct}
+                onChange={(e) => mutate({ layout: { ...draft.layout, contents: { ...draft.layout.contents, titleScalePct: Number(e.target.value) } } })} />
+            </label>
+            <div className="flex items-center gap-4 flex-wrap">
+              <label className="inline-flex items-center gap-2 text-apple-12 text-secondary">
+                <input type="checkbox" checked={draft.layout.contents.numbered} data-testid={`${prefix}-contents-numbered`}
+                  onChange={(e) => mutate({ layout: { ...draft.layout, contents: { ...draft.layout.contents, numbered: e.target.checked } } })} />
+                Number the entries
+              </label>
+              <label className="inline-flex items-center gap-2 text-apple-12 text-secondary">
+                <input type="checkbox" checked={draft.layout.contents.dotLeaders} data-testid={`${prefix}-contents-dot-leaders`}
+                  onChange={(e) => mutate({ layout: { ...draft.layout, contents: { ...draft.layout.contents, dotLeaders: e.target.checked } } })} />
+                Dot leaders
+              </label>
+              <label className="inline-flex items-center gap-2 text-apple-12 text-secondary">
+                <input type="checkbox" checked={draft.layout.contents.indentSubheadings} data-testid={`${prefix}-contents-indent`}
+                  onChange={(e) => mutate({ layout: { ...draft.layout, contents: { ...draft.layout.contents, indentSubheadings: e.target.checked } } })} />
+                Indent sub-headings
+              </label>
+            </div>
           </div>
 
           <div className="p-4 rounded-2xl border border-hairline bg-surface space-y-3" data-testid={`${prefix}-colours`}>
