@@ -124,7 +124,7 @@ Also on `main`: `docs/ACP-FEATURES.md` is tracked but **0 bytes**. `docs/REMAINI
 | `feature/writing-engine` | **26** | 4 | unmerged, no PR | Deterministic writing engine, W1–W15. |
 | `docs/continuous-monitoring-in-scope` | 1 | 4 | **PR #14 OPEN** | docs only. |
 | `fix/tutorial-recorder-fixtures` | 4 | 163 | **PR #12 OPEN** | Superseded — `main` already contains its fixes (`recorderFixtures.test.ts`, registry re-seed in `global-setup.ts`). |
-| `feature/board-ai-control-plane` | 0 | 155 | **MERGED (PR #13)** | Local copy is 1 commit behind (`6f784ea` vs `f8d4cd3`). |
+| `feature/board-ai-control-plane` | 0 | 153 | **MERGED (PR #13)** | Local copy is 1 commit behind (`6f784ea` vs `f8d4cd3`). |
 | `merge/coderabbit-pilot` | 8 | 340 | unmerged, Oct 12 | ancient |
 | `feature/cap-due-date-change` | 2 | 374 | unmerged, Oct 5 | ancient |
 | `coderabbit/application-qa-audit/56ea96a0` | 1 | 344 | **PR #4 CLOSED** | rejected |
