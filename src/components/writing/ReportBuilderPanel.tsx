@@ -16,10 +16,12 @@ import { applyApprovalGate, checkStaleness, type Observation } from '../../lib/w
 import { provenanceTrace, counterfactualRegister, verifyTrace } from '../../lib/writing/explain';
 import { lineagePanel } from '../../lib/writing/lineagePanel';
 import { FIGURE_FUNCTIONS } from '../../lib/writing/figures';
+import { FigureStudio } from './FigureStudio';
+import type { FigureSpec } from '../../lib/render/figure';
 import type { ClaimGraph, Formality, Locale, Register, Tone, Voice } from '../../lib/writing/types';
 
 type LoadState = 'loading' | 'ready' | 'error';
-type Pane = 'claims' | 'coverage' | 'contradictions' | 'excluded' | 'compare';
+type Pane = 'claims' | 'coverage' | 'contradictions' | 'excluded' | 'compare' | 'figures';
 
 const label = (s: string) => s.replace(/_/g, ' ').replace(/^\w/, (m) => m.toUpperCase());
 
@@ -50,6 +52,7 @@ export const ReportBuilderPanel: React.FC<{ prefix?: string }> = ({ prefix = 'wk
   const [counterfactualText, setCounterfactualText] = useState<Record<string, string>>({});
   const [traceOk, setTraceOk] = useState<Record<string, boolean>>({});
   const [freezeResult, setFreezeResult] = useState<string | null>(null);
+  const [addedFigures, setAddedFigures] = useState<FigureSpec[]>([]);
 
   const register: Register = useMemo(() => ({ formality, tone, voice }), [formality, tone, voice]);
 
@@ -203,7 +206,7 @@ export const ReportBuilderPanel: React.FC<{ prefix?: string }> = ({ prefix = 'wk
       </div>
 
       <div className="flex items-center gap-1 flex-wrap" role="tablist" aria-label="Report panes">
-        {([['claims', 'Claims'], ['coverage', 'Coverage'], ['contradictions', 'Contradictions'], ['excluded', 'Excluded'], ['compare', 'Compare']] as const).map(([id, lbl]) => (
+        {([['claims', 'Claims'], ['coverage', 'Coverage'], ['contradictions', 'Contradictions'], ['excluded', 'Excluded'], ['compare', 'Compare'], ['figures', 'Figures']] as const).map(([id, lbl]) => (
           <button key={id} type="button" role="tab" aria-selected={pane === id} data-testid={`${prefix}-pane-${id}`}
             onClick={() => setPane(id)}
             className={`px-3 py-1.5 rounded-lg text-apple-12 font-semibold border ${pane === id ? 'bg-surface-hover border-accent text-primary' : 'bg-surface border-hairline text-secondary'}`}>
@@ -308,6 +311,21 @@ export const ReportBuilderPanel: React.FC<{ prefix?: string }> = ({ prefix = 'wk
           <div className="text-apple-12 text-secondary" data-testid={`${prefix}-compare-registers`}>
             {registerRows.length} register rows
           </div>
+        </div>
+      )}
+
+      {pane === 'figures' && (
+        <FigureStudio prefix={prefix} onPick={(fig) => setAddedFigures((f) => [...f, fig])} />
+      )}
+
+      {addedFigures.length > 0 && (
+        <div className="p-4 rounded-2xl bg-surface border border-hairline space-y-2" data-testid={`${prefix}-figures-added`}>
+          <div className="text-apple-12 text-primary">Figures in this report ({addedFigures.length})</div>
+          {addedFigures.map((f, i) => (
+            <div key={`${f.title}-${i}`} className="text-apple-11 text-secondary" data-testid={`${prefix}-figure-added-${i}`}>
+              {f.title} · {f.expression} · [{f.minX}, {f.maxX}]
+            </div>
+          ))}
         </div>
       )}
 

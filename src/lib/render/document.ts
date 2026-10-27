@@ -9,13 +9,35 @@
  * The model is derived from the report's blocks (report_blocks), which are the product's own
  * structured content; nothing here reaches the network or the database.
  */
-import type { PdfDocumentModel, PdfSection, PdfTextBlock } from './pdf';
+import type { PdfBlock, PdfDocumentModel, PdfSection, PdfTextBlock } from './pdf';
+import { figurePng, FIGURE_SIZE_PT } from './figure';
 
 export interface DocumentBlock {
-  kind: 'heading' | 'paragraph' | 'table';
+  kind: 'heading' | 'paragraph' | 'table' | 'figure';
   /** For a paragraph/heading: the text. For a table: the section label used as its caption. */
   text?: string;
   table?: { headers: string[]; rows: string[][] };
+  /** WP-G: a deterministic formula graphic. The renderers sample it through the same pure engine, so
+   *  the PNG, the SVG and the printed page are one figure, not three. */
+  figure?: FormulaFigure;
+}
+
+/**
+ * The formula graphic a report block may carry (WP-G). The expression is the canonical thing; the
+ * sampled points are derived. The grammar is restricted and pure (no `eval`), so a client can express
+ * a curve without the report ever running client-supplied code, and the same spec always draws the
+ * same figure.
+ */
+export interface FormulaFigure {
+  expression: string;
+  minX: number;
+  maxX: number;
+  /** The caption printed under the figure. */
+  label: string;
+  /** The line colour, as a hex value (the caller resolves it from the design tokens). */
+  colour: string;
+  /** The figure title, printed above it. */
+  title: string;
 }
 
 export interface DocumentSection {
@@ -90,6 +112,20 @@ export function documentFromReportBlocks(
       const headers = toStringArray(b.content.headers);
       const rows = toRows(b.content.rows);
       list.push({ kind: 'table', text: String(b.content.caption ?? b.sectionType), table: { headers, rows } });
+    } else if (b.blockType === 'image' && b.content.figure) {
+      const f = b.content.figure as Record<string, unknown>;
+      list.push({
+        kind: 'figure',
+        text: String(f.title ?? 'Figure'),
+        figure: {
+          expression: String(f.expression ?? ''),
+          minX: Number(f.minX ?? 0),
+          maxX: Number(f.maxX ?? 1),
+          label: String(f.label ?? 'value'),
+          colour: String(f.colour ?? '#2f6f6a'),
+          title: String(f.title ?? 'Figure'),
+        },
+      });
     } else {
       const text = String(b.content.text ?? b.content.body ?? '');
       list.push({ kind: b.blockType === 'text' && Boolean(b.content.heading) ? 'heading' : 'paragraph', text });
@@ -170,12 +206,26 @@ export function toPdfModel(
     });
   }
   for (const s of model.sections) {
-    const blocks: PdfTextBlock[] = [];
+    const blocks: PdfBlock[] = [];
     for (const b of s.blocks) {
       if (b.kind === 'table' && b.table) {
         blocks.push({ kind: 'heading', text: b.text ?? '' });
         blocks.push({ kind: 'paragraph', text: b.table.headers.join('  |  ') });
         for (const row of b.table.rows) blocks.push({ kind: 'paragraph', text: row.join('  |  ') });
+      } else if (b.kind === 'figure' && b.figure) {
+        // WP-G: rasterise the figure through the one pure engine, so the printed page is the figure
+        // the canvas showed. A figure that cannot be rendered is skipped, never faked.
+        const png = figurePng(b.figure);
+        if (png) {
+          blocks.push({
+            kind: 'figure',
+            title: b.figure.title,
+            caption: b.figure.label,
+            png,
+            widthPt: FIGURE_SIZE_PT.widthPt,
+            heightPt: FIGURE_SIZE_PT.heightPt,
+          });
+        }
       } else {
         blocks.push({ kind: b.kind === 'heading' ? 'heading' : 'paragraph', text: b.text ?? '' });
       }

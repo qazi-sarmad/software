@@ -1048,7 +1048,9 @@ only the render hash moves (W1, W2.2, W4, W5, W6, W8, W12).
   (`observations.ts`), `provenanceTrace`, `counterfactualRegister`, `verifyTrace` (`explain.ts`),
   `lineagePanel` (`lineagePanel.ts`), `FIGURE_FUNCTIONS` (`figures.ts`), `REPORT_MODELS`,
   `modelById` (`models.ts`), `FORMALITY_DEFINITIONS`, `TONE_DEFINITIONS`, `VOICES`,
-  `DEFAULT_REGISTER` (`registers.ts`), and the frozen fixtures (`fixtures.ts`).
+  `DEFAULT_REGISTER` (`registers.ts`), the frozen fixtures (`fixtures.ts`), and the figure bridge
+  (`src/lib/render/figure.ts`: `figureChart`, `figureSvg`, `figurePng`, `figureError`) that draws a
+  formula figure with the one pure engine used by the PDF and the DOCX.
 - **Testids:** `audit-file-builder`, `audit-file-view-builder`, `wk-report-builder-panel`,
   `wk-report-builder-loading`, `wk-report-builder-error`, `wk-report-builder-error-message`,
   `wk-report-builder-retry`, `wk-report-builder-denied`, `wk-report-builder-denied-error`,
@@ -1057,7 +1059,7 @@ only the render hash moves (W1, W2.2, W4, W5, W6, W8, W12).
   `wk-report-builder-hashes`, `wk-report-builder-graph-root`, `wk-report-builder-render-hash`,
   `wk-report-builder-model-name`, `wk-report-builder-pane-claims`, `wk-report-builder-pane-coverage`,
   `wk-report-builder-pane-contradictions`, `wk-report-builder-pane-excluded`,
-  `wk-report-builder-pane-compare`, `wk-report-builder-claims`, `wk-report-builder-claim-<id>`,
+  `wk-report-builder-pane-compare`, `wk-report-builder-pane-figures`, `wk-report-builder-claims`, `wk-report-builder-claim-<id>`,
   `wk-report-builder-claim-<id>-text`, `wk-report-builder-claim-<id>-phrase`,
   `wk-report-builder-claim-<id>-provenance`, `wk-report-builder-claim-<id>-lineage`,
   `wk-report-builder-claim-<id>-provenance-panel`, `wk-report-builder-claim-<id>-trace-ok`,
@@ -1071,6 +1073,16 @@ only the render hash moves (W1, W2.2, W4, W5, W6, W8, W12).
   `wk-report-builder-excluded-empty`, `wk-report-builder-excluded-<observationId>`,
   `wk-report-builder-compare`, `wk-report-builder-compare-summary`,
   `wk-report-builder-compare-changed-<claimId>`, `wk-report-builder-compare-registers`,
+  `wk-report-builder-figure-studio`, `wk-report-builder-figure-note`,
+  `wk-report-builder-figure-presets`, `wk-report-builder-figure-preset-<name>`,
+  `wk-report-builder-figure-expression`, `wk-report-builder-figure-help`,
+  `wk-report-builder-figure-min-x`, `wk-report-builder-figure-max-x`,
+  `wk-report-builder-figure-title`, `wk-report-builder-figure-label`,
+  `wk-report-builder-figure-colours`, `wk-report-builder-figure-colour-<name>`,
+  `wk-report-builder-figure-preview`, `wk-report-builder-figure-preview-svg`,
+  `wk-report-builder-figure-error`, `wk-report-builder-figure-add`,
+  `wk-report-builder-figure-added`, `wk-report-builder-figure-limits`,
+  `wk-report-builder-figures-added`, `wk-report-builder-figure-added-<i>`,
   `wk-report-builder-freeze`, `wk-report-builder-freeze-run`, `wk-report-builder-freeze-result`.
 - **States:** loading ("Composing the report…"); an inline error with a retry; a denied state for a
   caller without the right; ready, with the five panes and the freeze panel. The coverage pane names

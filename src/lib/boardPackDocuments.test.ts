@@ -52,7 +52,7 @@ describe('buildBoardPackPdf', () => {
     const model = buildBoardPackPdf(input);
     expect(model.title).toBe('Acme FY26 pack');
     expect(model.sections[0].heading).toBe('Cover and assurance statement');
-    expect(model.sections[0].blocks.map((b) => b.text).join(' ')).toContain(input.dataHash);
+    expect(model.sections[0].blocks.map((b) => ('text' in b ? b.text : '')).join(' ')).toContain(input.dataHash);
   });
 
   it('turns every figure that has a ref into a hyperlink to its record', () => {
@@ -75,7 +75,7 @@ describe('buildBoardPackPdf', () => {
     const model = buildBoardPackPdf(input);
     const last = model.sections[model.sections.length - 1];
     expect(last.heading).toBe('Sources');
-    expect(last.blocks.map((b) => b.text).join(' ')).toContain('2 workpapers not yet sealed are not included.');
+    expect(last.blocks.map((b) => ('text' in b ? b.text : '')).join(' ')).toContain('2 workpapers not yet sealed are not included.');
   });
 
   it('is deterministic', () => {

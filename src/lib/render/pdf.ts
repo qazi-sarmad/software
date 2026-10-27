@@ -15,6 +15,20 @@ export interface PdfTextBlock {
   text: string;
 }
 
+/** WP-G: a figure the PDF renderer draws as an embedded PNG. The PNG is produced by the same pure
+ *  chart renderer the SVG and the DOCX use, so the printed figure is the figure the canvas showed. */
+export interface PdfFigureBlock {
+  kind: 'figure';
+  title: string;
+  caption: string;
+  /** PNG bytes for the figure, ready to embed. */
+  png: Uint8Array;
+  widthPt: number;
+  heightPt: number;
+}
+
+export type PdfBlock = PdfTextBlock | PdfFigureBlock;
+
 export interface PdfLink {
   label: string;
   url: string;
@@ -22,7 +36,7 @@ export interface PdfLink {
 
 export interface PdfSection {
   heading: string;
-  blocks: PdfTextBlock[];
+  blocks: PdfBlock[];
   links?: PdfLink[];
 }
 
@@ -229,6 +243,28 @@ export async function renderPdf(spec: BrandingSpec, model: PdfDocumentModel): Pr
     }
     cursorY -= 4;
     for (const block of section.blocks) {
+      if (block.kind === 'figure') {
+        // WP-G: draw the figure's own PNG, then its caption, exactly as the canvas showed it.
+        const img = await pdf.embedPng(block.png);
+        ensureSpace(block.heightPt + 26);
+        cursorY -= 4;
+        for (const line of wrapText(block.title, heading, blockHeadingPt - 1, contentWidth)) {
+          ensureSpace(blockHeadingPt);
+          page.drawText(line, { x: marginLeft, y: cursorY - blockHeadingPt, size: blockHeadingPt - 1, font: heading, color: toRgb('#000000') });
+          cursorY -= leadingFor(blockHeadingPt - 1);
+        }
+        page.drawImage(img, { x: marginLeft, y: cursorY - block.heightPt, width: block.widthPt, height: block.heightPt });
+        cursorY -= block.heightPt + 4;
+        if (block.caption) {
+          for (const line of wrapText(block.caption, body, 9, contentWidth)) {
+            ensureSpace(12);
+            page.drawText(line, { x: marginLeft, y: cursorY - 9, size: 9, font: body, color: toRgb('#444444') });
+            cursorY -= 12;
+          }
+        }
+        cursorY -= 4;
+        continue;
+      }
       const size = block.kind === 'heading' ? blockHeadingPt : bodyPt;
       const font = block.kind === 'heading' ? heading : body;
       const lineHeight = leadingFor(size);

@@ -6,10 +6,11 @@
  * apart from nothing at all — the package writes no timestamp unless one is supplied.
  */
 import {
-  AlignmentType, Document, HeadingLevel, Packer, Paragraph, Table, TableCell, TableRow, TextRun,
+  AlignmentType, Document, HeadingLevel, ImageRun, Packer, Paragraph, Table, TableCell, TableRow, TextRun,
 } from 'docx';
 import JSZip from 'jszip';
 import { buildContents, footerLine, type DocumentModel, type DocumentTypography } from './document';
+import { figurePng } from './figure';
 
 const MONO_PLACEHOLDER = {
   font: 'Calibri',
@@ -109,6 +110,17 @@ export async function renderDocx(model: DocumentModel): Promise<Uint8Array> {
       if (block.kind === 'table' && block.table) {
         children.push(paragraph(block.text ?? '', s));
         children.push(tableFrom(block.table.headers, block.table.rows, s));
+      } else if (block.kind === 'figure' && block.figure) {
+        // WP-G: the same pure figure the PDF and the canvas show, embedded as a PNG run.
+        const png = figurePng(block.figure);
+        if (png) {
+          children.push(heading(block.figure.title, HeadingLevel.HEADING_2, s));
+          children.push(new Paragraph({
+            alignment: AlignmentType.CENTER,
+            children: [new ImageRun({ type: 'png', data: png, transformation: { width: 468, height: 216 } })],
+          }));
+          if (block.figure.label) children.push(paragraph(block.figure.label, s));
+        }
       } else if (block.kind === 'heading') {
         children.push(heading(block.text ?? '', HeadingLevel.HEADING_2, s));
       } else {
