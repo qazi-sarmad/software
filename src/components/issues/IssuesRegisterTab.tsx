@@ -4,6 +4,8 @@ import { useFilterStore } from '../../context/FilterStore';
 import { useApp } from '../../context/AppContext';
 import { HoverPreview } from '../common/HoverPreview';
 import { CapRegisterPanel } from '../audit/CapRegisterPanel';
+import { IssueHeatMatrix } from './IssueHeatMatrix';
+import { getOrgLocalToday } from '../../lib/orgDate';
 import { PatternsPanel } from './PatternsPanel';
 import { AuditIssue, Severity } from '../../types';
 import {
@@ -146,6 +148,13 @@ export const IssuesRegisterTab: React.FC = () => {
           })}
         </div>
       </div>
+
+      {/* WP-V slice 1: a severity × aging heat matrix beside the register table. */}
+      <IssueHeatMatrix
+        issues={filteredIssues}
+        asOf={getOrgLocalToday()}
+        onPickSeverity={(sev) => filter.setSeverity(sev)}
+      />
 
       {/* Issues Table */}
       <div className="bg-surface border border-hairline rounded-2xl shadow-apple overflow-hidden">
