@@ -140,6 +140,10 @@ declare
 begin
   perform provio_test.reset_data();
 
+  -- The platform MFA switch (0100) is global state a test can arm; a mid-test failure must not leave
+  -- it armed for the tests that follow, so the seed clears it. This is why 106 can arm it safely.
+  update platform_security_settings set require_platform_mfa = false where id;
+
   insert into orgs (id, name, is_demo) values
     ('a0000000-0000-0000-0000-000000000001', 'Org A', false),
     ('b0000000-0000-0000-0000-000000000001', 'Org B', false);

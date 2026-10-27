@@ -542,9 +542,7 @@ returns table (
 )
 language plpgsql stable security definer set search_path = public as $$
 begin
-  if not public.is_platform_admin() then
-    raise exception 'not allowed: platform administrator only' using errcode = 'P0001';
-  end if;
+  perform public.require_platform_admin();
   return query select d.pitr_enabled, d.backup_frequency, d.retention_days, d.restore_test_interval_days,
     d.last_restore_test_at,
     case when d.last_restore_test_at is null then null

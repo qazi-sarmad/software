@@ -150,9 +150,7 @@ create or replace function public.platform_signing_keys_due(p_now timestamptz)
 returns table (key_id text, scope text, org_id uuid, algorithm text, key_version int, rotate_after timestamptz)
 language plpgsql stable security definer set search_path = public as $$
 begin
-  if not public.is_platform_admin() then
-    raise exception 'not allowed: platform administrator only' using errcode = 'P0001';
-  end if;
+  perform public.require_platform_admin();
   if p_now is null then
     raise exception 'the check time is required' using errcode = 'P0001';
   end if;
