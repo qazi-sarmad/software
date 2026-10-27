@@ -39,6 +39,18 @@ export interface PdfDocumentModel {
   headingFontBytes?: Uint8Array;
   bodyFontBytes?: Uint8Array;
   /**
+   * The resolved report-format typography (WP-C3). When present the PDF prints the same heading and
+   * body sizes, weights and line height the live canvas shows; when absent the renderer keeps its
+   * original fixed sizes, so an old model renders exactly as before.
+   */
+  typography?: {
+    headingPt: number;
+    bodyPt: number;
+    headingWeight: number;
+    bodyWeight: number;
+    lineHeight: number;
+  };
+  /**
    * The fixed timestamp for the PDF's own metadata, passed in as an argument.
    *
    * pdf-lib's constructor calls `updateInfoDict()`, which writes `new Date()` into CreationDate and
@@ -139,6 +151,16 @@ export async function renderPdf(spec: BrandingSpec, model: PdfDocumentModel): Pr
     body = await pdf.embedFont(StandardFonts.Helvetica);
   }
 
+  // WP-C3: the report-format typography, when the caller supplies it, decides the printed sizes and
+  // line height, so the frozen PDF matches the live canvas. Without it the renderer keeps the sizes
+  // it has always used, so a model built before this change still renders identically.
+  const typo = model.typography;
+  const sectionHeadingPt = typo ? typo.headingPt : 15;
+  const blockHeadingPt = typo ? typo.headingPt : 12;
+  const bodyPt = typo ? typo.bodyPt : 10.5;
+  /** The baseline-to-baseline distance for a run at `size`. */
+  const leadingFor = (size: number) => (typo ? size * typo.lineHeight : size + 5);
+
   const dims = pageDimensions(spec.pageSize);
   const marginTop = mmToPt(spec.marginTopMm);
   const marginRight = mmToPt(spec.marginRightMm);
@@ -200,16 +222,16 @@ export async function renderPdf(spec: BrandingSpec, model: PdfDocumentModel): Pr
   for (const section of model.sections) {
     ensureSpace(40);
     cursorY -= 8;
-    for (const line of wrapText(section.heading, heading, 15, contentWidth)) {
-      ensureSpace(20);
-      page.drawText(line, { x: marginLeft, y: cursorY - 15, size: 15, font: heading, color: toRgb('#000000') });
-      cursorY -= 20;
+    for (const line of wrapText(section.heading, heading, sectionHeadingPt, contentWidth)) {
+      ensureSpace(sectionHeadingPt);
+      page.drawText(line, { x: marginLeft, y: cursorY - sectionHeadingPt, size: sectionHeadingPt, font: heading, color: toRgb('#000000') });
+      cursorY -= leadingFor(sectionHeadingPt);
     }
     cursorY -= 4;
     for (const block of section.blocks) {
-      const size = block.kind === 'heading' ? 12 : 10.5;
+      const size = block.kind === 'heading' ? blockHeadingPt : bodyPt;
       const font = block.kind === 'heading' ? heading : body;
-      const lineHeight = size + 5;
+      const lineHeight = leadingFor(size);
       for (const line of wrapText(block.text, font, size, contentWidth)) {
         ensureSpace(lineHeight);
         page.drawText(line, { x: marginLeft, y: cursorY - size, size, font, color: toRgb('#222222') });

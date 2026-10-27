@@ -90,8 +90,13 @@ export function footerLine(footer?: FooterContext): string {
 }
 
 /** Adapt the shared model to the PDF renderer's own model type. `timestamp` pins the PDF metadata
- *  (creation/modification date) so the bytes are reproducible; it is passed in, never read. */
-export function toPdfModel(model: DocumentModel, timestamp?: string): PdfDocumentModel {
+ *  (creation/modification date) so the bytes are reproducible; it is passed in, never read. The
+ *  optional `typography` carries the report format's resolved sizes to the printer (WP-C3). */
+export function toPdfModel(
+  model: DocumentModel,
+  timestamp?: string,
+  typography?: PdfDocumentModel['typography'],
+): PdfDocumentModel {
   const sections: PdfSection[] = model.sections.map((s) => {
     const blocks: PdfTextBlock[] = [];
     for (const b of s.blocks) {
@@ -107,5 +112,5 @@ export function toPdfModel(model: DocumentModel, timestamp?: string): PdfDocumen
   });
   const line = footerLine(model.footer);
   if (line) sections.push({ heading: 'Document control', blocks: [{ kind: 'paragraph', text: line }] });
-  return { title: model.title, subtitle: model.subtitle, sections, timestamp };
+  return { title: model.title, subtitle: model.subtitle, sections, timestamp, typography };
 }

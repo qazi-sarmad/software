@@ -14,6 +14,7 @@ import { renderPdf } from '../lib/render/pdf';
 import { renderDocx } from '../lib/render/docx';
 import { documentFromReportBlocks, toPdfModel, footerLine, type DocumentModel, type ReportBlockInput } from '../lib/render/document';
 import { DEFAULT_BRANDING, type BrandingSpec } from '../lib/render/branding';
+import { DEFAULT_FORMAT_LAYOUT, toPdfTypography, type FormatLayout } from '../lib/writing/reportFormat';
 import { sha256Hex } from '../lib/population';
 
 export const REPORT_BUCKET = 'reports';
@@ -28,6 +29,9 @@ export interface ReportFileInput {
   userLabel: string;
   frozenAt?: string | null;
   branding?: BrandingSpec;
+  /** The report format's print layout (WP-C3). Its resolved typography decides the PDF's printed
+   *  sizes and line height, so the frozen PDF matches the live canvas. Absent means the defaults. */
+  layout?: FormatLayout;
 }
 
 export interface StoredReportFiles {
@@ -69,7 +73,7 @@ export async function renderAndStoreReportFiles(input: ReportFileInput): Promise
   const docxHash = await hashOf(docxBytes);
 
   const pdfModel = buildReportModel(input, docxHash, frozenLabel);
-  const pdfBytes = await renderPdf(spec, toPdfModel(pdfModel));
+  const pdfBytes = await renderPdf(spec, toPdfModel(pdfModel, undefined, toPdfTypography(input.layout ?? DEFAULT_FORMAT_LAYOUT)));
   const pdfHash = await hashOf(pdfBytes);
 
   const base = `${input.orgId}/reports/${input.reportVersionId}`;

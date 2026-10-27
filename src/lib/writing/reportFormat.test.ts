@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_FORMAT_LAYOUT, REPORT_PALETTE, TYPOGRAPHY_LIMITS, applyFormat, defaultFormat, formatBodyHash,
-  formatCanonicalKey, isValidColour, resolveTypography, resolvedRegisters, validateFormat,
+  formatCanonicalKey, isValidColour, layoutFromRow, resolveTypography, resolvedRegisters, toPdfTypography, validateFormat,
   type FormatLayout, type FormatModelScope, type ReportFormat,
 } from './reportFormat';
 
@@ -249,5 +249,42 @@ describe('reportFormat: typography and colour model (WP-C1)', () => {
     const b = makeFormat(); b.layout = { ...DEFAULT_FORMAT_LAYOUT, fontSizePt: 12 };
     const body = (f: ReportFormat) => ({ ...f, audiences: f.audiences });
     expect(await formatBodyHash(body(a))).not.toBe(await formatBodyHash(body(b)));
+  });
+});
+
+describe('reportFormat: the printed typography the renderer consumes (WP-C3)', () => {
+  it('adapts a layout to the PDF typography shape the canvas agrees with', () => {
+    const layout: FormatLayout = { ...DEFAULT_FORMAT_LAYOUT, fontSizePt: 12, headingScalePct: 150, lineHeightPct: 180 };
+    const typo = toPdfTypography(layout);
+    const resolved = resolveTypography(layout);
+    expect(typo.bodyPt).toBe(resolved.bodyPt);
+    expect(typo.headingPt).toBe(resolved.headingPt);
+    expect(typo.lineHeight).toBeCloseTo(1.8, 5);
+    expect(typo.bodyWeight).toBe(resolved.bodyWeight);
+    expect(typo.headingWeight).toBe(resolved.headingWeight);
+  });
+
+  it('clamps an out-of-range layout, so the printed page never leaves the readable band', () => {
+    const typo = toPdfTypography({ ...DEFAULT_FORMAT_LAYOUT, fontSizePt: 99, lineHeightPct: 5 });
+    expect(typo.bodyPt).toBe(TYPOGRAPHY_LIMITS.fontSizePt.max);
+    expect(typo.lineHeight).toBeCloseTo(TYPOGRAPHY_LIMITS.lineHeightPct.min / 100, 5);
+  });
+
+  it('merges a stored layout row onto the defaults, ignoring unknown and invalid keys', () => {
+    const layout = layoutFromRow({ fontSizePt: 13, pageSize: 'Letter', bogus: 'x', colourPrimary: '' });
+    expect(layout.fontSizePt).toBe(13);
+    expect(layout.pageSize).toBe('Letter');
+    expect(layout.colourPrimary).toBe(DEFAULT_FORMAT_LAYOUT.colourPrimary);
+    expect((layout as unknown as Record<string, unknown>).bogus).toBeUndefined();
+  });
+
+  it('returns the defaults when no row is stored', () => {
+    expect(layoutFromRow(null)).toEqual(DEFAULT_FORMAT_LAYOUT);
+    expect(layoutFromRow(undefined)).toEqual(DEFAULT_FORMAT_LAYOUT);
+  });
+
+  it('snaps a stored weight to one the chosen family actually ships', () => {
+    const layout = layoutFromRow({ fontBody: 'Inter', fontWeightBody: 550 });
+    expect([400, 500, 600, 700]).toContain(layout.fontWeightBody);
   });
 });

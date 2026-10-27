@@ -15,6 +15,7 @@ import { renderDocx, documentPlainText } from './render/docx';
 import { renderXlsx, renderZip, type Sheet } from './render/xlsx';
 import { renderChartPng, renderChartSvg, type ChartModel } from './render/chart';
 import { documentFromReportBlocks, toPdfModel, type DocumentModel, type FooterContext } from './render/document';
+import { DEFAULT_FORMAT_LAYOUT, toPdfTypography, type FormatLayout } from './writing/reportFormat';
 import { sha256Hex } from './population';
 
 export type BinaryFormat = 'csv' | 'json' | 'text' | 'pdf' | 'docx' | 'xlsx' | 'png' | 'svg' | 'zip';
@@ -75,6 +76,8 @@ export interface RenderExportInput {
   /** Extra files for a ZIP bundle (for example a chart plus its data). */
   extraFiles?: Array<{ path: string; data: Uint8Array | string }>;
   chart?: ChartModel;
+  /** The report format's print layout (WP-C3), so an exported PDF matches the frozen one. */
+  layout?: FormatLayout;
 }
 
 /**
@@ -99,7 +102,7 @@ export async function renderExport(input: RenderExportInput): Promise<RenderedEx
   }
   if (input.format === 'pdf') {
     const model = modelFromTable(input.objectType, sheet, input.footer);
-    const bytes = await renderPdf(spec, toPdfModel(model));
+    const bytes = await renderPdf(spec, toPdfModel(model, undefined, toPdfTypography(input.layout ?? DEFAULT_FORMAT_LAYOUT)));
     return { bytes, contentType: 'application/pdf', extension: 'pdf', hash: await hashBytes(bytes) };
   }
   if (input.format === 'docx') {

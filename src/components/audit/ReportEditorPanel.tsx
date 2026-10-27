@@ -16,6 +16,8 @@ import {
 } from '../../data/reports';
 import { checkCapReconciliation, type CapRow, listCaps } from '../../data/caps';
 import { renderAndStoreReportFiles, type StoredReportFiles } from '../../data/reportFiles';
+import { getActiveReportLayout } from '../../data/writing';
+import type { FormatLayout } from '../../lib/writing/reportFormat';
 import { acknowledgePreflight, listPreflightAcknowledgements } from '../../data/preflight';
 import { PREFLIGHT_CHECKS, type PreflightAcknowledgement } from '../../lib/preflight';
 import { hasRight } from '../../lib/rights';
@@ -161,9 +163,16 @@ export const ReportEditorPanel: React.FC<{ engagementId: string }> = ({ engageme
     setBusy(false);
   };
 
-  /** Render, upload and record the frozen report's files from the current blocks. */
+  /** Render, upload and record the frozen report's files from the current blocks. The org's active
+   *  report format supplies the printed typography (WP-C3), so the frozen PDF matches the canvas. */
   const storeReportFiles = async (reportVersionId: string) => {
     if (!orgId) throw new Error('no organisation in the session');
+    let layout: FormatLayout | undefined;
+    try {
+      layout = await getActiveReportLayout(orgId);
+    } catch {
+      layout = undefined;
+    }
     const stored = await renderAndStoreReportFiles({
       reportVersionId,
       orgId,
@@ -174,6 +183,7 @@ export const ReportEditorPanel: React.FC<{ engagementId: string }> = ({ engageme
       engagementLabel: engagementLabel || 'Engagement',
       userLabel: currentUser?.name ?? currentUser?.email ?? 'auditor',
       frozenAt: new Date().toISOString(),
+      layout,
     });
     setReportHashes(stored);
     return stored;

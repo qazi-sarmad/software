@@ -411,6 +411,55 @@ function round1(n: number): number {
   return Math.round(n * 10) / 10;
 }
 
+/**
+ * The report-format typography in the shape the PDF renderer consumes (WP-C3). The renderer already
+ * resolves the same numbers through `resolveTypography` for the canvas; this adapts them to the
+ * printer's model so the frozen PDF matches the page the editor shows. Pure.
+ */
+export function toPdfTypography(layout: FormatLayout): {
+  headingPt: number; bodyPt: number; headingWeight: number; bodyWeight: number; lineHeight: number;
+} {
+  const t = resolveTypography(layout);
+  return {
+    headingPt: t.headingPt,
+    bodyPt: t.bodyPt,
+    headingWeight: t.headingWeight,
+    bodyWeight: t.bodyWeight,
+    lineHeight: t.lineHeight,
+  };
+}
+
+/**
+ * Merge a stored layout row (a plain object from `report_formats.layout`) onto the defaults, so a
+ * format saved before a field existed still yields a complete, valid layout. Pure; unknown keys are
+ * ignored. Used by the report editor to hand the printed typography to the renderer (WP-C3).
+ */
+export function layoutFromRow(row: Record<string, unknown> | null | undefined): FormatLayout {
+  const out: FormatLayout = { ...DEFAULT_FORMAT_LAYOUT };
+  if (!row) return out;
+  const str = (k: keyof FormatLayout, allowed?: readonly string[]) => {
+    const v = row[k as string];
+    if (typeof v === 'string' && v.trim() !== '' && (!allowed || allowed.includes(v))) {
+      (out[k] as unknown as string) = v;
+    }
+  };
+  const num = (k: keyof FormatLayout, min: number, max: number) => {
+    const v = row[k as string];
+    if (typeof v === 'number' && Number.isFinite(v)) (out[k] as unknown as number) = clamp(v, min, max);
+  };
+  str('pageSize', ['A4', 'Letter']);
+  str('colourPrimary'); str('colourAccent'); str('colourText'); str('colourBackground');
+  str('fontHeading'); str('fontBody');
+  num('marginTopMm', 0, 60); num('marginRightMm', 0, 60); num('marginBottomMm', 0, 60); num('marginLeftMm', 0, 60);
+  num('fontSizePt', TYPOGRAPHY_LIMITS.fontSizePt.min, TYPOGRAPHY_LIMITS.fontSizePt.max);
+  num('lineHeightPct', TYPOGRAPHY_LIMITS.lineHeightPct.min, TYPOGRAPHY_LIMITS.lineHeightPct.max);
+  num('headingScalePct', TYPOGRAPHY_LIMITS.headingScalePct.min, TYPOGRAPHY_LIMITS.headingScalePct.max);
+  if (typeof row.fontWeightHeading === 'number') out.fontWeightHeading = resolveWeight(out.fontHeading, row.fontWeightHeading);
+  if (typeof row.fontWeightBody === 'number') out.fontWeightBody = resolveWeight(out.fontBody, row.fontWeightBody);
+  if (typeof row.showFooter === 'boolean') out.showFooter = row.showFooter;
+  return out;
+}
+
 /** The format hash used in a report's metadata: the published version's body hash. A report records
  *  which format produced it, so an old report can be re-rendered from the format it was built with
  * (W8.2), exactly as it records its phrase and engine versions.

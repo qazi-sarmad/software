@@ -6,6 +6,7 @@
  * RPC that checks rights (0089, 0090) and the org guard.
  */
 import { callRpc, getClient, type DataResult } from './db';
+import { layoutFromRow, type FormatLayout } from '../lib/writing/reportFormat';
 
 export interface PhraseRow {
   id: string;
@@ -310,6 +311,19 @@ export async function listFormatAudiences(formatId: string): Promise<FormatAudie
   return (data ?? []).map((r: Record<string, unknown>) => ({
     roleSlug: String(r.role_slug), canView: Boolean(r.can_view), canEdit: Boolean(r.can_edit),
   }));
+}
+
+/**
+ * The print layout the report editor prints with (WP-C3). The org's newest published format wins;
+ * otherwise the newest version of any status; otherwise the defaults. Returns a complete, validated
+ * layout, so the frozen PDF matches the format the client published. Pure merge is in
+ * `layoutFromRow`; this only chooses which row to use.
+ */
+export async function getActiveReportLayout(orgId: string): Promise<FormatLayout> {
+  const formats = await listReportFormats(orgId);
+  const published = formats.filter((f) => f.status === 'published');
+  const chosen = published[0] ?? formats[0];
+  return layoutFromRow(chosen?.layout);
 }
 
 /** Save a format draft (edit_config). A published version is immutable; this creates the next one. */

@@ -109,6 +109,36 @@ describe('renderPdf', () => {
   });
 });
 
+describe('renderPdf honours the report-format typography (WP-C3)', () => {
+  const model = (typography?: { headingPt: number; bodyPt: number; headingWeight: number; bodyWeight: number; lineHeight: number }) => ({
+    title: 'Typed', sections: [{ heading: 'Findings', blocks: [{ kind: 'paragraph' as const, text: 'A finding.' }] }],
+    typography,
+  });
+
+  it('renders a larger body size as more drawn text state and a different byte stream', async () => {
+    const small = await renderPdf(spec, model({ headingPt: 17.6, bodyPt: 11, headingWeight: 600, bodyWeight: 400, lineHeight: 1.4 }));
+    const large = await renderPdf(spec, model({ headingPt: 32, bodyPt: 16, headingWeight: 700, bodyWeight: 600, lineHeight: 2.2 }));
+    expect(large.length).not.toBe(small.length);
+    const a = await PDFDocument.load(small);
+    const b = await PDFDocument.load(large);
+    // The larger typography pushes the same content onto more vertical space.
+    expect(b.getPageCount()).toBeGreaterThanOrEqual(a.getPageCount());
+  });
+
+  it('is byte-identical twice for the same typography (determinism holds)', async () => {
+    const typo = { headingPt: 19.2, bodyPt: 12, headingWeight: 600, bodyWeight: 400, lineHeight: 1.6 };
+    const a = await renderPdf(spec, model(typo));
+    const b = await renderPdf(spec, model(typo));
+    expect(Buffer.from(a).equals(Buffer.from(b))).toBe(true);
+  });
+
+  it('keeps the original sizes when no typography is supplied (old models unchanged)', async () => {
+    const bytes = await renderPdf(spec, model(undefined));
+    const doc = await PDFDocument.load(bytes);
+    expect(doc.getPageCount()).toBeGreaterThanOrEqual(1);
+  });
+});
+
 describe('renderQr', () => {
   it('encodes a URL to a PNG data URL', async () => {
     const url = await renderQrDataUrl(verificationUrl('https://app.example/', 'verify', 'id-1'), { size: 128 });

@@ -12,6 +12,7 @@ import { DEFAULT_BRANDING, type BrandingSpec } from '../render/branding';
 import { renderPdf } from '../render/pdf';
 import { renderDocx, documentPlainText } from '../render/docx';
 import { toPdfModel, type DocumentModel, type DocumentSection } from '../render/document';
+import { DEFAULT_FORMAT_LAYOUT, toPdfTypography, type FormatLayout } from './reportFormat';
 import { sha256Hex } from '../population';
 import { planReport, type PlannedReport } from './planner';
 import { composedText, type ComposedReport } from './compose';
@@ -27,6 +28,9 @@ export interface IssueInput {
   /** The fixed timestamp: the issuance time, passed in, never read from a clock. */
   issuedAt: string;
   branding?: BrandingSpec;
+  /** The report format's print layout (WP-C3). Its resolved typography decides the PDF's printed
+   *  sizes and line height, so the issued PDF matches the live canvas. Absent means the defaults. */
+  layout?: FormatLayout;
 }
 
 export interface IssuedReport {
@@ -112,10 +116,11 @@ function blocksForClaim(claim: Claim, text: string): DocumentSection['blocks'] {
 }
 
 /** Render the issued report to PDF bytes. The issuance time pins the PDF's own metadata, so the
- *  bytes are reproducible (W7.1) and no clock is read. */
-export async function issuePdf(issued: IssuedReport, branding?: BrandingSpec): Promise<Uint8Array> {
+ *  bytes are reproducible (W7.1) and no clock is read. The optional layout (WP-C3) decides the
+ *  printed typography so the frozen PDF matches the live canvas. */
+export async function issuePdf(issued: IssuedReport, branding?: BrandingSpec, layout?: FormatLayout): Promise<Uint8Array> {
   const spec = branding ?? { ...DEFAULT_BRANDING, orgId: 'org' };
-  return renderPdf(spec, toPdfModel(issued.document, issued.metadata.issuedAt));
+  return renderPdf(spec, toPdfModel(issued.document, issued.metadata.issuedAt, toPdfTypography(layout ?? DEFAULT_FORMAT_LAYOUT)));
 }
 
 /** Render the issued report to DOCX bytes. */
