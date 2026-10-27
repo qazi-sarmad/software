@@ -37,6 +37,13 @@ vi.mock('../../data/caps', () => ({
   checkCapReconciliation: () => checkCapFn(),
 }));
 
+const listAcksFn = vi.fn();
+const ackFn = vi.fn();
+vi.mock('../../data/preflight', () => ({
+  listPreflightAcknowledgements: () => listAcksFn(),
+  acknowledgePreflight: (...a: unknown[]) => ackFn(...a),
+}));
+
 const userRef = { current: { role: 'cia', rights: { perform_work: true, review_and_approve: true, approve_plan: true } } };
 vi.mock('../../context/AppContext', () => ({ useApp: () => ({ currentUser: userRef.current }) }));
 
@@ -67,6 +74,8 @@ describe('Phase 6 UI panels (6H)', () => {
     listCapsFn.mockResolvedValue([]);
     updateCapFn.mockResolvedValue({ ok: true });
     closeCapFn.mockResolvedValue({ ok: true });
+    listAcksFn.mockResolvedValue([]);
+    ackFn.mockResolvedValue({ ok: true });
   });
 
   describe('ReportEditorPanel', () => {
@@ -146,6 +155,30 @@ describe('Phase 6 UI panels (6H)', () => {
       await waitFor(() => expect(screen.getByTestId('report-rights-note')).toBeTruthy());
       expect((screen.getByTestId('report-freeze') as HTMLButtonElement).disabled).toBe(true);
       expect((screen.getByTestId('report-issue') as HTMLButtonElement).disabled).toBe(true);
+    });
+
+    it('§11.4 records a pre-flight acknowledgement with a reason and shows it', async () => {
+      listAcksFn.mockResolvedValue([{ check: 'missing_evidence', itemId: 'ev-1', reason: 'waived by the manager', acknowledgedBy: 'u1', acknowledgedAt: '2026-10-26T00:00:00Z' }]);
+      render(<ReportEditorPanel engagementId="e1" />);
+      await waitFor(() => expect(screen.getByTestId('report-preflight-ack-form')).toBeTruthy());
+      // The count reflects the store.
+      expect(screen.getByTestId('report-preflight-acks').textContent).toContain('1 acknowledged');
+      fireEvent.change(screen.getByTestId('report-preflight-ack-check'), { target: { value: 'unresolved_flags' } });
+      fireEvent.change(screen.getByTestId('report-preflight-ack-item'), { target: { value: 'f-1' } });
+      fireEvent.change(screen.getByTestId('report-preflight-ack-reason'), { target: { value: 'accepted by the manager' } });
+      fireEvent.click(screen.getByTestId('report-preflight-ack-submit'));
+      await waitFor(() => expect(ackFn).toHaveBeenCalledWith('e1', 'unresolved_flags', 'f-1', 'accepted by the manager'));
+    });
+
+    it('§11.4 keeps the acknowledgement disabled until a long-enough reason is present', async () => {
+      render(<ReportEditorPanel engagementId="e1" />);
+      const submit = await screen.findByTestId('report-preflight-ack-submit');
+      expect((submit as HTMLButtonElement).disabled).toBe(true);
+      fireEvent.change(screen.getByTestId('report-preflight-ack-item'), { target: { value: 'f-1' } });
+      fireEvent.change(screen.getByTestId('report-preflight-ack-reason'), { target: { value: 'short' } });
+      expect((submit as HTMLButtonElement).disabled).toBe(true);
+      fireEvent.change(screen.getByTestId('report-preflight-ack-reason'), { target: { value: 'a sufficiently long reason' } });
+      expect((submit as HTMLButtonElement).disabled).toBe(false);
     });
   });
 

@@ -16,6 +16,8 @@ import {
 } from '../../data/reports';
 import { checkCapReconciliation, type CapRow, listCaps } from '../../data/caps';
 import { renderAndStoreReportFiles, type StoredReportFiles } from '../../data/reportFiles';
+import { acknowledgePreflight, listPreflightAcknowledgements } from '../../data/preflight';
+import { PREFLIGHT_CHECKS, type PreflightAcknowledgement } from '../../lib/preflight';
 import { hasRight } from '../../lib/rights';
 import { rightReason, rightReasonFor } from '../../lib/rightLabels';
 import { formatFieldPairs } from '../../lib/readable';
@@ -57,6 +59,10 @@ export const ReportEditorPanel: React.FC<{ engagementId: string }> = ({ engageme
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [preflightAcks, setPreflightAcks] = useState<PreflightAcknowledgement[]>([]);
+  const [ackCheck, setAckCheck] = useState<string>(PREFLIGHT_CHECKS[0]);
+  const [ackItem, setAckItem] = useState('');
+  const [ackReason, setAckReason] = useState('');
 
   const canApprove = hasRight(currentUser, 'approve_plan');
 
@@ -85,6 +91,7 @@ export const ReportEditorPanel: React.FC<{ engagementId: string }> = ({ engageme
         setCapOk(null);
       }
       setCaps(await listCaps(engagementId));
+      setPreflightAcks(await listPreflightAcknowledgements(engagementId));
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not load the report.');
     } finally {
@@ -133,6 +140,22 @@ export const ReportEditorPanel: React.FC<{ engagementId: string }> = ({ engageme
       } catch (e) {
         setError(e instanceof Error ? e.message : 'The report files could not be rendered.');
       }
+      await load();
+    }
+    setBusy(false);
+  };
+
+  /** §11.4: record an acknowledgement of one pre-flight item, with the reason. Append-only. */
+  const acknowledge = async () => {
+    setBusy(true);
+    setError(null);
+    setNotice(null);
+    const res = await acknowledgePreflight(engagementId, ackCheck, ackItem.trim(), ackReason.trim());
+    if (!res.ok) setError(res.reason);
+    else {
+      setNotice('Acknowledgement recorded.');
+      setAckItem('');
+      setAckReason('');
       await load();
     }
     setBusy(false);
@@ -364,7 +387,49 @@ export const ReportEditorPanel: React.FC<{ engagementId: string }> = ({ engageme
                 <li className={capOk ? 'text-verdigris' : 'text-cinnabar'} data-testid="report-preflight-caps">
                   {capOk ? '✓' : '✗'} CAP reconciliation {capOk === null ? 'unknown' : capOk ? 'complete' : 'incomplete'}
                 </li>
+                <li className={preflightAcks.length === 0 ? 'text-secondary' : 'text-verdigris'} data-testid="report-preflight-acks">
+                  {preflightAcks.length} acknowledged pre-flight item{preflightAcks.length === 1 ? '' : 's'}
+                </li>
               </ul>
+              {/* §11.4: an open item may be waived with a logged reason instead of blocking. */}
+              <div className="space-y-2 rounded-xl border border-hairline p-3" data-testid="report-preflight-ack-form">
+                <div className="text-apple-11 text-secondary">
+                  Waive a pre-flight item with a reason (recorded, append-only).
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <select
+                    data-testid="report-preflight-ack-check"
+                    value={ackCheck}
+                    onChange={(e) => setAckCheck(e.target.value)}
+                    className="px-2 py-1.5 rounded-lg bg-surface-sunken border border-hairline text-apple-12 text-primary"
+                  >
+                    {PREFLIGHT_CHECKS.map((c) => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                  <input
+                    data-testid="report-preflight-ack-item"
+                    value={ackItem}
+                    onChange={(e) => setAckItem(e.target.value)}
+                    placeholder="Item id"
+                    className="px-2 py-1.5 rounded-lg bg-surface-sunken border border-hairline text-apple-12 text-primary"
+                  />
+                  <input
+                    data-testid="report-preflight-ack-reason"
+                    value={ackReason}
+                    onChange={(e) => setAckReason(e.target.value)}
+                    placeholder="Reason (min 10 characters)"
+                    className="flex-1 px-2 py-1.5 rounded-lg bg-surface-sunken border border-hairline text-apple-12 text-primary"
+                  />
+                  <button
+                    type="button"
+                    data-testid="report-preflight-ack-submit"
+                    onClick={acknowledge}
+                    disabled={busy || ackItem.trim().length === 0 || ackReason.trim().length < 10}
+                    className="px-3 py-1.5 rounded-lg bg-surface border border-hairline hover:bg-surface-hover text-apple-12 font-semibold text-primary disabled:opacity-50"
+                  >
+                    Record acknowledgement
+                  </button>
+                </div>
+              </div>
               {!canFreeze && (
                 <div className="px-3 py-2 rounded-xl text-apple-12 text-cinnabar bg-cinnabar-subtle border border-cinnabar flex items-start gap-2" data-testid="report-freeze-blocked">
                   <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
