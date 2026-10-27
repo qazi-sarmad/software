@@ -100,3 +100,36 @@ law "data never leaves the tenant" is untouched: the share is never a cross-*org
 explicitly-scoped read path with its own audit. The `shared_universe_read(p_universe_id)` projection
 is the only tenant-content read that is not keyed on `jwt_org_id()` equality, and it is itself
 `security definer` and checks `jwt_org_id()` equality plus a live share row for `auth.uid()`.
+
+## D-S1-CI-JOB-TIMEOUT — the job limit, not the step limit, cancelled the sweep
+
+**Decision.** The `gates` job limit is 75 minutes (was 45). The screenshot sweep keeps its own
+15-minute limit.
+
+**Why.** Run 40485222778 reached steps 1–14 all green, then cancelled step 15 (the screenshot sweep)
+at 14.1m. The step's own limit never fired: the *job* limit did. Measured from the run's step
+timestamps, step 13 (migrations and SQL tests against the hosted test project) takes **23.2m** of the
+budget, so only ~14m remained when the sweep began. A per-step limit cannot save a step whose job has
+already run out of time, so the fix belongs on the job. 75m gives the sweep its full 15m even when the
+SQL step is slow.
+
+**What it constrains.** The sweep is `continue-on-error`, so it must never be the reason a run is
+cancelled; a future step that adds several minutes of network work must re-check that the job limit
+still covers the sweep.
+
+## D-S1-PANEL-DOUBLE-LOAD — the report editor loads twice; tests must settle both
+
+**Decision.** A test that drives the report editor's pre-flight form waits for both loads
+(`listCaps` is each load's last call) before interacting.
+
+**Why.** CI run 40491675102 failed `phase6Panels.test.tsx:167` with
+`Unable to find an element by: [data-testid="report-preflight-ack-item"]` while `report-loading` was
+on screen. `ReportEditorPanel`'s `load` effect depends on `activeId`: it runs once with no version
+selected, then again once it selects the first version, and the second run sets `loading=true` and
+briefly unmounts the form. The §11.4 tests interacted after the *first* paint, so on a slow runner the
+change event landed on the unmounted form and the item value was lost. The "issues the report" test
+already documents this and waits; the §11.4 tests did not. Reproduced deterministically by delaying
+the second `listCaps` call: the old pattern fails with the exact CI error, the waiting pattern passes.
+
+**What it constrains.** Any new test that drives a panel whose effect depends on a state it sets
+inside the same effect must wait for the load to settle, not merely for the first paint.
