@@ -13,18 +13,25 @@ if (!SUPABASE_URL || !PUBLISHABLE_KEY) {
 }
 
 // [table, column holding the org id]
-const TENANT_TABLES: [string, string][] = [
+// Tables where isolation must be absolute: no sanctioned crossing path exists for them.
+const ABSOLUTE_TABLES: [string, string][] = [
   ['org_members', 'org_id'],
   ['universes', 'org_id'],
-  ['entities', 'org_id'],
   ['roles', 'org_id'],
   ['user_scopes', 'org_id'],
   ['orgs', 'id'],
 ];
 
-const USERS: { email: string; org: string }[] = [
-  { email: 'ayesha.khan@provio-test.invalid', org: ORG_A },
-  { email: 'hamza.qureshi@provio-test.invalid', org: ORG_B },
+// Tables that may legitimately cross between *associated* group companies, and only through a live
+// joint-audit share (migration 0102). A row from an org the caller is not associated with is still a
+// leak, so the bound is "own org or an associated org", never "any org".
+const SHAREABLE_TABLES: [string, string][] = [
+  ['entities', 'org_id'],
+];
+
+const USERS: { email: string; org: string; associated: string }[] = [
+  { email: 'ayesha.khan@provio-test.invalid', org: ORG_A, associated: ORG_B },
+  { email: 'hamza.qureshi@provio-test.invalid', org: ORG_B, associated: ORG_A },
 ];
 
 async function signIn(request: APIRequestContext, email: string): Promise<string> {
@@ -52,7 +59,7 @@ async function readRows(
 
 test.describe('RLS: tenants cannot read each other', () => {
   for (const user of USERS) {
-    for (const [table, column] of TENANT_TABLES) {
+    for (const [table, column] of ABSOLUTE_TABLES) {
       test(`[E2E] ${user.email} sees only its own org in ${table}`, async ({ request }) => {
         const token = await signIn(request, user.email);
         const data = await readRows(request, token, table, column);
@@ -65,10 +72,24 @@ test.describe('RLS: tenants cannot read each other', () => {
         }
       });
     }
+    // A shareable table may cross only to an *associated* org, and only while a live joint-audit
+    // share covers the row. A row from any third org is still a leak, so this is the honest bound.
+    for (const [table, column] of SHAREABLE_TABLES) {
+      test(`[E2E] ${user.email} sees only its own or an associated org in ${table}`, async ({ request }) => {
+        const token = await signIn(request, user.email);
+        const data = await readRows(request, token, table, column);
+        expect(Array.isArray(data), `${table} read as ${user.email}`).toBeTruthy();
+        const rows = data as Record<string, unknown>[];
+        expect(rows.length, `${table} has rows for own org`).toBeGreaterThan(0);
+        for (const row of rows) {
+          expect([user.org, user.associated], `${table} row from a non-associated org`).toContain(row[column]);
+        }
+      });
+    }
   }
 
   test('[E2E] with no session, tenant tables return no rows', async ({ request }) => {
-    for (const [table, column] of TENANT_TABLES) {
+    for (const [table, column] of [...ABSOLUTE_TABLES, ...SHAREABLE_TABLES]) {
       const data = await readRows(request, null, table, column);
       if (typeof data === 'number') {
         expect([401, 403], `${table} without session`).toContain(data);
