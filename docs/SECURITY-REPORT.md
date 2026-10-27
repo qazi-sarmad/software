@@ -9,7 +9,7 @@ the command is named. CI is green end to end on the pushed head.
 
 - Branch: `feature/security-harden-v1`.
 - Base: `7749484` (the SCALE-1 close-out, which itself descends from `feature/writing-engine`).
-- Head: `24ee4d6f20e7efbc574e75b9bf80e9c4b5c1ec39` (pushed; CI run 40564211934 green on all 15 steps).
+- Head: `306e7ff4c090171d4ff9b61dc7466cc35a5dc49e` (pushed; CI runs 40564211934 and 40571411050 green on all 15 steps).
 
 ## Counts against the baselines
 
@@ -83,8 +83,8 @@ runner. Fixed in `e58a332` to read the commit author instead (and shallow-clone 
 ✓ Upload screenshots       ✓ Complete job
 ```
 
-**Run 40564211934, head `24ee4d6`** (this report) — same 15 steps, all green. The final head is
-`24ee4d6f20e7efbc574e75b9bf80e9c4b5c1ec39`.
+**Run 40564211934, head `24ee4d6`**, and **run 40571411050, head `306e7ff`** (this report) — same 15 steps, all green. The final head is
+`306e7ff4c090171d4ff9b61dc7466cc35a5dc49e` (CI run 40571411050 green).
 
 The screenshot sweep hits its own 15-minute `timeout-minutes` and is `continue-on-error`, so it is
 reported as a timeout while the job stays green — the same behaviour recorded in `SCALE-REPORT.md`.
