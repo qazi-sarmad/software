@@ -20,10 +20,10 @@ Baselines were recorded at the branch point in `docs/SCALE-PLAN.md`. This is the
 | Migrations | 94 (highest `0094_verify_report_root.sql`) | 99 (highest `0099_board_pack_depth.sql`) | `ls supabase/migrations/*.sql \| wc -l` |
 | SQL test files | 97 (highest `99_verify_report_root.sql`) | 103 (highest `105_board_pack_depth.sql`) | `ls supabase/tests/*.sql \| wc -l` |
 | SQL assertions (`provio_test.assert_*`) | 1603 | 1824 | `grep -rho 'provio_test.assert_[a-z_]*' supabase/tests/*.sql \| wc -l` |
-| vitest files / tests | 164 / 1901 | 201 / 2376 | `npx vitest run` |
+| vitest files / tests | 164 / 1901 | 202 / 2378 | `npx vitest run` |
 | Playwright spec files / tests | 25 / 116 | 29 / 133 | `ls e2e/*.spec.ts \| wc -l`; `grep -rhE '^\s*(test\|it)\(' e2e/*.spec.ts \| wc -l` |
-| Guards (`src/guards/*.test.ts`) | 19 | 20 | `ls src/guards/*.test.ts \| wc -l` |
-| Guard tests | 78 | 81 | `grep -rhE '^\s*(test\|it)\(' src/guards/*.test.ts \| wc -l` |
+| Guards (`src/guards/*.test.ts`) | 19 | 21 | `ls src/guards/*.test.ts \| wc -l` |
+| Guard tests | 78 | 83 | `grep -rhE '^\s*(test\|it)\(' src/guards/*.test.ts \| wc -l` |
 
 Every count rose or held. No baseline regressed.
 
