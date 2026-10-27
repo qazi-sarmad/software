@@ -15,6 +15,7 @@ import { resolveHexColour } from '../../lib/render/branding';
 import { canRedo, canUndo, initHistory, moveItem, pushHistory, redo, undo, type History } from '../../lib/writing/formatHistory';
 import { REPORT_FONT_FAMILIES, REPORT_FONT_NAMES } from '../../lib/render/fonts';
 import { FormatCanvas } from './FormatCanvas';
+import { DesignPane } from './DesignPane';
 import {
   CONTENTS_LIMITS, DEFAULT_FORMAT_LAYOUT, HEADING_LABEL_LIMITS, REPORT_PALETTE, RHETORICAL_ROLES, TYPOGRAPHY_LIMITS, applyFormat,
   defaultFormat, formatBodyHash, validateFormat,
@@ -22,7 +23,7 @@ import {
 } from '../../lib/writing/reportFormat';
 
 type LoadState = 'loading' | 'ready' | 'error';
-type Pane = 'layout' | 'blocks' | 'audiences' | 'versions';
+type Pane = 'layout' | 'blocks' | 'design' | 'audiences' | 'versions';
 
 const label = (s: string) => s.replace(/_/g, ' ').replace(/^\w/, (m) => m.toUpperCase());
 
@@ -174,6 +175,12 @@ export const ReportFormatPanel: React.FC<{ prefix?: string }> = ({ prefix = 'wk-
     mutate({ blocks: draft.blocks.map((b, i) => (i === index ? { ...b, ...patch } : b)) });
   };
 
+  /** Patch the print layout (WP-D). One entry point for the layout and design panes. */
+  const setLayout = (patch: Partial<FormatLayout>) => {
+    if (!draft) return;
+    mutate({ layout: { ...draft.layout, ...patch } });
+  };
+
   const addMissingSections = () => {
     if (!draft) return;
     const present = new Set(draft.blocks.map((b) => b.key));
@@ -300,7 +307,7 @@ export const ReportFormatPanel: React.FC<{ prefix?: string }> = ({ prefix = 'wk-
       </div>
 
       <div className="flex items-center gap-2 flex-wrap" data-testid={`${prefix}-pane-tabs`}>
-        {(['blocks', 'layout', 'audiences', 'versions'] as Pane[]).map((id) => (
+        {(['blocks', 'layout', 'design', 'audiences', 'versions'] as Pane[]).map((id) => (
           <button key={id} type="button" role="tab" aria-selected={pane === id} data-testid={`${prefix}-pane-${id}`}
             className={`px-3 py-1 rounded-xl text-apple-12 ${pane === id ? 'bg-accent-subtle text-primary' : 'text-secondary hover:text-primary'}`}
             onClick={() => setPane(id)}>{label(id)}</button>
@@ -503,6 +510,25 @@ export const ReportFormatPanel: React.FC<{ prefix?: string }> = ({ prefix = 'wk-
             ))}
           </div>
         </div>
+      )}
+
+      {pane === 'design' && draft && (
+        <DesignPane
+          draft={draft}
+          applied={applied?.blocks ?? null}
+          prefix={prefix}
+          onLayout={setLayout}
+          chromeVars={{
+            org: draft.label, engagement: draft.label, classification: 'Internal',
+            date: draft.createdAt, user: currentUser.name ?? '',
+          }}
+          colours={{
+            primary: draft.layout.colourPrimary, accent: draft.layout.colourAccent,
+            text: draft.layout.colourText, background: draft.layout.colourBackground,
+          }}
+          fonts={{ heading: draft.layout.fontHeading, body: draft.layout.fontBody }}
+          onReorder={reorderBlocks}
+        />
       )}
 
       {pane === 'audiences' && (
