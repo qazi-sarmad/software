@@ -23,6 +23,14 @@ import { canonicalise, hashCanonical, normaliseText } from './canonical';
 import { DEFAULT_FONT_BODY, DEFAULT_FONT_HEADING, isAllowedFontFamily, resolveWeight } from '../render/fonts';
 import type { Formality, Locale, RhetoricalRole, Tone, Voice } from './types';
 import type { ContentsSpec } from '../render/document';
+import { DEFAULT_GRID, GRID_LIMITS, type GridSpec } from './grid';
+import {
+  DEFAULT_CHROME, DEFAULT_PAGE_SETUP, PAGE_NUMBER_STYLES, PAGE_SETUP_LIMITS, defaultPlacedBlock,
+  type ChromeSpec, type PageSetup, type PlacedBlock,
+} from './pageDesign';
+import { SHAPE_LIMITS, shapeFromRow, type ShapeSpec } from './shapes';
+import { LINK_LIMITS, hyperlinkError, type CrossReferenceSpec, type HyperlinkSpec } from './links';
+import { DEFAULT_TABLE_STYLE, TABLE_STYLE_NAMES, type TableStyleName } from './tableStyleDefaults';
 
 /** Every rhetorical role a plan section may carry. The editor offers exactly these. */
 export const RHETORICAL_ROLES: RhetoricalRole[] = [
@@ -83,6 +91,36 @@ export interface FormatLayout {
   showFooter: boolean;
   /** The table of contents (WP-T). A formal report carries one; a format decides its design. */
   contents: ContentsStyle;
+  // ------------------------------------------------------------------------------------------
+  // The page design (WP-D): the parts of the layout a designer sets on the canvas.
+  // ------------------------------------------------------------------------------------------
+  /** Portrait or landscape. `pageSize` gives the paper; this gives the way up it is printed. */
+  orientation: 'portrait' | 'landscape';
+  /** The number of text columns the flowing body uses (1..3). */
+  columns: number;
+  /** The gap between two columns, in millimetres. */
+  columnGapMm: number;
+  /** The snap grid and the rulers. */
+  grid: GridSpec;
+  /** The header and footer. */
+  chrome: ChromeSpec;
+  /** Number the section headings (`1. Scope`). */
+  numberedHeadings: boolean;
+  /** Where each block sits: flowing, or free at an x/y the designer chose. */
+  placed: PlacedBlock[];
+  /** The shapes the designer dropped on the page. */
+  shapes: ShapeSpec[];
+  /** The hyperlinks the report carries. */
+  links: HyperlinkSpec[];
+  /** The cross-references the report carries, resolved to the target's page. */
+  crossReferences: CrossReferenceSpec[];
+  /** The table style applied to a table the designer does not style itself. */
+  defaultTableStyle: TableStyleName;
+  /** Per-table style choices, keyed by the table's section key. */
+  tableStyles: { key: string; style: TableStyleName }[];
+  /** The border and alternate-row colours a table style derives its shades from. */
+  tableBorder: string;
+  tableRowAlternate: string;
 }
 
 /**
@@ -367,6 +405,81 @@ export function validateFormat(format: ReportFormat, scope: FormatModelScope): F
       issues.push({ code: 'audience_contradiction', field: `audiences[${i}]`, message: `role "${a.roleSlug}" may edit but not view` });
     }
   });
+  // WP-D: the page design. Every check names the field so the designer's editor can show it precisely.
+  if (l.orientation !== 'portrait' && l.orientation !== 'landscape') {
+    issues.push({ code: 'bad_orientation', field: 'layout.orientation', message: 'the orientation must be portrait or landscape' });
+  }
+  if (typeof l.columns === 'number'
+    && (l.columns < PAGE_SETUP_LIMITS.columns.min || l.columns > PAGE_SETUP_LIMITS.columns.max)) {
+    issues.push({ code: 'columns_out_of_range', field: 'layout.columns', message: `the column count must be between ${PAGE_SETUP_LIMITS.columns.min} and ${PAGE_SETUP_LIMITS.columns.max}` });
+  }
+  if (typeof l.columns === 'number' && !Number.isInteger(l.columns)) {
+    issues.push({ code: 'non_integer_measure', field: 'layout.columns', message: 'columns must be a whole number' });
+  }
+  if (l.columnGapMm > PAGE_SETUP_LIMITS.columnGapMm.max) {
+    issues.push({ code: 'column_gap_out_of_range', field: 'layout.columnGapMm', message: `the column gap must be ${PAGE_SETUP_LIMITS.columnGapMm.max} mm or less` });
+  }
+  if (l.grid.sizeMm < GRID_LIMITS.sizeMm.min || l.grid.sizeMm > GRID_LIMITS.sizeMm.max) {
+    issues.push({ code: 'grid_size_out_of_range', field: 'layout.grid.sizeMm', message: `the grid step must be between ${GRID_LIMITS.sizeMm.min} and ${GRID_LIMITS.sizeMm.max} mm` });
+  }
+  for (const key of ['tableBorder', 'tableRowAlternate'] as const) {
+    if (typeof l[key] === 'string' && l[key] !== '' && !isValidColour(l[key])) {
+      issues.push({ code: 'bad_colour', field: `layout.${key}`, message: `"${l[key]}" is not a colour token or hex value` });
+    }
+  }
+  if (!(TABLE_STYLE_NAMES as readonly string[]).includes(l.defaultTableStyle)) {
+    issues.push({ code: 'bad_table_style', field: 'layout.defaultTableStyle', message: `"${l.defaultTableStyle}" is not a table style` });
+  }
+  const sectionIds = new Set(format.blocks.map((b) => b.key));
+  l.tableStyles.forEach((t, i) => {
+    if (!(TABLE_STYLE_NAMES as readonly string[]).includes(t.style)) {
+      issues.push({ code: 'bad_table_style', field: `layout.tableStyles[${i}].style`, message: `"${t.style}" is not a table style` });
+    }
+    if (!sectionIds.has(t.key)) {
+      issues.push({ code: 'unknown_section', field: `layout.tableStyles[${i}].key`, message: `the format has no block "${t.key}" to style` });
+    }
+  });
+  l.links.forEach((link, i) => {
+    const err = hyperlinkError(link);
+    if (err) issues.push({ code: 'bad_link', field: `layout.links[${i}]`, message: err });
+  });
+  l.crossReferences.forEach((ref, i) => {
+    if (ref.targetKey.trim() === '') {
+      issues.push({ code: 'bad_reference', field: `layout.crossReferences[${i}].targetKey`, message: 'a cross-reference needs a target' });
+    } else if (!sectionIds.has(ref.targetKey) && !l.shapes.some((s) => s.id === ref.targetKey)) {
+      issues.push({ code: 'unknown_reference', field: `layout.crossReferences[${i}].targetKey`, message: `nothing in this format is called "${ref.targetKey}"` });
+    }
+  });
+  l.shapes.forEach((s, i) => {
+    if (s.id.trim() === '') {
+      issues.push({ code: 'bad_shape', field: `layout.shapes[${i}].id`, message: 'a shape needs an id' });
+    }
+    if (s.wMm < SHAPE_LIMITS.sizeMm.min || s.hMm < SHAPE_LIMITS.sizeMm.min) {
+      issues.push({ code: 'bad_shape', field: `layout.shapes[${i}]`, message: 'a shape must be at least 1 mm across' });
+    }
+    if (s.fill !== 'none' && !isValidColour(s.fill) && !/^(brand|accent|surface|callout)$/.test(s.fill)) {
+      issues.push({ code: 'bad_colour', field: `layout.shapes[${i}].fill`, message: `"${s.fill}" is not a colour` });
+    }
+    if (s.stroke !== 'none' && !isValidColour(s.stroke)) {
+      issues.push({ code: 'bad_colour', field: `layout.shapes[${i}].stroke`, message: `"${s.stroke}" is not a colour` });
+    }
+    if (s.kind === 'callout' && s.text.length > SHAPE_LIMITS.textMaxLength) {
+      issues.push({ code: 'callout_text_too_long', field: `layout.shapes[${i}].text`, message: `a callout holds at most ${SHAPE_LIMITS.textMaxLength} characters` });
+    }
+  });
+  const placedKeys = new Set<string>();
+  l.placed.forEach((p, i) => {
+    if (!sectionIds.has(p.key)) {
+      issues.push({ code: 'unknown_section', field: `layout.placed[${i}].key`, message: `the format has no block "${p.key}" to place` });
+    }
+    if (placedKeys.has(p.key)) {
+      issues.push({ code: 'duplicate_placement', field: `layout.placed[${i}].key`, message: `block "${p.key}" is placed twice` });
+    }
+    placedKeys.add(p.key);
+    if ((p.xMm === null) !== (p.yMm === null)) {
+      issues.push({ code: 'half_placement', field: `layout.placed[${i}]`, message: `block "${p.key}" has only one of x and y; a free block needs both` });
+    }
+  });
   return issues;
 }
 
@@ -435,13 +548,29 @@ export function defaultFormat(
   return {
     orgId, formatKey, version: 1, label: formatKey, status: 'draft', modelId,
     blocks: plan.map((p) => ({ key: p.key, label: p.label, role: p.role, visible: true, register: null })),
-    layout: { ...layout, contents: { ...layout.contents } }, defaultLocale, audiences: [],
+    layout: cloneLayout(layout), defaultLocale, audiences: [],
+  };
+}
+
+/** A deep copy of a layout, so a draft edit can never mutate the format it was copied from. */
+export function cloneLayout(layout: FormatLayout): FormatLayout {
+  return {
+    ...layout,
+    contents: { ...layout.contents },
+    grid: { ...layout.grid },
+    chrome: { ...layout.chrome },
+    placed: layout.placed.map((p) => ({ ...p })),
+    shapes: layout.shapes.map((s) => ({ ...s })),
+    links: layout.links.map((l) => ({ ...l })),
+    crossReferences: layout.crossReferences.map((r) => ({ ...r })),
+    tableStyles: layout.tableStyles.map((t) => ({ ...t })),
   };
 }
 
 /** The default layout, expressed in design tokens (no hex literal anywhere in the product code). */
 export const DEFAULT_FORMAT_LAYOUT: FormatLayout = {
   pageSize: 'A4',
+  orientation: 'portrait',
   marginTopMm: 20,
   marginRightMm: 20,
   marginBottomMm: 20,
@@ -459,6 +588,19 @@ export const DEFAULT_FORMAT_LAYOUT: FormatLayout = {
   fontWeightBody: 400,
   showFooter: true,
   contents: { ...DEFAULT_CONTENTS_STYLE },
+  columns: 1,
+  columnGapMm: 6,
+  grid: { ...DEFAULT_GRID },
+  chrome: { ...DEFAULT_CHROME },
+  numberedHeadings: true,
+  placed: [],
+  shapes: [],
+  links: [],
+  crossReferences: [],
+  defaultTableStyle: DEFAULT_TABLE_STYLE,
+  tableStyles: [],
+  tableBorder: 'brand-rule',
+  tableRowAlternate: 'brand-surface',
 };
 
 /** A stable, canonical key for the report-format review/compare surfaces. */
@@ -540,7 +682,12 @@ export function toContentsSpec(layout: FormatLayout): ContentsSpec | undefined {
  * ignored. Used by the report editor to hand the printed typography to the renderer (WP-C3).
  */
 export function layoutFromRow(row: Record<string, unknown> | null | undefined): FormatLayout {
-  const out: FormatLayout = { ...DEFAULT_FORMAT_LAYOUT, contents: { ...DEFAULT_CONTENTS_STYLE } };
+  const out: FormatLayout = {
+    ...DEFAULT_FORMAT_LAYOUT,
+    contents: { ...DEFAULT_CONTENTS_STYLE },
+    grid: { ...DEFAULT_GRID },
+    chrome: { ...DEFAULT_CHROME },
+  };
   if (!row) return out;
   const str = (k: keyof FormatLayout, allowed?: readonly string[]) => {
     const v = row[k as string];
@@ -553,15 +700,32 @@ export function layoutFromRow(row: Record<string, unknown> | null | undefined): 
     if (typeof v === 'number' && Number.isFinite(v)) (out[k] as unknown as number) = clamp(v, min, max);
   };
   str('pageSize', ['A4', 'Letter']);
+  str('orientation', ['portrait', 'landscape']);
   str('colourPrimary'); str('colourAccent'); str('colourText'); str('colourBackground');
   str('fontHeading'); str('fontBody');
+  str('tableBorder'); str('tableRowAlternate');
   num('marginTopMm', 0, 60); num('marginRightMm', 0, 60); num('marginBottomMm', 0, 60); num('marginLeftMm', 0, 60);
   num('fontSizePt', TYPOGRAPHY_LIMITS.fontSizePt.min, TYPOGRAPHY_LIMITS.fontSizePt.max);
   num('lineHeightPct', TYPOGRAPHY_LIMITS.lineHeightPct.min, TYPOGRAPHY_LIMITS.lineHeightPct.max);
   num('headingScalePct', TYPOGRAPHY_LIMITS.headingScalePct.min, TYPOGRAPHY_LIMITS.headingScalePct.max);
+  num('columns', PAGE_SETUP_LIMITS.columns.min, PAGE_SETUP_LIMITS.columns.max);
+  num('columnGapMm', PAGE_SETUP_LIMITS.columnGapMm.min, PAGE_SETUP_LIMITS.columnGapMm.max);
+  if (typeof row.numberedHeadings === 'boolean') out.numberedHeadings = row.numberedHeadings;
+  if (typeof row.defaultTableStyle === 'string' && (TABLE_STYLE_NAMES as readonly string[]).includes(row.defaultTableStyle)) {
+    out.defaultTableStyle = row.defaultTableStyle as TableStyleName;
+  }
   if (typeof row.fontWeightHeading === 'number') out.fontWeightHeading = resolveWeight(out.fontHeading, row.fontWeightHeading);
   if (typeof row.fontWeightBody === 'number') out.fontWeightBody = resolveWeight(out.fontBody, row.fontWeightBody);
   if (typeof row.showFooter === 'boolean') out.showFooter = row.showFooter;
+  // WP-D: the grid, chrome, shapes, placement, links, references and table styles are merged field by
+  // field, so a format saved before a field existed still yields a complete, valid design.
+  out.grid = mergeGrid(row.grid);
+  out.chrome = mergeChrome(row.chrome);
+  out.placed = mergePlaced(row.placed);
+  out.shapes = mergeShapes(row.shapes);
+  out.links = mergeLinks(row.links);
+  out.crossReferences = mergeReferences(row.crossReferences);
+  out.tableStyles = mergeTableStyles(row.tableStyles);
   // WP-T: merge a stored contents design onto the defaults, field by field, so a format saved before
   // a field existed still yields a complete, valid contents style.
   const rawContents = row.contents;
@@ -579,6 +743,101 @@ export function layoutFromRow(row: Record<string, unknown> | null | undefined): 
     }
   }
   return out;
+}
+
+function mergeGrid(raw: unknown): GridSpec {
+  const g: GridSpec = { ...DEFAULT_GRID };
+  if (!raw || typeof raw !== 'object') return g;
+  const r = raw as Record<string, unknown>;
+  if (typeof r.visible === 'boolean') g.visible = r.visible;
+  if (typeof r.snap === 'boolean') g.snap = r.snap;
+  if (typeof r.rulers === 'boolean') g.rulers = r.rulers;
+  if (typeof r.sizeMm === 'number' && Number.isFinite(r.sizeMm)) g.sizeMm = clamp(r.sizeMm, GRID_LIMITS.sizeMm.min, GRID_LIMITS.sizeMm.max);
+  if (r.subdivisions === 1 || r.subdivisions === 2 || r.subdivisions === 4) g.subdivisions = r.subdivisions;
+  return g;
+}
+
+function mergeChrome(raw: unknown): ChromeSpec {
+  const c: ChromeSpec = { ...DEFAULT_CHROME };
+  if (!raw || typeof raw !== 'object') return c;
+  const r = raw as Record<string, unknown>;
+  for (const k of ['headerLeft', 'headerCentre', 'headerRight', 'footerLeft', 'footerCentre', 'footerRight'] as const) {
+    if (typeof r[k] === 'string') c[k] = (r[k] as string).slice(0, 200);
+  }
+  for (const k of ['headerEnabled', 'footerEnabled', 'rule', 'onFirstPage'] as const) {
+    if (typeof r[k] === 'boolean') c[k] = r[k] as boolean;
+  }
+  if (typeof r.pageNumber === 'string' && (PAGE_NUMBER_STYLES as readonly string[]).includes(r.pageNumber)) {
+    c.pageNumber = r.pageNumber as ChromeSpec['pageNumber'];
+  }
+  return c;
+}
+
+function mergePlaced(raw: unknown): PlacedBlock[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter((p): p is Record<string, unknown> => Boolean(p) && typeof p === 'object')
+    .map((p) => {
+      const key = typeof p.key === 'string' ? p.key : '';
+      const base = defaultPlacedBlock(key);
+      const n = (v: unknown, fallback: number): number => (typeof v === 'number' && Number.isFinite(v) ? v : fallback);
+      return {
+        key,
+        page: Math.max(1, Math.round(n(p.page, base.page))),
+        column: Math.max(1, Math.round(n(p.column, base.column))),
+        xMm: typeof p.xMm === 'number' && Number.isFinite(p.xMm) ? Math.max(0, p.xMm) : null,
+        yMm: typeof p.yMm === 'number' && Number.isFinite(p.yMm) ? Math.max(0, p.yMm) : null,
+        wMm: Math.max(0, n(p.wMm, base.wMm)),
+      };
+    })
+    .filter((p) => p.key !== '');
+}
+
+function mergeShapes(raw: unknown): ShapeSpec[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter((s): s is Record<string, unknown> => Boolean(s) && typeof s === 'object')
+    .map((s, i) => shapeFromRow(s, i))
+    .filter((s) => s.id !== '');
+}
+
+function mergeLinks(raw: unknown): HyperlinkSpec[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter((l): l is Record<string, unknown> => Boolean(l) && typeof l === 'object')
+    .map((l, i) => ({
+      id: typeof l.id === 'string' && l.id ? l.id : `link-${i + 1}`,
+      label: typeof l.label === 'string' ? l.label.slice(0, LINK_LIMITS.labelMaxLength) : '',
+      url: typeof l.url === 'string' ? l.url.slice(0, LINK_LIMITS.urlMaxLength) : '',
+      underline: typeof l.underline === 'boolean' ? l.underline : true,
+    }))
+    .filter((l) => l.label !== '' || l.url !== '');
+}
+
+function mergeReferences(raw: unknown): CrossReferenceSpec[] {
+  if (!Array.isArray(raw)) return [];
+  const kinds: CrossReferenceSpec['kind'][] = ['heading', 'figure', 'table'];
+  return raw
+    .filter((r): r is Record<string, unknown> => Boolean(r) && typeof r === 'object')
+    .map((r, i) => ({
+      id: typeof r.id === 'string' && r.id ? r.id : `ref-${i + 1}`,
+      kind: kinds.includes(r.kind as CrossReferenceSpec['kind']) ? (r.kind as CrossReferenceSpec['kind']) : 'heading',
+      targetKey: typeof r.targetKey === 'string' ? r.targetKey.slice(0, LINK_LIMITS.targetMaxLength) : '',
+      label: typeof r.label === 'string' ? r.label.slice(0, LINK_LIMITS.labelMaxLength) : 'see',
+    }))
+    .filter((r) => r.targetKey !== '');
+}
+
+function mergeTableStyles(raw: unknown): { key: string; style: TableStyleName }[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter((t): t is Record<string, unknown> => Boolean(t) && typeof t === 'object')
+    .map((t) => ({
+      key: typeof t.key === 'string' ? t.key : '',
+      style: (typeof t.style === 'string' && (TABLE_STYLE_NAMES as readonly string[]).includes(t.style))
+        ? (t.style as TableStyleName) : DEFAULT_TABLE_STYLE,
+    }))
+    .filter((t) => t.key !== '');
 }
 
 /** The format hash used in a report's metadata: the published version's body hash. A report records
