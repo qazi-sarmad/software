@@ -30,7 +30,7 @@ or above its baseline.
 |---|---|---|
 | 0 Product Summary | Present | Full product, backend and RLS: `0008_rls.sql`; sql `01`,`02`,`03`; `e2e/phase7.spec.ts` |
 | 1 Laws | Present | L1 `0029_analyst_engine.sql`, `0088_claim_graph.sql`,`0089_phrase_library.sql` + guards `sourceGuards.test.ts`,`noAi.test.ts`; L2 sql `06`,`34`, connector egress allow-list `0090`; L4 Realtime + drilldowns + figure lineage panel; L5 sql `09`,`10`,`15`, `0088` issuance hash chain |
-| 2 Structure and Tenancy | Present | Hierarchy, single-universe engagement, platform-blind Present (sql `25`,`03`). Cross-universe view-only sharing Present: `0095_scale_harden_sharing_preflight.sql` (`universe_shares`, `share_grant`/`share_revoke`, `shared_universe_read`), `src/data/shares.ts`, `src/components/admin/SharePanel.tsx`, sql `100`,`103`, `e2e/wp6-system.spec.ts`. |
+| 2 Structure and Tenancy | Present | Hierarchy, single-universe engagement, platform-blind Present (sql `25`,`03`). Group / joint-audit sharing Present: `0102_group_joint_audit_sharing.sql` (`engagement_joint_shares`, `joint_share_grant`/`joint_share_revoke`, `joint_share_active` projection with edit rights to both parties), `src/data/shares.ts`, `src/components/admin/SharePanel.tsx`, sql `103`, `e2e/wp6-system.spec.ts`. The superseded view-only intra-tenant `universe_shares` model is removed; intra-tenant access is rights-driven. |
 | 3 Hosting and Client Access | Present | Login + RLS isolation + export Present. Phone viewport smoke Present (`e2e/s16-mobile.spec.ts`). Dedicated/self-hosted switch remains an owner action (infrastructure, not code). |
 | 4 Roles, Teams and Access | Present | sql `19`,`20`,`21`,`24`,`11`,`12`,`08`,`16`; guards `noRoleStrings`,`sourceGuards` |
 | 5 Navigation and Home | Present | `NavStrip.tsx` + test; `CommandPalette.tsx`; `PendingTasksTab.tsx`; `AuditFileModal.tsx` |
@@ -68,10 +68,13 @@ Closed by SCALE-1 (`feature/scale-harden-v1`, WP2). Every former Partial/Missing
 Present with working code and tests; the only items that remain are pure-owner actions against
 external services, listed last.
 
-1. **§2 cross-universe view-only sharing** — Present. `universe_shares` table, `share_grant` /
-   `share_revoke` RPCs (Level-1/Level-2 Head or Org Admin; revocation by the granting Head, a higher
-   Head or an Org Admin), `shared_universe_read` read-only projection, in-app + email notification,
-   `src/components/admin/SharePanel.tsx`, sql `100`,`103`, `e2e/wp6-system.spec.ts`.
+1. **§2 group / joint-audit sharing** — Present. `engagement_joint_shares` table, `joint_share_grant` /
+   `joint_share_revoke` RPCs (the `manage_engagements` right and a platform-recorded group
+   association; revocation records a reason), `joint_share_active` read/write projection that gives
+   both parties edit rights to the shared engagement and its working papers only, in-app + email
+   notification on grant, group configuration distribution, `src/components/admin/SharePanel.tsx`,
+   sql `103`, `e2e/wp6-system.spec.ts`. The former view-only `universe_shares` path is removed; the
+   RLS shape is documented in `docs/SCALE-DECISIONS.md`.
 2. **§10.1 configurable grace period before the hard lock** — Present. `testing_grace_hours` on
    `org_lifecycle_settings`, `testing_lock_active` grace window, `src/lib/lifecycle.ts`,
    `src/data/governance.ts`, sql `100`.

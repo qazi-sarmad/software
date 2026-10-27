@@ -10,10 +10,12 @@ owner), owner actions, and parked items. Cross-references: `docs/PARITY.md` (sta
 Closed on `feature/scale-harden-v1` (WP2). Each former Partial/Missing item is now Present in
 `docs/PARITY.md` with working code and tests. No item below is parked or awaiting a decision.
 
-1. **§2 cross-universe view-only sharing** — Present. `universe_shares` table, `share_grant` /
-   `share_revoke` RPCs (Level-1/Level-2 Head or Org Admin), `shared_universe_read` read-only
-   projection, in-app + email notification, `src/components/admin/SharePanel.tsx`, sql `100`,`103`,
-   `e2e/wp6-system.spec.ts`. RLS shape documented in `docs/SCALE-DECISIONS.md`.
+1. **§2 group / joint-audit sharing** — Present. `engagement_joint_shares` table, `joint_share_grant` /
+   `joint_share_revoke` RPCs (the `manage_engagements` right and a recorded group association),
+   `joint_share_active` projection giving both parties edit rights to the shared engagement and its
+   working papers only, in-app + email notification on grant, group configuration distribution,
+   `src/components/admin/SharePanel.tsx`, sql `103`, `e2e/wp6-system.spec.ts`. The former view-only
+   `universe_shares` path is removed; the RLS shape is documented in `docs/SCALE-DECISIONS.md`.
 2. **§10.1 configurable grace period before the Testing hard lock** — Present.
    `org_lifecycle_settings.testing_grace_hours`, `testing_lock_active` grace window, `src/lib/lifecycle.ts`,
    `src/data/governance.ts`, sql `100`.

@@ -133,3 +133,40 @@ the second `listCaps` call: the old pattern fails with the exact CI error, the w
 
 **What it constrains.** Any new test that drives a panel whose effect depends on a state it sets
 inside the same effect must wait for the load to settle, not merely for the first paint.
+
+## D-S2-JOINT-AUDIT-RLS — the corrected §2 model (group / joint-audit sharing)
+
+**Decision.** §2 is **group / joint-audit** sharing, not intra-tenant view-only sharing. Two
+*associated* group companies (a platform-recorded association) share one **engagement** with **edit
+rights to both parties**. The superseded `universe_shares` view-only model (D-S1-SHARE-RLS) is removed
+in `0102_group_joint_audit_sharing.sql`; intra-tenant access is rights-driven (`view_all_scopes` or a
+scope grant) and no dormant share path remains.
+
+**The shape (migration `0102_group_joint_audit_sharing.sql`).**
+
+- `engagement_joint_shares(id, engagement_id, owner_org_id, counterparty_org_id, rights, granted_by,
+  granted_at, expires_at, revoked_at, revoke_reason)`, RLS on. `rights` is constrained to `'edit'`;
+  the two orgs must differ; an expiry must be in the future. The select policy keeps
+  `owner_org_id = jwt_org_id() or counterparty_org_id = jwt_org_id()`.
+- The projection is **additive, never a relaxation**. `engagements_joint_select` is
+  `public.joint_share_active(id) and org_id = any(public.associated_org_ids())`; `entities_joint_select`
+  reaches the entity only through an engagement covered by a live share; the working-paper tables
+  (`workpapers`, `observations`, `caps`, `cap_items`, `conclusion_records`, `plan_items`,
+  `populations`, `analysis_results`, `evidence_files`, `preflight_acks`, `report_blocks`,
+  `report_versions`) get `*_joint_select` / `*_joint_insert` / `*_joint_update` policies gated on the
+  same predicate. Every pre-existing policy is left in place and Postgres ORs them, so normal tenant
+  data still requires `org_id = jwt_org_id()`.
+- `joint_share_active(p_engagement_id)` is `security definer` and org-scoped: it matches the caller's
+  org as owner or counterparty, `revoked_at is null`, and `(expires_at is null or expires_at > now())`.
+  The guard `src/guards/rlsOrgEquality.test.ts` lists it as an approved helper and asserts its own
+  definition carries `jwt_org_id()`.
+- **Rights checks.** `joint_share_grant(p_engagement_id, p_counterparty_org_id, p_expires_at)` requires
+  `caller_has_right('manage_engagements')`, requires the engagement to belong to the caller's org, and
+  requires `are_associated(v_org, p_counterparty_org_id)`. `joint_share_revoke(p_share_id, p_reason)`
+  records the reason. Both are `security definer` and append to the ledger.
+
+**What it constrains.** The `org_id = jwt_org_id()` equality is untouched for normal tenant data; a
+joint share only adds visibility for an *associated* org, on the *shared* engagement and its working
+papers. `e2e/rls.spec.ts` keeps an absolute "own org only" bound on the tables with no crossing path
+(`org_members`, `universes`, `roles`, `user_scopes`, `orgs`) and bounds `entities` to own-or-associated,
+so a row from a third org is still a failure.
