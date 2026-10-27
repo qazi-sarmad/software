@@ -65,7 +65,9 @@ export const Select: React.FC<SelectProps> = ({ value, options, onChange, ariaLa
       <button
         type="button"
         data-testid={testId}
-        aria-label={ariaLabel}
+        /* WCAG 2.5.3: the accessible name contains the visible label, so a speech-input user can
+           say what they see. The current selection is part of the name for the same reason. */
+        aria-label={current ? `${ariaLabel}, ${current.label}` : ariaLabel}
         aria-haspopup="listbox"
         aria-expanded={open}
         onClick={() => (open ? setOpen(false) : openList())}
