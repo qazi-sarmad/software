@@ -232,7 +232,7 @@ behaviour, or **remove it from the UI** and mark it deferred. No field may be vi
 | F100 | Explain layer (popout, drilldown, access-filtered) | `Wired` | `EXPLAIN-LAYER.md`; access-filtered through `src/lib/access.ts` | — |
 | F101 | Review comment thread | `Wired` | `CommentHistoryPanel` via `RecordContent` `comment_history`; non-modal | — |
 | F102 | Review comment popout (hover/focus) | `Absent` | One testid, no states, no inventory entry, no drilldown | S21 |
-| F103 | Dead comment dock removed | `Absent` | `ReviewCommentsDock.tsx` — mounted nowhere | S21 |
+| F103 | Dead comment dock removed | `Absent` | Deleted in U14/S21 after `node scripts/audit-wiring.mjs` reported no reachable caller; the live review surface is `CommentHistoryPanel` | S21 |
 | F104 | Theme presets (ledger, porcelain, bone) | `Wired` | `ThemeContext`, `data-preset`, full light+dark token blocks | — |
 | F105 | Additional themes (prism, bloom, slate) | `Absent` | §12.2 | U9 |
 | F106 | Audience profiles (Focus, Expressive, Aesthetic, Assurance) | `Absent` | §12.1 | U10 |

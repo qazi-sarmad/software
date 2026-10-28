@@ -250,7 +250,7 @@ is real.** A beautiful dashboard over an unwired engine is a better-looking lie.
 | U11 | Time-of-day phases: pure `resolveDayPhase(minuteOfDay)`, time as an argument | DEFERRED |
 | U12 | Motion system: four levels, token-driven durations, ten named animations, gates | DEFERRED |
 | U13 | Animated headers: token-driven gradient, never behind text, frozen under reduced motion | DEFERRED |
-| U14 | Dead comment dock removed (`ReviewCommentsDock.tsx`) — also listed as S21 | TODO |
+| U14 | Dead comment dock removed (`ReviewCommentsDock.tsx`) — also listed as S21 | DONE |
 
 ### Why the split falls where it does
 
