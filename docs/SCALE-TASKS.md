@@ -169,11 +169,42 @@ tests exercise) the in-memory demo path is kept unchanged.
 | 2.2 | Enforce `signoff_role_*` in `sign_planning` / `sign_conclusion` | DONE |
 | 2.3 | Enforce `testing_mode` (one-stage vs two-stage) | DONE |
 | 2.4 | Enforce `approval_chain` when an approval is decided | DONE |
-| 2.5 | Wire `runPreflight` into `freeze_report`; gate on `preflight_acks` | TODO |
+| 2.5 | Wire `runPreflight` into `freeze_report`; gate on `preflight_acks` | DONE |
 | 2.6 | Persist the report graph root (`report_graphs` writer) | TODO |
 | 2.7 | Seed `workpaper_rows` from `lock_sample`; link sample to tested rows | TODO |
 | 2.8 | Method-aware sampling (MUS/PPS, systematic, stratified) + Clopper-Pearson | TODO |
 | 2.9 | Value-coverage check (top-value items included or waived with a reason) | TODO |
+
+### Phase 2.5 — what was built and how it was verified (2026-10-28)
+
+Migration `supabase/migrations/0102_phase2_preflight_gate.sql` (new) and test
+`supabase/tests/103_phase2_preflight_gate.sql` (new, 11 assertions). The migration applies twice
+cleanly and the full SQL harness is green ("all SQL tests passed twice", 106 test files).
+
+- **The defect.** The §11.4 pre-flight engine (`src/lib/preflight.ts`, eight checks) had no caller but
+  its own unit test, and `freeze_report` (0040) gated on exactly two inline checks (open comments, CAP
+  reconciliation) and never consulted `preflight_acks`. A report could therefore be frozen and issued
+  with the pre-flight never executed. `grep -n 'runPreflight' src/` showed the only reference outside
+  the module was the test file.
+- **The fix.** The database is now the authority. `preflight_items(engagement_id)` computes every open
+  item from real tables (`conclusion_records.exceptions`, `workpaper_rows`, `samples`, `populations`,
+  `evidence_files`, `findings`, `report_comments`), one query per check key, and returns
+  `{check_key, item_id, detail}`. `preflight_blocking(engagement_id)` returns the items with no live
+  acknowledgement. `assert_preflight_clear(engagement_id)` raises `preflight_blocked` while any remain.
+  `freeze_report` is extended in place to call it after the existing two gates, so their specific
+  refusals are unchanged.
+- **`preflight_acks` is now genuinely append-only.** 0095 said so in prose but shipped no guard; 0102
+  adds a `before update or delete` trigger, so an edit or delete raises. The latest row per
+  (check, item) with a >=10-character reason is the live acknowledgement; history is kept.
+- **Wired, verified by grep.** `listPreflightItems` / `listPreflightBlocking` in
+  `src/data/preflight.ts`; `grep -n 'listPreflightBlocking' src/components/` shows the one component
+  caller, `ReportEditorPanel.tsx`, which renders the live list (`report-preflight-item-list`), colours
+  each item acknowledged/unacknowledged, lets a click fill the waive form, and blocks the freeze
+  button (`canFreeze`) until `preflightBlocking.length === 0`. The database gate is the enforcement;
+  the screen is the explanation.
+- **Gate set after the change:** `tsc` PASS; `vitest` PASS; `vite build` PASS; `check-shrink` PASS;
+  `check-tokens` PASS; `check-ui-contract` PASS; `check-tutorials` PASS; SQL harness PASS — "all SQL
+  tests passed twice" (106 test files).
 
 ### Phase 2.1–2.4 — what was built and how it was verified (2026-10-28)
 

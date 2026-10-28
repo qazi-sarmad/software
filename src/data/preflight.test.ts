@@ -1,10 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { acknowledgePreflight, listPreflightAcknowledgements } from './preflight';
+import {
+  acknowledgePreflight, listPreflightAcknowledgements, listPreflightBlocking, listPreflightItems,
+} from './preflight';
 
 /** With no Supabase environment variables the module is inert. No request leaves the process. */
 describe('pre-flight data module (not configured)', () => {
   it('reads return empty', async () => {
     expect(await listPreflightAcknowledgements('eng-1')).toEqual([]);
+    expect(await listPreflightItems('eng-1')).toEqual([]);
+    expect(await listPreflightBlocking('eng-1')).toEqual([]);
   });
 
   it('a write reports not configured', async () => {

@@ -1067,7 +1067,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Data modules:** none (pure/UI only)
 - **RPCs reachable via those modules:** none
 - **Tables reachable via those modules:** none
-- **Testids (16):** `audit-file`, `audit-file-as-of`, `audit-file-builder`, `audit-file-caps`, `audit-file-certificate`, `audit-file-conclusion`, `audit-file-documents`, `audit-file-export`, `audit-file-findings`, `audit-file-report`, `audit-file-stage`, `audit-file-unavailable`, `audit-file-workspace`, `tab-audit-file`, `workbench-action-error`, `workbench-signoff`
+- **Testids (18):** `audit-file`, `audit-file-advance-stage`, `audit-file-as-of`, `audit-file-builder`, `audit-file-caps`, `audit-file-certificate`, `audit-file-conclusion`, `audit-file-documents`, `audit-file-export`, `audit-file-findings`, `audit-file-report`, `audit-file-stage`, `audit-file-stage-error`, `audit-file-unavailable`, `audit-file-workspace`, `tab-audit-file`, `workbench-action-error`, `workbench-signoff`
 - **States:** loading; unavailable (`audit-file-unavailable`); ready; per-view empty states.
 - **Tutorial key:** — (no key)
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
@@ -1154,8 +1154,8 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Route / location:** Audit File window, view "Row testing" (`audit-file-view-rowtesting`).
 - **Rights required:** `perform_work` to record; `review_and_approve` to sign off; `can_reopen` to reopen.
 - **Data functions (`src/data/*.ts`):** `RowResult`, `WorkpaperRowRow`, `getWorkpaper`, `recordRow`, `reopenWorkpaper`, `signOffWorkpaper`
-- **Data modules:** `src/data/rowTesting.ts`
-- **RPCs reachable via those modules:** none
+- **Data modules:** `src/data/mutations.ts`, `src/data/rowTesting.ts`
+- **RPCs reachable via those modules:** `add_entity`
 - **Tables reachable via those modules:** `workpaper_rows`, `workpapers`
 - **Testids (10):** `rowtesting-empty`, `rowtesting-error`, `rowtesting-justification`, `rowtesting-loading`, `rowtesting-panel`, `rowtesting-preflight`, `rowtesting-reopen`, `rowtesting-signed-off`, `rowtesting-signoff`, `rowtesting-signoff-reason`
 - **States:** loading; empty; signed-off; preflight note; error inline.
@@ -1260,9 +1260,9 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Rights required:** `perform_work` to compose/comment; `approve_plan` to freeze.
 - **Data functions (`src/data/*.ts`):** `CapRow`, `ReportBlockRow`, `ReportCommentRow`, `ReportVersionRow`, `StoredReportFiles`, `acknowledgePreflight`, `addReportComment`, `checkCapReconciliation`, `freezeReport`, `getActiveReportLayout`, `issueReport`, `listCaps`, `listPreflightAcknowledgements`, `listReportBlocks`, `listReportComments`, `listReportVersions`, `openReportCommentCount`, `renderAndStoreReportFiles`, `resolveReportComment`
 - **Data modules:** `src/data/caps.ts`, `src/data/preflight.ts`, `src/data/reportFiles.ts`, `src/data/reports.ts`, `src/data/writing.ts`
-- **RPCs reachable via those modules:** `alert_list`, `check_cap_reconciliation`, `compute_report_summary`, `connector_egress_allowed`, `format_audience_list`, `format_list`, `open_report_comment_count`, `phrase_list`, `preflight_acks_get`, `store_report_file`
+- **RPCs reachable via those modules:** `alert_list`, `check_cap_reconciliation`, `compute_report_summary`, `connector_egress_allowed`, `format_audience_list`, `format_list`, `open_report_comment_count`, `phrase_list`, `preflight_acks_get`, `preflight_blocking`, `preflight_items`, `store_report_file`
 - **Tables reachable via those modules:** `caps`, `connector_instances`, `connector_runs`, `monitor_rules`, `phrase_reviews`, `report_blocks`, `report_comments`, `report_versions`, `staged_records`
-- **Testids (31):** `report-caps-note`, `report-comment-add`, `report-comment-input`, `report-comments`, `report-comments-empty`, `report-compose`, `report-editor`, `report-empty`, `report-error`, `report-file-docx`, `report-file-pdf`, `report-files`, `report-freeze`, `report-freeze-blocked`, `report-freeze-panel`, `report-issue`, `report-loading`, `report-notice`, `report-open-comments`, `report-placeholder-count`, `report-preflight-ack-check`, `report-preflight-ack-form`, `report-preflight-ack-item`, `report-preflight-ack-reason`, `report-preflight-ack-submit`, `report-preflight-acks`, `report-preflight-caps`, `report-preflight-comments`, `report-rights-note`, `report-section-empty`, `report-versions`
+- **Testids (33):** `report-caps-note`, `report-comment-add`, `report-comment-input`, `report-comments`, `report-comments-empty`, `report-compose`, `report-editor`, `report-empty`, `report-error`, `report-file-docx`, `report-file-pdf`, `report-files`, `report-freeze`, `report-freeze-blocked`, `report-freeze-panel`, `report-issue`, `report-loading`, `report-notice`, `report-open-comments`, `report-placeholder-count`, `report-preflight-ack-check`, `report-preflight-ack-form`, `report-preflight-ack-item`, `report-preflight-ack-reason`, `report-preflight-ack-submit`, `report-preflight-acks`, `report-preflight-blocking`, `report-preflight-caps`, `report-preflight-comments`, `report-preflight-item-list`, `report-rights-note`, `report-section-empty`, `report-versions`
 - **States:** loading; empty; comments; pre-flight; freeze blocked; frozen; error inline.
 - **Tutorial key:** — (no key)
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
@@ -1481,8 +1481,8 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 
 | RPC | Module | Parameters | Scope |
 |---|---|---|---|
-| `admin_upload_branding_asset` | `src/data/branding.ts` | `p_org`, `p_kind`, `p_filename`, `p_mime`, `p_base64` | platform |
 | `add_entity` | `src/data/mutations.ts` | `p_universe_id`, `p_name`, `p_kind` | tenant |
+| `admin_upload_branding_asset` | `src/data/branding.ts` | `p_org`, `p_kind`, `p_filename`, `p_mime`, `p_base64` | platform |
 | `alert_list` | `src/data/writing.ts` | `p_org` | tenant |
 | `automation_rule_list` | `src/data/automation.ts` | `p_org` | tenant |
 | `automation_rule_test` | `src/data/automation.ts` | `p_rule_id`, `p_sample` | tenant |
@@ -1565,6 +1565,8 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 | `populate_planning_suggestions` | `src/data/planning.ts` | `p_engagement_id` | tenant |
 | `population_archive_due` | `src/data/archival.ts` | `p_org_id` | tenant |
 | `preflight_acks_get` | `src/data/preflight.ts` | `p_engagement_id` | tenant |
+| `preflight_blocking` | `src/data/preflight.ts` | `p_engagement_id` | tenant |
+| `preflight_items` | `src/data/preflight.ts` | `p_engagement_id` | tenant |
 | `request_change` | `src/data/changeControl.ts` | `p_engagement_id`, `p_change_class`, `p_title`, `p_payload`, `p_klass` | tenant |
 | `request_extraction` | `src/data/documents.ts` | `p_file_id` | tenant |
 | `revert_prior_year_item` | `src/data/imports.ts` | `p_import_id` | tenant |
@@ -1594,8 +1596,8 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 
 - Screens documented: 93 (contract sections: 48 Appendix A + 44 Appendix B).
 - Tutorial keys: 80.
-- RPCs catalogued: 107.
-- Data modules: 53; exported data functions: 341.
+- RPCs catalogued: 110.
+- Data modules: 55; exported data functions: 357.
 - Contract testids not found verbatim in `src/` (placeholder or dynamic): 190.
   - audit-file-view-builder, audit-file-view-certificate, audit-file-view-conclusion, audit-file-view-documents, audit-file-view-ethics, audit-file-view-execution, audit-file-view-findings, audit-file-view-planning, audit-file-view-population, audit-file-view-report, audit-file-view-review, audit-file-view-rowtesting, audit-file-view-sampling, hosting-test, invite-user, issues-view-patterns, oa-branding-colour-accent, oa-branding-colour-background, oa-branding-colour-primary, oa-branding-colour-text, oa-branding-margin-0, oa-branding-margin-3, oa-certificate-enabled-verification, oa-escalation-result, oa-escalation-saved, oa-governance-signoff-conclusion, oa-governance-signoff-planning, oa-governance-signoff-testing, org-control-tab-auditors, org-control-tab-automation, org-control-tab-branding, org-control-tab-connectors, org-control-tab-features, org-control-tab-formats, org-control-tab-governance, org-control-tab-hosting, org-control-tab-people, org-control-tab-setup, org-control-tab-tutorials, prefers-reduced-motion …
 

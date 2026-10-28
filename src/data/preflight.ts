@@ -33,3 +33,36 @@ export function acknowledgePreflight(
     p_engagement_id: engagementId, p_check_key: check, p_item_id: itemId, p_reason: reason,
   }, NOT_CONFIGURED);
 }
+
+/** One open pre-flight item, as the database computed it (migration 0102). */
+export interface PreflightItemRow {
+  check: PreflightCheck;
+  itemId: string;
+  detail: string;
+}
+
+/** Every open pre-flight item for an engagement, from the database. Empty when not configured. */
+export async function listPreflightItems(engagementId: string): Promise<PreflightItemRow[]> {
+  const sb = getClient();
+  if (!sb) return [];
+  const { data, error } = await sb.rpc('preflight_items', { p_engagement_id: engagementId });
+  if (error || !Array.isArray(data)) return [];
+  return (data as Array<Record<string, unknown>>).map((row) => ({
+    check: row.check_key as PreflightCheck,
+    itemId: row.item_id as string,
+    detail: row.detail as string,
+  }));
+}
+
+/** The open items that carry no live acknowledgement: these block the freeze. */
+export async function listPreflightBlocking(engagementId: string): Promise<PreflightItemRow[]> {
+  const sb = getClient();
+  if (!sb) return [];
+  const { data, error } = await sb.rpc('preflight_blocking', { p_engagement_id: engagementId });
+  if (error || !Array.isArray(data)) return [];
+  return (data as Array<Record<string, unknown>>).map((row) => ({
+    check: row.check_key as PreflightCheck,
+    itemId: row.item_id as string,
+    detail: row.detail as string,
+  }));
+}

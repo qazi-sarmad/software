@@ -18,7 +18,7 @@ import { checkCapReconciliation, type CapRow, listCaps } from '../../data/caps';
 import { renderAndStoreReportFiles, type StoredReportFiles } from '../../data/reportFiles';
 import { getActiveReportLayout } from '../../data/writing';
 import type { FormatLayout } from '../../lib/writing/reportFormat';
-import { acknowledgePreflight, listPreflightAcknowledgements } from '../../data/preflight';
+import { acknowledgePreflight, listPreflightAcknowledgements, listPreflightBlocking, listPreflightItems, type PreflightItemRow } from '../../data/preflight';
 import { PREFLIGHT_CHECKS, type PreflightAcknowledgement } from '../../lib/preflight';
 import { hasRight } from '../../lib/rights';
 import { rightReason, rightReasonFor } from '../../lib/rightLabels';
@@ -62,6 +62,8 @@ export const ReportEditorPanel: React.FC<{ engagementId: string }> = ({ engageme
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [preflightAcks, setPreflightAcks] = useState<PreflightAcknowledgement[]>([]);
+  const [preflightItems, setPreflightItems] = useState<PreflightItemRow[]>([]);
+  const [preflightBlocking, setPreflightBlocking] = useState<PreflightItemRow[]>([]);
   const [ackCheck, setAckCheck] = useState<string>(PREFLIGHT_CHECKS[0]);
   const [ackItem, setAckItem] = useState('');
   const [ackReason, setAckReason] = useState('');
@@ -94,6 +96,12 @@ export const ReportEditorPanel: React.FC<{ engagementId: string }> = ({ engageme
       }
       setCaps(await listCaps(engagementId));
       setPreflightAcks(await listPreflightAcknowledgements(engagementId));
+      const [items, blocking] = await Promise.all([
+        listPreflightItems(engagementId),
+        listPreflightBlocking(engagementId),
+      ]);
+      setPreflightItems(items);
+      setPreflightBlocking(blocking);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not load the report.');
     } finally {
@@ -246,7 +254,7 @@ export const ReportEditorPanel: React.FC<{ engagementId: string }> = ({ engageme
   }
 
   const frozen = active?.status === 'frozen' || active?.status === 'issued_v1';
-  const canFreeze = openComments === 0 && capOk === true;
+  const canFreeze = openComments === 0 && capOk === true && preflightBlocking.length === 0;
 
   return (
     <div className="space-y-5" data-testid="report-editor">
@@ -400,7 +408,34 @@ export const ReportEditorPanel: React.FC<{ engagementId: string }> = ({ engageme
                 <li className={preflightAcks.length === 0 ? 'text-secondary' : 'text-verdigris'} data-testid="report-preflight-acks">
                   {preflightAcks.length} acknowledged pre-flight item{preflightAcks.length === 1 ? '' : 's'}
                 </li>
+                <li className={preflightBlocking.length === 0 ? 'text-verdigris' : 'text-cinnabar'} data-testid="report-preflight-blocking">
+                  {preflightBlocking.length === 0 ? '✓' : '✗'} {preflightItems.length} open pre-flight item{preflightItems.length === 1 ? '' : 's'}
+                  {preflightBlocking.length > 0 ? `, ${preflightBlocking.length} unacknowledged` : ''}
+                </li>
               </ul>
+              {/* §11.4: the live open items, computed by the database (migration 0102). Clicking one
+                  fills the waive form so an acknowledgement names the exact item. */}
+              {preflightItems.length > 0 && (
+                <ul className="space-y-1" data-testid="report-preflight-item-list">
+                  {preflightItems.map((it) => {
+                    const acked = !preflightBlocking.some((b) => b.check === it.check && b.itemId === it.itemId);
+                    return (
+                      <li key={`${it.check}:${it.itemId}`} className="flex items-start gap-2 text-apple-11">
+                        <span className={acked ? 'text-verdigris' : 'text-cinnabar'}>{acked ? '✓' : '✗'}</span>
+                        <button
+                          type="button"
+                          data-testid={`report-preflight-item-${it.check}-${it.itemId}`}
+                          onClick={() => { setAckCheck(it.check); setAckItem(it.itemId); }}
+                          className="text-left text-primary hover:underline"
+                        >
+                          <span className="font-semibold">{it.check}</span>
+                          <span className="text-secondary"> — {it.detail} ({it.itemId.slice(0, 8)})</span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
               {/* §11.4: an open item may be waived with a logged reason instead of blocking. */}
               <div className="space-y-2 rounded-xl border border-hairline p-3" data-testid="report-preflight-ack-form">
                 <div className="text-apple-11 text-secondary">
@@ -443,7 +478,7 @@ export const ReportEditorPanel: React.FC<{ engagementId: string }> = ({ engageme
               {!canFreeze && (
                 <div className="px-3 py-2 rounded-xl text-apple-12 text-cinnabar bg-cinnabar-subtle border border-cinnabar flex items-start gap-2" data-testid="report-freeze-blocked">
                   <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
-                  <span>Freeze is blocked until there are no open comments and CAP reconciliation passes.</span>
+                  <span>Freeze is blocked until there are no open comments, CAP reconciliation passes and every pre-flight item is acknowledged.</span>
                 </div>
               )}
               {caps.length === 0 && (
