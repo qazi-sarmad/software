@@ -22,10 +22,11 @@ import { OrgHostingPanel } from './OrgHostingPanel';
 import { OrgGovernancePanel } from './OrgGovernancePanel';
 import { SharePanel } from './SharePanel';
 import { IntegrityAlarmPanel } from './IntegrityAlarmPanel';
+import { AttestationPanel } from './AttestationPanel';
 import { InlineError } from '../common/InlineError';
-import { Check, Lock, Zap, Sliders, Users, Shield, ShieldAlert, History, Database } from '../common/Icons';
+import { Check, Lock, Zap, Sliders, Users, Shield, ShieldAlert, History, Database, FileCheck } from '../common/Icons';
 
-type Tab = 'features' | 'branding' | 'email' | 'automation' | 'escalation' | 'setup' | 'consultation' | 'auditors' | 'hosting' | 'governance' | 'history' | 'changes' | 'tutorials' | 'connectors' | 'formats' | 'sharing' | 'integrity';
+type Tab = 'features' | 'branding' | 'email' | 'automation' | 'escalation' | 'setup' | 'consultation' | 'auditors' | 'hosting' | 'governance' | 'history' | 'changes' | 'tutorials' | 'connectors' | 'formats' | 'sharing' | 'integrity' | 'attestation';
 type LoadState = 'loading' | 'ready' | 'error';
 
 /** F18: every configuration tab carries its own "Show me how" tutorial key (Appendix A). */
@@ -47,6 +48,7 @@ const TAB_TUTORIAL: Record<Tab, { key: string; title: string }> = {
   formats: { key: 'oa.formats', title: 'OA-24 report format editor' },
   sharing: { key: 'oa.governance', title: 'OA-22 governance settings' },
   integrity: { key: 'oa.governance', title: 'OA-29 integrity alarm' },
+  attestation: { key: 'oa.governance', title: 'OA-30 attestation' },
 };
 
 /**
@@ -151,6 +153,7 @@ export const OrgControlPanel: React.FC<{ initialTab?: Tab }> = ({ initialTab }) 
           { id: 'formats', label: 'Report formats', icon: Sliders },
           { id: 'sharing', label: 'Sharing', icon: Users },
           { id: 'integrity', label: 'Integrity', icon: ShieldAlert },
+          { id: 'attestation', label: 'Attestation', icon: FileCheck },
         ] as { id: Tab; label: string; icon: React.FC<{ className?: string }> }[]).map((t) => {
           const Icon = t.icon;
           return (
@@ -270,6 +273,7 @@ export const OrgControlPanel: React.FC<{ initialTab?: Tab }> = ({ initialTab }) 
       {tab === 'formats' && <ReportFormatPanel />}
       {tab === 'sharing' && <SharePanel />}
       {tab === 'integrity' && <IntegrityAlarmPanel screenId="OA-29" />}
+      {tab === 'attestation' && <AttestationPanel screenId="OA-30" />}
       {tab === 'hosting' && <OrgHostingPanel />}
       {tab === 'governance' && <OrgGovernancePanel />}
       {tab === 'history' && <OrgConfigHistory />}

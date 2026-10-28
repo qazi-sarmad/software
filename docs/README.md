@@ -15,6 +15,7 @@ There are nine documents you should trust. Everything else is history.
 | `iia-standards-reference.md` | Verified IIA 2024 standard numbers and titles (structure only). |
 | `SYSTELIGON.md` | The deterministic forensic engine: spec, boundary, stretch roadmap. |
 | `FONT-REPOSITORY.md` | Self-hosted fonts, licence metadata, template auto-detection. |
+| `ATTESTATION-VERIFICATION.md` | The third-party verification procedure (T4, §11.3): how an outsider re-derives a root from a portable attestation package with independent tooling. |
 | `BUILDER-PROMPT.md` | The paste-block for a fresh builder session (full scope, Phases 1-6). |
 | `SYSTELIGON-BUILDER-PROMPT.md` | The paste-block for **Builder B** — E1-E7 + E9-E10, the functional U rows (U1-U4, U6, U8, U14), S17-S21, T, D, F, G7-G10. The visual U rows and E8 are deferred pending the design language. |
 | `SYSTELIGON-TASKS.md` | The ledger for the concurrent Systeligon build. One branch, one ledger. |

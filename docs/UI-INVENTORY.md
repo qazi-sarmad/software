@@ -701,6 +701,24 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
   named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
 
+### `OA-30` — Attestation (T3/T4/T5, §11.3)
+
+- **Purpose:** The portable attestation package: list the organisation's signed subjects, build a self-contained package for one (roots, signatures, timestamps, the versions that scored it, the Merkle leaves and the verification instructions), export it as JSON, and verify a package — one built here or one dropped in from elsewhere — against its own contents and its embedded public keys. The verification is the same procedure the standalone verifier (`scripts/verify-attestation.mjs`) implements, so an outsider can re-derive the root without trusting the producer. This is tamper-evidence: it proves structure and provenance, not the truth of the underlying claims.
+- **Route / location:** The Assurance control plane (`org_control` inspector), tab `attestation`.
+- **Rights required:** an integrity owner — `review_and_approve` or `edit_config`, or a Level-1/Level-2 Head; the database RPCs (`attestation_subjects_list`, `attestation_input_get`) re-check the right and a caller without it is refused.
+- **Data functions (`src/data/*.ts`):** `AttestationSubjectRow`, `buildAttestationPackage`, `listAttestationSubjects`, `loadAttestationInput`, `parseAttestationPackage`, `verifyAttestationPackage`
+- **Data modules:** `src/data/attestation.ts`
+- **RPCs reachable via those modules:** `attestation_input_get`, `attestation_subjects_list`
+- **Tables reachable via those modules:** none
+- **Testids (24):** `OA-30-build-<id>`, `OA-30-empty`, `OA-30-error`, `OA-30-explain-attestation`, `OA-30-export`, `OA-30-headline`, `OA-30-icon`, `OA-30-leaf-count`, `OA-30-load-error`, `OA-30-loading`, `OA-30-merkle-root`, `OA-30-package`, `OA-30-package-root`, `OA-30-package-title`, `OA-30-panel`, `OA-30-problems`, `OA-30-signature-count`, `OA-30-subject-<id>`, `OA-30-subjects`, `OA-30-timestamp-count`, `OA-30-verdict`, `OA-30-verify-drop`, `OA-30-verify-drop-label`, `OA-30-versions`
+- **Explain ids (0):** — (no explain affordance)
+- **IIA standards addressed (0):** —
+- **Drilldown targets (0):** — (no aggregate)
+- **States:** loading; empty (nothing signed yet); ready with signed subjects; package built and verified; package built and NOT verified; error.
+- **Tutorial key:** — (no key)
+- **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
+  named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
+
 ### `OA-05` — roles and rights (S3)
 
 - **Purpose:** the role register and the rights matrix. A role is a named bundle of the 15 closed rights keys; the app and the database both check rights, never role names.
@@ -1820,6 +1838,8 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 | `add_entity` | `src/data/mutations.ts` | `p_universe_id`, `p_name`, `p_kind` | tenant |
 | `admin_upload_branding_asset` | `src/data/branding.ts` | `p_org`, `p_kind`, `p_filename`, `p_mime`, `p_base64` | platform |
 | `alert_list` | `src/data/writing.ts` | `p_org` | tenant |
+| `attestation_input_get` | `src/data/attestation.ts` | `p_kind`, `p_subject_id` | tenant |
+| `attestation_subjects_list` | `src/data/attestation.ts` | — | tenant |
 | `automation_rule_list` | `src/data/automation.ts` | `p_org` | tenant |
 | `automation_rule_test` | `src/data/automation.ts` | `p_rule_id`, `p_sample` | tenant |
 | `board_pack_get` | `src/data/boardPack.ts` | `p_id` | tenant |
@@ -1946,10 +1966,10 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 
 ## Coverage cross-check
 
-- Screens documented: 96 (contract sections: 48 Appendix A + 44 Appendix B).
+- Screens documented: 97 (contract sections: 48 Appendix A + 44 Appendix B).
 - Tutorial keys: 80.
-- RPCs catalogued: 126.
-- Data modules: 57; exported data functions: 381.
+- RPCs catalogued: 128.
+- Data modules: 58; exported data functions: 385.
 - Contract testids not found verbatim in `src/` (placeholder or dynamic): 193.
   - audit-file-view-builder, audit-file-view-certificate, audit-file-view-conclusion, audit-file-view-documents, audit-file-view-ethics, audit-file-view-execution, audit-file-view-findings, audit-file-view-planning, audit-file-view-population, audit-file-view-report, audit-file-view-review, audit-file-view-rowtesting, audit-file-view-sampling, data-front-door-kind, hosting-test, invite-user, issues-view-patterns, oa-branding-colour-accent, oa-branding-colour-background, oa-branding-colour-primary, oa-branding-colour-text, oa-branding-margin-0, oa-branding-margin-3, oa-certificate-enabled-verification, oa-escalation-result, oa-escalation-saved, oa-governance-signoff-conclusion, oa-governance-signoff-planning, oa-governance-signoff-testing, org-control-tab-auditors, org-control-tab-automation, org-control-tab-branding, org-control-tab-connectors, org-control-tab-features, org-control-tab-formats, org-control-tab-governance, org-control-tab-hosting, org-control-tab-people, org-control-tab-setup, org-control-tab-tutorials …
 

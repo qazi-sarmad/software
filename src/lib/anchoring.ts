@@ -80,6 +80,9 @@ export interface CryptoLike {
     verify(
       algorithm: { name: string } | null, key: unknown, signature: Uint8Array, data: Uint8Array
     ): Promise<boolean>;
+    /** SHA-256 of a buffer. Optional here: this module never hashes, but the attestation package
+     *  (src/lib/attestation.ts) reuses the injected crypto and needs it. */
+    digest?(algorithm: string, data: Uint8Array): Promise<ArrayBuffer>;
   };
 }
 

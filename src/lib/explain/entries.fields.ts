@@ -628,4 +628,14 @@ export const TERM_ENTRIES: ExplainEntry[] = [
     related: ['term.redaction'],
     source: 'src/lib/rights.ts',
   },
+  {
+    id: 'term.attestation',
+    kind: 'term',
+    title: 'Attestation package',
+    summary: 'A self-contained artifact that carries the roots, the signatures over them, the timestamps, the versions that scored it and the procedure to re-derive it all.',
+    effect: 'An outsider can confirm nothing changed without trusting the producer, using their own tooling.',
+    iiaStandards: ['14.6', '15.1'],
+    related: ['term.graph_root', 'term.merkle_leaf', 'term.sealed'],
+    source: 'SYSTELIGON.md §11.3',
+  },
 ];

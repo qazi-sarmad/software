@@ -157,9 +157,9 @@ feature to be testable.
 | F66 | Ledger verification | `Wired` | `ledger_continuity_check` (0112) wraps `verify_ledger`, raises an incident on a break; `IntegrityAlarmPanel.tsx` offers "Verify the ledger now" | T7 |
 | F67 | Public verification route | `Wired` | `PublicVerifyRoute` — anonymous, rate-limited | — |
 | F68 | Guided integrity incident wizard | `Absent` | §11.3a | T6 |
-| F69 | Portable attestation package | `Absent` | §11.3 | T3 |
-| F70 | Third-party verification | `Absent` | §11.3 | T4 |
-| F71 | Attestation screen | `Absent` | §11.3 | T5 |
+| F69 | Portable attestation package | `Wired` | `buildAttestationPackage` + `attestation_input_get` (0113); `AttestationPanel.tsx` is the OA-30 surface | T3 |
+| F70 | Third-party verification | `Wired` | `verifyAttestationPackage` + the standalone `scripts/verify-attestation.mjs`; both implement the documented procedure in `docs/ATTESTATION-VERIFICATION.md` | T4 |
+| F71 | Attestation screen | `Wired` | `AttestationPanel.tsx` (OA-30, the `org_control` `attestation` tab) — view, export, verify | T5 |
 
 ---
 
@@ -278,18 +278,19 @@ Each is a pure function under `src/lib/`, with direct unit tests and a screen su
 
 | Status | Count |
 |---|---|
-| `Wired` | 67 |
+| `Wired` | 70 |
 | `Inert` | 23 |
-| `Absent` | 35 |
+| `Absent` | 32 |
 | **Total** | **125** |
 
 **Read that again, with the correction applied.** This is materially better than the first pass
 reported, because Phases 1 and 2 of the scale-harden build closed the whole foundation, the S17-S20
-work packages closed the evidence-bytes and SIRA-write-path gaps, and T7 closed the tamper alarm and
-the ledger verification. The picture now: **67 wired, 23 inert, 35 absent.** The remaining `Inert`
-rows are the genuine, still-open unwired features — the monitor runtime, the alert persistence and
-delivery, the connector adapters. Every one of those is a defect, and every one looks like a working
-feature in the UI.
+work packages closed the evidence-bytes and SIRA-write-path gaps, T7 closed the tamper alarm and
+the ledger verification, and T3/T4/T5 closed the portable attestation package, the third-party
+verifier and the attestation screen. The picture now: **70 wired, 23 inert, 32 absent.** The remaining
+`Inert` rows are the genuine, still-open unwired features — the monitor runtime, the alert persistence
+and delivery, the connector adapters. Every one of those is a defect, and every one looks like a
+working feature in the UI.
 
 **The order of work is not negotiable, and R1 and R2 are already done.** R1 (the app reads its own
 database) and R2 (the lifecycle is real) closed in Phases 1-2. R3 (the configuration is honest) is

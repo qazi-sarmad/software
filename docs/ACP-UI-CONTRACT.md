@@ -1273,6 +1273,17 @@ The tamper alarm: read the organisation's integrity alerts (severity-split by th
 - **States:** loading; empty (no alerts — the verified state); ready with incidents/warnings; acknowledged; verify result; error.
 - **Tutorial key:** —
 
+## OA-30 — Attestation (T3/T4/T5, §11.3)
+
+The portable attestation package: list the organisation's signed subjects, build a self-contained package for one (roots, signatures, timestamps, the versions that scored it, the Merkle leaves and the verification instructions), export it as JSON, and verify a package — one built here or one dropped in from elsewhere — against its own contents and its embedded public keys. The verification is the same procedure the standalone verifier (`scripts/verify-attestation.mjs`) implements, so an outsider can re-derive the root without trusting the producer. This is tamper-evidence: it proves structure and provenance, not the truth of the underlying claims.
+
+- **Route:** The Assurance control plane (`org_control` inspector), tab `attestation`.
+- **Rights:** an integrity owner — `review_and_approve` or `edit_config`, or a Level-1/Level-2 Head; the database RPCs (`attestation_subjects_list`, `attestation_input_get`) re-check the right and a caller without it is refused.
+- **Data:** `AttestationSubjectRow`, `listAttestationSubjects`, `loadAttestationInput`, `buildAttestationPackage`, `parseAttestationPackage`, `verifyAttestationPackage` — through `src/data/*.ts` and `src/lib/*.ts`; components never import the database client (rule M8).
+- **Testids:** `OA-30-build-<id>`, `OA-30-empty`, `OA-30-error`, `OA-30-explain-attestation`, `OA-30-export`, `OA-30-headline`, `OA-30-icon`, `OA-30-leaf-count`, `OA-30-load-error`, `OA-30-loading`, `OA-30-merkle-root`, `OA-30-package`, `OA-30-package-root`, `OA-30-package-title`, `OA-30-panel`, `OA-30-problems`, `OA-30-signature-count`, `OA-30-subject-<id>`, `OA-30-subjects`, `OA-30-timestamp-count`, `OA-30-verdict`, `OA-30-verify-drop`, `OA-30-verify-drop-label`, `OA-30-versions`
+- **States:** loading; empty (nothing signed yet); ready with signed subjects; package built and verified; package built and NOT verified; error.
+- **Tutorial key:** —
+
 ## SA-16 — Guided provisioning (SCALE-1, WP3)
 
 The guided zero-to-first-report path: create an organisation, set its entitlements and invite cap, configure the platform email sender, read the readiness checks (roles, status, invite, sender, engagement) and activate the tenant.

@@ -251,9 +251,9 @@ the S18/S19 section above), so this prerequisite no longer blocks anything.
 
 | # | Task | Status |
 |---|---|---|
-| T3 | Portable attestation package: roots, signatures, timestamps, the rule versions that scored it, verification instructions | TODO |
-| T4 | Third-party verifier: a documented procedure usable with independent tooling | TODO |
-| T5 | Attestation screen: view, export, verify | TODO |
+| T3 | Portable attestation package: roots, signatures, timestamps, the rule versions that scored it, verification instructions | DONE |
+| T4 | Third-party verifier: a documented procedure usable with independent tooling | DONE |
+| T5 | Attestation screen: view, export, verify | DONE |
 | T6 | Guided integrity incident wizard: what changed, by whom, what it affects; then restore / re-derive / freeze / escalate, each with a reason, append-only, verify afterwards | TODO |
 | T7 | WIRE THE EXISTING ALARM — `listIntegrityAlerts()` has zero callers; no migration emits a notification | DONE |
 
@@ -275,6 +275,30 @@ a break. The surface is `IntegrityAlarmPanel.tsx` (OA-29, the `org_control` `int
 `IntegrityAlarmBanner.tsx` (DB-01). `src/lib/integrityAlarm.ts` is the pure labelling/summary layer,
 pinned to the SQL rule by a parity test. SQL test `112_integrity_alarm.sql`; vitest
 `src/lib/integrityAlarm.test.ts` and `src/data/archival.integrityAlarm.test.ts`.
+
+### T3/T4/T5 — what was built (2026-10-28)
+
+The cryptographic spine (0096 signing keys, signatures, timestamps, trust anchors; 0103 report graphs
+and the Merkle root) already existed. What was missing was a portable artifact an outsider could check
+without our code, the published procedure to check it, and a screen to build and verify one.
+
+| Piece | What it does |
+|---|---|
+| `supabase/migrations/0113_attestation_package.sql` | Adds `report_claims.leaf_hash` and redefines `report_graph_commit` to record it — the gap that made the root un-re-foldable off-database, because the canonical claim text is not kept and a leaf cannot be recovered from `claim_hash`. Adds `attestation_input_get(kind, subject_id)` — one security-definer read that gathers a subject's roots, versions (incl. the distinct rule packs), Merkle leaves, signatures, public keys, timestamp tokens and ledger seq, for `report_graph_root` / `engagement_certificate` / `board_pack_data_hash`. Adds `attestation_subjects_list()` — the signed subjects an integrity owner can build a package for. Both refuse a caller who is not an integrity owner (`review_and_approve`/`edit_config`/Head/platform admin). |
+| `src/lib/attestation.ts` | The PURE package model: `buildAttestationPackage` (time is an argument; the package root is the SHA-256 of the canonical package without `packageRoot`), `packageRoot`, `merkleRootOfLeafHashes` (the exact mirror of `report_graph_root_of`: `'01'` node prefix, odd node promoted), `verifyAttestationPackage` (re-derives the root, re-folds the leaves, verifies every Ed25519 signature against the embedded keys, and returns a verdict — never throws), `parseAttestationPackage`, and `ATTESTATION_INSTRUCTIONS` (the procedure, as data). Only hashes, signatures, public keys, timestamps and version ids are carried (Law L2). |
+| `scripts/verify-attestation.mjs` | The STANDALONE third-party verifier: a self-contained Node script that imports only `node:crypto`/`node:fs`. It re-derives the package root, re-folds the Merkle root, verifies every Ed25519 signature (rebuilding the SPKI from the raw 32-byte key itself) and checks an `--expect-root` you supply. Exit 0 passes, 1 fails, with each step printed. This is the "independent tooling" half of T4. |
+| `docs/ATTESTATION-VERIFICATION.md` | The published procedure (T4), written for an outsider: what a package is, what it proves and what it does not, and the six steps to verify it in any language. |
+| `src/data/attestation.ts` | The data module: `loadAttestationInput`, `listAttestationSubjects` — thin RPC wrappers; no component imports the client (M8). Inert (empty / null) with no Supabase environment. |
+| `src/components/admin/AttestationPanel.tsx` | The OA-30 surface: lists signed subjects, builds a package for one, verifies it in place, exports it as JSON, and verifies a package dropped in from elsewhere. It re-checks nothing about tenant access itself — the RPCs do — and it never claims more than the package proves. Wired as the `attestation` tab of the `org_control` inspector. |
+
+**The two verifiers are the same procedure, and a test enforces it.** `src/lib/attestation.standalone.test.ts`
+builds a package with the in-product code and runs `scripts/verify-attestation.mjs` as a separate Node
+process; both must reach the same verdict on a good package and on a tampered one. A divergence is a
+build failure. Tests: `src/lib/attestation.test.ts` (15) + `src/lib/attestation.standalone.test.ts` (3);
+SQL `supabase/tests/113_attestation_package.sql` (19 assertions, applied twice).
+
+**Boundary (never blurred).** A package proves structure and provenance, not the truth of the claims.
+It is tamper-EVIDENCE, not tamper-prevention.
 
 ---
 
