@@ -231,8 +231,8 @@ behaviour, or **remove it from the UI** and mark it deferred. No field may be vi
 |---|---|---|---|---|
 | F100 | Explain layer (popout, drilldown, access-filtered) | `Wired` | `EXPLAIN-LAYER.md`; access-filtered through `src/lib/access.ts` | — |
 | F101 | Review comment thread | `Wired` | `CommentHistoryPanel` via `RecordContent` `comment_history`; non-modal | — |
-| F102 | Review comment popout (hover/focus) | `Absent` | One testid, no states, no inventory entry, no drilldown | S21 |
-| F103 | Dead comment dock removed | `Absent` | Deleted in U14/S21 after `node scripts/audit-wiring.mjs` reported no reachable caller; the live review surface is `CommentHistoryPanel` | S21 |
+| F102 | Review comment popout (hover/focus) | `Wired` | `CommentPopout.tsx` renders the access-filtered `commentPopout` model (`src/lib/commentPopout.ts`, pure) on the shared `HoverPreview` chrome; `CommentHistoryPanel.tsx` mounts it per comment and drives the search / cycle / status states and the `CH-07-drilldown` drilldown (contract CH-07) | S21 |
+| F103 | Dead comment dock removed | `Wired` | the dead ReviewCommentsDock was deleted in U14/S21 after `node scripts/audit-wiring.mjs` reported no reachable caller; the live review surface is `CommentHistoryPanel` | S21 |
 | F104 | Theme presets (ledger, porcelain, bone) | `Wired` | `ThemeContext`, `data-preset`, full light+dark token blocks | — |
 | F105 | Additional themes (prism, bloom, slate) | `Absent` | §12.2 | U9 |
 | F106 | Audience profiles (Focus, Expressive, Aesthetic, Assurance) | `Absent` | §12.1 | U10 |
@@ -278,15 +278,15 @@ Each is a pure function under `src/lib/`, with direct unit tests and a screen su
 
 | Status | Count |
 |---|---|
-| `Wired` | 62 |
+| `Wired` | 64 |
 | `Inert` | 25 |
-| `Absent` | 38 |
+| `Absent` | 36 |
 | **Total** | **125** |
 
 **Read that again, with the correction applied.** This is materially better than the first pass
 reported, because Phases 1 and 2 of the scale-harden build closed the whole foundation, and the S17-S20
-work packages closed the evidence-bytes and SIRA-write-path gaps. The picture now: **62 wired, 25
-inert, 38 absent.** The remaining `Inert` rows are the genuine, still-open unwired features — the
+work packages closed the evidence-bytes and SIRA-write-path gaps. The picture now: **64 wired, 25
+inert, 36 absent.** The remaining `Inert` rows are the genuine, still-open unwired features — the
 monitor runtime, the tamper alarm, the ledger verification. Every one of those is a defect, and every
 one looks like a working feature in the UI.
 

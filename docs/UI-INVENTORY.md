@@ -1735,6 +1735,24 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
   named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
 
+### `CH-07` — Review comment history and popout (S21)
+
+- **Purpose:** The live review-comment surface: one comment's dialogue, or the full review trail across cycles. Each row carries the access-filtered hover/focus popout (author, age, workpaper, engagement, status, resolution path) and the open/cleared counts drill to the exact comments behind them. Non-blocking throughout.
+- **Route / location:** The `comment_history` inspector window, opened from the review dock ("View full comment history") and the Work Queue.
+- **Rights required:** any member that may read audit working records; an observer (read-only with `view_all_scopes`) and a configuration-only principal see the redacted popout, never the text.
+- **Data functions (`src/data/*.ts`):** `ageLabel`, `canViewComment`, `commentAgeDays`, `commentPopout`
+- **Data modules:** none (pure/UI only)
+- **RPCs reachable via those modules:** none
+- **Tables reachable via those modules:** none
+- **Testids (17):** `CH-07-comment-empty`, `CH-07-comment-list`, `CH-07-comment-popout-<id>`, `CH-07-comment-search`, `CH-07-comment-cycle-filter`, `CH-07-comment-status-all`, `CH-07-comment-status-open`, `CH-07-comment-status-cleared`, `CH-07-comment-<id>`, `CH-07-comment-age-<id>`, `CH-07-comment-state-<id>`, `CH-07-comment-resolution-<id>`, `CH-07-comment-open-<id>`, `CH-07-comment-reply-input-<id>`, `CH-07-comment-reply-<id>`, `CH-07-bubble-mine`, `CH-07-bubble-other`
+- **Explain ids (0):** — (no explain affordance)
+- **IIA standards addressed (0):** —
+- **Drilldown targets (1):** `CH-07-comment-status-open` → comments
+- **States:** single comment; full history; search; cycle filter; open/cleared filter; redacted (viewer may not read); empty ("no comments match"); drilldown open.
+- **Tutorial key:** — (no key)
+- **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
+  named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
+
 ## Chrome behaviour reference
 
 The chrome is present on every authenticated screen and is the only thing that moves the user
@@ -1908,7 +1926,7 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 
 ## Coverage cross-check
 
-- Screens documented: 94 (contract sections: 48 Appendix A + 44 Appendix B).
+- Screens documented: 95 (contract sections: 48 Appendix A + 44 Appendix B).
 - Tutorial keys: 80.
 - RPCs catalogued: 124.
 - Data modules: 57; exported data functions: 379.

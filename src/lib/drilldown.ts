@@ -13,11 +13,12 @@ import type {
   AuditEngagement,
   AuditIssue,
   AuditObservation,
+  ReviewComment,
   WorkingPaper,
 } from '../types';
 
 /** The record families a dashboard number can summarise. */
-export type DrillKind = 'entities' | 'engagements' | 'issues' | 'workpapers' | 'caps' | 'observations';
+export type DrillKind = 'entities' | 'engagements' | 'issues' | 'workpapers' | 'caps' | 'observations' | 'comments';
 
 export const DRILL_KINDS: DrillKind[] = [
   'entities',
@@ -26,6 +27,7 @@ export const DRILL_KINDS: DrillKind[] = [
   'workpapers',
   'caps',
   'observations',
+  'comments',
 ];
 
 /** One row in a drilldown: the minimum needed to name it and to open its record. */
@@ -56,6 +58,7 @@ export interface DrillSource {
   workpapers: WorkingPaper[];
   caps: AuditCapItem[];
   observations: AuditObservation[];
+  comments: ReviewComment[];
 }
 
 /** Rows whose department matches, when the target names one. Entities have no department link here. */
@@ -107,6 +110,13 @@ export function drillItems(kind: DrillKind, source: DrillSource, department?: st
         title: o.title,
         subtitle: o.status,
         badge: o.severity,
+      }));
+    case 'comments':
+      return source.comments.map((c) => ({
+        id: c.id,
+        title: c.text,
+        subtitle: `${c.authorName} · ${c.createdAt.slice(0, 10)}`,
+        badge: c.status === 'cleared' || c.resolved ? 'cleared' : 'open',
       }));
   }
 }

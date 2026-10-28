@@ -119,6 +119,10 @@ const source: DrillSource = {
   workpapers: [workpaper('w1', true), workpaper('w2', false)],
   caps: [cap('c1', 'Open', 'Treasury'), cap('c2', 'Closed', 'Treasury'), cap('c3', 'Overdue', 'Trading')],
   observations: [observation('o1')],
+  comments: [
+    { id: 'cm1', workpaperId: 'w1', authorId: 'u1', authorName: 'A', authorRole: 'reviewer', text: 'check this', createdAt: '2026-01-01', resolved: false },
+    { id: 'cm2', workpaperId: 'w1', authorId: 'u1', authorName: 'A', authorRole: 'reviewer', text: 'done', createdAt: '2026-01-02', resolved: true },
+  ],
 };
 
 describe('drilldown predicates (E5/U1)', () => {

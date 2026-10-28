@@ -26,6 +26,7 @@ const source: DrillSource = {
   workpapers: [],
   caps: [],
   observations: [],
+  comments: [],
 };
 
 describe('DrilldownPanel (E5/U1)', () => {

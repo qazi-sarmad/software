@@ -37,6 +37,7 @@ export const ExecutiveDashboardTab: React.FC = () => {
     scopedWorkpapers,
     scopedObservations,
     filteredCapItems,
+    scopedComments,
   } = useScopedData();
   const filter = useFilterStore();
   const { setActiveTab, setSelectedEngagementId, openInspector, applyPlanItemDates } = useApp();
@@ -52,8 +53,9 @@ export const ExecutiveDashboardTab: React.FC = () => {
       workpapers: scopedWorkpapers,
       caps: filteredCapItems,
       observations: scopedObservations,
+      comments: scopedComments,
     }),
-    [scopedEntities, filteredEngagements, scopedIssues, scopedWorkpapers, filteredCapItems, scopedObservations]
+    [scopedEntities, filteredEngagements, scopedIssues, scopedWorkpapers, filteredCapItems, scopedObservations, scopedComments]
   );
 
   // Open a drilldown row in the existing record drilldown (RecordView / FloatingWindowManager).

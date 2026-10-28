@@ -313,6 +313,7 @@ export const CapRadialTracker: React.FC<CapRadialTrackerProps> = ({
       workpapers: [],
       caps: scoped,
       observations: [],
+      comments: [],
     };
   }, [departments, currentDeptData]);
 

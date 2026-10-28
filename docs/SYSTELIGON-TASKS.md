@@ -140,7 +140,7 @@ to the harness seed, not to this branch's scope.
 | S18 | SIRA continuity: carry-forward pack on publish, seed next cycle, anomalies propose emergent risk | DONE |
 | S19 | Two-key SIRA acceptance: finaliser endorses, auditor accepts, publish blocked while proposed | DONE |
 | S20 | EVIDENCE STORAGE — the most serious gap. Buckets, `storage_path`, real upload, re-derive on verify | DONE |
-| S21 | Review comment popout: testids, states, inventory entry, hover popout, drilldown; delete the dead dock | TODO |
+| S21 | Review comment popout: testids, states, inventory entry, hover popout, drilldown; delete the dead dock | DONE |
 
 ### S17 — what was built (2026-10-28)
 
@@ -217,6 +217,24 @@ were not stored. The size cap is enforced in the database, not only the request.
 (applied twice, green) proves the row, the org-prefix refusal, the cap, the hash shape, a matching
 verify, a mismatching verify that raises an alert, `no_stored_bytes`, cross-org refusal and the
 anonymous refusal.
+
+### S21 — what was built (2026-10-28)
+
+The thinnest surface in the product, closed. `CommentHistoryPanel` had ONE testid (`bubble-mine`/
+`bubble-other`), no screenId prefix, no documented states, no inventory entry and no drilldown; and
+`ReviewCommentsDock.tsx` was mounted nowhere.
+
+| Piece | What it does |
+|---|---|
+| `src/lib/commentPopout.ts` | The PURE popout model: `commentPopout({comment, workpaper, engagement, todayIso, viewer})` returns author, role, age (`commentAgeDays`/`ageLabel`, time as an argument), workpaper ref/title, engagement, status + label, the resolution path as a rule, and the comment body. `canViewComment` mirrors `filterComments` in `src/lib/access.ts`: a configuration-only principal and an observer (read-only with `view_all_scopes`) are refused, and the model then returns `status: 'redacted'` with a reason and `text: null` — it NEVER returns nothing and never leaks the body (Law L2). |
+| `src/components/reviews/CommentPopout.tsx` | The hover/focus popout, on the shared `HoverPreview` chrome (the same portal every explain affordance uses). Non-blocking: a `role="tooltip"` popover, never a modal; the trigger is focusable and opens on focus. |
+| `src/components/reviews/CommentHistoryPanel.tsx` | Every element now carries a `CH-07-*` testid; full history mode with search, cycle filter and open/cleared status pills; single-comment mode; the redacted viewer; the guided empty state; the reply thread and composer; and the per-row popout trigger. The open count opens the `CH-07-drilldown` panel with the exact comments behind it (E5/U1), `role="complementary"`, deep-linkable via `#drill=comments`. |
+| `src/lib/drilldown.ts` | A new `comments` family so the count and its drilldown read the SAME filtered rows. Declared in `src/lib/drilldownAggregates.ts` (G8). |
+| `src/components/reviews/ReviewCommentsDock.tsx` | Deleted (U14/S21) after `node scripts/audit-wiring.mjs` reported no reachable caller. The live review surface is `CommentHistoryPanel`, reachable via the `comment_history` inspector. |
+
+Contract section CH-07 added to `docs/ACP-UI-CONTRACT.md`; `docs/UI-INVENTORY.md` regenerated (95
+screens). Tests: `src/lib/commentPopout.test.ts` (12, incl. the redaction guard) and
+`src/components/reviews/CommentHistoryPanel.test.tsx` (8, pinning every CH-07 state).
 
 ### S18/S19 prerequisite (historical) — the SIRA write path was inert
 

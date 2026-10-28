@@ -56,6 +56,12 @@ export const AGGREGATE_SURFACES: AggregateSurface[] = [
     label: 'CAP hub total',
     drill: 'caps',
   },
+  {
+    screenId: 'CH-07',
+    testId: 'CH-07-comment-status-open',
+    label: 'Open review comments',
+    drill: 'comments',
+  },
 ];
 
 /** Every aggregate that declares a drill target. */

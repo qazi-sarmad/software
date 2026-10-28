@@ -1206,6 +1206,18 @@ The audit calendar: the day detail panel opened from the header calendar.
 - **States:** loading; day detail; empty.
 - **Tutorial key:** —
 
+## CH-07 — Review comment history and popout (S21)
+
+The live review-comment surface: one comment's dialogue, or the full review trail across cycles. Each row carries the access-filtered hover/focus popout (author, age, workpaper, engagement, status, resolution path) and the open/cleared counts drill to the exact comments behind them. Non-blocking throughout.
+
+- **Route:** The `comment_history` inspector window, opened from the review dock ("View full comment history") and the Work Queue.
+- **Rights:** any member that may read audit working records; an observer (read-only with `view_all_scopes`) and a configuration-only principal see the redacted popout, never the text.
+- **Data:** `commentPopout`, `commentAgeDays`, `ageLabel`, `canViewComment` (`src/lib/commentPopout.ts`) — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `CH-07-comment-empty`, `CH-07-comment-list`, `CH-07-comment-popout-<id>`, `CH-07-comment-search`, `CH-07-comment-cycle-filter`, `CH-07-comment-status-all`, `CH-07-comment-status-open`, `CH-07-comment-status-cleared`, `CH-07-comment-<id>`, `CH-07-comment-age-<id>`, `CH-07-comment-state-<id>`, `CH-07-comment-resolution-<id>`, `CH-07-comment-open-<id>`, `CH-07-comment-reply-input-<id>`, `CH-07-comment-reply-<id>`, `CH-07-bubble-mine`, `CH-07-bubble-other`
+- **States:** single comment; full history; search; cycle filter; open/cleared filter; redacted (viewer may not read); empty ("no comments match"); drilldown open.
+- **Drilldown (E5/U1):** the open/cleared counts open the exact comments behind them in the non-blocking `DrilldownPanel` (testid prefix `CH-07-drilldown`), deep-linkable via `#drill=comments`.
+- **Tutorial key:** —
+
 ## OA-25 — Cross-universe view-only sharing (SCALE-1, §2)
 
 Grant, view and revoke an intra-organisation, view-only share of a universe to a same-tenant member, and (in grantee mode) read the universes shared with me.
