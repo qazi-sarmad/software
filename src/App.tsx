@@ -114,6 +114,19 @@ const AppContent: React.FC = () => {
   const { activeTab, inspector, closeInspector, ledgerError, currentUser } = useApp();
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
 
+  // Cmd/Ctrl-K opens the palette from anywhere (U2). Bound here, on the shell, so the shortcut works
+  // whichever screen has focus; the palette itself only handles Escape.
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsCommandPaletteOpen((open) => !open);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
+
   // One floating window for the current inspector record. The window id is derived from the record
   // so a re-opened record reuses the same window (and the dock restores it, not duplicates it).
   const inspectorWindow: OpenWindow | null = inspector.type

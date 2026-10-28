@@ -8,7 +8,7 @@ Certificate and External auditor surfaces) and Appendix B (the core audit worksp
 chrome), so every screen a redesign must draw is here. Screens are grouped by area; each entry
 gives screenId, purpose, route, rights, data functions, RPCs/tables, every data-testid, states,
 tutorial key and connections. The RPC catalogue at the end lists every `platform_*` and
-tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to regenerate; the
+tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to regenerate; the
 `uiInventory` guard fails if this file drifts from the contract.
 
 ## How to read a screen entry
@@ -241,7 +241,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **RPCs reachable via those modules:** `automation_rule_list`, `automation_rule_test`, `notification_template_list`
 - **Tables reachable via those modules:** `automation_events_catalogue`
 - **Testids (43):** `superadmin-automation`, `superadmin-automation-loading`, `superadmin-automation-error`, `superadmin-automation-result`, `superadmin-automation-saved`, `superadmin-automation-empty`, `superadmin-automation-tabs`, `superadmin-automation-tab-rules`, `superadmin-automation-tab-templates`, `rule-key`, `rule-name`, `rule-event`, `rule-enabled`, `rule-add-condition`, `rule-no-conditions`, `rule-condition-<i>`, `rule-condition-field-<i>`, `rule-condition-op-<i>`, `rule-condition-value-<i>`, `rule-condition-remove-<i>`, `rule-add-action`, `rule-no-actions`, `rule-action-<i>`, `rule-action-type-<i>`, `rule-action-message-<i>`, `rule-action-remove-<i>`, `rule-save`, `rule-list`, `rule-<key>`, `rule-test-<key>`, `rule-test-output`, `template-event`, `template-subject`, `template-blocks`, `template-block-<i>`, `template-block-text-<i>`, `template-block-up-<i>`, `template-block-down-<i>`, `template-block-remove-<i>`, `template-add-<type>`, `template-save`, `template-list`, `template-<eventKey>`
-- **Explain ids (2):** `field.config.report_opinion_required`, `field.config.testing_grace_hours`
+- **Explain ids (0):** — (no explain affordance)
 - **IIA standards addressed (0):** —
 - **Drilldown targets (0):** — (no aggregate)
 - **States:** loading, error (with Retry), empty (no rules / no platform sender), ready. The test output panel appears only after a test and always says "nothing was sent".
@@ -477,7 +477,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **RPCs reachable via those modules:** `automation_rule_list`, `automation_rule_test`, `notification_template_list`
 - **Tables reachable via those modules:** `automation_events_catalogue`
 - **Testids (33):** `org-automation`, `org-automation-loading`, `org-automation-error`, `org-automation-result`, `org-automation-saved`, `org-automation-empty`, `org-automation-new`, `org-automation-editor`, `org-rule-key`, `org-rule-name`, `org-rule-event`, `org-rule-enabled`, `org-rule-add-condition`, `org-rule-condition-<i>`, `org-rule-condition-field-<i>`, `org-rule-condition-op-<i>`, `org-rule-condition-value-<i>`, `org-rule-condition-remove-<i>`, `org-rule-add-action`, `org-rule-action-<i>`, `org-rule-action-type-<i>`, `org-rule-action-message-<i>`, `org-rule-action-remove-<i>`, `org-rule-save`, `org-rule-cancel`, `org-rule-list`, `org-rule-<key>`, `org-rule-copy-<key>`, `org-rule-edit-<key>`, `org-rule-test-<key>`, `org-rule-test-output`, `org-template-list`, `org-template-<eventKey>`
-- **Explain ids (0):** — (no explain affordance)
+- **Explain ids (1):** `term.invite`
 - **IIA standards addressed (1):** `11.1`
 - **Drilldown targets (0):** — (no aggregate)
 - **States:** loading, error (with Retry), empty (no rules), ready. A platform template offers "Copy and change"; a tenant rule offers "Change".
@@ -495,7 +495,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **RPCs reachable via those modules:** `invite_status`, `invite_user_capped`
 - **Tables reachable via those modules:** `org_members`, `roles`, `user_scopes`
 - **Testids (14):** `people-admin-panel`, `admin-people`, `admin-invite`, `admin-invite-sent`, `admin-error`, `oa-accept`, `oa-accept-token`, `oa-accept-email`, `oa-accept-password`, `oa-accept-submit`, `oa-accept-error`, `oa-accept-hint`, `oa-accept-done`, `oa-accept-continue`
-- **Explain ids (1):** `term.invite`
+- **Explain ids (0):** — (no explain affordance)
 - **IIA standards addressed (0):** —
 - **Drilldown targets (0):** — (no aggregate)
 - **States:** ready; the confirmation reads "Invitation queued for <email>". An invalid address keeps the button disabled. A cap breach or a missing right shows the RPC's message in `admin-error`. Acceptance: idle; busy; the token pre-filled from the link; a short password or a missing code is refused inline; email confirmation required is stated plainly; done.
@@ -693,7 +693,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **RPCs reachable via those modules:** `invite_status`, `invite_user_capped`
 - **Tables reachable via those modules:** `org_members`, `roles`, `user_scopes`
 - **Testids (11):** `people-admin-panel`, `admin-roles`, `admin-roles-readonly`, `admin-create-role`, `role-<slug>`, `admin-loading`, `admin-people-empty`, `admin-provision`, `admin-scopes`, `admin-grant-scope`, `admin-set-cap`
-- **Explain ids (1):** `term.invite`
+- **Explain ids (0):** — (no explain affordance)
 - **IIA standards addressed (6):** `2.1`, `2.2`, `5.1`, `5.2`, `6.1`, `7.1`
 - **Drilldown targets (0):** — (no aggregate)
 - **States:** loading, load error (`admin-load-error`), read-only without `edit_config` (`admin-roles-readonly`), ready; an inline error on a refused write (`admin-error`).
@@ -729,7 +729,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **RPCs reachable via those modules:** `certificate_config_get`, `certificate_get`, `certificate_list`, `verify_board_pack`, `verify_certificate`, `verify_report_root`
 - **Tables reachable via those modules:** none
 - **Testids (15):** `oa-certificate-config`, `oa-certificate-field-<key>`, `oa-certificate-enabled-<key>`, `engagement_id`, `engagement_title`, `organisation`, `engagement_root_hash`, `issued_at`, `sealed_workpapers`, `findings_count`, `sealing_actors`, `verification`, `free_text`, `oa-certificate-field-engagement_id`, `oa-certificate-enabled-verification`
-- **Explain ids (216):** `field.config.approval_chain`, `field.config.escalation_hours`, `field.config.escalation_role`, `field.config.invite_cap`, `field.config.report_opinion_required`, `field.config.signoff_role_conclusion`, `field.config.signoff_role_planning`, `field.config.signoff_role_testing`, `field.config.sla_hours`, `field.config.testing_grace_hours`, `field.config.testing_mode`, `field.engagement.stage`, `field.evidence.content_sha256`, `field.population.row_count`, `field.workpaper.status`, `method.haphazard`, `method.high_value`, `method.low_value`, `method.mus`, `method.random`, `method.stratified`, `method.systematic`, `screen.AF-01`, `screen.AF-02`, `screen.AF-03`, `screen.AF-04`, `screen.AF-05`, `screen.AF-06`, `screen.AF-07`, `screen.AF-08`, `screen.AF-09`, `screen.AF-10`, `screen.AF-11`, `screen.AF-12`, `screen.AF-13`, `screen.AF-14`, `screen.AP-01`, `screen.AP-02`, `screen.AP-03`, `screen.AP-04`, `screen.AP-05`, `screen.AU-01`, `screen.AU-02`, `screen.AX-01`, `screen.AX-02`, `screen.CH-01`, `screen.CH-02`, `screen.CH-03`, `screen.CH-04`, `screen.CH-05`, `screen.CH-06`, `screen.DB-01`, `screen.EX-01`, `screen.EX-02`, `screen.EX-03`, `screen.EX-04`, `screen.GL-01`, `screen.GL-02`, `screen.IR-01`, `screen.IR-02`, `screen.IR-03`, `screen.IR-04`, `screen.IR-05`, `screen.OA-01`, `screen.OA-02`, `screen.OA-03`, `screen.OA-04`, `screen.OA-05`, `screen.OA-08`, `screen.OA-09`, `screen.OA-10`, `screen.OA-11`, `screen.OA-12`, `screen.OA-13`, `screen.OA-14`, `screen.OA-15`, `screen.OA-16`, `screen.OA-17`, `screen.OA-18`, `screen.OA-19`, `screen.OA-20`, `screen.OA-21`, `screen.OA-22`, `screen.OA-23`, `screen.OA-24`, `screen.OA-25`, `screen.OA-26`, `screen.OA-27`, `screen.OA-28`, `screen.SA-01`, `screen.SA-02`, `screen.SA-03`, `screen.SA-04`, `screen.SA-05`, `screen.SA-07`, `screen.SA-08`, `screen.SA-09`, `screen.SA-10`, `screen.SA-11`, `screen.SA-12`, `screen.SA-13`, `screen.SA-14`, `screen.SA-15`, `screen.SA-16`, `screen.SA-17`, `screen.SR-01`, `screen.SR-02`, `screen.SR-03`, `screen.TUT-01`, `screen.WK-01`, `screen.WK-02`, `screen.WK-03`, `screen.WK-04`, `screen.WK-05`, `screen.WK-06`, `screen.WK-08`, `screen.WK-09`, `screen.WK-10`, `screen.WK-11`, `screen.WQ-01`, `standard.1.1`, `standard.1.2`, `standard.1.3`, `standard.10.1`, `standard.10.2`, `standard.10.3`, `standard.11.1`, `standard.11.2`, `standard.11.3`, `standard.11.4`, `standard.11.5`, `standard.12.1`, `standard.12.2`, `standard.12.3`, `standard.13.1`, `standard.13.2`, `standard.13.3`, `standard.13.4`, `standard.13.5`, `standard.13.6`, `standard.14.1`, `standard.14.2`, `standard.14.3`, `standard.14.4`, `standard.14.5`, `standard.14.6`, `standard.15.1`, `standard.15.2`, `standard.2.1`, `standard.2.2`, `standard.2.3`, `standard.3.1`, `standard.3.2`, `standard.4.1`, `standard.4.2`, `standard.4.3`, `standard.5.1`, `standard.5.2`, `standard.6.1`, `standard.6.2`, `standard.6.3`, `standard.7.1`, `standard.7.2`, `standard.8.1`, `standard.8.2`, `standard.8.3`, `standard.8.4`, `standard.9.1`, `standard.9.2`, `standard.9.3`, `standard.9.4`, `standard.9.5`, `status.alert.hash_mismatch`, `status.alert.ledger_chain`, `status.cap.closed`, `status.cap.open`, `status.cap.overdue`, `status.engagement.closed`, `status.engagement.draft`, `status.engagement.in_progress`, `status.engagement.reopened`, `status.engagement.signed_off`, `status.workpaper.ready_for_review`, `status.workpaper.signed_off`, `step.conclusion_signoff`, `step.evidence_verify`, `step.header_confirmation`, `step.planning_signoff`, `step.reopen`, `step.seal`, `step.testing_signoff`, `term.access_right`, `term.action_plan`, `term.chain_of_custody`, `term.coverage`, `term.exception`, `term.finding`, `term.graph_root`, `term.inclusion_proof`, `term.inherent_risk`, `term.integrity_alert`, `term.invite`, `term.ledger`, `term.materiality`, `term.merkle_leaf`, `term.observation`, `term.override`, `term.population`, `term.precision`, `term.redaction`, `term.residual_risk`, `term.risk_rating`, `term.root_cause`, `term.sample`, `term.sealed`, `term.upper_error_limit`
+- **Explain ids (0):** — (no explain affordance)
 - **IIA standards addressed (0):** —
 - **Drilldown targets (0):** — (no aggregate)
 - **States:** loading, error, ready; the read-only view without `edit_config`.
@@ -983,7 +983,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **RPCs reachable via those modules:** `compute_report_summary`, `open_report_comment_count`
 - **Tables reachable via those modules:** `report_blocks`, `report_comments`, `report_versions`
 - **Testids (76):** `audit-file-builder`, `audit-file-view-builder`, `wk-report-builder-panel`, `wk-report-builder-loading`, `wk-report-builder-error`, `wk-report-builder-error-message`, `wk-report-builder-retry`, `wk-report-builder-denied`, `wk-report-builder-denied-error`, `wk-report-builder-controls`, `wk-report-builder-model`, `wk-report-builder-formality`, `wk-report-builder-tone`, `wk-report-builder-voice`, `wk-report-builder-locale`, `wk-report-builder-hashes`, `wk-report-builder-graph-root`, `wk-report-builder-render-hash`, `wk-report-builder-model-name`, `wk-report-builder-pane-claims`, `wk-report-builder-pane-coverage`, `wk-report-builder-pane-contradictions`, `wk-report-builder-pane-excluded`, `wk-report-builder-pane-compare`, `wk-report-builder-pane-figures`, `wk-report-builder-claims`, `wk-report-builder-claim-<id>`, `wk-report-builder-claim-<id>-text`, `wk-report-builder-claim-<id>-phrase`, `wk-report-builder-claim-<id>-provenance`, `wk-report-builder-claim-<id>-lineage`, `wk-report-builder-claim-<id>-provenance-panel`, `wk-report-builder-claim-<id>-trace-ok`, `wk-report-builder-claim-<id>-counterfactual`, `wk-report-builder-lineage-<figureId>`, `wk-report-builder-lineage-<figureId>-description`, `wk-report-builder-lineage-<figureId>-count`, `wk-report-builder-lineage-<figureId>-records`, `wk-report-builder-coverage`, `wk-report-builder-coverage-status`, `wk-report-builder-coverage-missing`, `wk-report-builder-coverage-duplicated`, `wk-report-builder-coverage-orphaned`, `wk-report-builder-contradictions`, `wk-report-builder-contradictions-empty`, `wk-report-builder-contradiction-<ruleId>`, `wk-report-builder-excluded`, `wk-report-builder-excluded-empty`, `wk-report-builder-excluded-<observationId>`, `wk-report-builder-compare`, `wk-report-builder-compare-summary`, `wk-report-builder-compare-changed-<claimId>`, `wk-report-builder-compare-registers`, `wk-report-builder-figure-studio`, `wk-report-builder-figure-note`, `wk-report-builder-figure-presets`, `wk-report-builder-figure-preset-<name>`, `wk-report-builder-figure-expression`, `wk-report-builder-figure-help`, `wk-report-builder-figure-min-x`, `wk-report-builder-figure-max-x`, `wk-report-builder-figure-title`, `wk-report-builder-figure-label`, `wk-report-builder-figure-colours`, `wk-report-builder-figure-colour-<name>`, `wk-report-builder-figure-preview`, `wk-report-builder-figure-preview-svg`, `wk-report-builder-figure-error`, `wk-report-builder-figure-add`, `wk-report-builder-figure-added`, `wk-report-builder-figure-limits`, `wk-report-builder-figures-added`, `wk-report-builder-figure-added-<i>`, `wk-report-builder-freeze`, `wk-report-builder-freeze-run`, `wk-report-builder-freeze-result`
-- **Explain ids (6):** `field.engagement.stage`, `status.engagement.closed`, `status.engagement.draft`, `status.engagement.in_progress`, `status.engagement.reopened`, `status.engagement.signed_off`
+- **Explain ids (0):** — (no explain affordance)
 - **IIA standards addressed (2):** `11.2`, `15.1`
 - **Drilldown targets (0):** — (no aggregate)
 - **States:** loading ("Composing the report…"); an inline error with a retry; a denied state for a caller without the right; ready, with the five panes and the freeze panel. The coverage pane names each missing, duplicated and orphaned item; the freeze panel lists every blocker or states that the freeze is allowed with the graph root and render hash.
@@ -1059,7 +1059,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **RPCs reachable via those modules:** `plan_approval_config`, `plan_history`
 - **Tables reachable via those modules:** `plan_items`, `plans`
 - **Testids (7):** `gantt-approve-shift`, `gantt-shift-error`, `DB-01-cap-hub-drilldown`, `DB-01-tile-entities`, `DB-01-tile-engagements`, `DB-01-tile-issues`, `DB-01-tile-workpapers`
-- **Explain ids (0):** — (no explain affordance)
+- **Explain ids (1):** `standard.12.2`
 - **IIA standards addressed (1):** `12.2`
 - **Drilldown targets (5):** `DB-01-tile-entities` → entities, `DB-01-tile-engagements` → engagements, `DB-01-tile-issues` → issues, `DB-01-tile-workpapers` → workpapers, `DB-01-cap-hub-drilldown` → caps
 - **States:** loading (skeleton tiles); empty (no engagements in scope); ready; the Board Pack block carries its own loading/empty/error states.
@@ -1077,7 +1077,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **RPCs reachable via those modules:** none
 - **Tables reachable via those modules:** none
 - **Testids (7):** `pending-comments`, `tab-pending`, `WQ-01-front-door`, `WQ-01-front-door-count`, `WQ-01-front-door-summary`, `WQ-01-front-door-empty`, `WQ-01-front-door-list`
-- **Explain ids (0):** — (no explain affordance)
+- **Explain ids (4):** `standard.10.2`, `standard.12.2`, `standard.13.5`, `standard.8.2`
 - **IIA standards addressed (4):** `10.2`, `12.2`, `13.5`, `8.2`
 - **Drilldown targets (0):** — (no aggregate)
 - **States:** loading; empty per section ("Nothing awaiting you"); ready; error inline.
@@ -1095,7 +1095,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **RPCs reachable via those modules:** none
 - **Tables reachable via those modules:** none
 - **Testids (3):** `add-entity-form`, `add-entity-open`, `db-entities`
-- **Explain ids (0):** — (no explain affordance)
+- **Explain ids (1):** `standard.9.1`
 - **IIA standards addressed (1):** `9.1`
 - **Drilldown targets (0):** — (no aggregate)
 - **States:** loading; empty (no universes/entities); ready; denied on the add form without `edit_config`.
@@ -1131,7 +1131,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **RPCs reachable via those modules:** `deploy_engagement`, `ethics_status`, `plan_approval_config`, `plan_history`
 - **Tables reachable via those modules:** `activity_log`, `deployment_requests`, `plan_items`, `plans`
 - **Testids (11):** `engagement-signoff`, `plan-action-error`, `plan-open-combined`, `plan-open-ethics`, `plan-open-gate`, `plan-open-items`, `plan-records`, `plan-records-error`, `plan-records-gates`, `plan-records-items`, `plan-records-versions`
-- **Explain ids (0):** — (no explain affordance)
+- **Explain ids (3):** `standard.13.3`, `standard.9.2`, `standard.9.4`
 - **IIA standards addressed (3):** `13.3`, `9.2`, `9.4`
 - **Drilldown targets (0):** — (no aggregate)
 - **States:** loading; empty; ready.
@@ -1221,7 +1221,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **RPCs reachable via those modules:** `plan_approval_config`, `plan_history`, `sira_model_snapshot`
 - **Tables reachable via those modules:** `plan_items`, `plans`, `sira_cycles`, `sira_emergent_risks`, `sira_scores`
 - **Testids (9):** `sira-load-error`, `sira-open-cycles`, `sira-open-model`, `sira-persisted`, `sira-persisted-cycles`, `sira-persisted-model`, `sira-persisted-plan`, `sira-table`, `tab-sira`
-- **Explain ids (0):** — (no explain affordance)
+- **Explain ids (4):** `standard.13.2`, `standard.9.1`, `standard.9.2`, `standard.9.4`
 - **IIA standards addressed (4):** `13.2`, `9.1`, `9.2`, `9.4`
 - **Drilldown targets (0):** — (no aggregate)
 - **States:** loading; empty; persisted/not-persisted banner; ready.
@@ -1275,7 +1275,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **RPCs reachable via those modules:** none
 - **Tables reachable via those modules:** none
 - **Testids (18):** `audit-file`, `audit-file-advance-stage`, `audit-file-as-of`, `audit-file-builder`, `audit-file-caps`, `audit-file-certificate`, `audit-file-conclusion`, `audit-file-documents`, `audit-file-export`, `audit-file-findings`, `audit-file-report`, `audit-file-stage`, `audit-file-stage-error`, `audit-file-unavailable`, `audit-file-workspace`, `tab-audit-file`, `workbench-action-error`, `workbench-signoff`
-- **Explain ids (8):** `field.engagement.stage`, `status.engagement.closed`, `status.engagement.draft`, `status.engagement.in_progress`, `status.engagement.reopened`, `status.engagement.signed_off`, `status.workpaper.ready_for_review`, `status.workpaper.signed_off`
+- **Explain ids (6):** `field.engagement.stage`, `status.engagement.closed`, `status.engagement.draft`, `status.engagement.in_progress`, `status.engagement.reopened`, `status.engagement.signed_off`
 - **IIA standards addressed (3):** `10.2`, `13.5`, `14.6`
 - **Drilldown targets (0):** — (no aggregate)
 - **States:** loading; unavailable (`audit-file-unavailable`); ready; per-view empty states.
@@ -1437,7 +1437,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **RPCs reachable via those modules:** `missing_readability_sections`
 - **Tables reachable via those modules:** `findings`, `issues`, `observations`, `severity_levels`
 - **Testids (8):** `findings-empty`, `findings-error`, `findings-loading`, `findings-panel`, `issue-create`, `issue-title`, `issues-empty`, `severity-legend`
-- **Explain ids (2):** `field.config.report_opinion_required`, `field.config.testing_grace_hours`
+- **Explain ids (0):** — (no explain affordance)
 - **IIA standards addressed (3):** `1.1`, `13.1`, `14.3`
 - **Drilldown targets (0):** — (no aggregate)
 - **States:** loading; empty (`issues-empty`); ready; error inline.
@@ -1455,7 +1455,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **RPCs reachable via those modules:** `request_extraction`, `search_documents`
 - **Tables reachable via those modules:** `evidence_files`
 - **Testids (9):** `document-empty`, `document-error`, `document-list`, `document-list-empty`, `document-list-toggle`, `document-loading`, `document-results`, `document-search`, `document-viewer`
-- **Explain ids (0):** — (no explain affordance)
+- **Explain ids (1):** `field.evidence.content_sha256`
 - **IIA standards addressed (2):** `14.6`, `5.2`
 - **Drilldown targets (0):** — (no aggregate)
 - **States:** loading; empty; search results; error inline.
@@ -1527,7 +1527,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **RPCs reachable via those modules:** none
 - **Tables reachable via those modules:** none
 - **Testids (3):** `cap-engagement-picker`, `cap-no-engagement`, `issues-cap-register-section`
-- **Explain ids (0):** — (no explain affordance)
+- **Explain ids (5):** `standard.1.1`, `standard.13.1`, `standard.14.3`, `standard.14.4`, `standard.15.2`
 - **IIA standards addressed (5):** `1.1`, `13.1`, `14.3`, `14.4`, `15.2`
 - **Drilldown targets (0):** — (no aggregate)
 - **States:** loading; empty; ready; per-view states.
@@ -1647,18 +1647,18 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 
 ### `CH-03` — Command palette (S1)
 
-- **Purpose:** The keyboard palette for jumping to a screen or a record.
-- **Route / location:** A non-blocking overlay opened from the header search.
-- **Rights required:** any signed-in member.
-- **Data functions (`src/data/*.ts`):** none (pure/UI only)
+- **Purpose:** The keyboard palette for jumping to a screen, a record, an action or an explain entry. Cmd/Ctrl-K
+- **Route / location:** A non-blocking dropdown anchored below the header, never a modal.
+- **Rights required:** any signed-in member; actions that need a right are hidden from a caller who lacks it (`visibleCommands`).
+- **Data functions (`src/data/*.ts`):** `useScopedData`
 - **Data modules:** none (pure/UI only)
 - **RPCs reachable via those modules:** none
 - **Tables reachable via those modules:** none
-- **Testids (1):** `command-palette`
-- **Explain ids (0):** — (no explain affordance)
+- **Testids (8):** `command-palette`, `command-palette-input`, `command-palette-close`, `command-palette-empty`, `command-palette-explain`, `command-palette-item-<id>`, `command-palette-option-<id>`, `command-palette-group-<kind>`
+- **Explain ids (dynamic):** dynamic (a mount resolves its id at runtime; the screen may open any entry)
 - **IIA standards addressed (0):** —
 - **Drilldown targets (0):** — (no aggregate)
-- **States:** hidden; open with results; no results.
+- **States:** hidden; open with results (screens, then actions, then explain, then records); no results ("No matches within your permissions."); an explain row opened inline, non-modally.
 - **Tutorial key:** — (no key)
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
   named in the purpose. The chrome that carries every hop is listed under *Common chrome*.

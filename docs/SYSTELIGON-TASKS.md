@@ -201,6 +201,7 @@ requirement, and the thing that makes the product teachable without a manual.
 | E8 | `PencilGuide` + guidance data for guided first-run and per-screen "show me" | DEFERRED (design language) |
 | E9 | Gates G7 (explain coverage), G8 (drilldown), G9 (IIA honesty) + tests | DONE |
 | E10 | Extend `UI-INVENTORY.md` with explain ids, standards and drilldown targets per screen | DONE |
+| E10 fix | Explain-id attribution was substring-inferred across all of `src/`, so a screen with bare field-name testids absorbed the whole catalogue (OA-10 claimed 216 ids) and a screen that mounts `StandardsAffordance` claimed none (DB-01 = 0). Replaced with `src/lib/uiInventoryAttribution.ts` (the real mount, read from JSX, not a name grep); `uiInventory.test.ts` now regenerates the doc and fails on any drift | DONE |
 
 ### The access rule that makes this safe (Law L2)
 
@@ -238,7 +239,7 @@ is real.** A beautiful dashboard over an unwired engine is a better-looking lie.
 | # | Task | Status |
 |---|---|---|
 | U1 | Every dashboard number drills to its exact filtered records | DONE |
-| U2 | Command palette (Cmd/Ctrl-K) | TODO |
+| U2 | Command palette (Cmd/Ctrl-K) | DONE |
 | U3 | Work queue as the front door | DONE |
 | U4 | Live activity spine on the existing `liveSync` transport | TODO |
 | U5 | Motion that signals state change only; universal `prefers-reduced-motion` | DEFERRED (motion curves are design) |

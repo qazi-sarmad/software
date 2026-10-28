@@ -1140,14 +1140,22 @@ The header: the compact search that opens the command palette, the profile menu 
 
 ## CH-03 — Command palette (S1)
 
-The keyboard palette for jumping to a screen or a record.
+The keyboard palette for jumping to a screen, a record, an action or an explain entry. Cmd/Ctrl-K
+opens it anywhere.
 
-- **Route:** A non-blocking overlay opened from the header search.
-- **Rights:** any signed-in member.
-- **Data:** none (pure/UI only) — through `src/data/*.ts`; components never import the database client (rule M8).
-- **Testids:** `command-palette`
-- **States:** hidden; open with results; no results.
+- **Route:** A non-blocking dropdown anchored below the header, never a modal.
+- **Rights:** any signed-in member; actions that need a right are hidden from a caller who lacks it
+  (`visibleCommands`).
+- **Data:** the caller's already-scoped records only (`useScopedData`, filtered through
+  `src/lib/access.ts`). The palette performs no access decision of its own (Law L2); it indexes
+  screens, actions and explain entries from the pure `src/lib/commandPalette.ts`.
+- **Testids:** `command-palette`, `command-palette-input`, `command-palette-close`,
+  `command-palette-empty`, `command-palette-explain`, `command-palette-item-<id>`,
+  `command-palette-option-<id>`, `command-palette-group-<kind>`.
+- **States:** hidden; open with results (screens, then actions, then explain, then records); no
+  results ("No matches within your permissions."); an explain row opened inline, non-modally.
 - **Tutorial key:** —
+
 
 ## CH-04 — Floating windows and dock (S1)
 

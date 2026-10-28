@@ -17,9 +17,9 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { EXPLAIN_ENTRIES } from '../src/lib/explain/catalogue.ts';
 import { IIA_STANDARDS } from '../src/lib/explain/iia.ts';
 import { AGGREGATE_SURFACES } from '../src/lib/drilldownAggregates.ts';
+import { explainMounts, explainIdsForScreen, DYNAMIC_EXPLAIN } from '../src/lib/uiInventoryAttribution.ts';
 
 const ROOT = path.resolve(new URL('..', import.meta.url).pathname);
 const read = (p) => fs.readFileSync(path.join(ROOT, p), 'utf8');
@@ -122,39 +122,17 @@ for (const [mod, d] of Object.entries(modules)) for (const fn of [...d.fns, ...d
 // The three maps below are derived from the SAME pure modules the app and the gates read, so the
 // inventory cannot name an explain id, a standard or a drilldown the code does not carry.
 
-/** Source files (relative to src/) and their text, for the wiring scan. */
+/** Source files (relative to src/) and their text, for the authored attribution scan. */
 const srcByRel = new Map();
 for (const f of walk(path.join(ROOT, 'src'))) {
   if (!/\.(ts|tsx)$/.test(f) || /\.test\./.test(f)) continue;
   srcByRel.set(path.relative(ROOT, f), fs.readFileSync(f, 'utf8'));
 }
 
-const explainIds = new Set(EXPLAIN_ENTRIES.map((e) => e.id));
-/** Every explain id a source file references, by literal id or by template-literal family prefix. */
-function explainIdsIn(text) {
-  const found = new Set();
-  for (const m of text.matchAll(/['"`]([a-z]+\.[a-zA-Z0-9_.]+)['"`]/g)) if (explainIds.has(m[1])) found.add(m[1]);
-  for (const m of text.matchAll(/`([a-z]+(?:\.[a-zA-Z0-9_]+)*\.)\$\{/g)) {
-    for (const id of explainIds) if (id.startsWith(m[1])) found.add(id);
-  }
-  return found;
-}
-
-/** The source files that define any of a screen's contract testids (the screen's real call sites). */
-function filesForTestids(tids) {
-  const files = new Set();
-  for (const [rel, text] of srcByRel) {
-    if (tids.some((t) => !t.includes('<') && text.includes(t))) files.add(rel);
-  }
-  return files;
-}
-
-/** Explain ids the screen actually mounts, from the files that define its testids. */
-function wiredExplainIds(tids) {
-  const found = new Set();
-  for (const rel of filesForTestids(tids)) for (const id of explainIdsIn(srcByRel.get(rel))) found.add(id);
-  return [...found].sort();
-}
+// Explain ids come from the AUTHORED mounts (`screenId="DB-01"` on an ExplainPopout / ExplainDetail
+// / StandardsAffordance), not from substring-matching a screen's testids across all of src/ — the
+// latter credited config screens with the whole catalogue and credited the dashboard with nothing.
+const explainMountMap = explainMounts(Object.fromEntries(srcByRel));
 
 /** Standards a screen addresses, from the catalogue's own `implementedBy` (the declared mapping). */
 function standardsForScreen(screenId) {
@@ -179,7 +157,7 @@ w('Certificate and External auditor surfaces) and Appendix B (the core audit wor
 w('chrome), so every screen a redesign must draw is here. Screens are grouped by area; each entry');
 w('gives screenId, purpose, route, rights, data functions, RPCs/tables, every data-testid, states,');
 w('tutorial key and connections. The RPC catalogue at the end lists every `platform_*` and');
-w('tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to regenerate; the');
+w('tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to regenerate; the');
 w('`uiInventory` guard fails if this file drifts from the contract.');
 w();
 w('## How to read a screen entry');
@@ -230,8 +208,12 @@ for (const [area, list] of byArea) {
     // name the standards it addresses. An empty line is meaningful — it says the screen carries no
     // such surface, which the G7/G8 gates then hold it to.
     const screenIds = s.ids;
-    const wiredExplain = [...new Set(screenIds.flatMap((id) => wiredExplainIds(tids)))].sort();
-    w(`- **Explain ids (${wiredExplain.length}):** ${wiredExplain.map((e) => '`' + e + '`').join(', ') || '— (no explain affordance)'}`);
+    const wiredExplain = [...new Set(screenIds.flatMap((id) => explainIdsForScreen(explainMountMap, id)))].sort();
+    const dynamic = wiredExplain.includes(DYNAMIC_EXPLAIN);
+    const explainCell = dynamic
+      ? 'dynamic (a mount resolves its id at runtime; the screen may open any entry)'
+      : wiredExplain.map((e) => '`' + e + '`').join(', ') || '— (no explain affordance)';
+    w(`- **Explain ids (${dynamic ? 'dynamic' : wiredExplain.length}):** ${explainCell}`);
     const screenStd = [...new Set(screenIds.flatMap((id) => standardsForScreen(id)))].sort();
     w(`- **IIA standards addressed (${screenStd.length}):** ${screenStd.map((n) => '`' + n + '`').join(', ') || '—'}`);
     const drills = [...new Set(screenIds.flatMap((id) => drillTargetsForScreen(id)))];
@@ -324,5 +306,8 @@ w(`- Contract testids not found verbatim in \`src/\` (placeholder or dynamic): $
 if (missingInCode.length) w(`  - ${missingInCode.slice(0, 40).join(', ')}${missingInCode.length > 40 ? ' …' : ''}`);
 w();
 
-fs.writeFileSync(path.join(ROOT, 'docs/UI-INVENTORY.md'), out.join('\n') + '\n');
-console.log(`wrote docs/UI-INVENTORY.md: ${out.length} lines, ${sections.length} screens, ${allRpcs.length} RPCs`);
+// The output path defaults to docs/UI-INVENTORY.md; a caller (the guard) may pass another path so it
+// can generate into a temp file and diff without touching the committed doc.
+const outPath = process.argv[2] ? path.resolve(process.argv[2]) : path.join(ROOT, 'docs/UI-INVENTORY.md');
+fs.writeFileSync(outPath, out.join('\n') + '\n');
+console.log(`wrote ${path.relative(ROOT, outPath)}: ${out.length} lines, ${sections.length} screens, ${allRpcs.length} RPCs`);

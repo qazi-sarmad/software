@@ -239,7 +239,7 @@ behaviour, or **remove it from the UI** and mark it deferred. No field may be vi
 | F107 | Time-of-day phases | `Absent` | §12.3 — `resolveDayPhase` is a pure function, time as an argument | U11 |
 | F108 | Motion system (levels, tokens, named animations) | `Inert` | Two keyframes exist; one component honours reduced-motion | U12 |
 | F109 | Animated headers | `Absent` | §12.5 | U13 |
-| F110 | Command palette | `Absent` | §11.1c U2 | U14 |
+| F110 | Command palette | `Wired` | `CommandPalette.tsx` (Cmd/Ctrl-K) over the pure `rankCommands`/`visibleCommands`/`recordCommands` in `src/lib/commandPalette.ts`; screens, records, actions and explain entries; non-blocking | U2 |
 | F111 | Density toggle | `Absent` | §11.1c U7 | U15 |
 | F112 | Contrast test covers all presets | `Inert` | `tokens.contrast.test.ts` covers three; must cover six at every phase | U9 |
 | F113 | Motion / theme / personalisation gates | `Absent` | §12.7 | U12 |
@@ -278,9 +278,9 @@ Each is a pure function under `src/lib/`, with direct unit tests and a screen su
 
 | Status | Count |
 |---|---|
-| `Wired` | 52 |
+| `Wired` | 53 |
 | `Inert` | 29 |
-| `Absent` | 44 |
+| `Absent` | 43 |
 | **Total** | **125** |
 
 **Read that again, with the correction applied.** This is materially better than the first pass
