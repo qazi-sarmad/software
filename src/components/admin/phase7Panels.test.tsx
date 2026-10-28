@@ -137,6 +137,16 @@ describe('Phase 7 UI panels (7G)', () => {
       expect(screen.getByTestId('import-errors').textContent).toContain('risk_id');
     });
 
+    it('recognises a mislabelled file by its bytes and refuses to import it as a table', async () => {
+      render(<ImportWizardPanel />);
+      // A PDF renamed to .csv: the bytes say PDF, so the wizard names it rather than parsing garbage.
+      const file = fakeFile('population.csv', '%PDF-1.7\nnot a table');
+      fireEvent.change(screen.getByTestId('import-file-input'), { target: { files: [file] } });
+      await waitFor(() => expect(screen.getByTestId('import-error')).toBeTruthy());
+      expect(screen.getByTestId('import-error').textContent).toMatch(/PDF file, not a table/);
+      expect(screen.queryByTestId('import-mapping')).toBeNull();
+    });
+
     it('commits and shows the imported count', async () => {
       startImportFn.mockResolvedValue('job-1');
       validateImportFn.mockResolvedValue({ valid: 1, invalid: 0, errors: [] });

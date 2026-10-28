@@ -136,11 +136,33 @@ to the harness seed, not to this branch's scope.
 
 | # | Task | Status |
 |---|---|---|
-| S17 | Document recognition by MAGIC BYTES; archive unpacking with limits; office-in-zip; metadata; inventory before import | TODO |
+| S17 | Document recognition by MAGIC BYTES; archive unpacking with limits; office-in-zip; metadata; inventory before import | DONE |
 | S18 | SIRA continuity: carry-forward pack on publish, seed next cycle, anomalies propose emergent risk | TODO |
 | S19 | Two-key SIRA acceptance: finaliser endorses, auditor accepts, publish blocked while proposed | TODO |
 | S20 | EVIDENCE STORAGE — the most serious gap. Buckets, `storage_path`, real upload, re-derive on verify | TODO |
 | S21 | Review comment popout: testids, states, inventory entry, hover popout, drilldown; delete the dead dock | TODO |
+
+### S17 — what was built (2026-10-28)
+
+`src/lib/recognition/` — pure, deterministic, no AI, no network:
+
+| Module | What it does |
+|---|---|
+| `sniff.ts` | Magic-byte signatures (PDF/PNG/GIF/JPEG/TIFF/ZIP/RAR/7z/gzip/OLE2); OOXML resolved to docx/xlsx/pptx by ENTRY NAME (`classifyOfficeArchive`); OLE2 resolved by stream name; a conservative text/CSV probe; `recognise()` returns `{kind, claimed, agrees, detail}` so a name that lies is reported, not obeyed. |
+| `archive.ts` | `unpackArchive` enforces, in order and BEFORE inflation where the reader can report sizes: max entries, safe paths (no absolute, no `..`, no drive/UNC), per-member and total declared size, compression ratio (zip bomb). It then re-checks the ACTUAL inflated size, because a header can lie. Hashes every member; flags nested archives for a depth-limited recurse. |
+| `metadata.ts` | `docProps/core.xml` + `app.xml` (title, author, created, modified, application, company) and PDF `/Info` (literal and hex strings, `D:` dates → ISO 8601). A shallow, bounded tag extractor — not a general XML parser. |
+| `zipReader.ts` | The `ArchiveReader` adapter over the project's existing `jszip`, so there is one ZIP implementation. |
+| `index.ts` | `inspectFile`/`buildInventory`: sniff → open a ZIP as the archive it is → classify → read metadata → unpack under limits → return an INVENTORY with honest counts. |
+
+**RAR decision (deliberate, not reflex):** no RAR library is installed, and RAR's decompressor is
+licence-restricted. A `.rar` is RECOGNISED exactly (its magic bytes) and reported as an archive whose
+members cannot be listed in-product, with the reason stated — never silently dropped, never guessed
+at. Recognition is not unpacking, and the inventory says which one it did.
+
+**Wired into** `ImportWizardPanel.tsx:onFile`: routing is now by the sniffed kind, not the extension.
+A file whose bytes disagree with its name is imported under its true kind when that kind is readable
+(with the disagreement shown), and refused with the real kind named when it is not. The upload step
+shows the inventory line (kind, size, SHA-256). 48 unit tests.
 
 ### S18/S19 prerequisite — the SIRA write path is inert
 

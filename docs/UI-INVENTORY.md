@@ -649,18 +649,18 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 
 ### `OA-27` — Import wizard (S1)
 
-- **Purpose:** Import a workpaper source (upload, choose file, DOCX tables), map it, validate it, preview the valid/invalid counts, and commit it; the job history is listed.
+- **Purpose:** Import a workpaper source (upload, choose file, DOCX tables), map it, validate it, preview the valid/invalid counts, and commit it; the job history is listed. The file's format is decided by its MAGIC BYTES, not its extension: a file whose bytes disagree with its name is imported under its true kind and the disagreement is shown, or refused with the real kind named.
 - **Route / location:** The `import_wizard` inspector window.
 - **Rights required:** `manage_engagements`; a caller without it sees `import-no-right`.
 - **Data functions (`src/data/*.ts`):** `ImportJobRow`, `ImportType`, `ImportValidation`, `listImportJobs`, `startImport`, `validateImport`
 - **Data modules:** `src/data/imports.ts`
 - **RPCs reachable via those modules:** `commit_import`, `confirm_prior_year_item`, `import_prior_year_item`, `revert_prior_year_item`, `start_import`, `unconfirmed_prior_year_imports`, `validate_import`
 - **Tables reachable via those modules:** `import_jobs`, `prior_year_imports`
-- **Testids (20):** `import-choose-file`, `import-commit`, `import-confirm`, `import-denied`, `import-docx-tables`, `import-done`, `import-error`, `import-errors`, `import-file-input`, `import-history`, `import-history-empty`, `import-invalid-count`, `import-mapping`, `import-no-right`, `import-preview`, `import-steps`, `import-upload`, `import-valid-count`, `import-validate`, `import-wizard`
+- **Testids (22):** `import-choose-file`, `import-commit`, `import-confirm`, `import-denied`, `import-docx-tables`, `import-done`, `import-error`, `import-errors`, `import-file-input`, `import-history`, `import-history-empty`, `import-invalid-count`, `import-mapping`, `import-no-right`, `import-preview`, `import-recognised`, `import-recognition-note`, `import-steps`, `import-upload`, `import-valid-count`, `import-validate`, `import-wizard`
 - **Explain ids (0):** — (no explain affordance)
 - **IIA standards addressed (0):** —
 - **Drilldown targets (0):** — (no aggregate)
-- **States:** no-right; upload; mapping; validated; preview; done; history loading/empty.
+- **States:** no-right; upload; recognised (kind, size, SHA-256); bytes/name disagreement; mapping; validated; preview; done; history loading/empty.
 - **Tutorial key:** — (no key)
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
   named in the purpose. The chrome that carries every hop is listed under *Common chrome*.

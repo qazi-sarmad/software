@@ -1214,13 +1214,13 @@ Read and filter the activity log, run an archive by period, and export a record 
 
 ## OA-27 — Import wizard (S1)
 
-Import a workpaper source (upload, choose file, DOCX tables), map it, validate it, preview the valid/invalid counts, and commit it; the job history is listed.
+Import a workpaper source (upload, choose file, DOCX tables), map it, validate it, preview the valid/invalid counts, and commit it; the job history is listed. The file's format is decided by its MAGIC BYTES, not its extension: a file whose bytes disagree with its name is imported under its true kind and the disagreement is shown, or refused with the real kind named.
 
 - **Route:** The `import_wizard` inspector window.
 - **Rights:** `manage_engagements`; a caller without it sees `import-no-right`.
 - **Data:** `ImportJobRow`, `ImportType`, `ImportValidation`, `listImportJobs`, `startImport`, `validateImport` — through `src/data/*.ts`; components never import the database client (rule M8).
-- **Testids:** `import-choose-file`, `import-commit`, `import-confirm`, `import-denied`, `import-docx-tables`, `import-done`, `import-error`, `import-errors`, `import-file-input`, `import-history`, `import-history-empty`, `import-invalid-count`, `import-mapping`, `import-no-right`, `import-preview`, `import-steps`, `import-upload`, `import-valid-count`, `import-validate`, `import-wizard`
-- **States:** no-right; upload; mapping; validated; preview; done; history loading/empty.
+- **Testids:** `import-choose-file`, `import-commit`, `import-confirm`, `import-denied`, `import-docx-tables`, `import-done`, `import-error`, `import-errors`, `import-file-input`, `import-history`, `import-history-empty`, `import-invalid-count`, `import-mapping`, `import-no-right`, `import-preview`, `import-recognised`, `import-recognition-note`, `import-steps`, `import-upload`, `import-valid-count`, `import-validate`, `import-wizard`
+- **States:** no-right; upload; recognised (kind, size, SHA-256); bytes/name disagreement; mapping; validated; preview; done; history loading/empty.
 - **Tutorial key:** —
 
 ## OA-28 — Org settings inspector (S1)

@@ -119,7 +119,7 @@ feature to be testable.
 | F42 | Evidence re-derived on verify | `Absent` | Nothing to re-derive — the bytes were never kept | S20 |
 | F43 | Document extraction (edge function) | `Inert` | `extractDocument` exists in `src/data/documents.ts` but **no screen calls it**; the `doc-extract` function is deployed but unreachable from the UI | R2 |
 | F44 | Extraction stub queue | `Wired` | `request_extraction` RPC | — |
-| F45 | Document recognition (magic bytes, archives) | `Absent` | Routing is extension-only (`isDocx(filename)`); no `.rar`; no office-in-zip handling | S17 |
+| F45 | Document recognition (magic bytes, archives) | `Wired` | `src/lib/recognition/` sniffs magic bytes, resolves office-in-zip by entry names, unpacks archives under limits, reads docProps//Info metadata; `ImportWizardPanel.tsx:onFile` routes on the sniffed kind and shows the inventory line | S17 |
 | F46 | Evidence completeness (Mode A) | `Inert` | Depends on F41 | S20 |
 | F47 | Evidence verification (Mode B) | `Inert` | Depends on F41 | S20 |
 | F48 | Chain of custody | `Absent` | D2 candidate | D2 |
@@ -278,14 +278,14 @@ Each is a pure function under `src/lib/`, with direct unit tests and a screen su
 
 | Status | Count |
 |---|---|
-| `Wired` | 53 |
+| `Wired` | 54 |
 | `Inert` | 29 |
-| `Absent` | 43 |
+| `Absent` | 42 |
 | **Total** | **125** |
 
 **Read that again, with the correction applied.** This is materially better than the first pass
 reported, because Phases 1 and 2 of the scale-harden build closed the whole foundation. The picture
-now: **52 wired, 29 inert, 44 absent.** The remaining `Inert` rows are the genuine, still-open
+now: **54 wired, 29 inert, 42 absent.** The remaining `Inert` rows are the genuine, still-open
 unwired features — the monitor runtime, the evidence bytes, the tamper alarm, the SIRA write path,
 the ledger verification. Every one of those is a defect, and every one looks like a working feature
 in the UI.
