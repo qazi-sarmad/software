@@ -446,6 +446,20 @@ bubble-other), no screenId prefix, no documented states, not in the inventory, n
 U1 drilldown from every number; U2 command palette; U3 work queue front door; U4 live activity spine;
 U5 motion with meaning; U6 guided empty states; U7 density toggle; U8 keyboard-first.
 
+### FEATURE-REGISTER + gate (R0) — 2026-10-28
+docs/FEATURE-REGISTER.md is now the live inventory: 125 features, three statuses only (Wired/Inert/
+Absent - "Partial" is banned because it is the word that let the old docs claim completion). Counts:
+38 Wired, 42 Inert, 45 Absent. `scripts/check-feature-register.mjs` keeps it honest and is wired into
+pre-pr-gates.sh, ci-local.sh (step 8c) and package.json. It fails when a status is outside the three,
+ids are non-contiguous, the printed counts disagree with the rows, a Wired row names a symbol that
+does not exist, a Wired row names a pure-layer export no screen calls, or a row asserting deadness
+names something that IS called.
+**The gate caught 15 errors in the register as first written** - including a real finding: the entire
+SIRA WRITE path is inert (createSiraCycle / publishSiraCycle / recordSiraScore / submitEmergentRisk /
+decideEmergentRisk all have ZERO callers; only the reads are wired from SiraTab.tsx). Also inert:
+extractDocument (the doc-extract edge function is deployed but unreachable from the UI).
+Work packages: R1-R7 (the missing middle, in dependency order), S13-S21, T3-T7, C1-C7, U9-U16, D1-D9.
+
 ## Environment facts (for the next session)
 
 - The sandbox has **no host Postgres** and **no Docker socket for the user**, but

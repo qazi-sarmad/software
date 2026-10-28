@@ -31,6 +31,7 @@ node scripts/check-function-deploy-list.mjs || { echo "FAIL: check-function-depl
 
 step "6c. UI contract"
 node scripts/check-ui-contract.mjs || { echo "FAIL: check-ui-contract"; exit 1; }
+node scripts/check-feature-register.mjs || { echo "FAIL: check-feature-register"; exit 1; }
 
 step "7. Source guards (single client, no blocking modals, no demo ids, no Math.random)"
 npx vitest run src/guards || { echo "FAIL: guards"; exit 1; }

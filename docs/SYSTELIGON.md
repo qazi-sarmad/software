@@ -931,7 +931,230 @@ annually.
 
 ---
 
-## 12. Work packages
+## 12. Personalisation — themes, motion, and time of day
+
+The owner asked for this to suit a 15-year-old young genius, a 21-year-old who wants it
+Instagrammable, a late-teens aesthetic, and a 30-year-old with his own preferences — with multiple
+dark and light themes, colour and contrast that shift with the time of day, and "very sexy animated
+headers."
+
+**What already exists, and it is a real foundation.** `src/context/ThemeContext.tsx` implements
+`ThemeMode = 'system' | 'light' | 'dark'`, three presets (`ledger`, `porcelain`, `bone`), a
+`data-preset` attribute on the root, and a `.dark` class. `src/styles/tokens.css` defines **every
+variable twice** per preset — a light block and a `.dark` block — and states plainly that "nothing
+else is chromatic: no blue or orange." `AccountSettingsModal` already renders a preset picker with
+swatches. Two keyframes exist (`pulse-cinnabar`, `pulse-verdigris`), one component honours
+`prefers-reduced-motion`, and the `check-tokens` gate forbids hardcoded hex and `rgb()`/`rgba()` in
+components.
+
+**The critical constraint — read this before designing anything.** The `check-tokens` gate bans
+hardcoded colour in components, and every preset must define *every* variable in both light and dark.
+That is not an obstacle; it is the mechanism that makes personalisation safe. **A new theme is a new
+token block, never a component change.** If a personalisation feature cannot be expressed as tokens,
+it is designed wrongly.
+
+### 14.1 Audience profiles — what "suit me" actually means
+
+Four named starting points. Each is a **preset bundle**: a theme, a motion level, a density, a corner
+radius, a type scale, and a header treatment. The user picks a profile, then tunes any part of it. A
+profile is never a cage.
+
+| Profile | Who | Theme default | Motion | Density | Radius | Type | Header |
+|---|---|---|---|---|---|---|---|
+| **Focus** | 15-year-old young genius | `ledger` dark | `full` | compact | 10px | `apple` standard | animated gradient, slow |
+| **Expressive** | 21-year-old, Instagrammable | `prism` dark | `full` | comfortable | 20px | `apple` large | animated mesh gradient, vivid |
+| **Aesthetic** | late-teens, wants pretty | `bloom` light | `expressive` | comfortable | 16px | `apple` standard | animated soft gradient, pastel |
+| **Assurance** | 30-year-old professional | `porcelain` light | `subtle` | dense | 8px | `apple` standard | hairline accent bar, minimal |
+
+**Assurance is the default** and stays the shipped default. The others are opt-in. This matters: a
+Head of Audit opening the product for the first time must see the calm professional face, not the
+expressive one. `Focus` and `Expressive` are what a younger or more design-forward user chooses.
+
+### 14.2 Themes — the full matrix
+
+Six themes, each with a complete light and dark block. The three existing presets are kept unchanged
+(they are already contrast-tested and referenced by `OrgBrandingPanel`); three are added.
+
+| Preset | Light | Dark | Character |
+|---|---|---|---|
+| `ledger` *(exists)* | warm paper | neutral charcoal | the audit default, Verdigris + Cinnabar |
+| `porcelain` *(exists)* | cool clean | soft cool | precise hairline borders |
+| `bone` *(exists)* | bone paper | deep warm neutral | the only warm preset |
+| `prism` *(new)* | high-key neutral | near-black with glow | vivid accent, saturated, for `Expressive` |
+| `bloom` *(new)* | soft pink-cream | deep plum | pastel, soft, for `Aesthetic` |
+| `slate` *(new)* | high-contrast white | true black | maximum contrast, for accessibility and long sessions |
+
+**Rules every new preset must satisfy, enforced by the gate:**
+
+1. **Every variable defined in both blocks.** No preset may rely on a fallback from another.
+2. **Contrast ratios pass.** Body text ≥ 4.5:1, large text and UI borders ≥ 3:1, in both modes. The
+   existing `tokens.contrast.test.ts` extends to cover all six.
+3. **No hardcoded colour in components.** Only token references.
+4. **Cinnabar and Verdigris keep their meaning.** Red is a finding, green is effective — in every
+   theme. A theme may change the *hue* of the semantic colours within a constrained range, never the
+   *meaning*. `Expressive` must not turn findings purple because it looks better; that would be a
+   safety regression dressed as a preference.
+5. **Semantic colours are named by meaning, not hue.** `--finding`, `--effective`, `--warning`,
+   `--info` — so a theme maps meaning to hue in one place.
+
+### 14.3 Time of day — colour and contrast that shift
+
+The owner asked for colour and contrast to change with the time of day. Implemented deterministically
+and **never by reading the clock inside a pure function** (Law: time is always an argument).
+
+**A pure function** `resolveDayPhase(minuteOfDay: number): DayPhase` under `src/lib/theme/`, taking
+minutes since midnight and returning one of `night | dawn | morning | day | dusk | evening`. The
+caller passes `new Date()`; the function never reads it. Fully unit-tested across every boundary.
+
+**What shifts, per phase:**
+
+| Phase | Light themes | Dark themes | Contrast |
+|---|---|---|---|
+| `night` (22:00–05:00) | dimmed 8%, warmer | deepest, reduced glare | slightly reduced on large text |
+| `dawn` (05:00–07:00) | warm lift | warm lift | standard |
+| `morning` (07:00–11:00) | brightest, coolest | standard | high |
+| `day` (11:00–16:00) | full brightness | standard | maximum |
+| `dusk` (16:00–19:00) | warm shift | warm shift | standard |
+| `evening` (19:00–22:00) | dimmed 4%, warmer | warmer, softer | standard |
+
+**How it is expressed:** each preset gains six optional phase blocks — `[data-preset="x"][data-phase="night"]`
+— that override only the canvas, surface and accent-lightness tokens. Absent a block, the base block
+applies, so a preset with no phase tuning is valid. **This is the whole mechanism: no component
+knows about time.**
+
+**Controls the user gets:** off / on; "follow the system clock" or a manual phase; a night-shift
+strength slider; and a **"reduce contrast at night" toggle that defaults OFF** — because dimming
+contrast for someone with low vision is a harm, not a comfort. Every phase transition is a 400 ms
+cross-fade, never a flash, and is suppressed entirely under `prefers-reduced-motion`.
+
+### 14.4 Motion — the animation system
+
+The owner loves animation. The design constraint is that motion must **signal state change**, never
+decorate, and must be fully suppressible.
+
+**A motion level, chosen per user:** `none | subtle | full | expressive`. Stored as
+`data-motion` on the root. Every animated component reads the level from a token-driven CSS variable,
+never from a JS branch, so there is one place to change and one place to test.
+
+**Token-driven durations and easings** — no magic numbers in components:
+
+| Token | Value | Used for |
+|---|---|---|
+| `--motion-instant` | 80 ms | state flips, checkbox, toggle |
+| `--motion-fast` | 160 ms | hover, focus ring, row highlight |
+| `--motion-base` | 240 ms | panel enter, tab change, tooltip |
+| `--motion-slow` | 400 ms | window open, drawer, phase cross-fade |
+| `--motion-deliberate` | 640 ms | number count-up, seal animation |
+| `--ease-out` | `cubic-bezier(0.16, 1, 0.3, 1)` | entering |
+| `--ease-in-out` | `cubic-bezier(0.65, 0, 0.35, 1)` | moving |
+| `--ease-spring` | `cubic-bezier(0.34, 1.56, 0.64, 1)` | expressive only |
+
+**The named animations, each with a purpose:**
+
+1. **Number count-up.** A KPI changes from £4,180,000 to £4,205,000 by counting, not jumping. Makes a
+   change *noticed*. `--motion-deliberate`. Suppressed under `subtle`; replaced by a brief flash.
+2. **Row entrance.** New ledger or finding rows slide in 8px with a fade. Makes a live feed feel live.
+3. **Seal animation.** A report freezing gets a single-pass ring sweep on the seal icon. Confirms an
+   irreversible act. Never loops.
+4. **Tab underline slide.** The active indicator travels between tabs. Cheap, and it makes navigation
+   feel physical.
+5. **Window open/close.** Inspector windows scale from 0.98 with a fade, respecting the floating
+   non-modal law.
+6. **Skeleton shimmer.** Loading placeholders pulse rather than spin. Calmer and faster-feeling.
+7. **Focus ring.** A 160 ms expanding ring on keyboard focus. Accessibility, not decoration.
+8. **Progress fill.** Bars and rings ease to their value rather than snapping.
+9. **Heatmap cell reveal.** The SIRA heatmap fills cell by cell, 20 ms stagger. Makes a year legible
+   in one image.
+10. **Phase cross-fade.** Time-of-day shift, 400 ms.
+
+**Hard rules:** every animation is `transform`/`opacity` only — never `width`, `height`, `top` or
+`left`, which force layout and make the product feel slow. No animation exceeds 640 ms. Nothing loops
+except a genuine "in progress" indicator. **`prefers-reduced-motion` overrides the user's level to
+`none`, always** — the OS setting wins, and a gate enforces that every animated component has the
+guard. No animation ever delays an action: the state changes immediately and the motion follows.
+
+### 14.5 The animated header — "very sexy," done properly
+
+The owner asked for animated headers. Here is the design that is beautiful and does not undermine the
+product.
+
+**A header is a token-driven layered gradient** — one canvas element or a CSS gradient stack, no
+image, no video, no third-party asset. It is tinted by the active theme's accent tokens, so it
+changes with the theme and the time-of-day phase automatically.
+
+**Three treatments, by profile:**
+
+| Treatment | For | Motion |
+|---|---|---|
+| **Accent bar** | `Assurance` | a 2px hairline that subtly shifts hue across its length. Static position. |
+| **Soft gradient** | `Aesthetic` | a slow 3-stop pastel gradient, 24 s drift, very low amplitude. |
+| **Mesh drift** | `Expressive` | a 4-point mesh gradient drifting on a 32 s loop, 60% opacity, blurred. |
+| **Slow sweep** | `Focus` | a single accent sweep every 18 s, high-contrast, restrained. |
+
+**The constraints that make it "sexy" rather than embarrassing:**
+
+- **It never moves behind text.** The gradient sits above the content layer or is masked away from any
+  text region. Text must never sit on a moving background — that is unreadable and it is what makes
+  animated headers look cheap.
+- **It never animates while the user is reading or typing.** Pause on focus within the header region.
+- **60 fps or it does not ship.** A GPU-composited `transform`/`opacity` loop only; a gate fails any
+  header animation touching layout properties.
+- **`prefers-reduced-motion` freezes it to a static gradient.** Not removed — frozen. The colour
+  remains, the motion goes.
+- **It is off by default in `Assurance`.** A Head of Audit does not want a drifting mesh above their
+  engagement list on the morning of a committee meeting.
+- **Battery and CPU respect.** The loop pauses when the tab is hidden (`visibilitychange`).
+
+**What it must never be:** a video background, a particle system, a 3D scene, a bouncing logo, or
+anything that loads a remote asset. Each of those is slow, breaks offline, leaks data, or reads as a
+toy — and the buyer here is a CFO.
+
+### 14.6 Where the preferences live
+
+Two scopes, in this precedence:
+
+1. **Org defaults** (`org_branding` / `branding_assets`, already existing): the theme and header an
+   organisation sets for everyone. This is the professional baseline.
+2. **Personal overrides** (per user, stored locally and synced): theme, profile, motion level,
+   density, radius, phase behaviour, header treatment.
+
+**A personal override never breaks an org rule that is a control.** An org may lock the theme for
+compliance or brand reasons — the user then tunes only motion and density. Conversely, an org may not
+force an animation on a user who has set reduced motion; accessibility wins over brand, always.
+
+**Storage:** the user's preference object is versioned and validated on load. An unknown preset or
+motion level falls back to the default rather than throwing — the existing `ThemeContext` already does
+this correctly for old preset names, and the new fields follow the same pattern.
+
+### 14.7 Gates that protect all of this
+
+| Gate | Fails when |
+|---|---|
+| `check-tokens` (exists, extended) | a component hardcodes a colour, or a preset misses a variable in either mode |
+| `tokens.contrast.test.ts` (exists, extended) | any of the six presets fails contrast in either mode, at any phase |
+| `check-motion` (new) | a component animates without a `prefers-reduced-motion` guard, animates a layout property, or exceeds 640 ms |
+| `check-theme-completeness` (new) | a preset block omits a variable, or a phase block overrides a token the base does not define |
+| `check-personalisation` (new) | a profile bundle references a preset, motion level or density that does not exist |
+
+### 14.8 The design file
+
+The owner has a design file to provide. **It is the source of truth for the visual layer** and this
+section is the contract it must satisfy. On receipt:
+
+1. Extract its palettes and map each to a preset, checking every variable against the token list.
+2. Record its type, radius, spacing and motion values as tokens, not as component values.
+3. Diff it against the six presets above and report what it adds, changes or contradicts.
+4. Add any new preset to the matrix, the contrast test, and the gate — never to a component.
+5. If the file specifies a component behaviour that cannot be expressed as tokens, that is a
+   design-system gap to resolve, not a licence to hardcode.
+
+**Until the file arrives, nothing here is blocked:** the four profiles, six presets, phase system,
+motion system and header treatments are all implementable from this specification alone.
+
+---
+
+## 13. Work packages
+
 
 | # | Task | Depends on |
 |---|---|---|
@@ -1007,7 +1230,7 @@ Each D-series item is a pure function under `src/lib/` with direct unit tests, p
 
 ---
 
-## 13. Acceptance
+## 14. Acceptance
 
 - A population upload detects headers, asks for confirmation, and counts the true population minus
   the header row.
