@@ -422,6 +422,30 @@ T7 wire the existing alarm. NOTE: integrity_alerts table, raise_integrity_alert(
 appends a ledger entry) and the archive check functions ALL EXIST. But listIntegrityAlerts() has zero
 callers and no migration emits a notification -> detection is complete, THE ALARM IS MISSING.
 
+### CRITICAL — evidence is not stored anywhere (spec SYSTELIGON.md §6.0)
+`EvidenceTab.tsx` has a working upload control that computes a SHA-256 and calls
+`attachEvidenceToWorkpaper`, which writes to React state ONLY (AppContext.tsx:730, ZERO storage calls).
+The bytes are discarded on reload. `evidence_files` (0035) has NO storage_path column. NO storage
+bucket is created anywhere (not `reports`, `archives` or `org-branding`). Only `reportFiles.ts`
+uploads anything (the rendered report PDF/DOCX). Mode A / Mode B evidence verification therefore
+verifies a hash of bytes nobody kept. Fix = S20. This is the most serious gap found; the product's
+central claim is evidence verification.
+
+### Two-key SIRA acceptance (S19) — spec SYSTELIGON.md §11.1b
+Owner correction: the accept/reject/override control stays with the SIRA finaliser, but their decision
+is an ENDORSEMENT, not a closure - the auditors themselves must accept. Publish is blocked while
+proposals are outstanding; reminders until resolved; silence is a finding.
+
+### Review comment popout (S21) — spec SYSTELIGON.md §11.3b
+Exists and reachable (CommentHistoryPanel via RecordContent 'comment_history', dispatched from
+ReviewCommentsGlobalDock, mounted in App.tsx) but is the thinnest surface: ONE testid (bubble-mine/
+bubble-other), no screenId prefix, no documented states, not in the inventory, no drilldown.
+`ReviewCommentsDock.tsx` is DEAD (mounted nowhere) - delete it.
+
+### Interface quality (U1-U8) — spec SYSTELIGON.md §11.1c
+U1 drilldown from every number; U2 command palette; U3 work queue front door; U4 live activity spine;
+U5 motion with meaning; U6 guided empty states; U7 density toggle; U8 keyboard-first.
+
 ## Environment facts (for the next session)
 
 - The sandbox has **no host Postgres** and **no Docker socket for the user**, but

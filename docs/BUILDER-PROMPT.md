@@ -175,6 +175,27 @@ S-series — the engine and the testing flow
   through the existing submitEmergentRisk channel; a human accepts or rejects with a reason.
   NOTE: `populate_planning_suggestions` and `decide_planning_suggestion` already exist and have ZERO
   non-test callers - wire them. Prior-year import IS already built and wired.
+- S19 TWO-KEY SIRA ACCEPTANCE. The owner's correction: the accept/reject/override control STAYS with
+  the SIRA finaliser, and it must be visible, reminded and shown - but their decision is an
+  ENDORSEMENT, not a closure. The AUDITORS themselves must accept. Block publication of the next-year
+  cycle while proposals are outstanding, remind until resolved, and report silence as a finding. A
+  single role able to both propose and close is a control weakness an external reviewer will flag.
+- S20 EVIDENCE STORAGE - THE MOST SERIOUS GAP FOUND. `EvidenceTab.tsx` has a working upload control
+  that computes a SHA-256 and calls `attachEvidenceToWorkpaper`, which writes to React state ONLY
+  (AppContext.tsx:730 - ZERO storage calls). The bytes are discarded on reload. `evidence_files`
+  (0035) has NO storage_path column. NO storage bucket is created anywhere. Only `reportFiles.ts`
+  uploads anything. So Mode A / Mode B evidence verification verifies a hash of bytes nobody kept.
+  Fix: create the buckets (evidence/reports/archives/org-branding) with org-scoped RLS on
+  storage.objects keyed to jwt_org_id() by path prefix; add storage_path/mime_type/byte_size to
+  evidence_files; upload bytes THEN the row THEN the ledger entry, never the reverse; re-derive on
+  verify; signed short-lived URLs; enforce the size cap. Until then the tab must say "session only".
+- S21 REVIEW COMMENT POPOUT. Exists and is reachable (CommentHistoryPanel via RecordContent
+  'comment_history', dispatched from ReviewCommentsGlobalDock, mounted in App.tsx) but is the thinnest
+  surface in the product: ONE testid (bubble-mine/bubble-other), no screenId prefix, no documented
+  states, not in the inventory, no drilldown. `ReviewCommentsDock.tsx` is DEAD - mounted nowhere.
+  Delete it. Then give every element a testid, implement all states, add the inventory entry, build
+  the real hover/focus popout (author, age, workpaper, engagement, status, resolution path,
+  access-filtered) and add drilldown.
 
 
 C-series — continuous assurance (the category shift)
@@ -223,6 +244,20 @@ D-series — deterministic capability library (each a pure function + tests + a 
   breach, policy exception register, meeting-governance score, regulatory change impact.
 - D4 Assurance operations: engagement health, reviewer load and ageing, finding ageing and
   recurrence, report consistency, audit trail completeness.
+
+U-series — interface quality (spec SYSTELIGON.md section 11.1c)
+Tier 1 first, and only once the data underneath is real. A beautiful dashboard over an unwired
+monitor engine is a better-looking lie.
+- U1 Every dashboard number drills to its exact filtered records.
+- U2 Command palette (Cmd/Ctrl-K): screens, records, actions, explain layer.
+- U3 The work queue as the front door - what needs YOU today, ordered by consequence.
+- U4 A live activity spine on the existing liveSync transport.
+- U5 Motion that signals state change only, and universal prefers-reduced-motion.
+- U6 Guided empty states, so a new org is not a wall of zeros.
+- U7 Density toggle (comfortable/compact/dense), remembered per user. Auditors read tables.
+- U8 Keyboard-first, with a `?` shortcut sheet.
+DO NOT: gratuitous animation, vanity charts, dark patterns, or any "AI insight" badge. The product's
+claim is determinism - decorating it as magic undercuts the one thing that makes it different.
 
 ===============================================================
 PART 4 — FONTS (docs/FONT-REPOSITORY.md, F1-F7)

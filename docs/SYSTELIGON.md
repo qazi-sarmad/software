@@ -236,6 +236,56 @@ headings and 3 tables." It cannot say "this document approves the budget." That 
 
 ## 6. Evidence verification — the two modes, and their limit
 
+### 6.0 Evidence storage — the finding, stated plainly
+
+The owner asked whether all evidence and attachments are stored in the app. **They are not, and this
+is the most serious gap found in this review.** Verified:
+
+- **`EvidenceTab.tsx` has a working upload control.** It reads the file, computes its SHA-256 in the
+  browser, and calls `attachEvidenceToWorkpaper`.
+- **`attachEvidenceToWorkpaper` (`src/context/AppContext.tsx:730`) never writes the bytes anywhere.**
+  It builds an in-memory item `{id, name, uploadedAt, uploadedBy, sha256, sizeBytes}` and appends it to
+  `workpaper.evidenceItems` in React state. There are **zero** `storage.from(...).upload(...)` calls in
+  the entire file. The file's contents are discarded when the tab closes.
+- **Only `reportFiles.ts` uploads anything at all** — the rendered report PDF and DOCX, to a
+  `reports` bucket. Those are the only bytes that leave the browser.
+- **`evidence_files` (migration `0035_document_viewer.sql`) has no storage column.** Its columns are
+  `id, org_id, engagement_id, workpaper_id, filename, stage, content_sha256, created_by, created_at`.
+  There is **nowhere to record where a file's bytes live**, and nothing inserts into it except a
+  select in `documents.ts`.
+- **No storage bucket is created anywhere.** No migration, script, edge function or config declares
+  `reports`, `archives`, `org-branding` or any other bucket. The code assumes they exist.
+
+**What this means in practice.** An auditor uploads a bank statement. The screen says the file is
+attached and shows a SHA-256. The record survives only until the page reloads. There is no file to
+retrieve, no document to view, no evidence to verify — and critically, **the hash that the evidence
+verification mode depends on is a hash of bytes nobody kept.** Mode A and Mode B (§6.1, §6.2) both
+compare a stored hash against a re-derived one; with no stored bytes, there is nothing to re-derive.
+
+This is the same defect class as the unwired monitors and the missing tamper alarm — built, tested,
+never completed — but the consequence is worse, because the product's central claim is that evidence
+is verified. **An evidence verification feature with no stored evidence is a claim the product cannot
+support.**
+
+**The fix, in order:**
+
+1. **Create the buckets** in a migration or a documented setup step: `evidence`, `reports`,
+   `archives`, `org-branding`, each private, with RLS on `storage.objects` keyed to
+   `jwt_org_id()` by path prefix so one tenant can never read another's object.
+2. **Add `storage_path`, `mime_type`, `byte_size` and `content_sha256` to `evidence_files`**, and
+   insert the row only after the upload succeeds — the same ordering `reportFiles.ts` already uses.
+3. **Upload on attach.** Write the bytes, then the row, then the ledger entry. Never the reverse.
+4. **Re-derive on verify.** Download by path, re-hash, compare to `content_sha256`. That is what makes
+   Mode A and Mode B real rather than decorative.
+5. **Signed, short-lived URLs** for viewing, never public objects.
+6. **Enforce the size cap** already configured in `OrgGovernancePanel` ("Evidence upload limits") and
+   the 25 MB the UI promises.
+7. **Delete the false affordance** if any of the above is not done. A control that appears to store
+   evidence and does not is worse than no control, because it manufactures confidence.
+
+Until step 1–4 are done, the evidence tab must carry a visible "stored in this session only" warning
+rather than implying persistence. Honesty about the limit is the §7 principle applied to ourselves.
+
 The org configures one, per audit or per org:
 
 **Mode A — completeness.** Every tested row has a remark and a closed decision of `effective` /
@@ -578,9 +628,116 @@ whether continuous-audit anomalies feed back into it. Verified state, then desig
 5. **Close the loop visibly.** The cycle view shows, per risk: prior score, current score, what moved
    it, and the evidence.
 
-The principle is the one `populate_planning_suggestions` already uses: **the system proposes, a human
-decides, the decision is logged with a reason.** That is what makes this a loop rather than an
-automation that quietly rewrites the risk model.
+**The acceptance rule — the owner's correction, and it is the right one.** The accept/reject/override
+control belongs with the role that finalises and reviews the SIRA for the next year, and it should
+stay there. But **the finaliser's decision is a proposal, not a closure.** The owner's words: it
+should be there, it should be reminded, it should be shown — but ultimately it needs acceptance from
+**the auditors themselves**.
+
+So the flow is two-key, not one:
+
+1. **The engine proposes.** Carry-forward items and anomaly-derived risks arrive as suggestions with
+   their evidence attached.
+2. **The finaliser sees them, cannot miss them, and acts.** The SIRA cycle for the next year will not
+   publish while proposals are outstanding. They are surfaced on the cycle, counted on the dashboard,
+   and reminded by notification until resolved. The finaliser may **accept**, **reject with a reason**,
+   or **override** — the override capability stays, exactly as the owner wants.
+3. **But acceptance is the auditor's.** An item the finaliser accepts is not closed; it is
+   *endorsed* and routed to the auditor responsible for that risk or entity. Only their acceptance
+   closes it. A finaliser override that the auditor has not accepted is visible as such, and it does
+   not silently become the risk model.
+4. **Everything is shown.** The cycle view displays, per item: who proposed it, what evidence, what
+   the finaliser decided and why, who accepted it and when, and how long it has been waiting. Nothing
+   closes quietly.
+5. **Silence is a finding.** A proposal neither accepted nor rejected by its deadline is reported as
+   outstanding, the same way a vanished action item is (§3.3).
+
+The principle is the one already used by `decide_planning_suggestion`, extended: **the system
+proposes, the finaliser endorses, the auditor accepts, and every step is logged with a reason.** A
+single role able to both propose and close would be a control weakness, and the audit profession
+would say so. The two-key design is what makes this defensible to an external reviewer.
+
+### 11.1c Making the interface feel outrageously good — what to build, and what not to
+
+The owner asked what would make the dashboards and UI "sexier, too-good-to-be-true, interactive."
+The honest answer has a shape: **the interface should feel like it already knows what you need, and
+every number should be one click from its proof.** Flashy is easy and worthless. What follows is
+ordered by effect per unit of work.
+
+**The foundation already exists and should be credited.** 150 design tokens in `src/styles/tokens.css`,
+a nine-step type scale (`apple-11` to `apple-40`), a contrast test, a floating non-modal window
+manager, d3 for charts, and five gates that protect the UI (`check-tokens`, `check-ui-contract`,
+`check-shrink`, `check-tutorials`, `check-function-deploy-list`). This is a real design system. Do not
+rebuild it.
+
+**Tier 1 — the things that make it feel alive (highest value, all deterministic)**
+
+1. **Everything is one click from its proof.** Every number on every dashboard opens the exact
+   filtered records behind it. This is already law (the explain layer) but it is what separates a
+   dashboard that looks good from one that is *trusted*. A CFO who can click "£4.2m" and see the 63
+   rows is a different experience from one who has to ask.
+2. **The command palette.** `Cmd/Ctrl-K` opening everything: screens, records, actions, and the
+   explain layer. In a product with this many screens, it is the single highest-leverage interaction.
+   Type "benford" and go straight there. Type an entity name and jump to it.
+3. **The work queue as the front door.** Not a dashboard of charts — a list of what needs *you*,
+   today, ordered by consequence. "3 CAPs overdue. 1 report awaiting your approval. 2 comments
+   unanswered." Every item one click from the action. This is what makes a product feel indispensable.
+4. **The live activity spine.** A quiet, non-intrusive stream — "Ayesha approved the SIRA cycle",
+   "Report R-2026-014 was sealed" — using the `liveSync` transport that already exists. It makes the
+   product feel inhabited. Realtime when available, poll otherwise, already solved.
+5. **Progressive disclosure done well.** The screen shows the conclusion; the drilldown shows the
+   evidence; the popout explains the term. Three depths, each one click, never a modal.
+
+**Tier 2 — the things that make it feel expensive**
+
+6. **Motion with meaning.** Numbers count up when they change. Rows slide in. A frozen report gets a
+   brief seal animation. Motion should signal *state change*, never decorate. Must respect
+   `prefers-reduced-motion` — one component already does; make it universal.
+7. **The empty state as a guide.** A new org's dashboard should not be a wall of zeros. It should say
+   "Create your first universe" with one button. This is the guided first-run requirement, and it is
+   the difference between a product that feels finished and one that feels blank.
+8. **Density that respects the professional.** Auditors read tables, not cards. A comfortable /
+   compact / dense toggle, remembered per user. Card-heavy dashboards look modern and slow real work.
+9. **Typography doing the work.** The nine-step scale is there. Use weight and size for hierarchy and
+   stop using colour for it. Big numbers, small labels, generous whitespace — that is what "premium"
+   actually means.
+10. **Keyboard everything.** Every action reachable without a mouse. `?` opens the shortcut sheet.
+
+**Tier 3 — the genuinely differentiating surfaces**
+
+11. **The alert card that explains itself.** Once C2 is done, an alert reads: *"Duplicate payment
+    £48,200 — Vendor Services — residual risk High — control CTRL-114 last failed 12 days ago"* with
+    one-click "raise adhoc audit". That card, on a dashboard, is the product's best sales pitch.
+12. **The SIRA heatmap that moves.** Risk position over time, animated across cycles. Deterministic,
+    from data already held, and it makes a year of work visible in one image.
+13. **The report builder as a canvas.** Already substantially built (`DesignCanvas`, rulers, snap,
+    zoom, multi-column flow). It needs polish, not invention.
+14. **A "verify this" affordance everywhere.** A small shield icon on every sealed artifact that
+    opens the verification path. It makes trust visible rather than claimed.
+15. **Guided pointers, done with taste.** The pencil-style hand-drawn arrows the owner asked for.
+    One at a time, dismissible, keyboard-reachable, never blocking.
+
+**What NOT to do — and this matters**
+
+- **No gratuitous animation.** A spinning logo, a parallax hero, a gradient blob — all of it reads as
+  a toy to the exact buyer (a Head of Audit, a CFO, an audit committee) you are selling to. Serious
+  products look calm.
+- **No dashboard of vanity charts.** Every chart must answer a question someone actually asks. A
+  donut chart of "findings by severity" that nobody acts on is noise.
+- **No dark patterns.** No fake urgency, no nagging, no "are you sure you want to leave" modals.
+- **No AI-flavoured UI.** No "✨ AI insight" badges. The product's claim is determinism; decorating it
+  as magic undercuts the one thing that makes it different. This is the §7 boundary in visual form.
+- **No blocking modals, ever.** Already law, and it is the right law.
+
+**The honest summary.** The "too good to be true" feeling in this product will not come from
+visual flourish. It will come from **speed, certainty and depth**: the number appears instantly, you
+can click it and see the proof, the term explains itself, and you never wonder whether it is right.
+That feeling is earned by the explain layer and the wiring, not by gradients. The screens that will
+make someone say "wait, it does *that*" are the alert card (11), the drilldown (1), and the command
+palette (2) — all three cheap, all three deterministic, all three already half-built.
+
+**One caveat on scope.** None of this replaces the wiring work. A beautiful dashboard over an unwired
+monitor engine is a better-looking lie. Build Tier 1 first, and only after the data is real.
 
 ### 11.2 Adjacent products built from the same assets
 
@@ -688,6 +845,53 @@ stops a person with direct database access from changing a row. What it does is 
 expected and actual values are preserved. Prevention is an infrastructure-level problem. Claiming
 prevention would be exactly the overstatement §7 exists to stop.
 
+### 11.3b The review comment popout — status
+
+The owner asked what the state of the review comment popout is. Verified answer: **it exists, it is
+reachable, and it is the thinnest surface in the product.**
+
+**What works.** `CommentHistoryPanel.tsx` is a real component, reachable from
+`RecordContent.tsx` under the `comment_history` record type, which is dispatched from
+`ReviewCommentsGlobalDock.tsx` via `openInspector('comment_history')`. `ReviewCommentsGlobalDock` is
+mounted in `App.tsx`, so the path is live. It renders a thread and a reply box
+(`handleSendReply`), and it is hosted in the floating, non-modal inspector window
+(`FloatingWindowManager`) — so the "no blocking modals" law is respected. `src/lib/comments.ts`
+holds the pure logic: `isCommentOpen`, `isLiveWorkingPaper`, `pendingComments`.
+
+**What is missing.**
+
+- **Almost no testids.** The panel has **one** testid, `bubble-mine` / `bubble-other`. The law
+  requires every interactive element to carry `data-testid="<screenId>-<element>"`. There is no
+  `<screenId>` prefix and no testid on the reply box, the send button, the thread container, or the
+  empty state.
+- **No documented states.** No loading, empty, error, denied or ready handling is visible in the
+  panel. Every screen in the contract lists its states; this one has none.
+- **Not in the inventory.** `docs/UI-INVENTORY.md` lists `comment_history` only as a row in the
+  inspector-kinds table. It has no screen entry: no purpose, no route, no rights, no data functions,
+  no RPCs, no testids, no inbound or outbound navigation.
+- **`ReviewCommentsDock.tsx` is dead.** It is a second, older comment dock that is **mounted nowhere**
+  — verified, zero importers outside its own file. It should be deleted, or it will be maintained by
+  mistake.
+- **No popout in the explain-layer sense.** The owner's ask is a *popout* — hover a comment and see
+  the context, the workpaper, the engagement, the author, the age, the resolution path. What exists is
+  a thread list in an inspector window. That is a dock, not a popout.
+- **No drilldown.** There is no path from a comment to the exact record it concerns.
+
+**The work.**
+
+1. Give the panel a `screenId` and a testid on **every** interactive element.
+2. Implement and document all states: loading, empty, error, denied, ready.
+3. Add the full screen entry to `docs/UI-INVENTORY.md`.
+4. Delete `ReviewCommentsDock.tsx`.
+5. Build the actual popout: hover or focus a comment marker and show the author, the age, the
+   workpaper and engagement, the status, and the resolution path — access-filtered through
+   `src/lib/access.ts`, exactly like every other explain-layer popout, and keyboard-reachable.
+6. Add drilldown from the comment to its record.
+7. Cover it in the explain-coverage gate (G7).
+
+This is small work with a disproportionate effect: review comments are where a reviewer spends their
+day, and it is currently the least-built surface in the product.
+
 ### 11.4 Deterministic capabilities not yet built
 
 - **Cross-engagement systemic detection.** The same finding recurring across engagements is a
@@ -749,6 +953,9 @@ annually.
 | S16 | Name held in one constants module so a rename is one commit | — |
 | S17 | Document recognition: magic-byte sniffing, archive unpacking with bomb/traversal limits, office-inside-zip detection, metadata and title extraction, recursion, inventory-before-import (§5a) | S7 |
 | S18 | SIRA continuity: carry-forward pack on publish, seed the next cycle, anomalies and findings proposed as emergent risk (§11.1b) | S1, C2 |
+| S19 | Two-key SIRA acceptance: finaliser endorses, auditor accepts; publish blocked while proposals are outstanding; reminders until resolved; silence is a finding (§11.1b) | S18 |
+| S20 | Evidence storage: create buckets with org-scoped RLS, add storage_path/mime/size to evidence_files, upload on attach, re-derive on verify, signed URLs, size cap (§6.0) | — |
+| S21 | Review comment popout: screenId + testids on every element, all states, inventory entry, delete the dead ReviewCommentsDock, hover/focus popout, drilldown (§11.3b) | — |
 
 ### Continuous assurance (C-series) — spec §11.1
 
@@ -773,6 +980,19 @@ annually.
 | T5 | Attestation screen: view, export and verify a package | T3 |
 | T6 | Guided integrity incident wizard: what changed, who, what it affects, then restore / re-derive / freeze / escalate, each with a reason, all append-only, verify afterwards (§11.3a) | T1 |
 | T7 | Wire the existing alarm: surface integrity_alerts, notify on every channel, severity-split a hash mismatch from a broken ledger chain | T1 |
+
+### Interface quality (U-series) — spec §11.1c
+
+| # | Task |
+|---|---|
+| U1 | Drilldown from every dashboard number to its exact filtered records |
+| U2 | Command palette (Cmd/Ctrl-K): screens, records, actions, explain layer |
+| U3 | Work queue as the front door, ordered by consequence |
+| U4 | Live activity spine on the existing liveSync transport |
+| U5 | Motion with meaning, universal prefers-reduced-motion |
+| U6 | Guided empty states for a new org |
+| U7 | Density toggle (comfortable / compact / dense), remembered per user |
+| U8 | Keyboard-first: every action reachable, `?` shortcut sheet |
 
 ### Deterministic capability library (D-series) — spec §11.1a
 
