@@ -641,7 +641,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Data modules:** `src/data/tutorials.ts`
 - **RPCs reachable via those modules:** `list_tutorials`
 - **Tables reachable via those modules:** none
-- **Testids (6):** `org-tutorials`, `superadmin-tutorials`, `superadmin-tutorials-loading`, `superadmin-tutorials-error`, `superadmin-tutorials-empty`, `tutorial-<key>`
+- **Testids (2):** `org-tutorials`, `tutorial-<key>`
 - **States:** loading, error, empty, ready.
 - **Tutorial key:** `oa.tutorials`
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens

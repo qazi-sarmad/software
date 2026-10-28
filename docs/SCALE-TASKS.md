@@ -653,7 +653,29 @@ counts; a trigger would double-fire).
 | C4 | Adhoc audit suggestion from an alert, pre-filled with entity/department/control | TODO |
 | C5 | Remediation wizard from an alert (finding, CAP, request evidence, escalate, dismiss with reason) | TODO |
 | C6 | Alert triage surface with rights gating | TODO |
-| C7 | Anomaly to SIRA: a resolved alert proposes an emergent risk carrying the alert id, rule version and affected rows | TODO |
+| C7 | Anomaly to SIRA: a resolved alert proposes an emergent risk carrying the alert id, rule version and affected rows | BLOCKED (S18) |
+
+**C2 is the highest-value item, not an optional refinement.** `docs/SYSTELIGON.md` §11.1: today
+`MonitorAlert` carries only `ruleId`, `ruleVersion`, `kind`, `reason`, `references`, `evaluatedAt` —
+no entity, department, SIRA risk or control. A runner that fires unenriched alerts satisfies `C1`
+and misses the point of the phase: nobody can act on "a rule fired".
+
+**`C7` depends on `S18`** (SIRA continuity), which is Builder B's and not yet built, so `C7` is
+recorded `BLOCKED (S18)` rather than left `TODO` — it is not available work for this branch alone.
+
+**The joins already exist — this is a build, not an invention.** Reuse them; do not write a second
+engine: `src/lib/findingTarget.ts` (`departmentsOf` / `auditsForDepartment`), the SIRA risk fields in
+`src/data/sira.ts`, the existing `pg_cron` schedules, and `src/lib/liveSync.ts` (transport selection
+with poll fallback). The runner's schedule pattern is `email-dispatch` (`0064_email_dispatch.sql`:
+`pg_cron` → `net.http_post` + dispatch token → Edge Function).
+
+**Two test expectations the runner must respect.** `supabase/tests/70_escalation.sql:49-51` asserts
+exactly **three** enabled `platform.escalation.%` rules; if the runner adds a `watcher.signal`
+escalation rule, that count becomes **four** and the assertion moves in the same commit. And do
+**not** process events from an `after insert` trigger on `automation_events`:
+`supabase/tests/66_secrets_email_automation.sql:186` asserts `rule_engine_process(v_event) = 0` on a
+second call, so a trigger would process the event at insert and break line 179. Use an explicit
+dispatcher RPC.
 
 ### Phase 5 — what already exists (verified in the code, not claimed)
 
