@@ -187,6 +187,51 @@ Three tiers, in this order:
 Everything extracted is stored with the **source hash**, so a finding can always be traced to the
 exact bytes that produced it.
 
+
+### 5a. Recognising what was handed over
+
+The owner asked whether the system auto-recognises document types, handles `.zip` and `.rar`, and
+reads titles and data. The verified state first.
+
+**What exists.** `jszip` is a dependency, so ZIP is available. `mammoth` handles DOCX, `xlsx` handles
+spreadsheets, `pdf-lib` handles PDF. Routing is by **extension**, via guards such as `isDocx(filename)`
+(`src/lib/docxImport.ts`) and `isSupportedPopulationFile(name)` (`src/lib/population.ts`).
+
+**What is missing.**
+
+- **No magic-byte detection.** An extension is a claim, not a fact. A `.xlsx` renamed `.csv` is
+  misrouted; a `.exe` named `.pdf` is attempted. Detection must read the leading bytes: `PK\x03\x04`
+  (zip, and therefore also docx/xlsx/pptx), `%PDF-`, `\xD0\xCF\x11\xE0` (legacy Office),
+  `Rar!\x1A\x07`, `\x89PNG`, `\xFF\xD8\xFF` (JPEG), `II*\x00` / `MM\x00*` (TIFF).
+- **No `.rar` support.** No RAR library is present. This needs a deliberate decision, not a reflex
+  install: the RAR decompressor is licence-restricted, so the options are a permissively licensed
+  implementation, asking the user to convert, or refusing the format with a clear message.
+- **Office formats are themselves ZIPs.** Detection must identify docx/xlsx/pptx from the archive's
+  entry names (`word/document.xml`, `xl/workbook.xml`, `ppt/presentation.xml`) *before* treating it
+  as a plain archive, or every DOCX is unpacked into XML fragments.
+- **No title or metadata extraction.** DOCX carries `docProps/core.xml` (title, author, created,
+  modified) and `docProps/app.xml`; XLSX carries the same parts; PDF carries `/Info` or XMP. All are
+  plain XML, all parseable deterministically, none needs a model.
+- **No recursion.** An archive is not unpacked into its members and routed individually.
+
+**The design.**
+
+1. **Sniff magic bytes first.** The extension is a hint, never the decision.
+2. **Classify**: office document, PDF, image, archive, tabular, unknown.
+3. **For an archive, unpack with hard limits** — maximum entries, maximum uncompressed size, maximum
+   compression ratio (a zip bomb is a denial of service), reject absolute and `..` paths (path
+   traversal), never execute anything, and record every member's hash.
+4. **Recurse** into each member with a depth limit, routing each through step 2.
+5. **Extract per format**: title, author, created and modified dates, headings, tables, defined terms,
+   dates and amounts — into a structured record that keeps the source hash.
+6. **Return an inventory** of what was found so the user confirms before anything is imported. Same
+   confirm-before-count principle as S2.
+7. **Report anything unrecognised as unrecognised.** Never silently skipped — an unparsed file is not
+   an empty file.
+
+**Boundary.** This recognises *form*, not *meaning*. It can say "this is a DOCX, titled X, with 14
+headings and 3 tables." It cannot say "this document approves the budget." That is §7.
+
 ---
 
 ## 6. Evidence verification — the two modes, and their limit
@@ -484,6 +529,59 @@ Additional competencies the assets support, in rough priority:
 
 Every item above is a pure function or a join over data already held. None requires a model.
 
+
+### 11.1b SIRA continuity — does a year's work feed the next year?
+
+The owner asked whether a completed year's SIRA produces recommendations for the next version, and
+whether continuous-audit anomalies feed back into it. Verified state, then design.
+
+**What exists — more than expected.**
+
+- **SIRA is already cyclic.** `sira_cycles` is keyed `(org_id, universe_id, year)` (`0020_sira_cycles.sql`).
+  A cycle is created per year, scored, then published.
+- **Emergent risk is already first-class.** `SiraEmergentRisk` carries `universeId`, `entityId`,
+  `title`, `description`, and a decision of `accepted`/`rejected` **with a reason**
+  (`decideEmergentRisk`). That is precisely the channel an anomaly should enter through.
+- **Planning already pre-fills from SIRA.** `populate_planning_suggestions()` (`0025_planning.sql`)
+  reads the latest *published* cycle's scores for the engagement's entity and returns suggestions
+  carrying `inherent_rating`, `risk_band`, `risk_name` and `prior_finding_count`. It applies nothing —
+  the auditor accepts or rejects each item, logged by `decide_planning_suggestion`.
+- **Prior-year import is built AND wired.** `prior_year_imports` (`0044_prior_year_import.sql`)
+  imports risk/control mapping, scope, procedures and resource estimates, marked `imported_confirm`
+  until confirmed, and `PriorYearImportPanel` is rendered inside `PlanningPanel`.
+
+**What is missing — the owner's point.**
+
+- **`populate_planning_suggestions` and `decide_planning_suggestion` have ZERO non-test callers.**
+  The SIRA pre-fill is a dead RPC. The data path exists; nothing calls it.
+- **A published cycle does not seed the next.** `create_sira_cycle` inserts a bare draft row. Prior
+  scores, accepted emergent risks and the year's findings are not carried forward. Every year starts
+  from nothing.
+- **Anomalies do not reach SIRA at all.** Alerts are unwired (C1) and carry no entity link (C2), so
+  there is no path into emergent risk.
+- **`prior_finding_count` counts all findings ever**, not the prior period's. It is a count, not a
+  carried-forward assessment.
+
+**The design — a closed loop.**
+
+1. **Close the year.** On publication, produce a **carry-forward pack**: each risk's prior score and
+   band, the movement, the findings that touched it, the controls that failed, and the emergent risks
+   accepted during the year. Deterministic, from records already held.
+2. **Seed the next cycle.** `create_sira_cycle` optionally takes the prior cycle and pre-populates
+   scores marked `carried_forward`, so the auditor adjusts rather than retypes. Every carried value
+   keeps its provenance.
+3. **Feed anomalies in.** An alert (C2) with a resolved entity and control raises a **proposed
+   emergent risk** through the existing `submitEmergentRisk` channel, carrying the alert id, the rule
+   version and the affected rows as evidence. Accepted or rejected with a reason, as now.
+4. **Feed findings in.** Findings closed during the year propose control changes on the affected
+   risks, again as suggestions.
+5. **Close the loop visibly.** The cycle view shows, per risk: prior score, current score, what moved
+   it, and the evidence.
+
+The principle is the one `populate_planning_suggestions` already uses: **the system proposes, a human
+decides, the decision is logged with a reason.** That is what makes this a loop rather than an
+automation that quietly rewrites the risk model.
+
 ### 11.2 Adjacent products built from the same assets
 
 Each of these reuses the engine rather than extending it, which is why they are credible:
@@ -535,6 +633,60 @@ So the honest summary: the **cryptographic spine was planned and is largely buil
 **third-party verification product was not planned at all.** The spine is the hard part and it is
 done. Turning it into a verifiable package is comparatively small work, which is why this is worth
 prioritising — and it remains the strongest patent candidate (§10).
+
+
+### 11.3a Tamper response — what happens, who is told, how it is fixed
+
+The owner asked what tampering would actually do, how they would be alerted, and how it would be
+remediated. Answered from the code, then designed.
+
+**What exists — more than was stated earlier.** Migration `0077_verified_archival.sql`:
+
+- `integrity_alerts` table: `org_id`, `kind`, `object_type`, `object_id`, `expected_hash`,
+  `actual_hash`, `detail`.
+- `raise_integrity_alert(...)` — `security definer`, granted to `service_role` only — writes the
+  alert **and appends an `integrity_alert` entry to the hash-chained ledger**. A detected tamper is
+  itself recorded in the append-only trail.
+- The archival functions call it: `population_archive_check` and `population_archive_verify` raise an
+  alert when a stored hash does not match.
+- `verify_report_root`, `verify_certificate`, `verify_board_pack` and `verify_ledger` exist, and
+  `PublicVerifyRoute` is a real anonymous surface where an outsider can check a root.
+
+**Question by question.**
+
+**What would tampering do?** It makes verification **fail**. The stored root and the re-derived root
+diverge; expected and actual hashes are recorded; an `integrity_alert` row is written; a ledger entry
+is appended. The sealed output is not "corrected" and cannot be — the tamper is *proved*, permanently,
+with the before and after values.
+
+**How would you be alerted? Today: you would not.** Verified: `listIntegrityAlerts()` is exported from
+`src/data/archival.ts` and **called from nowhere**, and no migration emits a notification or email for
+an integrity alert. Detection is complete; **the alarm is missing.** A tamper today is recorded in a
+table nobody reads — the same defect class as the unwired monitor engine.
+
+**How it is remediated, guided.** T-series work:
+
+1. **Detect without being asked.** A scheduled sweep (T1) verifies roots, signatures and timestamps; a
+   ledger continuity check (T2) verifies the chain has no gap. Detection must not wait for a click.
+2. **Alert on every channel that matters.** Work Queue item, email, and a dashboard banner to the
+   org's integrity owners and the platform admin. Severity separates "a hash mismatch on one archive"
+   from "the ledger chain is broken" — the second is an incident, not a warning.
+3. **A guided incident wizard, not a message.** It shows in plain words: what changed, when, by whom
+   (from the ledger and activity log), and what it affects — which report, archive, population or
+   certificate. Then the options, each requiring a reason: **restore** from the sealed copy,
+   **re-derive and re-seal** with an incident note, **freeze** the affected engagement, or
+   **escalate** to the platform admin. Every action appends to the ledger.
+4. **The incident record is itself append-only.** It cannot be deleted or edited, only annotated. An
+   incident that can be quietly closed is not evidence.
+5. **Explain every step.** Each option and its consequence is described by the explain layer.
+6. **Verify afterwards.** Re-run verification and show the result, so the incident closes on proof
+   rather than on assertion.
+
+**A boundary worth stating plainly.** This is **tamper-evidence, not tamper-prevention.** Nothing here
+stops a person with direct database access from changing a row. What it does is make the change
+**provable** — the root no longer matches, the mismatch is recorded in a chained ledger, and the
+expected and actual values are preserved. Prevention is an infrastructure-level problem. Claiming
+prevention would be exactly the overstatement §7 exists to stop.
 
 ### 11.4 Deterministic capabilities not yet built
 
@@ -595,6 +747,8 @@ annually.
 | S14 | Sequential minutes: action-item register, carry-forward, vanish, reopen, close-without-evidence | S7 |
 | S15 | Policy / procedure / regulation comparison, with coverage reporting | S7 |
 | S16 | Name held in one constants module so a rename is one commit | — |
+| S17 | Document recognition: magic-byte sniffing, archive unpacking with bomb/traversal limits, office-inside-zip detection, metadata and title extraction, recursion, inventory-before-import (§5a) | S7 |
+| S18 | SIRA continuity: carry-forward pack on publish, seed the next cycle, anomalies and findings proposed as emergent risk (§11.1b) | S1, C2 |
 
 ### Continuous assurance (C-series) — spec §11.1
 
@@ -606,6 +760,7 @@ annually.
 | C4 | Adhoc audit suggestion from an alert, pre-filled with entity/department/control | C2 |
 | C5 | Remediation wizard from an alert (finding, CAP, request evidence, escalate, dismiss with reason) | C2 |
 | C6 | Alert triage surface with rights gating | C1 |
+| C7 | Anomaly to SIRA: a resolved alert proposes an emergent risk carrying the alert id, rule version and affected rows | C2, S18 |
 
 ### Trust and attestation (T-series) — spec §11.3
 
@@ -616,6 +771,8 @@ annually.
 | T3 | Portable attestation package (roots, signatures, timestamps, rule versions, instructions) | T1 |
 | T4 | Third-party verifier: documented procedure usable with independent tooling | T3 |
 | T5 | Attestation screen: view, export and verify a package | T3 |
+| T6 | Guided integrity incident wizard: what changed, who, what it affects, then restore / re-derive / freeze / escalate, each with a reason, all append-only, verify afterwards (§11.3a) | T1 |
+| T7 | Wire the existing alarm: surface integrity_alerts, notify on every channel, severity-split a hash mismatch from a broken ledger chain | T1 |
 
 ### Deterministic capability library (D-series) — spec §11.1a
 

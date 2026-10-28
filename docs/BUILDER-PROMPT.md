@@ -162,6 +162,20 @@ S-series — the engine and the testing flow
   obligation verbs, cross-references). Report what matched AND what could not be interpreted — an
   unparsed clause is not a clean clause, and silently ignoring one is the bug class we are killing.
 - S16 Name in ONE constants module so a rename is one commit.
+- S17 Document recognition: sniff MAGIC BYTES (never trust the extension). Detect office-inside-zip by
+  entry names before treating an archive as a plain archive. Unpack archives with hard limits -
+  max entries, max uncompressed size, max compression ratio (zip bomb), reject absolute and `..` paths
+  (traversal), never execute, hash every member. Recurse with a depth limit. Extract title/author/
+  created/modified from docProps/core.xml and app.xml, and PDF /Info. Return an INVENTORY for the user
+  to confirm before import, and report unrecognised files AS unrecognised. No .rar library exists today
+  and RAR's decompressor is licence-restricted - make a deliberate decision, do not reflex-install.
+- S18 SIRA continuity: on publish, produce a carry-forward pack (prior score, band, movement, the
+  findings that touched it, the controls that failed, the emergent risks accepted). Seed the next
+  cycle from it, marked carried_forward with provenance. Anomalies and findings PROPOSE emergent risk
+  through the existing submitEmergentRisk channel; a human accepts or rejects with a reason.
+  NOTE: `populate_planning_suggestions` and `decide_planning_suggestion` already exist and have ZERO
+  non-test callers - wire them. Prior-year import IS already built and wired.
+
 
 C-series — continuous assurance (the category shift)
 - C1 Scheduled runner: call runMonitors per org on pg_cron (pg_cron is already in use, ten jobs
@@ -176,6 +190,8 @@ C-series — continuous assurance (the category shift)
 - C5 Remediation wizard from an alert: create finding, raise CAP, request evidence, escalate,
   dismiss with reason. Every action explained by the explain layer.
 - C6 Alert triage surface with rights gating.
+- C7 Anomaly to SIRA: a resolved alert proposes an emergent risk carrying the alert id, the rule
+  version and the affected rows as evidence.
 
 T-series — trust and attestation
 - T1 Tamper alarm: verify roots on a schedule, raise a signal on signature or timestamp failure.
@@ -186,6 +202,17 @@ T-series — trust and attestation
 - T4 Third-party verifier: a DOCUMENTED procedure usable with independent tooling, so an outsider
   can re-derive the root without trusting the producer.
 - T5 Attestation screen: view, export, verify.
+- T6 Guided integrity incident wizard. Shows in plain words what changed, when, by whom (ledger +
+  activity log) and what it affects (which report, archive, population, certificate), then offers
+  restore / re-derive and re-seal / freeze the engagement / escalate - each requiring a reason, each
+  appending to the ledger. The incident record is itself append-only and can only be annotated.
+  Re-run verification at the end so the incident closes on PROOF, not on assertion.
+- T7 WIRE THE EXISTING ALARM. `integrity_alerts`, `raise_integrity_alert()` (which writes the alert AND
+  appends a ledger entry) and the archive check functions ALL ALREADY EXIST. But `listIntegrityAlerts()`
+  has ZERO callers and no migration emits a notification. Detection is complete; the alarm is missing.
+  Surface it, notify on every channel, and severity-split a single hash mismatch from a broken ledger
+  chain - the second is an incident, not a warning.
+  BOUNDARY: this is TAMPER-EVIDENCE, not tamper-prevention. Never claim prevention.
 
 D-series — deterministic capability library (each a pure function + tests + a screen surface)
 - D1 Risk and control intelligence: residual-risk drift, control coverage matrix, control

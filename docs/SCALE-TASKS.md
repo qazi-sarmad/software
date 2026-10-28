@@ -406,6 +406,22 @@ migration 0096) is ALREADY BUILT; only the user-facing and third-party-verificat
 D1 risk/control intelligence; D2 population/evidence intelligence; D3 process/governance
 intelligence; D4 assurance operations. Each is a pure function under src/lib/ with unit tests.
 
+### Document recognition and SIRA continuity (S17-S18) — spec SYSTELIGON.md §5a, §11.1b
+S17 magic-byte sniffing, archive unpacking with zip-bomb/path-traversal limits, office-inside-zip
+detection, metadata/title extraction, recursion, inventory-before-import. NOTE: jszip/mammoth/xlsx/
+pdf-lib already present; routing today is by EXTENSION only. No .rar library exists (licence decision).
+S18 SIRA continuity: carry-forward pack on publish, seed next cycle, anomalies and findings proposed
+as emergent risk. NOTE: SIRA is already cyclic and emergent risk already has accept/reject with a
+reason; `populate_planning_suggestions` and `decide_planning_suggestion` exist but have ZERO non-test
+callers. Prior-year import IS built and wired (PriorYearImportPanel in PlanningPanel).
+
+### Tamper response (T6-T7) — spec SYSTELIGON.md §11.3a
+T6 guided integrity incident wizard (what changed/who/what it affects, then restore, re-derive, freeze
+or escalate, each with a reason, append-only, verify afterwards).
+T7 wire the existing alarm. NOTE: integrity_alerts table, raise_integrity_alert() (writes the alert AND
+appends a ledger entry) and the archive check functions ALL EXIST. But listIntegrityAlerts() has zero
+callers and no migration emits a notification -> detection is complete, THE ALARM IS MISSING.
+
 ## Environment facts (for the next session)
 
 - The sandbox has **no host Postgres** and **no Docker socket for the user**, but
