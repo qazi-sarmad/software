@@ -356,7 +356,7 @@ signed-in user) plus contextual values the **host screen** has already filtered 
 `src/lib/access.ts`. The popout never queries and never decides access to tenant data; it re-checks
 the caller's rights and redacts. This keeps Law L2 intact.
 
-## Systelligence — the deterministic forensic engine (spec: docs/SYSTELLIGENCE.md)
+## Systellect — the deterministic forensic engine (spec: docs/SYSTELLECT.md)
 
 Owner requirement (2026-10-28). Hard-coded, zero external reliance, never AI. Rule-based forensic
 analysis: population analysis, header detection, evidence verification, document review, and
@@ -367,7 +367,7 @@ on upload; accepted -> flag/evidence/verify/revert; declined -> floor + paste-fi
 |---|---|---|
 | S1 | `src/lib/systelligence/` — rule schema, runner, versioning, result shape | TODO |
 | S2 | Header detection + confirm-before-count in the population flow | TODO |
-| S3 | Accepted-Systelligence flow (flag -> rows -> evidence -> verify -> revert/override) | TODO |
+| S3 | Accepted-Systellect flow (flag -> rows -> evidence -> verify -> revert/override) | TODO |
 | S4 | Declined flow: floor, paste-to-fill, auto-add rows beyond the floor, package evidence | TODO |
 | S5 | Mode A / Mode B evidence verification, org-configurable | TODO |
 | S6 | Forensic rule library (Benford, duplicates, gaps, SoD, reconciliation, velocity...) | TODO |
@@ -377,11 +377,19 @@ on upload; accepted -> flag/evidence/verify/revert; declined -> floor + paste-fi
 | S10 | Rule packs per audit type + adhoc rule builder | TODO |
 | S11 | Signed OTA rule-pack distribution | TODO |
 | S12 | Override visibility: an override is shown to the reviewer at the next stage | TODO |
-| S13 | Editor: org format adoption + font/colour auto-detect + generated design elements | TODO |
+| S13 | Report writer under Systellect: format adoption + font/colour auto-detect + generated elements + provenance | TODO |
+| S14 | Sequential minutes: action-item register, carry-forward, vanish, reopen, close-without-evidence | TODO |
+| S15 | Policy / procedure / regulation comparison, with coverage reporting | TODO |
+| S16 | Name held in one constants module so a rename is one commit | TODO |
 
-Boundary (see SYSTELLIGENCE.md §7): a rule engine is genuinely better than a model for numeric and
+Boundary (see SYSTELLECT.md §7): a rule engine is genuinely better than a model for numeric and
 structural forensics because it is reproducible and attributable. It cannot do open-ended semantic
 judgement at any level of effort, and the product must never be described as if it can.
+
+IP (see SYSTELLECT.md §9a): the repo is PUBLIC and the clock is running. Owner actions, only these:
+make the repo private, add a proprietary licence, engage patent counsel, trademark-search the name.
+`systellect.com` is taken (live AI consultancy since 2010) and `systelligence` has prior use — hold
+the name in one constants module so a rename is one commit.
 
 ## Font repository (spec: docs/FONT-REPOSITORY.md)
 

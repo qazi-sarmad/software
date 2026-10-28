@@ -64,7 +64,7 @@ fails the build if a bundled font has no licence metadata or is marked non-redis
 | F3 | Curate and subset the bundled repository (few hundred families) |
 | F4 | Org font upload via `branding_assets`, with licence acknowledgement |
 | F5 | Font/colour/theme auto-detection from DOCX and PPTX |
-| F6 | Wire detection into the org format (see `docs/SYSTELLIGENCE.md` §9) |
+| F6 | Wire detection into the org format (see `docs/SYSTELLECT.md` §9) |
 | F7 | Gate **G10 — font licence**: no bundled font without licence metadata and a redistributable flag |
 
 ---

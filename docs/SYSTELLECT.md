@@ -1,4 +1,4 @@
-# Systelligence — the deterministic forensic engine
+# Systellect — the deterministic forensic engine
 
 Owner requirement (2026-10-28). This document is the buildable specification, and it is written to
 keep one promise: **everything described here is deterministic, hard-coded, and calls nothing
@@ -33,9 +33,9 @@ It is not a model. It does not "understand" anything. It applies rules and repor
 4. The population is registered with its hash and its confirmed row count. The database already
    refuses to verify a population without both, and refuses any sample that points at an unverified
    population (L3).
-5. The auditor is offered **Systelligence** for this test.
+5. The auditor is offered **Systellect** for this test.
 
-### 2.2 If Systelligence is accepted
+### 2.2 If Systellect is accepted
 
 - The engine runs its rule pack over the population.
 - It returns the rows it **requires evidence for**.
@@ -46,7 +46,7 @@ It is not a model. It does not "understand" anything. It applies rules and repor
 - The auditor **may close anyway**, but only with a remark, and that override is **explicitly carried
   forward and shown to the reviewer at the next stage** — the reviewer must not have to discover it.
 
-### 2.3 If Systelligence is declined
+### 2.3 If Systellect is declined
 
 - The sampling method and controls are chosen, which fixes the number to be extracted: **the floor**.
 - The auditor self-populates the drawn floor of rows.
@@ -97,22 +97,62 @@ The engine reads documents deterministically (see §5) and can find:
 - Contradictions between documents (the same figure with two different values).
 - Absent follow-through (a prior action item with no corresponding later record).
 
-### 3.3 Minutes, configuration, code and Power Query — pattern-level, not comprehension
+### 3.3 Sequential documents — minutes, action tracking, policy comparison
 
-The engine can find **known structural patterns**:
+This is where the engine earns its keep on documents, and all of it is deterministic.
+
+**Action-item tracking across a series of minutes.** Given minutes in date order, the engine
+maintains a register and follows each item forward:
+
+- An action raised in minute 1 with an owner and a due date, checked against every later minute.
+- Items **carried forward** — raised, not closed, and not mentioned again.
+- Items that **vanish** — raised, then never appear in any later minute. Silence is a finding.
+- Items **closed with no evidence** — marked done, but no document supports it.
+- Items **reopened** — closed, then raised again.
+- Items **closed before they were raised**, or closed by someone other than the owner.
+- Owner and due date **changed** without a recorded decision to change them.
+- An item whose due date **passes** with no status change.
+
+Because the whole register is derived from the documents, the engine can show, for any action item,
+its complete history: every minute it appears in, in order, with the exact text that mentioned it.
+That history is the evidence, and it is reproducible.
+
+**Policy against procedure against regulation.** The engine compares two or more document sets and
+reports the mismatches:
+
+- A **policy** clause with no corresponding **procedure** step — stated intent, no mechanism.
+- A **procedure** step with no enabling **policy** — an action with no authority behind it.
+- A **regulation** requirement not covered by any policy or procedure — a coverage gap.
+- A **policy** that contradicts another policy, or a procedure that contradicts a regulation.
+- The **same rule stated differently** in two documents, with the differences shown side by side.
+- A policy **version** that changed without the procedure being updated to match.
+- A control in the register with no procedure step, and a procedure step with no control.
+
+**How comparison works without a model.** Documents are parsed into structure — headings, numbered
+clauses, obligation sentences, defined terms, references. The engine then matches on those structures:
+shared defined terms, shared reference numbers, obligation verbs ("must", "shall", "is required to"),
+and explicit cross-references. It reports **what it matched and what it could not match**, and it
+shows the two passages side by side with their locations. It does not decide which document is right.
+That is a human call, and it is recorded as such.
+
+The engine is explicit about its own coverage: it reports how many clauses it parsed, how many it
+matched, and how many it **could not interpret** — because an unparsed clause is not a clean clause,
+and silently ignoring one would be the same class of lie as the config panel that read nothing.
+
+**Structural pattern rules** (unchanged from before):
 
 - A decision recorded with no quorum, no owner, or no action item.
 - An action item with no responsible person or no due date.
 - A prior decision with no recorded outcome.
-- A policy statement contradicted by another document.
 - In configuration and source: hardcoded credentials, `SELECT *`, an external call with no error
   handling, an unbounded loop, a disabled check, a dead branch, a hardcoded environment value.
 - In Power Query: a step whose declared output does not match the step that follows; a merge with no
   matching key; a filter that removes the rows the stated logic depends on.
 
-**It cannot judge whether a decision was wise, whether code is correct in intent, or whether a
-minute reflects good governance.** It finds the *shape* of a problem. A human decides what the shape
-means. This is the boundary, and §7 explains why it must not be crossed.
+**It cannot judge whether a decision was wise, whether a policy is sound, whether code is correct in
+intent, or whether a minute reflects good governance.** It finds the *shape* of a problem and shows
+the evidence. A human decides what the shape means. This is the boundary, and §7 explains why it must
+not be crossed.
 
 ---
 
@@ -171,7 +211,7 @@ still owns the judgement. §7 explains why this line is where it is.
 
 ## 7. The boundary — read this before promising anything
 
-The owner's ambition is that Systelligence should feel "almost unbelievable that this is not a
+The owner's ambition is that Systellect should feel "almost unbelievable that this is not a
 top-tier AI model". The honest position:
 
 **For everything in §3.1 and the structural parts of §3.2, a rule engine is genuinely better than an
@@ -185,7 +225,7 @@ amount of engineering turns pattern matching into comprehension. Claiming otherw
 class of lie as the config panel that saved a value nothing read: it would look like a capability and
 be nothing.
 
-So the promise is: **Systelligence is a forensic rule engine that finds anomalies, inconsistencies and
+So the promise is: **Systellect is a forensic rule engine that finds anomalies, inconsistencies and
 known defect patterns, and can prove why.** That is a genuine market differentiator, it is defensible
 to a regulator, and it is buildable. It is not a model and must never be described as one — not in the
 UI, not in a sales conversation, not in this document.
@@ -211,11 +251,17 @@ without a trace.
 
 ---
 
-## 9. Editor — Canva-style report formatting
+## 9. The report writer, under Systellect
+
+Systellect is the umbrella. The report writer is one of its surfaces, not a separate product: the same
+engine that flags a row, tracks an action item across minutes, or matches a policy to a procedure also
+assembles the report that presents those findings — so a finding and its write-up cannot disagree,
+because they come from one source.
 
 Already substantially built, and this should be credited: `DesignCanvas.tsx` (rulers, snap grid, zoom,
 drag, resize, multi-column flow, design shapes), `FormatCanvas.tsx`, `ReportFormatPanel.tsx`,
-`FigureStudio.tsx`, `DesignPane.tsx`, with pure geometry in `src/lib/writing/designCanvas.ts`.
+`FigureStudio.tsx`, `DesignPane.tsx`, with pure geometry in `src/lib/writing/designCanvas.ts`, plus
+`compose.ts`, `canonical.ts`, `bundle.ts` and the render pipeline.
 
 What is added:
 
@@ -226,12 +272,64 @@ What is added:
 3. **Generated design elements** — a library of deterministic, parameterised figures and blocks
    (charts, callouts, dividers, tables) the user can drop in. Generated from data and tokens, never
    from a model.
-4. **Editable at every stage** — before drafting, during, after, and after management comments. A
+4. **Findings flow straight into the report.** A Systellect finding carries its rule id, version and
+   source rows; the report renders it with that provenance intact. The writer never restates a finding
+   in its own words, because a restatement is where a fact can drift.
+5. **Editable at every stage** — before drafting, during, after, and after management comments. A
    format is a versioned artifact, so re-adjusting formatting never alters a fact.
 
 This pairs with the font repository requirement: self-host the curated set, drop the Google CDN
 dependency, store per-font licence metadata, allow org upload, and auto-detect from the client's own
 templates.
+
+---
+
+## 9a. Intellectual property — read this before filing or publishing anything
+
+The owner asked whether Systellect is patentable. It is a fair question and the answer has an urgent
+practical edge, so it is recorded here rather than left to a later conversation. **This is not legal
+advice; it is a plain statement of the facts and the deadline.**
+
+**The urgency.** The repository is **public** on GitHub, created 2026-09-30 and pushed to as recently
+as today. In most jurisdictions, a **public disclosure starts a clock**: in the United States you have
+**twelve months from first public disclosure** to file, after which your own disclosure can be used
+against you; in the **UK and most of Europe there is effectively no grace period at all** — a public
+disclosure before filing destroys novelty outright. The commit history is the disclosure date, and it
+is provable. So the clock is already running and may already have expired in Europe.
+
+**Therefore, in order of priority:**
+
+1. **Make the repository private now.** It costs nothing, it stops the clock advancing, and it is
+   already on the owner-action list. This is the single highest-value action available today.
+2. **Add a proprietary licence.** The repo currently has **no licence**, which is better than a
+   permissive one — but it should state "all rights reserved" explicitly.
+3. **Talk to a patent attorney before filing anything further or describing the mechanism publicly.**
+   Do not publish the mechanism in a blog post, a sales deck or a demo before that conversation.
+
+**What is genuinely strong here, and what is not.** A patent needs an *inventive step*, not just a
+good product. The strong candidate is narrow and specific: **a deterministic, reproducible method for
+verifying audit evidence and cross-document consistency that records rule identity, rule version and
+source provenance for every finding, such that a sealed output can be re-derived and independently
+verified.** That is a concrete method with a technical effect. What is **not** patentable is "software
+that analyses audits" — that is an abstract idea and will be rejected. The defensibility in practice
+will come more from the accumulated rule library, the IIA mappings and the sealed-output provenance
+than from the concept alone.
+
+**The honest strategic note.** For a product this size, **copyright over the code, trademark over the
+name, and trade secret over the rule library** are likely to matter more than a patent, and cost far
+less. A patent filing is expensive and slow; the owner has said there is no budget. Trade secret
+protection — keeping the rule library private and the repository closed — is free and immediate.
+
+**A caution on the name.** `systellect.com` is **taken** (registered 2010, currently a live
+"Engineering Intelligence" / AI consultancy site), so the name is in active commercial use by an AI
+services company. That is a trademark risk for this exact market. `systelligence` also has prior use
+(an open-source project exists). Before committing to either name, run a proper trademark search — I
+can only report that the obvious signals are negative, not give a clearance opinion. This is a reason
+to hold the name loosely in code: keep it in one constants module so a rename is one commit.
+
+**Owner actions, and only these:** make the repository private; add a proprietary licence; engage
+patent counsel if a filing is wanted; run a trademark search on the final name. No further code work
+is blocked by any of this.
 
 ---
 
@@ -241,7 +339,7 @@ templates.
 |---|---|---|
 | S1 | `src/lib/systelligence/` — rule schema, runner, versioning, result shape | — |
 | S2 | Header detection + confirm-before-count in the population flow | — |
-| S3 | The accepted-Systelligence flow (flag → rows → evidence → verify → revert/override) | S1 |
+| S3 | The accepted-Systellect flow (flag → rows → evidence → verify → revert/override) | S1 |
 | S4 | The declined flow: floor, paste-to-fill, auto-add rows beyond the floor, package evidence | — |
 | S5 | Mode A / Mode B verification, org-configurable | S1 |
 | S6 | Forensic rule library (§3.1) — one pure module per family, each versioned and tested | S1 |
@@ -251,7 +349,10 @@ templates.
 | S10 | Rule packs per audit type + adhoc rule builder | S1 |
 | S11 | Signed OTA rule-pack distribution | S1 |
 | S12 | Override visibility: an override at one stage is shown to the reviewer at the next | S3 |
-| S13 | Editor: org format adoption + font/colour auto-detect + generated elements | — |
+| S13 | Report writer under Systellect: org format adoption + font/colour auto-detect + generated elements + findings-to-report provenance | — |
+| S14 | Sequential minutes: action-item register, carry-forward, vanish, reopen, close-without-evidence | S7 |
+| S15 | Policy / procedure / regulation comparison, with coverage reporting | S7 |
+| S16 | Name held in one constants module so a rename is one commit | — |
 
 ---
 
@@ -259,7 +360,7 @@ templates.
 
 - A population upload detects headers, asks for confirmation, and counts the true population minus
   the header row.
-- Systelligence, when accepted, flags rows, requests evidence, auto-populates, verifies, and reverts
+- Systellect, when accepted, flags rows, requests evidence, auto-populates, verifies, and reverts
   on failure — with the override path visible to the next reviewer.
 - When declined, the floor is enforced as a minimum, paste fills cells, and rows are added beyond the
   floor when the population is larger.
