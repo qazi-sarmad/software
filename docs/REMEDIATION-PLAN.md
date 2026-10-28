@@ -235,8 +235,16 @@ did not catch this, so we change the *kind* of test.
 6. **RPC parity gate.** Every RPC the app calls must exist in the final schema (catches the
    `SamplingPanel` empty-orgId bug class), and every RPC the schema exposes for the UI must be called
    or allow-listed.
+7. **Explain coverage gate.** Every method, option, field and status the UI offers must resolve to an
+   explain-layer catalogue entry, and every entry must be referenced by something. Catches a new
+   dropdown option shipped with no explanation. See `docs/EXPLAIN-LAYER.md`.
+8. **Drilldown gate.** Every rendered aggregate (count, percentage, total) must have a drilldown
+   target. Catches a dashboard number with no way to reach its records.
+9. **IIA honesty gate.** Every IIA standard entry must point at a screen or RPC that exists, or be
+   explicitly marked `not yet implemented`; no verbatim standard text. Catches standards shown as
+   covered when they are not, and copyright trouble.
 
-These six gates are cheap, deterministic (Law 1 friendly) and would each have caught a real defect
+These nine gates are cheap, deterministic (Law 1 friendly) and would each have caught a real defect
 found in the audit.
 
 ---

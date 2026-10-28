@@ -141,6 +141,31 @@ is empty in production (`src/App.tsx:204`).
 
 ---
 
+## Explain layer (popouts, drilldown, access-filtered detail, IIA standards)
+
+Full specification: `docs/EXPLAIN-LAYER.md`. Verified IIA numbering: `docs/iia-standards-reference.md`.
+Owner requirement: every method, field, status and term gets a small popout saying what it is and what
+it will do; everything is drilldownable; hovering any text shows a detail popout **filtered on view
+access**; IIA standards are woven into the same information workflow.
+
+| # | Task | Status |
+|---|---|---|
+| E1 | `src/lib/explain/catalogue.ts` — schema, `explainFor(user, id, context)`, redaction, L2 guard test | TODO |
+| E2 | `ExplainPopout` + `useExplain` on `HoverPreview`; non-blocking, a11y (tooltip + complementary) | TODO |
+| E3 | `src/lib/explain/iia.ts` — standards as data, paraphrased, mapped to real screens/RPCs | TODO |
+| E4 | Hover cards + detail panels wired across sampling methods, fields, statuses, terms | TODO |
+| E5 | Drilldown from every aggregate; deep-linkable; no blocking modal (walk test) | TODO |
+| E6 | Standards affordance on screens, lifecycle steps and report sections | TODO |
+| E7 | Standards view (catalogue → implementation → evidence) | TODO |
+| E8 | `PencilGuide` + guidance data for guided first-run and per-screen "show me" | TODO |
+| E9 | Gates G7 (explain coverage), G8 (drilldown), G9 (IIA honesty) + tests | TODO |
+| E10 | Extend `UI-INVENTORY.md` with explain ids, standards and drilldown targets per screen | TODO |
+
+The access rule that makes this safe: the popout renders static catalogue content (safe for any
+signed-in user) plus contextual values the **host screen** has already filtered through
+`src/lib/access.ts`. The popout never queries and never decides access to tenant data; it re-checks
+the caller's rights and redacts. This keeps Law L2 intact.
+
 ## Environment facts (for the next session)
 
 - The sandbox has **no host Postgres** and **no Docker socket for the user**, but

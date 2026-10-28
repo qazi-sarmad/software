@@ -1,6 +1,6 @@
 # Docs index — read this first
 
-There are only four documents you should trust. Everything else is history.
+There are only six documents you should trust. Everything else is history.
 
 ## Read these
 
@@ -10,6 +10,8 @@ There are only four documents you should trust. Everything else is history.
 | `FUNCTIONALITY-AUDIT.md` | What is **actually** built, verified line by line against the code. |
 | `REMEDIATION-PLAN.md` | The plan being executed, and why it is in this order. |
 | `SCALE-TASKS.md` | Live task status. Updated in the same commit as the work. |
+| `EXPLAIN-LAYER.md` | The popout / drilldown / access-filtered-detail / IIA-standards layer. |
+| `iia-standards-reference.md` | Verified IIA 2024 standard numbers and titles (structure only). |
 
 ## Interface inputs (read by tooling, keep in sync)
 
