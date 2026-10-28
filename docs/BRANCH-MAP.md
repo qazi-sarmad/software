@@ -107,16 +107,33 @@ Verified: `gen-ui-inventory.mjs` is deterministic (regenerating produces byte-id
 are exactly what turns a two-builder merge into a phantom conflict, so regenerate before you commit
 a screen change, every time.
 
-**Screen-id ranges are the partition.** Both branches currently end at `WK-11`. New screens take the
-next free id in the range you own:
+**Screen-id ranges are the partition.** Both branches currently end at `WK-11`. The contract carries
+fourteen families; every one is assigned, so no builder has to guess:
 
-| Range | Owner |
-|---|---|
-| `SA-*` (Super Admin) | Builder A — its Phases 3-6 are all platform surfaces |
-| `OA-*`, `WK-*`, `EX-*` | Builder B — E10, S21, T5 and the explain surfaces |
-| `GL-*`, `TUT-*` | Builder A (chrome) |
+| Family | Count | Owner | Why |
+|---|---|---|---|
+| `SA-*` | 15 | Builder A | its Phases 3-6 are all platform surfaces |
+| `OA-*` | 24 | Builder A | org-admin config; A's 3.4/3.5 add `OA-22b`, `OA-22` |
+| `GL-*`, `TUT-*` | 3 | Builder A | chrome and the tutorial drawer |
+| `AF-*` | 14 | Builder B | E4/E6 affordances, S20 evidence, S21 comments |
+| `AP-*` | 5 | Builder B | E4/E6 on the plan and SIRA surfaces |
+| `AU-*`, `AX-*` | 4 | Builder B | E4/E6 on the universe and auth surfaces |
+| `CH-*` | 6 | Builder B | U2 is the command palette (`CH-03`) |
+| `DB-*` | 1 | Builder B | U1 dashboard numbers |
+| `IR-*` | 5 | Builder B | E4/E6 on the issues and CAP register |
+| `SR-*` | 3 | Builder B | S18/S19 SIRA continuity |
+| `WK-*` | 9 | Builder B | E10, T5, the report builder |
+| `WQ-*` | 1 | Builder B | U3 work queue front door |
 
-If you need a screen id outside your range, STOP and report it.
+**This table was incomplete when first written** — it named only `SA-*`, `OA-*`, `WK-*`, `EX-*`, `GL-*`
+and `TUT-*`, leaving `AF-*`, `AP-*`, `AU-*`, `AX-*`, `CH-*`, `DB-*`, `IR-*`, `SR-*` and `WQ-*`
+unassigned. Builder B was already working on `U2` (the command palette, `CH-03`) against a map that
+did not mention `CH-*`. A missing row is a collision waiting for the other builder to arrive, so every
+family is now listed.
+
+**If your row needs a screen in a family you do not own, STOP and report it.** Do not take the next
+free id and do not reuse a retired id (`SA-06`, `OA-06`, `OA-07`, `WK-07` are retired and stay
+retired).
 
 ## Inert-function resolution — assigned, not implicit
 
