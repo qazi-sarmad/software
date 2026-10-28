@@ -112,7 +112,13 @@ Measured: Builder A already modified all four in its current work.
 | `docs/ACP-UI-CONTRACT.md` | **hand-written — the source of truth** | Edit only your own screen sections. This is the one file where a human edit is correct. |
 | `docs/UI-INVENTORY.md` | **generated** by `scripts/gen-ui-inventory.mjs` | NEVER hand-edit. Regenerate after changing the contract. |
 | `src/lib/tutorialKeys.json` | **generated** by `scripts/gen-tutorial-steps.mjs` | NEVER hand-edit. Regenerate. |
+| `supabase/migrations/0081_tutorial_steps.sql` | **generated** by the same `scripts/gen-tutorial-steps.mjs` | NEVER hand-edit. Regenerate. **This is the file that actually conflicts** when A merges the spec branch — measured: a real `git merge` of the guidance into A aborts with a conflict here, while B merges clean. Both sides regenerated it from the contract at different times. Delete your copy, regenerate, commit. |
 | `public/tutorials/.ui-hashes.json` | **generated** by `scripts/record-tutorials.mjs` | NEVER hand-edit. Regenerate by recording. |
+
+**Measured conflict: `supabase/migrations/0081_tutorial_steps.sql`.** Merging the guidance into
+Builder A conflicts on this file and nowhere else. It is generated, so the resolution is not a text
+merge — it is `node scripts/gen-tutorial-steps.mjs` after the contract is settled. Builder B merges
+the same guidance with zero conflicts, so this is an A-side stale regeneration, not a real divergence.
 
 **On conflict in a generated file, do not merge the text — regenerate it.** Delete your version,
 regenerate from `docs/ACP-UI-CONTRACT.md`, and commit the result. A text merge of a generated file
