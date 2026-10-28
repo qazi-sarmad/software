@@ -393,6 +393,19 @@ signed-in user) plus contextual values the **host screen** has already filtered 
 `src/lib/access.ts`. The popout never queries and never decides access to tenant data; it re-checks
 the caller's rights and redacts. This keeps Law L2 intact.
 
+### Continuous assurance (C1-C6) — spec SYSTELIGON.md §11.1
+Scheduled runner, alert enrichment (entity/department/SIRA/inherent+residual risk/controls),
+Work Queue + email delivery via liveSync, adhoc audit suggestion, remediation wizard, triage surface.
+
+### Trust and attestation (T1-T5) — spec SYSTELIGON.md §11.3
+Tamper alarm, ledger continuity check, portable attestation package, third-party verifier,
+attestation screen. NOTE: the cryptographic spine (signing_keys/signatures/timestamp authorities,
+migration 0096) is ALREADY BUILT; only the user-facing and third-party-verification halves are new.
+
+### Deterministic capability library (D1-D4) — spec SYSTELIGON.md §11.1a
+D1 risk/control intelligence; D2 population/evidence intelligence; D3 process/governance
+intelligence; D4 assurance operations. Each is a pure function under src/lib/ with unit tests.
+
 ## Environment facts (for the next session)
 
 - The sandbox has **no host Postgres** and **no Docker socket for the user**, but
