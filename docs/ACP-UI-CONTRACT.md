@@ -1345,11 +1345,17 @@ above. `docs/ACP-TUTORIALS.md` lists every key and its steps.
 - **Route:** Org Admin control plane, tab `Tutorials` (`org-control-tab-tutorials`).
 - **Rights:** any signed-in org member; read-only.
 - **Data:** `listTutorials()` (`src/data/tutorials.ts`), `tutorialHealth(rows, liveHashes)`.
-- **Testids:** `org-tutorials`, `superadmin-tutorials`, `superadmin-tutorials-loading`,
-  `superadmin-tutorials-error`, `superadmin-tutorials-empty`, `tutorial-<key>`.
+- **Testids:** `org-tutorials`, `tutorial-<key>`.
 - **States:** loading, error, empty, ready.
 - **Tutorial key:** `oa.tutorials` (its step target is OA-18's own `org-tutorials`, not the
   super-admin library's `superadmin-tutorials`).
+
+OA-18 renders `SuperAdminTutorials audience="org_admin"`, so the `superadmin-tutorials*` testids
+*are* in the DOM here. They are deliberately **not** listed above: this list is what
+`scripts/gen-tutorial-steps.mjs` draws step targets from, and `src/guards/tutorialTargets.test.ts`
+(T1) forbids an org-admin key from driving a control that only the super-admin portal renders.
+Listing them made `oa.tutorials` target `superadmin-tutorials` on every regeneration, which failed
+that guard. SA-13 owns those testids in the contract; the tenant view owns `org-tutorials`.
 
 ## OA-19 — Go Live health check (S1)
 
