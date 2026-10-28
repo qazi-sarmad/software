@@ -1,4 +1,4 @@
-# Systellect — the deterministic forensic engine
+# Systeligon — the deterministic forensic engine
 
 Owner requirement (2026-10-28). This document is the buildable specification, and it is written to
 keep one promise: **everything described here is deterministic, hard-coded, and calls nothing
@@ -33,9 +33,9 @@ It is not a model. It does not "understand" anything. It applies rules and repor
 4. The population is registered with its hash and its confirmed row count. The database already
    refuses to verify a population without both, and refuses any sample that points at an unverified
    population (L3).
-5. The auditor is offered **Systellect** for this test.
+5. The auditor is offered **Systeligon** for this test.
 
-### 2.2 If Systellect is accepted
+### 2.2 If Systeligon is accepted
 
 - The engine runs its rule pack over the population.
 - It returns the rows it **requires evidence for**.
@@ -46,7 +46,7 @@ It is not a model. It does not "understand" anything. It applies rules and repor
 - The auditor **may close anyway**, but only with a remark, and that override is **explicitly carried
   forward and shown to the reviewer at the next stage** — the reviewer must not have to discover it.
 
-### 2.3 If Systellect is declined
+### 2.3 If Systeligon is declined
 
 - The sampling method and controls are chosen, which fixes the number to be extracted: **the floor**.
 - The auditor self-populates the drawn floor of rows.
@@ -158,7 +158,7 @@ not be crossed.
 
 ## 4. Rule packs
 
-- Rules live under `src/lib/systelligence/rules/`, pure and versioned.
+- Rules live under `src/lib/systeligon/rules/`, pure and versioned.
 - Every rule declares `id`, `version`, `kind`, `params`, `appliesTo`, and the IIA standards it
   supports (see `docs/iia-standards-reference.md`).
 - A rule pack is a named, versioned bundle shipped per audit type, so a new client gets a working
@@ -211,7 +211,7 @@ still owns the judgement. §7 explains why this line is where it is.
 
 ## 7. The boundary — read this before promising anything
 
-The owner's ambition is that Systellect should feel "almost unbelievable that this is not a
+The owner's ambition is that Systeligon should feel "almost unbelievable that this is not a
 top-tier AI model". The honest position:
 
 **For everything in §3.1 and the structural parts of §3.2, a rule engine is genuinely better than an
@@ -225,7 +225,7 @@ amount of engineering turns pattern matching into comprehension. Claiming otherw
 class of lie as the config panel that saved a value nothing read: it would look like a capability and
 be nothing.
 
-So the promise is: **Systellect is a forensic rule engine that finds anomalies, inconsistencies and
+So the promise is: **Systeligon is a forensic rule engine that finds anomalies, inconsistencies and
 known defect patterns, and can prove why.** That is a genuine market differentiator, it is defensible
 to a regulator, and it is buildable. It is not a model and must never be described as one — not in the
 UI, not in a sales conversation, not in this document.
@@ -251,9 +251,9 @@ without a trace.
 
 ---
 
-## 9. The report writer, under Systellect
+## 9. The report writer, under Systeligon
 
-Systellect is the umbrella. The report writer is one of its surfaces, not a separate product: the same
+Systeligon is the umbrella. The report writer is one of its surfaces, not a separate product: the same
 engine that flags a row, tracks an action item across minutes, or matches a policy to a procedure also
 assembles the report that presents those findings — so a finding and its write-up cannot disagree,
 because they come from one source.
@@ -272,7 +272,7 @@ What is added:
 3. **Generated design elements** — a library of deterministic, parameterised figures and blocks
    (charts, callouts, dividers, tables) the user can drop in. Generated from data and tokens, never
    from a model.
-4. **Findings flow straight into the report.** A Systellect finding carries its rule id, version and
+4. **Findings flow straight into the report.** A Systeligon finding carries its rule id, version and
    source rows; the report renders it with that provenance intact. The writer never restates a finding
    in its own words, because a restatement is where a fact can drift.
 5. **Editable at every stage** — before drafting, during, after, and after management comments. A
@@ -286,7 +286,7 @@ templates.
 
 ## 9a. Intellectual property — read this before filing or publishing anything
 
-The owner asked whether Systellect is patentable. It is a fair question and the answer has an urgent
+The owner asked whether Systeligon is patentable. It is a fair question and the answer has an urgent
 practical edge, so it is recorded here rather than left to a later conversation. **This is not legal
 advice; it is a plain statement of the facts and the deadline.**
 
@@ -320,12 +320,27 @@ name, and trade secret over the rule library** are likely to matter more than a 
 less. A patent filing is expensive and slow; the owner has said there is no budget. Trade secret
 protection — keeping the rule library private and the repository closed — is free and immediate.
 
-**A caution on the name.** `systellect.com` is **taken** (registered 2010, currently a live
-"Engineering Intelligence" / AI consultancy site), so the name is in active commercial use by an AI
-services company. That is a trademark risk for this exact market. `systelligence` also has prior use
-(an open-source project exists). Before committing to either name, run a proper trademark search — I
-can only report that the obvious signals are negative, not give a clearance opinion. This is a reason
-to hold the name loosely in code: keep it in one constants module so a rename is one commit.
+**A caution on the name — and why this one is different.** The previous candidates were both in use:
+`systellect.com` is taken (registered 2010, a live "Engineering Intelligence" AI consultancy) and
+`systelligence` has prior open-source use. **`systeligon` checked clean** on 2026-10-28:
+
+| Check | Result |
+|---|---|
+| `systeligon.com` RDAP record | **no record — available** |
+| DNS: `.com`, `.io`, `.ai`, `.app` | **no resolution on any** |
+| npm registry | **not found** |
+| GitHub repositories | **zero** |
+
+That is a materially better position, but **it is not trademark clearance.** A domain being free
+means nobody bought the domain; it does not mean nobody registered the mark. Two caveats to hold:
+
+- **Register the domains now.** They are cheap and the availability can change within days of any
+  public mention. `.com` and `.io` at minimum.
+- **Search the trademark registers before printing it on anything** — USPTO (US), UKIPO (UK), EUIPO
+  (EU), and any market being sold into. I can only report the signals above; I cannot give a clearance
+  opinion, and an unavailable domain was the *weaker* signal of the two.
+
+The name stays in **one constants module** (task S16) regardless, so a rename remains one commit.
 
 **Owner actions, and only these:** make the repository private; add a proprietary licence; engage
 patent counsel if a filing is wanted; run a trademark search on the final name. No further code work
@@ -333,13 +348,99 @@ is blocked by any of this.
 
 ---
 
-## 10. Work packages
+## 11. Where this can be stretched
+
+The owner asked what else the system can be engineered to do. This section records the honest answer:
+what the existing assets genuinely support, what is novel, and what must not be attempted.
+
+**Sequencing warning, stated first.** Nothing in this section starts until the current build is
+finished — Phases 1–6, gates G1–G10, Systeligon S1–S16, fonts F1–F7. The failure mode for an
+ambitious product is not a lack of ideas; it is starting the next one before the last one works. This
+section exists so the ideas are **captured and not lost**, not so they are started.
+
+### 11.1 The category shift — the biggest available move
+
+Today this is a **point-in-time audit tool**: someone runs an audit, the tool helps, the report is
+sealed. The assets already present — deterministic monitors, connectors, a versioned rule library,
+sealed and timestamped outputs — support a different category: **continuous assurance**. Rules run on
+a schedule against client systems, and the client learns about a control failure the week it happens
+rather than the year after.
+
+That is a category change, not a feature, and it is the single largest available expansion. It needs
+no new invention, only the monitor runner (Phase 5) pointed at a schedule.
+
+### 11.2 Adjacent products built from the same assets
+
+Each of these reuses the engine rather than extending it, which is why they are credible:
+
+| Product | Reuses | Notes |
+|---|---|---|
+| **Continuous control monitoring** (SOX/ICFR) | monitors + connectors + rules | Control testing is what the engine already does |
+| **Regulatory coverage attestation** | policy/procedure comparison (§3.3) | Encode a regulation as obligations, produce a coverage matrix |
+| **Data quality assurance** | forensic rules (§3.1) | Sellable to a CFO with no audit at all |
+| **Third-party / vendor assurance** | same engine over questionnaires | Different inputs, identical machinery |
+| **Forensic investigation support** | journal-entry testing, duplicate payments, vendor-master analysis | The strongest rule families already |
+| **Grant / funding assurance** | lifecycle + evidence verification | Compliance-shaped, well suited |
+| **Multi-entity / franchise assurance** | one rulebook across many entities | Compare like with like |
+| **Certification-grade evidence packs** | `0096` anchoring + Merkle + timestamps | See §11.3 |
+
+### 11.3 The genuinely novel capability: verifiable attestation
+
+This is the one worth protecting. Because outputs are **hash-chained, signed, Merkle-rooted and
+timestamped**, Systeligon can produce an assurance package that a **third party can verify without
+trusting the producer** — a regulator, a board, or a counterparty re-derives the root and confirms
+nothing changed.
+
+Almost nothing on the market does this, because it requires the discipline of deterministic rules and
+append-only config that this codebase already has. It is also, not coincidentally, the strongest
+patent candidate (§9a).
+
+### 11.4 Deterministic capabilities not yet built
+
+- **Cross-engagement systemic detection.** The same finding recurring across engagements is a
+  systemic issue, not N isolated ones. Deterministic within one tenant; see the L2 warning below.
+- **Control dependency graph.** Model which controls depend on which, so the engine can answer "if
+  this control fails, what else is exposed." Pure graph traversal.
+- **Deterministic exposure simulation.** Given a failed control and the affected rows, compute the
+  value at risk. Arithmetic over data already held.
+- **Audit plan optimisation.** Given risks, resources and a period, produce a schedule that covers the
+  required risk. Constraint solving, deterministic.
+- **Sampling optimisation.** Minimum sample size for a stated confidence and materiality
+  (Clopper-Pearson is already on the Phase 2 list).
+- **Control metrics over time.** Trend the engine's own output: is the control environment improving?
+
+### 11.5 The moat is the discipline, not the features
+
+Worth being explicit, because it changes what to invest in: the defensible asset is **the explain
+layer plus sealed provenance** — every number traceable to a rule, a version and a row, and every
+output independently verifiable. Competitors can copy a feature list. Copying the discipline means
+rebuilding their data model, and that is why it is the moat.
+
+The rule library is the second asset, and it should be held as a **trade secret** (§9a).
+
+### 11.6 What must not be attempted
+
+- **Open-ended semantic judgement.** §7. No amount of effort changes this.
+- **Cross-tenant data pooling.** Law L2 forbids tenant data leaving the tenant. Benchmarking across
+  clients would break it. If ever wanted, it requires explicit per-client consent, aggregation with
+  a minimum cohort size, and a written Law change — not a feature flag.
+- **Anything calling a model.** Law L1. This is a written decision to reverse, not a design choice.
+
+### 11.7 If only one is pursued
+
+**Continuous assurance (§11.1)**, because it reuses what is already built, changes the category rather
+than the feature list, and makes the sealed-attestation story (§11.3) recur monthly instead of
+annually.
+
+---
+
+## 12. Work packages
 
 | # | Task | Depends on |
 |---|---|---|
-| S1 | `src/lib/systelligence/` — rule schema, runner, versioning, result shape | — |
+| S1 | `src/lib/systeligon/` — rule schema, runner, versioning, result shape | — |
 | S2 | Header detection + confirm-before-count in the population flow | — |
-| S3 | The accepted-Systellect flow (flag → rows → evidence → verify → revert/override) | S1 |
+| S3 | The accepted-Systeligon flow (flag → rows → evidence → verify → revert/override) | S1 |
 | S4 | The declined flow: floor, paste-to-fill, auto-add rows beyond the floor, package evidence | — |
 | S5 | Mode A / Mode B verification, org-configurable | S1 |
 | S6 | Forensic rule library (§3.1) — one pure module per family, each versioned and tested | S1 |
@@ -349,7 +450,7 @@ is blocked by any of this.
 | S10 | Rule packs per audit type + adhoc rule builder | S1 |
 | S11 | Signed OTA rule-pack distribution | S1 |
 | S12 | Override visibility: an override at one stage is shown to the reviewer at the next | S3 |
-| S13 | Report writer under Systellect: org format adoption + font/colour auto-detect + generated elements + findings-to-report provenance | — |
+| S13 | Report writer under Systeligon: org format adoption + font/colour auto-detect + generated elements + findings-to-report provenance | — |
 | S14 | Sequential minutes: action-item register, carry-forward, vanish, reopen, close-without-evidence | S7 |
 | S15 | Policy / procedure / regulation comparison, with coverage reporting | S7 |
 | S16 | Name held in one constants module so a rename is one commit | — |
@@ -360,7 +461,7 @@ is blocked by any of this.
 
 - A population upload detects headers, asks for confirmation, and counts the true population minus
   the header row.
-- Systellect, when accepted, flags rows, requests evidence, auto-populates, verifies, and reverts
+- Systeligon, when accepted, flags rows, requests evidence, auto-populates, verifies, and reverts
   on failure — with the override path visible to the next reviewer.
 - When declined, the floor is enforced as a minimum, paste fills cells, and rows are added beyond the
   floor when the population is larger.
