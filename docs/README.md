@@ -1,6 +1,6 @@
 # Docs index — read this first
 
-There are only six documents you should trust. Everything else is history.
+There are nine documents you should trust. Everything else is history.
 
 ## Read these
 
@@ -12,6 +12,9 @@ There are only six documents you should trust. Everything else is history.
 | `SCALE-TASKS.md` | Live task status. Updated in the same commit as the work. |
 | `EXPLAIN-LAYER.md` | The popout / drilldown / access-filtered-detail / IIA-standards layer. |
 | `iia-standards-reference.md` | Verified IIA 2024 standard numbers and titles (structure only). |
+| `SYSTELIGON.md` | The deterministic forensic engine: spec, boundary, stretch roadmap. |
+| `FONT-REPOSITORY.md` | Self-hosted fonts, licence metadata, template auto-detection. |
+| `BUILDER-PROMPT.md` | The paste-block for a fresh builder session. |
 
 ## Interface inputs (read by tooling, keep in sync)
 
