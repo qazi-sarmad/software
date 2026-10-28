@@ -315,12 +315,44 @@ and the full SQL harness is green ("all SQL tests passed twice").
 
 | # | Task | Status |
 |---|---|---|
-| 3.1 | `approval_chain` enforced (or hidden) | TODO |
-| 3.2 | `signoff_role_*` enforced | TODO |
-| 3.3 | `testing_mode` enforced | TODO |
+| 3.1 | `approval_chain` enforced (or hidden) | DONE |
+| 3.2 | `signoff_role_*` enforced | DONE |
+| 3.3 | `testing_mode` enforced | DONE |
 | 3.4 | `report_templates` enforced (or hidden) | TODO |
 | 3.5 | `anchoring_settings` setters wired (`admin_save_trust_anchor`, `admin_save_timestamp_authority`) | TODO |
 | 3.6 | `docs/CONFIG-EFFECT-MATRIX.md` — every configurable field with its proving test | TODO |
+
+### Phase 3.1–3.3 — what was built and how it was verified (2026-10-28)
+
+Migration `supabase/migrations/0107_phase3_workflow_enforcement.sql` (new) and test
+`supabase/tests/108_phase3_workflow_enforcement.sql` (new, 10 assertions). The migration applies
+twice cleanly and the full SQL harness is green ("all SQL tests passed twice", 109 test files).
+
+- **The defect.** `approval_chain`, `signoff_role_planning`, `signoff_role_conclusion` and
+  `testing_mode` were already enforced by `0101` (Phase 2). But three fields the Org Admin screen
+  saves and displays were read by no function: `workflow_settings.sla_hours`,
+  `workflow_settings.escalation_hours` and `workflow_settings.escalation_role`. And
+  `org_lifecycle_settings.signoff_role_testing` was stored and rendered but never consulted — only
+  the planning and conclusion roles were enforced, so the testing sign-off role did nothing.
+- **3.1 `sla_hours`.** `request_combined_deployment` now computes `sla_due_at` from
+  `workflow_settings.sla_hours` when the org has configured one, falling back to
+  `engagement_gate_settings.sla_hours` (the pre-0107 source) and then 48 hours. Test 108 §1 sets the
+  workflow SLA to 5 hours and asserts the due time lands within the 5-hour window.
+- **3.2 `escalation_hours`.** `escalate_overdue_deployment_requests` and
+  `deployment_requests_escalate_all` escalate a pending request once it is older than
+  `workflow_settings.escalation_hours` when configured, otherwise they keep the pre-0107 rule (past
+  `sla_due_at`). The schema requires `escalation_hours >= sla_hours`, so the window is a grace period
+  measured from creation; test 108 §2 proves a request past its SLA but inside the window is **not**
+  escalated, and one past the window is.
+- **3.3 `escalation_role`.** Both sweeps notify the configured `escalation_role` (an in-app
+  notification with that `role_target`); test 108 §3 asserts the notification carries the role.
+- **3.2 `signoff_role_testing`.** `sign_off_workpaper` now requires the caller to meet the configured
+  testing sign-off role, using the same `caller_meets_signoff_role` helper the planning and
+  conclusion stages already use. Test 108 §4 sets the role to `lead` and proves a manager without it
+  is refused, then to `reviewer` and proves the same manager signs.
+- **Gate set after the change:** `tsc` PASS; `vitest` PASS; `vite build` PASS; `check-shrink` PASS;
+  `check-tokens` PASS; `check-ui-contract` PASS; `check-tutorials` PASS; SQL harness PASS — "all SQL
+  tests passed twice" (111 test files).
 
 ## Phase 4 — Methodology & test steps as data
 
