@@ -186,6 +186,16 @@ export async function loadTenantSnapshot(warnings: string[] = []): Promise<Tenan
     };
   }, warnings)) as WorkingPaper[];
 
+  // Persisted test-step ticks (migration 0100). Definitions arrive in Phase 4; today the loader only
+  // restores the completed flag on whatever steps the workpaper already carries.
+  const stepState = (await readRows('workpaper_step_state', 'workpaper_id, step_id, completed', (r) => ({
+    workpaperId: s(r.workpaper_id), stepId: s(r.step_id), completed: !!r.completed,
+  }), warnings)) as { workpaperId: string; stepId: string; completed: boolean }[];
+  for (const wp of workpapers) {
+    const own = stepState.filter((st) => st.workpaperId === wp.id);
+    if (own.length) wp.testSteps = own.map((st) => ({ id: st.stepId, description: st.stepId, completed: st.completed }));
+  }
+
   const observations = (await readRows('observations', 'id, engagement_id, workpaper_id, title, sections, status, submitted_at, submitted_by', (r) => {
     const eng = engagements.find((e) => e.id === s(r.engagement_id));
     const sections = (r.sections as Record<string, string> | null) ?? {};
@@ -223,9 +233,12 @@ export async function loadTenantSnapshot(warnings: string[] = []): Promise<Tenan
     };
   }, warnings)) as AuditCapItem[];
 
-  const comments = (await readRows('report_comments', 'id, report_id, author_id, body, created_at, resolved_at', (r) => ({
-    id: s(r.id), workpaperId: '', authorId: s(r.author_id), authorName: '',
-    authorRole: 'reviewer' as Role, text: s(r.body), createdAt: s(r.created_at),
+  // Report comments are report-scoped in the database (report_version_id), while the shell's review
+  // dock is workpaper-scoped. The text and resolution state carry over; the workpaper link is left
+  // empty rather than invented, so a report comment never masquerades as a workpaper blocker.
+  const comments = (await readRows('report_comments', 'id, comment_text, commenter_id, status, created_at, resolved_at', (r) => ({
+    id: s(r.id), workpaperId: '', authorId: s(r.commenter_id), authorName: '',
+    authorRole: 'reviewer' as Role, text: s(r.comment_text), createdAt: s(r.created_at),
     status: r.resolved_at ? 'cleared' : 'open',
     resolved: !!r.resolved_at,
   }), warnings)) as ReviewComment[];

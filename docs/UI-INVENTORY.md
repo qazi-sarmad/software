@@ -1482,6 +1482,7 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 | RPC | Module | Parameters | Scope |
 |---|---|---|---|
 | `admin_upload_branding_asset` | `src/data/branding.ts` | `p_org`, `p_kind`, `p_filename`, `p_mime`, `p_base64` | platform |
+| `add_entity` | `src/data/mutations.ts` | `p_universe_id`, `p_name`, `p_kind` | tenant |
 | `alert_list` | `src/data/writing.ts` | `p_org` | tenant |
 | `automation_rule_list` | `src/data/automation.ts` | `p_org` | tenant |
 | `automation_rule_test` | `src/data/automation.ts` | `p_rule_id`, `p_sample` | tenant |

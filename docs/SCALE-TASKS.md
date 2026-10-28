@@ -90,7 +90,7 @@ is empty in production (`src/App.tsx:204`).
 | 1.1 | `src/data/tenant.ts` — session-scoped tenant loader (RLS-scoped table reads, never throws) | DONE |
 | 1.2 | `TenantDataProvider` replacing the seed as the shell's source (wired in `AuthGate`, `src/App.tsx`) | DONE |
 | 1.3 | Keep `EMPTY_SEED` only for genuinely tenant-less routes (`/e/:token`, `/verify`, `/pack`, `/root`) | DONE |
-| 1.4 | Kill the parallel in-memory mutations (sign-off, CAP, ledger, test steps) or point them at RPCs | DOING |
+| 1.4 | Kill the parallel in-memory mutations (sign-off, CAP, ledger, test steps) or point them at RPCs | DONE |
 | 1.5 | Production-build E2E that proves data loads (`e2e/phase1-production-build.spec.ts`) | DONE |
 
 **Task 1.1–1.3, 1.5 — what was built and how it was verified (2026-10-28).**
@@ -120,6 +120,46 @@ is empty in production (`src/App.tsx:204`).
   (48 screens); `check-tutorials` PASS (79 current, 1 stale `sa.tenant-hub` — pre-existing).
 - One test fixture updated: `src/App.noTenant.test.tsx` mocks `./data/client` and now must also provide
   `hasSupabaseConfig` (the new export the shell reads).
+
+**Task 1.4 — what was built and how it was verified (2026-10-28).**
+
+Before this task the shell's mutations only changed the in-memory seed: `signOffEngagement`,
+`reopenEngagement`, `addEntity`, `setTestStepCompleted`, `registerPopulation`, `finalizeTest`,
+`signOffWorkpaper`, `reopenWorkpaper`, `addObservation` and `transitionCap` were all `setState` calls,
+so a reload lost the change and no other principal ever saw it. Each now has a real write path, used
+when a Supabase project is configured; with no project (a bare dev checkout, which is what the unit
+tests exercise) the in-memory demo path is kept unchanged.
+
+- **Reuse first (grep, not guess).** Four operations already had an RPC and were wired to it rather
+  than redefined: `reopen_engagement(uuid, text)` (0007), `sign_off_workpaper(uuid)` and
+  `reopen_workpaper(uuid, text)` (0028), `create_observation(uuid, uuid, text, jsonb)` (0030), and the
+  CAP pair `update_cap` / `close_cap` (0038).
+- **Migration `0100_phase1_write_paths.sql`** adds the four that were genuinely missing, each a thin
+  right-checked, ledger-writing wrapper in the repo's existing shape (`jwt_org_id` +
+  `caller_has_right` + `append_ledger_entry`): `finalize_testing(uuid)`, `submit_population(uuid, text,
+  text, int, bigint)`, `add_entity(uuid, text, text)`, `set_test_step_state(uuid, text, boolean)`, plus
+  `seal_engagement(uuid)` for the Audit File review surface. It also adds the `workpaper_step_state`
+  table (RLS select by org, `pin_org_id` and the workpaper sealed-guard triggers) so a test-step tick
+  persists.
+- **The wiring, verified by grep.** `src/data/mutations.ts` is the new data module (Phase 1.4 writes);
+  `grep -n 'writes\.' src/context/AppContext.tsx` shows the one call site for each. Each mutation is an
+  RPC followed by `reload()` (`loadTenantSnapshot`), so the screen shows what the database holds. The
+  client-side rights check (`canPerformAction`) still runs first so the UI reason is immediate and
+  matches the RPC's refusal.
+- **Two defects the audit found in the loader and fixed here:** `tenant.ts` read
+  `report_comments(report_id, author_id, body)`, columns that do not exist (the real names are
+  `report_version_id`, `commenter_id`, `comment_text`) — every comment read would have errored; and it
+  never read `workpaper_step_state`, so a tick was written but never shown. Both fixed.
+- **`supabase/tests/101_phase1_write_paths.sql`** (new, 30 assertions) proves each write under a real
+  role: the happy path writes and reads back, and a caller without the right is refused. It also pins
+  the F11 anonymous surface (`has_function_privilege('anon', ...)` is false for the new functions).
+  The test caught two real constraints it had to respect rather than assert around: `workpaper_rows`
+  has `exception_flag NOT NULL`, so an unresolved row cannot come from `record_workpaper_row`; and
+  `sign_off_workpaper` enforces four-eyes, so the signer must not be the preparer.
+- **Gate set after the change:** `tsc` PASS; `vitest` 203 files / **2386** tests PASS; `vite build`
+  PASS; `check-shrink` PASS (58 files); `check-tokens` PASS (179 files, 0 violations); `check-ui-contract`
+  PASS (48 screens); `check-tutorials` PASS (80 keys, 79 current / 1 stale `sa.tenant-hub`, pre-existing);
+  SQL harness PASS — "all SQL tests passed twice" (104 test files).
 
 ## Phase 2 — Make the lifecycle real
 
