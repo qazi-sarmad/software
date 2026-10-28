@@ -9,6 +9,10 @@ const listRules = vi.fn();
 const getSize = vi.fn();
 const compute = vi.fn();
 const getSamp = vi.fn();
+const getCoverage = vi.fn();
+const getPrec = vi.fn();
+const getTested = vi.fn();
+const waive = vi.fn();
 const listRowsFn = vi.fn();
 const getWp = vi.fn();
 const recordFn = vi.fn();
@@ -28,6 +32,10 @@ vi.mock('../../data/sampling', () => ({
   computeSample: (...a: unknown[]) => compute(...a),
   lockSample: () => Promise.resolve({ ok: true }),
   getSample: () => getSamp(),
+  getValueCoverage: () => getCoverage(),
+  getSamplePrecision: () => getPrec(),
+  listSampleTestedRows: () => getTested(),
+  waiveValueCoverage: (...a: unknown[]) => waive(...a),
 }));
 vi.mock('../../data/rowTesting', () => ({
   listRows: () => listRowsFn(),
@@ -63,6 +71,10 @@ describe('Phase 4 UI panels (4I)', () => {
     getSize.mockResolvedValue(20);
     compute.mockResolvedValue({ ok: true });
     getSamp.mockResolvedValue(null);
+    getCoverage.mockResolvedValue(null);
+    getPrec.mockResolvedValue(null);
+    getTested.mockResolvedValue([]);
+    waive.mockResolvedValue({ ok: true });
     listRowsFn.mockResolvedValue([]);
     getWp.mockResolvedValue(null);
     recordFn.mockResolvedValue({ ok: true });
@@ -101,6 +113,41 @@ describe('Phase 4 UI panels (4I)', () => {
     await waitFor(() => expect(screen.getByTestId('sampling-compute')).toBeTruthy());
     fireEvent.click(screen.getByTestId('sampling-compute'));
     await waitFor(() => expect(compute).toHaveBeenCalledWith('w1', 'system', undefined));
+  });
+
+  it('sampling: shows the method, the calculation and the tested rows (2.7/2.8)', async () => {
+    getSamp.mockResolvedValue({
+      id: 's1', workpaperId: 'w1', populationId: 'p1', mode: 'system', seed: 'abc',
+      sizeFloor: 20, sampleRows: [{ row_ref: 1 }], lockedAt: '2026-01-01', lockedBy: 'u1',
+      method: 'systematic', calculation: { method: 'systematic', mode: 'system', formula: 'every k-th row', inputs: {}, result: { size: 1 } },
+    });
+    getCoverage.mockResolvedValue({ highValueRows: [1], included: [1], missing: [], waived: [], covered: true });
+    getPrec.mockResolvedValue({ n: 20, k: 1, confidence: 0.95, lower: 0.001, upper: 0.279 });
+    getTested.mockResolvedValue([{ id: 'r1', rowRef: '1', result: 'tick', rationale: null, exceptionFlag: false, reviewedResult: null }]);
+    render(<SamplingPanel workpaperId="w1" />);
+    await waitFor(() => expect(screen.getByTestId('sampling-method')).toBeTruthy());
+    expect(screen.getByTestId('sampling-method').textContent).toMatch(/systematic/);
+    expect(screen.getByTestId('sampling-calculation').textContent).toMatch(/every k-th row/);
+    expect(screen.getByTestId('sampling-tested-row-1')).toBeTruthy();
+    expect(screen.getByTestId('sampling-precision').textContent).toMatch(/Clopper-Pearson/);
+  });
+
+  it('sampling: a missing high-value item is named and can be waived (2.9)', async () => {
+    getSamp.mockResolvedValue({
+      id: 's1', workpaperId: 'w1', populationId: 'p1', mode: 'auditor_paste', seed: null,
+      sizeFloor: 20, sampleRows: [{ row_ref: 2 }], lockedAt: null, lockedBy: null,
+      method: 'random', calculation: null,
+    });
+    getCoverage.mockResolvedValue({ highValueRows: [1], included: [], missing: [1], waived: [], covered: false });
+    render(<SamplingPanel workpaperId="w1" />);
+    await waitFor(() => expect(screen.getByTestId('sampling-coverage-status')).toBeTruthy());
+    expect(screen.getByTestId('sampling-coverage-status').textContent).toMatch(/neither in the sample nor waived/);
+    const waiveBtn = screen.getByTestId('sampling-waive-1') as HTMLButtonElement;
+    expect(waiveBtn.disabled).toBe(true);
+    fireEvent.change(screen.getByTestId('sampling-waive-reason'), { target: { value: 'Immaterial: tested elsewhere in the cash workpaper.' } });
+    expect((screen.getByTestId('sampling-waive-1') as HTMLButtonElement).disabled).toBe(false);
+    fireEvent.click(screen.getByTestId('sampling-waive-1'));
+    await waitFor(() => expect(waive).toHaveBeenCalledWith('s1', 1, 'Immaterial: tested elsewhere in the cash workpaper.'));
   });
 
   it('row testing: designed empty state', async () => {

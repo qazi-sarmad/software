@@ -171,9 +171,46 @@ tests exercise) the in-memory demo path is kept unchanged.
 | 2.4 | Enforce `approval_chain` when an approval is decided | DONE |
 | 2.5 | Wire `runPreflight` into `freeze_report`; gate on `preflight_acks` | DONE |
 | 2.6 | Persist the report graph root (`report_graphs` writer) | DONE |
-| 2.7 | Seed `workpaper_rows` from `lock_sample`; link sample to tested rows | TODO |
-| 2.8 | Method-aware sampling (MUS/PPS, systematic, stratified) + Clopper-Pearson | TODO |
-| 2.9 | Value-coverage check (top-value items included or waived with a reason) | TODO |
+| 2.7 | Seed `workpaper_rows` from `lock_sample`; link sample to tested rows | DONE |
+| 2.8 | Method-aware sampling (MUS/PPS, systematic, stratified) + Clopper-Pearson | DONE |
+| 2.9 | Value-coverage check (top-value items included or waived with a reason) | DONE |
+
+### Phase 2.7–2.9 — what was built and how it was verified (2026-10-28)
+
+Three migrations, three SQL tests (105, 106, 107), one data module and one screen extended.
+
+- **2.7 — the drawn sample becomes the tested set.** `lock_sample` (0027) locked a sample and stopped;
+  `workpaper_rows` (0028) had no writer but `record_workpaper_row`, and `workpaper_rows.sample_id` had
+  no writer at all (`grep -rn 'insert into workpaper_rows' supabase/migrations/` proved it). The
+  auditor drew a sample and re-keyed every `row_ref` by hand, with nothing linking the two. Migration
+  `0104_phase2_row_seeding.sql` seeds one `workpaper_rows` row per `samples.sample_rows` element when
+  the sample locks, sets `sample_id`, and adds `sample_tested_rows` for the drilldown. The
+  `on conflict (workpaper_id, row_ref) do update set sample_id` keeps the link and never clobbers a
+  result. Wired in `src/data/sampling.ts` (`listSampleTestedRows`) and shown in `SamplingPanel`
+  (`sampling-tested-rows`). Test `105_phase2_row_seeding.sql` (12 assertions).
+- **2.8 — method-aware sampling and the exact bound.** `compute_sample` (0027) hardcoded
+  `method = 'random'` while the schema accepted seven methods and the Org Sampling Table mapped a band
+  to one of them. Migration `0105_phase2_sampling_methods.sql` reads the mapped method and applies it
+  (random, systematic, high_value, low_value, mus, stratified, haphazard), records `calculation`
+  (formula, inputs, result) on the sample, and adds the Clopper-Pearson exact interval (§11.3) as
+  `clopper_pearson_upper`/`_lower` plus `sample_precision`. The interval is computed from the
+  binomial CDF directly (`binom_cdf`), because Postgres has no `lgamma`; the SQL values match
+  independently-computed references exactly (0/20 → 0.168433, 3/20 → 0.378927, 10/50 → 0.337183,
+  2/10 at 90% → 0.506901, 5/25 at 99% → 0.469758). A *system* sample always includes the high-value
+  items. Test `106_phase2_sampling_methods.sql` (22 assertions).
+- **2.9 — high-value coverage.** No coverage check existed: a sample could exclude the population's
+  largest items and still lock. Migration `0106_phase2_value_coverage.sql` adds `value_coverage`,
+  `assert_value_coverage` (called by `lock_sample`) and `waive_value_coverage` with an append-only
+  `sample_value_waivers` table (>=10-character reason, ledger entry). A *system* sample already
+  covers the high-value items, so the gate bites on an *auditor paste* that omits them — exactly the
+  case §11.3 names. Test `107_phase2_value_coverage.sql` (16 assertions).
+- **Two implementations, one answer.** The CP reference values in test 106 were computed outside SQL
+  (bisection on the binomial CDF) and pinned in the test, so a drift between the SQL and the textbook
+  definition fails the test.
+- **Gate set after the change:** `tsc` PASS; `vitest` 205 files / 2401 tests PASS; `vite build` PASS;
+  `check-shrink` PASS (58 files); `check-tokens` PASS (179 files, 0 violations); `check-ui-contract`
+  PASS (48 screens); `check-tutorials` PASS (79 current / 1 stale `sa.tenant-hub`, pre-existing);
+  SQL harness PASS — "migrations applied twice / all SQL tests passed twice" (110 test files).
 
 ### Phase 2.6 — what was built and how it was verified (2026-10-28)
 

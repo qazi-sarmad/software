@@ -32,6 +32,45 @@ export interface SampleRow {
   sampleRows: unknown[];
   lockedAt: string | null;
   lockedBy: string | null;
+  method?: SamplingMethod | null;
+  calculation?: SampleCalculation | null;
+}
+
+/** How the sample was drawn (2.8): the method, its formula, the inputs and the result size. */
+export interface SampleCalculation {
+  method: SamplingMethod;
+  mode: SampleMode;
+  formula: string;
+  inputs: Record<string, unknown>;
+  result: { size: number };
+}
+
+/** High-value coverage for a sample (2.9): what the sample holds and what is waived. */
+export interface ValueCoverage {
+  highValueRows: number[];
+  included: number[];
+  missing: number[];
+  waived: number[];
+  covered: boolean;
+}
+
+/** The exact Clopper-Pearson interval for a sample's current exceptions (2.8, §11.3). */
+export interface SamplePrecision {
+  n: number;
+  k: number;
+  confidence: number;
+  lower: number | null;
+  upper: number | null;
+}
+
+/** A tested row linked to a sample (2.7). */
+export interface SampleTestedRow {
+  id: string;
+  rowRef: string;
+  result: string | null;
+  rationale: string | null;
+  exceptionFlag: boolean;
+  reviewedResult: 'accepted' | 'reverted' | null;
 }
 
 export function computeSample(
@@ -44,6 +83,61 @@ export function computeSample(
 
 export function lockSample(sampleId: string): Promise<DataResult> {
   return callRpc('lock_sample', { p_sample_id: sampleId });
+}
+
+/** Waive a high-value item the sample omits (2.9). The reason is required and kept. */
+export function waiveValueCoverage(sampleId: string, rowRef: number, reason: string): Promise<DataResult> {
+  return callRpc('waive_value_coverage', { p_sample_id: sampleId, p_row_ref: rowRef, p_reason: reason });
+}
+
+/** The high-value coverage of a sample (2.9). */
+export async function getValueCoverage(sampleId: string): Promise<ValueCoverage | null> {
+  const sb = getClient();
+  if (!sb) return null;
+  const { data, error } = await sb.rpc('value_coverage', { p_sample_id: sampleId });
+  if (error) throw new Error(error.message);
+  if (!data) return null;
+  const d = data as Record<string, unknown>;
+  return {
+    highValueRows: (d.high_value_rows as number[]) ?? [],
+    included: (d.included as number[]) ?? [],
+    missing: (d.missing as number[]) ?? [],
+    waived: (d.waived as number[]) ?? [],
+    covered: Boolean(d.covered),
+  };
+}
+
+/** The exact Clopper-Pearson interval for a sample's current exceptions (2.8). */
+export async function getSamplePrecision(sampleId: string, confidence = 0.95): Promise<SamplePrecision | null> {
+  const sb = getClient();
+  if (!sb) return null;
+  const { data, error } = await sb.rpc('sample_precision', { p_sample_id: sampleId, p_conf: confidence });
+  if (error) throw new Error(error.message);
+  if (!data) return null;
+  const d = data as Record<string, unknown>;
+  return {
+    n: (d.n as number) ?? 0,
+    k: (d.k as number) ?? 0,
+    confidence: Number(d.confidence ?? confidence),
+    lower: d.lower === null ? null : Number(d.lower),
+    upper: d.upper === null ? null : Number(d.upper),
+  };
+}
+
+/** The tested rows a sample produced (2.7), for the drilldown. */
+export async function listSampleTestedRows(sampleId: string): Promise<SampleTestedRow[]> {
+  const sb = getClient();
+  if (!sb) return [];
+  const { data, error } = await sb.rpc('sample_tested_rows', { p_sample_id: sampleId });
+  if (error) throw new Error(error.message);
+  return ((data ?? []) as Record<string, unknown>[]).map((r) => ({
+    id: r.id as string,
+    rowRef: String(r.row_ref),
+    result: (r.result as string | null) ?? null,
+    rationale: (r.rationale as string | null) ?? null,
+    exceptionFlag: Boolean(r.exception_flag),
+    reviewedResult: (r.reviewed_result as 'accepted' | 'reverted' | null) ?? null,
+  }));
 }
 
 export function replaceSample(sampleId: string, rationale: string): Promise<DataResult> {
@@ -88,7 +182,7 @@ export async function getSample(workpaperId: string): Promise<SampleRow | null> 
   if (!sb) return null;
   const { data, error } = await sb
     .from('samples')
-    .select('id, workpaper_id, population_id, mode, seed, size_floor, sample_rows, locked_at, locked_by')
+    .select('id, workpaper_id, population_id, mode, seed, size_floor, sample_rows, method, calculation, locked_at, locked_by')
     .eq('workpaper_id', workpaperId)
     .order('created_at', { ascending: false })
     .limit(1)
@@ -105,6 +199,8 @@ export async function getSample(workpaperId: string): Promise<SampleRow | null> 
     sampleRows: (data.sample_rows as unknown[]) ?? [],
     lockedAt: (data.locked_at as string | null) ?? null,
     lockedBy: (data.locked_by as string | null) ?? null,
+    method: (data.method as SamplingMethod | null) ?? null,
+    calculation: (data.calculation as SampleCalculation | null) ?? null,
   };
 }
 

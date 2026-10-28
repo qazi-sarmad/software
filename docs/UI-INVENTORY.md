@@ -564,7 +564,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Rights required:** `edit_config`; a caller without it sees `org-settings-no-right`.
 - **Data functions (`src/data/*.ts`):** `EMAIL_PROVIDERS`, `EmailSettingsRow`, `SEVERITY_COLOR_TOKENS`, `SamplingRuleRow`, `SeverityLevelRow`, `deleteSeverityLevel`, `getEmailSettings`, `listSamplingRules`, `listSeverityLevels`, `setEmailProvider`, `upsertSamplingRule`, `upsertSeverityLevel`
 - **Data modules:** `src/data/email.ts`, `src/data/observations.ts`, `src/data/orgSettings.ts`, `src/data/sampling.ts`
-- **RPCs reachable via those modules:** `get_sample_size`, `missing_readability_sections`
+- **RPCs reachable via those modules:** `get_sample_size`, `missing_readability_sections`, `sample_precision`, `sample_tested_rows`, `value_coverage`
 - **Tables reachable via those modules:** `email_queue`, `email_settings`, `findings`, `issues`, `observations`, `org_sampling_table`, `samples`, `severity_levels`
 - **Testids (10):** `org-settings-denied`, `org-settings-email`, `org-settings-error`, `org-settings-loading`, `org-settings-no-right`, `org-settings-panel`, `org-settings-result`, `org-settings-sampling`, `org-settings-severity`, `org-settings-tabs`
 - **States:** no-right; loading; tabs; ready.
@@ -1140,10 +1140,10 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Rights required:** `perform_work`.
 - **Data functions (`src/data/*.ts`):** `SampleMode`, `SampleRow`, `SamplingRuleRow`, `computeSample`, `getSample`, `getSampleSize`, `lockSample`
 - **Data modules:** `src/data/sampling.ts`
-- **RPCs reachable via those modules:** `get_sample_size`
+- **RPCs reachable via those modules:** `get_sample_size`, `sample_precision`, `sample_tested_rows`, `value_coverage`
 - **Tables reachable via those modules:** `org_sampling_table`, `samples`
-- **Testids (12):** `sampling-compute`, `sampling-current`, `sampling-error`, `sampling-floor`, `sampling-loading`, `sampling-lock`, `sampling-locked`, `sampling-panel`, `sampling-paste`, `sampling-paste-count`, `sampling-rules-empty`, `sampling-seed-preview`
-- **States:** loading; no rules (`sampling-rules-empty`); computed; locked (`sampling-locked`); error inline.
+- **Testids (19):** `sampling-calculation`, `sampling-compute`, `sampling-coverage`, `sampling-coverage-status`, `sampling-current`, `sampling-error`, `sampling-floor`, `sampling-loading`, `sampling-lock`, `sampling-locked`, `sampling-method`, `sampling-panel`, `sampling-paste`, `sampling-paste-count`, `sampling-precision`, `sampling-rules-empty`, `sampling-seed-preview`, `sampling-tested-rows`, `sampling-waive-reason`
+- **States:** loading; no rules (`sampling-rules-empty`); computed (`sampling-method`, `sampling-calculation`); high-value coverage (`sampling-coverage`, `sampling-coverage-status`; a missing item can be waived with a reason, `sampling-waive-reason`); exact interval (`sampling-precision`); tested rows from the sample (`sampling-tested-rows`); locked (`sampling-locked`); error inline.
 - **Tutorial key:** — (no key)
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
   named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
@@ -1571,6 +1571,8 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 | `request_change` | `src/data/changeControl.ts` | `p_engagement_id`, `p_change_class`, `p_title`, `p_payload`, `p_klass` | tenant |
 | `request_extraction` | `src/data/documents.ts` | `p_file_id` | tenant |
 | `revert_prior_year_item` | `src/data/imports.ts` | `p_import_id` | tenant |
+| `sample_precision` | `src/data/sampling.ts` | `p_sample_id`, `p_conf` | tenant |
+| `sample_tested_rows` | `src/data/sampling.ts` | `p_sample_id` | tenant |
 | `search_documents` | `src/data/documents.ts` | `p_engagement_id`, `p_query`, `p_stage` | tenant |
 | `secret_display` | `src/data/secrets.ts` | `p_id` | tenant |
 | `setup_list` | `src/data/setup.ts` | `p_scope` | tenant |
@@ -1588,6 +1590,7 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 | `testing_signed_off` | `src/data/conclusion.ts` | `p_engagement_id` | tenant |
 | `unconfirmed_prior_year_imports` | `src/data/imports.ts` | `p_engagement_id` | tenant |
 | `validate_import` | `src/data/imports.ts` | `p_job_id`, `p_mapped_rows` | tenant |
+| `value_coverage` | `src/data/sampling.ts` | `p_sample_id` | tenant |
 | `verify_board_pack` | `src/data/certificate.ts` | `p_id` | tenant |
 | `verify_certificate` | `src/data/certificate.ts` | `p_id` | tenant |
 | `verify_report_root` | `src/data/certificate.ts` | `p_root` | tenant |
@@ -1597,8 +1600,8 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 
 - Screens documented: 93 (contract sections: 48 Appendix A + 44 Appendix B).
 - Tutorial keys: 80.
-- RPCs catalogued: 111.
-- Data modules: 56; exported data functions: 360.
+- RPCs catalogued: 114.
+- Data modules: 56; exported data functions: 364.
 - Contract testids not found verbatim in `src/` (placeholder or dynamic): 190.
   - audit-file-view-builder, audit-file-view-certificate, audit-file-view-conclusion, audit-file-view-documents, audit-file-view-ethics, audit-file-view-execution, audit-file-view-findings, audit-file-view-planning, audit-file-view-population, audit-file-view-report, audit-file-view-review, audit-file-view-rowtesting, audit-file-view-sampling, hosting-test, invite-user, issues-view-patterns, oa-branding-colour-accent, oa-branding-colour-background, oa-branding-colour-primary, oa-branding-colour-text, oa-branding-margin-0, oa-branding-margin-3, oa-certificate-enabled-verification, oa-escalation-result, oa-escalation-saved, oa-governance-signoff-conclusion, oa-governance-signoff-planning, oa-governance-signoff-testing, org-control-tab-auditors, org-control-tab-automation, org-control-tab-branding, org-control-tab-connectors, org-control-tab-features, org-control-tab-formats, org-control-tab-governance, org-control-tab-hosting, org-control-tab-people, org-control-tab-setup, org-control-tab-tutorials, prefers-reduced-motion …
 

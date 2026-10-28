@@ -6,9 +6,16 @@ import {
   computeSample,
   lockSample,
   getSample,
+  getValueCoverage,
+  getSamplePrecision,
+  listSampleTestedRows,
+  waiveValueCoverage,
   type SamplingRuleRow,
   type SampleMode,
   type SampleRow,
+  type ValueCoverage,
+  type SamplePrecision,
+  type SampleTestedRow,
 } from '../../data/sampling';
 import { hasRight } from '../../lib/rights';
 import { rightReason, rightReasonFor } from '../../lib/rightLabels';
@@ -31,6 +38,10 @@ export const SamplingPanel: React.FC<{ workpaperId: string }> = ({ workpaperId }
   const [pasteText, setPasteText] = useState('');
   const [floor, setFloor] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
+  const [coverage, setCoverage] = useState<ValueCoverage | null>(null);
+  const [precision, setPrecision] = useState<SamplePrecision | null>(null);
+  const [tested, setTested] = useState<SampleTestedRow[]>([]);
+  const [waiveReason, setWaiveReason] = useState('');
 
   const canWrite = hasRight(currentUser, 'perform_work');
 
@@ -44,6 +55,20 @@ export const SamplingPanel: React.FC<{ workpaperId: string }> = ({ workpaperId }
       if (rs.length > 0) {
         const r = rs[0];
         setFloor(await getSampleSize('', r.controlType, r.frequency, r.popBand, 500));
+      }
+      if (s) {
+        const [cov, prec, rows] = await Promise.all([
+          getValueCoverage(s.id),
+          getSamplePrecision(s.id),
+          listSampleTestedRows(s.id),
+        ]);
+        setCoverage(cov);
+        setPrecision(prec);
+        setTested(rows);
+      } else {
+        setCoverage(null);
+        setPrecision(null);
+        setTested([]);
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not load the sampling configuration.');
@@ -78,6 +103,19 @@ export const SamplingPanel: React.FC<{ workpaperId: string }> = ({ workpaperId }
     const res = await lockSample(sample.id);
     if (!res.ok) setError(res.reason);
     else await load();
+    setBusy(false);
+  };
+
+  const waive = async (rowRef: number) => {
+    if (!sample) return;
+    setBusy(true);
+    setError(null);
+    const res = await waiveValueCoverage(sample.id, rowRef, waiveReason.trim());
+    if (!res.ok) setError(res.reason);
+    else {
+      setWaiveReason('');
+      await load();
+    }
     setBusy(false);
   };
 
@@ -211,7 +249,91 @@ export const SamplingPanel: React.FC<{ workpaperId: string }> = ({ workpaperId }
               </HoldToConfirm>
             )}
           </div>
+          {sample.method && (
+            <div className="text-apple-11 text-secondary" data-testid="sampling-method">
+              Method: <span className="text-primary font-semibold capitalize">{sample.method.replace('_', ' ')}</span>
+            </div>
+          )}
+          {sample.calculation && (
+            <div className="text-apple-11 text-secondary" data-testid="sampling-calculation">
+              How this was calculated: <span className="text-primary">{sample.calculation.formula}</span>
+            </div>
+          )}
           <div className="text-apple-11 text-tertiary font-mono break-all">seed: {sample.seed}</div>
+
+          {coverage && coverage.highValueRows.length > 0 && (
+            <div className="border-t border-hairline pt-3 space-y-2" data-testid="sampling-coverage">
+              <div className="text-apple-11 font-semibold text-secondary uppercase tracking-wider">
+                High-value coverage
+              </div>
+              <div className={`text-apple-12 ${coverage.covered ? 'text-verdigris' : 'text-critical'}`} data-testid="sampling-coverage-status">
+                {coverage.covered
+                  ? `Covered: all ${coverage.highValueRows.length} high-value item(s) are in the sample or waived.`
+                  : `${coverage.missing.length} high-value item(s) are neither in the sample nor waived: ${coverage.missing.join(', ')}.`}
+              </div>
+              {!coverage.covered && canWrite && (
+                <div className="space-y-2">
+                  <label className="block text-apple-11 text-secondary" htmlFor="sampling-waive-reason">
+                    Waive reason (at least 10 characters). A waiver is kept in the ledger.
+                  </label>
+                  <input
+                    id="sampling-waive-reason"
+                    data-testid="sampling-waive-reason"
+                    value={waiveReason}
+                    onChange={(e) => setWaiveReason(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-surface-sunken border border-hairline text-apple-12 text-primary"
+                  />
+                  <div className="flex flex-wrap gap-2">
+                    {coverage.missing.map((ref) => (
+                      <button
+                        key={ref}
+                        type="button"
+                        data-testid={`sampling-waive-${ref}`}
+                        onClick={() => waive(ref)}
+                        disabled={busy || waiveReason.trim().length < 10}
+                        className="px-3 py-1.5 rounded-lg bg-surface border border-hairline hover:bg-surface-hover text-apple-12 font-semibold text-primary disabled:opacity-50"
+                      >
+                        Waive row {ref}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {precision && precision.n > 0 && (
+            <div className="border-t border-hairline pt-3 text-apple-11 text-secondary" data-testid="sampling-precision">
+              Exceptions: <span className="text-primary font-semibold tabular-nums">{precision.k}</span> of{' '}
+              <span className="text-primary font-semibold tabular-nums">{precision.n}</span> tested.
+              {precision.upper !== null && (
+                <> Clopper-Pearson {Math.round(precision.confidence * 100)}% interval:{' '}
+                  <span className="text-primary font-semibold tabular-nums">
+                    {precision.lower?.toFixed(4) ?? '—'} to {precision.upper.toFixed(4)}
+                  </span>
+                </>
+              )}
+            </div>
+          )}
+
+          {tested.length > 0 && (
+            <div className="border-t border-hairline pt-3 space-y-2" data-testid="sampling-tested-rows">
+              <div className="text-apple-11 font-semibold text-secondary uppercase tracking-wider">
+                Tested rows from this sample ({tested.length})
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {tested.map((r) => (
+                  <span
+                    key={r.id}
+                    data-testid={`sampling-tested-row-${r.rowRef}`}
+                    className="px-2 py-0.5 rounded-md bg-surface-sunken border border-hairline text-apple-11 text-secondary font-mono"
+                  >
+                    {r.rowRef}{r.result ? ` · ${r.result}` : ' · open'}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -945,8 +945,8 @@ Compute a deterministic sample (seed preview, mode, floor), paste an id list, an
 - **Route:** Audit File window, view "Sampling" (`audit-file-view-sampling`).
 - **Rights:** `perform_work`.
 - **Data:** `SampleMode`, `SampleRow`, `SamplingRuleRow`, `computeSample`, `getSample`, `getSampleSize`, `lockSample` — through `src/data/*.ts`; components never import the database client (rule M8).
-- **Testids:** `sampling-compute`, `sampling-current`, `sampling-error`, `sampling-floor`, `sampling-loading`, `sampling-lock`, `sampling-locked`, `sampling-panel`, `sampling-paste`, `sampling-paste-count`, `sampling-rules-empty`, `sampling-seed-preview`
-- **States:** loading; no rules (`sampling-rules-empty`); computed; locked (`sampling-locked`); error inline.
+- **Testids:** `sampling-calculation`, `sampling-compute`, `sampling-coverage`, `sampling-coverage-status`, `sampling-current`, `sampling-error`, `sampling-floor`, `sampling-loading`, `sampling-lock`, `sampling-locked`, `sampling-method`, `sampling-panel`, `sampling-paste`, `sampling-paste-count`, `sampling-precision`, `sampling-rules-empty`, `sampling-seed-preview`, `sampling-tested-rows`, `sampling-waive-reason`
+- **States:** loading; no rules (`sampling-rules-empty`); computed (`sampling-method`, `sampling-calculation`); high-value coverage (`sampling-coverage`, `sampling-coverage-status`; a missing item can be waived with a reason, `sampling-waive-reason`); exact interval (`sampling-precision`); tested rows from the sample (`sampling-tested-rows`); locked (`sampling-locked`); error inline.
 - **Tutorial key:** —
 
 ## AF-07 — Row testing panel (S1)
