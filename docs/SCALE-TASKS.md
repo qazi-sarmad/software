@@ -356,6 +356,49 @@ signed-in user) plus contextual values the **host screen** has already filtered 
 `src/lib/access.ts`. The popout never queries and never decides access to tenant data; it re-checks
 the caller's rights and redacts. This keeps Law L2 intact.
 
+## Systelligence — the deterministic forensic engine (spec: docs/SYSTELLIGENCE.md)
+
+Owner requirement (2026-10-28). Hard-coded, zero external reliance, never AI. Rule-based forensic
+analysis: population analysis, header detection, evidence verification, document review, and
+pattern rules for minutes, configuration and Power Query. Plus the three-way testing flow (automatic
+on upload; accepted -> flag/evidence/verify/revert; declined -> floor + paste-fill + auto-add).
+
+| # | Task | Status |
+|---|---|---|
+| S1 | `src/lib/systelligence/` — rule schema, runner, versioning, result shape | TODO |
+| S2 | Header detection + confirm-before-count in the population flow | TODO |
+| S3 | Accepted-Systelligence flow (flag -> rows -> evidence -> verify -> revert/override) | TODO |
+| S4 | Declined flow: floor, paste-to-fill, auto-add rows beyond the floor, package evidence | TODO |
+| S5 | Mode A / Mode B evidence verification, org-configurable | TODO |
+| S6 | Forensic rule library (Benford, duplicates, gaps, SoD, reconciliation, velocity...) | TODO |
+| S7 | Document extraction tiers 1-3 (native, bundled lazy OCR, structured) with source hashes | TODO |
+| S8 | Structural document review rules | TODO |
+| S9 | Pattern rules for minutes, configuration, source, Power Query | TODO |
+| S10 | Rule packs per audit type + adhoc rule builder | TODO |
+| S11 | Signed OTA rule-pack distribution | TODO |
+| S12 | Override visibility: an override is shown to the reviewer at the next stage | TODO |
+| S13 | Editor: org format adoption + font/colour auto-detect + generated design elements | TODO |
+
+Boundary (see SYSTELLIGENCE.md §7): a rule engine is genuinely better than a model for numeric and
+structural forensics because it is reproducible and attributable. It cannot do open-ended semantic
+judgement at any level of effort, and the product must never be described as if it can.
+
+## Font repository (spec: docs/FONT-REPOSITORY.md)
+
+Owner requirement (2026-10-28). Self-host free fonts; auto-detect a client's existing formatting.
+The current Google Fonts CDN link is a privacy and resilience defect (leaks client IPs, breaks
+offline) and must go.
+
+| # | Task | Status |
+|---|---|---|
+| F1 | Remove the Google Fonts CDN link; self-host the three families already used | TODO |
+| F2 | `src/lib/fonts/` — catalogue, per-font licence metadata, lazy loader | TODO |
+| F3 | Curate and subset the bundled repository | TODO |
+| F4 | Org font upload via `branding_assets`, with licence acknowledgement | TODO |
+| F5 | Font/colour/theme auto-detection from DOCX and PPTX | TODO |
+| F6 | Wire detection into the org report format | TODO |
+| F7 | Gate G10 — font licence (no bundled font without licence metadata) | TODO |
+
 ## Environment facts (for the next session)
 
 - The sandbox has **no host Postgres** and **no Docker socket for the user**, but
