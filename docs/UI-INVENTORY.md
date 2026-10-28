@@ -719,6 +719,24 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
   named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
 
+### `OA-31` — Integrity incident wizard (T6, §11.3a)
+
+- **Purpose:** The guided response to a detected tamper. It shows, in plain words, what changed, when and by whom, and what it affects (which engagement, archive, population or the ledger chain), then offers restore / re-derive and re-seal / freeze the engagement / escalate — each requiring a reason — and re-runs verification at the end so the incident closes on proof rather than assertion. Every step is appended to the incident's own append-only trail, so an incident cannot be quietly closed. This is tamper-evidence, never tamper-prevention.
+- **Route / location:** The Assurance control plane (`org_control` inspector), tab `incidents`.
+- **Rights required:** an integrity owner — `review_and_approve` or `edit_config`, or a Level-1/Level-2 Head; every `integrity_incident_*` RPC re-checks the right and a caller without it is refused.
+- **Data functions (`src/data/*.ts`):** `IncidentActionRow`, `IntegrityIncidentRow`, `availableActions`, `incidentAction`, `incidentModel`, `incidentStatus`, `listIntegrityIncidents`, `openIntegrityIncident`, `verifyIntegrityIncident`
+- **Data modules:** `src/data/incidents.ts`
+- **RPCs reachable via those modules:** `integrity_incident_action`, `integrity_incident_open`, `integrity_incident_verify`, `integrity_incidents_list`
+- **Tables reachable via those modules:** none
+- **Testids (32):** `OA-31-actual`, `OA-31-affects`, `OA-31-boundary`, `OA-31-denied`, `OA-31-detail`, `OA-31-empty`, `OA-31-error`, `OA-31-expected`, `OA-31-headline`, `OA-31-icon`, `OA-31-incident-<id>`, `OA-31-incident-status-<id>`, `OA-31-list`, `OA-31-load-error`, `OA-31-loading`, `OA-31-open-<alertId>`, `OA-31-openable`, `OA-31-openable-<alertId>`, `OA-31-opened`, `OA-31-outcome`, `OA-31-panel`, `OA-31-reason`, `OA-31-step-annotate`, `OA-31-step-escalate`, `OA-31-step-freeze`, `OA-31-step-rederive`, `OA-31-step-restore`, `OA-31-trail`, `OA-31-trail-<n>`, `OA-31-unconfigured`, `OA-31-verify`, `OA-31-what-changed`
+- **Explain ids (0):** — (no explain affordance)
+- **IIA standards addressed (0):** —
+- **Drilldown targets (0):** — (no aggregate)
+- **States:** denied (not an integrity owner); loading; not configured (no database connection — never shown as an empty healthy panel); empty (no incidents); alerts with no incident yet (the entry point); ready with a selected incident and its trail; a step's computed outcome; error.
+- **Tutorial key:** — (no key)
+- **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
+  named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
+
 ### `OA-05` — roles and rights (S3)
 
 - **Purpose:** the role register and the rights matrix. A role is a named bundle of the 15 closed rights keys; the app and the database both check rights, never role names.
@@ -1889,6 +1907,10 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 | `hosting_fit_rule_save` | `src/data/hostingFit.ts` | `p_rule_key`, `p_field`, `p_operator`, `p_value`, `p_severity`, `p_message`, `p_cost_tier`, `p_enabled` | tenant |
 | `import_prior_year_item` | `src/data/imports.ts` | `p_source_engagement_id`, `p_item_type`, `p_engagement_id` | tenant |
 | `integrity_alerts_list` | `src/data/archival.ts` | — | tenant |
+| `integrity_incident_action` | `src/data/incidents.ts` | `p_incident_id`, `p_action`, `p_reason` | tenant |
+| `integrity_incident_open` | `src/data/incidents.ts` | `p_alert_id` | tenant |
+| `integrity_incident_verify` | `src/data/incidents.ts` | `p_incident_id` | tenant |
+| `integrity_incidents_list` | `src/data/incidents.ts` | — | tenant |
 | `invite_status` | `src/data/admin.ts` | `p_invite_id` | tenant |
 | `invite_user_capped` | `src/data/admin.ts` | `p_email`, `p_role_slug` | tenant |
 | `ledger_continuity_check` | `src/data/archival.ts` | — | tenant |
@@ -1966,10 +1988,10 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 
 ## Coverage cross-check
 
-- Screens documented: 97 (contract sections: 48 Appendix A + 44 Appendix B).
+- Screens documented: 98 (contract sections: 48 Appendix A + 44 Appendix B).
 - Tutorial keys: 80.
-- RPCs catalogued: 128.
-- Data modules: 58; exported data functions: 385.
+- RPCs catalogued: 132.
+- Data modules: 59; exported data functions: 388.
 - Contract testids not found verbatim in `src/` (placeholder or dynamic): 193.
   - audit-file-view-builder, audit-file-view-certificate, audit-file-view-conclusion, audit-file-view-documents, audit-file-view-ethics, audit-file-view-execution, audit-file-view-findings, audit-file-view-planning, audit-file-view-population, audit-file-view-report, audit-file-view-review, audit-file-view-rowtesting, audit-file-view-sampling, data-front-door-kind, hosting-test, invite-user, issues-view-patterns, oa-branding-colour-accent, oa-branding-colour-background, oa-branding-colour-primary, oa-branding-colour-text, oa-branding-margin-0, oa-branding-margin-3, oa-certificate-enabled-verification, oa-escalation-result, oa-escalation-saved, oa-governance-signoff-conclusion, oa-governance-signoff-planning, oa-governance-signoff-testing, org-control-tab-auditors, org-control-tab-automation, org-control-tab-branding, org-control-tab-connectors, org-control-tab-features, org-control-tab-formats, org-control-tab-governance, org-control-tab-hosting, org-control-tab-people, org-control-tab-setup, org-control-tab-tutorials …
 

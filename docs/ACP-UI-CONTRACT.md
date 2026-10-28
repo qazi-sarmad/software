@@ -1284,6 +1284,17 @@ The portable attestation package: list the organisation's signed subjects, build
 - **States:** loading; empty (nothing signed yet); ready with signed subjects; package built and verified; package built and NOT verified; error.
 - **Tutorial key:** —
 
+## OA-31 — Integrity incident wizard (T6, §11.3a)
+
+The guided response to a detected tamper. It shows, in plain words, what changed, when and by whom, and what it affects (which engagement, archive, population or the ledger chain), then offers restore / re-derive and re-seal / freeze the engagement / escalate — each requiring a reason — and re-runs verification at the end so the incident closes on proof rather than assertion. Every step is appended to the incident's own append-only trail, so an incident cannot be quietly closed. This is tamper-evidence, never tamper-prevention.
+
+- **Route:** The Assurance control plane (`org_control` inspector), tab `incidents`.
+- **Rights:** an integrity owner — `review_and_approve` or `edit_config`, or a Level-1/Level-2 Head; every `integrity_incident_*` RPC re-checks the right and a caller without it is refused.
+- **Data:** `IntegrityIncidentRow`, `IncidentActionRow`, `incidentModel`, `incidentStatus`, `availableActions`, `listIntegrityIncidents`, `openIntegrityIncident`, `incidentAction`, `verifyIntegrityIncident` — through `src/data/*.ts` and `src/lib/*.ts`; components never import the database client (rule M8).
+- **Testids:** `OA-31-actual`, `OA-31-affects`, `OA-31-boundary`, `OA-31-denied`, `OA-31-detail`, `OA-31-empty`, `OA-31-error`, `OA-31-expected`, `OA-31-headline`, `OA-31-icon`, `OA-31-incident-<id>`, `OA-31-incident-status-<id>`, `OA-31-list`, `OA-31-load-error`, `OA-31-loading`, `OA-31-open-<alertId>`, `OA-31-openable`, `OA-31-openable-<alertId>`, `OA-31-opened`, `OA-31-outcome`, `OA-31-panel`, `OA-31-reason`, `OA-31-step-annotate`, `OA-31-step-escalate`, `OA-31-step-freeze`, `OA-31-step-rederive`, `OA-31-step-restore`, `OA-31-trail`, `OA-31-trail-<n>`, `OA-31-unconfigured`, `OA-31-verify`, `OA-31-what-changed`
+- **States:** denied (not an integrity owner); loading; not configured (no database connection — never shown as an empty healthy panel); empty (no incidents); alerts with no incident yet (the entry point); ready with a selected incident and its trail; a step's computed outcome; error.
+- **Tutorial key:** —
+
 ## SA-16 — Guided provisioning (SCALE-1, WP3)
 
 The guided zero-to-first-report path: create an organisation, set its entitlements and invite cap, configure the platform email sender, read the readiness checks (roles, status, invite, sender, engagement) and activate the tenant.

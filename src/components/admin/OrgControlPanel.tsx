@@ -23,10 +23,11 @@ import { OrgGovernancePanel } from './OrgGovernancePanel';
 import { SharePanel } from './SharePanel';
 import { IntegrityAlarmPanel } from './IntegrityAlarmPanel';
 import { AttestationPanel } from './AttestationPanel';
+import { IncidentWizardPanel } from './IncidentWizardPanel';
 import { InlineError } from '../common/InlineError';
 import { Check, Lock, Zap, Sliders, Users, Shield, ShieldAlert, History, Database, FileCheck } from '../common/Icons';
 
-type Tab = 'features' | 'branding' | 'email' | 'automation' | 'escalation' | 'setup' | 'consultation' | 'auditors' | 'hosting' | 'governance' | 'history' | 'changes' | 'tutorials' | 'connectors' | 'formats' | 'sharing' | 'integrity' | 'attestation';
+type Tab = 'features' | 'branding' | 'email' | 'automation' | 'escalation' | 'setup' | 'consultation' | 'auditors' | 'hosting' | 'governance' | 'history' | 'changes' | 'tutorials' | 'connectors' | 'formats' | 'sharing' | 'integrity' | 'attestation' | 'incidents';
 type LoadState = 'loading' | 'ready' | 'error';
 
 /** F18: every configuration tab carries its own "Show me how" tutorial key (Appendix A). */
@@ -49,6 +50,7 @@ const TAB_TUTORIAL: Record<Tab, { key: string; title: string }> = {
   sharing: { key: 'oa.governance', title: 'OA-22 governance settings' },
   integrity: { key: 'oa.governance', title: 'OA-29 integrity alarm' },
   attestation: { key: 'oa.governance', title: 'OA-30 attestation' },
+  incidents: { key: 'oa.governance', title: 'OA-31 incident wizard' },
 };
 
 /**
@@ -154,6 +156,7 @@ export const OrgControlPanel: React.FC<{ initialTab?: Tab }> = ({ initialTab }) 
           { id: 'sharing', label: 'Sharing', icon: Users },
           { id: 'integrity', label: 'Integrity', icon: ShieldAlert },
           { id: 'attestation', label: 'Attestation', icon: FileCheck },
+          { id: 'incidents', label: 'Incidents', icon: ShieldAlert },
         ] as { id: Tab; label: string; icon: React.FC<{ className?: string }> }[]).map((t) => {
           const Icon = t.icon;
           return (
@@ -274,6 +277,7 @@ export const OrgControlPanel: React.FC<{ initialTab?: Tab }> = ({ initialTab }) 
       {tab === 'sharing' && <SharePanel />}
       {tab === 'integrity' && <IntegrityAlarmPanel screenId="OA-29" />}
       {tab === 'attestation' && <AttestationPanel screenId="OA-30" />}
+      {tab === 'incidents' && <IncidentWizardPanel screenId="OA-31" />}
       {tab === 'hosting' && <OrgHostingPanel />}
       {tab === 'governance' && <OrgGovernancePanel />}
       {tab === 'history' && <OrgConfigHistory />}

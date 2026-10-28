@@ -638,4 +638,16 @@ export const TERM_ENTRIES: ExplainEntry[] = [
     related: ['term.graph_root', 'term.merkle_leaf', 'term.sealed'],
     source: 'SYSTELIGON.md §11.3',
   },
+  {
+    id: 'term.incident',
+    kind: 'term',
+    title: 'Integrity incident',
+    summary: 'A guided response to a detected tamper: what changed, when, by whom and what it affects, then restore, re-derive, freeze or escalate.',
+    effect:
+      'Every step carries a reason and appends to the ledger; verification is re-run so the incident closes on proof. The incident record is itself append-only and cannot be quietly closed.',
+    iiaStandards: ['14.6', '5.2'],
+    minRight: 'review_and_approve',
+    related: ['term.integrity_alert', 'term.ledger'],
+    source: 'SYSTELIGON.md §11.3a; 0114_incident_wizard.sql',
+  },
 ];

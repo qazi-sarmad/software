@@ -254,7 +254,7 @@ the S18/S19 section above), so this prerequisite no longer blocks anything.
 | T3 | Portable attestation package: roots, signatures, timestamps, the rule versions that scored it, verification instructions | DONE |
 | T4 | Third-party verifier: a documented procedure usable with independent tooling | DONE |
 | T5 | Attestation screen: view, export, verify | DONE |
-| T6 | Guided integrity incident wizard: what changed, by whom, what it affects; then restore / re-derive / freeze / escalate, each with a reason, append-only, verify afterwards | TODO |
+| T6 | Guided integrity incident wizard: what changed, by whom, what it affects; then restore / re-derive / freeze / escalate, each with a reason, append-only, verify afterwards | DONE |
 | T7 | WIRE THE EXISTING ALARM — `listIntegrityAlerts()` has zero callers; no migration emits a notification | DONE |
 
 **T7 detail.** `integrity_alerts`, `raise_integrity_alert()` (which writes the alert AND appends a
@@ -275,6 +275,32 @@ a break. The surface is `IntegrityAlarmPanel.tsx` (OA-29, the `org_control` `int
 `IntegrityAlarmBanner.tsx` (DB-01). `src/lib/integrityAlarm.ts` is the pure labelling/summary layer,
 pinned to the SQL rule by a parity test. SQL test `112_integrity_alarm.sql`; vitest
 `src/lib/integrityAlarm.test.ts` and `src/data/archival.integrityAlarm.test.ts`.
+
+**T6 implemented (2026-10-28).** The RESPONSE to the alarm. `0114_incident_wizard.sql`:
+`integrity_incidents` is the immutable incident header (select-only policy, no update grant); the
+`engagement_id` it affects is resolved once at open time by `integrity_incident_engagement(type, id)`
+(evidence file → its engagement, archive job → its engagement, ledger/report graph → none).
+`integrity_incident_actions` is the append-only trail (every `annotate` / `restore` / `rederive` /
+`freeze` / `escalate` / `verify` / `open` step is a row; the trigger refuses any UPDATE or DELETE, so
+an incident cannot be quietly closed — the STATUS is DERIVED from the trail in the pure layer, never
+stored and mutated). `integrity_incident_open(alert_id)` is idempotent per alert.
+`integrity_incident_outcome(incident, action)` is the deterministic rule: restore compares the record
+now to what was sealed (`restored` / `still_mismatched` / `no_sealed_copy` / `not_applicable` — no
+bytes are conjured); re-derive re-walks the ledger chain or re-folds the report-graph leaves
+(`intact` / `broken` / `matches` / `diverges`); freeze sets `engagements.frozen_at`/`_reason`/`_by_incident`
+and a `guard_engagement_frozen` trigger stops a frozen engagement moving stage or sealing; escalate
+notifies the org's integrity owners in-app, queues an email to the platform's `platform_notification_recipients`
+(the designed channel that needs no org membership), raises the `integrity.incident_escalated`
+automation event and writes a durable `platform_trail` row. `integrity_incident_action(id, action,
+reason)` requires a reason (`a_reason_is_required`) and appends to the ledger;
+`integrity_incident_verify(id)` re-runs verification so the incident closes on PROOF.
+`integrity_incidents_list()` is the gated read (rights re-checked; `review_and_approve`/`edit_config`/
+Head/platform admin). Surface `IncidentWizardPanel.tsx` (OA-31, the `org_control` `incidents` tab);
+pure layer `src/lib/incidentWizard.ts` (status, available actions, model, headline — time is an
+argument). Data module `src/data/incidents.ts` (inert without a Supabase env). SQL test
+`114_incident_wizard.sql`; vitest `src/lib/incidentWizard.test.ts`, `src/data/incidents.test.ts`,
+`src/components/admin/IncidentWizardPanel.test.tsx`. Explain entries `term.incident` and `screen.OA-31`.
+BOUNDARY (never blurred): tamper-EVIDENCE, not tamper-prevention.
 
 ### T3/T4/T5 — what was built (2026-10-28)
 

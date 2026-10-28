@@ -109,6 +109,7 @@ export const SCREEN_ENTRIES: ExplainEntry[] = [
   screen('OA-28', 'Org settings inspector', 'The organisation settings in one inspector.', 'Each setting is explained and enforced.', ['screen.OA-22']),
   screen('OA-29', 'Integrity alarm', 'The organisation’s integrity alerts, severity-split and acknowledged in place.', 'A broken ledger chain or an invalid signature is an incident, not a warning; the alarm notifies every channel.', ['term.integrity_alert', 'term.ledger']),
   screen('OA-30', 'Attestation', 'View, export and verify a portable attestation package.', 'An outsider re-derives the root from the artifact alone, without trusting the producer.', ['term.attestation', 'term.graph_root']),
+  screen('OA-31', 'Integrity incident wizard', 'The guided response to a detected tamper: what changed, by whom and what it affects.', 'Restore, re-derive, freeze or escalate, each with a reason; verification is re-run so the incident closes on proof.', ['term.incident', 'term.integrity_alert']),
   screen('WK-01', 'Board Pack panel', 'The Board Pack panel on the dashboard.', 'It opens the generator and the web view.', ['screen.WK-02', 'screen.WK-03']),
   screen('WK-02', 'Board Pack generator', 'Generate a Board Pack from the configured sections.', 'Generation records what was included and its provenance.', ['screen.WK-03']),
   screen('WK-03', 'Board Pack web view', 'The web view of a generated Board Pack.', 'Every figure links to its source record.', ['screen.WK-01']),
