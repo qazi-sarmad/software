@@ -15,6 +15,7 @@
     "tutorials:record": "node scripts/record-tutorials.mjs",
     "check-tutorials": "node scripts/check-tutorials.mjs",
     "check-ui-contract": "node scripts/check-ui-contract.mjs",
+    "check-feature-register": "node scripts/check-feature-register.mjs",
     "tutorials:placeholder": "node scripts/record-tutorials.mjs --placeholder",
     "screenshots": "node scripts/screenshot-all.mjs"
   },

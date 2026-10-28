@@ -108,6 +108,8 @@ fi
 if [ -z "$FAILED" ]; then
   step "8b. UI contract (node scripts/check-ui-contract.mjs)"
   if node scripts/check-ui-contract.mjs; then echo "PASS: 8b. UI contract"; else fail "8b. UI contract"; fi
+  step "8c. Feature register (node scripts/check-feature-register.mjs)"
+  if node scripts/check-feature-register.mjs; then echo "PASS: 8c. Feature register"; else fail "8c. Feature register"; fi
 fi
 
 # ---------------------------------------------------------------------------

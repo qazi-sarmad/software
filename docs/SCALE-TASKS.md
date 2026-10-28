@@ -642,6 +642,73 @@ signed-in user) plus contextual values the **host screen** has already filtered 
 `src/lib/access.ts`. The popout never queries and never decides access to tenant data; it re-checks
 the caller's rights and redacts. This keeps Law L2 intact.
 
+### Continuous assurance (C1-C6) — spec SYSTELIGON.md §11.1
+Scheduled runner, alert enrichment (entity/department/SIRA/inherent+residual risk/controls),
+Work Queue + email delivery via liveSync, adhoc audit suggestion, remediation wizard, triage surface.
+
+### Trust and attestation (T1-T5) — spec SYSTELIGON.md §11.3
+Tamper alarm, ledger continuity check, portable attestation package, third-party verifier,
+attestation screen. NOTE: the cryptographic spine (signing_keys/signatures/timestamp authorities,
+migration 0096) is ALREADY BUILT; only the user-facing and third-party-verification halves are new.
+
+### Deterministic capability library (D1-D4) — spec SYSTELIGON.md §11.1a
+D1 risk/control intelligence; D2 population/evidence intelligence; D3 process/governance
+intelligence; D4 assurance operations. Each is a pure function under src/lib/ with unit tests.
+
+### Document recognition and SIRA continuity (S17-S18) — spec SYSTELIGON.md §5a, §11.1b
+S17 magic-byte sniffing, archive unpacking with zip-bomb/path-traversal limits, office-inside-zip
+detection, metadata/title extraction, recursion, inventory-before-import. NOTE: jszip/mammoth/xlsx/
+pdf-lib already present; routing today is by EXTENSION only. No .rar library exists (licence decision).
+S18 SIRA continuity: carry-forward pack on publish, seed next cycle, anomalies and findings proposed
+as emergent risk. NOTE: SIRA is already cyclic and emergent risk already has accept/reject with a
+reason; `populate_planning_suggestions` and `decide_planning_suggestion` exist but have ZERO non-test
+callers. Prior-year import IS built and wired (PriorYearImportPanel in PlanningPanel).
+
+### Tamper response (T6-T7) — spec SYSTELIGON.md §11.3a
+T6 guided integrity incident wizard (what changed/who/what it affects, then restore, re-derive, freeze
+or escalate, each with a reason, append-only, verify afterwards).
+T7 wire the existing alarm. NOTE: integrity_alerts table, raise_integrity_alert() (writes the alert AND
+appends a ledger entry) and the archive check functions ALL EXIST. But listIntegrityAlerts() has zero
+callers and no migration emits a notification -> detection is complete, THE ALARM IS MISSING.
+
+### CRITICAL — evidence is not stored anywhere (spec SYSTELIGON.md §6.0)
+`EvidenceTab.tsx` has a working upload control that computes a SHA-256 and calls
+`attachEvidenceToWorkpaper`, which writes to React state ONLY (AppContext.tsx:730, ZERO storage calls).
+The bytes are discarded on reload. `evidence_files` (0035) has NO storage_path column. NO storage
+bucket is created anywhere (not `reports`, `archives` or `org-branding`). Only `reportFiles.ts`
+uploads anything (the rendered report PDF/DOCX). Mode A / Mode B evidence verification therefore
+verifies a hash of bytes nobody kept. Fix = S20. This is the most serious gap found; the product's
+central claim is evidence verification.
+
+### Two-key SIRA acceptance (S19) — spec SYSTELIGON.md §11.1b
+Owner correction: the accept/reject/override control stays with the SIRA finaliser, but their decision
+is an ENDORSEMENT, not a closure - the auditors themselves must accept. Publish is blocked while
+proposals are outstanding; reminders until resolved; silence is a finding.
+
+### Review comment popout (S21) — spec SYSTELIGON.md §11.3b
+Exists and reachable (CommentHistoryPanel via RecordContent 'comment_history', dispatched from
+ReviewCommentsGlobalDock, mounted in App.tsx) but is the thinnest surface: ONE testid (bubble-mine/
+bubble-other), no screenId prefix, no documented states, not in the inventory, no drilldown.
+`ReviewCommentsDock.tsx` is DEAD (mounted nowhere) - delete it.
+
+### Interface quality (U1-U8) — spec SYSTELIGON.md §11.1c
+U1 drilldown from every number; U2 command palette; U3 work queue front door; U4 live activity spine;
+U5 motion with meaning; U6 guided empty states; U7 density toggle; U8 keyboard-first.
+
+### FEATURE-REGISTER + gate (R0) — 2026-10-28
+docs/FEATURE-REGISTER.md is now the live inventory: 125 features, three statuses only (Wired/Inert/
+Absent - "Partial" is banned because it is the word that let the old docs claim completion). Counts:
+38 Wired, 42 Inert, 45 Absent. `scripts/check-feature-register.mjs` keeps it honest and is wired into
+pre-pr-gates.sh, ci-local.sh (step 8c) and package.json. It fails when a status is outside the three,
+ids are non-contiguous, the printed counts disagree with the rows, a Wired row names a symbol that
+does not exist, a Wired row names a pure-layer export no screen calls, or a row asserting deadness
+names something that IS called.
+**The gate caught 15 errors in the register as first written** - including a real finding: the entire
+SIRA WRITE path is inert (createSiraCycle / publishSiraCycle / recordSiraScore / submitEmergentRisk /
+decideEmergentRisk all have ZERO callers; only the reads are wired from SiraTab.tsx). Also inert:
+extractDocument (the doc-extract edge function is deployed but unreachable from the UI).
+Work packages: R1-R7 (the missing middle, in dependency order), S13-S21, T3-T7, C1-C7, U9-U16, D1-D9.
+
 ## Environment facts (for the next session)
 
 - The sandbox has **no host Postgres** and **no Docker socket for the user**, but
