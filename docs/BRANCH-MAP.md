@@ -33,8 +33,8 @@ builder pushes *to* it. That is what keeps the two work trees independent.
 
 | Branch | Owner | Scope | Ledger | Migration range |
 |---|---|---|---|---|
-| `feature/scale-harden-v1` | Builder A | Phases 3-6, the C-series, gates G1-G6 | `docs/SCALE-TASKS.md` | `0107`-`0109` |
-| `feature/systeligon-build-v1` | Builder B | E1-E7 + E9-E10, U1-U4 + U6 + U8 + U14, S17-S21, T3-T7, D1-D4, F1-F7, G7-G10 | `docs/SYSTELIGON-TASKS.md` | `0110`+ |
+| `feature/scale-harden-v1` | Builder A | Phases 3-6, the C-series, gates G1-G6 | `docs/SCALE-TASKS.md` | `0107`-`0113` |
+| `feature/systeligon-build-v1` | Builder B | E1-E7 + E9-E10, U1-U4 + U6 + U8 + U14, S17-S21, T3-T7, D1-D4, F1-F7, G7-G10 | `docs/SYSTELIGON-TASKS.md` | `0114`+ |
 | `feature/systeligon-v1` | nobody builds here | specs, register, gates, this map | — | none |
 | `main` | the owner | — | — | — |
 
@@ -93,9 +93,9 @@ harmless; a collision is not.
 | Range | Owner | Notes |
 |---|---|---|
 | `0001`-`0106` | shared | Already on every branch. Do not renumber. |
-| `0107` | Builder A | Phase 3 workflow enforcement. |
-| `0108`-`0109` | Builder A | Reserved for Phases 4-5. |
-| `0110` onward | Builder B | Start at `0110`. |
+| `0107`-`0110` | Builder A | **Consumed**: Phase 3 workflow enforcement, report templates, config effects, Phase 4 methodology. |
+| `0111`-`0113` | Builder A | Reserved for Phase 5 (`C1`-`C7`) and Phase 6. |
+| `0114` onward | Builder B | Start at `0114`. **This supersedes the `0110` line in `docs/SYSTELIGON-TASKS.md`**: Builder A reached `0110` before that reservation was known, and `0110_phase4_methodology.sql` is already committed on their branch. |
 
 **Never write a migration below your own range.** This is the single most likely way for one builder
 to break the other's SQL harness.
@@ -221,8 +221,8 @@ That is the gap this section closes.
 | Item | State |
 |---|---|
 | Phases 1-2 | **DONE** on the merge base (`0100`-`0106`). Both builders inherit them. |
-| Builder A | Active. Phases 1-3 DONE (`3.1`-`3.5`; highest migration `0108`). `3.6`, Phases 4-6, `G1`-`G6`, `U1`-`U3` TODO — plus the `E1`-`E10` block, which is **not A's** (see the known gap below). |
-| Builder B | Active. `E1`-`E7`, `E9`, `E10`, `U1`, `U3`, `U14`, `G7`-`G9` DONE; 26 TODO (`S17`-`S21`, `T3`-`T7`, `D1`-`D4`, `U2`/`U4`/`U6`/`U8`, `F1`-`F7`, `G10`). Highest migration `0106`; range `0110+` reserved. |
+| Builder A | Active. Phases 1-4 DONE (`3.1`-`3.6`, `4.1`-`4.4`; highest migration `0110`). Phases 5-6 (`5.1`-`5.3`, the `C1`-`C7` block, `6.1`-`6.3`), `G1`-`G6`, `U1`-`U3` TODO — plus the `E1`-`E10` block, which is **not A's** (see the known gap below). |
+| Builder B | Active. `E1`-`E7`, `E9`, `E10`, `U1`, `U3`, `U14`, `G7`-`G9` DONE; 26 TODO (`S17`-`S21`, `T3`-`T7`, `D1`-`D4`, `U2`/`U4`/`U6`/`U8`, `F1`-`F7`, `G10`). Highest migration `0106`; range `0114+` reserved (moved up — see the migration table). |
 | The spec branch | Complete. Holds every document both builders read. **Neither builder has merged it yet** — both reported a false "already up to date". See *Merge rules* rule 4. |
 
 ### Known gap — Builder A's ledger still claims the E-series

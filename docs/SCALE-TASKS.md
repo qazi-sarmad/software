@@ -333,11 +333,45 @@ and the full SQL harness is green ("all SQL tests passed twice").
 
 ## Phase 5 — Monitors & connectors reachable
 
+**Builder A owns the C-series (C1-C7), not only the three rows below.** `5.1` *is* `C1` and `5.2`
+*is* `C3`; the other five have no Phase 5 row at all. The C-series is enumerated in
+`docs/SYSTELIGON.md` §11.1a and reproduced here so this ledger is self-contained: a builder reading
+only this file must not be able to finish Phase 5 believing the C-series is done.
+
 | # | Task | Status |
 |---|---|---|
 | 5.1 | Runner wiring `rule_engine_process`, `staged_record_ingest`, `connector_run_start/finish`, `alert_record` | TODO |
 | 5.2 | Fired alerts land in the Work Queue | TODO |
 | 5.3 | 22 adapters either wired or clearly labelled "catalogue only, not live" | TODO |
+| C1 | Scheduled runner: `runMonitors` per org on `pg_cron`, persist alerts, emit `watcher.signal` (same work as `5.1`) | TODO |
+| C2 | Alert enrichment: resolve entity, department, SIRA risk, inherent + residual risk, controls | TODO |
+| C3 | Delivery: Work Queue in-app + email, via liveSync (realtime, poll fallback) (same work as `5.2`) | TODO |
+| C4 | Adhoc audit suggestion from an alert, pre-filled with entity/department/control | TODO |
+| C5 | Remediation wizard from an alert (finding, CAP, request evidence, escalate, dismiss with reason) | TODO |
+| C6 | Alert triage surface with rights gating | TODO |
+| C7 | Anomaly to SIRA: a resolved alert proposes an emergent risk carrying the alert id, rule version and affected rows | BLOCKED (`S18`) |
+
+**C2 is the highest-value item, not an optional refinement.** `docs/SYSTELIGON.md` §11.1: today
+`MonitorAlert` carries only `ruleId`, `ruleVersion`, `kind`, `reason`, `references`, `evaluatedAt` —
+no entity, department, SIRA risk or control. A runner that fires unenriched alerts satisfies `C1`
+and misses the point of the phase: nobody can act on "a rule fired".
+
+**`C7` depends on `S18`** (SIRA continuity), which is Builder B's and not yet built. `C7` cannot be
+completed by Builder A alone; it is recorded `BLOCKED (S18)` rather than left `TODO`, so it is not
+mistaken for available work. The `BLOCKED` reason names the dependency, not the owner.
+
+**The joins already exist — this is a build, not an invention.** Reuse them; do not write a second
+engine: `src/lib/findingTarget.ts` (`departmentsOf` / `auditsForDepartment`), the SIRA risk fields in
+`src/data/sira.ts`, the existing `pg_cron` schedules, and `src/lib/liveSync.ts` (transport selection
+with poll fallback). The runner's trigger pattern is `email-dispatch` (`0064_email_dispatch.sql`:
+`pg_cron` → `net.http_post` + dispatch token → Edge Function).
+
+**Two test expectations move when `C3` lands.** `supabase/tests/70_escalation.sql:49-51` asserts
+exactly **three** enabled `platform.escalation.%` rules — adding the `watcher.signal` rule makes it
+**four**, and that assertion must be updated in the same commit. Do **not** process events from an
+`after insert` trigger on `automation_events`: `supabase/tests/66_secrets_email_automation.sql:186`
+asserts `rule_engine_process(v_event) = 0` on a second call, and a trigger would process the event at
+insert and break line 179. Use an explicit dispatcher RPC.
 
 ## Phase 6 — Proof & demo script
 

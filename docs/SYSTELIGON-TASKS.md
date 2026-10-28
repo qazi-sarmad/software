@@ -88,13 +88,18 @@ migration namespace.
 | Range | Owner |
 |---|---|
 | `0001`-`0106` | Applied. Already on both branches. Do not renumber. |
-| `0107` | **`feature/scale-harden-v1`** (Phase 3 workflow enforcement). Do not use. |
-| `0108`-`0109` | **Reserved for `feature/scale-harden-v1`** (their Phases 4-5). Do not use. |
-| `0110` onward | **Yours.** Start at `0110`. |
+| `0107`-`0110` | **`feature/scale-harden-v1`** — **consumed**. Phase 3 workflow enforcement, report templates, config effects, Phase 4 methodology. Do not use. |
+| `0111`-`0113` | **Reserved for `feature/scale-harden-v1`** (their Phase 5 `C1`-`C7` and Phase 6). Do not use. |
+| `0114` onward | **Yours.** Start at `0114`. |
+
+**This table supersedes the earlier `0110` reservation.** Builder A reached `0110` before that
+reservation was communicated, and `0110_phase4_methodology.sql` is already committed on their branch.
+Renumbering a committed migration would break both SQL harnesses, so the boundary moved up instead.
+The authoritative table is in `docs/BRANCH-MAP.md`; if the two disagree, that one wins.
 
 Migrations are applied by glob (`supabase/migrations/*.sql`), so a gap is harmless — the harness
 applies every file in filename order and does not require contiguity. If you need a second
-migration, use `0111`, `0112`, and so on.
+migration, use `0115`, `0116`, and so on.
 
 ---
 
@@ -105,7 +110,7 @@ migration, use `0111`, `0112`, and so on.
 | 0.1 | Branch `feature/systeligon-build-v1` from `feature/systeligon-v1` | DONE |
 | 0.2 | Baseline counts recorded above | DONE |
 | 0.3 | Own ledger (`docs/SYSTELIGON-TASKS.md`) — the split | DONE |
-| 0.4 | Migration range reserved (`0110+`) | DONE |
+| 0.4 | Migration range reserved (`0114+`; moved up from `0110` — see the table) | DONE |
 | 0.5 | Run the full gate set, confirm green before any change | TODO |
 
 ---
@@ -355,5 +360,5 @@ turning it into a hard CI gate. Do not duplicate it.
 
 - **Update this file in the same commit as the work.** No exceptions.
 - **Never edit `docs/SCALE-TASKS.md`.** That is the other session's ledger.
-- **Never use migration numbers below `0110`.**
+- **Never use migration numbers below `0114`.**
 - **Never push to `feature/scale-harden-v1` or `main`.**
