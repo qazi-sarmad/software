@@ -494,6 +494,11 @@ begin
 end $$;
 
 -- alert_list: the triage queue and the digest (M12) read alerts with their disposition.
+-- Drop first: 0112 (C2) widens this function's `returns table` row with the alert enrichment, and
+-- this file is replayed (the local harness applies every migration twice). Without the drop, the
+-- replay hits "cannot change return type of existing function" and aborts the whole run — the same
+-- trap 0033 records for `platform_whoami`.
+drop function if exists public.alert_list(uuid);
 create or replace function public.alert_list(p_org uuid)
 returns table (alert_id uuid, rule_id text, rule_version int, kind text, reason text,
                evaluated_at timestamptz, disposition text, lineage_hash text, hash text)

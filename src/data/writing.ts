@@ -86,6 +86,17 @@ export interface AlertRow {
   disposition: 'open' | 'dismissed' | 'snoozed' | 'escalated';
   lineageHash: string;
   hash: string;
+  /** C2 enrichment. Resolved server-side; all null/empty when the alert has no linked records. */
+  entityId: string | null;
+  department: string | null;
+  engagementId: string | null;
+  siraRiskId: string | null;
+  siraRiskName: string | null;
+  inherentRisk: number | null;
+  inherentRiskLabel: string | null;
+  residualRisk: number | null;
+  residualBand: string | null;
+  controlIds: string[];
 }
 
 /** List the phrase library for the organisation. */
@@ -236,6 +247,16 @@ export async function listAlerts(orgId: string): Promise<AlertRow[]> {
     kind: String(r.kind), reason: String(r.reason), evaluatedAt: String(r.evaluated_at),
     disposition: r.disposition as AlertRow['disposition'], lineageHash: String(r.lineage_hash),
     hash: String(r.hash),
+    entityId: r.entity_id == null ? null : String(r.entity_id),
+    department: r.department == null ? null : String(r.department),
+    engagementId: r.engagement_id == null ? null : String(r.engagement_id),
+    siraRiskId: r.sira_risk_id == null ? null : String(r.sira_risk_id),
+    siraRiskName: r.sira_risk_name == null ? null : String(r.sira_risk_name),
+    inherentRisk: r.inherent_risk == null ? null : Number(r.inherent_risk),
+    inherentRiskLabel: r.inherent_risk_label == null ? null : String(r.inherent_risk_label),
+    residualRisk: r.residual_risk == null ? null : Number(r.residual_risk),
+    residualBand: r.residual_band == null ? null : String(r.residual_band),
+    controlIds: Array.isArray(r.control_ids) ? (r.control_ids as unknown[]).map(String) : [],
   }));
 }
 

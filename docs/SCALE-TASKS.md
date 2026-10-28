@@ -648,7 +648,7 @@ counts; a trigger would double-fire).
 | # | Task | Status |
 |---|---|---|
 | C1 | Scheduled runner: `pg_cron` `monitor-runner` job (`*/5 * * * *`) calls `monitor_runner_sweep(limit)`, which evaluates every org's released rules (SQL twin of `runMonitors`) and calls the `automation_dispatch_pending(org, limit)` dispatcher RPC (no trigger); persist alerts, emit `watcher.signal` | DONE |
-| C2 | Alert enrichment: resolve entity, department, SIRA risk, inherent + residual risk, affected controls onto the alert | TODO |
+| C2 | Alert enrichment: resolve entity, department, SIRA risk, inherent + residual risk, affected controls onto the alert | DONE |
 | C3 | Delivery: Work Queue in-app + email, via `src/lib/liveSync.ts` (realtime, poll fallback) | TODO |
 | C4 | Adhoc audit suggestion from an alert, pre-filled with entity/department/control | TODO |
 | C5 | Remediation wizard from an alert (finding, CAP, request evidence, escalate, dismiss with reason) | TODO |
@@ -668,6 +668,23 @@ is on the reference set, not the lineage hash, so a later sweep over unchanged r
 re-alert (a five-minute job that re-alerted every run would be unusable). The Edge Function
 `monitor-runner` is deliberately **not** added: the `pg_cron` SQL job is the runner, the same shape
 `deployment-escalation-sweep` already uses, and it is the honest, testable pattern.
+
+**C2 evidence (DONE).** Migration `supabase/migrations/0112_phase5_alert_enrichment.sql` adds
+`alert_enrichment(org, refs)` — a pure, deterministic resolver — and stores its answer on
+`monitor_alerts` (nine new columns), returns it from `alert_list`, and carries it in the
+`watcher.signal` catalogue payload so C3's notification can name the same things. The joins are the
+real chain: `staged_records.population_id -> populations.engagement_id -> engagements.entity_id` for
+the entity/engagement/universe; `entities.kind` (falling back to the name) for the department; the
+entity's highest score in its latest PUBLISHED SIRA cycle for `residual_risk`/`residual_band`
+(banded by `sira_band_for`), with `inherent_risk`/`inherent_risk_label` read from that score row's
+`sira_scores.factor_values->>'inherent_risk'` factor and labelled from the org's `sira_scales`; and
+the resolved engagement's `workpapers` for `control_ids`. Nothing is invented: an alert whose records
+are not tied to an engagement keeps nulls (and `control_ids = '{}'`), and every reader tolerates it.
+Tests: `supabase/tests/113_phase5_alert_enrichment.sql` (32 assertions, runs twice in the Docker
+harness) and `src/data/writing.test.ts` (the `alert_list` -> `AlertRow` mapping, including the
+null/empty case). The screen shows the linkage in the alert detail (`ConnectorMonitorPanel`). A real
+replay defect was fixed on the way: `alert_list`'s `returns table` row changed, so 0090 now
+`drop function if exists public.alert_list(uuid)` before the create — the same trap 0033 records.
 
 **C2 is the highest-value item, not an optional refinement.** `docs/SYSTELIGON.md` §11.1: today
 `MonitorAlert` carries only `ruleId`, `ruleVersion`, `kind`, `reason`, `references`, `evaluatedAt` —

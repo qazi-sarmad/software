@@ -259,6 +259,34 @@ export const ConnectorMonitorPanel: React.FC<{ prefix?: string; initialTab?: Tab
             <div className="p-4 rounded-2xl bg-surface border border-hairline space-y-2" data-testid={`${prefix}-alert-detail`}>
               <div className="text-apple-13 font-semibold text-primary">{alert.ruleId} v{alert.ruleVersion}</div>
               <div className="text-apple-12 text-secondary" data-testid={`${prefix}-alert-detail-reason`}>{alert.reason}</div>
+              {/* C2 enrichment: what the alert is about, so it can be acted on. Absent when the
+                  alert has no linked records (an internal signal, a connector staging outside a
+                  population); the block simply does not render. */}
+              {(alert.department || alert.entityId || alert.residualBand || alert.inherentRiskLabel) && (
+                <dl className="grid grid-cols-2 gap-x-3 gap-y-1 text-apple-11" data-testid={`${prefix}-alert-detail-enrichment`}>
+                  {alert.department && (
+                    <div><dt className="text-secondary">Department</dt>
+                      <dd className="text-primary" data-testid={`${prefix}-alert-detail-department`}>{alert.department}</dd></div>
+                  )}
+                  {alert.inherentRiskLabel && (
+                    <div><dt className="text-secondary">Inherent risk</dt>
+                      <dd className="text-primary" data-testid={`${prefix}-alert-detail-inherent`}>{alert.inherentRiskLabel}</dd></div>
+                  )}
+                  {alert.residualBand && (
+                    <div><dt className="text-secondary">SIRA residual risk</dt>
+                      <dd className="text-primary" data-testid={`${prefix}-alert-detail-residual`}>
+                        {alert.residualBand}{alert.residualRisk != null ? ` (${alert.residualRisk})` : ''}</dd></div>
+                  )}
+                  {alert.siraRiskName && (
+                    <div><dt className="text-secondary">Risk</dt>
+                      <dd className="text-primary" data-testid={`${prefix}-alert-detail-risk`}>{alert.siraRiskName}</dd></div>
+                  )}
+                  {alert.controlIds.length > 0 && (
+                    <div><dt className="text-secondary">Affected controls</dt>
+                      <dd className="text-primary" data-testid={`${prefix}-alert-detail-controls`}>{alert.controlIds.length}</dd></div>
+                  )}
+                </dl>
+              )}
               <div className="text-apple-11 text-secondary" data-testid={`${prefix}-alert-detail-lineage`}>lineage {alert.lineageHash.slice(0, 16)}… · chain {alert.hash.slice(0, 16)}…</div>
               <div className="flex items-center gap-2 flex-wrap">
                 {(['dismissed', 'snoozed', 'escalated'] as const).map((d) => (
