@@ -656,7 +656,7 @@ Each task closes only after the following checks.
 - **Engine logic:** every deterministic function has unit tests.
 - **Interactive flows:** every flow marked for end-to-end testing has a Playwright test.
 - **Priority tests:** SQL isolation tests (tenant, scope and platform role) and population gate tests are built first and must always pass.
-- **Parity:** `docs/PARITY.md` maps every section of this specification to Present, Partial or Missing, with evidence.
+- **Parity:** `docs/archive/PARITY.md` (ARCHIVED — its Present/Partial/Missing claims are NOT reliable; see `docs/FUNCTIONALITY-AUDIT.md` for the code-verified state).
 - **Screenshots:** every changed screen is captured in all three presets, in light and dark, on each task. A full sweep of every screen in every variant is run at each gate boundary.
 - **Per-gate report:** files changed, real test counts, parity status, screenshots, decisions made, and an explicit NOT DONE list.
 - **Caution:** code is verified through the tests above, not by reading it alone.
@@ -696,7 +696,7 @@ Phase 2 built the access layer: identity, rights, RLS, the audit team, the role 
 
 - **§4.1.** No change: the seed matrix now implements it.
 - **§4.4.** No change: four-eyes is an id comparison, not a role name; sealed means read-only; the ledger is append-only.
-- **§23.** The portal is now built; its scope is the list in §23. Items not yet built (organisation settings, structure, controls, methodology, risk model, workflow, notifications, BI, templates, export) are recorded as not done in `docs/NOT-DONE.md`.
+- **§23.** The portal is now built; its scope is the list in §23. Items not yet built (organisation settings, structure, controls, methodology, risk model, workflow, notifications, BI, templates, export) are recorded as not done in `docs/archive/NOT-DONE.md` (ARCHIVED — superseded by `docs/SCALE-TASKS.md`).
 - **§25.2.** No change: tenancy and scope are enforced by RLS, proven by SQL tests.
 - **§28.** No change: no blocking modal, no Reports tab, no Workbench tab. The admin panel is an inspector.
 
