@@ -132,6 +132,22 @@ the first run reported 103/103 "TEST FAILED". Fix: mount the repo read-only at `
 container with `-w /repo`, so psql resolves the include from the repo root. With that, all 103 SQL
 test files pass twice.
 
+### Baseline re-verified at `a917f31` (2026-10-28, start of the G-gate work)
+
+Every gate re-run locally at the head the G-gate work begins from (`a917f31`). The counts have grown
+with Phases 3–5; this is the number to compare a later run against.
+
+| Gate | Command | Result |
+|---|---|---|
+| Type check | `npx tsc --noEmit` | PASS |
+| Unit tests | `npx vitest run` | PASS — 213 files / 2451 tests |
+| Build | `npx vite build` | PASS |
+| Shrink | `node scripts/check-shrink.mjs` | PASS (58 files) |
+| Tokens | `node scripts/check-tokens.mjs` | PASS (188 files, 0 violations) |
+| UI contract | `node scripts/check-ui-contract.mjs` | PASS (48 screens) |
+| Tutorials | `npm run check-tutorials` | PASS (81 GIFs, 12 stale — pre-existing, regenerate in Phase 6) |
+| SQL harness | `bash scripts/local-sql-harness-docker.sh` | PASS — "migrations applied twice / all SQL tests passed twice" (114 migrations, 118 test files) |
+
 ### Task 0.5 — why "the new tables don't exist" (found 2026-10-28)
 
 The owner reported that the tables the last several commits were supposed to create could not be
@@ -803,11 +819,58 @@ branch builds G1–G6 and does not build G7–G10.
 | # | Gate | Status |
 |---|---|---|
 | G1 | Production-build E2E (`npm run preview`, not `dev`) | TODO |
-| G2 | No-dead-code (every `public` fn has a production caller or is allow-listed) | TODO |
+| G2 | No-dead-code (every `public` fn has a production caller or is allow-listed) | DONE |
 | G3 | Config-effect (every configurable field has a proving test) | TODO |
 | G4 | Wiring (every `src/data/*.ts` export imported by a component or allow-listed) | TODO |
 | G5 | Two-sources (no component reads both the seed and the database) | TODO |
-| G6 | RPC parity (every RPC the app calls exists in the final schema) | TODO |
+| G6 | RPC parity (every RPC the app calls exists in the final schema) | DONE |
+
+### G2 — no dead code, DONE (2026-10-28)
+
+`scripts/check-dead-code.mjs` + `scripts/dead-code-allow.json`. It replays every migration into an
+in-process Postgres (pglite, installed `--no-save`) and reads the **real** schema, so the answer is
+about the database that ships, not about source text. A `public` function is reachable when a caller
+is found in any of: another function body (`pg_get_functiondef`), an RLS policy / view / constraint /
+column default, a migration-level statement (a seed `DO` block), a trigger (`execute function`), an
+RPC target named in `src/data/**` or `supabase/functions/**`, the RPC catalogue in
+`docs/UI-INVENTORY.md`, or a Supabase auth hook in `supabase/config.toml`.
+
+- **Result:** `PASS: check-dead-code — all 531 public functions are reachable or allow-listed (39
+  allow-listed).` The gate also fails on a **stale** allow-list entry (one that has become reachable),
+  so the list cannot silently accumulate.
+- **Why a pglite replay, not a grep.** The obvious grep produced three false positives in a row: it
+  missed `public.fn(`-qualified calls, it missed `callRpcId(`, and it treated a `grant execute`
+  / `comment on` line as a caller. Reading `pg_proc` removes all three classes of error at once.
+- **39 allow-listed, each with a reason in `scripts/dead-code-allow.json`.** 30 are **test-only** —
+  a SQL test calls them, which per `docs/BRANCH-MAP.md` means "a tested unit the UI has not reached
+  yet", not dead code. 2 are platform-operational (`migration_job_advance`, `migration_step_upsert`;
+  `service_role` only, driven by the hosting-migration runner outside this repo).
+- **7 are genuinely unreferenced** (no caller in the schema, the app, an Edge Function, a migration
+  statement **or** any SQL test). They are recorded here, not deleted, because `docs/BRANCH-MAP.md`
+  forbids silently deleting another area's code and none of them is this branch's:
+  `has_org` (superseded by an inline `jwt_org_id() is not null`), `org_id_from_header` (a documented
+  anti-pattern helper, deliberately never called), `seed_severity_levels` (superseded by the inline
+  seed in `0030`), `share_covers` (superseded by `has_active_share` in `0095`), `signing_keys_get`
+  (no UI lists signing keys), and the two hosting-migration RPCs above. Reported so the owner can
+  decide whether to remove or wire them.
+
+### G6 — RPC parity, DONE (2026-10-28)
+
+`scripts/check-rpc-parity.mjs`. It extracts every RPC target the app names (`rpc('name'`,
+`callRpc…('name'`, `callRpcId('name'`) from `src/data/**` and `supabase/functions/**`, replays the
+migrations into pglite, and asserts every one exists in `public` **and** is callable by the
+`authenticated` role (a function that exists but grants no execute to `authenticated` is a
+production break the test suite cannot see, because the tests mock the client).
+
+- **Result:** `PASS: check-rpc-parity — every RPC the app calls (115) exists in the final schema and
+  is callable by authenticated (10 service-only allow-listed).`
+- The 10 service-only allow-listed RPCs are the dispatcher/worker functions the Edge Functions call
+  with the service key (`email_dispatch_claim`, `secret_reveal`, `automation_dispatch_pending`, …);
+  they are correct to be service-only.
+- **Same pglite trap as G2, recorded so the next script does not hit it:** `@electric-sql/pglite`
+  ships the `pgcrypto` bundle but not the Supabase-specific `pg_cron` / `vault` / `pgsodium` shims
+  some migrations reference, so the replay strips the `create extension` lines pglite does not
+  provide. Without that the replay stops early and every later function looks missing.
 
 ## UI / UX
 
