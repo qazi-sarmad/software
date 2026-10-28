@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { WorkingPaper } from '../../types';
 import { useApp } from '../../context/AppContext';
 import { computeSha256 } from '../../lib/ledger';
+import { ExplainPopout } from '../explain/ExplainPopout';
 import { Upload, FileCheck, ShieldCheck, Download, Clock } from '../common/Icons';
 
 interface EvidenceTabProps {
@@ -102,7 +103,9 @@ export const EvidenceTab: React.FC<EvidenceTabProps> = ({ workpaper }) => {
                   <span>•</span>
                   <span>Uploaded by {item.uploadedBy}</span>
                   <span>•</span>
-                  <span className="font-mono text-tertiary">SHA: {item.sha256.slice(0, 16)}...</span>
+                  <ExplainPopout explainId="field.evidence.content_sha256" screenId="AF-11" element={`explain-evidence-hash-${item.id}`}>
+                    <span className="font-mono text-tertiary">SHA: {item.sha256.slice(0, 16)}...</span>
+                  </ExplainPopout>
                 </div>
               </div>
 

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useScopedData } from '../../hooks/useScopedData';
+import { ExplainPopout } from '../explain/ExplainPopout';
 import { ShieldCheck } from '../common/Icons';
 import {
   AUDIT_FILE_TABS,
@@ -92,9 +93,11 @@ export const AuditFileModal: React.FC = () => {
             <span className="font-mono text-apple-11 px-2 py-0.5 rounded bg-surface border border-hairline text-secondary">
               {engagement.id}
             </span>
-            <span className="text-apple-11 font-semibold text-secondary uppercase" data-testid="audit-file-stage">
-              {engagement.stage}
-            </span>
+            <ExplainPopout explainId="field.engagement.stage" screenId="AF-01" element="explain-stage">
+              <span className="text-apple-11 font-semibold text-secondary uppercase" data-testid="audit-file-stage">
+                {engagement.stage}
+              </span>
+            </ExplainPopout>
             {nextStage && engagement.status !== 'signed_off' && (
               <button
                 type="button"

@@ -21,7 +21,18 @@ import { hasRight } from '../../lib/rights';
 import { rightReason, rightReasonFor } from '../../lib/rightLabels';
 import { InlineError } from '../common/InlineError';
 import { HoldToConfirm } from '../common/HoldToConfirm';
+import { ExplainPopout } from '../explain/ExplainPopout';
 import { Sliders, Lock, CheckCircle2, Hash, Layers } from '../common/Icons';
+
+const SAMPLING_METHODS = new Set([
+  'random',
+  'systematic',
+  'mus',
+  'stratified',
+  'high_value',
+  'low_value',
+  'haphazard',
+]);
 
 /**
  * Sampling configuration panel (4I, spec §11.2). Shows the org sampling table, the computed floor, a
@@ -251,7 +262,14 @@ export const SamplingPanel: React.FC<{ workpaperId: string }> = ({ workpaperId }
           </div>
           {sample.method && (
             <div className="text-apple-11 text-secondary" data-testid="sampling-method">
-              Method: <span className="text-primary font-semibold capitalize">{sample.method.replace('_', ' ')}</span>
+              Method:{' '}
+              {SAMPLING_METHODS.has(sample.method) ? (
+                <ExplainPopout explainId={`method.${sample.method}`} screenId="AF-06" element={`explain-method-${sample.method}`}>
+                  <span className="text-primary font-semibold capitalize">{sample.method.replace('_', ' ')}</span>
+                </ExplainPopout>
+              ) : (
+                <span className="text-primary font-semibold capitalize">{sample.method.replace('_', ' ')}</span>
+              )}
             </div>
           )}
           {sample.calculation && (
@@ -264,7 +282,9 @@ export const SamplingPanel: React.FC<{ workpaperId: string }> = ({ workpaperId }
           {coverage && coverage.highValueRows.length > 0 && (
             <div className="border-t border-hairline pt-3 space-y-2" data-testid="sampling-coverage">
               <div className="text-apple-11 font-semibold text-secondary uppercase tracking-wider">
-                High-value coverage
+                <ExplainPopout explainId="term.coverage" screenId="AF-06" element="explain-coverage">
+                  High-value coverage
+                </ExplainPopout>
               </div>
               <div className={`text-apple-12 ${coverage.covered ? 'text-verdigris' : 'text-critical'}`} data-testid="sampling-coverage-status">
                 {coverage.covered
@@ -304,7 +324,10 @@ export const SamplingPanel: React.FC<{ workpaperId: string }> = ({ workpaperId }
 
           {precision && precision.n > 0 && (
             <div className="border-t border-hairline pt-3 text-apple-11 text-secondary" data-testid="sampling-precision">
-              Exceptions: <span className="text-primary font-semibold tabular-nums">{precision.k}</span> of{' '}
+              <ExplainPopout explainId="term.exception" screenId="AF-06" element="explain-exception">
+                Exceptions
+              </ExplainPopout>
+              : <span className="text-primary font-semibold tabular-nums">{precision.k}</span> of{' '}
               <span className="text-primary font-semibold tabular-nums">{precision.n}</span> tested.
               {precision.upper !== null && (
                 <> Clopper-Pearson {Math.round(precision.confidence * 100)}% interval:{' '}

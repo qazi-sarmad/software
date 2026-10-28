@@ -194,7 +194,7 @@ requirement, and the thing that makes the product teachable without a manual.
 | E1 | `src/lib/explain/catalogue.ts` — schema, `explainFor(user, id, context)`, redaction, L2 guard test | DONE |
 | E2 | `ExplainPopout` + `useExplain` on `HoverPreview`; non-blocking, a11y (tooltip + complementary) | DONE |
 | E3 | `src/lib/explain/iia.ts` — standards as data, paraphrased, mapped to real screens/RPCs | DONE |
-| E4 | Hover cards + detail panels wired across sampling methods, fields, statuses, terms | TODO |
+| E4 | Hover cards + detail panels wired across sampling methods, fields, statuses, terms | DONE |
 | E5 | Drilldown from every aggregate; deep-linkable; no blocking modal (walk test) | TODO |
 | E6 | Standards affordance on screens, lifecycle steps and report sections | TODO |
 | E7 | Standards view (catalogue → implementation → evidence) | TODO |
