@@ -758,8 +758,9 @@ The landing tab: portfolio tiles (engagements, CAPs, findings, seals), a CAP rad
 - **Route:** Tab `executive` (nav strip "Dashboard"). Not a route.
 - **Rights:** any signed-in member; each tile degrades to its empty state when the scope holds no records.
 - **Data:** `AlertCircle`, `CheckCircle2`, `ChevronRight`, `Clock`, `ExternalLink`, `ShieldCheck`, `X`, `motion`, `updatePlanItemDates` — through `src/data/*.ts`; components never import the database client (rule M8).
-- **Testids:** `gantt-approve-shift`, `gantt-shift-error`
+- **Testids:** `gantt-approve-shift`, `gantt-shift-error`, `DB-01-cap-hub-drilldown`, `DB-01-tile-entities`, `DB-01-tile-engagements`, `DB-01-tile-issues`, `DB-01-tile-workpapers`
 - **States:** loading (skeleton tiles); empty (no engagements in scope); ready; the Board Pack block carries its own loading/empty/error states.
+- **Drilldown (E5/U1):** every tile number opens the exact scoped/filtered records it was counted from, in the non-blocking `DrilldownPanel` (`role="complementary"`, testid prefix `DB-01-drilldown`). The CAP hub number (`DB-01-cap-hub-drilldown`) drills to its CAPs. The open family is mirrored to the URL hash (`#drill=<kind>`) so a state is deep-linkable; the hash carries only the family name, never a tenant id.
 - **Tutorial key:** oa.boardpack-use (the Board Pack block)
 
 ## WQ-01 — Work Queue (S1)
@@ -769,8 +770,9 @@ The user-specific queue: my workpapers, what awaits my sign-off, what awaits my 
 - **Route:** Tab `pending` (nav strip "Work Queue").
 - **Rights:** any signed-in member; each section is filtered by the caller's rights.
 - **Data:** none (pure/UI only) — through `src/data/*.ts`; components never import the database client (rule M8).
-- **Testids:** `pending-comments`, `tab-pending`
+- **Testids:** `pending-comments`, `tab-pending`, `WQ-01-front-door`, `WQ-01-front-door-count`, `WQ-01-front-door-summary`, `WQ-01-front-door-empty`, `WQ-01-front-door-list`
 - **States:** loading; empty per section ("Nothing awaiting you"); ready; error inline.
+- **Front door (U3):** the first element on the tab is the consequence-ordered list of what needs this user today, built by the pure `src/lib/frontDoor.ts` rule (overdue CAP → overdue audit → approval → sign-off → comment → open workpaper). Each row is one click from its action; the summary line reads in the spec's shape ("3 CAPs overdue. 1 report awaiting your approval."). Rows carry `data-front-door-kind`. Never a chart, never a modal.
 - **Tutorial key:** —
 
 ## AU-01 — Audit Universe (S1)

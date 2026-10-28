@@ -195,7 +195,7 @@ requirement, and the thing that makes the product teachable without a manual.
 | E2 | `ExplainPopout` + `useExplain` on `HoverPreview`; non-blocking, a11y (tooltip + complementary) | DONE |
 | E3 | `src/lib/explain/iia.ts` — standards as data, paraphrased, mapped to real screens/RPCs | DONE |
 | E4 | Hover cards + detail panels wired across sampling methods, fields, statuses, terms | DONE |
-| E5 | Drilldown from every aggregate; deep-linkable; no blocking modal (walk test) | TODO |
+| E5 | Drilldown from every aggregate; deep-linkable; no blocking modal (walk test) | DONE |
 | E6 | Standards affordance on screens, lifecycle steps and report sections | TODO |
 | E7 | Standards view (catalogue → implementation → evidence) | TODO |
 | E8 | `PencilGuide` + guidance data for guided first-run and per-screen "show me" | DEFERRED (design language) |
@@ -237,9 +237,9 @@ is real.** A beautiful dashboard over an unwired engine is a better-looking lie.
 
 | # | Task | Status |
 |---|---|---|
-| U1 | Every dashboard number drills to its exact filtered records | TODO |
+| U1 | Every dashboard number drills to its exact filtered records | DONE |
 | U2 | Command palette (Cmd/Ctrl-K) | TODO |
-| U3 | Work queue as the front door | TODO |
+| U3 | Work queue as the front door | DONE |
 | U4 | Live activity spine on the existing `liveSync` transport | TODO |
 | U5 | Motion that signals state change only; universal `prefers-reduced-motion` | DEFERRED (motion curves are design) |
 | U6 | Guided empty states | TODO |
@@ -295,7 +295,7 @@ different.
 | Gate | Fails when | Status |
 |---|---|---|
 | G7 | an explain id has no catalogue entry | TODO |
-| G8 | an aggregate has no drilldown target | TODO |
+| G8 | an aggregate has no drilldown target | DONE |
 | G9 | an IIA reference does not match the verified numbering | TODO |
 | G10 | a bundled font has no licence metadata | TODO |
 

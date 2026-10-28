@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useScopedData } from '../../hooks/useScopedData';
 import { CheckCircle2 } from '../common/Icons';
 import { buildWorkQueue, myComments } from '../../lib/workQueue';
+import { buildFrontDoor, frontDoorSummary, type FrontDoorItem } from '../../lib/frontDoor';
 import { getOrgLocalToday } from '../../lib/orgDate';
 import { EscalationCards } from './EscalationCards';
+import { FrontDoor } from './FrontDoor';
 import { NotificationsCard } from './NotificationsCard';
 
 /**
@@ -27,7 +29,38 @@ export const PendingTasksTab: React.FC = () => {
   };
   const sections = buildWorkQueue(input).filter((s) => s.key !== 'team' || s.items.length > 0);
   const comments = myComments(input);
-  const overdue = scopedEngagements.filter((e) => e.status !== 'signed_off' && e.dueDate < TODAY);
+
+  // The front door (U3): what needs this user, ordered by consequence. Pure rule, time as an
+  // argument, rights (not role names) gating the approval rows.
+  const frontDoor = useMemo(
+    () =>
+      buildFrontDoor({
+        user: currentUser,
+        todayIso: TODAY,
+        engagements: scopedEngagements,
+        workpapers: scopedWorkpapers,
+        capItems: scopedCapItems,
+        comments: scopedComments,
+      }),
+    [currentUser, TODAY, scopedEngagements, scopedWorkpapers, scopedCapItems, scopedComments]
+  );
+
+  const openFrontDoorItem = (item: FrontDoorItem) => {
+    const engagement = scopedEngagements.find((e) => e.id === item.engagementId);
+    const workpaper = item.workpaperId
+      ? scopedWorkpapers.find((w) => w.id === item.workpaperId)
+      : undefined;
+    if (item.kind === 'cap_overdue' || (item.kind === 'approval' && item.id.startsWith('appr:cap:'))) {
+      const cap = scopedCapItems.find((c) => c.id === item.id.replace(/^appr:cap:|^cap:/, ''));
+      if (cap) openInspector('cap_inspector', { cap, department: cap.department });
+      return;
+    }
+    if (workpaper) {
+      openInspector('workbench', { workpaperId: workpaper.id });
+      return;
+    }
+    if (engagement) openInspector('audit_file', { engagement, workpaper });
+  };
 
   return (
     <section data-testid="tab-pending" className="max-w-7xl mx-auto px-6 py-8 min-h-[60vh] space-y-8">
@@ -36,10 +69,14 @@ export const PendingTasksTab: React.FC = () => {
           <CheckCircle2 className="w-4 h-4 stroke-[1.3]" /><span>Work Queue</span>
         </div>
         <h1 className="font-serif-title text-apple-28 font-bold text-primary tracking-tight">What needs you</h1>
-        <p className="text-apple-13 text-secondary">
-          {comments.length} review comments awaiting a response · {overdue.length} overdue audits
-        </p>
       </div>
+
+      <FrontDoor
+        items={frontDoor}
+        summary={frontDoorSummary(frontDoor)}
+        screenId="WQ-01"
+        onOpen={openFrontDoorItem}
+      />
 
       <EscalationCards />
 

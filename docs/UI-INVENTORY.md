@@ -887,7 +887,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Data modules:** `src/data/plan.ts`
 - **RPCs reachable via those modules:** `plan_approval_config`, `plan_history`
 - **Tables reachable via those modules:** `plan_items`, `plans`
-- **Testids (2):** `gantt-approve-shift`, `gantt-shift-error`
+- **Testids (7):** `gantt-approve-shift`, `gantt-shift-error`, `DB-01-cap-hub-drilldown`, `DB-01-tile-entities`, `DB-01-tile-engagements`, `DB-01-tile-issues`, `DB-01-tile-workpapers`
 - **States:** loading (skeleton tiles); empty (no engagements in scope); ready; the Board Pack block carries its own loading/empty/error states.
 - **Tutorial key:** — (no key)
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
@@ -902,7 +902,7 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Data modules:** none (pure/UI only)
 - **RPCs reachable via those modules:** none
 - **Tables reachable via those modules:** none
-- **Testids (2):** `pending-comments`, `tab-pending`
+- **Testids (7):** `pending-comments`, `tab-pending`, `WQ-01-front-door`, `WQ-01-front-door-count`, `WQ-01-front-door-summary`, `WQ-01-front-door-empty`, `WQ-01-front-door-list`
 - **States:** loading; empty per section ("Nothing awaiting you"); ready; error inline.
 - **Tutorial key:** — (no key)
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
@@ -1602,6 +1602,6 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 - Tutorial keys: 80.
 - RPCs catalogued: 114.
 - Data modules: 56; exported data functions: 364.
-- Contract testids not found verbatim in `src/` (placeholder or dynamic): 190.
-  - audit-file-view-builder, audit-file-view-certificate, audit-file-view-conclusion, audit-file-view-documents, audit-file-view-ethics, audit-file-view-execution, audit-file-view-findings, audit-file-view-planning, audit-file-view-population, audit-file-view-report, audit-file-view-review, audit-file-view-rowtesting, audit-file-view-sampling, hosting-test, invite-user, issues-view-patterns, oa-branding-colour-accent, oa-branding-colour-background, oa-branding-colour-primary, oa-branding-colour-text, oa-branding-margin-0, oa-branding-margin-3, oa-certificate-enabled-verification, oa-escalation-result, oa-escalation-saved, oa-governance-signoff-conclusion, oa-governance-signoff-planning, oa-governance-signoff-testing, org-control-tab-auditors, org-control-tab-automation, org-control-tab-branding, org-control-tab-connectors, org-control-tab-features, org-control-tab-formats, org-control-tab-governance, org-control-tab-hosting, org-control-tab-people, org-control-tab-setup, org-control-tab-tutorials, prefers-reduced-motion …
+- Contract testids not found verbatim in `src/` (placeholder or dynamic): 191.
+  - audit-file-view-builder, audit-file-view-certificate, audit-file-view-conclusion, audit-file-view-documents, audit-file-view-ethics, audit-file-view-execution, audit-file-view-findings, audit-file-view-planning, audit-file-view-population, audit-file-view-report, audit-file-view-review, audit-file-view-rowtesting, audit-file-view-sampling, data-front-door-kind, hosting-test, invite-user, issues-view-patterns, oa-branding-colour-accent, oa-branding-colour-background, oa-branding-colour-primary, oa-branding-colour-text, oa-branding-margin-0, oa-branding-margin-3, oa-certificate-enabled-verification, oa-escalation-result, oa-escalation-saved, oa-governance-signoff-conclusion, oa-governance-signoff-planning, oa-governance-signoff-testing, org-control-tab-auditors, org-control-tab-automation, org-control-tab-branding, org-control-tab-connectors, org-control-tab-features, org-control-tab-formats, org-control-tab-governance, org-control-tab-hosting, org-control-tab-people, org-control-tab-setup, org-control-tab-tutorials …
 

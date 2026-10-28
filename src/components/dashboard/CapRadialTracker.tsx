@@ -1,7 +1,9 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import { useFilterStore } from '../../context/FilterStore';
 import { useApp } from '../../context/AppContext';
+import { useDrilldown } from '../../hooks/useDrilldown';
+import { DrilldownPanel } from '../explain/DrilldownPanel';
 import { AuditCapItem, Severity } from '../../types';
 import { stableKey } from '../../lib/readable';
 import { AlertCircle, RotateCcw } from '../common/Icons';
@@ -30,6 +32,7 @@ export const CapRadialTracker: React.FC<CapRadialTrackerProps> = ({
   const svgRef = useRef<SVGSVGElement>(null);
   const filter = useFilterStore();
   const { openInspector } = useApp();
+  const drill = useDrilldown();
   const [hoveredDept, setHoveredDept] = useState<string | null>(null);
   // Keep latest callbacks in refs so the draw effect never re-runs (and re-animates) on hover.
   const openInspectorRef = useRef(openInspector);
@@ -298,6 +301,21 @@ export const CapRadialTracker: React.FC<CapRadialTrackerProps> = ({
     : openCapCount;
   const displayOverdue = currentDeptData ? currentDeptData.overdueCount : overdueCapCount;
 
+  // The rows behind the hub number (E5/U1). The hub is scoped to the hovered/filtered department
+  // when there is one, so the drilldown reads exactly the caps the number was counted from.
+  const capSource = useMemo(() => {
+    const all = departments.flatMap((d) => d.caps);
+    const scoped = currentDeptData ? currentDeptData.caps : all;
+    return {
+      entities: [],
+      engagements: [],
+      issues: [],
+      workpapers: [],
+      caps: scoped,
+      observations: [],
+    };
+  }, [departments, currentDeptData]);
+
   return (
     <div className="w-full bg-surface border border-hairline rounded-2xl p-6 shadow-apple space-y-6">
       <div className="flex items-start justify-between gap-4">
@@ -344,9 +362,27 @@ export const CapRadialTracker: React.FC<CapRadialTrackerProps> = ({
             <span className="text-apple-11 font-medium text-secondary truncate max-w-[100px]">
               {currentDeptData ? currentDeptData.department : 'Total Portfolio'}
             </span>
-            <span className="font-serif-numeral text-apple-32 font-bold text-primary tabular-nums leading-none my-0.5">
+            {/* The hub number is an aggregate: it drills to the exact CAPs it was counted from
+                (E5/U1). A button, not a modal — the panel is non-blocking. */}
+            <button
+              type="button"
+              data-testid="DB-01-cap-hub-drilldown"
+              data-drill-kind="caps"
+              onClick={() =>
+                drill.open({
+                  kind: 'caps',
+                  label: currentDeptData ? `${currentDeptData.department} CAPs` : 'All CAPs in scope',
+                  filterSummary: currentDeptData
+                    ? `Corrective actions for ${currentDeptData.department}.`
+                    : 'Corrective actions in scope and under the active filters.',
+                  department: currentDeptData?.department,
+                })
+              }
+              className="pointer-events-auto font-serif-numeral text-apple-32 font-bold text-primary tabular-nums leading-none my-0.5 hover:text-accent transition-colors"
+              aria-label={`Show the ${displayCount} corrective actions behind this number`}
+            >
               {displayCount}
-            </span>
+            </button>
             <span className="text-apple-11 text-secondary">{displayOpen} open CAPs</span>
             {displayOverdue > 0 && (
               <span className="text-apple-11 font-bold text-cinnabar flex items-center gap-1 mt-0.5">
@@ -429,6 +465,21 @@ export const CapRadialTracker: React.FC<CapRadialTrackerProps> = ({
           </div>
         </div>
       </div>
+
+      {/* The CAPs behind the hub number (E5/U1), non-blocking and deep-linkable (#drill=caps). */}
+      {drill.target && (
+        <DrilldownPanel
+          target={drill.target}
+          source={capSource}
+          screenId="DB-01"
+          onOpenRecord={(kind, id) => {
+            if (kind !== 'caps') return;
+            const cap = capSource.caps.find((c) => c.id === id);
+            if (cap) openInspector('cap_inspector', { cap, department: cap.department });
+          }}
+          onClose={drill.close}
+        />
+      )}
     </div>
   );
 };
