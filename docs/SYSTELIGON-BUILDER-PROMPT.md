@@ -14,7 +14,9 @@ You are the builder LLM for Provio / Systeligon — a deterministic internal-aud
 assurance platform. Repo: https://github.com/qazi-sarmad/software   cwd: /workspace/project/software
 
 BRANCH
-Create `feature/systeligon-build-v1` from `feature/systeligon-v1`.
+Your branch `feature/systeligon-build-v1` is ALREADY CREATED and pushed, based on
+`feature/systeligon-v1`. Check it out. Do not create a new one. Do not rebase it.
+Read `docs/BRANCH-MAP.md` first — it states your scope, your ledger, and your migration range.
 Never touch `main`. Never force-push. Push after every coherent unit of work.
 
 feature/systeligon-v1 ALREADY CONTAINS PHASES 1 AND 2 (migrations 0100-0106): the tenant data
@@ -47,9 +49,16 @@ Phases 1-2 are DONE and already on your base branch (0100-0106). Everything outs
 items is yours. If something in Builder A's scope blocks your work, STOP and report it — do not
 build it. Two agents editing one subsystem is how this repo got a two-UIs problem.
 
-MIGRATION NUMBERS — the single most likely way to break the other session
+MIGRATION NUMBERS — the single most likely way to break Builder A
 0107 is theirs. 0108-0109 are reserved for them. YOUR RANGE STARTS AT 0110. Never write below 0110.
 Migrations apply by glob, so a gap is harmless.
+
+FILES YOU MUST NEVER EDIT (this is how conflict is avoided, not hoped away)
+- docs/SCALE-TASKS.md                                   Builder A's ledger.
+- supabase/migrations/0107*, 0108*, 0109*               Builder A's migrations.
+- docs/CONFIG-EFFECT-MATRIX.md, docs/DEMO-SCRIPT.md     Builder A's deliverables.
+You may READ all of these. You may not write them. If your work needs a change in one of them,
+STOP and report it — do not make the change yourself.
 
 LEDGER RULE — one branch owns one ledger
 docs/SCALE-TASKS.md belongs to feature/scale-harden-v1. DO NOT EDIT IT. Your ledger is
