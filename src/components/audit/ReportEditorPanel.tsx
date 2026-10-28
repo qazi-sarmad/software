@@ -15,6 +15,7 @@ import {
   type ReportCommentRow,
 } from '../../data/reports';
 import { checkCapReconciliation, type CapRow, listCaps } from '../../data/caps';
+import { commitReportGraph } from '../../data/reportGraph';
 import { renderAndStoreReportFiles, type StoredReportFiles } from '../../data/reportFiles';
 import { getActiveReportLayout } from '../../data/writing';
 import type { FormatLayout } from '../../lib/writing/reportFormat';
@@ -142,6 +143,13 @@ export const ReportEditorPanel: React.FC<{ engagementId: string }> = ({ engageme
     const res = await freezeReport(activeId);
     if (!res.ok) setError(res.reason);
     else {
+      // §15.6: commit the evidence-bound claim graph, so the frozen report's root is real tenant
+      // data that verify_report_root can prove. A failure is reported but the freeze already stands.
+      try {
+        await commitReportGraph({ reportVersionId: activeId, engagementId });
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'The report graph could not be committed.');
+      }
       // §18: the frozen report is a real PDF and a real DOCX from the one block model. Store them and
       // record both hashes; a failure here is reported but the freeze itself already stands.
       try {

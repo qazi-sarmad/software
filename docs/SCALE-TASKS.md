@@ -170,10 +170,40 @@ tests exercise) the in-memory demo path is kept unchanged.
 | 2.3 | Enforce `testing_mode` (one-stage vs two-stage) | DONE |
 | 2.4 | Enforce `approval_chain` when an approval is decided | DONE |
 | 2.5 | Wire `runPreflight` into `freeze_report`; gate on `preflight_acks` | DONE |
-| 2.6 | Persist the report graph root (`report_graphs` writer) | TODO |
+| 2.6 | Persist the report graph root (`report_graphs` writer) | DONE |
 | 2.7 | Seed `workpaper_rows` from `lock_sample`; link sample to tested rows | TODO |
 | 2.8 | Method-aware sampling (MUS/PPS, systematic, stratified) + Clopper-Pearson | TODO |
 | 2.9 | Value-coverage check (top-value items included or waived with a reason) | TODO |
+
+### Phase 2.6 — what was built and how it was verified (2026-10-28)
+
+Migration `supabase/migrations/0103_phase2_report_graph.sql` (new) and test
+`supabase/tests/104_phase2_report_graph.sql` (new, 20 assertions). The migration applies twice cleanly.
+
+- **The defect.** `report_graphs` and `report_claims` (0088) are append-only and `verify_report_root`
+  (0094) reads the root to prove tamper-evidence, but no writer existed anywhere:
+  `grep -rn 'report_graphs' src/ supabase/functions/` returned nothing. The engine computed roots in
+  `src/lib/writing/` and the result was thrown away, so the verification chain had no data.
+- **The fix.** `report_graph_commit(...)` writes the graph. The database does not take the caller's
+  word for the root: it recomputes every claim hash from the claim's canonical facts and rebuilds the
+  Merkle root from those leaf hashes (`report_graph_root_of`, domain prefixes `00`/`01`, odd node
+  promoted not duplicated, exactly `buildMerkleTree`), and raises `graph_root_mismatch` /
+  `claim_hash_mismatch` when they disagree. The commit is idempotent per
+  (version, model, register, locale), writes the claims (whose trigger writes the hash-chained
+  `report_claim_versions`) and anchors the root to a ledger entry. Right required is
+  `review_and_approve`, matching `compose_report`, which is the same stage.
+- **`src/lib/writing/derive.ts` (new)** is the missing middle: it turns an engagement's real records
+  (findings, tested items and exceptions, controls, CAPs) into claims with references to those
+  records. It is pure — no clock, no random source; time enters as an argument. `src/data/reportGraph.ts`
+  loads the records through RLS and calls the writer; `ReportEditorPanel.freeze` calls
+  `commitReportGraph` after `freeze_report`, so a frozen report has a committed, verifiable root.
+- **Two implementations proven equal.** `supabase/tests/104` pins three canonical claim texts and
+  their root produced by the TypeScript engine (`graphHashes`), and asserts `report_graph_root_of`
+  reproduces `fae44ed0…956` exactly, so a drift between SQL and TS fails the test.
+- **Gate set after the change:** `tsc` PASS; `vitest` 205 files / 2401 tests PASS; `vite build` PASS;
+  `check-shrink` PASS (58 files); `check-tokens` PASS (179 files, 0 violations); `check-ui-contract`
+  PASS (48 screens); `check-tutorials` PASS (79 current / 1 stale `sa.tenant-hub`, pre-existing);
+  SQL harness PASS — "all SQL tests passed twice" (107 test files).
 
 ### Phase 2.5 — what was built and how it was verified (2026-10-28)
 

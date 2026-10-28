@@ -1567,6 +1567,7 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 | `preflight_acks_get` | `src/data/preflight.ts` | `p_engagement_id` | tenant |
 | `preflight_blocking` | `src/data/preflight.ts` | `p_engagement_id` | tenant |
 | `preflight_items` | `src/data/preflight.ts` | `p_engagement_id` | tenant |
+| `report_graph_get` | `src/data/reportGraph.ts` | `p_report_version_id` | tenant |
 | `request_change` | `src/data/changeControl.ts` | `p_engagement_id`, `p_change_class`, `p_title`, `p_payload`, `p_klass` | tenant |
 | `request_extraction` | `src/data/documents.ts` | `p_file_id` | tenant |
 | `revert_prior_year_item` | `src/data/imports.ts` | `p_import_id` | tenant |
@@ -1596,8 +1597,8 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 
 - Screens documented: 93 (contract sections: 48 Appendix A + 44 Appendix B).
 - Tutorial keys: 80.
-- RPCs catalogued: 110.
-- Data modules: 55; exported data functions: 357.
+- RPCs catalogued: 111.
+- Data modules: 56; exported data functions: 360.
 - Contract testids not found verbatim in `src/` (placeholder or dynamic): 190.
   - audit-file-view-builder, audit-file-view-certificate, audit-file-view-conclusion, audit-file-view-documents, audit-file-view-ethics, audit-file-view-execution, audit-file-view-findings, audit-file-view-planning, audit-file-view-population, audit-file-view-report, audit-file-view-review, audit-file-view-rowtesting, audit-file-view-sampling, hosting-test, invite-user, issues-view-patterns, oa-branding-colour-accent, oa-branding-colour-background, oa-branding-colour-primary, oa-branding-colour-text, oa-branding-margin-0, oa-branding-margin-3, oa-certificate-enabled-verification, oa-escalation-result, oa-escalation-saved, oa-governance-signoff-conclusion, oa-governance-signoff-planning, oa-governance-signoff-testing, org-control-tab-auditors, org-control-tab-automation, org-control-tab-branding, org-control-tab-connectors, org-control-tab-features, org-control-tab-formats, org-control-tab-governance, org-control-tab-hosting, org-control-tab-people, org-control-tab-setup, org-control-tab-tutorials, prefers-reduced-motion …
 
