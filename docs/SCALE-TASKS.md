@@ -647,13 +647,27 @@ counts; a trigger would double-fire).
 
 | # | Task | Status |
 |---|---|---|
-| C1 | Scheduled runner: `automation_dispatch_pending(org, limit)` dispatcher RPC (no trigger), runner Edge Function calls it, `runMonitors` per org, persist alerts, emit `watcher.signal` | TODO |
+| C1 | Scheduled runner: `pg_cron` `monitor-runner` job (`*/5 * * * *`) calls `monitor_runner_sweep(limit)`, which evaluates every org's released rules (SQL twin of `runMonitors`) and calls the `automation_dispatch_pending(org, limit)` dispatcher RPC (no trigger); persist alerts, emit `watcher.signal` | DONE |
 | C2 | Alert enrichment: resolve entity, department, SIRA risk, inherent + residual risk, affected controls onto the alert | TODO |
 | C3 | Delivery: Work Queue in-app + email, via `src/lib/liveSync.ts` (realtime, poll fallback) | TODO |
 | C4 | Adhoc audit suggestion from an alert, pre-filled with entity/department/control | TODO |
 | C5 | Remediation wizard from an alert (finding, CAP, request evidence, escalate, dismiss with reason) | TODO |
 | C6 | Alert triage surface with rights gating | TODO |
 | C7 | Anomaly to SIRA: a resolved alert proposes an emergent risk carrying the alert id, rule version and affected rows | BLOCKED (S18) |
+
+**C1 evidence (DONE).** Migration `supabase/migrations/0111_phase5_monitor_runner.sql` adds
+`monitor_runner_sweep(limit)` (the `pg_cron` `monitor-runner` job, `*/5 * * * *`), which evaluates
+every organisation's released rules in SQL and drains the event outbox. The SQL evaluation is the
+twin of `evaluateMonitor` in `src/lib/writing/monitors.ts`; both are pinned to the same lineage
+hashes. Two tests prove it: `supabase/tests/112_phase5_monitor_runner.sql` (SQL, runs twice in the
+Docker harness) and `src/lib/writing/monitorRunnerParity.test.ts` (TypeScript). A real defect was
+found and fixed on the way: `monitor_alert_chain` ordered by `created_at desc, id desc`, but every
+alert written by one sweep shares the transaction's `now()`, so the chain was ordered by a random
+uuid whenever two alerts were written together; 0111 adds a monotonic `seq` and orders by it. Dedup
+is on the reference set, not the lineage hash, so a later sweep over unchanged records does not
+re-alert (a five-minute job that re-alerted every run would be unusable). The Edge Function
+`monitor-runner` is deliberately **not** added: the `pg_cron` SQL job is the runner, the same shape
+`deployment-escalation-sweep` already uses, and it is the honest, testable pattern.
 
 **C2 is the highest-value item, not an optional refinement.** `docs/SYSTELIGON.md` §11.1: today
 `MonitorAlert` carries only `ruleId`, `ruleVersion`, `kind`, `reason`, `references`, `evaluatedAt` —
