@@ -67,6 +67,24 @@ lie here: screens import with aliases (`populateSuggestions` is the export
 
 ---
 
+## Task labels are branch-scoped, not a shared namespace
+
+**`U1` on Builder A's branch is not `U1` on Builder B's.** They are different tasks that happen to
+share a label:
+
+| Label | Builder A's meaning | Builder B's meaning |
+|---|---|---|
+| `U1` | pencil-style guided pointers | dashboard numbers drill to their records (DONE) |
+| `U2` | every screen's functional states | command palette, Cmd/Ctrl-K |
+| `U3` | guided first-run, zero to first sealed report | work queue as the front door (DONE) |
+
+So "U2 is done" is meaningless without naming the branch. Write the branch in every cross-builder
+report: "B's `U2`" or "A's `U2`". `G1`-`G6` are A's; `G7`-`G10` are B's; those do not overlap, but
+they are the exception, not the rule. **Before you report a label as done or as yours, check it
+against the other ledger.**
+
+---
+
 ## Migration reservation
 
 Both work branches share one migration namespace, applied by glob in filename order. A gap is
@@ -167,8 +185,26 @@ That is the gap this section closes.
 2. **Never push to another builder's branch.** It is a live working tree.
 3. **Never merge to `main`.** The owner does that.
 4. **A builder merges `feature/systeligon-v1`** to pick up new specs, the register, or gate changes.
-   Measured: this auto-merges `docs/SCALE-TASKS.md` with no conflict, because the two sides' edits
-   land in different regions.
+   Measured: this auto-merges both ledgers with no conflict, because the two sides' edits land in
+   different regions. Verified by a real `git merge --no-ff` into B's head: exit 0, zero conflicts.
+
+   **`git fetch origin` alone is not enough, and the obvious check is a false positive.** Two
+   builders have now reported "Already up to date" while the guidance was not in their branch. The
+   reason: they tested `git merge-base --is-ancestor <pre-split-sha> HEAD`. A pre-split commit is an
+   ancestor of *everything* you build on, so that test returns true whether or not the merge landed.
+
+   **Test the right sha, and test it after fetching:**
+   ```bash
+   git fetch origin
+   git merge origin/feature/systeligon-v1
+   git merge-base --is-ancestor f387e61 HEAD && echo GUIDANCE LANDED || echo NOT LANDED
+   ```
+   `f387e61` is the first guidance commit. If the echo says `NOT LANDED`, the merge did not happen —
+   do not proceed on the assumption that it did.
+
+   **Do not use `git merge-tree` to predict conflicts on this branch pair.** It echoes the guidance
+   text *about* conflict markers, so its output contains `+<<<<<<<` even when the merge is clean.
+   Run the real `git merge --no-ff` and read `git diff --name-only --diff-filter=U`.
 5. **If a builder needs something in the other's scope, it stops and reports it** rather than building
    it. Two agents editing one subsystem is how this repository got a two-UIs problem.
 
@@ -179,9 +215,28 @@ That is the gap this section closes.
 | Item | State |
 |---|---|
 | Phases 1-2 | **DONE** on the merge base (`0100`-`0106`). Both builders inherit them. |
-| Builder A | Active on Phase 3. `3.1`-`3.4` DONE (workflow settings, `report_templates`). `3.5`-`3.6` and Phases 4-6 TODO. |
-| Builder B | Branch created, not yet started. |
-| The spec branch | Complete. Holds every document both builders read. |
+| Builder A | Active. Phases 1-3 DONE (`3.1`-`3.5`; highest migration `0108`). `3.6`, Phases 4-6, `G1`-`G6`, `U1`-`U3` TODO — plus the `E1`-`E10` block, which is **not A's** (see the known gap below). |
+| Builder B | Active. `E1`-`E7`, `E9`, `E10`, `U1`, `U3`, `U14`, `G7`-`G9` DONE; 26 TODO (`S17`-`S21`, `T3`-`T7`, `D1`-`D4`, `U2`/`U4`/`U6`/`U8`, `F1`-`F7`, `G10`). Highest migration `0106`; range `0110+` reserved. |
+| The spec branch | Complete. Holds every document both builders read. **Neither builder has merged it yet** — both reported a false "already up to date". See *Merge rules* rule 4. |
+
+### Known gap — Builder A's ledger still claims the E-series
+
+Builder A's `docs/SCALE-TASKS.md` lists **`E1`-`E10` as its own TODO** (catalogue, popout, `iia.ts`,
+wiring, drilldown, standards affordance, standards view, gates G7-G9, E10 inventory). **All ten are
+already `DONE` on Builder B's branch**, and A's branch carries neither `src/lib/explain/` nor the
+explain guards.
+
+A specified the explain layer (`21ee32f`) before the split, and the split then assigned the E-series
+to Builder B — but A never learned that, because A has no `BRANCH-MAP.md`, no builder prompt and no
+guidance. If A works the E-series it re-implements about 4,900 lines of B's work in parallel, and the
+merge is a rewrite rather than a merge.
+
+**Fix, at A's next review boundary: A merges `feature/systeligon-v1`, then strikes the E-series block
+from its ledger with a one-line note** — "moved to Builder B; see `BRANCH-MAP.md`" — rather than
+marking it DONE (A did not do it) or leaving it TODO (it is not outstanding work).
+
+**A's `U3` ("guided first-run, zero to first sealed report") is real A work and is not B's `U3`**
+(work queue front door, DONE). Same for `U2`. See *Task labels are branch-scoped* above.
 
 ### Known gap — Builder A is missing the specs
 
