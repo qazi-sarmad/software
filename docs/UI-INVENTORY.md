@@ -1218,8 +1218,8 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 - **Rights required:** any member reads; the open buttons gate on the matching right.
 - **Data functions (`src/data/*.ts`):** `PlanRow`, `PlanVersionRow`, `SiraCycle`, `SiraEmergentRisk`, `SiraModel`, `latestPlanForUniverse`, `listEmergentRisks`, `planHistory`, `siraModelSnapshot`
 - **Data modules:** `src/data/plan.ts`, `src/data/sira.ts`
-- **RPCs reachable via those modules:** `plan_approval_config`, `plan_history`, `sira_model_snapshot`
-- **Tables reachable via those modules:** `plan_items`, `plans`, `sira_cycles`, `sira_emergent_risks`, `sira_scores`
+- **RPCs reachable via those modules:** `plan_approval_config`, `plan_history`, `propose_emergent_risks`, `remind_sira_acceptance`, `seed_sira_next_cycle`, `sira_acceptance_state`, `sira_carry_forward_pack`, `sira_model_snapshot`, `sira_publish_block`
+- **Tables reachable via those modules:** `plan_items`, `plans`, `sira_carry_forward`, `sira_cycles`, `sira_emergent_risks`, `sira_scores`
 - **Testids (9):** `sira-load-error`, `sira-open-cycles`, `sira-open-model`, `sira-persisted`, `sira-persisted-cycles`, `sira-persisted-model`, `sira-persisted-plan`, `sira-table`, `tab-sira`
 - **Explain ids (4):** `standard.13.2`, `standard.9.1`, `standard.9.2`, `standard.9.4`
 - **IIA standards addressed (4):** `13.2`, `9.1`, `9.2`, `9.4`
@@ -1249,18 +1249,18 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 
 ### `SR-03` — SIRA cycles inspector (S1)
 
-- **Purpose:** Create a SIRA cycle, record scores, publish the cycle, and decide emergent risks with a reason.
+- **Purpose:** Create a SIRA cycle, record scores, publish the cycle, decide emergent risks with a reason, and close
 - **Route / location:** The `sira_cycles` inspector window.
-- **Rights required:** `manage_engagements` to create/publish; `review_and_approve` to decide an emergent risk.
+- **Rights required:** `manage_engagements` to create/publish/endorse; `review_and_approve` to decide an emergent risk and to accept.
 - **Data functions (`src/data/*.ts`):** none (pure/UI only)
 - **Data modules:** none (pure/UI only)
 - **RPCs reachable via those modules:** none
 - **Tables reachable via those modules:** none
-- **Testids (6):** `emergent-empty`, `emergent-risks`, `sira-create-cycle`, `sira-cycle-panel`, `sira-cycles`, `sira-cycles-empty`
+- **Testids (11):** `emergent-empty`, `emergent-risks`, `sira-create-cycle`, `sira-cycle-panel`, `sira-cycles`, `sira-cycles-empty`, `sira-cycles-inspector`, `sira-cycles-unscoped`, `sira-pack-`, `sira-remind`, `sira-seed-`
 - **Explain ids (0):** — (no explain affordance)
 - **IIA standards addressed (0):** —
 - **Drilldown targets (0):** — (no aggregate)
-- **States:** loading; empty (`sira-cycles-empty`, `emergent-empty`); ready.
+- **States:** loading; empty (`sira-cycles-empty`, `emergent-empty`); unscoped (`sira-cycles-unscoped`); ready; publish blocked; awaiting acceptance; pack built.
 - **Tutorial key:** — (no key)
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
   named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
@@ -1459,6 +1459,24 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 - **IIA standards addressed (2):** `14.6`, `5.2`
 - **Drilldown targets (0):** — (no aggregate)
 - **States:** loading; empty; search results; error inline.
+- **Tutorial key:** — (no key)
+- **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
+  named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
+
+### `AF-15` — Evidence vault (workpaper) (S20)
+
+- **Purpose:** The evidence vault inside a workpaper's workbench: upload a file, see every stored artifact with its
+- **Route / location:** the `workbench` inspector window, sub-tab "Evidence Vault".
+- **Rights required:** `perform_work` to upload; any member of the org reads.
+- **Data functions (`src/data/*.ts`):** `EVIDENCE_MAX_BYTES`, `EvidenceFileRow`, `evidenceSignedUrl`, `evidenceStorageReady`, `listEvidenceFiles`, `uploadEvidence`, `verifyEvidenceFile`
+- **Data modules:** `src/data/documents.ts`, `src/data/evidence.ts`
+- **RPCs reachable via those modules:** `evidence_files_for`, `evidence_storage_ready`, `register_evidence_file`, `request_extraction`, `search_documents`, `verify_evidence_file`
+- **Tables reachable via those modules:** `evidence_files`
+- **Testids (3):** `evidence-error`, `evidence-storage-note`, `evidence-upload`
+- **Explain ids (0):** — (no explain affordance)
+- **IIA standards addressed (0):** —
+- **Drilldown targets (0):** — (no aggregate)
+- **States:** loading; session-only (no bucket); empty; stored; verifying; verified; mismatch.
 - **Tutorial key:** — (no key)
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
   named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
@@ -1793,6 +1811,8 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 | `entity_history` | `src/data/universe.ts` | `p_entity_id` | tenant |
 | `escalation_event_list` | `src/data/escalation.ts` | `p_org` | tenant |
 | `ethics_status` | `src/data/deployment.ts` | `p_engagement` | tenant |
+| `evidence_files_for` | `src/data/evidence.ts` | `p_workpaper_id` | tenant |
+| `evidence_storage_ready` | `src/data/evidence.ts` | — | tenant |
 | `ext_engagement_summary` | `src/data/externalAuditors.ts` | `p_engagement_id` | tenant |
 | `ext_latest_board_pack` | `src/data/externalAuditors.ts` | `p_engagement_id` | tenant |
 | `ext_latest_certificate` | `src/data/externalAuditors.ts` | `p_engagement_id` | tenant |
@@ -1849,6 +1869,9 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 | `preflight_acks_get` | `src/data/preflight.ts` | `p_engagement_id` | tenant |
 | `preflight_blocking` | `src/data/preflight.ts` | `p_engagement_id` | tenant |
 | `preflight_items` | `src/data/preflight.ts` | `p_engagement_id` | tenant |
+| `propose_emergent_risks` | `src/data/sira.ts` | `p_cycle` | tenant |
+| `register_evidence_file` | `src/data/evidence.ts` | `p_engagement_id`, `p_workpaper_id`, `p_filename`, `p_storage_path`, `p_sha256`, `p_mime_type`, `p_byte_size`, `p_stage` | tenant |
+| `remind_sira_acceptance` | `src/data/sira.ts` | `p_org`, `p_as_of`, `p_days` | tenant |
 | `report_graph_get` | `src/data/reportGraph.ts` | `p_report_version_id` | tenant |
 | `request_change` | `src/data/changeControl.ts` | `p_engagement_id`, `p_change_class`, `p_title`, `p_payload`, `p_klass` | tenant |
 | `request_extraction` | `src/data/documents.ts` | `p_file_id` | tenant |
@@ -1857,12 +1880,16 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 | `sample_tested_rows` | `src/data/sampling.ts` | `p_sample_id` | tenant |
 | `search_documents` | `src/data/documents.ts` | `p_engagement_id`, `p_query`, `p_stage` | tenant |
 | `secret_display` | `src/data/secrets.ts` | `p_id` | tenant |
+| `seed_sira_next_cycle` | `src/data/sira.ts` | `p_cycle` | tenant |
 | `setup_list` | `src/data/setup.ts` | `p_scope` | tenant |
 | `share_grant` | `src/data/shares.ts` | `p_universe_id`, `p_grantee_user_id`, `p_expires_at` | tenant |
 | `shared_universe_view` | `src/data/shares.ts` | `p_share_id` | tenant |
 | `shares_get` | `src/data/shares.ts` | — | tenant |
 | `shares_with_me` | `src/data/shares.ts` | — | tenant |
+| `sira_acceptance_state` | `src/data/sira.ts` | `p_cycle` | tenant |
+| `sira_carry_forward_pack` | `src/data/sira.ts` | `p_cycle` | tenant |
 | `sira_model_snapshot` | `src/data/sira.ts` | `p_org` | tenant |
+| `sira_publish_block` | `src/data/sira.ts` | `p_cycle` | tenant |
 | `start_import` | `src/data/imports.ts` | `p_import_type`, `p_source_filename` | tenant |
 | `store_report_file` | `src/data/reportFiles.ts` | `p_report_version_id`, `p_kind`, `p_storage_path`, `p_sha256`, `p_byte_size` | tenant |
 | `support_access_log_list` | `src/data/platform.ts` | `p_org`, `p_limit` | tenant |
@@ -1875,15 +1902,16 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 | `value_coverage` | `src/data/sampling.ts` | `p_sample_id` | tenant |
 | `verify_board_pack` | `src/data/certificate.ts` | `p_id` | tenant |
 | `verify_certificate` | `src/data/certificate.ts` | `p_id` | tenant |
+| `verify_evidence_file` | `src/data/evidence.ts` | `p_evidence_id`, `p_observed_sha256` | tenant |
 | `verify_report_root` | `src/data/certificate.ts` | `p_root` | tenant |
 | `work_queue_proposal_list` | `src/data/escalation.ts` | `p_org` | tenant |
 
 ## Coverage cross-check
 
-- Screens documented: 93 (contract sections: 48 Appendix A + 44 Appendix B).
+- Screens documented: 94 (contract sections: 48 Appendix A + 44 Appendix B).
 - Tutorial keys: 80.
-- RPCs catalogued: 114.
-- Data modules: 56; exported data functions: 364.
-- Contract testids not found verbatim in `src/` (placeholder or dynamic): 191.
+- RPCs catalogued: 124.
+- Data modules: 57; exported data functions: 379.
+- Contract testids not found verbatim in `src/` (placeholder or dynamic): 193.
   - audit-file-view-builder, audit-file-view-certificate, audit-file-view-conclusion, audit-file-view-documents, audit-file-view-ethics, audit-file-view-execution, audit-file-view-findings, audit-file-view-planning, audit-file-view-population, audit-file-view-report, audit-file-view-review, audit-file-view-rowtesting, audit-file-view-sampling, data-front-door-kind, hosting-test, invite-user, issues-view-patterns, oa-branding-colour-accent, oa-branding-colour-background, oa-branding-colour-primary, oa-branding-colour-text, oa-branding-margin-0, oa-branding-margin-3, oa-certificate-enabled-verification, oa-escalation-result, oa-escalation-saved, oa-governance-signoff-conclusion, oa-governance-signoff-planning, oa-governance-signoff-testing, org-control-tab-auditors, org-control-tab-automation, org-control-tab-branding, org-control-tab-connectors, org-control-tab-features, org-control-tab-formats, org-control-tab-governance, org-control-tab-hosting, org-control-tab-people, org-control-tab-setup, org-control-tab-tutorials …
 

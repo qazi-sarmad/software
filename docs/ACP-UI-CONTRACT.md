@@ -876,13 +876,15 @@ Edit the SIRA model: aggregation, factors and bands; a locked model is read-only
 
 ## SR-03 — SIRA cycles inspector (S1)
 
-Create a SIRA cycle, record scores, publish the cycle, and decide emergent risks with a reason.
+Create a SIRA cycle, record scores, publish the cycle, decide emergent risks with a reason, and close
+the two-key acceptance (S18/S19): the finaliser endorses a published cycle, a different auditor
+accepts it, and the next cycle is blocked while proposals are outstanding.
 
 - **Route:** The `sira_cycles` inspector window.
-- **Rights:** `manage_engagements` to create/publish; `review_and_approve` to decide an emergent risk.
+- **Rights:** `manage_engagements` to create/publish/endorse; `review_and_approve` to decide an emergent risk and to accept.
 - **Data:** none (pure/UI only) — through `src/data/*.ts`; components never import the database client (rule M8).
-- **Testids:** `emergent-empty`, `emergent-risks`, `sira-create-cycle`, `sira-cycle-panel`, `sira-cycles`, `sira-cycles-empty`
-- **States:** loading; empty (`sira-cycles-empty`, `emergent-empty`); ready.
+- **Testids:** `emergent-empty`, `emergent-risks`, `sira-create-cycle`, `sira-cycle-panel`, `sira-cycles`, `sira-cycles-empty`, `sira-cycles-inspector`, `sira-cycles-unscoped`, `sira-pack-`, `sira-remind`, `sira-seed-`
+- **States:** loading; empty (`sira-cycles-empty`, `emergent-empty`); unscoped (`sira-cycles-unscoped`); ready; publish blocked; awaiting acceptance; pack built.
 - **Tutorial key:** —
 
 ## AF-01 — Audit File window (S1)
@@ -1004,6 +1006,20 @@ Search the engagement's evidence documents, extract text on request, and read th
 - **Data:** `DocumentHit`, `DocumentStage`, `EvidenceFileRow`, `isDocumentStage`, `listEvidenceFiles`, `requestExtraction`, `searchDocuments` — through `src/data/*.ts`; components never import the database client (rule M8).
 - **Testids:** `document-empty`, `document-error`, `document-list`, `document-list-empty`, `document-list-toggle`, `document-loading`, `document-results`, `document-search`, `document-viewer`
 - **States:** loading; empty; search results; error inline.
+- **Tutorial key:** —
+
+## AF-15 — Evidence vault (workpaper) (S20)
+
+The evidence vault inside a workpaper's workbench: upload a file, see every stored artifact with its
+SHA-256, re-derive the hash from the stored bytes to verify, and download through a short-lived
+signed URL. When no storage bucket is wired the screen says "session only" honestly rather than
+claiming a hash-lock it cannot keep.
+
+- **Route:** the `workbench` inspector window, sub-tab "Evidence Vault".
+- **Rights:** `perform_work` to upload; any member of the org reads.
+- **Data:** `EVIDENCE_MAX_BYTES`, `EvidenceFileRow`, `evidenceSignedUrl`, `evidenceStorageReady`, `listEvidenceFiles`, `uploadEvidence`, `verifyEvidenceFile` — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `evidence-error`, `evidence-storage-note`, `evidence-upload`
+- **States:** loading; session-only (no bucket); empty; stored; verifying; verified; mismatch.
 - **Tutorial key:** —
 
 ## AF-12 — Deployment gate (S1)

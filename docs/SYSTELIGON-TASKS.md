@@ -137,9 +137,9 @@ to the harness seed, not to this branch's scope.
 | # | Task | Status |
 |---|---|---|
 | S17 | Document recognition by MAGIC BYTES; archive unpacking with limits; office-in-zip; metadata; inventory before import | DONE |
-| S18 | SIRA continuity: carry-forward pack on publish, seed next cycle, anomalies propose emergent risk | TODO |
-| S19 | Two-key SIRA acceptance: finaliser endorses, auditor accepts, publish blocked while proposed | TODO |
-| S20 | EVIDENCE STORAGE — the most serious gap. Buckets, `storage_path`, real upload, re-derive on verify | TODO |
+| S18 | SIRA continuity: carry-forward pack on publish, seed next cycle, anomalies propose emergent risk | DONE |
+| S19 | Two-key SIRA acceptance: finaliser endorses, auditor accepts, publish blocked while proposed | DONE |
+| S20 | EVIDENCE STORAGE — the most serious gap. Buckets, `storage_path`, real upload, re-derive on verify | DONE |
 | S21 | Review comment popout: testids, states, inventory entry, hover popout, drilldown; delete the dead dock | TODO |
 
 ### S17 — what was built (2026-10-28)
@@ -164,15 +164,68 @@ A file whose bytes disagree with its name is imported under its true kind when t
 (with the disagreement shown), and refused with the real kind named when it is not. The upload step
 shows the inventory line (kind, size, SHA-256). 48 unit tests.
 
-### S18/S19 prerequisite — the SIRA write path is inert
+### S18/S19 — what was built (2026-10-28)
 
-**Verified finding.** `createSiraCycle`, `publishSiraCycle`, `recordSiraScore`, `submitEmergentRisk`
-and `decideEmergentRisk` in `src/data/sira.ts` have **ZERO callers** in components, context or hooks.
-Only the reads are wired (`listCycles`, `listEmergentRisks`, `siraModelSnapshot`, from `SiraTab.tsx`).
-`SiraCyclePanel` is rendered by `RecordContent.tsx:118` with no submit or publish handler passed.
+**The prerequisite first: the SIRA write path was inert, and is now wired.** The audit's finding was
+exact — `createSiraCycle`, `publishSiraCycle`, `recordSiraScore`, `submitEmergentRisk` and
+`decideEmergentRisk` had **zero callers**; only the reads were wired. Nothing was built on that
+surface until the surface could be driven.
 
-So S18's carry-forward and S19's two-key acceptance both depend on a write path the UI does not have.
-**Wire the write path first**, or S18/S19 will build on a surface that cannot be driven.
+| Piece | What it does |
+|---|---|
+| `supabase/migrations/0110_sira_continuity_acceptance.sql` | Adds `sira_carry_forward` and `sira_acceptances`; adds the missing `band` column to `sira_scores` (selected by `listScores`, never created — a latent read bug); adds `sira_carry_forward_pack(cycle)`, `sira_seed_next_cycle_internal`, `propose_emergent_risks(cycle)`, `endorse_sira_cycle`, `decide_sira_acceptance`, `remind_sira_acceptance`, `sira_acceptance_status(cycle)`. All additive; RLS on both tables; reads allow `can_read_all_scopes()`, `review_and_approve` (an auditor must see what they are asked to accept) or an explicit scope. |
+| `src/data/sira.ts` | Adds `decideEmergentRisk`, `proposeEmergentRisks`, `carryForwardPack`, `seedNextCycle`, `endorseSiraCycle`, `decideSiraAcceptance`, `remindSiraAcceptance`, `siraAcceptanceStatus` — thin RPC wrappers, no client in a component (M8). |
+| `src/components/sira/SiraCyclesInspector.tsx` | The connected inspector: create/publish a cycle, build the carry-forward pack, seed the next cycle, propose and decide emergent risks, endorse and accept. Every element carries a `sira-*` testid. |
+| `src/components/sira/SiraCyclePanel.tsx` | Renders the carry-forward pack, the two-key acceptance state, the publication block and the reminder count; the proposal's provenance and the mandatory decision reason. |
+
+**Carry-forward (S18).** On publish, `sira_carry_forward_pack` records the prior score, band,
+movement, the findings that touched it, the controls that failed and the emergent risks accepted.
+`sira_seed_next_cycle_internal` seeds the next cycle from it, marked `carried_forward` with
+provenance. `propose_emergent_risks` PROPOSES from open findings and anomalies through the existing
+`submitEmergentRisk` channel; a human accepts or rejects with a mandatory reason. Idempotent — a
+re-run proposes nothing again.
+
+**Two-key acceptance (S19).** The owner's correction is implemented exactly: the accept/reject control
+STAYS with the SIRA finaliser and is visible, reminded and shown — but the finaliser's decision is an
+**endorsement**, not a closure. A **different** auditor holding `review_and_approve` must accept.
+`endorse_sira_cycle` refuses a self-accept; `decide_sira_acceptance` refuses the same person who
+endorsed. Publication of the next-year cycle is blocked while proposals are outstanding
+(`sira_acceptance_status().can_publish_next`), `remind_sira_acceptance` reports silence as a finding,
+and the reminder count is surfaced. One role able to both propose and close is a control weakness an
+external reviewer would flag; it is no longer possible.
+
+**Tests.** `supabase/tests/106_sira_continuity.sql` (applied twice, green) proves the pack, the
+idempotent proposal, the two-key separation, the publication block and the silence finding.
+`src/components/sira/SiraPanels.test.tsx` (12 tests) proves the panel's states, the two controls being
+mutually exclusive, the block text and the proposal provenance.
+
+### S20 — what was built (2026-10-28)
+
+**The most serious gap found, closed.** The audit was exact: `EvidenceTab.tsx` had a working upload
+control that computed a SHA-256 and called `attachEvidenceToWorkpaper`, which wrote to React state
+ONLY. The bytes were discarded on reload. `evidence_files` had no `storage_path`. No bucket was
+created anywhere. Mode A / Mode B verification verified a hash of bytes nobody kept.
+
+| Piece | What it does |
+|---|---|
+| `supabase/migrations/0111_evidence_storage.sql` | Creates the four private buckets (`evidence`, `reports`, `archives`, `org-branding`) with org-scoped RLS on `storage.objects` keyed to `jwt_org_id()` by the leading path segment (guarded on the `storage` schema existing, so the SQL harness applies cleanly). Adds `storage_path`/`mime_type`/`byte_size`/`storage_bucket`/`registered_by`/`verified_*` to `evidence_files`. Adds `register_evidence_file` (re-checks the right, the seal, the size and the org prefix; writes the row THEN the ledger entry), `verify_evidence_file` (re-derives and compares, raises an integrity alert on a mismatch, records `no_stored_bytes` when there is nothing to verify), `evidence_files_for`, `evidence_max_bytes`, `evidence_storage_ready`. |
+| `src/data/evidence.ts` | Upload (bytes → row → ledger), list, verify, signed short-lived URL, readiness probe. A component never imports the client. |
+| `src/components/audit/EvidenceTab.tsx` | Uploads to the bucket when one is wired and shows the stored rows; otherwise keeps the honest in-memory path and labels it **"session only"** rather than claiming a hash-lock it cannot keep. Every element carries an `evidence-*` testid. |
+
+**Order is bytes → row → ledger, never the reverse**, so the ledger can never attest to bytes that
+were not stored. The size cap is enforced in the database, not only the request. `supabase/tests/107_evidence_storage.sql`
+(applied twice, green) proves the row, the org-prefix refusal, the cap, the hash shape, a matching
+verify, a mismatching verify that raises an alert, `no_stored_bytes`, cross-org refusal and the
+anonymous refusal.
+
+### S18/S19 prerequisite (historical) — the SIRA write path was inert
+
+**Verified finding, since closed.** `createSiraCycle`, `publishSiraCycle`, `recordSiraScore`,
+`submitEmergentRisk` and `decideEmergentRisk` in `src/data/sira.ts` had **ZERO callers** in
+components, context or hooks. Only the reads were wired (`listCycles`, `listEmergentRisks`,
+`siraModelSnapshot`, from `SiraTab.tsx`). `SiraCyclePanel` was rendered by `RecordContent.tsx` with no
+submit or publish handler passed. The write path is now wired through `SiraCyclesInspector.tsx` (see
+the S18/S19 section above), so this prerequisite no longer blocks anything.
 
 ---
 

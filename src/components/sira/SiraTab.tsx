@@ -101,7 +101,7 @@ export const SiraTab: React.FC = () => {
           <button
             type="button"
             data-testid="sira-open-cycles"
-            onClick={() => openInspector('sira_cycles', { cycles: [], emergent: [] })}
+            onClick={() => openInspector('sira_cycles', { universeId: isUuid(universe?.id) ? universe!.id : undefined })}
             className="px-3 py-1.5 rounded-lg border border-hairline text-apple-12 text-primary hover:bg-surface-hover"
           >
             Cycles &amp; emergent risks

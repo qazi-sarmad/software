@@ -76,4 +76,92 @@ describe('SiraCyclePanel', () => {
     ));
     expect(screen.getByTestId('emergent-reason-r1').textContent).toMatch(/not material enough/);
   });
+
+  it('shows the two-key acceptance state and the publication block (S19)', () => {
+    wrap('cia', (
+      <SiraCyclePanel
+        cycles={[{ id: 'c1', year: 2026, status: 'published', publishedAt: '2026-01-01' }]}
+        emergent={[]}
+        acceptances={{
+          c1: {
+            acceptanceStatus: 'awaiting_acceptance', endorsedAt: null, acceptedAt: null,
+            reminderCount: 2, pendingProposals: 1, canPublishNext: false,
+            blockReason: '1 emergent-risk proposal is outstanding',
+          },
+        }}
+      />
+    ));
+    expect(screen.getByTestId('sira-acceptance-c1').textContent).toMatch(/Awaiting auditor acceptance/);
+    expect(screen.getByTestId('sira-publish-block-c1').textContent).toMatch(/outstanding/);
+    expect(screen.getByTestId('sira-reminders-c1').textContent).toMatch(/2 reminders/);
+  });
+
+  it('offers endorse to the finaliser and accept to an auditor, never the same control', () => {
+    const acc = {
+      c1: {
+        acceptanceStatus: 'none' as const, endorsedAt: null, acceptedAt: null,
+        reminderCount: 0, pendingProposals: 0, canPublishNext: true, blockReason: null,
+      },
+    };
+    wrap('cia', <SiraCyclePanel cycles={[{ id: 'c1', year: 2026, status: 'published', publishedAt: 'x' }]} emergent={[]} acceptances={acc} onEndorseCycle={() => {}} />);
+    expect(screen.getByTestId('sira-endorse-c1')).toBeTruthy();
+    expect(screen.queryByTestId('sira-decide-acceptance-c1')).toBeNull();
+  });
+
+  it('offers the auditor accept control once endorsed, not the finaliser control', () => {
+    const acc = {
+      c1: {
+        acceptanceStatus: 'awaiting_acceptance' as const, endorsedAt: '2026-02-01', acceptedAt: null,
+        reminderCount: 0, pendingProposals: 0, canPublishNext: true, blockReason: null,
+      },
+    };
+    wrap('cia', <SiraCyclePanel cycles={[{ id: 'c1', year: 2026, status: 'published', publishedAt: 'x' }]} emergent={[]} acceptances={acc} onDecideAcceptance={() => {}} />);
+    expect(screen.getByTestId('sira-decide-acceptance-c1')).toBeTruthy();
+    expect(screen.queryByTestId('sira-endorse-c1')).toBeNull();
+  });
+
+  it('records the proposal provenance of an emergent risk (S18)', () => {
+    wrap('cia', (
+      <SiraCyclePanel
+        cycles={[]}
+        emergent={[{ id: 'r1', title: 'From a finding', description: null, status: 'pending', decisionReason: null, sourceKind: 'finding', proposalReason: 'an open finding on this universe' }]}
+      />
+    ));
+    expect(screen.getByTestId('emergent-proposal-r1').textContent).toMatch(/an open finding/);
+  });
+
+  it('offers the carry-forward pack builder on a published cycle (S18)', () => {
+    wrap('cia', (
+      <SiraCyclePanel
+        cycles={[{ id: 'c1', year: 2026, status: 'published', publishedAt: 'x' }]}
+        emergent={[]}
+        onBuildPack={() => {}}
+      />
+    ));
+    expect(screen.getByTestId('sira-pack-c1')).toBeTruthy();
+    // The seed control appears only once the pack has been built.
+    expect(screen.queryByTestId('sira-seed-c1')).toBeNull();
+  });
+
+  it('renders the pack and offers seeding once it is built (S18)', () => {
+    wrap('cia', (
+      <SiraCyclePanel
+        cycles={[{ id: 'c1', year: 2026, status: 'published', publishedAt: 'x' }]}
+        emergent={[]}
+        packs={{
+          c1: {
+            fromYear: 2026,
+            toYear: 2027,
+            entities: [{ entityId: 'e1', name: 'Treasury', priorScore: 72.5, priorBand: 'High', scoreCount: 3 }],
+            acceptedRiskTitles: ['Vendor concentration'],
+          },
+        }}
+        onSeedNext={() => {}}
+      />
+    ));
+    expect(screen.getByTestId('sira-pack-view-c1').textContent).toMatch(/2026 → 2027/);
+    expect(screen.getByTestId('sira-pack-entity-c1-e1').textContent).toMatch(/Treasury: prior 72.5 \(High\) from 3 scores/);
+    expect(screen.getByTestId('sira-pack-risks-c1').textContent).toMatch(/Vendor concentration/);
+    expect(screen.getByTestId('sira-seed-c1')).toBeTruthy();
+  });
 });

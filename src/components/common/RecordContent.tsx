@@ -21,7 +21,7 @@ const DeploymentGatePanel = lazy(() => import('../audit/DeploymentGatePanel').th
 const EthicsPanel = lazy(() => import('../audit/EthicsPanel').then((m) => ({ default: m.EthicsPanel })));
 const CombinedApprovalPanel = lazy(() => import('../plan/CombinedApprovalPanel').then((m) => ({ default: m.CombinedApprovalPanel })));
 const SiraModelEditor = lazy(() => import('../sira/SiraModelEditor').then((m) => ({ default: m.SiraModelEditor })));
-const SiraCyclePanel = lazy(() => import('../sira/SiraCyclePanel').then((m) => ({ default: m.SiraCyclePanel })));
+const SiraCyclesInspector = lazy(() => import('../sira/SiraCyclesInspector').then((m) => ({ default: m.SiraCyclesInspector })));
 const PlanItemsPanel = lazy(() => import('../plan/PlanItemsPanel').then((m) => ({ default: m.PlanItemsPanel })));
 const ImportWizardPanel = lazy(() => import('../admin/ImportWizardPanel').then((m) => ({ default: m.ImportWizardPanel })));
 const ActivityLogPanel = lazy(() => import('../admin/ActivityLogPanel').then((m) => ({ default: m.ActivityLogPanel })));
@@ -117,7 +117,7 @@ export const RecordContent: React.FC<RecordContentProps> = ({ type, data, onClos
         case 'sira_model':
           return <SiraModelEditor model={data?.model ?? null} />;
         case 'sira_cycles':
-          return <SiraCyclePanel cycles={data?.cycles ?? []} emergent={data?.emergent ?? []} />;
+          return <SiraCyclesInspector universeId={data?.universeId} />;
         case 'plan_items':
           return <PlanItemsPanel items={data?.items ?? []} versions={data?.versions ?? []} />;
         case 'import_wizard':

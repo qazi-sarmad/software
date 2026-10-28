@@ -71,10 +71,10 @@ feature to be testable.
 |---|---|---|---|---|
 | F9 | Universe and entity management | `Wired` | `listEntities()` read by `AuditUniverseTab`; the two-sources merge was closed in Phase 1 (the seed is now hydrated from the DB, not parallel to it) | — |
 | F10 | SIRA reads (cycles, risks, model snapshot) | `Wired` | `listCycles`, `listEmergentRisks`, `siraModelSnapshot` called from `SiraTab.tsx` | — |
-| F11 | SIRA carry-forward into next year | `Absent` | `create_sira_cycle` inserts a bare draft; no seeding | S18 |
+| F11 | SIRA carry-forward into next year | `Wired` | `sira_carry_forward` (0110) + `sira_carry_forward_pack(cycle)` + `sira_seed_next_cycle_internal`; the pack is built on publish and the next cycle is seeded from it, marked `carried_forward` with provenance. `SiraCyclesInspector.tsx` builds and seeds; `src/data/sira.ts` `carryForwardPack`/`seedNextCycle` | S18 |
 | F12 | SIRA pre-fill into planning | `Wired` | `populateSuggestions` / `decideSuggestion` (`src/data/planning.ts:38,53`) called from `PlanningPanel.tsx:44,76`. The audit predates this wiring and its claim is stale | — |
-| F13 | Two-key SIRA acceptance | `Absent` | Finaliser decision is currently a closure; auditor acceptance not modelled | S19 |
-| F14 | Emergent risk submit / decide | `Inert` | `submitEmergentRisk` / `decideEmergentRisk` — verified **0 callers**; `SiraCyclePanel` renders `emergent` but is passed no submit/decide handler from `RecordContent.tsx:118` | S18 |
+| F13 | Two-key SIRA acceptance | `Wired` | `sira_acceptances` (0110): `endorse_sira_cycle` (finaliser, `manage_engagements`) then `decide_sira_acceptance` (a **different** auditor holding `review_and_approve`). `remind_sira_acceptance` reports silence as a finding; publish of the next cycle is blocked while proposals are outstanding. `SiraCyclePanel.tsx` drives both controls | S19 |
+| F14 | Emergent risk submit / decide | `Wired` | `propose_emergent_risks(cycle)` proposes from open findings/anomalies; `decide_emergent_risk` accepts/rejects with a mandatory reason. Both called from `SiraCyclesInspector.tsx`; `decideEmergentRisk` also in `src/data/sira.ts` | S18 |
 | F15 | Planning suggestions and decisions | `Wired` | Same path as F12 — `PlanningPanel.tsx` renders and decides them | — |
 | F16 | Plan approval rights | `Wired` | `plan_approval_settings`, enforced in `create_plan` / `approve_plan` | — |
 | F17 | Engagement gates | `Wired` | `engagement_gate_settings`, enforced by deploy/approve/escalate RPCs | — |
@@ -114,14 +114,14 @@ feature to be testable.
 
 | # | Capability | Status | Evidence / gap | WP |
 |---|---|---|---|---|
-| F40 | Evidence upload control | `Inert` | `EvidenceTab.tsx` computes a SHA-256 then calls `attachEvidenceToWorkpaper`, which writes **React state only** — zero storage calls | S20 |
-| F41 | Evidence bytes stored | `Absent` | `evidence_files` (0035) has **no** `storage_path`; **no bucket is created anywhere** | S20 |
-| F42 | Evidence re-derived on verify | `Absent` | Nothing to re-derive — the bytes were never kept | S20 |
+| F40 | Evidence upload control | `Wired` | `EvidenceTab.tsx` uploads the bytes to the private `evidence` bucket, then registers the row (`register_evidence_file`), then the ledger entry — bytes → row → ledger, never the reverse. Falls back to a labelled "session only" path when no bucket is wired | S20 |
+| F41 | Evidence bytes stored | `Wired` | Four private buckets (`evidence`, `reports`, `archives`, `org-branding`) with org-scoped RLS on `storage.objects` keyed to `jwt_org_id()` by path prefix (0111); `evidence_files` gains `storage_path`/`mime_type`/`byte_size` | S20 |
+| F42 | Evidence re-derived on verify | `Wired` | `verify_evidence_file` re-derives the SHA-256 from the stored bytes, records the status, and raises an integrity alert on a mismatch; `verifyEvidenceFile` (`src/data/evidence.ts`) downloads and hashes | S20 |
 | F43 | Document extraction (edge function) | `Inert` | `extractDocument` exists in `src/data/documents.ts` but **no screen calls it**; the `doc-extract` function is deployed but unreachable from the UI | R2 |
 | F44 | Extraction stub queue | `Wired` | `request_extraction` RPC | — |
 | F45 | Document recognition (magic bytes, archives) | `Wired` | `src/lib/recognition/` sniffs magic bytes, resolves office-in-zip by entry names, unpacks archives under limits, reads docProps//Info metadata; `ImportWizardPanel.tsx:onFile` routes on the sniffed kind and shows the inventory line | S17 |
-| F46 | Evidence completeness (Mode A) | `Inert` | Depends on F41 | S20 |
-| F47 | Evidence verification (Mode B) | `Inert` | Depends on F41 | S20 |
+| F46 | Evidence completeness (Mode A) | `Wired` | Depends on F41, now present — `evidence_files_for(workpaper)` returns the stored rows with their storage facts | S20 |
+| F47 | Evidence verification (Mode B) | `Wired` | Depends on F41, now present — see F42 | S20 |
 | F48 | Chain of custody | `Absent` | D2 candidate | D2 |
 
 ---
@@ -278,17 +278,17 @@ Each is a pure function under `src/lib/`, with direct unit tests and a screen su
 
 | Status | Count |
 |---|---|
-| `Wired` | 54 |
-| `Inert` | 29 |
-| `Absent` | 42 |
+| `Wired` | 62 |
+| `Inert` | 25 |
+| `Absent` | 38 |
 | **Total** | **125** |
 
 **Read that again, with the correction applied.** This is materially better than the first pass
-reported, because Phases 1 and 2 of the scale-harden build closed the whole foundation. The picture
-now: **54 wired, 29 inert, 42 absent.** The remaining `Inert` rows are the genuine, still-open
-unwired features — the monitor runtime, the evidence bytes, the tamper alarm, the SIRA write path,
-the ledger verification. Every one of those is a defect, and every one looks like a working feature
-in the UI.
+reported, because Phases 1 and 2 of the scale-harden build closed the whole foundation, and the S17-S20
+work packages closed the evidence-bytes and SIRA-write-path gaps. The picture now: **62 wired, 25
+inert, 38 absent.** The remaining `Inert` rows are the genuine, still-open unwired features — the
+monitor runtime, the tamper alarm, the ledger verification. Every one of those is a defect, and every
+one looks like a working feature in the UI.
 
 **The order of work is not negotiable, and R1 and R2 are already done.** R1 (the app reads its own
 database) and R2 (the lifecycle is real) closed in Phases 1-2. R3 (the configuration is honest) is
