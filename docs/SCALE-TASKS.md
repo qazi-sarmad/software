@@ -649,7 +649,7 @@ counts; a trigger would double-fire).
 |---|---|---|
 | C1 | Scheduled runner: `pg_cron` `monitor-runner` job (`*/5 * * * *`) calls `monitor_runner_sweep(limit)`, which evaluates every org's released rules (SQL twin of `runMonitors`) and calls the `automation_dispatch_pending(org, limit)` dispatcher RPC (no trigger); persist alerts, emit `watcher.signal` | DONE |
 | C2 | Alert enrichment: resolve entity, department, SIRA risk, inherent + residual risk, affected controls onto the alert | DONE |
-| C3 | Delivery: Work Queue in-app + email, via `src/lib/liveSync.ts` (realtime, poll fallback) | TODO |
+| C3 | Delivery: Work Queue in-app + email, via `src/lib/liveSync.ts` (realtime, poll fallback) | DONE |
 | C4 | Adhoc audit suggestion from an alert, pre-filled with entity/department/control | TODO |
 | C5 | Remediation wizard from an alert (finding, CAP, request evidence, escalate, dismiss with reason) | TODO |
 | C6 | Alert triage surface with rights gating | TODO |
@@ -690,6 +690,29 @@ replay defect was fixed on the way: `alert_list`'s `returns table` row changed, 
 `MonitorAlert` carries only `ruleId`, `ruleVersion`, `kind`, `reason`, `references`, `evaluatedAt` —
 no entity, department, SIRA risk or control. A runner that fires unenriched alerts satisfies `C1`
 and misses the point of the phase: nobody can act on "a rule fired".
+
+**C3 evidence (DONE).** Migration `supabase/migrations/0113_phase5_delivery.sql` adds
+`monitor_alert_notify(org, alert_id)`, called once at the end of `alert_record` — the single write
+path for an alert — so no alert can be written undelivered. It resolves the recipients as the members
+whose role holds the `review_and_approve` RIGHT (the right `alert_triage_record` already requires; a
+role *name* would break the moment a role's rights changed, which is what the rights model exists to
+avoid), writes one per-recipient in-app `notifications` row (`user_id` set — the shape
+`notifications_list()` returns and `useLiveNotifications` subscribes to over Realtime with the poll
+fallback) and queues one `email_queue` row per recipient that has an address through `queue_email`
+(0039), which the existing `email-dispatch` pipeline sends. It is idempotent per alert, and
+delivery is deliberately best-effort after the insert so a missing address never rolls the alert
+back. The defect it closes is exact: the escalation path writes `notifications` with `user_id = null`
+and a `role_target`, and `notifications_list()` filters `user_id = auth.uid()`, so a role-targeted
+row is visible to no one in the Work Queue — an alert reached the `monitor_alerts` table and stopped
+there. It is not an `automation_rules` row for `watcher.signal` (that would notify a role name and
+double-deliver on the event the alert trigger already emits) and not a trigger on `monitor_alerts`
+(that would run inside `alert_record`'s transaction). A platform `watcher.signal` notification
+template is seeded. Tests: `supabase/tests/114_phase5_delivery.sql` (21 assertions, runs twice in the
+Docker harness) proves the two `review_and_approve` holders are notified in-app and by email, a
+non-triager is not, the recipient sees it through `notifications_list()`, a second notify writes
+nothing, an unenriched alert still delivers, org B's alert reaches no org A member, and the function
+is service-only. The in-app surface (`wk-notifications` card + header bell, `e2e/s15-notifications.spec.ts`)
+already existed and reads the same table, so the gap was the database delivery, not the UI.
 
 **`C7` depends on `S18`** (SIRA continuity), which is Builder B's and not yet built, so `C7` is
 recorded `BLOCKED (S18)` rather than left `TODO` — it is not available work for this branch alone.
