@@ -84,6 +84,66 @@ to break the other's SQL harness.
 
 ---
 
+## Shared registries — the real collision surface
+
+Four files are touched by BOTH builders, because both add screens and both must register them.
+Measured: Builder A already modified all four in its current work.
+
+| File | Hand-written or generated? | Rule |
+|---|---|---|
+| `docs/ACP-UI-CONTRACT.md` | **hand-written — the source of truth** | Edit only your own screen sections. This is the one file where a human edit is correct. |
+| `docs/UI-INVENTORY.md` | **generated** by `scripts/gen-ui-inventory.mjs` | NEVER hand-edit. Regenerate after changing the contract. |
+| `src/lib/tutorialKeys.json` | **generated** by `scripts/gen-tutorial-steps.mjs` | NEVER hand-edit. Regenerate. |
+| `public/tutorials/.ui-hashes.json` | **generated** by `scripts/record-tutorials.mjs` | NEVER hand-edit. Regenerate by recording. |
+
+**On conflict in a generated file, do not merge the text — regenerate it.** Delete your version,
+regenerate from `docs/ACP-UI-CONTRACT.md`, and commit the result. A text merge of a generated file
+produces a document that no longer matches its source, and the next generator run silently reverts
+half of it.
+
+Verified: `gen-ui-inventory.mjs` is deterministic (regenerating produces byte-identical output), and
+`gen-tutorial-steps.mjs` is idempotent (a second run changes nothing). The committed
+`tutorialKeys.json` was merely **stale** — one regeneration brings it current. Stale generated files
+are exactly what turns a two-builder merge into a phantom conflict, so regenerate before you commit
+a screen change, every time.
+
+**Screen-id ranges are the partition.** Both branches currently end at `WK-11`. New screens take the
+next free id in the range you own:
+
+| Range | Owner |
+|---|---|
+| `SA-*` (Super Admin) | Builder A — its Phases 3-6 are all platform surfaces |
+| `OA-*`, `WK-*`, `EX-*` | Builder B — E10, S21, T5 and the explain surfaces |
+| `GL-*`, `TUT-*` | Builder A (chrome) |
+
+If you need a screen id outside your range, STOP and report it.
+
+## Inert-function resolution — assigned, not implicit
+
+The wiring audit (`node scripts/audit-wiring.mjs`) reports **529 exports with no reachable caller**.
+Do NOT treat that number as a to-do list. Measured on this branch: **402 of the 529 are referenced
+by a `.test.ts`** — they are legitimate test-only exports, not dead code. Only **127** have no test
+reference at all, and those are the ones that need triage.
+
+| Situation | Owner |
+|---|---|
+| The export is named in a row of YOUR ledger | you resolve it, in that row's commit |
+| The export sits in `src/lib/writing/**` or `src/lib/render/**` | Builder A |
+| The export sits in `src/data/**` or `src/lib/explain/**` | Builder B |
+| Anything else | report it in your ledger; do not silently delete |
+
+**Named and assigned today** (all Builder B's, because they sit in its S/T rows):
+`listIntegrityAlerts` (T7), `createSiraCycle`, `publishSiraCycle`, `recordSiraScore`,
+`submitEmergentRisk`, `decideEmergentRisk` (S18/S19).
+
+**A test-only export is not dead.** Before deleting anything, check whether a `.test.ts` calls it. If
+it does, it is a tested unit that the UI has not reached yet — that is a wiring gap to record, not
+code to delete. Deleting a tested export to make the audit number go down destroys coverage and
+hides the real defect.
+
+**Neither builder was told this before now.** Both were silently carrying the same 529-export list.
+That is the gap this section closes.
+
 ## Merge rules
 
 1. **Never force-push any branch.**

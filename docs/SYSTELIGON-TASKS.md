@@ -136,6 +136,16 @@ So S18's carry-forward and S19's two-key acceptance both depend on a write path 
 
 | # | Task | Status |
 |---|---|---|
+> **Orphan found 2026-10-28: T1 and T2 are in NO ledger.** T3-T6 all declare a dependency on T1
+> (the tamper alarm: verify roots on a schedule, raise a signal on signature/timestamp failure) and
+> T2 (ledger continuity check on a schedule). Neither Builder A's ledger nor this one contains a T1
+> or T2 row. They are therefore Builder B's by default, because T3-T7 cannot be built or tested
+> without the schedule that raises the signal they consume.
+>
+> **Do T1 and T2 first, before T3.** They are the reason T7's alarm has nothing to fire on.
+> `verify_ledger` (zero production callers) is the ledger-continuity primitive T2 needs; it is
+> unassigned and therefore yours.
+
 | T3 | Portable attestation package: roots, signatures, timestamps, the rule versions that scored it, verification instructions | TODO |
 | T4 | Third-party verifier: a documented procedure usable with independent tooling | TODO |
 | T5 | Attestation screen: view, export, verify | TODO |
@@ -253,6 +263,49 @@ product's claim is determinism; decorating it as magic undercuts the one thing t
 different.
 
 ---
+
+## Inert-function resolution — YOUR share, assigned
+
+`node scripts/audit-wiring.mjs` reports **529 exports with no reachable caller**. Do NOT treat that
+as a to-do list. Measured on this branch: **402 of the 529 are referenced by a `.test.ts`** — they
+are legitimate test-only exports. Only **127** have no test reference at all, and only those need
+triage.
+
+**Yours, by name:**
+| Export | Where | Row |
+|---|---|---|
+| `listIntegrityAlerts` | `src/data/archival.ts` | T7 — the alarm has no caller |
+| `createSiraCycle`, `publishSiraCycle` | SIRA write path | S18 |
+| `recordSiraScore`, `submitEmergentRisk`, `decideEmergentRisk` | SIRA write path | S18/S19 |
+| `verify_ledger` | ledger chain | T2 — unassigned, therefore yours |
+
+**Rule.** The export is yours if it sits in `src/data/**` or `src/lib/explain/**`, or if it is named
+in a row of this ledger. Exports under `src/lib/writing/**` and `src/lib/render/**` are Builder A's.
+
+**A test-only export is not dead.** Before deleting anything, check whether a `.test.ts` calls it. If
+it does, it is a tested unit the UI has not reached — record the wiring gap, do not delete the code.
+Deleting tested exports to make the audit number go down destroys coverage and hides the real defect.
+
+## Shared registry files — read this before you add a screen
+
+Four files are touched by BOTH builders. All four are **generated except one**:
+
+| File | Rule |
+|---|---|
+| `docs/ACP-UI-CONTRACT.md` | **hand-written — the source of truth.** Edit only your own screen sections. |
+| `docs/UI-INVENTORY.md` | **generated** by `gen-ui-inventory.mjs` — regenerate, never hand-edit |
+| `src/lib/tutorialKeys.json` | **generated** by `gen-tutorial-steps.mjs` — regenerate, never hand-edit |
+| `public/tutorials/.ui-hashes.json` | **generated** by `record-tutorials.mjs` — regenerate by recording |
+
+**On conflict in a generated file, do not merge the text — regenerate it.** Regenerate from the
+contract and commit the result. A text merge of a generated file stops matching its source.
+
+**Regenerate before you commit a screen change, every time.** The committed `tutorialKeys.json` is
+currently **stale**; one regeneration brings it current. Stale generated files are what turn a
+two-builder merge into a phantom conflict.
+
+**Your screen-id range: `OA-*`, `WK-*`, `EX-*`.** Builder A owns `SA-*`, `GL-*`, `TUT-*`. Both
+branches currently end at `WK-11`. Need an id outside your range? STOP and report it.
 
 ## F-series — fonts
 

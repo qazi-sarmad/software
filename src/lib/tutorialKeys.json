@@ -843,7 +843,7 @@
       },
       {
         "text": "Read Features result in SA-14.",
-        "testid": "superadmin-features"
+        "testid": "superadmin-features-result"
       },
       {
         "text": "Check the values shown on SA-14 and confirm they are correct.",
@@ -1294,12 +1294,12 @@
         "testid": "admin-roles"
       },
       {
-        "text": "Read Admin panel in OA-05.",
-        "testid": "people-admin-panel"
+        "text": "Click Provision in OA-05.",
+        "testid": "admin-provision"
       },
       {
-        "text": "Check the values shown on OA-05 and confirm they are correct.",
-        "testid": null
+        "text": "Read Admin panel in OA-05.",
+        "testid": "people-admin-panel"
       }
     ]
   },
@@ -1866,11 +1866,11 @@
         "testid": "org-tutorials"
       },
       {
-        "text": "Check the values shown on OA-18 and confirm they are correct.",
-        "testid": null
+        "text": "Read Tutorials in OA-18.",
+        "testid": "superadmin-tutorials"
       },
       {
-        "text": "Save the change, then read the confirmation on OA-18.",
+        "text": "Check the values shown on OA-18 and confirm they are correct.",
         "testid": null
       }
     ]
@@ -2002,12 +2002,12 @@
         "testid": "wk-boardpack-<id>"
       },
       {
-        "text": "Open the Board Pack config tab in WK-01.",
-        "testid": "wk-boardpack-tab-config"
+        "text": "Click Board Pack heatmap in WK-01.",
+        "testid": "wk-boardpack-heatmap"
       },
       {
-        "text": "Open the Board Pack view tab in WK-01.",
-        "testid": "wk-boardpack-tab-view"
+        "text": "Click Board Pack gantt legend in WK-01.",
+        "testid": "wk-boardpack-gantt-legend"
       }
     ]
   },
@@ -2110,12 +2110,12 @@
         "testid": "wk-boardpack-<id>"
       },
       {
-        "text": "Open the Board Pack config tab in WK-04.",
-        "testid": "wk-boardpack-tab-config"
+        "text": "Click Board Pack heatmap in WK-04.",
+        "testid": "wk-boardpack-heatmap"
       },
       {
-        "text": "Open the Board Pack view tab in WK-04.",
-        "testid": "wk-boardpack-tab-view"
+        "text": "Click Board Pack gantt legend in WK-04.",
+        "testid": "wk-boardpack-gantt-legend"
       }
     ]
   },
@@ -2431,19 +2431,31 @@
     "steps": [
       {
         "text": "Open OA-22 (Governance settings).",
-        "testid": "org-control-tab-governance"
+        "testid": null
       },
       {
-        "text": "Read the lifecycle settings.",
-        "testid": "oa-governance-lifecycle"
+        "text": "Read Governance in OA-22.",
+        "testid": "oa-governance"
       },
       {
-        "text": "Choose the testing stages.",
-        "testid": "oa-governance-testing-mode"
-      },
-      {
-        "text": "Click Save lifecycle settings.",
+        "text": "Click Governance lifecycle save in OA-22.",
         "testid": "oa-governance-lifecycle-save"
+      },
+      {
+        "text": "Find the first Governance scale in OA-22.",
+        "testid": "oa-governance-scale-<key>"
+      },
+      {
+        "text": "Click Governance section add in OA-22.",
+        "testid": "oa-governance-section-add"
+      },
+      {
+        "text": "Click Governance scale add in OA-22.",
+        "testid": "oa-governance-scale-add"
+      },
+      {
+        "text": "Click Governance FSLI add in OA-22.",
+        "testid": "oa-governance-fsli-add"
       }
     ]
   },
@@ -2454,32 +2466,32 @@
     "title": "Connectors and monitoring",
     "steps": [
       {
-        "text": "Open OA-23 (connectors and monitoring).",
-        "testid": "org-control-panel"
+        "text": "Open OA-23 (Connectors and monitoring).",
+        "testid": null
       },
       {
-        "text": "Select the Connectors tab.",
-        "testid": "org-control-tab-connectors"
+        "text": "Read Connectors panel in OA-23.",
+        "testid": "wk-connectors-panel"
       },
       {
-        "text": "Read the connector catalogue and pick the connector to add.",
-        "testid": "wk-connectors-catalogue"
-      },
-      {
-        "text": "Enter a label and the stored credential reference, then save the instance.",
+        "text": "Click Connectors save in OA-23.",
         "testid": "wk-connectors-save"
       },
       {
-        "text": "Open the run history to see row counts and health.",
-        "testid": "wk-connectors-tab-runs"
+        "text": "Find the first Connectors tab in OA-23.",
+        "testid": "wk-connectors-tab-<id>"
       },
       {
-        "text": "Open the staged-record browser and drill into a record.",
-        "testid": "wk-connectors-tab-staged"
+        "text": "Click Connectors retry in OA-23.",
+        "testid": "wk-connectors-retry"
       },
       {
-        "text": "Open the alert queue and triage an alert.",
-        "testid": "wk-connectors-tab-alerts"
+        "text": "Click Connectors rule save in OA-23.",
+        "testid": "wk-connectors-rule-save"
+      },
+      {
+        "text": "Click Connectors alert triage save in OA-23.",
+        "testid": "wk-connectors-alert-triage-save"
       }
     ]
   },
@@ -2490,36 +2502,32 @@
     "title": "Report format editor",
     "steps": [
       {
-        "text": "Open OA-24 (report format editor).",
-        "testid": "org-control-panel"
+        "text": "Open OA-24 (Report format editor).",
+        "testid": null
       },
       {
-        "text": "Select the Report formats tab.",
-        "testid": "org-control-tab-formats"
+        "text": "Read Format panel in OA-24.",
+        "testid": "wk-format-panel"
       },
       {
-        "text": "Pick the report format to edit.",
-        "testid": "wk-format-format-pick"
+        "text": "Click Format audiences save in OA-24.",
+        "testid": "wk-format-audiences-save"
       },
       {
-        "text": "Choose the report model the format is built for.",
-        "testid": "wk-format-model-pick"
+        "text": "Click Format retry in OA-24.",
+        "testid": "wk-format-retry"
       },
       {
-        "text": "Reorder a block with Up or Down, or hide it.",
-        "testid": "wk-format-block-cover-up"
+        "text": "Click Format preview in OA-24.",
+        "testid": "wk-format-preview"
       },
       {
-        "text": "Give a block its own register.",
-        "testid": "wk-format-block-findings-register"
-      },
-      {
-        "text": "Change the print layout and watch the preview update.",
-        "testid": "wk-format-layout-page-size"
-      },
-      {
-        "text": "Save the draft, then publish the version.",
+        "text": "Click Format save in OA-24.",
         "testid": "wk-format-save"
+      },
+      {
+        "text": "Click Format publish in OA-24.",
+        "testid": "wk-format-publish"
       }
     ]
   },
@@ -2530,36 +2538,32 @@
     "title": "Report builder",
     "steps": [
       {
-        "text": "Open WK-11 (report builder).",
-        "testid": "audit-file-view-builder"
+        "text": "Open WK-11 (Report builder).",
+        "testid": null
       },
       {
-        "text": "Choose the report model to compose.",
-        "testid": "wk-report-builder-model"
+        "text": "Read Report builder panel in WK-11.",
+        "testid": "wk-report-builder-panel"
       },
       {
-        "text": "Choose the formality level.",
-        "testid": "wk-report-builder-formality"
-      },
-      {
-        "text": "Choose the tone level.",
-        "testid": "wk-report-builder-tone"
-      },
-      {
-        "text": "Choose the voice.",
-        "testid": "wk-report-builder-voice"
-      },
-      {
-        "text": "Read the first claim and open Why this sentence.",
-        "testid": "wk-report-builder-claim-c-scope-provenance"
-      },
-      {
-        "text": "Open the coverage pane to see the reconciliation.",
-        "testid": "wk-report-builder-pane-coverage"
-      },
-      {
-        "text": "Run the freeze and read every blocker it names.",
+        "text": "Click Report builder freeze run in WK-11.",
         "testid": "wk-report-builder-freeze-run"
+      },
+      {
+        "text": "Find the first Report builder claim in WK-11.",
+        "testid": "wk-report-builder-claim-<id>"
+      },
+      {
+        "text": "Click Report builder retry in WK-11.",
+        "testid": "wk-report-builder-retry"
+      },
+      {
+        "text": "Click Report builder figure preview in WK-11.",
+        "testid": "wk-report-builder-figure-preview"
+      },
+      {
+        "text": "Click Report builder figure add in WK-11.",
+        "testid": "wk-report-builder-figure-add"
       }
     ]
   }
