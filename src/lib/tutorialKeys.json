@@ -1866,11 +1866,11 @@
         "testid": "org-tutorials"
       },
       {
-        "text": "Read Tutorials in OA-18.",
-        "testid": "superadmin-tutorials"
+        "text": "Check the values shown on OA-18 and confirm they are correct.",
+        "testid": null
       },
       {
-        "text": "Check the values shown on OA-18 and confirm they are correct.",
+        "text": "Save the change, then read the confirmation on OA-18.",
         "testid": null
       }
     ]

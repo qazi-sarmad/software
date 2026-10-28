@@ -45,6 +45,59 @@ green test as proof that a feature works.**
 | 0.3 | Archive stale docs with banners; write this ledger | DONE |
 | 0.4 | Docker-based local SQL harness (real Postgres 17) | DONE |
 | 0.5 | Unblock migration replay: `0033` drops `platform_whoami()` before recreating it | DONE |
+| 0.6 | Merge the spec branch `feature/systeligon-v1` (`0dc9db2`) to obtain `SYSTELIGON.md`, the register, the gates and `BRANCH-MAP.md` | DONE |
+| 0.7 | Fix the tutorial-step generator so it never targets the other portal's testid (the red the merge surfaced) | DONE |
+| 0.8 | Re-scope Phase 5 to the full C-series (C1–C7) and strike the E-series (Builder B's) | DONE |
+
+### Task 0.6 — the spec-branch merge, and the one red it surfaced (2026-10-28)
+
+Merged `origin/feature/systeligon-v1` (`0dc9db2`) into this branch with `git merge --no-ff`.
+Verified landed: `git merge-base --is-ancestor f387e61 HEAD` → **GUIDANCE LANDED** (the check
+`docs/BRANCH-MAP.md` rule 4 prescribes; the obvious `--is-ancestor <pre-split-sha>` test is a false
+positive and was not used).
+
+- **One conflict, exactly where the map predicted:** `supabase/migrations/0081_tutorial_steps.sql`,
+  a **generated** file. Resolved the way the map requires — not by a text merge, but by regenerating
+  from `docs/ACP-UI-CONTRACT.md` with `node scripts/gen-tutorial-steps.mjs`. `src/lib/tutorialKeys.json`
+  auto-merged and the key list is the correct union (81 keys; this branch's only-ours key is
+  `sa.integrity-anchoring`).
+- **The red the merge surfaced.** With the environment inert (see the note below), the full suite ran
+  **2439/2439 green except one**: `src/guards/tutorialTargets.test.ts` failed with
+  `oa.tutorials -> superadmin-tutorials`. Root cause, proven by experiment: at the merge base the
+  **generator itself** produces that target (OA-18's contract section lists `superadmin-tutorials`
+  because OA-18 embeds the platform table with `audience="org_admin"`), while the **committed**
+  `tutorialKeys.json` had been **hand-corrected** to only `org-tutorials`. So any regeneration
+  reintroduced a latent generator defect. Builder B carries the same generator (identical md5) and the
+  same hand-fix, so the defect is shared, not this branch's alone.
+- **Fix (0.7).** `scripts/gen-tutorial-steps.mjs` now filters a candidate target that belongs to the
+  other portal (`foreignPortal(key, t)`: an `oa.*` key never targets `superadmin-*`; an `sa.*` key
+  never targets `org-*` / `org_admin-*` / `oa-*`). This is the same rule the guard enforces and the
+  note on the OA-18 section states. Regenerated; the guard passes; the generator is idempotent
+  (a second run is byte-identical).
+
+### Environment note — the vitest run must have Supabase unset
+
+This sandbox exports `VITE_SUPABASE_URL`, `SUPABASE_URL` and the keys. The data-layer tests assert the
+**inert** path ("not configured → empty collections, writes refuse"), so with those variables set they
+fail with live-Postgres errors (`permission denied for table universes`) — 42 spurious failures that
+have nothing to do with any change. Run the suite inert:
+
+```bash
+env -u VITE_SUPABASE_URL -u VITE_SUPABASE_PUBLISHABLE_KEY -u SUPABASE_URL \
+    -u SUPABASE_SECRET_KEY -u SUPABASE_PUBLISHABLE_KEY npx vitest run
+```
+
+With that, the suite is 2439/2439. Recorded so the next session does not read those 42 as regressions.
+
+### Task 0.8 — migration-number coordination
+
+`docs/BRANCH-MAP.md` reserves `0107`–`0109` for this branch and `0110`+ for Builder B. This branch
+had already committed Phase 4 as `0110_phase4_methodology.sql` **before** the map existed, so `0110`
+is consumed. Builder B's highest migration today is `0106`, so there is **no live collision**, but the
+reservation is off by one. Decision recorded rather than silently renumbering a shipped migration
+(renumbering would break `supabase/tests/111_phase4_methodology.sql` and this ledger's own history):
+**this branch's Phase 5 migrations start at `0111`**, leaving `0110` as-is. A future reader should
+treat `0107`–`0110` as this branch's and `0111`+ as free for whichever builder reaches it first.
 
 ### Baseline counts (locked at branch point)
 
@@ -580,13 +633,48 @@ screens); `check-tutorials` PASS (81 GIFs, 0 placeholders, 5 stale — the same 
 GIFs regenerate in Phase 6); SQL harness PASS — "migrations applied twice / all SQL tests passed
 twice".
 
-## Phase 5 — Monitors & connectors reachable
+## Phase 5 — Monitors & connectors reachable (the C-series)
+
+Re-scoped 2026-10-28 after merging `feature/systeligon-v1` and reading `docs/BRANCH-MAP.md`.
+This branch owns the whole **C-series (C1–C7)**, defined in `docs/SYSTELIGON.md` §11.1 and §13.
+The old rows (5.1–5.3) covered only C1 and C3; they are replaced below.
+
+The dispatch precedent is the email pipeline in `supabase/migrations/0064` §4:
+`cron.schedule` every minute → `net.http_post` to an Edge Function carrying a dispatch token.
+C1 follows the same shape — a dispatcher RPC the runner calls — and **adds no trigger**, which is
+what preserves SQL test `66` (it calls `rule_engine_process` directly and asserts notification
+counts; a trigger would double-fire).
 
 | # | Task | Status |
 |---|---|---|
-| 5.1 | Runner wiring `rule_engine_process`, `staged_record_ingest`, `connector_run_start/finish`, `alert_record` | TODO |
-| 5.2 | Fired alerts land in the Work Queue | TODO |
-| 5.3 | 22 adapters either wired or clearly labelled "catalogue only, not live" | TODO |
+| C1 | Scheduled runner: `automation_dispatch_pending(org, limit)` dispatcher RPC (no trigger), runner Edge Function calls it, `runMonitors` per org, persist alerts, emit `watcher.signal` | TODO |
+| C2 | Alert enrichment: resolve entity, department, SIRA risk, inherent + residual risk, affected controls onto the alert | TODO |
+| C3 | Delivery: Work Queue in-app + email, via `src/lib/liveSync.ts` (realtime, poll fallback) | TODO |
+| C4 | Adhoc audit suggestion from an alert, pre-filled with entity/department/control | TODO |
+| C5 | Remediation wizard from an alert (finding, CAP, request evidence, escalate, dismiss with reason) | TODO |
+| C6 | Alert triage surface with rights gating | TODO |
+| C7 | Anomaly to SIRA: a resolved alert proposes an emergent risk carrying the alert id, rule version and affected rows | TODO |
+
+### Phase 5 — what already exists (verified in the code, not claimed)
+
+- The engine is real and pure: `src/lib/writing/monitors.ts` (six deterministic rule kinds —
+  `threshold`, `rate`, `sequence`, `set_membership`, `missing_event`, `reconciliation`), hash-chained
+  alerts (`monitor_alert_chain`), triage states, `src/lib/writing/canonical.ts` (WebCrypto SHA-256).
+- The DB side is real: `monitor_rule_save` / `_release`, `alert_record`, `alert_triage_record`,
+  `alert_list`, `connector_instance_save`, `connector_run_start` / `_finish`, `staged_record_ingest`,
+  `connector_egress_allowed`, `rule_engine_process`, `rule_conditions_ok`, `rule_condition_ok`,
+  `escalation_recommendation`, `escalation_evaluate`, `admin_require_right`, `admin_log_change`,
+  `provio_org_guard`.
+- **What is missing is the wiring**: `runMonitors` / `evaluateMonitor` have no non-test caller, no
+  alert reaches the UI, and `MonitorAlert` carries no entity / department / SIRA / control linkage.
+
+### Phase 5 — why the runner is an RPC plus an Edge Function, not a trigger
+
+A trigger on `automation_events` would call `rule_engine_process` a second time for every event that
+SQL test `66` inserts by hand, so the test's notification counts would double and it would fail.
+The dispatcher RPC keeps the engine's invocation explicit and testable: the runner Edge Function
+calls `automation_dispatch_pending(org, limit)`, which selects the pending rows, invokes the engine,
+and returns what it did. That is the same split the email pipeline already uses.
 
 ## Phase 6 — Proof & demo script
 
@@ -596,7 +684,12 @@ twice".
 | 6.2 | Multi-org isolation under concurrency | TODO |
 | 6.3 | `docs/DEMO-SCRIPT.md` using only tested flows | TODO |
 
-## Six anti-theatre CI gates
+## Six anti-theatre CI gates (G1–G6 — this branch's)
+
+`docs/BRANCH-MAP.md` records the split: **G1–G6 are this branch's; G7–G10 are Builder B's**
+(explain coverage, drilldown, IIA honesty, and B's tenth gate). The earlier plan named nine gates on
+one branch; after the split the explain-layer gates travel with the explain layer, which is B's. This
+branch builds G1–G6 and does not build G7–G10.
 
 | # | Gate | Status |
 |---|---|---|
@@ -615,27 +708,42 @@ twice".
 | U2 | Complete every screen's functional states (loading/empty/error/ready/denied) | TODO |
 | U3 | Guided first-run: zero → first sealed report with no further code | TODO |
 
+**Overlap to resolve with Builder B before starting U1.** `docs/BRANCH-MAP.md` gives this branch `U1`
+(pencil-style guided pointers) and gives Builder B `E8` (`PencilGuide` + guidance data under
+`src/lib/guidance/`) — the same surface. B's ledger currently marks `E8` **DEFERRED (design
+language)**, so nothing of it is built yet. Per `BRANCH-MAP.md` rule 5, this branch will not build a
+second guidance implementation; the plan is to take `U1`/`U3` (the guided first-run flow and the
+per-screen "show me" mode) as this branch's own, and to reuse one shared `src/lib/guidance/` data
+module rather than write a parallel one. Recorded here so the collision is visible, not silent.
+
 ---
 
 ## Explain layer (popouts, drilldown, access-filtered detail, IIA standards)
 
-Full specification: `docs/EXPLAIN-LAYER.md`. Verified IIA numbering: `docs/iia-standards-reference.md`.
-Owner requirement: every method, field, status and term gets a small popout saying what it is and what
-it will do; everything is drilldownable; hovering any text shows a detail popout **filtered on view
-access**; IIA standards are woven into the same information workflow.
+**MOVED TO BUILDER B — see `docs/BRANCH-MAP.md`.** The E-series (E1–E10) is not this branch's work.
+`feature/systeligon-v1` was merged into this branch on 2026-10-28, and `docs/BRANCH-MAP.md` records
+that the split assigned the whole explain layer to Builder B, whose ledger is
+`docs/SYSTELIGON-TASKS.md`. Builder B has built it: `src/lib/explain/` (catalogue, iia, types,
+entries.*), `src/components/explain/` (ExplainPopout, ExplainDetail, DrilldownPanel, StandardsView,
+StandardsAffordance) and its gates. B's rows E1–E7, E9 and E10 read **DONE**; E8 (`PencilGuide`,
+guidance data) is **DEFERRED (design language)** on B's branch, and the pencil guidance is B's to
+build. This branch does not re-implement any of it.
+
+The rows below are struck, not marked DONE (this branch did not do the work) and not left TODO (it is
+not outstanding work here). They are kept as a pointer so a reader of this ledger is not misled.
 
 | # | Task | Status |
 |---|---|---|
-| E1 | `src/lib/explain/catalogue.ts` — schema, `explainFor(user, id, context)`, redaction, L2 guard test | TODO |
-| E2 | `ExplainPopout` + `useExplain` on `HoverPreview`; non-blocking, a11y (tooltip + complementary) | TODO |
-| E3 | `src/lib/explain/iia.ts` — standards as data, paraphrased, mapped to real screens/RPCs | TODO |
-| E4 | Hover cards + detail panels wired across sampling methods, fields, statuses, terms | TODO |
-| E5 | Drilldown from every aggregate; deep-linkable; no blocking modal (walk test) | TODO |
-| E6 | Standards affordance on screens, lifecycle steps and report sections | TODO |
-| E7 | Standards view (catalogue → implementation → evidence) | TODO |
-| E8 | `PencilGuide` + guidance data for guided first-run and per-screen "show me" | TODO |
-| E9 | Gates G7 (explain coverage), G8 (drilldown), G9 (IIA honesty) + tests | TODO |
-| E10 | Extend `UI-INVENTORY.md` with explain ids, standards and drilldown targets per screen | TODO |
+| E1 | `src/lib/explain/catalogue.ts` — schema, `explainFor(user, id, context)`, redaction, L2 guard test | MOVED (Builder B) |
+| E2 | `ExplainPopout` + `useExplain` on `HoverPreview`; non-blocking, a11y (tooltip + complementary) | MOVED (Builder B) |
+| E3 | `src/lib/explain/iia.ts` — standards as data, paraphrased, mapped to real screens/RPCs | MOVED (Builder B) |
+| E4 | Hover cards + detail panels wired across sampling methods, fields, statuses, terms | MOVED (Builder B) |
+| E5 | Drilldown from every aggregate; deep-linkable; no blocking modal (walk test) | MOVED (Builder B) |
+| E6 | Standards affordance on screens, lifecycle steps and report sections | MOVED (Builder B) |
+| E7 | Standards view (catalogue → implementation → evidence) | MOVED (Builder B) |
+| E8 | `PencilGuide` + guidance data for guided first-run and per-screen "show me" | MOVED (Builder B; B DEFERRED it) |
+| E9 | Gates G7 (explain coverage), G8 (drilldown), G9 (IIA honesty) + tests | MOVED (Builder B) |
+| E10 | Extend `UI-INVENTORY.md` with explain ids, standards and drilldown targets per screen | MOVED (Builder B) |
 
 The access rule that makes this safe: the popout renders static catalogue content (safe for any
 signed-in user) plus contextual values the **host screen** has already filtered through
