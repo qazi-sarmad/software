@@ -539,12 +539,46 @@ cleanly; full SQL harness green ("all SQL tests passed twice", 112 test files).
 
 ## Phase 4 — Methodology & test steps as data
 
+Migration `0110_phase4_methodology.sql`; SQL test `111_phase4_methodology.sql`.
+
 | # | Task | Status |
 |---|---|---|
-| 4.1 | `procedure_templates`, `test_step_templates` (+ versions), in the config registry | TODO |
-| 4.2 | Test steps become data; row-testing panel driven by the template | TODO |
-| 4.3 | Methodology library screen (create / edit / publish) | TODO |
-| 4.4 | Provisioning seeds a default template | TODO |
+| 4.1 | `procedure_templates`, `test_step_templates` (+ versions), in the config registry | DONE |
+| 4.2 | Test steps become data; row-testing panel driven by the template | DONE |
+| 4.3 | Methodology library screen (create / edit / publish) | DONE |
+| 4.4 | Provisioning seeds a default template | DONE |
+
+**4.1 — DONE.** A procedure is a versioned, org-owned template (`procedure_templates`) with ordered
+steps (`test_step_templates`); every change is hash-chained into `procedure_template_versions`
+(advisory-locked per org, append-only). Writers `procedure_template_save` (validates the whole step
+array before writing — unknown kind, duplicate key, blank label and empty list all refused) and
+`procedure_template_publish`; readers `procedure_template_list` / `_get`; all require `edit_config`
+except the readers. The version table is registered in `config_areas` (key `procedure_templates`,
+history `procedure_template_versions`, notify `both`). Org-scoped RLS with no platform read (L2).
+
+**4.2 — DONE.** `workpaper_step_state` gains the snapshot columns (`template_id`, `label`, `kind`,
+`requires_evidence`, `ordinal`). `workpaper_apply_template` copies the current procedure's steps onto a
+workpaper (requires `perform_work`, refuses a signed-off workpaper, idempotent — re-applying never
+clears a completed tick). `finalize_testing` is replaced with the 0100 body plus a step gate: every
+step that came from a template must be complete before fieldwork closes. A manually ticked step (no
+template) is a note, not a gate, so existing flows are unaffected. UI: `ProcedureStepsPanel`
+(`procedure-steps-panel`) inside `TestingStepsTab`; the legacy seed list shows only when no procedure
+has been applied.
+
+**4.3 — DONE.** `MethodologyPanel` (`methodology-panel`) mounted as the Org Admin `Methodology` tab
+(`org-control-tab-methodology`): list the current procedures, edit a title/description and its ordered
+steps (label, kind from the closed set, evidence-required toggle, reorder, add, remove), save a new
+version, publish a version. Data module `src/data/methodology.ts`. Contract section `OA-25`.
+
+**4.4 — DONE.** `procedure_template_seed(org, model, title)` seeds the default three-step procedure
+(idempotent); every existing tenant is seeded on upgrade and `platform_create_tenant` seeds a new
+tenant, so a client has a working methodology from the first sign-in.
+
+**Gate set after the change:** `tsc` PASS; `vitest` PASS (211 files / 2439 tests); `vite build` PASS;
+`check-shrink` PASS; `check-tokens` PASS (187 files, 0 violations); `check-ui-contract` PASS (48
+screens); `check-tutorials` PASS (81 GIFs, 0 placeholders, 5 stale — the same 5 pre-existing stale keys,
+GIFs regenerate in Phase 6); SQL harness PASS — "migrations applied twice / all SQL tests passed
+twice".
 
 ## Phase 5 — Monitors & connectors reachable
 

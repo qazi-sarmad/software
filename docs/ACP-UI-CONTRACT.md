@@ -1650,3 +1650,45 @@ only the render hash moves (W1, W2.2, W4, W5, W6, W8, W12).
   each missing, duplicated and orphaned item; the freeze panel lists every blocker or states that the
   freeze is allowed with the graph root and render hash.
 - **Tutorial key:** `oa.report-builder`.
+
+## OA-25 — methodology library (Phase 4, §10.1, §11.3)
+
+The organisation's methodology library: every audit type's current procedure, its version, and its
+ordered test steps (a label, a kind, and whether evidence is required). Editing writes a new version;
+publishing makes a version current. An engagement snapshots the current procedure, so a later edit
+never rewrites a workpaper already in progress. The step kinds are a closed set the database enforces.
+
+- **Route:** `/admin`, tab `Methodology` (`org-control-tab-methodology`).
+- **Rights:** `edit_config`; a caller without it sees the plain refusal, never the panel.
+- **Data:** `listProcedureTemplates`, `getProcedureTemplate`, `saveProcedureTemplate`,
+  `publishProcedureTemplate`, `applyTemplateToWorkpaper`, `listWorkpaperSteps`, `STEP_KINDS`,
+  `STEP_KIND_LABELS` (`src/data/methodology.ts`).
+- **Testids:** `methodology-panel`, `methodology-no-right`, `methodology-denied`,
+  `methodology-loading`, `methodology-error`, `methodology-version`, `methodology-list`,
+  `methodology-empty`, `methodology-template-<model>`, `methodology-save-error`,
+  `methodology-result`, `methodology-title`, `methodology-description`, `methodology-steps`,
+  `methodology-steps-empty`, `methodology-step-<key>`, `methodology-step-label-<key>`,
+  `methodology-step-kind-<key>`, `methodology-step-evidence-<key>`, `methodology-step-up-<key>`,
+  `methodology-step-down-<key>`, `methodology-step-remove-<key>`, `methodology-add-step`,
+  `methodology-save`, `methodology-publish`.
+- **States:** loading; error; a denied state; ready with the template list and the step editor; an
+  inline result or refusal after a save or publish.
+- **Tutorial key:** `oa.governance`
+
+## WK-09 — procedure steps on a workpaper (Phase 4, §11.3)
+
+The steps a workpaper follows, snapshotted from the organisation's methodology library. A preparer
+chooses a procedure for the engagement's audit type and applies it; the steps appear with their kind
+and whether evidence is required. Ticking a step persists through `set_test_step_state`, and
+`finalize_testing` refuses to close fieldwork while an applied step is open. A workpaper with no
+applied procedure shows the legacy seed steps instead, so nothing that worked before regresses.
+
+- **Route:** the workpaper window, sub-tab "Testing" (`wk-subtab-testing`).
+- **Rights:** `perform_work`; the write is refused in the database without it.
+- **Data:** `listWorkpaperSteps`, `listProcedureTemplates`, `applyTemplateToWorkpaper`,
+  `STEP_KIND_LABELS` (`src/data/methodology.ts`).
+- **Testids:** `procedure-steps-panel`, `procedure-model`, `procedure-apply`,
+  `procedure-steps-message`, `procedure-steps-empty`, `procedure-step-<key>`.
+- **States:** loading; empty (no procedure applied); ready with the applied steps; an inline refusal
+  after a failed apply or tick.
+- **Tutorial key:** `wk.testing`

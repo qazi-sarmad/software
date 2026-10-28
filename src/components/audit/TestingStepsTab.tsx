@@ -4,6 +4,7 @@ import { WorkingPaper } from '../../types';
 import { useApp } from '../../context/AppContext';
 import { checkPopulationCsv, isSupportedPopulationFile, sha256Hex, POPULATION_MAX_BYTES, PopulationCheck } from '../../lib/population';
 import { CheckCircle2, ShieldCheck, Hash } from '../common/Icons';
+import { ProcedureStepsPanel } from './ProcedureStepsPanel';
 
 interface TestingStepsTabProps {
   workpaper: WorkingPaper;
@@ -20,6 +21,7 @@ export const TestingStepsTab: React.FC<TestingStepsTabProps> = ({ workpaper, loc
   const [busy, setBusy] = useState(false);
   const [check, setCheck] = useState<PopulationCheck | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [hasTemplateSteps, setHasTemplateSteps] = useState(false);
 
   const handleToggleStep = (stepId: string, completed: boolean) => {
     if (locked) return;
@@ -112,48 +114,53 @@ export const TestingStepsTab: React.FC<TestingStepsTabProps> = ({ workpaper, loc
         {message && <div className="text-apple-12 text-cinnabar" role="alert" data-testid="gate-message">{message}</div>}
       </div>
 
-      {/* Sequential Test Steps */}
-      <div className="space-y-3">
-        <h3 className="text-apple-13 font-semibold text-primary uppercase tracking-wider">
-          Substantive &amp; Control Test Program
-        </h3>
-        <div className="divide-y divide-hairline border border-hairline rounded-xl overflow-hidden bg-surface">
-          {steps.map((step, idx) => (
-            <div
-              key={step.id}
-              onClick={() => handleToggleStep(step.id, step.completed)}
-              className={`p-4 flex items-start gap-3 transition-colors ${
-                locked ? 'opacity-80 cursor-not-allowed' : 'cursor-pointer hover:bg-surface-hover'
-              }`}
-            >
-              <div className="pt-0.5 shrink-0">
-                <input
-                  type="checkbox"
-                  checked={step.completed}
-                  onChange={() => {}}
-                  disabled={locked}
-                  className="rounded border-hairline text-verdigris focus:ring-0"
-                />
-              </div>
-              <div className="min-w-0 flex-1 space-y-1">
-                <div className="flex items-center justify-between text-apple-12">
-                  <span className="font-medium text-primary">Step {idx + 1}: {step.description}</span>
-                  {step.completed && (
-                    <span className="text-apple-11 text-verdigris font-semibold flex items-center gap-1">
-                      <CheckCircle2 className="w-3 h-3" /> Done
-                    </span>
+      {/* Procedure steps (Phase 4.2): the steps come from the methodology library, not React state. */}
+      <ProcedureStepsPanel workpaperId={workpaper.id} locked={locked} onHasTemplateSteps={setHasTemplateSteps} />
+
+      {/* Legacy seed steps: shown only when no procedure has been applied to this workpaper. */}
+      {!hasTemplateSteps && steps.length > 0 && (
+        <div className="space-y-3">
+          <h3 className="text-apple-13 font-semibold text-primary uppercase tracking-wider">
+            Substantive &amp; Control Test Program
+          </h3>
+          <div className="divide-y divide-hairline border border-hairline rounded-xl overflow-hidden bg-surface">
+            {steps.map((step, idx) => (
+              <div
+                key={step.id}
+                onClick={() => handleToggleStep(step.id, step.completed)}
+                className={`p-4 flex items-start gap-3 transition-colors ${
+                  locked ? 'opacity-80 cursor-not-allowed' : 'cursor-pointer hover:bg-surface-hover'
+                }`}
+              >
+                <div className="pt-0.5 shrink-0">
+                  <input
+                    type="checkbox"
+                    checked={step.completed}
+                    onChange={() => {}}
+                    disabled={locked}
+                    className="rounded border-hairline text-verdigris focus:ring-0"
+                  />
+                </div>
+                <div className="min-w-0 flex-1 space-y-1">
+                  <div className="flex items-center justify-between text-apple-12">
+                    <span className="font-medium text-primary">Step {idx + 1}: {step.description}</span>
+                    {step.completed && (
+                      <span className="text-apple-11 text-verdigris font-semibold flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3" /> Done
+                      </span>
+                    )}
+                  </div>
+                  {step.resultNote && (
+                    <p className="text-apple-11 text-secondary font-mono bg-surface-sunken p-2 rounded">
+                      {step.resultNote}
+                    </p>
                   )}
                 </div>
-                {step.resultNote && (
-                  <p className="text-apple-11 text-secondary font-mono bg-surface-sunken p-2 rounded">
-                    {step.resultNote}
-                  </p>
-                )}
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Finalize Test Gate */}
       <div className="pt-4 border-t border-hairline flex items-center justify-between">

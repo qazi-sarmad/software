@@ -722,6 +722,21 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
   named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
 
+### `OA-25` — methodology library (Phase 4, §10.1, §11.3)
+
+- **Purpose:** The organisation's methodology library: every audit type's current procedure, its version, and its
+- **Route / location:** `/admin`, tab `Methodology` (`org-control-tab-methodology`).
+- **Rights required:** `edit_config`; a caller without it sees the plain refusal, never the panel.
+- **Data functions (`src/data/*.ts`):** `STEP_KINDS`, `STEP_KIND_LABELS`, `applyTemplateToWorkpaper`, `getProcedureTemplate`, `listProcedureTemplates`, `listWorkpaperSteps`, `publishProcedureTemplate`, `saveProcedureTemplate`
+- **Data modules:** `src/data/methodology.ts`
+- **RPCs reachable via those modules:** none
+- **Tables reachable via those modules:** `workpaper_step_state`
+- **Testids (25):** `methodology-panel`, `methodology-no-right`, `methodology-denied`, `methodology-loading`, `methodology-error`, `methodology-version`, `methodology-list`, `methodology-empty`, `methodology-template-<model>`, `methodology-save-error`, `methodology-result`, `methodology-title`, `methodology-description`, `methodology-steps`, `methodology-steps-empty`, `methodology-step-<key>`, `methodology-step-label-<key>`, `methodology-step-kind-<key>`, `methodology-step-evidence-<key>`, `methodology-step-up-<key>`, `methodology-step-down-<key>`, `methodology-step-remove-<key>`, `methodology-add-step`, `methodology-save`, `methodology-publish`
+- **States:** loading; error; a denied state; ready with the template list and the step editor; an inline result or refusal after a save or publish.
+- **Tutorial key:** — (no key)
+- **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
+  named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
+
 ## Engagement lifecycle
 
 ### `WK-08` — escalation cards and proposals (S6)
@@ -856,6 +871,21 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Testids (76):** `audit-file-builder`, `audit-file-view-builder`, `wk-report-builder-panel`, `wk-report-builder-loading`, `wk-report-builder-error`, `wk-report-builder-error-message`, `wk-report-builder-retry`, `wk-report-builder-denied`, `wk-report-builder-denied-error`, `wk-report-builder-controls`, `wk-report-builder-model`, `wk-report-builder-formality`, `wk-report-builder-tone`, `wk-report-builder-voice`, `wk-report-builder-locale`, `wk-report-builder-hashes`, `wk-report-builder-graph-root`, `wk-report-builder-render-hash`, `wk-report-builder-model-name`, `wk-report-builder-pane-claims`, `wk-report-builder-pane-coverage`, `wk-report-builder-pane-contradictions`, `wk-report-builder-pane-excluded`, `wk-report-builder-pane-compare`, `wk-report-builder-pane-figures`, `wk-report-builder-claims`, `wk-report-builder-claim-<id>`, `wk-report-builder-claim-<id>-text`, `wk-report-builder-claim-<id>-phrase`, `wk-report-builder-claim-<id>-provenance`, `wk-report-builder-claim-<id>-lineage`, `wk-report-builder-claim-<id>-provenance-panel`, `wk-report-builder-claim-<id>-trace-ok`, `wk-report-builder-claim-<id>-counterfactual`, `wk-report-builder-lineage-<figureId>`, `wk-report-builder-lineage-<figureId>-description`, `wk-report-builder-lineage-<figureId>-count`, `wk-report-builder-lineage-<figureId>-records`, `wk-report-builder-coverage`, `wk-report-builder-coverage-status`, `wk-report-builder-coverage-missing`, `wk-report-builder-coverage-duplicated`, `wk-report-builder-coverage-orphaned`, `wk-report-builder-contradictions`, `wk-report-builder-contradictions-empty`, `wk-report-builder-contradiction-<ruleId>`, `wk-report-builder-excluded`, `wk-report-builder-excluded-empty`, `wk-report-builder-excluded-<observationId>`, `wk-report-builder-compare`, `wk-report-builder-compare-summary`, `wk-report-builder-compare-changed-<claimId>`, `wk-report-builder-compare-registers`, `wk-report-builder-figure-studio`, `wk-report-builder-figure-note`, `wk-report-builder-figure-presets`, `wk-report-builder-figure-preset-<name>`, `wk-report-builder-figure-expression`, `wk-report-builder-figure-help`, `wk-report-builder-figure-min-x`, `wk-report-builder-figure-max-x`, `wk-report-builder-figure-title`, `wk-report-builder-figure-label`, `wk-report-builder-figure-colours`, `wk-report-builder-figure-colour-<name>`, `wk-report-builder-figure-preview`, `wk-report-builder-figure-preview-svg`, `wk-report-builder-figure-error`, `wk-report-builder-figure-add`, `wk-report-builder-figure-added`, `wk-report-builder-figure-limits`, `wk-report-builder-figures-added`, `wk-report-builder-figure-added-<i>`, `wk-report-builder-freeze`, `wk-report-builder-freeze-run`, `wk-report-builder-freeze-result`
 - **States:** loading ("Composing the report…"); an inline error with a retry; a denied state for a caller without the right; ready, with the five panes and the freeze panel. The coverage pane names each missing, duplicated and orphaned item; the freeze panel lists every blocker or states that the freeze is allowed with the graph root and render hash.
 - **Tutorial key:** `oa.report-builder`
+- **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
+  named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
+
+### `WK-09` — procedure steps on a workpaper (Phase 4, §11.3)
+
+- **Purpose:** The steps a workpaper follows, snapshotted from the organisation's methodology library. A preparer
+- **Route / location:** the workpaper window, sub-tab "Testing" (`wk-subtab-testing`).
+- **Rights required:** `perform_work`; the write is refused in the database without it.
+- **Data functions (`src/data/*.ts`):** `STEP_KIND_LABELS`, `applyTemplateToWorkpaper`, `listProcedureTemplates`, `listWorkpaperSteps`
+- **Data modules:** `src/data/methodology.ts`
+- **RPCs reachable via those modules:** none
+- **Tables reachable via those modules:** `workpaper_step_state`
+- **Testids (6):** `procedure-steps-panel`, `procedure-model`, `procedure-apply`, `procedure-steps-message`, `procedure-steps-empty`, `procedure-step-<key>`
+- **States:** loading; empty (no procedure applied); ready with the applied steps; an inline refusal after a failed apply or tick.
+- **Tutorial key:** `oa.timetravel`
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
   named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
 
@@ -1628,10 +1658,10 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 
 ## Coverage cross-check
 
-- Screens documented: 95 (contract sections: 48 Appendix A + 44 Appendix B).
+- Screens documented: 97 (contract sections: 48 Appendix A + 44 Appendix B).
 - Tutorial keys: 81.
 - RPCs catalogued: 114.
-- Data modules: 57; exported data functions: 371.
-- Contract testids not found verbatim in `src/` (placeholder or dynamic): 192.
-  - audit-file-view-builder, audit-file-view-certificate, audit-file-view-conclusion, audit-file-view-documents, audit-file-view-ethics, audit-file-view-execution, audit-file-view-findings, audit-file-view-planning, audit-file-view-population, audit-file-view-report, audit-file-view-review, audit-file-view-rowtesting, audit-file-view-sampling, hosting-test, invite-user, issues-view-patterns, oa-branding-colour-accent, oa-branding-colour-background, oa-branding-colour-primary, oa-branding-colour-text, oa-branding-margin-0, oa-branding-margin-3, oa-certificate-enabled-verification, oa-escalation-result, oa-escalation-saved, oa-governance-signoff-conclusion, oa-governance-signoff-planning, oa-governance-signoff-testing, org-control-tab-auditors, org-control-tab-automation, org-control-tab-branding, org-control-tab-connectors, org-control-tab-features, org-control-tab-formats, org-control-tab-governance, org-control-tab-hosting, org-control-tab-people, org-control-tab-setup, org-control-tab-templates, org-control-tab-tutorials …
+- Data modules: 58; exported data functions: 377.
+- Contract testids not found verbatim in `src/` (placeholder or dynamic): 194.
+  - audit-file-view-builder, audit-file-view-certificate, audit-file-view-conclusion, audit-file-view-documents, audit-file-view-ethics, audit-file-view-execution, audit-file-view-findings, audit-file-view-planning, audit-file-view-population, audit-file-view-report, audit-file-view-review, audit-file-view-rowtesting, audit-file-view-sampling, hosting-test, invite-user, issues-view-patterns, oa-branding-colour-accent, oa-branding-colour-background, oa-branding-colour-primary, oa-branding-colour-text, oa-branding-margin-0, oa-branding-margin-3, oa-certificate-enabled-verification, oa-escalation-result, oa-escalation-saved, oa-governance-signoff-conclusion, oa-governance-signoff-planning, oa-governance-signoff-testing, org-control-tab-auditors, org-control-tab-automation, org-control-tab-branding, org-control-tab-connectors, org-control-tab-features, org-control-tab-formats, org-control-tab-governance, org-control-tab-hosting, org-control-tab-methodology, org-control-tab-people, org-control-tab-setup, org-control-tab-templates …
 
