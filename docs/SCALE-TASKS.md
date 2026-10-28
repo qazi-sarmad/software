@@ -358,7 +358,7 @@ twice cleanly and the full SQL harness is green ("all SQL tests passed twice", 1
 
 Migration `supabase/migrations/0108_phase3_report_templates.sql` (new) and test
 `supabase/tests/109_phase3_report_templates.sql` (new, 13 assertions). Migration applies twice
-cleanly; full SQL harness green ("all SQL tests passed twice", 113 test files).
+cleanly; full SQL harness green ("all SQL tests passed twice", 112 test files).
 
 - **The defect.** `report_templates` (0088) was fully inert: no writer RPC, no reader, no screen
   reference — rows existed only in a test seed. `compose_report` hardcoded the five report sections.
