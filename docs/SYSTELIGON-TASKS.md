@@ -14,8 +14,18 @@ Two builds run concurrently on this repository:
 
 | Branch | Owns | Ledger |
 |---|---|---|
-| `feature/scale-harden-v1` | Phases 1-6 of the remediation plan (foundation, lifecycle, config, methodology, monitors, proof) | `docs/SCALE-TASKS.md` |
-| `feature/systeligon-build-v1` | The Systeligon forensic engine and its surfaces: S17-S21, T, D, U, F | **this file** |
+| `feature/scale-harden-v1` | Phases 3-6 of the remediation plan: config honesty, methodology templates, monitors & connectors, production-build proof. Plus the C-series and gates G1-G6. | `docs/SCALE-TASKS.md` |
+| `feature/systeligon-build-v1` | **Everything else established.** The full unscoped body: E1-E10, S17-S21, T3-T7, D1-D4, U1-U14, F1-F7, gates G7-G10. | **this file** |
+
+**Unscoped means unscoped.** Builder B takes the entire established body of work that Builder A does
+not own. It is not a cherry-picked slice. The list below is everything, and nothing on it is optional.
+
+**The non-collision boundary is exactly three things**, and they are all Builder A's:
+1. Phases 3-6 (config enforcement, methodology templates, monitors & connectors, production proof)
+2. The C-series (C1 IS the Phase 5 runner — same subsystem as Phase 5)
+3. Gates G1-G6
+
+Everything outside those three is Builder B's. Phases 1-2 are already done (migrations 0100-0106).
 
 **One branch owns one ledger.** That keeps the two merges clean. `docs/SCALE-TASKS.md` is the other
 session's; **do not edit it**. If you need their status, read it.
@@ -147,6 +157,42 @@ Each is a pure function under `src/lib/` with direct unit tests and a screen sur
 | D4 | Assurance operations: engagement health, reviewer load, finding ageing, report consistency, trail completeness | TODO |
 
 ---
+
+## E-series — the explain layer (docs/EXPLAIN-LAYER.md, E1-E10)
+
+Owner decision #6: everything must be explainable and drilldownable. Not polish — a first-class
+requirement, and the thing that makes the product teachable without a manual.
+
+| # | Task | Status |
+|---|---|---|
+| E1 | `src/lib/explain/catalogue.ts` — schema, `explainFor(user, id, context)`, redaction, L2 guard test | TODO |
+| E2 | `ExplainPopout` + `useExplain` on `HoverPreview`; non-blocking, a11y (tooltip + complementary) | TODO |
+| E3 | `src/lib/explain/iia.ts` — standards as data, paraphrased, mapped to real screens/RPCs | TODO |
+| E4 | Hover cards + detail panels wired across sampling methods, fields, statuses, terms | TODO |
+| E5 | Drilldown from every aggregate; deep-linkable; no blocking modal (walk test) | TODO |
+| E6 | Standards affordance on screens, lifecycle steps and report sections | TODO |
+| E7 | Standards view (catalogue → implementation → evidence) | TODO |
+| E8 | `PencilGuide` + guidance data for guided first-run and per-screen "show me" | TODO |
+| E9 | Gates G7 (explain coverage), G8 (drilldown), G9 (IIA honesty) + tests | TODO |
+| E10 | Extend `UI-INVENTORY.md` with explain ids, standards and drilldown targets per screen | TODO |
+
+### The access rule that makes this safe (Law L2)
+
+The popout renders **static catalogue content** (safe for any signed-in user) plus **contextual
+values the host screen has ALREADY filtered** through `src/lib/access.ts`. The popout never queries
+and never decides access to tenant data — `explainFor(user, id, context)` is **pure**, redacts on a
+missing right, and **never returns nothing** (a missing popout looks like a bug).
+
+Anchors that already exist and must be reused, not reinvented:
+- `src/lib/access.ts` — the host screen's filter
+- `src/components/common/HoverPreview.tsx` — the existing portal chrome
+- `RecordView` + `FloatingWindowManager` — record drilldown, already built
+
+### E1 is the gate for the rest
+
+`explainFor` must be pure and time-argumented. Write it and its redaction test FIRST; E2-E8 all call
+it. A popout that can leak a field the host screen filtered is an L2 breach, which is why E1 carries
+the guard test rather than E9.
 
 ## U-series — interface quality
 

@@ -1,10 +1,11 @@
-# Builder prompt — Systeligon concurrent build (scoped)
+# Builder prompt — Builder B (full established body, non-colliding)
 
 Paste the block below into a fresh session. It is self-contained: the session needs no prior context.
 
-This is the **scoped** brief. It supersedes the "PART 1-6, do everything" version in
-`docs/BUILDER-PROMPT.md` for the concurrent build, because a second session is already working
-Phases 3-6 on `feature/scale-harden-v1`. Overlap is the risk; scope is the mitigation.
+This is the brief for **Builder B**. It carries the **full established body of work** — unscoped —
+minus the three things Builder A owns. Two sessions run at once, so the boundary is stated exactly
+rather than left to judgement. It supersedes `docs/BUILDER-PROMPT.md`, which was written before
+Builder A existed and told a new session to rebase onto Builder A's working tree.
 
 ---
 
@@ -23,21 +24,28 @@ lock_sample, method-aware sampling and value coverage. You do NOT need to rebase
 feature/scale-harden-v1, and you must not — that branch is a second live session's working tree.
 Branch from feature/systeligon-v1 and start at 0106.
 
-YOUR SCOPE — do exactly this, and do not do more
-The Systeligon forensic engine and its surfaces: S17-S21, T3-T7, D1-D4, U1-U14, F1-F7.
-Full task list, with status, in docs/SYSTELIGON-TASKS.md — that is YOUR ledger.
+YOUR SCOPE — the whole established body, unscoped
+Everything in docs/SYSTELIGON-TASKS.md, in the order given there. That is YOUR ledger.
+- E1-E10   the explain layer (popouts, drilldown, access-filtered detail, IIA standards)
+- S17-S21  document recognition, SIRA continuity, two-key acceptance, evidence storage, comment popout
+- T3-T7    attestation package, third-party verifier, attestation screen, incident wizard, wire the alarm
+- D1-D4    the deterministic capability library
+- U1-U14   interface quality and personalisation (themes, profiles, time-of-day, motion, headers)
+- F1-F7    self-hosted fonts, licence metadata, template auto-detection
+- G7-G10   the gates you own
+This is not a cherry-picked slice. Nothing on it is optional. NO PARKING.
 
-NOT YOURS — another session is building these right now. Do not touch them:
-- Phase 3 config enforcement (approval_chain, signoff_role_*, testing_mode, report_templates,
-  anchoring_settings) and docs/CONFIG-EFFECT-MATRIX.md
-- Phase 4 methodology / test-step templates
-- Phase 5 monitors and connectors: the runner wiring rule_engine_process, staged_record_ingest,
-  connector_run_start/finish, alert_record, and the Work Queue delivery
-- Phase 6 production-build proof and docs/DEMO-SCRIPT.md
-- The C-series (C1-C7 continuous assurance) — C1 IS the Phase 5 runner. Same subsystem. Leave it.
-- Gates G1-G6 (they own them). G7-G10 are yours.
-If you believe something in their scope is a blocker for yours, STOP and report it rather than
-building it. Two agents editing one subsystem is how this repo got a two-UIs problem.
+THE BOUNDARY — exactly three things are Builder A's, and nothing else
+Builder A is working feature/scale-harden-v1 RIGHT NOW. Do not touch:
+1. Phases 3-6: config enforcement (approval_chain, signoff_role_*, testing_mode, report_templates,
+   anchoring_settings) and docs/CONFIG-EFFECT-MATRIX.md; methodology / test-step templates; the
+   monitor and connector runners (rule_engine_process, staged_record_ingest, connector_run_start/
+   finish, alert_record, Work Queue delivery); production-build proof and docs/DEMO-SCRIPT.md.
+2. The C-series (C1-C7). C1 IS the Phase 5 runner — same subsystem. Leave the whole series.
+3. Gates G1-G6.
+Phases 1-2 are DONE and already on your base branch (0100-0106). Everything outside those three
+items is yours. If something in Builder A's scope blocks your work, STOP and report it — do not
+build it. Two agents editing one subsystem is how this repo got a two-UIs problem.
 
 MIGRATION NUMBERS — the single most likely way to break the other session
 0107 is theirs. 0108-0109 are reserved for them. YOUR RANGE STARTS AT 0110. Never write below 0110.
@@ -56,10 +64,10 @@ seconds. Never ask the owner to run anything — you run every gate yourself and
 
 READ FIRST, IN THIS ORDER
 1. docs/SYSTELIGON-TASKS.md        — YOUR LIVE LEDGER; the only status truth for your work
-2. docs/SYSTELIGON.md              — the forensic engine spec (your primary document)
-3. docs/README.md                  — docs index
-4. docs/FEATURE-REGISTER.md        — every feature and its true wiring status, gated
-5. docs/EXPLAIN-LAYER.md           — popouts, drilldown, access-filtered detail, IIA standards
+2. docs/EXPLAIN-LAYER.md           — the explain layer, E1-E10 (your first work package)
+3. docs/SYSTELIGON.md              — the forensic engine spec (S/C/T/D) and section 12, personalisation
+4. docs/README.md                  — docs index
+5. docs/FEATURE-REGISTER.md        — every feature and its true wiring status, gated
 6. docs/FONT-REPOSITORY.md         — self-hosted fonts, licence metadata, template auto-detection
 7. docs/iia-standards-reference.md — VERIFIED IIA 2024 numbering (use these; never guess)
 docs/SPEC-v10.md is the authoritative specification.
@@ -110,8 +118,40 @@ ENVIRONMENT
   same commit or the gate fails.
 
 ===============================================================
-YOUR WORK — S17-S21, T3-T7, D1-D4, U1-U14, F1-F7
+YOUR WORK — E1-E10, S17-S21, T3-T7, D1-D4, U1-U14, F1-F7, G7-G10
 ===============================================================
+
+E-series — the explain layer (docs/EXPLAIN-LAYER.md)
+Owner decision #6: everything must be explainable and drilldownable. Not polish - a first-class
+requirement, and the thing that makes the product teachable without a manual. This is FIRST because
+E2-E8 all call E1, and every screen built later should carry its explain affordance from the start.
+- E1 src/lib/explain/catalogue.ts - the schema, explainFor(user, id, context), redaction, L2 guard
+  test. explainFor is PURE and takes time as an argument. It NEVER returns nothing (a missing popout
+  looks like a bug).
+- E2 ExplainPopout + useExplain on the existing HoverPreview chrome; non-blocking; a11y: tooltip plus
+  role="complementary". No blocking modals, ever.
+- E3 src/lib/explain/iia.ts - standards as data, PARAPHRASED in our own words (never paste IIA
+  wording), mapped to real screens and RPCs, using the VERIFIED numbering in
+  docs/iia-standards-reference.md.
+- E4 Hover cards and detail panels wired across sampling methods, fields, statuses and terms.
+- E5 Drilldown from every aggregate to the exact filtered records that produced it, via the existing
+  RecordView + FloatingWindowManager. Deep-linkable. No blocking modal (walk test).
+- E6 Standards affordance on screens, lifecycle steps and report sections.
+- E7 Standards view: catalogue -> implementation -> evidence.
+- E8 PencilGuide + guidance data for guided first-run and per-screen "show me". Hand-drawn SVG arrow
+  plus annotation bubble, pure data under src/lib/guidance/, one pointer at a time,
+  keyboard-reachable, dismissible, respects reduced motion.
+- E9 Gates G7 (explain coverage), G8 (drilldown), G9 (IIA honesty) + their tests.
+- E10 Extend docs/UI-INVENTORY.md with explain ids, standards and drilldown targets per screen.
+
+THE ACCESS RULE THAT MAKES E SAFE (Law L2 - read it twice)
+The popout renders static catalogue content (safe for any signed-in user) PLUS contextual values the
+HOST SCREEN has already filtered through src/lib/access.ts. The popout NEVER queries and NEVER
+decides access to tenant data - it re-checks the caller's rights and redacts. A popout that can leak
+a field the host screen filtered is an L2 breach. That is why E1 carries the redaction guard test
+rather than E9.
+Reuse, do not reinvent: src/lib/access.ts, src/components/common/HoverPreview.tsx, RecordView +
+FloatingWindowManager (record drilldown already exists).
 
 S-series — the forensic engine
 - S17 Document recognition: sniff MAGIC BYTES (never trust the extension). Detect office-inside-zip by
@@ -264,5 +304,5 @@ OWNER ACTIONS (do not attempt these yourself; they need the owner)
 - Deploy the edge functions.
 
 BEGIN: run the baseline gates and confirm green, record the counts in docs/SYSTELIGON-TASKS.md, then
-start at S20 (the most serious gap) and work continuously through your scope.
+work continuously through the ledger in its order.
 ```
