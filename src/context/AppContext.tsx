@@ -22,6 +22,7 @@ import {
   AuditObservation,
   AuditUniverse,
   CapStatus,
+  EngagementStage,
   GlassBoxToken,
   LedgerEntry,
   ReviewComment,
@@ -121,6 +122,7 @@ interface AppContextType {
   appendLedger: (params: Parameters<typeof appendLedgerEntry>[1]) => Promise<LedgerEntry>;
   signOffEngagement: (engagementId: string) => Promise<GateResult>;
   reopenEngagement: (engagementId: string, justification: string) => Promise<GateResult>;
+  advanceEngagementStage: (engagementId: string, toStage: EngagementStage) => Promise<GateResult>;
   addEntity: (input: NewEntityInput) => Promise<{ ok: true; id: string } | { ok: false; reason: string }>;
   finalizeTest: (workpaperId: string) => Promise<GateResult>;
   registerPopulation: (workpaperId: string, summary: PopulationSummary) => Promise<GateResult>;
@@ -395,6 +397,27 @@ export function AppProvider({ user, seed, children }: { user: User; seed: Tenant
           : item
       )
     );
+    return { ok: true };
+  });
+
+  /**
+   * Move an engagement forward one stage (Phase 2.1). The database is the authority: it re-checks
+   * manage_engagements, the forward-only rule, the planning lock and the testing mode, and logs the
+   * transition. With no project configured the in-memory seed moves, matching the demo behaviour.
+   */
+  const advanceEngagementStage = (engagementId: string, toStage: EngagementStage): Promise<GateResult> => withSealGuard(async () => {
+    const eng = rawEngagements.find((e) => e.id === engagementId);
+    if (!eng) return { ok: false, code: 'NOT_AVAILABLE', reason: 'Engagement not available.' };
+    if (!hasRight(currentUser, 'manage_engagements')) {
+      return { ok: false, code: 'FORBIDDEN', reason: rightReason('manage_engagements') };
+    }
+    if (useDatabase) {
+      const res = await writes.setEngagementStage(engagementId, toStage, eng.stage);
+      if (!res.ok) return { ok: false, code: 'STAGE_FAILED', reason: res.reason };
+      await reload();
+      return { ok: true };
+    }
+    setRawEngagements((prev) => prev.map((item) => (item.id === engagementId ? { ...item, stage: toStage } : item)));
     return { ok: true };
   });
 
@@ -823,6 +846,7 @@ export function AppProvider({ user, seed, children }: { user: User; seed: Tenant
         appendLedger,
         signOffEngagement,
         reopenEngagement,
+        advanceEngagementStage,
         addEntity,
         registerPopulation,
         setTestStepCompleted,

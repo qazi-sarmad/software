@@ -217,6 +217,14 @@ begin
 end $$;
 select provio_test.as_owner();
 
+-- Phase 2.3: in the default two-stage testing mode the seal (which moves the engagement to
+-- Conclusion) needs a signed-off design (DEA) workpaper as well as the operating one. Add one as the
+-- owner; fixtures bypass the sign-off RPCs.
+select provio_test.as_owner();
+insert into workpapers (id, org_id, engagement_id, stage, status, test_phase) values
+  ('60000000-0000-0000-0000-0000000000a9', 'a0000000-0000-0000-0000-000000000001',
+   '50000000-0000-0000-0000-0000000000a1', 'testing', 'signed_off', 'dea');
+
 select provio_test.as_user('10000000-0000-0000-0000-0000000000a4', 'a0000000-0000-0000-0000-000000000001', 'audit_manager');
 do $$
 begin

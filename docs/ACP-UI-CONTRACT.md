@@ -890,7 +890,7 @@ The engagement workspace: a floating, non-modal window whose view switch opens P
 - **Route:** The `audit_file` floating window, opened from an engagement card; the tab is `audit_file`.
 - **Rights:** any member reads; each view gates on its own right and shows the refusal otherwise.
 - **Data:** none (pure/UI only) — through `src/data/*.ts`; components never import the database client (rule M8).
-- **Testids:** `audit-file`, `audit-file-as-of`, `audit-file-builder`, `audit-file-caps`, `audit-file-certificate`, `audit-file-conclusion`, `audit-file-documents`, `audit-file-export`, `audit-file-findings`, `audit-file-report`, `audit-file-stage`, `audit-file-unavailable`, `audit-file-workspace`, `tab-audit-file`, `workbench-action-error`, `workbench-signoff`
+- **Testids:** `audit-file`, `audit-file-advance-stage`, `audit-file-as-of`, `audit-file-builder`, `audit-file-caps`, `audit-file-certificate`, `audit-file-conclusion`, `audit-file-documents`, `audit-file-export`, `audit-file-findings`, `audit-file-report`, `audit-file-stage`, `audit-file-stage-error`, `audit-file-unavailable`, `audit-file-workspace`, `tab-audit-file`, `workbench-action-error`, `workbench-signoff`
 - **States:** loading; unavailable (`audit-file-unavailable`); ready; per-view empty states.
 - **Tutorial key:** —
 

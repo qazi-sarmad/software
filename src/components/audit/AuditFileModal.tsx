@@ -36,7 +36,7 @@ import { ReportBuilderPanel } from '../writing/ReportBuilderPanel';
  * The engagement is always re-read through useScopedData(), so scope applies and status is never stale.
  */
 export const AuditFileModal: React.FC = () => {
-  const { inspector, openInspector, signOffEngagement, currentUser } = useApp();
+  const { inspector, openInspector, signOffEngagement, advanceEngagementStage, currentUser } = useApp();
   const { scopedEngagements, scopedWorkpapers, scopedControls, scopedEntities, scopedObservations, scopedComments } = useScopedData();
 
   const requestedId: string | undefined = inspector.data?.engagement?.id;
@@ -61,6 +61,22 @@ export const AuditFileModal: React.FC = () => {
   const blockers = getSignOffBlockers(workpapers, scopedObservations, scopedComments);
   const signOff = getSignOffState(currentUser, engagement, gate, blockers);
 
+  const [stageError, setStageError] = useState<string | null>(null);
+
+  // Phase 2.1: the stage advance is a database write. The next stage is the one after the current.
+  const nextStage = engagement
+    ? (['planning', 'testing', 'conclusion'] as const)[
+        (['planning', 'testing', 'conclusion'] as const).indexOf(engagement.stage as 'planning') + 1
+      ]
+    : undefined;
+
+  const handleAdvanceStage = async () => {
+    if (!engagement || !nextStage) return;
+    setStageError(null);
+    const res = await advanceEngagementStage(engagement.id, nextStage);
+    if (!res.ok) setStageError(res.reason);
+  };
+
   const onTabKey = (e: React.KeyboardEvent) => {
     const i = AUDIT_FILE_TABS.findIndex((t) => t.id === tab);
     if (e.key === 'ArrowRight') setTab(AUDIT_FILE_TABS[(i + 1) % AUDIT_FILE_TABS.length].id);
@@ -79,6 +95,16 @@ export const AuditFileModal: React.FC = () => {
             <span className="text-apple-11 font-semibold text-secondary uppercase" data-testid="audit-file-stage">
               {engagement.stage}
             </span>
+            {nextStage && engagement.status !== 'signed_off' && (
+              <button
+                type="button"
+                data-testid="audit-file-advance-stage"
+                onClick={handleAdvanceStage}
+                className="ml-1 px-2 py-0.5 rounded-full text-apple-11 font-semibold border border-hairline text-secondary hover:border-accent hover:text-accent focus:outline-none focus:ring-2 focus:ring-accent"
+              >
+                Move to {nextStage}
+              </button>
+            )}
           </div>
           {engagement.status === 'signed_off' && (
             <span className="px-2 py-0.5 rounded-full text-apple-11 font-semibold bg-verdigris-subtle text-verdigris border border-verdigris flex items-center gap-1">
@@ -94,6 +120,9 @@ export const AuditFileModal: React.FC = () => {
           <span>•</span>
           <span>{workpapers.length} working papers</span>
         </div>
+        {stageError && (
+          <p data-testid="audit-file-stage-error" className="text-apple-12 text-cinnabar">{stageError}</p>
+        )}
       </div>
 
       {/* View switch: the seed-backed Overview, or the database-backed phase workspaces (4I, 5G). */}

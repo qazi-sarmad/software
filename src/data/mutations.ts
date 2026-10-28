@@ -13,6 +13,19 @@ export function sealEngagement(engagementId: string): Promise<DataResult> {
   return callRpc('seal_engagement', { p_engagement_id: engagementId });
 }
 
+/**
+ * Move an engagement forward one stage (migration 0101). p_expected_stage is optimistic
+ * concurrency: the stage the caller saw. The database refuses a stale value, a backward move and a
+ * move whose pre-conditions (planning sign-off, testing_mode) are not met.
+ */
+export function setEngagementStage(
+  engagementId: string, toStage: string, expectedStage: string | null
+): Promise<DataResult> {
+  return callRpc('set_engagement_stage', {
+    p_engagement_id: engagementId, p_to_stage: toStage, p_expected_stage: expectedStage,
+  });
+}
+
 /** Reopen a sealed engagement with a justification (migration 0007). */
 export function reopenEngagement(engagementId: string, justification: string): Promise<DataResult> {
   return callRpc('reopen_engagement', { p_engagement_id: engagementId, p_justification: justification });

@@ -165,15 +165,53 @@ tests exercise) the in-memory demo path is kept unchanged.
 
 | # | Task | Status |
 |---|---|---|
-| 2.1 | `set_engagement_stage` RPC + transition log; wire planning→testing→conclusion in the UI | TODO |
-| 2.2 | Enforce `signoff_role_*` in `sign_planning` / `sign_conclusion` | TODO |
-| 2.3 | Enforce `testing_mode` (one-stage vs two-stage) | TODO |
-| 2.4 | Enforce `approval_chain` when an approval is decided | TODO |
+| 2.1 | `set_engagement_stage` RPC + transition log; wire planning→testing→conclusion in the UI | DONE |
+| 2.2 | Enforce `signoff_role_*` in `sign_planning` / `sign_conclusion` | DONE |
+| 2.3 | Enforce `testing_mode` (one-stage vs two-stage) | DONE |
+| 2.4 | Enforce `approval_chain` when an approval is decided | DONE |
 | 2.5 | Wire `runPreflight` into `freeze_report`; gate on `preflight_acks` | TODO |
 | 2.6 | Persist the report graph root (`report_graphs` writer) | TODO |
 | 2.7 | Seed `workpaper_rows` from `lock_sample`; link sample to tested rows | TODO |
 | 2.8 | Method-aware sampling (MUS/PPS, systematic, stratified) + Clopper-Pearson | TODO |
 | 2.9 | Value-coverage check (top-value items included or waived with a reason) | TODO |
+
+### Phase 2.1–2.4 — what was built and how it was verified (2026-10-28)
+
+Migration `supabase/migrations/0101_phase2_lifecycle.sql` (new) and test
+`supabase/tests/102_phase2_lifecycle.sql` (new, 26 assertions). The migration applies twice cleanly
+and the full SQL harness is green ("all SQL tests passed twice").
+
+- **2.1 `set_engagement_stage(p_engagement_id, p_to_stage, p_expected_stage)`.** The one write path
+  for `engagements.stage`, which had none: the audit found the stage only ever changed in React state
+  (`AppContext.signOffEngagement`), so the transition was lost on reload. The RPC checks
+  `manage_engagements`, refuses a stale `p_expected_stage` (optimistic concurrency), refuses a
+  backward or no-op move, and refuses a move to `testing` while `testing_lock_active()` is true
+  (honouring the org's grace period). Every transition writes an append-only
+  `engagement_stage_transitions` row (guarded against UPDATE/DELETE), a hash-chained ledger entry and
+  an `activity_log` row.
+- **Wired, verified by grep.** `grep -n 'setEngagementStage' src/` shows the one data-module caller
+  (`src/data/mutations.ts`), reached from `AppContext.advanceEngagementStage`, called by the "Move to
+  …" control in `AuditFileModal.tsx`. `src/context/stageAdvance.test.tsx` (4 tests) proves the command
+  is exposed, refuses a caller without `manage_engagements`, and moves the rendered engagement.
+- **2.2 `signoff_role_*`.** `sign_planning` and `sign_conclusion` are extended in place to require the
+  configured team role (`caller_meets_signoff_role`). A caller must hold the role's rights; and when
+  the engagement has a member in that role, the caller must be that member, so assigning a reviewer
+  genuinely narrows who may sign. Default role is `reviewer`, so existing flows are unchanged.
+- **2.3 `testing_mode`.** New `assert_conclusion_ready()` is shared by the `conclusion` stage
+  transition **and** `seal_engagement` (extended in place), so the two paths cannot disagree. Two-stage
+  needs a signed-off design (DEA) workpaper and a signed-off operating (OET) workpaper; one-stage needs
+  only the operating one. A new `workpapers.test_phase` column (`dea`/`oet`, default `oet`) carries the
+  distinction.
+- **2.4 `approval_chain`.** `workflow_settings.approval_chain` was stored and never consulted.
+  `approve_plan` is extended in place: every step of the chain must be recorded, in order, by a caller
+  holding that role (`approval_step_decide`), before the plan can be approved. With the default empty
+  chain the gate is inactive, so nothing changes for an org that has not configured one.
+- **Two fixture updates the enforcement forced:** `101_phase1_write_paths.sql` now inserts a signed-off
+  DEA workpaper before the seal (default mode is two-stage); no existing test needed weakening.
+- **Gate set after the change:** `tsc` PASS; `vitest` 203 files / 2386 tests PASS; `vite build` PASS;
+  `check-shrink` PASS (58 files); `check-tokens` PASS (179 files, 0 violations); `check-ui-contract`
+  PASS (48 screens); `check-tutorials` PASS (79 current / 1 stale `sa.tenant-hub`, pre-existing);
+  SQL harness PASS — "all SQL tests passed twice" (105 test files).
 
 ## Phase 3 — Make the configuration honest
 
