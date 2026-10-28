@@ -1473,6 +1473,26 @@ above. `docs/ACP-TUTORIALS.md` lists every key and its steps.
   `oa-governance-population-retention`, `oa-governance-retention-save`., `oa-governance-grace-hours`
 - **States:** loading, error, empty, ready; an inline result line reports a saved change or the plain
   refusal (a value outside the platform range, an unknown role tag, an unsupported format).
+
+## OA-22b — report template (Phase 3.4, §15.2)
+
+- **Purpose:** the organisation's report template — which of the five report sections a composed
+  report contains, and in what order. Saving writes a new versioned, logged template (0088's
+  hash chain) and the next `compose_report` follows it; with nothing saved the default five-section
+  order applies. The section ids are a closed set, so a template can never name a section the
+  product cannot render.
+- **Route:** Org Admin control plane, tab `Report template` (`org-control-tab-templates`).
+- **Rights:** `edit_config`.
+- **Data:** `listReportTemplates()`, `saveReportTemplate(modelId, title, sections)`,
+  `REPORT_SECTION_IDS` (`src/data/governance.ts`).
+- **Testids:** `report-template-panel`, `report-template-loading`, `report-template-error`,
+  `report-template-no-right`, `report-template-denied`, `report-template-version`,
+  `report-template-result`, `report-template-save-error`, `report-template-sections`,
+  `report-template-empty`, `report-template-section-<id>`, `report-template-up-<id>`,
+  `report-template-down-<id>`, `report-template-remove-<id>`, `report-template-add-row`,
+  `report-template-add-<id>`, `report-template-save`.
+- **States:** loading, error, empty (no sections chosen), ready; an inline result line reports the
+  saved change or the plain refusal (an unknown section id, an empty template).
 - **Tutorial key:** `oa.governance`.
 
 ## OA-23 — connectors and continuous monitoring (WRITE-1, W11.6)

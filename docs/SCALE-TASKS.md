@@ -318,7 +318,7 @@ and the full SQL harness is green ("all SQL tests passed twice").
 | 3.1 | `approval_chain` enforced (or hidden) | DONE |
 | 3.2 | `signoff_role_*` enforced | DONE |
 | 3.3 | `testing_mode` enforced | DONE |
-| 3.4 | `report_templates` enforced (or hidden) | TODO |
+| 3.4 | `report_templates` enforced (or hidden) | DONE |
 | 3.5 | `anchoring_settings` setters wired (`admin_save_trust_anchor`, `admin_save_timestamp_authority`) | TODO |
 | 3.6 | `docs/CONFIG-EFFECT-MATRIX.md` — every configurable field with its proving test | TODO |
 
@@ -353,6 +353,31 @@ twice cleanly and the full SQL harness is green ("all SQL tests passed twice", 1
 - **Gate set after the change:** `tsc` PASS; `vitest` PASS; `vite build` PASS; `check-shrink` PASS;
   `check-tokens` PASS; `check-ui-contract` PASS; `check-tutorials` PASS; SQL harness PASS — "all SQL
   tests passed twice" (111 test files).
+
+### Phase 3.4 — `report_templates` (2026-10-28)
+
+Migration `supabase/migrations/0108_phase3_report_templates.sql` (new) and test
+`supabase/tests/109_phase3_report_templates.sql` (new, 13 assertions). Migration applies twice
+cleanly; full SQL harness green ("all SQL tests passed twice", 113 test files).
+
+- **The defect.** `report_templates` (0088) was fully inert: no writer RPC, no reader, no screen
+  reference — rows existed only in a test seed. `compose_report` hardcoded the five report sections.
+- **The fix.** Added the missing writer `report_template_save(model_id, title, sections)` (requires
+  `edit_config`, validates each section id against the closed five, versions + logs the change; the
+  0088 trigger writes the hash-chained `report_template_versions` row) and the reader
+  `report_template_list()`. `compose_report` now reads the org's current M1 template and creates
+  exactly those sections in that order; with no template it produces the pre-0108 five-section
+  default unchanged.
+- **UI.** New `src/components/admin/ReportTemplatePanel.tsx` (tab `Report template`,
+  `org-control-tab-templates`): reorder / remove / add sections, save, with the live current version
+  shown. Test `ReportTemplatePanel.test.tsx` (5 cases) covers the default plan, a saved plan, the
+  reorder-and-save RPC call, a database refusal, and the no-right state. Contract section `OA-22b`
+  added to `docs/ACP-UI-CONTRACT.md`.
+- **Gate set after the change:** `tsc` PASS; `vitest` PASS (206 files / 2410 tests); `vite build`
+  PASS; `check-shrink` PASS; `check-tokens` PASS; `check-ui-contract` PASS (48 screens); 
+  `check-tutorials` PASS (75 current / 5 stale — the 4 new stale keys are `oa.features`,
+  `oa.tutorials`, `oa.connectors`, `oa.formats`, whose declaring file `OrgControlPanel.tsx` changed;
+  GIFs regenerate in Phase 6 when the UI is final); SQL harness PASS — "all SQL tests passed twice".
 
 ## Phase 4 — Methodology & test steps as data
 
