@@ -9,6 +9,18 @@ catch that; a register that is checked against the code can.
 claim below is verified against the code, not against another document. Where a row says `Wired`, the
 call site is named. Where it says `Inert`, the reason it is unreachable is named.
 
+> **CORRECTION — 2026-10-28, second pass.** The first version of this register was built from
+> `FUNCTIONALITY-AUDIT.md`, which was written at `c898269` — **before Phases 1 and 2 of the
+> scale-harden build existed**. It therefore reported as `Inert` a large amount of work that is now
+> wired. That was the same error this document exists to prevent: treating a document as evidence
+> instead of grepping the code. Every `Inert` claim below has been re-verified on the branch at
+> `f83c1da` with an alias-aware import resolver (`scripts/audit-wiring.mjs`), because name-based greps
+> miss aliased imports (`populateSuggestions` is `populate_planning_suggestions`).
+>
+> **What the correction changed:** the foundation and lifecycle are no longer "the missing middle".
+> Phase 1 (the app reads its own database) and Phase 2 (the lifecycle is real) are **DONE on this
+> branch** — see `SCALE-TASKS.md`. R1 and R2 in §15 are closed by work already committed.
+
 **Status vocabulary — exactly three values, no others.**
 
 | Status | Means | Evidence required |
@@ -42,14 +54,14 @@ feature to be testable.
 
 | # | Capability | Status | Evidence / gap | WP | Acceptance test |
 |---|---|---|---|---|---|
-| F1 | Tenant data loaded from the database into the shell | `Inert` | The shell is fed by `demoSeed` in DEV and `emptySeed` in production; `AppContext` makes **zero** supabase calls, so no tenant row ever reaches a screen | R1 | Playwright against a **production build**: a row inserted via SQL appears on the dashboard |
-| F2 | Engagement stage persisted | `Inert` | No RPC writes `engagements.stage`; only `setRawEngagements` in React state | R2 | SQL test for `set_engagement_stage`; Playwright moving planning→testing→conclusion |
-| F3 | Ledger verified against the database | `Inert` | `verify_ledger` — 0 production refs. The chain is written in memory only | R2 | SQL test tampering a ledger row, then `verify_ledger` returns false |
-| F4 | Report graph root persisted | `Inert` | `verify_report_root` has no writer for `report_graphs` | R2 | SQL test: freeze a report, then verify the root |
-| F5 | Pre-flight engine consumed at freeze | `Inert` | `preflight_acks` storage is wired; `runPreflight` is not called by `freeze_report` | R2 | Test: freeze refused while an item is unacknowledged |
-| F6 | Sampling linked to row testing | `Inert` | `workpaper_rows` never seeded from `lock_sample` | R2 | Test: a drawn sample becomes the tested set |
-| F7 | In-memory mutations routed to RPCs | `Inert` | `signOffEngagement`, `appendLedgerEntry`, `setTestStepCompleted` mutate React state only and are what actually runs on those paths; the durable RPCs exist alongside them | R2 | No `setRaw*` mutation remains on a lifecycle path |
-| F8 | Playwright runs a production build | `Absent` | `playwright.config.ts:39` runs `npm run dev` — the suite cannot see the prod path | R1 | Config change + the F1 test |
+| F1 | Tenant data loaded from the database into the shell | `Wired` | `loadTenantSnapshot()` (`src/data/tenant.ts`), called from `src/App.tsx:237` and `AppContext.tsx:177`; `snapshotToSeed()` replaces the seed inside `AuthGate`. Phase 1, SCALE-TASKS 1.1-1.3. (SCALE-TASKS 1.2 refers to a tenant data provider component; the mechanism actually shipped is these two functions called directly from the auth gate. Naming discrepancy in the ledger, not a functional gap.) | — | `e2e/phase1-production-build.spec.ts` (G1) |
+| F2 | Engagement stage persisted | `Wired` | `set_engagement_stage` (`0101_phase2_lifecycle.sql:149`), append-only transition log, called from `AppContext.tsx`; `src/context/stageAdvance.test.tsx` | — | Phase 2 2.1 |
+| F3 | Ledger verified against the database | `Inert` | `verify_ledger` (`0007:97`) still has **0** production callers — the chain is written but never verified against the DB | T7 | SQL test tampering a ledger row, then `verify_ledger` returns false |
+| F4 | Report graph root persisted | `Wired` | `commitReportGraph` (`src/data/reportGraph.ts:144`) called from `ReportEditorPanel.tsx:149`; read back by `verifyReportRoot` (`PublicVerifyRoute.tsx:43`). Phase 2, 2.6 | — | `104_phase2_report_graph.sql` |
+| F5 | Pre-flight engine consumed at freeze | `Wired` | `freeze_report` computes open items from real tables and refuses while any is unacknowledged (`0102_phase2_preflight_gate.sql`); `ReportEditorPanel.tsx:22` uses the preflight data module. Phase 2, 2.5 | — | Phase 2 2.5 |
+| F6 | Sampling linked to row testing | `Wired` | `workpaper_rows` seeded from `lock_sample` (`0104_phase2_row_seeding.sql`); method-aware draw `0105`; value coverage `0106`. Phase 2, 2.7-2.9 | — | `105_phase2_row_seeding.sql` |
+| F7 | In-memory mutations routed to RPCs | `Wired` | Phase 1 task 1.4 closed the parallel mutations; the durable RPCs are the path (`src/data/mutations.ts`) | — | Phase 1 1.4 |
+| F8 | Playwright runs a production build | `Wired` | `playwright.config.ts:5` — `E2E_PROD=1` serves the built bundle via `vite preview`; the G1 anti-theatre gate | — | `e2e/phase1-production-build.spec.ts` |
 
 ---
 
@@ -57,24 +69,24 @@ feature to be testable.
 
 | # | Capability | Status | Evidence / gap | WP |
 |---|---|---|---|---|
-| F9 | Universe and entity management | `Wired` | `listEntities()` read by `AuditUniverseTab` — **but** merged with `scopedEntities` from the seed (F1) | R1 |
+| F9 | Universe and entity management | `Wired` | `listEntities()` read by `AuditUniverseTab`; the two-sources merge was closed in Phase 1 (the seed is now hydrated from the DB, not parallel to it) | — |
 | F10 | SIRA reads (cycles, risks, model snapshot) | `Wired` | `listCycles`, `listEmergentRisks`, `siraModelSnapshot` called from `SiraTab.tsx` | — |
 | F11 | SIRA carry-forward into next year | `Absent` | `create_sira_cycle` inserts a bare draft; no seeding | S18 |
-| F12 | SIRA pre-fill into planning | `Inert` | `populate_planning_suggestions` + `decide_planning_suggestion` — **0 non-test callers** | S18 |
+| F12 | SIRA pre-fill into planning | `Wired` | `populateSuggestions` / `decideSuggestion` (`src/data/planning.ts:38,53`) called from `PlanningPanel.tsx:44,76`. The audit predates this wiring and its claim is stale | — |
 | F13 | Two-key SIRA acceptance | `Absent` | Finaliser decision is currently a closure; auditor acceptance not modelled | S19 |
-| F14 | Emergent risk submit / decide | `Inert` | `submitEmergentRisk` and `decideEmergentRisk` — **0 callers** in components/context/hooks | R2 |
-| F15 | Planning suggestions and decisions | `Inert` | See F12 | S18 |
+| F14 | Emergent risk submit / decide | `Inert` | `submitEmergentRisk` / `decideEmergentRisk` — verified **0 callers**; `SiraCyclePanel` renders `emergent` but is passed no submit/decide handler from `RecordContent.tsx:118` | S18 |
+| F15 | Planning suggestions and decisions | `Wired` | Same path as F12 — `PlanningPanel.tsx` renders and decides them | — |
 | F16 | Plan approval rights | `Wired` | `plan_approval_settings`, enforced in `create_plan` / `approve_plan` | — |
 | F17 | Engagement gates | `Wired` | `engagement_gate_settings`, enforced by deploy/approve/escalate RPCs | — |
 | F18 | Testing hard lock + grace period | `Wired` | `testing_grace_hours`, `testing_lock_active` trigger (`0095:56`) | — |
-| F19 | Testing mode (one-stage / two-stage) | `Inert` | `org_lifecycle_settings.testing_mode` stored, never read by a sign path | R3 |
-| F20 | Lifecycle sign-off roles | `Inert` | `signoff_role_*` stored; `sign_planning` / `sign_conclusion` never read them | R3 |
-| F21 | Workflow approval chain | `Inert` | `workflow_settings.approval_chain` stored, never consulted for a decision | R3 |
-| F22 | Sampling methods (MUS/PPS, systematic, stratified) | `Inert` | `compute_sample` exists; method selection not wired; sample-size calculator absent | R2 |
+| F19 | Testing mode (one-stage / two-stage) | `Wired` | Enforced: the transition to `conclusion` reads `testing_mode` (`0101_phase2_lifecycle.sql:114` `assert_conclusion_ready`). Phase 2, 2.3 | — |
+| F20 | Lifecycle sign-off roles | `Wired` | Enforced: `caller_meets_signoff_role` (`0101:98`) is required by `sign_planning` / `sign_conclusion`. Phase 2, 2.2 | — |
+| F21 | Workflow approval chain | `Wired` | Enforced: `approve_plan()` requires every chain step recorded in order (`0101`, 2.4). Phase 3 extends this to `sla_hours` / `escalation_*` / `signoff_role_testing` — commit `4db8820` on `feature/scale-harden-v1`, not yet on this branch | — |
+| F22 | Sampling methods (MUS/PPS, systematic, stratified) | `Wired` | Phase 2, 2.8: method-aware draw in `0105_phase2_sampling_methods.sql` + Clopper-Pearson; value coverage `0106`. `106_phase2_sampling_methods.sql` | — |
 | F23 | Row testing and sign-off | `Wired` | `record_workpaper_row`, `sign_off_workpaper`; `RowTestingPanel` calls them | — |
 | F24 | Population gate | `Wired` | `lock_population`, sha256, refusal in `compute_sample` | — |
 | F25 | Conclusion and engagement seal | `Wired` | `supabase/migrations/0034_conclusion.sql` sets `sealed` | — |
-| F26 | Reopen a sealed engagement | `Inert` | `reopen_engagement` — 0 production refs | R4 |
+| F26 | Reopen a sealed engagement | `Wired` | `reopenEngagement` (`src/data/mutations.ts`) called from `AuditPlanTab.tsx:118` | — |
 | F27 | Ethics sign-off | `Wired` | `ethics` inspector kind + acks | — |
 | F28 | Test steps as configurable data | `Absent` | No `test_step_templates` table; steps are React state | R5 |
 | F29 | Procedure / methodology templates | `Absent` | No `procedure_templates` table | R5 |
@@ -266,19 +278,22 @@ Each is a pure function under `src/lib/`, with direct unit tests and a screen su
 
 | Status | Count |
 |---|---|
-| `Wired` | 38 |
-| `Inert` | 42 |
-| `Absent` | 45 |
+| `Wired` | 52 |
+| `Inert` | 29 |
+| `Absent` | 44 |
 | **Total** | **125** |
 
-**Read that again.** Roughly **a third of the product is built and unreachable**, and another third
-does not exist. The `Wired` third is real and tested. The `Inert` third is the defect the owner kept
-finding — and every one of those rows looks like a working feature in the UI.
+**Read that again, with the correction applied.** This is materially better than the first pass
+reported, because Phases 1 and 2 of the scale-harden build closed the whole foundation. The picture
+now: **52 wired, 29 inert, 44 absent.** The remaining `Inert` rows are the genuine, still-open
+unwired features — the monitor runtime, the evidence bytes, the tamper alarm, the SIRA write path,
+the ledger verification. Every one of those is a defect, and every one looks like a working feature
+in the UI.
 
-**The order of work is not negotiable.** R1 before R2 (nothing is testable until data loads), R2
-before R3 (a setting cannot be proven enforced until the lifecycle persists), R3 before C-series (a
-monitor cannot be trusted until configuration is honest). The C, S, T, U, D and F series interleave
-after R3.
+**The order of work is not negotiable, and R1 and R2 are already done.** R1 (the app reads its own
+database) and R2 (the lifecycle is real) closed in Phases 1-2. R3 (the configuration is honest) is
+partly done — `testing_mode`, `signoff_role_*` and `approval_chain` are enforced; the rest is the
+TODO set in `SCALE-TASKS.md` Phase 3. The C, S, T, U, D and F series interleave after R3.
 
 ---
 
