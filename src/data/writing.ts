@@ -5,7 +5,7 @@
  * Supabase client. Reads use org-scoped RPCs and tables; every write goes through a security-definer
  * RPC that checks rights (0089, 0090) and the org guard.
  */
-import { callRpc, getClient, type DataResult } from './db';
+import { callRpc, getClient, NOT_CONFIGURED_REASON, type DataResult } from './db';
 import { layoutFromRow, type FormatLayout } from '../lib/writing/reportFormat';
 
 export interface PhraseRow {
@@ -269,6 +269,160 @@ export async function triageAlert(
     p_org: orgId, p_alert_id: alertId, p_disposition: disposition, p_reason: reason,
     p_snooze_until: snoozeUntil,
   });
+}
+
+// ---------------------------------------------------------------------------
+// Acting on an alert — Phase 5, C4/C5/C6, migration 0114. Everything is pre-filled from the alert's
+// enrichment (C2), so nobody retypes what the platform already knows.
+// ---------------------------------------------------------------------------
+
+/** A write that returns the new row's id, so a wizard can chain (finding -> CAP). */
+export interface IdResult { ok: boolean; reason?: string; id?: string }
+
+async function callRpcId(name: string, args: Record<string, unknown>): Promise<IdResult> {
+  const sb = getClient();
+  if (!sb) return { ok: false, reason: NOT_CONFIGURED_REASON };
+  const { data, error } = await sb.rpc(name, args);
+  return error ? { ok: false, reason: error.message } : { ok: true, id: data == null ? undefined : String(data) };
+}
+
+/** The pre-fill for an ad-hoc audit raised from an alert — C4. */
+export interface AlertAdhocSuggestion {
+  alertId: string;
+  ruleId: string;
+  ruleVersion: number;
+  entityId: string | null;
+  entityName: string | null;
+  universeId: string | null;
+  universeName: string | null;
+  department: string | null;
+  engagementId: string | null;
+  controlIds: string[];
+  controlCount: number;
+  residualBand: string | null;
+  siraRiskName: string | null;
+  planId: string | null;
+  title: string;
+  justification: string;
+}
+
+/** The ad-hoc audit pre-fill for an alert: entity, department, controls, and the draft plan. */
+export async function alertAdhocSuggestion(orgId: string, alertId: string): Promise<AlertAdhocSuggestion | null> {
+  const sb = getClient();
+  if (!sb) return null;
+  const { data, error } = await sb.rpc('alert_adhoc_suggestion', { p_org: orgId, p_alert_id: alertId });
+  if (error) throw new Error(error.message);
+  if (!data) return null;
+  const r = data as Record<string, unknown>;
+  return {
+    alertId: String(r.alert_id), ruleId: String(r.rule_id), ruleVersion: Number(r.rule_version),
+    entityId: r.entity_id == null ? null : String(r.entity_id),
+    entityName: r.entity_name == null ? null : String(r.entity_name),
+    universeId: r.universe_id == null ? null : String(r.universe_id),
+    universeName: r.universe_name == null ? null : String(r.universe_name),
+    department: r.department == null ? null : String(r.department),
+    engagementId: r.engagement_id == null ? null : String(r.engagement_id),
+    controlIds: Array.isArray(r.control_ids) ? (r.control_ids as unknown[]).map(String) : [],
+    controlCount: Number(r.control_count ?? 0),
+    residualBand: r.residual_band == null ? null : String(r.residual_band),
+    siraRiskName: r.sira_risk_name == null ? null : String(r.sira_risk_name),
+    planId: r.plan_id == null ? null : String(r.plan_id),
+    title: String(r.title ?? ''), justification: String(r.justification ?? ''),
+  };
+}
+
+/** Raise an ad-hoc audit from an alert, as a pending ad-hoc plan item (C4). */
+export function alertAdhocAuditRaise(
+  orgId: string, alertId: string, planId: string, title: string | null,
+  justification: string | null, start?: string, end?: string,
+): Promise<IdResult> {
+  return callRpcId('alert_adhoc_audit_raise', {
+    p_org: orgId, p_alert_id: alertId, p_plan: planId, p_title: title,
+    p_justification: justification, p_start: start ?? null, p_end: end ?? null,
+  });
+}
+
+/** Raise a finding from an alert, with the mandatory readability sections pre-filled (C5). */
+export function alertRaiseFinding(
+  orgId: string, alertId: string, engagementId: string, title?: string,
+  context?: string, condition?: string, effect?: string, risk?: string,
+): Promise<IdResult> {
+  return callRpcId('alert_raise_finding', {
+    p_org: orgId, p_alert_id: alertId, p_engagement: engagementId, p_title: title ?? null,
+    p_context: context ?? null, p_condition: condition ?? null,
+    p_effect: effect ?? null, p_risk: risk ?? null,
+  });
+}
+
+/** Raise a CAP on the register for a finding raised from an alert — C5. */
+export function alertRaiseCap(
+  orgId: string, alertId: string, findingId: string, responsibleDept: string | null,
+  dueDate: string | null, actionDescription: string | null,
+): Promise<IdResult> {
+  return callRpcId('alert_raise_cap', {
+    p_org: orgId, p_alert_id: alertId, p_finding_id: findingId,
+    p_responsible_dept: responsibleDept, p_due_date: dueDate,
+    p_action_description: actionDescription,
+  });
+}
+
+/** Record a request for evidence against an alert — C5. */
+export function alertRequestEvidence(
+  orgId: string, alertId: string, engagementId: string | null, requestedFrom: string,
+  description: string, dueDate?: string | null,
+): Promise<IdResult> {
+  return callRpcId('alert_request_evidence', {
+    p_org: orgId, p_alert_id: alertId, p_engagement: engagementId,
+    p_requested_from: requestedFrom, p_description: description, p_due_date: dueDate ?? null,
+  });
+}
+
+/** Escalate an alert into an observation (C5). */
+export function alertEscalate(
+  orgId: string, alertId: string, engagementId: string, title?: string,
+): Promise<IdResult> {
+  return callRpcId('alert_escalate', {
+    p_org: orgId, p_alert_id: alertId, p_engagement: engagementId, p_title: title ?? null,
+  });
+}
+
+export interface EngagementOption { id: string; title: string; entityId: string | null }
+
+/** The engagements an action from an alert can target, read under RLS. */
+export async function listEngagementOptions(): Promise<EngagementOption[]> {
+  const sb = getClient();
+  if (!sb) return [];
+  const { data, error } = await sb.from('engagements')
+    .select('id, title, entity_id').order('created_at', { ascending: false });
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((e: Record<string, unknown>) => ({
+    id: String(e.id), title: String(e.title ?? ''),
+    entityId: e.entity_id == null ? null : String(e.entity_id),
+  }));
+}
+
+export interface EvidenceRequestRow {
+  id: string;
+  alertId: string | null;
+  requestedFrom: string;
+  description: string;
+  dueDate: string | null;
+  status: string;
+}
+
+/** The evidence requests raised against an alert. */
+export async function listEvidenceRequests(orgId: string, alertId: string): Promise<EvidenceRequestRow[]> {
+  const sb = getClient();
+  if (!sb) return [];
+  const { data, error } = await sb.from('evidence_requests')
+    .select('id, alert_id, requested_from, description, due_date, status')
+    .eq('org_id', orgId).eq('alert_id', alertId).order('created_at', { ascending: false });
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((r: Record<string, unknown>) => ({
+    id: String(r.id), alertId: r.alert_id == null ? null : String(r.alert_id),
+    requestedFrom: String(r.requested_from ?? ''), description: String(r.description ?? ''),
+    dueDate: r.due_date == null ? null : String(r.due_date), status: String(r.status ?? 'open'),
+  }));
 }
 
 /** The egress allow-list check, for the connector setup screen. */

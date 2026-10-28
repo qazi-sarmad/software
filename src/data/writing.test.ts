@@ -79,3 +79,72 @@ describe('alert enrichment mapping (C2)', () => {
     expect(await m.listAlerts('org1')).toEqual([]);
   });
 });
+
+describe('acting on an alert (C4/C5/C6 — migration 0114)', () => {
+  it('maps the ad-hoc audit pre-fill from alert_adhoc_suggestion', async () => {
+    const m = await import('./writing');
+    rpcMock.mockResolvedValue({
+      data: {
+        alert_id: 'a1', rule_id: 'mon.c4', rule_version: 2, entity_id: 'e1', entity_name: 'Treasury',
+        universe_id: 'u1', universe_name: 'Group', department: 'Treasury', engagement_id: 'g1',
+        control_ids: ['c1', 'c2'], control_count: 2, residual_band: 'High', sira_risk_name: 'Liquidity',
+        plan_id: 'p1', title: 'Ad-hoc audit: Treasury', justification: 'Raised from alert a1 (rule mon.c4)',
+      },
+    });
+    const s = await m.alertAdhocSuggestion('org1', 'a1');
+    expect(rpcMock).toHaveBeenCalledWith('alert_adhoc_suggestion', { p_org: 'org1', p_alert_id: 'a1' });
+    expect(s).toEqual({
+      alertId: 'a1', ruleId: 'mon.c4', ruleVersion: 2, entityId: 'e1', entityName: 'Treasury',
+      universeId: 'u1', universeName: 'Group', department: 'Treasury', engagementId: 'g1',
+      controlIds: ['c1', 'c2'], controlCount: 2, residualBand: 'High', siraRiskName: 'Liquidity',
+      planId: 'p1', title: 'Ad-hoc audit: Treasury', justification: 'Raised from alert a1 (rule mon.c4)',
+    });
+  });
+
+  it('returns null for the pre-fill when not configured', async () => {
+    clientMissing = true;
+    const m = await import('./writing');
+    expect(await m.alertAdhocSuggestion('org1', 'a1')).toBeNull();
+  });
+
+  it('passes the alert id to every action and returns the new row id', async () => {
+    const m = await import('./writing');
+    rpcMock.mockResolvedValue({ data: 'new-id' });
+
+    expect(await m.alertAdhocAuditRaise('org1', 'a1', 'p1', 't', 'j')).toEqual({ ok: true, id: 'new-id' });
+    expect(rpcMock).toHaveBeenCalledWith('alert_adhoc_audit_raise',
+      expect.objectContaining({ p_org: 'org1', p_alert_id: 'a1', p_plan: 'p1' }));
+
+    expect(await m.alertRaiseFinding('org1', 'a1', 'g1')).toEqual({ ok: true, id: 'new-id' });
+    expect(rpcMock).toHaveBeenCalledWith('alert_raise_finding',
+      expect.objectContaining({ p_org: 'org1', p_alert_id: 'a1', p_engagement: 'g1' }));
+
+    expect(await m.alertRaiseCap('org1', 'a1', 'f1', 'Treasury', '2026-12-01', null)).toEqual({ ok: true, id: 'new-id' });
+    expect(rpcMock).toHaveBeenCalledWith('alert_raise_cap',
+      expect.objectContaining({ p_org: 'org1', p_alert_id: 'a1', p_finding_id: 'f1' }));
+
+    expect(await m.alertRequestEvidence('org1', 'a1', 'g1', 'Ops', 'the reconciliation')).toEqual({ ok: true, id: 'new-id' });
+    expect(rpcMock).toHaveBeenCalledWith('alert_request_evidence',
+      expect.objectContaining({ p_org: 'org1', p_alert_id: 'a1', p_requested_from: 'Ops' }));
+
+    expect(await m.alertEscalate('org1', 'a1', 'g1')).toEqual({ ok: true, id: 'new-id' });
+    expect(rpcMock).toHaveBeenCalledWith('alert_escalate',
+      expect.objectContaining({ p_org: 'org1', p_alert_id: 'a1', p_engagement: 'g1' }));
+  });
+
+  it('reports the refusal reason from the RPC', async () => {
+    const m = await import('./writing');
+    rpcMock.mockResolvedValue({ data: null, error: { message: 'not allowed: caller lacks the perform_work right' } });
+    const r = await m.alertRaiseFinding('org1', 'a1', 'g1');
+    expect(r.ok).toBe(false);
+    expect(r.reason).toContain('perform_work');
+  });
+
+  it('the writes report not-configured and the reads return empty when the client is absent', async () => {
+    clientMissing = true;
+    const m = await import('./writing');
+    expect((await m.alertEscalate('org1', 'a1', 'g1')).ok).toBe(false);
+    expect(await m.listEngagementOptions()).toEqual([]);
+    expect(await m.listEvidenceRequests('org1', 'a1')).toEqual([]);
+  });
+});

@@ -650,9 +650,9 @@ counts; a trigger would double-fire).
 | C1 | Scheduled runner: `pg_cron` `monitor-runner` job (`*/5 * * * *`) calls `monitor_runner_sweep(limit)`, which evaluates every org's released rules (SQL twin of `runMonitors`) and calls the `automation_dispatch_pending(org, limit)` dispatcher RPC (no trigger); persist alerts, emit `watcher.signal` | DONE |
 | C2 | Alert enrichment: resolve entity, department, SIRA risk, inherent + residual risk, affected controls onto the alert | DONE |
 | C3 | Delivery: Work Queue in-app + email, via `src/lib/liveSync.ts` (realtime, poll fallback) | DONE |
-| C4 | Adhoc audit suggestion from an alert, pre-filled with entity/department/control | TODO |
-| C5 | Remediation wizard from an alert (finding, CAP, request evidence, escalate, dismiss with reason) | TODO |
-| C6 | Alert triage surface with rights gating | TODO |
+| C4 | Adhoc audit suggestion from an alert, pre-filled with entity/department/control | DONE |
+| C5 | Remediation wizard from an alert (finding, CAP, request evidence, escalate, dismiss with reason) | DONE |
+| C6 | Alert triage surface with rights gating | DONE |
 | C7 | Anomaly to SIRA: a resolved alert proposes an emergent risk carrying the alert id, rule version and affected rows | BLOCKED (S18) |
 
 **C1 evidence (DONE).** Migration `supabase/migrations/0111_phase5_monitor_runner.sql` adds
@@ -713,6 +713,39 @@ non-triager is not, the recipient sees it through `notifications_list()`, a seco
 nothing, an unenriched alert still delivers, org B's alert reaches no org A member, and the function
 is service-only. The in-app surface (`wk-notifications` card + header bell, `e2e/s15-notifications.spec.ts`)
 already existed and reads the same table, so the gap was the database delivery, not the UI.
+
+**C4/C5/C6 evidence (DONE).** Migration `supabase/migrations/0114_phase5_alert_actions.sql` gives the
+triager the things to DO with a delivered alert, each pre-filled from the C2 enrichment so nobody
+retypes what the platform already knows. `alert_adhoc_suggestion(org, alert)` is the read-only
+pre-fill — entity, department, controls, the newest draft plan for the alert's universe, and a
+ready-made title and justification. `alert_adhoc_audit_raise` turns it into a pending ad-hoc plan item
+by **delegating to `add_plan_item` (0021)**, so the plan's create right and the ≥10-character ad-hoc
+justification rule are enforced exactly as for any other ad-hoc item; this adds no second approval
+path. `alert_raise_finding` builds an observation whose four mandatory readability sections (context,
+condition, effect, risk) are pre-filled from the alert — so `promote_to_finding` (0030) passes on real
+content, not a bypass — and promotes it. `alert_raise_cap` writes a row on the CAP register (0038),
+which has a select policy and **no tenant insert path**, so this RPC is the only honest way to add one.
+`alert_request_evidence` records a durable, listable `evidence_requests` row (new table, RLS select,
+no tenant write) rather than a notification that vanishes. `alert_escalate` records the disposition
+through `alert_triage_record` (0090) and creates an observation, storing its id on the triage row so
+alert and work are linked. **C6 is rights gating**, and it is per-action, not per-screen: the
+work-raising actions check `perform_work` (the right `create_observation`/`update_cap` already check),
+and escalation checks `review_and_approve` (the triage right) — so the UI can hide exactly what the
+caller cannot do. The UI is `src/components/writing/AlertActionsPanel.tsx`, mounted in the alert
+detail pane of `ConnectorMonitorPanel` (the existing `wk-connectors` screen, `OrgControlPanel` tab
+`connectors`); every write refreshes the alert list through the panel's `onDone`. Data functions live
+in `src/data/writing.ts` (`alertAdhocSuggestion`, `alertAdhocAuditRaise`, `alertRaiseFinding`,
+`alertRaiseCap`, `alertRequestEvidence`, `alertEscalate`, plus `listEngagementOptions` and
+`listEvidenceRequests`); the id-returning writes use a new `callRpcId` helper because `callRpc` drops
+the returned id. Tests: `supabase/tests/115_phase5_alert_actions.sql` (35 assertions, runs twice in the
+Docker harness) proves the pre-fill carries entity/department/engagement/controls/plan, the raised item
+is `pending_adhoc` with the alert entity, an ad-hoc audit without a plan is refused, the finding's four
+sections are pre-filled and `check_readability` passes, the CAP names the finding with the alert
+department, the evidence request is open and names the alert, escalation records the disposition and
+links the observation, a caller without `perform_work` is refused, org B cannot act on org A's alert,
+and the grants/RLS are right; `src/data/writing.test.ts` adds 6 unit tests for the mapping, the
+argument shapes and the refusal path. **`C7` stays `BLOCKED (S18)`**: an alert-to-emergent-risk
+proposal needs SIRA continuity, which is Builder B's and not built.
 
 **`C7` depends on `S18`** (SIRA continuity), which is Builder B's and not yet built, so `C7` is
 recorded `BLOCKED (S18)` rather than left `TODO` — it is not available work for this branch alone.

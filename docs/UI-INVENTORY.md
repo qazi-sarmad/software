@@ -699,8 +699,8 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Rights required:** `edit_config` to save an instance, rule or triage; `view_insights` to read.
 - **Data functions (`src/data/*.ts`):** `connectorEgressAllowed`, `listAlerts`, `listConnectorInstances`, `listConnectorRuns`, `listMonitorRules`, `listStagedRecords`, `releaseMonitorRule`, `saveConnectorInstance`, `saveMonitorRule`, `triageAlert`
 - **Data modules:** `src/data/writing.ts`
-- **RPCs reachable via those modules:** `alert_list`, `connector_egress_allowed`, `format_audience_list`, `format_list`, `phrase_list`
-- **Tables reachable via those modules:** `connector_instances`, `connector_runs`, `monitor_rules`, `phrase_reviews`, `staged_records`
+- **RPCs reachable via those modules:** `alert_adhoc_suggestion`, `alert_list`, `connector_egress_allowed`, `format_audience_list`, `format_list`, `phrase_list`
+- **Tables reachable via those modules:** `connector_instances`, `connector_runs`, `engagements`, `evidence_requests`, `monitor_rules`, `phrase_reviews`, `staged_records`
 - **Testids (40):** `wk-connectors-loading`, `wk-connectors-error`, `wk-connectors-retry`, `wk-connectors-panel`, `wk-connectors-tab-<id>`, `wk-connectors-catalogue`, `wk-connectors-label`, `wk-connectors-credential`, `wk-connectors-save`, `wk-connectors-saved`, `wk-connectors-instances`, `wk-connectors-instance-<id>`, `wk-connectors-runs`, `wk-connectors-runs-empty`, `wk-connectors-run-<id>`, `wk-connectors-staged`, `wk-connectors-staged-empty`, `wk-connectors-staged-<id>`, `wk-connectors-rules`, `wk-connectors-rules-empty`, `wk-connectors-rule-id`, `wk-connectors-rule-description`, `wk-connectors-rule-save`, `wk-connectors-alerts`, `wk-connectors-alerts-empty`, `wk-connectors-alerts-list`, `wk-connectors-alert-detail`, `wk-connectors-alert-detail-reason`, `wk-connectors-alert-detail-lineage`, `wk-connectors-alert-triage-form`, `wk-connectors-alert-triage-reason`, `wk-connectors-alert-triage-snooze`, `wk-connectors-alert-triage-save`, `wk-connectors-egress`, `wk-connectors-egress-host`, `wk-connectors-egress-check`, `wk-connectors-egress-result`, `wk-connectors-new`, `wk-connectors-rule-new`, `wk-connectors-empty`
 - **States:** loading, error, empty, ready; an inline result line reports a saved change or the plain refusal. The egress check shows whether a host is on the tenant's allow-list.
 - **Tutorial key:** `oa.connectors`
@@ -714,8 +714,8 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Rights required:** `edit_config` to save, publish or set audiences; `view_reports` to read.
 - **Data functions (`src/data/*.ts`):** `listFormatAudiences`, `listReportFormats`, `publishReportFormat`, `saveReportFormat`, `setFormatAudiences`
 - **Data modules:** `src/data/writing.ts`
-- **RPCs reachable via those modules:** `alert_list`, `connector_egress_allowed`, `format_audience_list`, `format_list`, `phrase_list`
-- **Tables reachable via those modules:** `connector_instances`, `connector_runs`, `monitor_rules`, `phrase_reviews`, `staged_records`
+- **RPCs reachable via those modules:** `alert_adhoc_suggestion`, `alert_list`, `connector_egress_allowed`, `format_audience_list`, `format_list`, `phrase_list`
+- **Tables reachable via those modules:** `connector_instances`, `connector_runs`, `engagements`, `evidence_requests`, `monitor_rules`, `phrase_reviews`, `staged_records`
 - **Testids (69):** `wk-format-loading`, `wk-format-error`, `wk-format-retry`, `wk-format-panel`, `wk-format-controls`, `wk-format-format-pick`, `wk-format-model-pick`, `wk-format-locale-pick`, `wk-format-label-input`, `wk-format-status`, `wk-format-version`, `wk-format-status-value`, `wk-format-issues`, `wk-format-published-note`, `wk-format-pane-tabs`, `wk-format-pane-<pane>`, `wk-format-blocks`, `wk-format-block-<key>`, `wk-format-block-<key>-key`, `wk-format-block-<key>-role`, `wk-format-block-<key>-register`, `wk-format-block-<key>-visible`, `wk-format-block-<key>-up`, `wk-format-block-<key>-down`, `wk-format-add-missing`, `wk-format-issue-list`, `wk-format-issue-<code>`, `wk-format-layout`, `wk-format-layout-page-size`, `wk-format-layout-marginTopMm`, `wk-format-layout-marginRightMm`, `wk-format-layout-marginBottomMm`, `wk-format-layout-marginLeftMm`, `wk-format-layout-font-heading`, `wk-format-layout-font-body`, `wk-format-layout-footer`, `wk-format-layout-tokens`, `wk-format-block-<key>-label`, `wk-format-contents`, `wk-format-contents-note`, `wk-format-contents-enabled`, `wk-format-contents-title`, `wk-format-contents-depth`, `wk-format-contents-title-scale`, `wk-format-contents-numbered`, `wk-format-contents-dot-leaders`, `wk-format-contents-indent`, `wk-format-audiences`, `wk-format-audiences-note`, `wk-format-audiences-empty`, `wk-format-audience-<slug>`, `wk-format-audience-<slug>-view`, `wk-format-audience-<slug>-edit`, `wk-format-audiences-save`, `wk-format-versions`, `wk-format-version-<n>`, `wk-format-version-<n>-load`, `wk-format-preview`, `wk-format-preview-summary`, `wk-format-preview-blocks`, `wk-format-preview-<key>`, `wk-format-preview-hidden`, `wk-format-preview-registers`, `wk-format-save`, `wk-format-publish`, `wk-format-result`, `wk-format-readonly`, `wk-format-create-default`, `wk-format-empty`
 - **States:** loading, error, empty, ready; an inline result line reports a saved change, a publish, or the plain refusal; the editor lists every validation issue precisely.
 - **Tutorial key:** `oa.formats`
@@ -1320,8 +1320,8 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Rights required:** `perform_work` to compose/comment; `approve_plan` to freeze.
 - **Data functions (`src/data/*.ts`):** `CapRow`, `ReportBlockRow`, `ReportCommentRow`, `ReportVersionRow`, `StoredReportFiles`, `acknowledgePreflight`, `addReportComment`, `checkCapReconciliation`, `freezeReport`, `getActiveReportLayout`, `issueReport`, `listCaps`, `listPreflightAcknowledgements`, `listReportBlocks`, `listReportComments`, `listReportVersions`, `openReportCommentCount`, `renderAndStoreReportFiles`, `resolveReportComment`
 - **Data modules:** `src/data/caps.ts`, `src/data/preflight.ts`, `src/data/reportFiles.ts`, `src/data/reports.ts`, `src/data/writing.ts`
-- **RPCs reachable via those modules:** `alert_list`, `check_cap_reconciliation`, `compute_report_summary`, `connector_egress_allowed`, `format_audience_list`, `format_list`, `open_report_comment_count`, `phrase_list`, `preflight_acks_get`, `preflight_blocking`, `preflight_items`, `store_report_file`
-- **Tables reachable via those modules:** `caps`, `connector_instances`, `connector_runs`, `monitor_rules`, `phrase_reviews`, `report_blocks`, `report_comments`, `report_versions`, `staged_records`
+- **RPCs reachable via those modules:** `alert_adhoc_suggestion`, `alert_list`, `check_cap_reconciliation`, `compute_report_summary`, `connector_egress_allowed`, `format_audience_list`, `format_list`, `open_report_comment_count`, `phrase_list`, `preflight_acks_get`, `preflight_blocking`, `preflight_items`, `store_report_file`
+- **Tables reachable via those modules:** `caps`, `connector_instances`, `connector_runs`, `engagements`, `evidence_requests`, `monitor_rules`, `phrase_reviews`, `report_blocks`, `report_comments`, `report_versions`, `staged_records`
 - **Testids (33):** `report-caps-note`, `report-comment-add`, `report-comment-input`, `report-comments`, `report-comments-empty`, `report-compose`, `report-editor`, `report-empty`, `report-error`, `report-file-docx`, `report-file-pdf`, `report-files`, `report-freeze`, `report-freeze-blocked`, `report-freeze-panel`, `report-issue`, `report-loading`, `report-notice`, `report-open-comments`, `report-placeholder-count`, `report-preflight-ack-check`, `report-preflight-ack-form`, `report-preflight-ack-item`, `report-preflight-ack-reason`, `report-preflight-ack-submit`, `report-preflight-acks`, `report-preflight-blocking`, `report-preflight-caps`, `report-preflight-comments`, `report-preflight-item-list`, `report-rights-note`, `report-section-empty`, `report-versions`
 - **States:** loading; empty; comments; pre-flight; freeze blocked; frozen; error inline.
 - **Tutorial key:** — (no key)
@@ -1543,6 +1543,7 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 |---|---|---|---|
 | `add_entity` | `src/data/mutations.ts` | `p_universe_id`, `p_name`, `p_kind` | tenant |
 | `admin_upload_branding_asset` | `src/data/branding.ts` | `p_org`, `p_kind`, `p_filename`, `p_mime`, `p_base64` | platform |
+| `alert_adhoc_suggestion` | `src/data/writing.ts` | `p_org`, `p_alert_id` | tenant |
 | `alert_list` | `src/data/writing.ts` | `p_org` | tenant |
 | `automation_rule_list` | `src/data/automation.ts` | `p_org` | tenant |
 | `automation_rule_test` | `src/data/automation.ts` | `p_rule_id`, `p_sample` | tenant |
@@ -1660,8 +1661,8 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 
 - Screens documented: 97 (contract sections: 48 Appendix A + 44 Appendix B).
 - Tutorial keys: 81.
-- RPCs catalogued: 114.
-- Data modules: 58; exported data functions: 377.
+- RPCs catalogued: 115.
+- Data modules: 58; exported data functions: 385.
 - Contract testids not found verbatim in `src/` (placeholder or dynamic): 194.
   - audit-file-view-builder, audit-file-view-certificate, audit-file-view-conclusion, audit-file-view-documents, audit-file-view-ethics, audit-file-view-execution, audit-file-view-findings, audit-file-view-planning, audit-file-view-population, audit-file-view-report, audit-file-view-review, audit-file-view-rowtesting, audit-file-view-sampling, hosting-test, invite-user, issues-view-patterns, oa-branding-colour-accent, oa-branding-colour-background, oa-branding-colour-primary, oa-branding-colour-text, oa-branding-margin-0, oa-branding-margin-3, oa-certificate-enabled-verification, oa-escalation-result, oa-escalation-saved, oa-governance-signoff-conclusion, oa-governance-signoff-planning, oa-governance-signoff-testing, org-control-tab-auditors, org-control-tab-automation, org-control-tab-branding, org-control-tab-connectors, org-control-tab-features, org-control-tab-formats, org-control-tab-governance, org-control-tab-hosting, org-control-tab-methodology, org-control-tab-people, org-control-tab-setup, org-control-tab-templates …
 

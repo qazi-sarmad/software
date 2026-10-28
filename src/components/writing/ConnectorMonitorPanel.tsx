@@ -10,6 +10,7 @@ import {
 } from '../../data/writing';
 import { catalogue } from '../../lib/writing/connectorCatalogue';
 import { MONITOR_KINDS } from '../../lib/writing/monitors';
+import { AlertActionsPanel } from './AlertActionsPanel';
 
 type LoadState = 'loading' | 'ready' | 'error';
 type Tab = 'catalogue' | 'runs' | 'staged' | 'rules' | 'alerts';
@@ -315,6 +316,8 @@ export const ConnectorMonitorPanel: React.FC<{ prefix?: string; initialTab?: Tab
                   </button>
                 </div>
               )}
+              {/* C4/C5/C6: what the triager can DO with the alert, pre-filled from the enrichment. */}
+              <AlertActionsPanel prefix={`${prefix}-actions`} alert={alert} onDone={() => void load()} />
             </div>
           )}
         </div>
