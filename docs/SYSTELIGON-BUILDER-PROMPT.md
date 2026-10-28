@@ -28,11 +28,10 @@ Branch from feature/systeligon-v1 and start at 0106.
 
 YOUR SCOPE — the whole established body, unscoped
 Everything in docs/SYSTELIGON-TASKS.md, in the order given there. That is YOUR ledger.
-- E1-E10   the explain layer (popouts, drilldown, access-filtered detail, IIA standards)
+- E1-E7, E9-E10   the explain layer (popouts, drilldown, access-filtered detail, IIA standards)
 - S17-S21  document recognition, SIRA continuity, two-key acceptance, evidence storage, comment popout
 - T3-T7    attestation package, third-party verifier, attestation screen, incident wizard, wire the alarm
 - D1-D4    the deterministic capability library
-- U1-U14   interface quality and personalisation (themes, profiles, time-of-day, motion, headers)
 - F1-F7    self-hosted fonts, licence metadata, template auto-detection
 - G7-G10   the gates you own
 This is not a cherry-picked slice. Nothing on it is optional. NO PARKING.
@@ -73,7 +72,7 @@ seconds. Never ask the owner to run anything — you run every gate yourself and
 
 READ FIRST, IN THIS ORDER
 1. docs/SYSTELIGON-TASKS.md        — YOUR LIVE LEDGER; the only status truth for your work
-2. docs/EXPLAIN-LAYER.md           — the explain layer, E1-E10 (your first work package)
+2. docs/EXPLAIN-LAYER.md           — the explain layer, E1-E7 + E9-E10 (your first work package)
 3. docs/SYSTELIGON.md              — the forensic engine spec (S/C/T/D) and section 12, personalisation
 4. docs/README.md                  — docs index
 5. docs/FEATURE-REGISTER.md        — every feature and its true wiring status, gated
@@ -127,7 +126,7 @@ ENVIRONMENT
   same commit or the gate fails.
 
 ===============================================================
-YOUR WORK — E1-E10, S17-S21, T3-T7, D1-D4, U1-U14, F1-F7, G7-G10
+YOUR WORK — E1-E7 + E9-E10, S17-S21, T3-T7, D1-D4, F1-F7, G7-G10
 ===============================================================
 
 E-series — the explain layer (docs/EXPLAIN-LAYER.md)
@@ -147,9 +146,6 @@ E2-E8 all call E1, and every screen built later should carry its explain afforda
   RecordView + FloatingWindowManager. Deep-linkable. No blocking modal (walk test).
 - E6 Standards affordance on screens, lifecycle steps and report sections.
 - E7 Standards view: catalogue -> implementation -> evidence.
-- E8 PencilGuide + guidance data for guided first-run and per-screen "show me". Hand-drawn SVG arrow
-  plus annotation bubble, pure data under src/lib/guidance/, one pointer at a time,
-  keyboard-reachable, dismissible, respects reduced motion.
 - E9 Gates G7 (explain coverage), G8 (drilldown), G9 (IIA honesty) + their tests.
 - E10 Extend docs/UI-INVENTORY.md with explain ids, standards and drilldown targets per screen.
 
@@ -228,37 +224,11 @@ D-series — deterministic capability library (each a pure function + tests + a 
 - D4 Assurance operations: engagement health, reviewer load and ageing, finding ageing and
   recurrence, report consistency, audit trail completeness.
 
-U-series — interface quality (spec SYSTELIGON.md section 11.1c and section 12)
-Tier 1 first, and only once the data underneath is real. A beautiful dashboard over an unwired
-monitor engine is a better-looking lie.
-- U1 Every dashboard number drills to its exact filtered records.
-- U2 Command palette (Cmd/Ctrl-K): screens, records, actions, explain layer.
-- U3 The work queue as the front door - what needs YOU today, ordered by consequence.
-- U4 A live activity spine on the existing liveSync transport.
-- U5 Motion that signals state change only, and universal prefers-reduced-motion.
-- U6 Guided empty states, so a new org is not a wall of zeros.
-- U7 Density toggle (comfortable/compact/dense), remembered per user. Auditors read tables.
-- U8 Keyboard-first, with a `?` shortcut sheet.
-- U9 Three new themes (prism, bloom, slate) as TOKEN BLOCKS, not component changes. The check-tokens
-  gate bans hardcoded colour; that gate is the mechanism that makes theming safe, not an obstacle.
-  Extend tokens.contrast.test.ts to cover all six presets in both modes.
-- U10 Four audience profiles: Focus (15yo), Expressive (21yo), Aesthetic (late teens), Assurance
-  (30yo professional). ASSURANCE IS THE SHIPPED DEFAULT - a Head of Audit must see the calm face
-  first. Each profile is a preset bundle (theme, motion, density, radius, type, header).
-- U11 Time-of-day phases. Pure `resolveDayPhase(minuteOfDay: number): DayPhase` under
-  src/lib/theme/. Time is ALWAYS an argument; never read the clock inside a pure function. Phases:
-  night/dawn/morning/day/dusk/evening. Expressed as [data-preset="x"][data-phase="night"] token
-  blocks. "Reduce contrast at night" defaults OFF - dimming contrast for low vision is a harm.
-- U12 Motion system: levels none/subtle/full/expressive as data-motion; token-driven durations
-  (--motion-instant 80ms .. --motion-deliberate 640ms); ten named animations, each signalling a
-  state change. transform/opacity ONLY - never width/height/top/left. prefers-reduced-motion
-  overrides the user's level to none, always.
-- U13 Animated headers: a token-driven layered gradient, tinted by theme and phase. NEVER moves
-  behind text. Pauses on focus-within. Off by default in Assurance. Freezes (not disappears) under
-  prefers-reduced-motion. Never a video, particle system, 3D scene, or remote asset.
-- U14 Delete the dead `ReviewCommentsDock.tsx` (same as S21).
-DO NOT: gratuitous animation, vanity charts, dark patterns, or any "AI insight" badge. The product's
-claim is determinism - decorating it as magic undercuts the one thing that makes it different.
+NOT YOURS — DEFERRED: the U-series (interface quality and personalisation) and E8 (pencil-style
+guided pointers). The owner has NOT yet settled the design language — themes, motion, typography,
+audience profiles, animated headers. Building those now means rebuilding them once it is decided.
+They stay in docs/SYSTELIGON-TASKS.md marked DEFERRED. Do not start them. If the owner settles the
+design language mid-run, the owner will say so and the rows will be released to you.
 
 F-series — fonts (docs/FONT-REPOSITORY.md)
 - F1 Remove the Google Fonts CDN link in index.html:14. It leaks every client's IP to a third party

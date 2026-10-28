@@ -15,10 +15,14 @@ Two builds run concurrently on this repository:
 | Branch | Owns | Ledger |
 |---|---|---|
 | `feature/scale-harden-v1` | Phases 3-6 of the remediation plan: config honesty, methodology templates, monitors & connectors, production-build proof. Plus the C-series and gates G1-G6. | `docs/SCALE-TASKS.md` |
-| `feature/systeligon-build-v1` | **Everything else established.** The full unscoped body: E1-E10, S17-S21, T3-T7, D1-D4, U1-U14, F1-F7, gates G7-G10. | **this file** |
+| `feature/systeligon-build-v1` | **Everything else established.** E1-E7, E9-E10 (explain layer), S17-S21, T3-T7, D1-D4, F1-F7, gates G7-G10. The U-series and E8 are DEFERRED pending the design language. | **this file** |
 
-**Unscoped means unscoped.** Builder B takes the entire established body of work that Builder A does
-not own. It is not a cherry-picked slice. The list below is everything, and nothing on it is optional.
+**Builder B takes the entire established body of work that Builder A does not own.** It is not a
+cherry-picked slice. The list below is everything, and nothing on it is optional.
+
+The one exception is the U-series and E8, which are **deferred** pending the design language. The
+owner has not settled themes, motion, typography, profiles or headers yet, and building on an
+unsettled design means rebuilding it. Deferred is not cancelled: the rows stay, marked `DEFERRED`.
 
 **The non-collision boundary is exactly three things**, and they are all Builder A's:
 1. Phases 3-6 (config enforcement, methodology templates, monitors & connectors, production proof)
@@ -158,7 +162,7 @@ Each is a pure function under `src/lib/` with direct unit tests and a screen sur
 
 ---
 
-## E-series — the explain layer (docs/EXPLAIN-LAYER.md, E1-E10)
+## E-series — the explain layer (docs/EXPLAIN-LAYER.md, E1-E7 + E9-E10; E8 deferred)
 
 Owner decision #6: everything must be explainable and drilldownable. Not polish — a first-class
 requirement, and the thing that makes the product teachable without a manual.
@@ -172,7 +176,7 @@ requirement, and the thing that makes the product teachable without a manual.
 | E5 | Drilldown from every aggregate; deep-linkable; no blocking modal (walk test) | TODO |
 | E6 | Standards affordance on screens, lifecycle steps and report sections | TODO |
 | E7 | Standards view (catalogue → implementation → evidence) | TODO |
-| E8 | `PencilGuide` + guidance data for guided first-run and per-screen "show me" | TODO |
+| E8 | `PencilGuide` + guidance data for guided first-run and per-screen "show me" | DEFERRED (design language) |
 | E9 | Gates G7 (explain coverage), G8 (drilldown), G9 (IIA honesty) + tests | TODO |
 | E10 | Extend `UI-INVENTORY.md` with explain ids, standards and drilldown targets per screen | TODO |
 
@@ -194,27 +198,31 @@ Anchors that already exist and must be reused, not reinvented:
 it. A popout that can leak a field the host screen filtered is an L2 breach, which is why E1 carries
 the guard test rather than E9.
 
-## U-series — interface quality
+## U-series — interface quality — **DEFERRED (owner: design language not yet settled)**
+
+**Not Builder B's work. Do not start any of this.** The owner has not yet agreed the design language
+(themes, motion, typography, profiles, headers). Building it now means rebuilding it once that is
+decided. The rows below are retained so the work is not lost; they are deferred, not cancelled.
 
 Spec: `docs/SYSTELIGON.md` §11.1c and §12 (personalisation). **Tier 1 only once the data underneath
 is real.** A beautiful dashboard over an unwired engine is a better-looking lie.
 
 | # | Task | Status |
 |---|---|---|
-| U1 | Every dashboard number drills to its exact filtered records | TODO |
-| U2 | Command palette (Cmd/Ctrl-K) | TODO |
-| U3 | Work queue as the front door | TODO |
-| U4 | Live activity spine on the existing `liveSync` transport | TODO |
-| U5 | Motion that signals state change only; universal `prefers-reduced-motion` | TODO |
-| U6 | Guided empty states | TODO |
-| U7 | Density toggle, remembered per user | TODO |
-| U8 | Keyboard-first, with a `?` shortcut sheet | TODO |
-| U9 | Three new themes (`prism`, `bloom`, `slate`) as token blocks; contrast test covers all six | TODO |
-| U10 | Four audience profiles (Focus, Expressive, Aesthetic, Assurance — Assurance is the default) | TODO |
-| U11 | Time-of-day phases: pure `resolveDayPhase(minuteOfDay)`, time as an argument | TODO |
-| U12 | Motion system: four levels, token-driven durations, ten named animations, gates | TODO |
-| U13 | Animated headers: token-driven gradient, never behind text, frozen under reduced motion | TODO |
-| U14 | Dead comment dock removed (`ReviewCommentsDock.tsx`) — also listed as S21 | TODO |
+| U1 | Every dashboard number drills to its exact filtered records | DEFERRED |
+| U2 | Command palette (Cmd/Ctrl-K) | DEFERRED |
+| U3 | Work queue as the front door | DEFERRED |
+| U4 | Live activity spine on the existing `liveSync` transport | DEFERRED |
+| U5 | Motion that signals state change only; universal `prefers-reduced-motion` | DEFERRED |
+| U6 | Guided empty states | DEFERRED |
+| U7 | Density toggle, remembered per user | DEFERRED |
+| U8 | Keyboard-first, with a `?` shortcut sheet | DEFERRED |
+| U9 | Three new themes (`prism`, `bloom`, `slate`) as token blocks; contrast test covers all six | DEFERRED |
+| U10 | Four audience profiles (Focus, Expressive, Aesthetic, Assurance — Assurance is the default) | DEFERRED |
+| U11 | Time-of-day phases: pure `resolveDayPhase(minuteOfDay)`, time as an argument | DEFERRED |
+| U12 | Motion system: four levels, token-driven durations, ten named animations, gates | DEFERRED |
+| U13 | Animated headers: token-driven gradient, never behind text, frozen under reduced motion | DEFERRED |
+| U14 | Dead comment dock removed (`ReviewCommentsDock.tsx`) — also listed as S21 | DEFERRED |
 
 **Do NOT:** gratuitous animation, vanity charts, dark patterns, or any "AI insight" badge. The
 product's claim is determinism; decorating it as magic undercuts the one thing that makes it

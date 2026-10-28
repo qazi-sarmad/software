@@ -16,7 +16,7 @@ There are nine documents you should trust. Everything else is history.
 | `SYSTELIGON.md` | The deterministic forensic engine: spec, boundary, stretch roadmap. |
 | `FONT-REPOSITORY.md` | Self-hosted fonts, licence metadata, template auto-detection. |
 | `BUILDER-PROMPT.md` | The paste-block for a fresh builder session (full scope, Phases 1-6). |
-| `SYSTELIGON-BUILDER-PROMPT.md` | The paste-block for **Builder B** — the full established body (E1-E10, S17-S21, T, D, U, F, G7-G10), minus the three things Builder A owns. Use this one while `feature/scale-harden-v1` is active. |
+| `SYSTELIGON-BUILDER-PROMPT.md` | The paste-block for **Builder B** — E1-E7 + E9-E10, S17-S21, T, D, F, G7-G10. The U-series and E8 are deferred pending the design language. |
 | `SYSTELIGON-TASKS.md` | The ledger for the concurrent Systeligon build. One branch, one ledger. |
 | `BRANCH-MAP.md` | **Which branch belongs to which builder, which ledger tracks it, and which migration numbers are reserved.** Read before creating a branch, a migration, or a ledger row. |
 
