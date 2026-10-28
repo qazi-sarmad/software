@@ -55,6 +55,29 @@ green test as proof that a feature works.**
 | Playwright specs | 29 |
 | Guards | 21 |
 
+### Baseline verified at 21ee32f (2026-10-28)
+
+Every gate run locally on a clean checkout of `feature/scale-harden-v1` @ `21ee32f`. Counts confirmed
+against the table above.
+
+| Gate | Command | Result |
+|---|---|---|
+| Type check | `npx tsc --noEmit` | PASS |
+| Unit tests | `npx vitest run` | PASS — 202 files / 2378 tests |
+| Build | `npx vite build` | PASS |
+| Shrink | `node scripts/check-shrink.mjs` | PASS (58 files) |
+| Tokens | `node scripts/check-tokens.mjs` | PASS (179 files, 0 violations) |
+| UI contract | `node scripts/check-ui-contract.mjs` | PASS (48 screens) |
+| Tutorials | `npm run check-tutorials` | PASS (80 GIFs) |
+| SQL harness | `bash scripts/local-sql-harness-docker.sh` | PASS — "all SQL tests passed twice" |
+
+**Harness defect found and fixed in this commit.** The Docker harness ran `psql` with the container's
+working directory `/`, but every SQL test begins with a relative include
+(`\i supabase/tests/00_lib.sql`). Every test therefore failed on the include, not on an assertion —
+the first run reported 103/103 "TEST FAILED". Fix: mount the repo read-only at `/repo` and run the
+container with `-w /repo`, so psql resolves the include from the repo root. With that, all 103 SQL
+test files pass twice.
+
 ---
 
 ## Phase 1 — Make the app read its own database

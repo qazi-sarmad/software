@@ -23,7 +23,11 @@ cleanup() { [ "$KEEP" = 0 ] && $DOCKER rm -f "$CONT" >/dev/null 2>&1; }
 trap cleanup EXIT
 
 $DOCKER rm -f "$CONT" >/dev/null 2>&1
-$DOCKER run -d --name "$CONT" -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB="$DB" \
+# The repo is mounted at /repo and psql runs with that as its working directory: every SQL test
+# begins with a relative include (`\i supabase/tests/00_lib.sql`), so psql must resolve paths from
+# the repo root. Without this, every test fails on the include, not on the assertion.
+$DOCKER run -d --name "$CONT" -v "$ROOT":/repo:ro -w /repo \
+  -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB="$DB" \
   -p "$PORT:5432" "$IMAGE" >/dev/null || { echo "could not start container"; exit 1; }
 
 # Wait for readiness. The official entrypoint runs a TEMPORARY socket-only server during initdb,
