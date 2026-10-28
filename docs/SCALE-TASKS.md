@@ -87,11 +87,39 @@ is empty in production (`src/App.tsx:204`).
 
 | # | Task | Status |
 |---|---|---|
-| 1.1 | `src/data/tenant.ts` — session-scoped tenant loader (RPC-only, no direct table reads) | TODO |
-| 1.2 | `TenantDataProvider` replacing the seed as the shell's source | TODO |
-| 1.3 | Keep `EMPTY_SEED` only for genuinely tenant-less routes (`/e/:token`) | TODO |
-| 1.4 | Kill the parallel in-memory mutations (sign-off, CAP, ledger, test steps) or point them at RPCs | TODO |
-| 1.5 | Production-build E2E that proves data loads (the anti-theatre test) | TODO |
+| 1.1 | `src/data/tenant.ts` — session-scoped tenant loader (RLS-scoped table reads, never throws) | DONE |
+| 1.2 | `TenantDataProvider` replacing the seed as the shell's source (wired in `AuthGate`, `src/App.tsx`) | DONE |
+| 1.3 | Keep `EMPTY_SEED` only for genuinely tenant-less routes (`/e/:token`, `/verify`, `/pack`, `/root`) | DONE |
+| 1.4 | Kill the parallel in-memory mutations (sign-off, CAP, ledger, test steps) or point them at RPCs | DOING |
+| 1.5 | Production-build E2E that proves data loads (`e2e/phase1-production-build.spec.ts`) | DONE |
+
+**Task 1.1–1.3, 1.5 — what was built and how it was verified (2026-10-28).**
+
+- `src/data/tenant.ts` hydrates the shell from the database through RLS-scoped table reads. Before this,
+  `AuthGate` (`src/App.tsx`) loaded the dev-only demo seed in development and `EMPTY_SEED` in a
+  production build, so every production screen showed its empty state. Now: with a configured Supabase
+  project the shell loads `loadTenantSnapshot()`; with no project at all a bare dev checkout still uses
+  the flagged demo tenant (dev-only dynamic import, not emitted in a production build). The loader never
+  throws — a denied or missing table yields an empty list and a recorded warning, surfaced as
+  `data-testid="tenant-load-error"`.
+- **Wiring verified by the call site, not by a unit test.** `grep loadTenantSnapshot src/` shows the one
+  call site in `src/App.tsx`. The G1 spec (`e2e/phase1-production-build.spec.ts`) runs ONLY against the
+  production bundle (`E2E_PROD=1` → `vite build && vite preview`) and asserts a database row renders:
+  `global-setup.ts` seeds the engagement "Phase 1 production-build probe (Test)" and scopes the preparer
+  to its universe; the title can only appear if the shell hydrated from the database. A second test
+  asserts no demo-seed `[CANARY-*]` marker leaks into the build.
+- **Result:** `npx playwright test e2e/phase1-production-build.spec.ts --project=chromium` with
+  `E2E_PROD=1` → **2 passed**, after first failing with a strict-mode violation that *proved* the row
+  was rendered (two matches: the plan card `<h3>` and the selected-engagement `<h2>`).
+- `src/data/tenant.test.ts` (4 tests) covers the not-configured path, the row mappers against a fake
+  client, and that a failing read is a warning not a throw.
+- `playwright.config.ts` gained the `E2E_PROD=1` branch (`npm run build && npm run preview -- --port 4173`).
+  The dev-server path is unchanged, so the historical specs keep their fast loop.
+- Gate set after the change: `tsc` PASS; `vitest` 203 files / 2382 tests PASS; `vite build` PASS;
+  `check-shrink` PASS (58 files); `check-tokens` PASS (179 files, 0 violations); `check-ui-contract` PASS
+  (48 screens); `check-tutorials` PASS (79 current, 1 stale `sa.tenant-hub` — pre-existing).
+- One test fixture updated: `src/App.noTenant.test.tsx` mocks `./data/client` and now must also provide
+  `hasSupabaseConfig` (the new export the shell reads).
 
 ## Phase 2 — Make the lifecycle real
 

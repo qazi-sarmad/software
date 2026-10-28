@@ -9,6 +9,7 @@ vi.mock('./data/client', () => ({
   refreshAuthToken: vi.fn().mockResolvedValue(true),
   signIn: vi.fn(),
   signOut: vi.fn(),
+  hasSupabaseConfig: () => false,
 }));
 vi.mock('./data/platform', () => ({
   platformWhoami: vi.fn().mockResolvedValue({ userId: null, isPlatformAdmin: false }),

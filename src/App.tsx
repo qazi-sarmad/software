@@ -8,6 +8,8 @@ import { InlineError } from './components/common/InlineError';
 import type { User } from './types';
 import type { TenantSeed } from './types/seed';
 import { EMPTY_SEED } from './data/emptySeed';
+import { hasSupabaseConfig } from './data/client';
+import { loadTenantSnapshot, snapshotToSeed } from './data/tenant';
 import { ThemeProvider } from './context/ThemeContext';
 import { HeaderBar } from './components/common/HeaderBar';
 import { NavStrip } from './components/common/NavStrip';
@@ -199,9 +201,15 @@ const EXTERNAL_TOKEN_HOLDER: User = {
 };
 
 /** Everything behind this gate needs an authenticated session. With none, the sign-in screen shows and no data is mounted. */
-// Tenant data is not part of the application bundle. The only source today is the flagged demo tenant, loaded by a
-// development-only dynamic import: in a production build this is null and the module is not emitted.
-const loadDemoSeed = import.meta.env.DEV ? () => import('./data/demoSeed').then((m) => m.demoSeed) : null;
+// Tenant data is not part of the application bundle. There are two sources:
+//   - a configured Supabase project: the shell hydrates from the database (src/data/tenant.ts), which
+//     is the production path. The row-level security policies decide what the session may read.
+//   - no Supabase project at all (a bare dev checkout): the flagged demo tenant, loaded by a
+//     development-only dynamic import. In a production build this is null and the module is not emitted.
+const loadDemoSeed = !hasSupabaseConfig() && import.meta.env.DEV
+  ? () => import('./data/demoSeed').then((m) => m.demoSeed)
+  : null;
+const useDatabase = hasSupabaseConfig();
 
 export interface ViewRecordTarget {
   recordType: string;
@@ -210,13 +218,34 @@ export interface ViewRecordTarget {
 
 const AuthGate: React.FC<{ viewRecord?: ViewRecordTarget; externalPortal?: boolean }> = ({ viewRecord, externalPortal }) => {
   const { user, status } = useAuth();
-  // In a production build there is no demo tenant to load, so the shell renders from the empty seed
-  // and every screen shows its designed empty state. In development the flagged demo tenant loads.
+  // With a configured project the seed starts empty and is filled by the database loader below; with
+  // no project the demo tenant (development) or the empty seed (production) is used.
   const [seed, setSeed] = useState<TenantSeed | null>(loadDemoSeed ? null : EMPTY_SEED);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     let live = true;
-    if (user && loadDemoSeed) {
+    setLoadError(null);
+    if (!user) {
+      setSeed(loadDemoSeed ? null : EMPTY_SEED);
+      return () => { live = false; };
+    }
+    if (useDatabase) {
+      // The database is the source of truth: hydrate the shell from RLS-scoped reads. A failed read is
+      // reported and the shell falls back to the empty seed rather than hanging on a spinner.
+      setSeed(null);
+      loadTenantSnapshot()
+        .then((snapshot) => {
+          if (live) setSeed(snapshotToSeed(snapshot, user));
+        })
+        .catch((err) => {
+          if (!live) return;
+          setLoadError(err instanceof Error ? err.message : 'Tenant data could not be loaded.');
+          setSeed(EMPTY_SEED);
+        });
+      return () => { live = false; };
+    }
+    if (loadDemoSeed) {
       loadDemoSeed().then((s) => {
         if (live) setSeed(s);
       });
@@ -254,6 +283,14 @@ const AuthGate: React.FC<{ viewRecord?: ViewRecordTarget; externalPortal?: boole
   if (!seed) return <LoadingFallback />;
   return (
     <AppProvider key={user.id} user={user} seed={seed}>
+      {loadError && (
+        <div className="max-w-7xl mx-auto w-full px-6 pt-4">
+          <InlineError
+            message={`Some tenant data could not be loaded from the database. ${loadError}`}
+            testId="tenant-load-error"
+          />
+        </div>
+      )}
       {viewRecord ? <RecordPage target={viewRecord} /> : <AppContent />}
     </AppProvider>
   );

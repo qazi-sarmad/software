@@ -22,6 +22,12 @@ function config(): { url: string; key: string } | null {
   return { url, key };
 }
 
+/** True when a Supabase project is configured for this build. The shell uses it to choose the
+ * database loader over the dev-only demo tenant. */
+export function hasSupabaseConfig(): boolean {
+  return config() !== null;
+}
+
 let client: SupabaseClient | null = null;
 
 /** Only the publishable key is used here. The secret key is never referenced in src/. */

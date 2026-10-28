@@ -273,6 +273,15 @@ export default async function globalSetup() {
   must('delete analysis_results', await sb.from('analysis_results').delete().in('org_id', [ORG_A, ORG_B]));
   must('delete planning_sections', await sb.from('planning_sections').delete().in('org_id', [ORG_A, ORG_B]));
   must('delete planning_suggestion_decisions', await sb.from('planning_suggestion_decisions').delete().in('org_id', [ORG_A, ORG_B]));
+  // Phase 1 anti-theatre fixture (G1). A visible audit record for org A with a scope row, so the
+  // production-build spec can assert a database row is really rendered by the shell. Seeded after the
+  // cleanup above so it survives; the scope row is inserted after `delete scopes` above.
+  must('phase1 engagement', await sb.from('engagements').upsert([
+    { id: 'e0000000-0000-4000-8000-0000000000f1', org_id: ORG_A, universe_id: A_U1, entity_id: A_ENTITY, title: 'Phase 1 production-build probe (Test)', stage: 'planning', sealed: false },
+  ], { onConflict: 'id' }));
+  must('phase1 scope', await sb.from('user_scopes').insert({
+    org_id: ORG_A, user_id: authIdFor('bilal.ahmed@provio-test.invalid', ORG_A), universe_id: A_U1, entity_id: null, engagement_id: null,
+  }));
 
   // Phase 5 workspace residue (5G). Findings, observations, issues, the conclusion record and the
   // document extractions written by a run must not change what the next run observes (M5).
