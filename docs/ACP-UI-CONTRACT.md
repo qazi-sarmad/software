@@ -1262,6 +1262,17 @@ The organisation settings inspector: sampling, severity levels and email provide
 - **States:** no-right; loading; tabs; ready.
 - **Tutorial key:** —
 
+## OA-29 — Integrity alarm (T7, §11.3a)
+
+The tamper alarm: read the organisation's integrity alerts (severity-split by the database rule), acknowledge one, and re-verify the ledger chain on demand. A single object that fails to verify is a warning; a broken ledger chain, an invalid signature or a failed timestamp is an incident. This is tamper-evidence, never tamper-prevention: it proves that a change happened and preserves the before and after hashes.
+
+- **Route:** The Assurance control plane (`org_control` inspector), tab `integrity`; the DB-01 dashboard banner (`DB-01-integrity-banner`) opens it.
+- **Rights:** an integrity owner — `review_and_approve` or `edit_config`, or a Level-1/Level-2 Head; the database RPC re-checks the right and a caller without it is refused.
+- **Data:** `IntegrityAlertRow`, `acknowledgeIntegrityAlert`, `ledgerContinuityCheck`, `listIntegrityAlerts` — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `DB-01-integrity-banner`, `DB-01-integrity-banner-text`, `OA-29-alert-acknowledge-<id>`, `OA-29-alert-acknowledged-<id>`, `OA-29-alert-actual-<id>`, `OA-29-alert-expected-<id>`, `OA-29-alert-kind-<id>`, `OA-29-alert-raised-<id>`, `OA-29-alert-sentence-<id>`, `OA-29-alert-severity-<id>`, `OA-29-empty`, `OA-29-error`, `OA-29-headline`, `OA-29-icon-incident`, `OA-29-icon-ok`, `OA-29-list`, `OA-29-load-error`, `OA-29-loading`, `OA-29-panel`, `OA-29-verify-ledger`, `OA-29-verify-result`
+- **States:** loading; empty (no alerts — the verified state); ready with incidents/warnings; acknowledged; verify result; error.
+- **Tutorial key:** —
+
 ## SA-16 — Guided provisioning (SCALE-1, WP3)
 
 The guided zero-to-first-report path: create an organisation, set its entitlements and invite cap, configure the platform email sender, read the readiness checks (roles, status, invite, sender, engagement) and activate the tenant.

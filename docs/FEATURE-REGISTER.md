@@ -151,10 +151,10 @@ feature to be testable.
 | # | Capability | Status | Evidence / gap | WP |
 |---|---|---|---|---|
 | F62 | Integrity alerts recorded | `Wired` | `raise_integrity_alert()` writes the alert **and** a ledger entry; called by archive checks | — |
-| F63 | Integrity alerts surfaced | `Inert` | `listIntegrityAlerts()` — **0 callers**. Detection complete, alarm missing | T7 |
-| F64 | Tamper notification on any channel | `Absent` | No migration emits a notification for an integrity alert | T7 |
+| F63 | Integrity alerts surfaced | `Wired` | `listIntegrityAlerts()` reads `integrity_alerts_list` (rights-gated, severity-annotated); `IntegrityAlarmPanel.tsx` is the OA-29 surface and `IntegrityAlarmBanner.tsx` is the DB-01 banner | T7 |
+| F64 | Tamper notification on any channel | `Wired` | `raise_integrity_alert` calls `integrity_alert_notify` (0112): in-app notification to each integrity owner, an email, and an `integrity.alert` automation event | T7 |
 | F65 | Archive verification | `Wired` | `population_archive_check` and `population_archive_verify` call `raise_integrity_alert` | — |
-| F66 | Ledger verification | `Inert` | `verify_ledger` — 0 production refs (F3) | R2 |
+| F66 | Ledger verification | `Wired` | `ledger_continuity_check` (0112) wraps `verify_ledger`, raises an incident on a break; `IntegrityAlarmPanel.tsx` offers "Verify the ledger now" | T7 |
 | F67 | Public verification route | `Wired` | `PublicVerifyRoute` — anonymous, rate-limited | — |
 | F68 | Guided integrity incident wizard | `Absent` | §11.3a | T6 |
 | F69 | Portable attestation package | `Absent` | §11.3 | T3 |
@@ -278,17 +278,18 @@ Each is a pure function under `src/lib/`, with direct unit tests and a screen su
 
 | Status | Count |
 |---|---|
-| `Wired` | 64 |
-| `Inert` | 25 |
-| `Absent` | 36 |
+| `Wired` | 67 |
+| `Inert` | 23 |
+| `Absent` | 35 |
 | **Total** | **125** |
 
 **Read that again, with the correction applied.** This is materially better than the first pass
-reported, because Phases 1 and 2 of the scale-harden build closed the whole foundation, and the S17-S20
-work packages closed the evidence-bytes and SIRA-write-path gaps. The picture now: **64 wired, 25
-inert, 36 absent.** The remaining `Inert` rows are the genuine, still-open unwired features — the
-monitor runtime, the tamper alarm, the ledger verification. Every one of those is a defect, and every
-one looks like a working feature in the UI.
+reported, because Phases 1 and 2 of the scale-harden build closed the whole foundation, the S17-S20
+work packages closed the evidence-bytes and SIRA-write-path gaps, and T7 closed the tamper alarm and
+the ledger verification. The picture now: **67 wired, 23 inert, 35 absent.** The remaining `Inert`
+rows are the genuine, still-open unwired features — the monitor runtime, the alert persistence and
+delivery, the connector adapters. Every one of those is a defect, and every one looks like a working
+feature in the UI.
 
 **The order of work is not negotiable, and R1 and R2 are already done.** R1 (the app reads its own
 database) and R2 (the lifecycle is real) closed in Phases 1-2. R3 (the configuration is honest) is

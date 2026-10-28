@@ -21,10 +21,11 @@ import { ExternalAuditorsPanel } from './ExternalAuditorsPanel';
 import { OrgHostingPanel } from './OrgHostingPanel';
 import { OrgGovernancePanel } from './OrgGovernancePanel';
 import { SharePanel } from './SharePanel';
+import { IntegrityAlarmPanel } from './IntegrityAlarmPanel';
 import { InlineError } from '../common/InlineError';
-import { Check, Lock, Zap, Sliders, Users, Shield, History, Database } from '../common/Icons';
+import { Check, Lock, Zap, Sliders, Users, Shield, ShieldAlert, History, Database } from '../common/Icons';
 
-type Tab = 'features' | 'branding' | 'email' | 'automation' | 'escalation' | 'setup' | 'consultation' | 'auditors' | 'hosting' | 'governance' | 'history' | 'changes' | 'tutorials' | 'connectors' | 'formats' | 'sharing';
+type Tab = 'features' | 'branding' | 'email' | 'automation' | 'escalation' | 'setup' | 'consultation' | 'auditors' | 'hosting' | 'governance' | 'history' | 'changes' | 'tutorials' | 'connectors' | 'formats' | 'sharing' | 'integrity';
 type LoadState = 'loading' | 'ready' | 'error';
 
 /** F18: every configuration tab carries its own "Show me how" tutorial key (Appendix A). */
@@ -45,6 +46,7 @@ const TAB_TUTORIAL: Record<Tab, { key: string; title: string }> = {
   connectors: { key: 'oa.connectors', title: 'OA-23 connectors and monitoring' },
   formats: { key: 'oa.formats', title: 'OA-24 report format editor' },
   sharing: { key: 'oa.governance', title: 'OA-22 governance settings' },
+  integrity: { key: 'oa.governance', title: 'OA-29 integrity alarm' },
 };
 
 /**
@@ -55,10 +57,10 @@ const TAB_TUTORIAL: Record<Tab, { key: string; title: string }> = {
  * wizard persists its state through src/data/setup.ts. The Dual Session tab shows the GL-01 banner
  * and lets the Org Admin end a session.
  */
-export const OrgControlPanel: React.FC = () => {
+export const OrgControlPanel: React.FC<{ initialTab?: Tab }> = ({ initialTab }) => {
   const { currentUser } = useApp();
   const canEdit = hasRight(currentUser, 'edit_config');
-  const [tab, setTab] = useState<Tab>('features');
+  const [tab, setTab] = useState<Tab>(initialTab ?? 'features');
   const [state, setState] = useState<LoadState>('loading');
   const [loadError, setLoadError] = useState('');
   const [catalogue, setCatalogue] = useState<FeatureRow[]>([]);
@@ -148,6 +150,7 @@ export const OrgControlPanel: React.FC = () => {
           { id: 'connectors', label: 'Connectors', icon: Database },
           { id: 'formats', label: 'Report formats', icon: Sliders },
           { id: 'sharing', label: 'Sharing', icon: Users },
+          { id: 'integrity', label: 'Integrity', icon: ShieldAlert },
         ] as { id: Tab; label: string; icon: React.FC<{ className?: string }> }[]).map((t) => {
           const Icon = t.icon;
           return (
@@ -266,6 +269,7 @@ export const OrgControlPanel: React.FC = () => {
       {tab === 'connectors' && <ConnectorMonitorPanel />}
       {tab === 'formats' && <ReportFormatPanel />}
       {tab === 'sharing' && <SharePanel />}
+      {tab === 'integrity' && <IntegrityAlarmPanel screenId="OA-29" />}
       {tab === 'hosting' && <OrgHostingPanel />}
       {tab === 'governance' && <OrgGovernancePanel />}
       {tab === 'history' && <OrgConfigHistory />}

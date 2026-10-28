@@ -9,6 +9,7 @@ import { BoardPackPanel } from '../pending/BoardPackPanel';
 import { HoverPreview } from '../common/HoverPreview';
 import { DrilldownPanel } from '../explain/DrilldownPanel';
 import { StandardsAffordance } from '../explain/StandardsAffordance';
+import { IntegrityAlarmBanner } from './IntegrityAlarmBanner';
 import { useDrilldown } from '../../hooks/useDrilldown';
 import {
   engagementsInProgress,
@@ -125,6 +126,10 @@ export const ExecutiveDashboardTab: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* T7: the tamper alarm, where a human already looks. Non-blocking, one line, links to the
+          integrity surface. It renders nothing when every recorded root still verifies. */}
+      <IntegrityAlarmBanner onOpen={() => openInspector('org_control', { tab: 'integrity' })} />
 
       {/* Metric Cards Row with Apple-tier Serif Numerals */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

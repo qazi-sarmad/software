@@ -636,8 +636,8 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 - **Rights required:** `manage_engagements`/`perform_work`; the export panel refuses without the right.
 - **Data functions (`src/data/*.ts`):** `ActivityLogRow`, `ArchiveJobRow`, `ExportFormat`, `ExportLogRow`, `exportActivityLog`, `exportCapRegister`, `exportEngagementBundle`, `exportFullTenant`, `exportLedger`, `exportSiraResults`, `exportWorkpaper`, `listActivityLog`, `listArchiveJobs`, `listExports`, `logExport`
 - **Data modules:** `src/data/archival.ts`, `src/data/exports.ts`
-- **RPCs reachable via those modules:** `log_export`, `population_archive_due`
-- **Tables reachable via those modules:** `activity_log`, `archive_jobs`, `exports_log`, `integrity_alerts`, `population_archives`
+- **RPCs reachable via those modules:** `integrity_alerts_list`, `ledger_continuity_check`, `log_export`, `population_archive_due`
+- **Tables reachable via those modules:** `activity_log`, `archive_jobs`, `exports_log`, `population_archives`
 - **Testids (25):** `activity-archive`, `activity-archived-notice`, `activity-empty`, `activity-error`, `activity-export`, `activity-filter`, `activity-filters`, `activity-loading`, `activity-log-panel`, `activity-since`, `activity-table`, `activity-until`, `archive-jobs`, `archive-jobs-empty`, `export-confirmation`, `export-confirmation-hash`, `export-controls`, `export-denied`, `export-error`, `export-history`, `export-history-empty`, `export-history-loading`, `export-no-right`, `export-panel`, `export-run`
 - **Explain ids (0):** — (no explain affordance)
 - **IIA standards addressed (2):** `5.1`, `5.2`
@@ -679,6 +679,24 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 - **IIA standards addressed (1):** `5.1`
 - **Drilldown targets (0):** — (no aggregate)
 - **States:** no-right; loading; tabs; ready.
+- **Tutorial key:** — (no key)
+- **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
+  named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
+
+### `OA-29` — Integrity alarm (T7, §11.3a)
+
+- **Purpose:** The tamper alarm: read the organisation's integrity alerts (severity-split by the database rule), acknowledge one, and re-verify the ledger chain on demand. A single object that fails to verify is a warning; a broken ledger chain, an invalid signature or a failed timestamp is an incident. This is tamper-evidence, never tamper-prevention: it proves that a change happened and preserves the before and after hashes.
+- **Route / location:** The Assurance control plane (`org_control` inspector), tab `integrity`; the DB-01 dashboard banner (`DB-01-integrity-banner`) opens it.
+- **Rights required:** an integrity owner — `review_and_approve` or `edit_config`, or a Level-1/Level-2 Head; the database RPC re-checks the right and a caller without it is refused.
+- **Data functions (`src/data/*.ts`):** `IntegrityAlertRow`, `acknowledgeIntegrityAlert`, `ledgerContinuityCheck`, `listIntegrityAlerts`
+- **Data modules:** `src/data/archival.ts`
+- **RPCs reachable via those modules:** `integrity_alerts_list`, `ledger_continuity_check`, `population_archive_due`
+- **Tables reachable via those modules:** `activity_log`, `archive_jobs`, `population_archives`
+- **Testids (21):** `DB-01-integrity-banner`, `DB-01-integrity-banner-text`, `OA-29-alert-acknowledge-<id>`, `OA-29-alert-acknowledged-<id>`, `OA-29-alert-actual-<id>`, `OA-29-alert-expected-<id>`, `OA-29-alert-kind-<id>`, `OA-29-alert-raised-<id>`, `OA-29-alert-sentence-<id>`, `OA-29-alert-severity-<id>`, `OA-29-empty`, `OA-29-error`, `OA-29-headline`, `OA-29-icon-incident`, `OA-29-icon-ok`, `OA-29-list`, `OA-29-load-error`, `OA-29-loading`, `OA-29-panel`, `OA-29-verify-ledger`, `OA-29-verify-result`
+- **Explain ids (0):** — (no explain affordance)
+- **IIA standards addressed (0):** —
+- **Drilldown targets (0):** — (no aggregate)
+- **States:** loading; empty (no alerts — the verified state); ready with incidents/warnings; acknowledged; verify result; error.
 - **Tutorial key:** — (no key)
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
   named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
@@ -1850,8 +1868,10 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 | `hosting_fit_get` | `src/data/hostingFit.ts` | — | tenant |
 | `hosting_fit_rule_save` | `src/data/hostingFit.ts` | `p_rule_key`, `p_field`, `p_operator`, `p_value`, `p_severity`, `p_message`, `p_cost_tier`, `p_enabled` | tenant |
 | `import_prior_year_item` | `src/data/imports.ts` | `p_source_engagement_id`, `p_item_type`, `p_engagement_id` | tenant |
+| `integrity_alerts_list` | `src/data/archival.ts` | — | tenant |
 | `invite_status` | `src/data/admin.ts` | `p_invite_id` | tenant |
 | `invite_user_capped` | `src/data/admin.ts` | `p_email`, `p_role_slug` | tenant |
+| `ledger_continuity_check` | `src/data/archival.ts` | — | tenant |
 | `list_changes` | `src/data/changeControl.ts` | `p_engagement_id` | tenant |
 | `list_feature_catalogue` | `src/data/entitlements.ts` | — | tenant |
 | `list_plans` | `src/data/entitlements.ts` | — | tenant |
@@ -1926,10 +1946,10 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 
 ## Coverage cross-check
 
-- Screens documented: 95 (contract sections: 48 Appendix A + 44 Appendix B).
+- Screens documented: 96 (contract sections: 48 Appendix A + 44 Appendix B).
 - Tutorial keys: 80.
-- RPCs catalogued: 124.
-- Data modules: 57; exported data functions: 379.
+- RPCs catalogued: 126.
+- Data modules: 57; exported data functions: 381.
 - Contract testids not found verbatim in `src/` (placeholder or dynamic): 193.
   - audit-file-view-builder, audit-file-view-certificate, audit-file-view-conclusion, audit-file-view-documents, audit-file-view-ethics, audit-file-view-execution, audit-file-view-findings, audit-file-view-planning, audit-file-view-population, audit-file-view-report, audit-file-view-review, audit-file-view-rowtesting, audit-file-view-sampling, data-front-door-kind, hosting-test, invite-user, issues-view-patterns, oa-branding-colour-accent, oa-branding-colour-background, oa-branding-colour-primary, oa-branding-colour-text, oa-branding-margin-0, oa-branding-margin-3, oa-certificate-enabled-verification, oa-escalation-result, oa-escalation-saved, oa-governance-signoff-conclusion, oa-governance-signoff-planning, oa-governance-signoff-testing, org-control-tab-auditors, org-control-tab-automation, org-control-tab-branding, org-control-tab-connectors, org-control-tab-features, org-control-tab-formats, org-control-tab-governance, org-control-tab-hosting, org-control-tab-people, org-control-tab-setup, org-control-tab-tutorials …
 

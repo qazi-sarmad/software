@@ -125,7 +125,7 @@ export const RecordContent: React.FC<RecordContentProps> = ({ type, data, onClos
         case 'activity_log':
           return <ActivityLogPanel />;
         case 'org_control':
-          return <OrgControlPanel />;
+          return <OrgControlPanel initialTab={data?.tab} />;
         case 'shared_with_me':
           return <SharedWithMePanel mode="grantee" />;
         case 'finding':

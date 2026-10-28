@@ -255,12 +255,26 @@ the S18/S19 section above), so this prerequisite no longer blocks anything.
 | T4 | Third-party verifier: a documented procedure usable with independent tooling | TODO |
 | T5 | Attestation screen: view, export, verify | TODO |
 | T6 | Guided integrity incident wizard: what changed, by whom, what it affects; then restore / re-derive / freeze / escalate, each with a reason, append-only, verify afterwards | TODO |
-| T7 | WIRE THE EXISTING ALARM — `listIntegrityAlerts()` has zero callers; no migration emits a notification | TODO |
+| T7 | WIRE THE EXISTING ALARM — `listIntegrityAlerts()` has zero callers; no migration emits a notification | DONE |
 
 **T7 detail.** `integrity_alerts`, `raise_integrity_alert()` (which writes the alert AND appends a
 ledger entry) and the archive check functions all already exist. Detection is complete; the alarm is
 missing. Severity-split a single hash mismatch from a broken ledger chain — the second is an
 incident, not a warning. BOUNDARY: this is tamper-EVIDENCE, never tamper-prevention.
+
+**T7 implemented (2026-10-28).** `0112_integrity_alarm.sql`:
+`integrity_alert_severity(kind)` is the severity rule as data (ledger chain / signature / timestamp =
+incident; a single object = warning). `raise_integrity_alert` is redefined to fan out through
+`integrity_alert_notify` — an in-app `notification_emit` to each integrity owner
+(`review_and_approve`/`edit_config`/Head, rights not role names), a queued email to the same owners,
+and an `integrity.alert` automation event for the Work Queue — so every existing detection path alarms
+with no further change. `integrity_alerts_list()` is the gated, severity-annotated, incident-first read
+surface. `integrity_alert_acknowledge()` records that a human saw it and ledgers the annotation; the
+alert row stays immutable. `ledger_continuity_check()` re-verifies the chain and raises an incident on
+a break. The surface is `IntegrityAlarmPanel.tsx` (OA-29, the `org_control` `integrity` tab) plus
+`IntegrityAlarmBanner.tsx` (DB-01). `src/lib/integrityAlarm.ts` is the pure labelling/summary layer,
+pinned to the SQL rule by a parity test. SQL test `112_integrity_alarm.sql`; vitest
+`src/lib/integrityAlarm.test.ts` and `src/data/archival.integrityAlarm.test.ts`.
 
 ---
 
