@@ -373,7 +373,7 @@ and the full SQL harness is green ("all SQL tests passed twice").
 | 3.3 | `testing_mode` enforced | DONE |
 | 3.4 | `report_templates` enforced (or hidden) | DONE |
 | 3.5 | `anchoring_settings` setters wired (`admin_save_trust_anchor`, `admin_save_timestamp_authority`) | DONE |
-| 3.6 | `docs/CONFIG-EFFECT-MATRIX.md` — every configurable field with its proving test | TODO |
+| 3.6 | `docs/CONFIG-EFFECT-MATRIX.md` — every configurable field with its proving test | DONE |
 
 ### Phase 3.5 — the anchoring setters wired (2026-10-28)
 
@@ -421,6 +421,64 @@ Supabase env (`source .env.e2e-local`); without it the sign-in screen reports "S
 configured" and every super-admin screen fails to render. Equally, the unit-test run must have those
 variables **absent** — with them present 18 files fail on `permission denied for table …` because the
 data modules stop being inert. Two separate shells' worth of state; keep them apart.
+
+### Phase 3.6 — the last inert config fields enforced, and the matrix written (2026-10-28)
+
+Migration `supabase/migrations/0109_phase3_config_effects.sql` (new) and test
+`supabase/tests/110_phase3_config_effects.sql` (new). Migration applies twice cleanly; full SQL
+harness green ("all SQL tests passed twice", 113 test files). New document
+`docs/CONFIG-EFFECT-MATRIX.md` proves every configurable field's effect by a named test.
+
+- **The defect.** Eight columns across six config tables were stored, versioned and echoed by a
+  getter but consulted by no decision. They were classified mechanically (parse every
+  `create function` body, attribute each column reference to its owning function, drop the pure echo
+  functions), which produced exactly this inert set:
+  `entity_approval_settings.required_fields`, `export_retention_settings.activity_retention_days`,
+  `export_retention_settings.export_schedule`, `org_lifecycle_settings.report_opinion_required`,
+  `org_settings_extra.certificate_auto_issue`, `org_settings_extra.last_board_meeting_date`,
+  `pattern_settings.visibility_right`, `tenant_settings.usage_quota`.
+- **Two-sources defect closed.** The UI saved `report_opinion_required` to `org_lifecycle_settings`,
+  but `sign_conclusion` read only the legacy `config_versions.conclusion.opinion_required` key, so
+  the toggle did nothing. `sign_conclusion` now treats the opinion as required when **either** source
+  says so. Test 110 §1 proves the toggle blocks and then unblocks the sign-off.
+- **`required_fields`.** `submit_entity` now validates every field named in
+  `entity_approval_settings.required_fields` against the entity and refuses with `required_field`
+  when one is missing. Test 110 §2 requires `["name","kind"]` and proves an entity with no kind is
+  refused, then that supplying the kind lets it through.
+- **`visibility_right`.** `pattern_findings` gated on the hardcoded `view_insights`; it now gates on
+  `pattern_settings.visibility_right`. Test 110 §3 raises it to `manage_team` and proves the CIA is
+  refused.
+- **`activity_retention_days`.** `archive_activity_period` now **clamps** the archived window to the
+  retention cutoff instead of archiving activity that is still inside the live window, and refuses
+  when the whole window is still live. Test 110 §4a proves a 300-day-old window is archivable under
+  the 365-day default but refused under a 3650-day retention.
+- **`export_schedule`.** New pure reader `scheduled_export_due(org)` makes the schedule a decision:
+  `manual` is never due; daily/weekly/monthly are due once the interval has elapsed since the last
+  export. Test 110 §4b proves manual is never due, daily is due with no export, is not due right
+  after one, is due again after two days, and that a monthly schedule is not due after two days.
+- **`certificate_auto_issue`.** `seal_engagement` now issues the certificate when the flag is on.
+  **Rollback risk fixed:** the flag and the `certificates` entitlement are checked **before** issuing,
+  so a `review_and_approve`-only caller can never have a completed seal rolled back because the
+  auto-issue sub-call lacked `manage_engagements`. Test 110 §5 proves off issues zero and on issues
+  exactly one, with the `certificate_issued` ledger entry.
+- **`last_board_meeting_date`.** `board_pack_generate` gained a `since_last_meeting` boundary that
+  starts at the configured date; the default `since_last` boundary is unchanged. Test 110 §6 proves
+  the new boundary starts on the meeting date and the default does not.
+- **`usage_quota`.** New reader `tenant_user_limit(org)` reads `usage_quota->>'users'`;
+  `admin_provision_member` refuses a genuinely new member past the limit (an update of an existing
+  member is not a new seat). An empty quota means unlimited, so nothing changes by default. Test 110
+  §7 proves null-when-unset, refusal at the limit, and success after raising it.
+- **Feature-map guard.** The `certificate_auto_issue` decision calls `has_feature(...)`, and
+  `src/guards/featureMapCompleteness.test.ts` requires every function that gates on `has_feature(` to
+  be mapped in `src/lib/featureMap.ts`. Rather than map the core `seal_engagement` to a sellable
+  feature, the decision was extracted into a certificates-owned helper
+  `auto_issue_certificate_on_seal(org, engagement)`, which carries the gate and is mapped to
+  `certificates`. Sealing stays a core lifecycle action; the helper is the only new mapped RPC.
+- **Gate set after the change:** `tsc` PASS; `vitest` PASS (208 files / 2421 tests); `vite build`
+  PASS; `check-shrink` PASS (58 files); `check-tokens` PASS (183 files, 0 violations);
+  `check-ui-contract` PASS (48 screens); `check-tutorials` PASS (81 GIFs, 76 current / 5 stale —
+  all 5 stale keys are pre-existing: `sa.tenant-hub`, `oa.features`, `oa.tutorials`, `oa.connectors`,
+  `oa.formats`); SQL harness PASS — "all SQL tests passed twice" (113 test files, 109 migrations).
 
 ### Phase 3.1–3.3 — what was built and how it was verified (2026-10-28)
 

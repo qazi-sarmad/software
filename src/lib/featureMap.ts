@@ -18,6 +18,8 @@ export const FEATURE_RPC_MAP: Record<string, string> = {
   certificate_revoke: 'certificates',
   certificate_supersede: 'certificates',
   certificate_config_save: 'certificates',
+  // Phase 3.6: the certificates-owned helper seal_engagement calls when certificate_auto_issue is on.
+  auto_issue_certificate_on_seal: 'certificates',
   verify_certificate: 'public_verification',
   verify_board_pack: 'public_verification',
   verify_report_root: 'public_verification',
