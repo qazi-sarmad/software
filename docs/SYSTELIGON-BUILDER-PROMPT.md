@@ -29,6 +29,8 @@ Branch from feature/systeligon-v1 and start at 0106.
 YOUR SCOPE — the whole established body, unscoped
 Everything in docs/SYSTELIGON-TASKS.md, in the order given there. That is YOUR ledger.
 - E1-E7, E9-E10   the explain layer (popouts, drilldown, access-filtered detail, IIA standards)
+- U1-U4, U6, U8, U14   the FUNCTIONAL interface rows (drilldown, command palette, work queue,
+  live activity spine, guided empty states, keyboard-first, delete the dead dock)
 - S17-S21  document recognition, SIRA continuity, two-key acceptance, evidence storage, comment popout
 - T3-T7    attestation package, third-party verifier, attestation screen, incident wizard, wire the alarm
 - D1-D4    the deterministic capability library
@@ -126,7 +128,7 @@ ENVIRONMENT
   same commit or the gate fails.
 
 ===============================================================
-YOUR WORK — E1-E7 + E9-E10, S17-S21, T3-T7, D1-D4, F1-F7, G7-G10
+YOUR WORK — E1-E7 + E9-E10, U1-U4 + U6 + U8 + U14, S17-S21, T3-T7, D1-D4, F1-F7, G7-G10
 ===============================================================
 
 E-series — the explain layer (docs/EXPLAIN-LAYER.md)
@@ -157,6 +159,26 @@ a field the host screen filtered is an L2 breach. That is why E1 carries the red
 rather than E9.
 Reuse, do not reinvent: src/lib/access.ts, src/components/common/HoverPreview.tsx, RecordView +
 FloatingWindowManager (record drilldown already exists).
+
+U-series — the FUNCTIONAL interface rows (spec SYSTELIGON.md §11.1c Tier 1)
+These are wiring and data work, not visual design. Each is what makes a number trustworthy.
+- U1 Drilldown from EVERY dashboard number to the exact filtered records behind it. This is the same
+  work as E5 — do them together. No blocking modal.
+- U2 Command palette (Cmd/Ctrl-K): screens, records, actions, and the explain layer. Type "benford"
+  and go there; type an entity name and jump to it. The highest-leverage interaction in a product
+  with this many screens.
+- U3 The work queue as the front door: what needs YOU today, ordered by consequence ("3 CAPs overdue.
+  1 report awaiting your approval. 2 comments unanswered"). A rule over existing tables, not a chart.
+- U4 Live activity spine: a quiet stream ("Ayesha approved the SIRA cycle", "Report R-2026-014 was
+  sealed") on the existing `src/lib/liveSync.ts` transport — realtime when available, poll otherwise.
+  That fallback is already solved; reuse it.
+- U6 Guided empty states: a new org's dashboard must not be a wall of zeros. "Create your first
+  universe" with one button.
+- U8 Keyboard-first: every action reachable without a mouse, and `?` opens the shortcut sheet.
+- U14 Delete `ReviewCommentsDock.tsx` — mounted nowhere. Same as S21.
+
+NOT yours in the U-series (deferred, design language unsettled): U5 motion, U7 density values,
+U9 themes, U10 audience profiles, U11 time-of-day phases, U12 motion system, U13 animated headers.
 
 S-series — the forensic engine
 - S17 Document recognition: sniff MAGIC BYTES (never trust the extension). Detect office-inside-zip by
@@ -224,11 +246,19 @@ D-series — deterministic capability library (each a pure function + tests + a 
 - D4 Assurance operations: engagement health, reviewer load and ageing, finding ageing and
   recurrence, report consistency, audit trail completeness.
 
-NOT YOURS — DEFERRED: the U-series (interface quality and personalisation) and E8 (pencil-style
-guided pointers). The owner has NOT yet settled the design language — themes, motion, typography,
-audience profiles, animated headers. Building those now means rebuilding them once it is decided.
-They stay in docs/SYSTELIGON-TASKS.md marked DEFERRED. Do not start them. If the owner settles the
-design language mid-run, the owner will say so and the rows will be released to you.
+NOT YOURS — DEFERRED: the VISUAL rows only. E8 (pencil-style guided pointers) and U5, U7, U9-U13
+(motion curves, density values, the three new themes, audience profiles, time-of-day phases, the
+motion system, animated headers). The owner has NOT yet settled the design language, so building
+those now means rebuilding them once it is decided. They stay in docs/SYSTELIGON-TASKS.md marked
+DEFERRED. Do not start them.
+
+The U-series is SPLIT, and the split matters. The functional rows ARE yours: U1 (drilldown from every
+number — the same work as E5), U2 (command palette), U3 (work queue as the front door), U4 (live
+activity spine on the existing liveSync transport), U6 (guided empty states), U8 (keyboard-first with
+a `?` sheet), U14 (delete the dead ReviewCommentsDock). Their correctness does not depend on any
+design decision — the targets are data, the ordering is a rule, the reachability is accessibility.
+The test: if the owner changed their mind about how it looks, would the work be thrown away? For your
+rows, no. For the deferred rows, yes.
 
 F-series — fonts (docs/FONT-REPOSITORY.md)
 - F1 Remove the Google Fonts CDN link in index.html:14. It leaks every client's IP to a third party

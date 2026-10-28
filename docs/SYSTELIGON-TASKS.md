@@ -15,7 +15,7 @@ Two builds run concurrently on this repository:
 | Branch | Owns | Ledger |
 |---|---|---|
 | `feature/scale-harden-v1` | Phases 3-6 of the remediation plan: config honesty, methodology templates, monitors & connectors, production-build proof. Plus the C-series and gates G1-G6. | `docs/SCALE-TASKS.md` |
-| `feature/systeligon-build-v1` | **Everything else established.** E1-E7, E9-E10 (explain layer), S17-S21, T3-T7, D1-D4, F1-F7, gates G7-G10. The U-series and E8 are DEFERRED pending the design language. | **this file** |
+| `feature/systeligon-build-v1` | **Everything else established.** E1-E7, E9-E10 (explain layer), S17-S21, T3-T7, D1-D4, F1-F7, gates G7-G10. The functional U rows (U1-U4, U6, U8, U14) are included; the visual U rows (U5, U7, U9-U13) and E8 are DEFERRED pending the design language. | **this file** |
 
 **Builder B takes the entire established body of work that Builder A does not own.** It is not a
 cherry-picked slice. The list below is everything, and nothing on it is optional.
@@ -198,31 +198,55 @@ Anchors that already exist and must be reused, not reinvented:
 it. A popout that can leak a field the host screen filtered is an L2 breach, which is why E1 carries
 the guard test rather than E9.
 
-## U-series — interface quality — **DEFERRED (owner: design language not yet settled)**
+## U-series — interface quality — **SPLIT: functional rows are Builder B's; visual rows deferred**
 
-**Not Builder B's work. Do not start any of this.** The owner has not yet agreed the design language
-(themes, motion, typography, profiles, headers). Building it now means rebuilding it once that is
-decided. The rows below are retained so the work is not lost; they are deferred, not cancelled.
+The U-series mixes two different kinds of work, and treating it as one block was wrong.
+
+**Functional rows — Builder B's, start them.** Their correctness does NOT depend on any design
+decision: the targets are data, the ordering is a rule, the reachability is accessibility. U1 is the
+same work as E5 (drilldown from an aggregate to its filtered records).
+
+**Visual rows — DEFERRED.** These are the design language the owner has not yet settled: motion
+curves, density values, themes, audience profiles, time-of-day palettes, animated headers. Building
+them now means rebuilding them once the design is agreed. Retained, marked `DEFERRED`, not cancelled.
 
 Spec: `docs/SYSTELIGON.md` §11.1c and §12 (personalisation). **Tier 1 only once the data underneath
 is real.** A beautiful dashboard over an unwired engine is a better-looking lie.
 
 | # | Task | Status |
 |---|---|---|
-| U1 | Every dashboard number drills to its exact filtered records | DEFERRED |
-| U2 | Command palette (Cmd/Ctrl-K) | DEFERRED |
-| U3 | Work queue as the front door | DEFERRED |
-| U4 | Live activity spine on the existing `liveSync` transport | DEFERRED |
-| U5 | Motion that signals state change only; universal `prefers-reduced-motion` | DEFERRED |
-| U6 | Guided empty states | DEFERRED |
-| U7 | Density toggle, remembered per user | DEFERRED |
-| U8 | Keyboard-first, with a `?` shortcut sheet | DEFERRED |
+| U1 | Every dashboard number drills to its exact filtered records | TODO |
+| U2 | Command palette (Cmd/Ctrl-K) | TODO |
+| U3 | Work queue as the front door | TODO |
+| U4 | Live activity spine on the existing `liveSync` transport | TODO |
+| U5 | Motion that signals state change only; universal `prefers-reduced-motion` | DEFERRED (motion curves are design) |
+| U6 | Guided empty states | TODO |
+| U7 | Density toggle, remembered per user | DEFERRED (density values are design) |
+| U8 | Keyboard-first, with a `?` shortcut sheet | TODO |
 | U9 | Three new themes (`prism`, `bloom`, `slate`) as token blocks; contrast test covers all six | DEFERRED |
 | U10 | Four audience profiles (Focus, Expressive, Aesthetic, Assurance — Assurance is the default) | DEFERRED |
 | U11 | Time-of-day phases: pure `resolveDayPhase(minuteOfDay)`, time as an argument | DEFERRED |
 | U12 | Motion system: four levels, token-driven durations, ten named animations, gates | DEFERRED |
 | U13 | Animated headers: token-driven gradient, never behind text, frozen under reduced motion | DEFERRED |
-| U14 | Dead comment dock removed (`ReviewCommentsDock.tsx`) — also listed as S21 | DEFERRED |
+| U14 | Dead comment dock removed (`ReviewCommentsDock.tsx`) — also listed as S21 | TODO |
+
+### Why the split falls where it does
+
+| Row | Kind | Correctness depends on design? | Owner |
+|---|---|---|---|
+| U1 drilldown from every number | functional | No — targets are data. Same work as E5. | **Builder B** |
+| U2 command palette | functional | No — indexes screens, records, actions | **Builder B** |
+| U3 work queue as front door | functional | No — "what needs you" is a rule over existing tables | **Builder B** |
+| U4 live activity spine | functional | No — uses the existing `liveSync` transport | **Builder B** |
+| U5 motion with meaning | visual | **Yes** — curves and durations are design | deferred |
+| U6 guided empty states | functional | No — what to show when empty is data | **Builder B** |
+| U7 density toggle | visual | **Yes** — the three values are design | deferred |
+| U8 keyboard-first + `?` sheet | functional | No — reachability is accessibility | **Builder B** |
+| U9-U13 themes, profiles, phases, motion system, headers | visual | **Yes** — this IS the design language | deferred |
+| U14 delete the dead dock | functional | No — dead code removal (same as S21) | **Builder B** |
+
+The test applied: *if the owner changed their mind about how it should look, would the work be
+thrown away?* For the deferred rows, yes. For the functional rows, no.
 
 **Do NOT:** gratuitous animation, vanity charts, dark patterns, or any "AI insight" badge. The
 product's claim is determinism; decorating it as magic undercuts the one thing that makes it

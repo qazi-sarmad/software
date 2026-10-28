@@ -20,7 +20,7 @@ main                                   untouched. Nothing merges here without th
  └── feature/systeligon-v1             the SPEC branch — docs, register, gates. Base, not a work tree.
       │                                (branched from 6f47cf8)
       │
-      └── feature/systeligon-build-v1  Builder B — E1-E7 + E9-E10, S17-S21, T3-T7, D1-D4, F1-F7, G7-G10
+      └── feature/systeligon-build-v1  Builder B — E1-E7 + E9-E10, U1-U4 + U6 + U8 + U14, S17-S21, T3-T7, D1-D4, F1-F7, G7-G10
                                        ledger: docs/SYSTELIGON-TASKS.md
 ```
 
@@ -34,7 +34,7 @@ builder pushes *to* it. That is what keeps the two work trees independent.
 | Branch | Owner | Scope | Ledger | Migration range |
 |---|---|---|---|---|
 | `feature/scale-harden-v1` | Builder A | Phases 3-6, the C-series, gates G1-G6 | `docs/SCALE-TASKS.md` | `0107`-`0109` |
-| `feature/systeligon-build-v1` | Builder B | E1-E7 + E9-E10, S17-S21, T3-T7, D1-D4, F1-F7, G7-G10 | `docs/SYSTELIGON-TASKS.md` | `0110`+ |
+| `feature/systeligon-build-v1` | Builder B | E1-E7 + E9-E10, U1-U4 + U6 + U8 + U14, S17-S21, T3-T7, D1-D4, F1-F7, G7-G10 | `docs/SYSTELIGON-TASKS.md` | `0110`+ |
 | `feature/systeligon-v1` | nobody builds here | specs, register, gates, this map | — | none |
 | `main` | the owner | — | — | — |
 
