@@ -196,11 +196,11 @@ requirement, and the thing that makes the product teachable without a manual.
 | E3 | `src/lib/explain/iia.ts` — standards as data, paraphrased, mapped to real screens/RPCs | DONE |
 | E4 | Hover cards + detail panels wired across sampling methods, fields, statuses, terms | DONE |
 | E5 | Drilldown from every aggregate; deep-linkable; no blocking modal (walk test) | DONE |
-| E6 | Standards affordance on screens, lifecycle steps and report sections | TODO |
-| E7 | Standards view (catalogue → implementation → evidence) | TODO |
+| E6 | Standards affordance on screens, lifecycle steps and report sections | DONE |
+| E7 | Standards view (catalogue → implementation → evidence) | DONE |
 | E8 | `PencilGuide` + guidance data for guided first-run and per-screen "show me" | DEFERRED (design language) |
-| E9 | Gates G7 (explain coverage), G8 (drilldown), G9 (IIA honesty) + tests | TODO |
-| E10 | Extend `UI-INVENTORY.md` with explain ids, standards and drilldown targets per screen | TODO |
+| E9 | Gates G7 (explain coverage), G8 (drilldown), G9 (IIA honesty) + tests | DONE |
+| E10 | Extend `UI-INVENTORY.md` with explain ids, standards and drilldown targets per screen | DONE |
 
 ### The access rule that makes this safe (Law L2)
 
@@ -294,9 +294,9 @@ different.
 
 | Gate | Fails when | Status |
 |---|---|---|
-| G7 | an explain id has no catalogue entry | TODO |
+| G7 | an explain id has no catalogue entry | DONE |
 | G8 | an aggregate has no drilldown target | DONE |
-| G9 | an IIA reference does not match the verified numbering | TODO |
+| G9 | an IIA reference does not match the verified numbering | DONE |
 | G10 | a bundled font has no licence metadata | TODO |
 
 `G2` (no-dead-code) already exists in spirit as `scripts/audit-wiring.mjs`; the other session owns

@@ -8,6 +8,7 @@ import { EngagementGantt } from './EngagementGantt';
 import { BoardPackPanel } from '../pending/BoardPackPanel';
 import { HoverPreview } from '../common/HoverPreview';
 import { DrilldownPanel } from '../explain/DrilldownPanel';
+import { StandardsAffordance } from '../explain/StandardsAffordance';
 import { useDrilldown } from '../../hooks/useDrilldown';
 import {
   engagementsInProgress,
@@ -99,6 +100,7 @@ export const ExecutiveDashboardTab: React.FC = () => {
             Welcome back, {currentUser.name}.{' '}
             <span className="text-primary font-medium">{stats.greetingSubtitle}</span>
           </p>
+          <StandardsAffordance kind="screen" target="DB-01" screenId="DB-01" element="standards" className="mt-3" />
         </div>
 
         {/* Global Filter Status & Reset */}

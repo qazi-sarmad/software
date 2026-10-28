@@ -70,6 +70,11 @@ describe('UI inventory covers every Appendix A screen (WP7)', () => {
       '- **Tutorial key:**',
       '- **Rights required:**',
       '- **States:**',
+      // E10: the explain layer, the standards and the drilldown targets are part of the inventory's
+      // contract with the redesign, so their absence is drift, not a formatting choice.
+      '- **Explain ids',
+      '- **IIA standards addressed',
+      '- **Drilldown targets',
     ]) {
       expect(inventory, `field ${field} absent`).toContain(field);
     }

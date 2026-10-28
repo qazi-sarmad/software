@@ -296,6 +296,23 @@ G3 (config-effect) already covers "every configurable field has a proving test".
 | E9 | Gates G7, G8, G9 + tests | E1–E8 |
 | E10 | Update `UI-INVENTORY.md` with explain ids, standards, drilldown targets per screen | E1–E8 |
 
+### 8.1 Implementation status
+
+E1–E7, E9 and E10 are built and on `feature/systeligon-build-v1`. E8 is deferred until the owner
+settles the design language.
+
+| # | Built as | Tests |
+|---|---|---|
+| E1 | `src/lib/explain/{catalogue,types,entries.methods,entries.fields,entries.screens}.ts` | `catalogue.test.ts` |
+| E2 | `src/components/explain/{ExplainPopout,ExplainDetail}.tsx`, `src/hooks/useExplain.ts` | `Explain.test.tsx` |
+| E3 | `src/lib/explain/iia.ts` (39 standards, paraphrased) | `iiaHonesty.test.ts` (G9) |
+| E4 | `ExplainPopout` mounted on the sampling, workpaper, field, status and term surfaces | `explainWiring.test.ts` |
+| E5 | `src/lib/drilldown.ts` + `drilldownAggregates.ts`, `DrilldownPanel.tsx`, deep-link hash | `DrilldownPanel.test.tsx`, `drilldownCoverage.test.ts` (G8) |
+| E6 | `src/lib/explain/standardsSurfaces.ts` + `src/components/explain/StandardsAffordance.tsx`, wired on AF-01/06, AP-01, AU-01, DB-01, IR-01, SR-01, WQ-01, WK-11 | `standardsSurfaces.test.ts`, `Standards.test.tsx` |
+| E7 | `src/components/explain/StandardsView.tsx`, reached from the affordance and the explain layer | `Standards.test.tsx` |
+| E9 | `src/guards/{explainCoverage,iiaHonesty,drilldownCoverage}.test.ts` | self |
+| E10 | `scripts/gen-ui-inventory.mjs` emits per-screen explain ids, standards and drilldown targets; `uiInventory.test.ts` requires the fields | `uiInventory.test.ts` |
+
 ---
 
 ## 9. Acceptance

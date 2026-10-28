@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useScopedData } from '../../hooks/useScopedData';
 import { ExplainPopout } from '../explain/ExplainPopout';
+import { StandardsAffordance } from '../explain/StandardsAffordance';
 import { ShieldCheck } from '../common/Icons';
 import {
   AUDIT_FILE_TABS,
@@ -117,7 +118,12 @@ export const AuditFileModal: React.FC = () => {
         </div>
         <h2 className="text-apple-17 font-bold text-primary">{engagement.title}</h2>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-apple-11 text-secondary">
-          <span className="capitalize">Status: {engagement.status.replace(/_/g, ' ')}</span>
+          <span className="capitalize">
+            Status:{' '}
+            <ExplainPopout explainId={`status.engagement.${engagement.status}`} screenId="AF-01" element={`explain-eng-status-${engagement.status}`}>
+              <span>{engagement.status.replace(/_/g, ' ')}</span>
+            </ExplainPopout>
+          </span>
           <span>•</span>
           <span>Due: {engagement.dueDate}</span>
           <span>•</span>
@@ -126,6 +132,8 @@ export const AuditFileModal: React.FC = () => {
         {stageError && (
           <p data-testid="audit-file-stage-error" className="text-apple-12 text-cinnabar">{stageError}</p>
         )}
+        {/* E6 §5.4 item 2: each lifecycle step shows the IIA standards it satisfies. */}
+        <StandardsAffordance kind="step" target={engagement.stage} screenId="AF-01" element="standards-step" label="This stage satisfies" className="pt-1" />
       </div>
 
       {/* View switch: the seed-backed Overview, or the database-backed phase workspaces (4I, 5G). */}

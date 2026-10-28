@@ -53,7 +53,8 @@ export type InspectorType =
   | 'activity_log'
   | 'org_control'
   | 'shared_with_me'
-  | 'finding';
+  | 'finding'
+  | 'standards';
 
 export interface InspectorState {
   type: InspectorType | null;

@@ -23,6 +23,7 @@ import {
 import { Select } from '../common/Select';
 import { Check, Minus, Plus, User, Users, XCircle } from '../common/Icons';
 import { HoldToConfirm } from '../common/HoldToConfirm';
+import { ExplainPopout } from '../explain/ExplainPopout';
 
 type Tab = 'people' | 'roles';
 type LoadState = 'loading' | 'ready' | 'error';
@@ -243,7 +244,11 @@ export const PeopleAdminPanel: React.FC = () => {
           </div>
 
           <div className="rounded-xl border border-hairline p-4 space-y-3">
-            <h4 className="text-apple-13 font-semibold text-primary">Invite a colleague</h4>
+            <h4 className="text-apple-13 font-semibold text-primary">
+              <ExplainPopout explainId="term.invite" screenId="OA-12" element="explain-invite">
+                Invite a colleague
+              </ExplainPopout>
+            </h4>
             <p className="text-apple-11 text-secondary">
               Enter the email address and the role to grant. The invitation is queued and the invitee
               sets their own password from the link. It is not an account until they accept.

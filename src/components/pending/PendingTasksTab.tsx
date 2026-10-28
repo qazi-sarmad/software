@@ -7,6 +7,7 @@ import { buildFrontDoor, frontDoorSummary, type FrontDoorItem } from '../../lib/
 import { getOrgLocalToday } from '../../lib/orgDate';
 import { EscalationCards } from './EscalationCards';
 import { FrontDoor } from './FrontDoor';
+import { StandardsAffordance } from '../explain/StandardsAffordance';
 import { NotificationsCard } from './NotificationsCard';
 
 /**
@@ -69,6 +70,7 @@ export const PendingTasksTab: React.FC = () => {
           <CheckCircle2 className="w-4 h-4 stroke-[1.3]" /><span>Work Queue</span>
         </div>
         <h1 className="font-serif-title text-apple-28 font-bold text-primary tracking-tight">What needs you</h1>
+        <StandardsAffordance kind="screen" target="WQ-01" screenId="WQ-01" element="standards" className="mt-2" />
       </div>
 
       <FrontDoor

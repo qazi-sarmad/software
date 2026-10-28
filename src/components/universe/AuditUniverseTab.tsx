@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useScopedData } from '../../hooks/useScopedData';
 import { useApp } from '../../context/AppContext';
 import { HoverPreview } from '../common/HoverPreview';
+import { StandardsAffordance } from '../explain/StandardsAffordance';
 import { AuditEntity } from '../../types';
 import { Shield, AlertTriangle, Layers, ArrowRight, Activity, CheckCircle2 } from '../common/Icons';
 import { hasRight } from '../../lib/rights';
@@ -56,6 +57,7 @@ export const AuditUniverseTab: React.FC = () => {
         <span className="text-apple-12 font-medium tracking-wide uppercase text-accent">
           Strategic Internal Risk Assessment (SIRA)
         </span>
+        <StandardsAffordance kind="screen" target="AU-01" screenId="AU-01" element="standards" className="mt-2" />
         <h1 className="text-apple-28 font-bold text-primary tracking-tight mt-1">
           Audit Universe &amp; Entity Heatmap
         </h1>

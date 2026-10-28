@@ -28,6 +28,7 @@ const ActivityLogPanel = lazy(() => import('../admin/ActivityLogPanel').then((m)
 const OrgControlPanel = lazy(() => import('../admin/OrgControlPanel').then((m) => ({ default: m.OrgControlPanel })));
 const SharedWithMePanel = lazy(() => import('../admin/SharePanel').then((m) => ({ default: m.SharePanel })));
 const FindingDrilldown = lazy(() => import('../issues/FindingDrilldown').then((m) => ({ default: m.FindingDrilldown })));
+const StandardsView = lazy(() => import('../explain/StandardsView').then((m) => ({ default: m.StandardsView })));
 
 export const INSPECTOR_TITLES: Record<InspectorType, string> = {
   observation: 'Audit Observation & 5C Analysis',
@@ -53,6 +54,7 @@ export const INSPECTOR_TITLES: Record<InspectorType, string> = {
   org_control: 'Assurance control plane',
   shared_with_me: 'Shared with you',
   finding: 'Audit Finding',
+  standards: 'IIA Standards',
 };
 
 /** Record type in a URL (/view/:recordType/:id) to the inspector content it shows. */
@@ -128,6 +130,8 @@ export const RecordContent: React.FC<RecordContentProps> = ({ type, data, onClos
           return <SharedWithMePanel mode="grantee" />;
         case 'finding':
           return <FindingDrilldown findingId={data?.findingId} />;
+        case 'standards':
+          return <StandardsView screenId="OA-19" />;
         default:
           return null;
       }

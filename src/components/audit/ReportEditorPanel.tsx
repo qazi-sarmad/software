@@ -25,6 +25,7 @@ import { hasRight } from '../../lib/rights';
 import { rightReason, rightReasonFor } from '../../lib/rightLabels';
 import { formatFieldPairs } from '../../lib/readable';
 import { InlineError } from '../common/InlineError';
+import { StandardsAffordance } from '../explain/StandardsAffordance';
 import { HoldToConfirm } from '../common/HoldToConfirm';
 import { AlertTriangle, CheckCircle2, FileText, Layers, Send } from '../common/Icons';
 
@@ -295,7 +296,7 @@ export const ReportEditorPanel: React.FC<{ engagementId: string }> = ({ engageme
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_220px] gap-4">
           <div className="space-y-4 min-w-0">
-            {/* Section tabs */}
+            {/* Section tabs. Each carries the IIA standards it satisfies (E6 §5.4 item 5). */}
             <div role="tablist" aria-label="Report sections" className="flex flex-wrap items-center gap-1 border-b border-hairline pb-2">
               {sections.map((s) => (
                 <button
@@ -313,6 +314,7 @@ export const ReportEditorPanel: React.FC<{ engagementId: string }> = ({ engageme
                 </button>
               ))}
             </div>
+            <StandardsAffordance kind="section" target={section} screenId="WK-11" element="standards-section" label="This section satisfies" />
 
             {sectionBlocks.length === 0 ? (
               <div className="p-5 text-center text-apple-12 text-secondary bg-surface-elevated rounded-xl" data-testid="report-section-empty">
