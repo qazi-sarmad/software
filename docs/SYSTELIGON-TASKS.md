@@ -1,0 +1,228 @@
+# SYSTELIGON-TASKS — the ledger for the concurrent Systeligon build
+
+**This file is the single place that records what is done on `feature/systeligon-build-v1`.**
+Update it in the same commit as the work. Anything not marked `DONE` here is not done, regardless of
+what any other document says.
+
+Status values: `TODO` · `DOING` · `DONE` · `BLOCKED (owner)`.
+
+---
+
+## Why this ledger is separate
+
+Two builds run concurrently on this repository:
+
+| Branch | Owns | Ledger |
+|---|---|---|
+| `feature/scale-harden-v1` | Phases 1-6 of the remediation plan (foundation, lifecycle, config, methodology, monitors, proof) | `docs/SCALE-TASKS.md` |
+| `feature/systeligon-build-v1` | The Systeligon forensic engine and its surfaces: S17-S21, T, D, U, F | **this file** |
+
+**One branch owns one ledger.** That keeps the two merges clean. `docs/SCALE-TASKS.md` is the other
+session's; **do not edit it**. If you need their status, read it.
+
+Measured, not assumed: merging `feature/systeligon-v1` into `feature/scale-harden-v1` in a scratch
+worktree auto-merges `docs/SCALE-TASKS.md` with **no conflict** — the two sides' edits to that file
+are in different regions, and both survive. The separate ledger is still the right call, because it
+removes the failure mode entirely rather than relying on the two sessions never editing the same
+region. But a merge between these branches is currently a clean fast-forward, not a reconciliation.
+
+---
+
+## Truth policy
+
+`docs/archive/` holds 63 documents written before the code-verified audit. **None of them may be
+cited as evidence that anything works.** Each carries a stale banner. The reliable sources are:
+
+| Document | What it is |
+|---|---|
+| `docs/SPEC-v10.md` | The specification. Authoritative, unchanged. |
+| `docs/SYSTELIGON.md` | The forensic engine spec. **Your primary document.** |
+| `docs/FEATURE-REGISTER.md` | Every feature and its true wiring status, gated by a script. |
+| `docs/EXPLAIN-LAYER.md` | Popouts, drilldown, access-filtered detail, IIA standards. |
+| `docs/FONT-REPOSITORY.md` | Self-hosted fonts, licence metadata, template auto-detection. |
+| `docs/iia-standards-reference.md` | VERIFIED IIA 2024 numbering. Use these; never guess. |
+| `docs/SYSTELIGON-TASKS.md` | This file. Live status for this branch. |
+
+Rule for every session: **verify wiring by grepping the call site.** Never trust a doc or a green
+test as proof that a feature works.
+
+**Use `node scripts/audit-wiring.mjs`.** It resolves the real import graph, alias-aware, and prints
+every export with no reachable caller. Name-based greps are unreliable here because screens import
+with aliases (`populateSuggestions` is the export `populate_planning_suggestions`).
+
+---
+
+## Baseline counts (locked at branch point)
+
+Recorded at `f2aaa5b`'s descendant `6f47cf8` (the merge base, which already contains Phases 1-2).
+
+| Metric | Baseline |
+|---|---|
+| Migrations | 106 |
+| SQL test files | 110 |
+| Vitest files | 205 |
+| Playwright specs | 30 |
+| Guards | 21 |
+
+---
+
+## MIGRATION NUMBER RESERVATION — read before writing any migration
+
+This is the single most likely way to break the other session's work. Both branches share one
+migration namespace.
+
+| Range | Owner |
+|---|---|
+| `0001`-`0106` | Applied. Already on both branches. Do not renumber. |
+| `0107` | **`feature/scale-harden-v1`** (Phase 3 workflow enforcement). Do not use. |
+| `0108`-`0109` | **Reserved for `feature/scale-harden-v1`** (their Phases 4-5). Do not use. |
+| `0110` onward | **Yours.** Start at `0110`. |
+
+Migrations are applied by glob (`supabase/migrations/*.sql`), so a gap is harmless — the harness
+applies every file in filename order and does not require contiguity. If you need a second
+migration, use `0111`, `0112`, and so on.
+
+---
+
+## WP0 — Pre-flight
+
+| # | Task | Status |
+|---|---|---|
+| 0.1 | Branch `feature/systeligon-build-v1` from `feature/systeligon-v1` | DONE |
+| 0.2 | Baseline counts recorded above | DONE |
+| 0.3 | Own ledger (`docs/SYSTELIGON-TASKS.md`) — the split | DONE |
+| 0.4 | Migration range reserved (`0110+`) | DONE |
+| 0.5 | Run the full gate set, confirm green before any change | TODO |
+
+---
+
+## S-series — the forensic engine
+
+| # | Task | Status |
+|---|---|---|
+| S17 | Document recognition by MAGIC BYTES; archive unpacking with limits; office-in-zip; metadata; inventory before import | TODO |
+| S18 | SIRA continuity: carry-forward pack on publish, seed next cycle, anomalies propose emergent risk | TODO |
+| S19 | Two-key SIRA acceptance: finaliser endorses, auditor accepts, publish blocked while proposed | TODO |
+| S20 | EVIDENCE STORAGE — the most serious gap. Buckets, `storage_path`, real upload, re-derive on verify | TODO |
+| S21 | Review comment popout: testids, states, inventory entry, hover popout, drilldown; delete the dead dock | TODO |
+
+### S18/S19 prerequisite — the SIRA write path is inert
+
+**Verified finding.** `createSiraCycle`, `publishSiraCycle`, `recordSiraScore`, `submitEmergentRisk`
+and `decideEmergentRisk` in `src/data/sira.ts` have **ZERO callers** in components, context or hooks.
+Only the reads are wired (`listCycles`, `listEmergentRisks`, `siraModelSnapshot`, from `SiraTab.tsx`).
+`SiraCyclePanel` is rendered by `RecordContent.tsx:118` with no submit or publish handler passed.
+
+So S18's carry-forward and S19's two-key acceptance both depend on a write path the UI does not have.
+**Wire the write path first**, or S18/S19 will build on a surface that cannot be driven.
+
+---
+
+## T-series — trust and attestation
+
+| # | Task | Status |
+|---|---|---|
+| T3 | Portable attestation package: roots, signatures, timestamps, the rule versions that scored it, verification instructions | TODO |
+| T4 | Third-party verifier: a documented procedure usable with independent tooling | TODO |
+| T5 | Attestation screen: view, export, verify | TODO |
+| T6 | Guided integrity incident wizard: what changed, by whom, what it affects; then restore / re-derive / freeze / escalate, each with a reason, append-only, verify afterwards | TODO |
+| T7 | WIRE THE EXISTING ALARM — `listIntegrityAlerts()` has zero callers; no migration emits a notification | TODO |
+
+**T7 detail.** `integrity_alerts`, `raise_integrity_alert()` (which writes the alert AND appends a
+ledger entry) and the archive check functions all already exist. Detection is complete; the alarm is
+missing. Severity-split a single hash mismatch from a broken ledger chain — the second is an
+incident, not a warning. BOUNDARY: this is tamper-EVIDENCE, never tamper-prevention.
+
+---
+
+## D-series — deterministic capability library
+
+Each is a pure function under `src/lib/` with direct unit tests and a screen surface.
+
+| # | Task | Status |
+|---|---|---|
+| D1 | Risk and control intelligence: residual-risk drift, control coverage matrix, effectiveness history, KCI, appetite breach | TODO |
+| D2 | Population and evidence intelligence: profile, stratification, sufficiency, freshness, chain of custody | TODO |
+| D3 | Process and governance intelligence: SoD matrix, delegation breach, policy exceptions, meeting governance, regulatory impact | TODO |
+| D4 | Assurance operations: engagement health, reviewer load, finding ageing, report consistency, trail completeness | TODO |
+
+---
+
+## U-series — interface quality
+
+Spec: `docs/SYSTELIGON.md` §11.1c and §12 (personalisation). **Tier 1 only once the data underneath
+is real.** A beautiful dashboard over an unwired engine is a better-looking lie.
+
+| # | Task | Status |
+|---|---|---|
+| U1 | Every dashboard number drills to its exact filtered records | TODO |
+| U2 | Command palette (Cmd/Ctrl-K) | TODO |
+| U3 | Work queue as the front door | TODO |
+| U4 | Live activity spine on the existing `liveSync` transport | TODO |
+| U5 | Motion that signals state change only; universal `prefers-reduced-motion` | TODO |
+| U6 | Guided empty states | TODO |
+| U7 | Density toggle, remembered per user | TODO |
+| U8 | Keyboard-first, with a `?` shortcut sheet | TODO |
+| U9 | Three new themes (`prism`, `bloom`, `slate`) as token blocks; contrast test covers all six | TODO |
+| U10 | Four audience profiles (Focus, Expressive, Aesthetic, Assurance — Assurance is the default) | TODO |
+| U11 | Time-of-day phases: pure `resolveDayPhase(minuteOfDay)`, time as an argument | TODO |
+| U12 | Motion system: four levels, token-driven durations, ten named animations, gates | TODO |
+| U13 | Animated headers: token-driven gradient, never behind text, frozen under reduced motion | TODO |
+| U14 | Dead comment dock removed (`ReviewCommentsDock.tsx`) — also listed as S21 | TODO |
+
+**Do NOT:** gratuitous animation, vanity charts, dark patterns, or any "AI insight" badge. The
+product's claim is determinism; decorating it as magic undercuts the one thing that makes it
+different.
+
+---
+
+## F-series — fonts
+
+| # | Task | Status |
+|---|---|---|
+| F1 | Remove the Google Fonts CDN link (`index.html:14`) — it leaks every client's IP to a third party and breaks offline | TODO |
+| F2 | `src/lib/fonts/` — catalogue, per-font licence metadata, lazy loader | TODO |
+| F3 | Curate and subset the bundled repository (do NOT attempt all ~1900 Google families) | TODO |
+| F4 | Org font upload via `branding_assets` with licence acknowledgement | TODO |
+| F5 | Font/colour/theme auto-detection from DOCX and PPTX | TODO |
+| F6 | Wire detection into the org report format | TODO |
+| F7 | Gate G10 — no bundled font without licence metadata and a redistributable flag | TODO |
+
+---
+
+## Gates to add on this branch
+
+| Gate | Fails when | Status |
+|---|---|---|
+| G7 | an explain id has no catalogue entry | TODO |
+| G8 | an aggregate has no drilldown target | TODO |
+| G9 | an IIA reference does not match the verified numbering | TODO |
+| G10 | a bundled font has no licence metadata | TODO |
+
+`G2` (no-dead-code) already exists in spirit as `scripts/audit-wiring.mjs`; the other session owns
+turning it into a hard CI gate. Do not duplicate it.
+
+---
+
+## Environment facts
+
+- No host Postgres and no Docker socket for the user, but `sudo -n docker` works.
+- `scripts/local-sql-harness-docker.sh` runs a real Postgres 17: shim, migrations twice, SQL tests
+  twice. Probe readiness over TCP (`-h 127.0.0.1`), NOT the socket.
+- `@electric-sql/pglite` is installed `--no-save` for in-process schema introspection.
+- Gates: `npx tsc --noEmit` | `npx vitest run` | `npx vite build` | `node scripts/check-shrink.mjs`
+  | `node scripts/check-tokens.mjs` | `node scripts/check-ui-contract.mjs` |
+  `node scripts/check-feature-register.mjs` | `npm run check-tutorials` |
+  `bash scripts/local-sql-harness-docker.sh` | `npx playwright test`.
+- `E2E_PROD=1` runs Playwright against the built bundle. The dev-server path is unchanged.
+- The register gate (`check-feature-register.mjs`) reads `docs/FEATURE-REGISTER.md`. **If you wire
+  something, update its row in the same commit** or the gate fails.
+
+---
+
+## Maintenance
+
+- **Update this file in the same commit as the work.** No exceptions.
+- **Never edit `docs/SCALE-TASKS.md`.** That is the other session's ledger.
+- **Never use migration numbers below `0110`.**
+- **Never push to `feature/scale-harden-v1` or `main`.**
