@@ -285,6 +285,21 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
   named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
 
+### `SA-18` — integrity anchoring (SCALE-1, Phase 3.5, §17)
+
+- **Purpose:** The platform integrity catalogue: the RFC 3161 timestamp authorities that stamp a sealed report's
+- **Route / location:** `/superadmin`, tab `Integrity anchoring` (`superadmin-tab-integrity`).
+- **Rights required:** platform admin (`is_platform_admin()`); every write is a platform-only RPC (`admin_save_timestamp_authority`, `admin_save_trust_anchor`, `admin_set_anchoring_min`), re-checked in the database.
+- **Data functions (`src/data/*.ts`):** `listTenants`, `listTimestampAuthorities`, `listTrustAnchors`, `saveTimestampAuthority`, `saveTrustAnchor`, `setAnchoringMin`
+- **Data modules:** `src/data/integrityAnchoring.ts`, `src/data/platform.ts`
+- **RPCs reachable via those modules:** `platform_create_tenant`, `platform_get_invite_caps`, `platform_job_health`, `platform_list_support_grants`, `platform_list_tenants`, `platform_list_trail`, `platform_provisioning_status`, `platform_whoami`, `support_access_log_list`, `support_grant_active`, `support_list_engagements`, `support_read_object`
+- **Tables reachable via those modules:** none
+- **Testids (25):** `sa-anchoring`, `sa-anchoring-loading`, `sa-anchoring-error`, `sa-anchoring-save-error`, `sa-anchoring-result`, `sa-anchoring-authorities`, `sa-anchoring-authority-list`, `sa-anchoring-authority-empty`, `sa-anchoring-authority-<id>`, `sa-anchoring-authority-name`, `sa-anchoring-authority-url`, `sa-anchoring-authority-order`, `sa-anchoring-authority-add`, `sa-anchoring-anchors`, `sa-anchoring-anchor-list`, `sa-anchoring-anchor-empty`, `sa-anchoring-anchor-<id>`, `sa-anchoring-anchor-name`, `sa-anchoring-anchor-cert`, `sa-anchoring-anchor-add`, `sa-anchoring-min`, `sa-anchoring-min-list`, `sa-anchoring-min-empty`, `sa-anchoring-min-<id>`, `sa-anchoring-min-<id>-<n>`
+- **States:** loading; error (with Retry); ready; empty authority list; empty anchor list; empty tenant list; an inline result or refusal after a write.
+- **Tutorial key:** `sa.integrity-anchoring`
+- **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
+  named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
+
 ### `SA-03` — tenant hub (S2)
 
 - **Purpose:** the platform's per-tenant register: every tenant with its status, feature flags, AI enablement and the invitation cap, plus the controls to change them.
@@ -657,7 +672,22 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **RPCs reachable via those modules:** none
 - **Tables reachable via those modules:** `bi_check_ranges`, `bi_parameters`, `finding_sections`, `fsli_mappings`, `methodology_scales`, `notification_rules`
 - **Testids (61):** `oa-governance`, `oa-governance-loading`, `oa-governance-error`, `oa-governance-empty`, `oa-governance-result`, `oa-governance-lifecycle`, `oa-governance-testing-mode`, `oa-governance-signoff-planning`, `oa-governance-signoff-testing`, `oa-governance-signoff-conclusion`, `oa-governance-opinion-required`, `oa-governance-lifecycle-save`, `oa-governance-findings`, `oa-governance-findings-list`, `oa-governance-findings-empty`, `oa-governance-section-<roleTag>`, `oa-governance-section-delete-<roleTag>`, `oa-governance-section-tag`, `oa-governance-section-label`, `oa-governance-section-position`, `oa-governance-section-add`, `oa-governance-methodology`, `oa-governance-scales-list`, `oa-governance-scale-<key>`, `oa-governance-scale-key`, `oa-governance-scale-label`, `oa-governance-scale-add`, `oa-governance-fsli-list`, `oa-governance-fsli-<code>`, `oa-governance-fsli-code`, `oa-governance-fsli-label`, `oa-governance-fsli-category`, `oa-governance-fsli-add`, `oa-governance-workflow`, `oa-governance-sla-hours`, `oa-governance-escalation-hours`, `oa-governance-escalation-role`, `oa-governance-workflow-save`, `oa-governance-notifications`, `oa-governance-rules-list`, `oa-governance-rules-empty`, `oa-governance-rule-<eventKey>`, `oa-governance-rule-event`, `oa-governance-rule-roles`, `oa-governance-rule-supervisor`, `oa-governance-rule-add`, `oa-governance-bi`, `oa-governance-bi-list`, `oa-governance-bi-<checkKey>`, `oa-governance-bi-value-<checkKey>`, `oa-governance-bi-save-<checkKey>`, `oa-governance-uploads`, `oa-governance-max-file-mb`, `oa-governance-ext-<ext>`, `oa-governance-uploads-save`, `oa-governance-retention`, `oa-governance-export-schedule`, `oa-governance-activity-retention`, `oa-governance-population-retention`, `oa-governance-retention-save`, `oa-governance-grace-hours`
-- **States:** loading, error, empty, ready; an inline result line reports a saved change or the plain refusal (a value outside the platform range, an unknown role tag, an unsupported format).
+- **States:** loading / empty / error / ready / denied
+- **Tutorial key:** `oa.governance`
+- **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
+  named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
+
+### `OA-22` — report template (Phase 3.4, §15.2)
+
+- **Purpose:** the organisation's report template — which of the five report sections a composed report contains, and in what order. Saving writes a new versioned, logged template (0088's hash chain) and the next `compose_report` follows it; with nothing saved the default five-section order applies. The section ids are a closed set, so a template can never name a section the product cannot render.
+- **Route / location:** Org Admin control plane, tab `Report template` (`org-control-tab-templates`).
+- **Rights required:** `edit_config`.
+- **Data functions (`src/data/*.ts`):** `REPORT_SECTION_IDS`, `listReportTemplates`, `saveReportTemplate`
+- **Data modules:** `src/data/governance.ts`
+- **RPCs reachable via those modules:** none
+- **Tables reachable via those modules:** `bi_check_ranges`, `bi_parameters`, `finding_sections`, `fsli_mappings`, `methodology_scales`, `notification_rules`
+- **Testids (17):** `report-template-panel`, `report-template-loading`, `report-template-error`, `report-template-no-right`, `report-template-denied`, `report-template-version`, `report-template-result`, `report-template-save-error`, `report-template-sections`, `report-template-empty`, `report-template-section-<id>`, `report-template-up-<id>`, `report-template-down-<id>`, `report-template-remove-<id>`, `report-template-add-row`, `report-template-add-<id>`, `report-template-save`
+- **States:** loading, error, empty (no sections chosen), ready; an inline result line reports the saved change or the plain refusal (an unknown section id, an empty template).
 - **Tutorial key:** `oa.governance`
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
   named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
@@ -1598,10 +1628,10 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 
 ## Coverage cross-check
 
-- Screens documented: 93 (contract sections: 48 Appendix A + 44 Appendix B).
-- Tutorial keys: 80.
+- Screens documented: 95 (contract sections: 48 Appendix A + 44 Appendix B).
+- Tutorial keys: 81.
 - RPCs catalogued: 114.
-- Data modules: 56; exported data functions: 364.
-- Contract testids not found verbatim in `src/` (placeholder or dynamic): 190.
-  - audit-file-view-builder, audit-file-view-certificate, audit-file-view-conclusion, audit-file-view-documents, audit-file-view-ethics, audit-file-view-execution, audit-file-view-findings, audit-file-view-planning, audit-file-view-population, audit-file-view-report, audit-file-view-review, audit-file-view-rowtesting, audit-file-view-sampling, hosting-test, invite-user, issues-view-patterns, oa-branding-colour-accent, oa-branding-colour-background, oa-branding-colour-primary, oa-branding-colour-text, oa-branding-margin-0, oa-branding-margin-3, oa-certificate-enabled-verification, oa-escalation-result, oa-escalation-saved, oa-governance-signoff-conclusion, oa-governance-signoff-planning, oa-governance-signoff-testing, org-control-tab-auditors, org-control-tab-automation, org-control-tab-branding, org-control-tab-connectors, org-control-tab-features, org-control-tab-formats, org-control-tab-governance, org-control-tab-hosting, org-control-tab-people, org-control-tab-setup, org-control-tab-tutorials, prefers-reduced-motion …
+- Data modules: 57; exported data functions: 371.
+- Contract testids not found verbatim in `src/` (placeholder or dynamic): 192.
+  - audit-file-view-builder, audit-file-view-certificate, audit-file-view-conclusion, audit-file-view-documents, audit-file-view-ethics, audit-file-view-execution, audit-file-view-findings, audit-file-view-planning, audit-file-view-population, audit-file-view-report, audit-file-view-review, audit-file-view-rowtesting, audit-file-view-sampling, hosting-test, invite-user, issues-view-patterns, oa-branding-colour-accent, oa-branding-colour-background, oa-branding-colour-primary, oa-branding-colour-text, oa-branding-margin-0, oa-branding-margin-3, oa-certificate-enabled-verification, oa-escalation-result, oa-escalation-saved, oa-governance-signoff-conclusion, oa-governance-signoff-planning, oa-governance-signoff-testing, org-control-tab-auditors, org-control-tab-automation, org-control-tab-branding, org-control-tab-connectors, org-control-tab-features, org-control-tab-formats, org-control-tab-governance, org-control-tab-hosting, org-control-tab-people, org-control-tab-setup, org-control-tab-templates, org-control-tab-tutorials …
 

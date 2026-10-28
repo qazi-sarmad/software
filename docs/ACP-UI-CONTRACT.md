@@ -1245,6 +1245,31 @@ The shell around every /superadmin tab: it proves the caller is a platform admin
 - **States:** checking; denied; ready.
 - **Tutorial key:** —
 
+## SA-18 — integrity anchoring (SCALE-1, Phase 3.5, §17)
+
+The platform integrity catalogue: the RFC 3161 timestamp authorities that stamp a sealed report's
+root hash, the trust anchors their certificates are verified against, and the per-organisation
+minimum number of independent authorities a stamp must carry before the seal counts as anchored.
+
+- **Route:** `/superadmin`, tab `Integrity anchoring` (`superadmin-tab-integrity`).
+- **Rights:** platform admin (`is_platform_admin()`); every write is a platform-only RPC
+  (`admin_save_timestamp_authority`, `admin_save_trust_anchor`, `admin_set_anchoring_min`), re-checked
+  in the database.
+- **Data:** `listTimestampAuthorities`, `listTrustAnchors`, `saveTimestampAuthority`,
+  `saveTrustAnchor`, `setAnchoringMin` (`src/data/integrityAnchoring.ts`), `listTenants`
+  (`src/data/platform.ts`).
+- **Testids:** `sa-anchoring`, `sa-anchoring-loading`, `sa-anchoring-error`, `sa-anchoring-save-error`,
+  `sa-anchoring-result`, `sa-anchoring-authorities`, `sa-anchoring-authority-list`,
+  `sa-anchoring-authority-empty`, `sa-anchoring-authority-<id>`, `sa-anchoring-authority-name`,
+  `sa-anchoring-authority-url`, `sa-anchoring-authority-order`, `sa-anchoring-authority-add`,
+  `sa-anchoring-anchors`, `sa-anchoring-anchor-list`, `sa-anchoring-anchor-empty`,
+  `sa-anchoring-anchor-<id>`, `sa-anchoring-anchor-name`, `sa-anchoring-anchor-cert`,
+  `sa-anchoring-anchor-add`, `sa-anchoring-min`, `sa-anchoring-min-list`, `sa-anchoring-min-empty`,
+  `sa-anchoring-min-<id>`, `sa-anchoring-min-<id>-<n>`
+- **States:** loading; error (with Retry); ready; empty authority list; empty anchor list; empty
+  tenant list; an inline result or refusal after a write.
+- **Tutorial key:** `sa.integrity-anchoring`
+
 
 ## Tutorials regenerated
 

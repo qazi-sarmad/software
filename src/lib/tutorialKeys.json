@@ -2562,5 +2562,41 @@
         "testid": "wk-report-builder-freeze-run"
       }
     ]
+  },
+  {
+    "key": "sa.integrity-anchoring",
+    "audience": "super_admin",
+    "screenId": "SA-18",
+    "title": "Integrity anchoring",
+    "steps": [
+      {
+        "text": "Open SA-18 (Integrity anchoring).",
+        "testid": null
+      },
+      {
+        "text": "Read Anchoring in SA-18.",
+        "testid": "sa-anchoring"
+      },
+      {
+        "text": "Click Anchoring authority add in SA-18.",
+        "testid": "sa-anchoring-authority-add"
+      },
+      {
+        "text": "Find the first Anchoring authority in SA-18.",
+        "testid": "sa-anchoring-authority-<id>"
+      },
+      {
+        "text": "Click Anchoring anchor add in SA-18.",
+        "testid": "sa-anchoring-anchor-add"
+      },
+      {
+        "text": "Read Anchoring result in SA-18.",
+        "testid": "sa-anchoring-result"
+      },
+      {
+        "text": "Read Anchoring authority list in SA-18.",
+        "testid": "sa-anchoring-authority-list"
+      }
+    ]
   }
 ]

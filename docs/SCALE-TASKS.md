@@ -372,8 +372,55 @@ and the full SQL harness is green ("all SQL tests passed twice").
 | 3.2 | `signoff_role_*` enforced | DONE |
 | 3.3 | `testing_mode` enforced | DONE |
 | 3.4 | `report_templates` enforced (or hidden) | DONE |
-| 3.5 | `anchoring_settings` setters wired (`admin_save_trust_anchor`, `admin_save_timestamp_authority`) | TODO |
+| 3.5 | `anchoring_settings` setters wired (`admin_save_trust_anchor`, `admin_save_timestamp_authority`) | DONE |
 | 3.6 | `docs/CONFIG-EFFECT-MATRIX.md` — every configurable field with its proving test | TODO |
+
+### Phase 3.5 — the anchoring setters wired (2026-10-28)
+
+No migration: `0096_integrity_anchoring.sql` already defines the three platform-only writers and the
+two readers. The defect was the UI: `admin_save_timestamp_authority`, `admin_save_trust_anchor` and
+`admin_set_anchoring_min` had **no caller anywhere in `src/`**, so the timestamp-authority catalogue,
+the trust anchors and every tenant's `min_authorities` could only be set by hand in SQL.
+
+- **Enforcement was already real; only the setters were dead.** `anchoring_settings.min_authorities`
+  (int, default 2, check 1–3) is read by `anchoring_status()` and the timestamp flow, so a sealed
+  report's root is anchored against the configured count of independent authorities. What was missing
+  was any way to populate the catalogue or change the count from the product.
+- **What was built.** `src/data/integrityAnchoring.ts` wraps the five RPCs
+  (`listTimestampAuthorities`, `listTrustAnchors`, `saveTimestampAuthority`, `saveTrustAnchor`,
+  `setAnchoringMin`) on `src/data/db.ts`. `src/components/superadmin/IntegrityAnchoringPanel.tsx` is
+  the screen: it lists the authorities and anchors, adds an authority or an anchor, and sets the
+  per-tenant minimum (1–3). `SuperAdminPortal.tsx` gained the `integrity` tab, its content branch and
+  its `TAB_TUTORIAL` entry (`sa.integrity-anchoring`).
+- **Wiring verified by grep, not by a test.** `grep -n 'IntegrityAnchoringPanel' src/` shows the
+  import and the one JSX call site in `SuperAdminPortal.tsx`; `grep -n 'TAB_TUTORIAL\[tab\]'` shows the
+  dereference that would throw for a tab with no entry, and the entry exists. The RPC names and their
+  argument shapes were read from `0096` and match the module (`p_id, p_name, p_url, p_enabled,
+  p_sort_order, p_notes` / `p_id, p_name, p_certificate_der, p_enabled` / `p_org, p_min`).
+- **Tests.** `src/data/integrityAnchoring.test.ts` (2) proves the inert path: with no Supabase env the
+  reads are empty and each write reports "The integrity module is not configured."
+  `src/components/superadmin/IntegrityAnchoringPanel.test.tsx` (5) renders the empty catalogues, lists
+  what the database holds, saves an authority through the writer, sets a tenant minimum, and surfaces a
+  database refusal in `sa-anchoring-save-error` instead of pretending success.
+- **Tutorial.** New key `sa.integrity-anchoring` (SA-18): added to `src/lib/tutorialKeys.json`, the
+  `0071` registry seed and the `0081` steps migration, and **live-recorded** against the local stack
+  (`public/tutorials/sa.integrity-anchoring.gif`, 960×540, 12 frames, 298 KB — a real capture, not a
+  placeholder). `scripts/tutorialCapture.mjs` gained its navigation entry.
+- **Contract.** New section `SA-18` in `docs/ACP-UI-CONTRACT.md`; `docs/UI-INVENTORY.md` regenerated
+  (95 screens).
+- **Gate set after the change:** `tsc` PASS; `vitest` 208 files / 2421 tests PASS; `vite build` PASS;
+  `check-shrink` PASS (58 files); `check-tokens` PASS (183 files, 0 violations); `check-ui-contract`
+  PASS (48 Appendix A screens); `check-tutorials` PASS (81 GIFs, 0 placeholders, 76 current / 5 stale —
+  the 5 stale keys are pre-existing, `sa.tenant-hub` plus the 4 the Phase 3.4 note already records);
+  SQL harness PASS — "all SQL tests passed twice".
+
+### Phase 3.5 — environment note (recorded, not a defect)
+
+The live tutorial recorder and any browser probe must run against a dev server started with the local
+Supabase env (`source .env.e2e-local`); without it the sign-in screen reports "Sign-in is not
+configured" and every super-admin screen fails to render. Equally, the unit-test run must have those
+variables **absent** — with them present 18 files fail on `permission denied for table …` because the
+data modules stop being inert. Two separate shells' worth of state; keep them apart.
 
 ### Phase 3.1–3.3 — what was built and how it was verified (2026-10-28)
 

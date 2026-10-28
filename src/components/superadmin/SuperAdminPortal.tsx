@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { platformWhoami } from '../../data/platform';
 import { InlineError } from '../common/InlineError';
-import { Building, Shield, Users, Zap, Eye, History, Send, Database, RefreshCw } from '../common/Icons';
+import { Building, Shield, ShieldCheck, Users, Zap, Eye, History, Send, Database, RefreshCw } from '../common/Icons';
 import { SuperAdminTenants } from './SuperAdminTenants';
 import { SuperAdminSupport } from './SuperAdminSupport';
 import { SuperAdminTrail } from './SuperAdminTrail';
@@ -15,6 +15,7 @@ import { SuperAdminEmail } from './SuperAdminEmail';
 import { SuperAdminAutomation } from './SuperAdminAutomation';
 import { SuperAdminHosting } from './SuperAdminHosting';
 import { SuperAdminMigration, DeploymentKitPanel } from './SuperAdminMigration';
+import { IntegrityAnchoringPanel } from './IntegrityAnchoringPanel';
 import { TutorialButton } from '../common/TutorialButton';
 
 /**
@@ -25,7 +26,7 @@ import { TutorialButton } from '../common/TutorialButton';
  * database. This is the sole surface that may know about the platform role (D-PLATFORM-RIGHTS);
  * no org-product code imports it. It renders no blocking modal (spec §27.5).
  */
-type Tab = 'tenants' | 'provisioning' | 'support' | 'consultation' | 'features' | 'recipients' | 'email' | 'automation' | 'tutorials' | 'setup' | 'trail' | 'hosting' | 'migration';
+type Tab = 'tenants' | 'provisioning' | 'support' | 'consultation' | 'features' | 'recipients' | 'email' | 'automation' | 'tutorials' | 'setup' | 'trail' | 'hosting' | 'migration' | 'integrity';
 type Gate = 'checking' | 'allowed' | 'denied';
 
 /** F18: every platform tab carries its own "Show me how" tutorial key (Appendix A). */
@@ -43,6 +44,7 @@ const TAB_TUTORIAL: Record<Tab, { key: string; title: string }> = {
   hosting: { key: 'sa.hosting-fit', title: 'SA-10 hosting fit check' },
   migration: { key: 'sa.migration', title: 'SA-12 migration jobs' },
   trail: { key: 'sa.trail', title: 'SA-15 platform trail' },
+  integrity: { key: 'sa.integrity-anchoring', title: 'SA-18 integrity anchoring' },
 };
 
 export const SuperAdminPortal: React.FC = () => {
@@ -115,6 +117,7 @@ export const SuperAdminPortal: React.FC = () => {
     { id: 'setup', label: 'Setup', icon: History },
     { id: 'hosting', label: 'Hosting fit', icon: Database },
     { id: 'migration', label: 'Migration jobs', icon: RefreshCw },
+    { id: 'integrity', label: 'Integrity anchoring', icon: ShieldCheck },
     { id: 'trail', label: 'Platform trail', icon: History },
   ];
 
@@ -186,6 +189,7 @@ export const SuperAdminPortal: React.FC = () => {
           </div>
         )}
         {tab === 'trail' && <SuperAdminTrail />}
+        {tab === 'integrity' && <IntegrityAnchoringPanel />}
       </div>
     </div>
   );
