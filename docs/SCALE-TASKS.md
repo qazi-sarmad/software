@@ -44,6 +44,7 @@ green test as proof that a feature works.**
 | 0.2 | Baseline counts recorded | DONE |
 | 0.3 | Archive stale docs with banners; write this ledger | DONE |
 | 0.4 | Docker-based local SQL harness (real Postgres 17) | DONE |
+| 0.5 | Unblock migration replay: `0033` drops `platform_whoami()` before recreating it | DONE |
 
 ### Baseline counts (locked at branch point)
 
@@ -77,6 +78,58 @@ working directory `/`, but every SQL test begins with a relative include
 the first run reported 103/103 "TEST FAILED". Fix: mount the repo read-only at `/repo` and run the
 container with `-w /repo`, so psql resolves the include from the repo root. With that, all 103 SQL
 test files pass twice.
+
+### Task 0.5 — why "the new tables don't exist" (found 2026-10-28)
+
+The owner reported that the tables the last several commits were supposed to create could not be
+found. Root cause, verified end to end:
+
+1. **The app and every local probe read the *local* Supabase stack**, not a cloud project.
+   `SUPABASE_URL=http://127.0.0.1:54321` (Kong), database container `supabase_db_provio`. That database
+   had applied migrations only through **0099** (`supabase_migrations.schema_migrations` max version
+   `0099`; `supabase migration list --local` showed `0100`–`0108` with an empty remote). So
+   `workpaper_step_state`, `engagement_stage_transitions`, `approval_steps` and `sample_value_waivers`
+   did not exist there, which is exactly what the owner saw.
+2. **The hosted test project (CI) is stuck at an even earlier point.** CI step 7 applies
+   `supabase/migrations/*.sql` in filename order with `psql -v ON_ERROR_STOP=1`. Every run since
+   `5522c5d` failed at `0033_platform_read_apis.sql:13`:
+   `ERROR: cannot change return type of existing function` / `DETAIL: Row type defined by OUT
+   parameters is different.` The loop aborts there, so 0034–0108 — including all of Phase 1/2/3 —
+   never applied. Every push has been red on step 7 for this one reason (`40683799449`, `40683773118`,
+   `40681931680`, `40675849876`, …).
+3. **Why `0033` fails on replay.** `0033` defines `platform_whoami()` returning
+   `(user_id uuid, is_platform_admin boolean)` with `create or replace`. The sibling branch
+   `feature/security-harden-v1` (migration `0103_owner_only_console_and_tenant_mfa.sql`) widens the
+   same function to four columns. Both branches are replayed against the **same shared hosted test
+   project** and both are re-applied on the harness's second pass, so whichever definition lands
+   first makes the other `create or replace` fail on the changed row type. The sibling branch already
+   carries the fix (`drop function if exists public.platform_whoami();` before the create); this
+   branch did not. It was the single content difference between the two branches' shared migrations
+   (`0033` is the only same-named migration whose bytes differ; 98 identical, 9 only-ours, 4
+   only-theirs, and the only function signature that collides across them is `platform_whoami`).
+
+**Fix (this commit).** `0033_platform_read_apis.sql` now drops `platform_whoami()` before recreating
+it, with a comment recording why. Verified two ways:
+
+- `bash scripts/local-sql-harness-docker.sh` → `migrations applied twice` / `all SQL tests passed
+  twice`, exit 0 (112 test files). The harness applies every migration twice, which is the same
+  replay that CI performs, so it now passes for the same reason CI will.
+- Reproduced the CI failure exactly in a throwaway Postgres 17 container: apply the shim + all
+  migrations, widen `platform_whoami()` to the sibling's four-column shape, then replay `0033`
+  unchanged → `ERROR: cannot change return type of existing function` (exit 3). With the drop line
+  the replay succeeds.
+- Applied the pending migrations to the local stack the app reads:
+  `npx supabase migration up --local` → applied `0100`–`0108`; the four new tables now exist and
+  public base tables went 176 → **180**.
+
+**Known remaining gap (tracked, not fixed here):** PostgREST's schema cache on the local stack is
+stale for the newly added functions (`report_graph_get`, `anchoring_status`,
+`platform_provisioning_status` still answer `PGRST202`), so a *newly added* RPC cannot be exercised
+over REST until the stack is restarted or the schema cache reloaded. `NOTIFY pgrst, 'reload schema'`
+from `psql` did not refresh it (PostgREST only listens on the channel its own connection opened).
+This does not affect CI (a fresh project) and does not affect the functions the app already calls;
+it is recorded so the next session does not misread a `PGRST202` on a brand-new RPC as a missing
+migration.
 
 ---
 
