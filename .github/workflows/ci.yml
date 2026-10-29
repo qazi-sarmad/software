@@ -80,24 +80,30 @@ jobs:
           node scripts/check-rpc-parity.mjs
           node scripts/check-feature-register.mjs
 
-      - name: 7. Migrations and SQL tests (runner-local PostgreSQL)
-        # Previously this applied 116 migrations and 121 test files to the hosted test project with
-        # one `psql -f` per file: 237 connections and ~16k DDL/WAL statements per run. That is what
-        # exhausted the project's Disk IO budget. The suite needs no cloud data (the shim supplies
-        # the Supabase parts), so it now runs against a throwaway cluster inside the runner and the
-        # hosted project is never touched by this step.
+      - name: 7. Migrations and SQL tests (test project only)
+        # Reverted to the hosted-test-project form (owner decision, 2026-10-29). The runner-local
+        # variant was introduced to spare the project's Disk IO budget, but it meant no CI step ever
+        # brought the hosted schema forward. Step 8 (Playwright) drives the app against that project,
+        # so a branch whose app code reads a table or column from a new migration failed on a missing
+        # column while every SQL gate stayed green: the suite applied the migrations to a throwaway
+        # cluster, never to the project the browser actually talks to. Applying them here keeps the
+        # hosted schema current with the branch under test, which is what step 8 needs. Every
+        # migration in this repository is idempotent (`if not exists` / `create or replace`), so the
+        # per-file replay is safe; the concurrency group above serialises it against a second run.
         if: ${{ hashFiles('supabase/migrations/**') != '' }}
+        env:
+          TEST_SUPABASE_DB_URL: ${{ secrets.TEST_SUPABASE_DB_URL }}
         run: |
           sudo apt-get update
-          sudo apt-get install -y postgresql postgresql-client
-          # The runner image ships a cluster that is often already running, and `pg_ctlcluster start`
-          # exits 2 in that case ("Cluster is already running"), so the start is best-effort and
-          # connectivity is what we actually assert. Version is read from the filesystem rather than
-          # pinned: the suite needs no version-specific syntax (only security_invoker, PG15+).
-          PGVER="$(ls /usr/lib/postgresql | sort -V | tail -1)"
-          sudo pg_ctlcluster "$PGVER" main start || true
-          sudo -n -u postgres psql -tAc 'select 1' >/dev/null || { echo "::error::postgres not reachable"; exit 1; }
-          bash scripts/local-sql-harness.sh
+          sudo apt-get install -y postgresql-client
+          # Never echo the URL. Fail loudly if the secret is empty.
+          if [ -z "$TEST_SUPABASE_DB_URL" ]; then echo "::error::TEST_SUPABASE_DB_URL is empty"; exit 1; fi
+          for f in supabase/migrations/*.sql; do
+            psql "$TEST_SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f "$f"
+          done
+          for f in supabase/tests/*.sql; do
+            psql "$TEST_SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f "$f"
+          done
 
       - name: 8. Playwright (dev server) and 8b. G1 production-build E2E
         # Step 8 drives the dev server (fast feedback). Step 8b sets E2E_PROD=1 so the same suite

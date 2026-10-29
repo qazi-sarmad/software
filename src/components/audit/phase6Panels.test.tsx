@@ -168,6 +168,11 @@ describe('Phase 6 UI panels (6H)', () => {
       openCount.mockResolvedValue(1);
       render(<ReportEditorPanel engagementId="e1" />);
       const inc = await screen.findByTestId('report-incorporate-c1');
+      // The panel loads twice (see the note on the §11.4 test above): once with no version selected,
+      // then again once it selects the first version. `load` clears the error at its start, so a
+      // reload still in flight would wipe the error this test asserts on. Wait for both loads before
+      // clicking, or the assertion races the second load's `setError(null)`.
+      await waitFor(() => expect(listCapsFn).toHaveBeenCalledTimes(2));
       fireEvent.click(inc);
       await waitFor(() => expect(screen.getByTestId('report-error').textContent).toContain('resolution reason'));
       expect(resolveComment).not.toHaveBeenCalled();
