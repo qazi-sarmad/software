@@ -70,6 +70,8 @@ export const FEATURE_RPC_MAP: Record<string, string> = {
   consultation_propose: 'consultation_full_admin',
   // Item A: integrity anchoring (0096).
   signature_record: 'integrity_anchoring',
+  // S10/S11: Systeligon rule packs (0117).
+  rule_pack_save: 'systeligon_rule_packs',
 };
 
 /**

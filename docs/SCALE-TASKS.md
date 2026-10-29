@@ -1440,6 +1440,30 @@ green. Register F132 added; counts 56/32/44.
 **Tests:** `rules/documents.test.ts` 7 tests. Full suite 219 files / 2,563 tests green; gates + build
 green. Register F133–F136 added; counts 56/36/44.
 
+### S10/S11 — rule packs and signed OTA distribution (2026-10-29)
+
+**DONE.** Queue item 14. Spec §4/§8. The client half was `src/lib/systeligon/ota.ts` (item 13); this
+closes the authoritative half and the caller.
+
+- `supabase/migrations/0117_systeligon_rule_packs.sql` — `rule_packs` (append-only by trigger: a
+  shipped `(name, version)` is immutable but for the release flag) and `rule_pack_refusals` (the
+  refusal log §8 requires). `rule_pack_save` re-checks the feature (`systeligon_rule_packs`), the
+  `edit_config` right, and that the key is registered and not retired. `rule_pack_list` returns the
+  newest version per name. RLS own-org only; no direct table write from a tenant.
+- **The defect the SQL harness found, and the fix.** The first draft raised on a refusal *after*
+  inserting the refusal row. A `raise` rolls back the same transaction that wrote the row, so the
+  refusal vanished — the log, the whole point of §8, was never there. `rule_pack_save` now **logs and
+  returns** `{ok:false, reason}` instead of raising; the caller reads the reason and stops, and the
+  refusal survives. Test 119 asserts exactly that (the duplicate refusal is present after the failed
+  save).
+- **Caller:** `src/data/rulePacks.ts` (`listRulePacks`, `saveSignedRulePack`) — signs with
+  `signPack`, passes the content hash and signature to the RPC, never reads a clock or a key.
+  `rule_pack_save` mapped in `src/lib/featureMap.ts` (F25 rule 5).
+- **Tests:** `supabase/tests/119_systeligon_rule_packs.sql` (RLS, no direct write, immutability,
+  duplicate logged, unknown key logged, no-right refused, isolation) + `ota.test.ts` (7) +
+  `rulePacks.test.ts` (2, inert). SQL harness green twice. Register F137 added (Inert — no screen
+  calls it yet); counts 56/37/44.
+
 ## Environment facts (for the next session)
 
 - The sandbox has **no host Postgres** and **no Docker socket for the user**, but

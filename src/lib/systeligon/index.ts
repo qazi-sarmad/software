@@ -27,6 +27,10 @@ export { sequentialRules, actionItemRegister, policyComparison } from './rules/s
 export { buildActionRegister, itemHistory, type ActionAppearance, type ActionFinding, type ActionFindingKind } from './minutes';
 export { compareDocuments, type MatchFinding, type ComparisonCoverage, type ComparisonResult, type MatchKind, type PassageRef } from './policydiff';
 export {
+  packContentHash, signPack, verifyPack, buildAdhocRule, runAdhocRule, packSigningInput,
+  type SignedRulePack, type PackVerification, type PackRefusal, type AdhocRuleSpec,
+} from './ota';
+export {
   requiredRowsFromFindings, buildAcceptedTestingSet, applyFloor, parsePastedBlock,
   verifyCompleteness, verifyEvidence, verifyRows, carriedOverrides,
   type RowDecision, type RemarkClaim, type TestedRow, type RequiredRow, type PopulationRow,

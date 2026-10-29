@@ -282,6 +282,7 @@ Each is a pure function under `src/lib/`, with direct unit tests and a screen su
 | F134 | Systeligon pattern rules (S9) | `Inert` | `src/lib/systeligon/rules/patterns.ts`: hardcoded credentials, `SELECT *`, an external call with no error handling, an unbounded loop, a disabled check, a hardcoded environment value — over `sourceFiles` text, each finding citing the line. Pure. Test-only so far | S9 |
 | F135 | Systeligon action-item register (S14) | `Inert` | `src/lib/systeligon/minutes.ts` + `rules/sequential.ts`: follows each action item across a minutes series — carried forward, vanished, closed no-evidence, reopened, closed-before-raised, closed-by-non-owner, owner/due changed, due passed — citing every appearance as the history. Pure; `asOf` is an argument. Test-only so far | S14 |
 | F136 | Systeligon policy/procedure/regulation comparison (S15) | `Inert` | `src/lib/systeligon/policydiff.ts` + `rules/sequential.ts`: policy-no-procedure, procedure-no-policy, regulation-uncovered, stated-differently, control-no-procedure, matched on shared references/terms/cross-refs, and **reports its own coverage** (parsed/matched/could-not-interpret). Pure. Test-only so far | S15 |
+| F137 | Systeligon signed rule-pack storage (S10/S11) | `Inert` | `src/data/rulePacks.ts` (`listRulePacks`, `saveSignedRulePack`) calls `rule_pack_list` and `rule_pack_save` in `supabase/migrations/0117_systeligon_rule_packs.sql`; the pack is signed over its content hash with the org's `signing_keys`, an unverifiable save is refused and logged (`rule_pack_refusals`), a shipped version is append-only, and only a platform admin may enable the feature. `rule_pack_save` is mapped in `src/lib/featureMap.ts`; the SQL side is `supabase/tests/119_systeligon_rule_packs.sql` and the client side `src/lib/systeligon/ota.test.ts`. **Inert: no screen calls the data module yet** — the pack-management UI is the builder's | S10/S11 |
 
 ---
 
@@ -290,13 +291,13 @@ Each is a pure function under `src/lib/`, with direct unit tests and a screen su
 | Status | Count |
 |---|---|
 | `Wired` | 56 |
-| `Inert` | 36 |
+| `Inert` | 37 |
 | `Absent` | 44 |
-| **Total** | **136** |
+| **Total** | **137** |
 
 **Read that again, with the correction applied.** This is materially better than the first pass
 reported, because Phases 1 and 2 of the scale-harden build closed the whole foundation. The picture
-now: **55 wired, 29 inert, 44 absent** (F126 population header detection by S2; F127-F128 the Systeligon rule-engine shell by S1; F129 the numeric rule library by S6; F130-F136 extraction, flows and the S8/S9/S14/S15 rules, all added 2026-10-29). F35 (report templates) and F37 (report graph root) were
+now: **56 wired, 37 inert, 44 absent** (F126 population header detection by S2; F127-F128 the Systeligon rule-engine shell by S1; F129 the numeric rule library by S6; F130-F136 extraction, flows and the S8/S9/S14/S15 rules; F137 the signed rule-pack storage by S10/S11 — all added 2026-10-29). F35 (report templates) and F37 (report graph root) were
 `Inert` here and are now written and read end to end, so they were corrected on 2026-10-29. The
 remaining `Inert` rows are the genuine, still-open
 unwired features — the monitor runtime, the evidence bytes, the tamper alarm, the SIRA write path,

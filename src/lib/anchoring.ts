@@ -22,6 +22,7 @@ export const SIGNATURE_KINDS = [
   'board_pack_data_hash',
   'engagement_certificate',
   'ledger_daily_root',
+  'rule_pack',
 ] as const;
 export type SignatureKind = (typeof SIGNATURE_KINDS)[number];
 

@@ -1648,6 +1648,7 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 | `request_change` | `src/data/changeControl.ts` | `p_engagement_id`, `p_change_class`, `p_title`, `p_payload`, `p_klass` | tenant |
 | `request_extraction` | `src/data/documents.ts` | `p_file_id` | tenant |
 | `revert_prior_year_item` | `src/data/imports.ts` | `p_import_id` | tenant |
+| `rule_pack_list` | `src/data/rulePacks.ts` | — | tenant |
 | `sample_precision` | `src/data/sampling.ts` | `p_sample_id`, `p_conf` | tenant |
 | `sample_tested_rows` | `src/data/sampling.ts` | `p_sample_id` | tenant |
 | `search_documents` | `src/data/documents.ts` | `p_engagement_id`, `p_query`, `p_stage` | tenant |
@@ -1677,8 +1678,8 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 
 - Screens documented: 98 (contract sections: 48 Appendix A + 44 Appendix B).
 - Tutorial keys: 81.
-- RPCs catalogued: 116.
-- Data modules: 58; exported data functions: 385.
+- RPCs catalogued: 117.
+- Data modules: 59; exported data functions: 387.
 - Contract testids not found verbatim in `src/` (placeholder or dynamic): 194.
   - audit-file-view-builder, audit-file-view-certificate, audit-file-view-conclusion, audit-file-view-documents, audit-file-view-ethics, audit-file-view-execution, audit-file-view-findings, audit-file-view-planning, audit-file-view-population, audit-file-view-report, audit-file-view-review, audit-file-view-rowtesting, audit-file-view-sampling, hosting-test, invite-user, issues-view-patterns, oa-branding-colour-accent, oa-branding-colour-background, oa-branding-colour-primary, oa-branding-colour-text, oa-branding-margin-0, oa-branding-margin-3, oa-certificate-enabled-verification, oa-escalation-result, oa-escalation-saved, oa-governance-signoff-conclusion, oa-governance-signoff-planning, oa-governance-signoff-testing, org-control-tab-auditors, org-control-tab-automation, org-control-tab-branding, org-control-tab-connectors, org-control-tab-features, org-control-tab-formats, org-control-tab-governance, org-control-tab-hosting, org-control-tab-methodology, org-control-tab-people, org-control-tab-setup, org-control-tab-templates …
 
