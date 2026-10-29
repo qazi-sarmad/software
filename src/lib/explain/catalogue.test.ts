@@ -6,6 +6,7 @@ import {
   EXPLAIN_DENIED_REASON,
   EXPLAIN_ENTRIES,
   entriesForStandard,
+  entriesRequiringRight,
   explainEntry,
   explainEntryIds,
   explainFor,
@@ -159,6 +160,29 @@ describe('redaction — the L2 guard (E1)', () => {
   it('a null user is treated as holding no rights', () => {
     const view = explainFor(null, 'status.engagement.signed_off');
     expect(view.status).toBe('denied');
+  });
+
+  it('redacts EVERY restricted entry for a caller lacking its right, and shows it to one who holds it', () => {
+    // The exhaustive form of the guard: every entry that declares a minRight must be redacted for a
+    // caller without it. A restricted entry that leaked its detail to an unauthorised caller is the
+    // L2 breach this test exists to catch, and it is checked for the whole catalogue, not one sample.
+    const restricted = EXPLAIN_ENTRIES.filter((e) => !!e.minRight);
+    expect(restricted.length, 'no restricted entries — the guard would be vacuous').toBeGreaterThan(0);
+    for (const entry of restricted) {
+      const right = entry.minRight!;
+      const holder: User = { ...observer, role: 'cia', rights: { [right]: true } as User['rights'] };
+      const denied = explainFor(preparer, entry.id);
+      expect(denied.status, `${entry.id} was not redacted for a caller lacking ${right}`).toBe('denied');
+      expect(denied.effect, `${entry.id} leaked its effect`).toBe('');
+      expect(denied.detail, `${entry.id} leaked its detail`).toEqual([]);
+      expect(denied.values, `${entry.id} leaked contextual values`).toEqual([]);
+      const allowed = explainFor(holder, entry.id);
+      expect(allowed.status, `${entry.id} was redacted for a caller holding ${right}`).toBe('ready');
+    }
+    // And the helper used above resolves the same set the guard iterates.
+    for (const right of new Set(restricted.map((e) => e.minRight!))) {
+      expect(entriesRequiringRight(right).length).toBeGreaterThan(0);
+    }
   });
 });
 

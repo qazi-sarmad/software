@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { FONT_CATALOGUE } from '../lib/fonts/catalogue';
-import { REPORT_FONT_FAMILIES } from '../lib/render/fonts';
+import { REPORT_FONT_FAMILIES, fontLicenceFor } from '../lib/render/fonts';
 
 /**
  * G10 — font licence (F7; docs/FONT-REPOSITORY.md §4, §5).
@@ -80,5 +80,18 @@ describe('G10 — font licence', () => {
       const lazily = !f.alwaysOn && loader.includes(`@fontsource/${f.slug}/`);
       expect(eagerly || lazily, `${f.family} is bundled but neither eagerly nor lazily loaded`).toBe(true);
     }
+  });
+
+  it('the render layer can resolve a licensed, embeddable entry for every report family (F2/F6)', () => {
+    // `fontLicenceFor` is the accessor the render layer exposes for a family's licence metadata. If
+    // it cannot resolve a family the report picker offers, that family is offered without a licence
+    // to embed it — the exact defect F7 forbids. This checks the accessor against the real catalogue.
+    for (const f of REPORT_FONT_FAMILIES) {
+      const entry = fontLicenceFor(f.family);
+      expect(entry, `${f.family} has no licence entry`).toBeTruthy();
+      expect(entry!.licence.redistributable, `${f.family} may not be redistributed`).toBe(true);
+      expect(entry!.reportEmbeddable, `${f.family} is not marked embeddable`).toBe(true);
+    }
+    expect(fontLicenceFor('Not A Real Font')).toBeUndefined();
   });
 });
