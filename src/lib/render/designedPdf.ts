@@ -104,8 +104,8 @@ export async function renderDesignedPdf(spec: BrandingSpec, model: DocumentModel
   pdf.setProducer('Provio');
   pdf.setCreator('Provio');
 
-  const headingFont = await embedFont(pdf, undefined, StandardFonts.HelveticaBold);
-  const bodyFont = await embedFont(pdf, undefined, StandardFonts.Helvetica);
+  const headingFont = await embedFont(pdf, model.fontBytes?.heading, StandardFonts.HelveticaBold);
+  const bodyFont = await embedFont(pdf, model.fontBytes?.body, StandardFonts.Helvetica);
 
   const typo = model.typography;
   const headingPt = typo?.headingPt ?? 15;

@@ -17,6 +17,7 @@ import { documentFromReportBlocks, toPdfModel, footerLine, type DocumentModel, t
 import { DEFAULT_BRANDING, resolveHexColour, type BrandingSpec } from '../lib/render/branding';
 import { DEFAULT_FORMAT_LAYOUT, toContentsSpec, toPdfTypography, type FormatLayout } from '../lib/writing/reportFormat';
 import { designFromFormat, hasDesign } from '../lib/writing/renderDesign';
+import { loadReportFonts } from './fontBytes';
 import { sha256Hex } from '../lib/population';
 
 export const REPORT_BUCKET = 'reports';
@@ -93,12 +94,22 @@ export async function renderAndStoreReportFiles(input: ReportFileInput): Promise
   const docxBytes = await renderDocx(docxModel);
   const docxHash = await hashOf(docxBytes);
 
-  const pdfModel = buildReportModel(input, docxHash, frozenLabel);
+  // F6: embed the self-hosted face the format chose, so the frozen PDF prints the font the canvas
+  // showed. The bytes are the bundled `@fontsource` files (no external host, nothing leaves the
+  // tenant); a family outside the catalogue resolves to no bytes and the renderer keeps its default.
+  const typography = toPdfTypography(input.layout ?? DEFAULT_FORMAT_LAYOUT);
+  const loaded = await loadReportFonts(
+    { family: typography.headingFamily, weight: typography.headingWeight },
+    { family: typography.bodyFamily, weight: typography.bodyWeight },
+  );
+  const fontBytes = { heading: loaded.headingFontBytes, body: loaded.bodyFontBytes };
+
+  const pdfModel = { ...buildReportModel(input, docxHash, frozenLabel), fontBytes };
   // WP-D: a format that asks for a designed page prints through the designed renderer; every other
   // format keeps the plain flow, so an old format renders exactly as before.
   const pdfBytes = pdfModel.design && hasDesign(input.layout ?? DEFAULT_FORMAT_LAYOUT)
     ? await renderDesignedPdf(spec, pdfModel)
-    : await renderPdf(spec, toPdfModel(pdfModel, undefined, toPdfTypography(input.layout ?? DEFAULT_FORMAT_LAYOUT)));
+    : await renderPdf(spec, toPdfModel(pdfModel, undefined, typography));
   const pdfHash = await hashOf(pdfBytes);
 
   const base = `${input.orgId}/reports/${input.reportVersionId}`;

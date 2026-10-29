@@ -68,6 +68,12 @@ export interface DocumentModel {
   /** The page design (WP-D): page setup, chrome, columns, shapes, placement, links, references and
    *  table styles. Present means the renderers print the designed page; absent means the plain flow. */
   design?: DocumentDesign;
+  /**
+   * The self-hosted font bytes to embed (F2/F6). Present means the PDF embeds the exact face the
+   * report format chose; absent means the renderer keeps its standard font. The bytes are loaded
+   * (browser IO) by `src/data/fontBytes.ts` and handed in as an argument, so this model stays pure.
+   */
+  fontBytes?: { heading?: Uint8Array; body?: Uint8Array };
 }
 
 /**
@@ -271,5 +277,13 @@ export function toPdfModel(
   }
   const line = footerLine(model.footer);
   if (line) sections.push({ heading: 'Document control', blocks: [{ kind: 'paragraph', text: line }] });
-  return { title: model.title, subtitle: model.subtitle, sections, timestamp, typography };
+  return {
+    title: model.title,
+    subtitle: model.subtitle,
+    sections,
+    timestamp,
+    typography,
+    headingFontBytes: model.fontBytes?.heading,
+    bodyFontBytes: model.fontBytes?.body,
+  };
 }

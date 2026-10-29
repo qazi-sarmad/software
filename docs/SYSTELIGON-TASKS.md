@@ -497,6 +497,27 @@ Contract section CH-08 added; `docs/UI-INVENTORY.md` regenerated (100 screens). 
 | F6 | Wire detection into the org report format | DONE |
 | F7 | Gate G10 — no bundled font without licence metadata and a redistributable flag | DONE |
 
+### F-series — correction (2026-10-28, re-audit under the ONE RULE)
+
+The F6 row claimed DONE, but the audit found `loadReportFonts` (`src/data/fontBytes.ts`) had **zero
+callers**: the report PDF never embedded a self-hosted face, so a format that chose Inter or Source
+Serif 4 printed in Helvetica. Two defects, both closed:
+
+1. **The embedding path was dead.** `renderAndStoreReportFiles` now loads the format's heading/body
+   bytes and passes them through `DocumentModel.fontBytes` → `toPdfModel` → the PDF renderer's
+   `headingFontBytes`/`bodyFontBytes`, and `renderDesignedPdf` now reads `model.fontBytes` (it passed
+   `undefined`). A family outside the catalogue resolves to no bytes and the renderer keeps its
+   default, so the fallback is honest, not silent.
+2. **Half the catalogue had no bundled bytes.** The map carried 6 of the 12 report families
+   (JetBrains Mono, IBM Plex Mono, Open Sans, Atkinson Hyperlegible, Playfair Display and Roboto Slab
+   were offered by the picker but unembeddable). All twelve are now imported at every declared weight
+   (26 files). `fontBytes.test.ts` pins the map against `REPORT_FONT_FAMILIES`, so a family offered
+   without its bytes fails the build rather than falling back at render time.
+
+Tests: `src/data/fontBytes.test.ts` (3) and `src/lib/render/designedPdf.test.ts` (+2, the face is
+embedded and the render stays byte-identical). The `render.test.ts` reproducibility sweep over every
+catalogue family still passes.
+
 ---
 
 ## Gates to add on this branch
