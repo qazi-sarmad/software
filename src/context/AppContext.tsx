@@ -332,6 +332,7 @@ export function AppProvider({ user, seed, children }: { user: User; seed: Tenant
       department: input.department.trim(), headOfDepartment: input.headOfDepartment.trim() || 'Unassigned',
       inherentRisk: input.inherentRisk, residualRisk: input.inherentRisk,
       siraScore: 0, controlsCount: 0, lastAuditDate: 'Never', status: 'active',
+      approvalStatus: 'draft', rejectionReason: null,
     };
     try {
       const payloadHash = await computePayloadHash({ id, universeId: input.universeId, name, code, timestamp: new Date().toISOString() });

@@ -130,6 +130,8 @@ export const initialEntities: AuditEntity[] = [
     controlsCount: 12,
     lastAuditDate: '2026-06-20',
     status: 'in_review',
+    approvalStatus: 'pending',
+    rejectionReason: null,
   },
   {
     id: 'ent-trading',
@@ -144,6 +146,8 @@ export const initialEntities: AuditEntity[] = [
     controlsCount: 16,
     lastAuditDate: '2026-07-14',
     status: 'active',
+    approvalStatus: 'approved',
+    rejectionReason: null,
   },
   {
     id: 'ent-compliance',
@@ -158,6 +162,8 @@ export const initialEntities: AuditEntity[] = [
     controlsCount: 10,
     lastAuditDate: '2026-05-30',
     status: 'active',
+    approvalStatus: 'approved',
+    rejectionReason: null,
   },
   {
     id: 'ent-retail',
@@ -172,6 +178,8 @@ export const initialEntities: AuditEntity[] = [
     controlsCount: 8,
     lastAuditDate: '2026-04-12',
     status: 'active',
+    approvalStatus: 'approved',
+    rejectionReason: null,
   },
   {
     id: 'ent-cards',
@@ -186,6 +194,8 @@ export const initialEntities: AuditEntity[] = [
     controlsCount: 14,
     lastAuditDate: '2026-08-01',
     status: 'active',
+    approvalStatus: 'approved',
+    rejectionReason: null,
   },
   {
     id: 'ent-digital',
@@ -200,6 +210,8 @@ export const initialEntities: AuditEntity[] = [
     controlsCount: 9,
     lastAuditDate: '2026-07-22',
     status: 'active',
+    approvalStatus: 'approved',
+    rejectionReason: null,
   },
 ];
 

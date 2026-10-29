@@ -61,6 +61,8 @@ describe('Task A: Scoped Visibility and Rights & Responsibilities', () => {
       controlsCount: 12,
       lastAuditDate: '2026-06-12',
       status: 'active',
+      approvalStatus: 'approved',
+      rejectionReason: null,
     },
     {
       id: 'ent-b',
@@ -75,6 +77,8 @@ describe('Task A: Scoped Visibility and Rights & Responsibilities', () => {
       controlsCount: 15,
       lastAuditDate: '2026-07-01',
       status: 'in_review',
+      approvalStatus: 'pending',
+      rejectionReason: null,
     },
     {
       id: 'ent-c',
@@ -89,6 +93,8 @@ describe('Task A: Scoped Visibility and Rights & Responsibilities', () => {
       controlsCount: 8,
       lastAuditDate: '2026-05-18',
       status: 'active',
+      approvalStatus: 'approved',
+      rejectionReason: null,
     },
   ];
 

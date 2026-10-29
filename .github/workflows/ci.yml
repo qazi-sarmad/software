@@ -65,6 +65,13 @@ jobs:
       - name: 6c. UI contract
         run: node scripts/check-ui-contract.mjs
 
+      - name: 6d. Anti-theatre gates (G2 dead code, G4 wiring, G5 two-sources, G6 RPC parity)
+        run: |
+          node scripts/check-dead-code.mjs
+          node scripts/check-wiring.mjs
+          node scripts/check-two-sources.mjs
+          node scripts/check-rpc-parity.mjs
+
       - name: 7. Migrations and SQL tests (test project only)
         if: ${{ hashFiles('supabase/migrations/**') != '' }}
         env:

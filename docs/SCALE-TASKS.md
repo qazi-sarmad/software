@@ -822,7 +822,7 @@ branch builds G1–G6 and does not build G7–G10.
 | G2 | No-dead-code (every `public` fn has a production caller or is allow-listed) | DONE |
 | G3 | Config-effect (every configurable field has a proving test) | TODO |
 | G4 | Wiring (every `src/data/*.ts` export imported by a component or allow-listed) | DONE |
-| G5 | Two-sources (no component reads both the seed and the database) | TODO |
+| G5 | Two-sources (no component reads both the seed and the database) | DONE |
 | G6 | RPC parity (every RPC the app calls exists in the final schema) | DONE |
 
 ### G2 — no dead code, DONE (2026-10-28)
@@ -915,6 +915,35 @@ RPC target named in `src/data/**` or `supabase/functions/**`, the RPC catalogue 
     ledger entry itself on every state change, so the client-side appender had no caller and never
     would. **DELETED** (this commit): a wrapper with no possible caller is dead code, not a wiring
     gap, so it is removed rather than allow-listed. Its wiring-allow entry is removed with it.
+
+### G5 — two sources, DONE (2026-10-28)
+
+`scripts/check-two-sources.mjs` + `scripts/two-sources-allow.json`. It resolves the real import graph
+(alias-aware and namespace-aware, the same reason G4 does) and reports any component that reads one
+tenant table from **both** the seed and the database. This is the defect the audit named: two lists
+for one table that agree in the dev demo and disagree in production, where the seed is empty — so
+half the screen is blank and no test notices (the tests run against the seed).
+
+- **Result:** `PASS: check-two-sources — no component reads a table from both the seed and the
+  database (0 allow-listed).`
+- **The one real violation, found and fixed.** `src/components/universe/AuditUniverseTab.tsx` read
+  `entities` from the seed (`scopedEntities` via `useScopedData`) **and** from the database
+  (`listEntities()` in `src/data/universe.ts`), rendering two lists: the seeded heatmap cards and a
+  separate "Entities awaiting or holding approval" DB list. In production the seed is empty and the DB
+  list is the only real one, so the heatmap vanished. **Fixed** by making the screen single-source:
+  the cards now come from `scopedEntities` (which `loadTenantSnapshot` hydrates from the database) and
+  carry the database approval status. `AuditEntity` gained `approvalStatus` and `rejectionReason`
+  (the DB `entities.status` / `entities.rejection_reason`), so the approval chip and the inspector
+  dispatch read the real state instead of a hardcoded `status: 'draft'`.
+- **Proven by** `src/guards/twoSources.test.ts` (5 tests) which drives the **same** detector the gate
+  runs (`scripts/two-sources-core.mjs`): it flags the seed+database clash, flags an aliased import,
+  passes a single-source component, ignores a reader name in a comment or string, and pins that the
+  real `AuditUniverseTab` is single-source. The gate was also run against the pre-fix file to confirm
+  it reports the violation, then against the fix to confirm it clears.
+- **Why a real import graph, not a grep.** Same alias/namespace problem as G4; a grep both misses
+  aliased reads and flags names mentioned in comments or strings.
+- **Wired into** `scripts/pre-pr-gates.sh` (step 6d), `scripts/ci-local.sh` (step 8d), `ci.yml`
+  (step 6d) and `package.json` (`npm run check-two-sources`).
 
 ### G6 — RPC parity, DONE (2026-10-28)
 

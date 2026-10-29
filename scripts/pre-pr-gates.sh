@@ -33,6 +33,12 @@ step "6c. UI contract"
 node scripts/check-ui-contract.mjs || { echo "FAIL: check-ui-contract"; exit 1; }
 node scripts/check-feature-register.mjs || { echo "FAIL: check-feature-register"; exit 1; }
 
+step "6d. Anti-theatre gates G2/G4/G5/G6 (dead code, wiring, two-sources, RPC parity)"
+node scripts/check-dead-code.mjs || { echo "FAIL: check-dead-code (G2)"; exit 1; }
+node scripts/check-wiring.mjs || { echo "FAIL: check-wiring (G4)"; exit 1; }
+node scripts/check-two-sources.mjs || { echo "FAIL: check-two-sources (G5)"; exit 1; }
+node scripts/check-rpc-parity.mjs || { echo "FAIL: check-rpc-parity (G6)"; exit 1; }
+
 step "7. Source guards (single client, no blocking modals, no demo ids, no Math.random)"
 npx vitest run src/guards || { echo "FAIL: guards"; exit 1; }
 

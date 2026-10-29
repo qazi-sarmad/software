@@ -24,6 +24,7 @@ import type {
   AuditUniverse,
   CapStatus,
   EngagementStage,
+  EntityApprovalStatus,
   LedgerEntry,
   LedgerEventType,
   ReviewComment,
@@ -86,6 +87,11 @@ function s(v: unknown, fallback = ''): string {
 function riskRating(v: unknown): 'low' | 'medium' | 'high' | 'critical' {
   const t = s(v, 'medium').toLowerCase();
   return t === 'low' || t === 'high' || t === 'critical' ? t : 'medium';
+}
+
+function approvalStatus(v: unknown): EntityApprovalStatus {
+  const t = s(v, 'draft');
+  return t === 'pending' || t === 'approved' || t === 'rejected' ? t : 'draft';
 }
 
 function severity(v: unknown): Severity {
@@ -156,6 +162,8 @@ export async function loadTenantSnapshot(warnings: string[] = []): Promise<Tenan
     inherentRisk: riskRating(null), residualRisk: riskRating(null),
     siraScore: 0, controlsCount: 0, lastAuditDate: '',
     status: s(r.status) === 'approved' ? 'active' : s(r.status) === 'pending' ? 'in_review' : 'active',
+    approvalStatus: approvalStatus(r.status),
+    rejectionReason: r.rejection_reason == null ? null : s(r.rejection_reason),
   }), warnings)) as AuditEntity[];
 
   const engagements = (await readRows('engagements', 'id, universe_id, entity_id, title, stage, sealed, ad_hoc, created_at', (r) => ({
