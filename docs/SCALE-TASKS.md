@@ -863,7 +863,10 @@ RPC target named in `src/data/**` or `supabase/functions/**`, the RPC catalogue 
 (a type vanishes at runtime and is not dead code when unused).
 
 - **Result:** `PASS: check-wiring — every src/data value export is reachable from a screen, referenced
-  by a test, or allow-listed (23 allow-listed, 28 test-only).`
+  by a test, or allow-listed (17 allow-listed, 28 test-only).` The count is 17 now: 23 when G4 first
+  landed, 20 after the WP-F font fix wired three `fontBytes` exports (see below), and 17 after this
+  commit closed the three remaining A-own gaps and removed their entries. The gate fails on a stale
+  entry, so the list cannot grow stale silently.
 - **Why a real graph, not a grep.** A name-based grep is wrong here in both directions: screens import
   with aliases (`populateSuggestions` is the export `populate_planning_suggestions`) and with
   namespaces (`import * as writes from '../data/mutations'`), so a grep both misses wired code and
@@ -894,12 +897,24 @@ RPC target named in `src/data/**` or `supabase/functions/**`, the RPC catalogue 
     `render.test.ts` ("carries heading and body font bytes …") and `designedPdf.test.ts`
     ("embeds the format font bytes …").
   - `src/data/reportGraph.ts::getReportGraph` — the reader for the committed report graph and claims
-    ("the screen's drilldown", Phase 2.6). The writer is wired; the reader has no caller, so the
-    committed root is not drilldownable yet.
+    ("the screen's drilldown", Phase 2.6). The writer is wired; the reader had no caller, so the
+    committed root was not drilldownable. **FIXED** (this commit). `ReportEditorPanel` now has a
+    non-blocking "View claim graph" drilldown (`report-graph-open`): it loads the selected version's
+    committed root and claims through `getReportGraph` and renders them in a panel beside the editor
+    (`report-graph-panel`, `report-graph-root-*`, `report-graph-claim-*`, with `report-graph-empty`
+    when nothing is committed and `report-graph-close` to dismiss). The panel resets on a version
+    switch so it never shows a root that does not match the version on screen. Proven by
+    `phase6Panels.test.tsx` ("drills into the committed claim graph", "shows the drilldown empty
+    state").
   - `src/data/reportFiles.ts::reportFooterPreview` — the on-screen footer line whose own doc comment
-    says it exists so the screen and the file agree; no screen calls it.
+    says it exists so the screen and the file agree; no screen called it. **FIXED** (this commit).
+    The report editor renders it under the frozen file hashes (`report-footer-preview`), from the
+    same `footerLine` the PDF/DOCX use, so the screen and the file agree. Proven by
+    `phase6Panels.test.tsx` ("previews the frozen footer line on screen").
   - `src/data/mutations.ts::appendLedgerEntryDb` — a Phase 1.4 leftover; the database writes the
-    ledger entry itself on every state change, so the client-side appender has no caller.
+    ledger entry itself on every state change, so the client-side appender had no caller and never
+    would. **DELETED** (this commit): a wrapper with no possible caller is dead code, not a wiring
+    gap, so it is removed rather than allow-listed. Its wiring-allow entry is removed with it.
 
 ### G6 — RPC parity, DONE (2026-10-28)
 

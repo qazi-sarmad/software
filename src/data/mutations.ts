@@ -85,10 +85,3 @@ export function createObservation(
     p_engagement_id: engagementId, p_workpaper_id: workpaperId, p_title: title, p_sections: sections,
   });
 }
-
-/** Append a hash-chained ledger entry through the database (migration 0073). */
-export function appendLedgerEntryDb(
-  orgId: string, action: string, payload: Record<string, unknown>
-): Promise<DataResult> {
-  return callRpc('append_ledger_entry', { p_org_id: orgId, p_action: action, p_payload: payload });
-}
