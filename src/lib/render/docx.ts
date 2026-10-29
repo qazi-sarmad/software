@@ -13,6 +13,7 @@ import {
 import JSZip from 'jszip';
 import { buildContents, footerLine, type DocumentModel, type DocumentTypography } from './document';
 import { fillTemplate } from './branding';
+import { PRODUCT_NAME } from '../product';
 import { figurePng } from './figure';
 import { resolveReference, referenceTargets, type ReferenceTarget } from '../writing/links';
 import { tableStyle, type TableStyle } from '../writing/tableStyles';
@@ -277,7 +278,7 @@ export async function renderDocx(model: DocumentModel): Promise<Uint8Array> {
   } : null;
 
   const doc = new Document({
-    creator: 'Provio',
+    creator: PRODUCT_NAME,
     description: model.title,
     sections: [{
       children,

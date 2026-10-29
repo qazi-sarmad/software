@@ -13,6 +13,7 @@
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
 import { fillTemplate, mmToPt, pageDimensions, type BrandingSpec } from './branding';
+import { PRODUCT_NAME } from '../product';
 import { wrapText } from './pdf';
 import type { DocumentDesign, DocumentModel } from './document';
 import { buildContents } from './document';
@@ -109,8 +110,8 @@ export async function renderDesignedPdf(
   const stamp = new Date(FIXED_PDF_EPOCH);
   pdf.setCreationDate(stamp);
   pdf.setModificationDate(stamp);
-  pdf.setProducer('Provio');
-  pdf.setCreator('Provio');
+  pdf.setProducer(PRODUCT_NAME);
+  pdf.setCreator(PRODUCT_NAME);
 
   // WP-F: embed the format's chosen self-hosted font when the caller supplied its bytes, so the
   // designed page prints the face the canvas showed; otherwise fall back to the standard font.

@@ -1491,6 +1491,37 @@ intact, and the committed claim graph must re-verify it.
   `a-own-unwired` with a real reason; `loadSysteligonFindings` is reached through `commitReportGraph`
   (called from `ReportEditorPanel.tsx:177`).
 
+### S16 — the name in ONE constants module (2026-10-29)
+
+**DONE.** Queue item 17. Spec §13: the product and engine names must be held in one place so a rename
+is one commit, not a grep-and-pray across the tree.
+
+- `src/lib/product.ts` (new) — the single source: `PRODUCT_NAME`, `PRODUCT_TAGLINE`, the derived
+  `PRODUCT_TITLE`, and `ENGINE_NAME`.
+- **Every live literal reads it.** `render/pdf.ts`, `render/designedPdf.ts`, `render/docx.ts` (export
+  metadata), `notifications.ts` (subject fallback), `wizardSteps.ts`, and the screens `SignInScreen`,
+  `NoTenantScreen`, `GraphOauthCallback`, `HeaderBar`, `PublicVerifyRoute`, `GlassBoxPublicRoute`,
+  `SuperAdminProvisioning`, `OrgEmailPanel`, `OrgHostingPanel` now render `PRODUCT_NAME`.
+- **The two files a browser build cannot import.** `scripts/sync-product-name.mjs` (`npm run gen:name`)
+  rewrites the `<title>`/OpenGraph title in `index.html` and the `name` in `metadata.json` from the
+  constant. Committed output is byte-identical to running the tool.
+- **The Edge runtime mirror.** `supabase/functions/_shared/productName.ts` holds the same literal for
+  the Deno function (which cannot import from `src/`), exactly as `requiredHostingSpec.ts` mirrors the
+  migration lists; the hosting-test handler reads it.
+- **The guard.** `src/guards/productName.test.ts` fails the build when (1) a raw `Provio`/`Systeligon`
+  token reappears in live `src/`/`supabase/functions` code outside the constants modules and the sync
+  script, (2) the Edge mirror drifts from the app constant, or (3) the committed `index.html`/
+  `metadata.json` no longer match what `gen:name` would write. It also proves it can catch a
+  reintroduced literal, so it cannot go blind.
+- **Tests:** `productName.test.ts` (4). The pre-existing tests that asserted the literal
+  (`notifications.test.ts`, `App.noTenant.test.tsx`, `hostingTestHandler.test.ts`) now assert against the
+  constant, and the render/link fixtures use neutral labels — so a rename genuinely is one commit.
+- Register row **F138** added (`Wired`); counts **58/37/43**. `check-feature-register` and
+  `check-wiring` green; `tsc --noEmit` clean.
+
+**Scope note:** this is the name constant. The product's *display* name in docs, marketing and the
+patent filing is an owner decision, not the builder's; S16 only makes the code name one edit.
+
 ## Environment facts (for the next session)
 
 - The sandbox has **no host Postgres** and **no Docker socket for the user**, but

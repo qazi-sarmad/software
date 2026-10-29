@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { PRODUCT_NAME } from '../../lib/product';
 
 /**
  * Rendered when a session exists but the account is not yet a member of any organisation (D4).
@@ -23,7 +24,7 @@ export const NoTenantScreen: React.FC = () => {
     >
       <div className="w-full max-w-md space-y-5 p-8 rounded-2xl bg-surface border border-hairline">
         <div>
-          <h1 className="text-apple-28 font-bold tracking-tight">Welcome to Provio</h1>
+          <h1 className="text-apple-28 font-bold tracking-tight">Welcome to {PRODUCT_NAME}</h1>
           <p className="text-apple-13 text-secondary mt-2">
             Your account has been created, but you are not yet assigned to an organisation. Your
             administrator will add you shortly. Check back in a few moments, or contact support.

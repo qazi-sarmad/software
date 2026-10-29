@@ -7,6 +7,7 @@ import {
 import { startGraphSignIn } from '../../data/emailOauth';
 import type { DataResult } from '../../data/db';
 import { InlineError } from '../common/InlineError';
+import { PRODUCT_NAME } from '../../lib/product';
 import { Check, Send, Settings } from '../common/Icons';
 import type { ProviderKind } from '../../../supabase/functions/_shared/emailAdapters';
 
@@ -168,7 +169,7 @@ export const OrgEmailPanel: React.FC = () => {
         {(draft.provider === 'graph_delegated' || draft.provider === 'graph_app') && (
           <div className="space-y-2 border-t border-hairline pt-3">
             <p className="text-apple-12 text-secondary">
-              Sign in to Microsoft once so Provio can send from this address. The sign-in is stored
+              Sign in to Microsoft once so {PRODUCT_NAME} can send from this address. The sign-in is stored
               securely; you are never shown the credential.
             </p>
             <button

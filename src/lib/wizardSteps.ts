@@ -7,6 +7,7 @@
  * own steps here; the wizard screens render whatever the registry holds for their scope.
  */
 import type { SetupScope } from '../data/setup';
+import { PRODUCT_NAME } from './product';
 
 export interface WizardStepDef {
   key: string;
@@ -26,8 +27,8 @@ export const ORG_WIZARD_STEPS: WizardStepDef[] = [
   { key: 'org.roles', title: 'Roles and permission defaults', what: 'Which rights each role holds, including who sees the Board Pack.', why: 'Access is decided by rights, not by role names.', skip: 'The seeded defaults stay in place.', tutorialKey: 'oa.setup-3', optional: false },
   { key: 'org.presentation', title: 'Presentation and certificate templates', what: 'Board Pack sections, certificate fields and your PPTX theme.', why: 'These shape every pack and certificate you issue.', skip: 'The platform default template is used.', tutorialKey: 'oa.setup-4', optional: true },
   { key: 'org.escalation', title: 'Escalation and automation rules', what: 'Rules that notify roles when something needs attention.', why: 'Nothing is escalated unless a rule says so.', skip: 'You start from the platform templates later.', tutorialKey: 'oa.setup-5', optional: true },
-  { key: 'org.hosting', title: 'Hosting', what: 'Where Provio runs for you.', why: 'It decides where your data lives.', skip: 'You stay with QSCorp hosting.', tutorialKey: 'oa.setup-6', optional: false },
-  { key: 'org.email', title: 'Email', what: 'How Provio sends your notifications.', why: 'Without this, notifications wait in the queue.', skip: 'Notifications are queued and not sent.', tutorialKey: 'oa.setup-7', optional: false },
+  { key: 'org.hosting', title: 'Hosting', what: 'Where ${PRODUCT_NAME} runs for you.', why: 'It decides where your data lives.', skip: 'You stay with QSCorp hosting.', tutorialKey: 'oa.setup-6', optional: false },
+  { key: 'org.email', title: 'Email', what: 'How ${PRODUCT_NAME} sends your notifications.', why: 'Without this, notifications wait in the queue.', skip: 'Notifications are queued and not sent.', tutorialKey: 'oa.setup-7', optional: false },
   { key: 'org.golive', title: 'Health check and Go Live', what: 'A short check that everything is set.', why: 'It catches gaps before your team starts.', skip: 'You can run the check again any time.', tutorialKey: 'oa.setup-8', optional: false },
 ];
 

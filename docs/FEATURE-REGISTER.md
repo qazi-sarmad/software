@@ -283,6 +283,7 @@ Each is a pure function under `src/lib/`, with direct unit tests and a screen su
 | F135 | Systeligon action-item register (S14) | `Inert` | `src/lib/systeligon/minutes.ts` + `rules/sequential.ts`: follows each action item across a minutes series — carried forward, vanished, closed no-evidence, reopened, closed-before-raised, closed-by-non-owner, owner/due changed, due passed — citing every appearance as the history. Pure; `asOf` is an argument. Test-only so far | S14 |
 | F136 | Systeligon policy/procedure/regulation comparison (S15) | `Inert` | `src/lib/systeligon/policydiff.ts` + `rules/sequential.ts`: policy-no-procedure, procedure-no-policy, regulation-uncovered, stated-differently, control-no-procedure, matched on shared references/terms/cross-refs, and **reports its own coverage** (parsed/matched/could-not-interpret). Pure. Test-only so far | S15 |
 | F137 | Systeligon signed rule-pack storage (S10/S11) | `Inert` | `src/data/rulePacks.ts` (`listRulePacks`, `saveSignedRulePack`) calls `rule_pack_list` and `rule_pack_save` in `supabase/migrations/0117_systeligon_rule_packs.sql`; the pack is signed over its content hash with the org's `signing_keys`, an unverifiable save is refused and logged (`rule_pack_refusals`), a shipped version is append-only, and only a platform admin may enable the feature. `rule_pack_save` is mapped in `src/lib/featureMap.ts`; the SQL side is `supabase/tests/119_systeligon_rule_packs.sql` and the client side `src/lib/systeligon/ota.test.ts`. **Inert: no screen calls the data module yet** — the pack-management UI is the builder's | S10/S11 |
+| F138 | Product and engine name in one constants module (S16) | `Wired` | `src/lib/product.ts` is the single source of the product name; every screen, export metadata and notification subject reads `PRODUCT_NAME` from it (`SignInScreen`, `NoTenantScreen`, `GraphOauthCallback`, `HeaderBar`, `PublicVerifyRoute`, `GlassBoxPublicRoute`, `SuperAdminProvisioning`, `OrgEmailPanel`, `OrgHostingPanel`, `wizardSteps.ts`, `render/pdf.ts`, `render/docx.ts`, `render/designedPdf.ts`, `notifications.ts`). The module also derives the document title and the engine name — non-screen consumers used by the sync tool and the parity guard. `scripts/sync-product-name.mjs` (`npm run gen:name`) rewrites the two files a browser build cannot import (`index.html`, `metadata.json`); the Edge Function runtime reads the mirror `supabase/functions/_shared/productName.ts`. `src/guards/productName.test.ts` fails the build on a reintroduced raw literal, a mirror drift, or a stale static file, so a rename is one commit | S16 |
 
 ---
 
@@ -290,14 +291,14 @@ Each is a pure function under `src/lib/`, with direct unit tests and a screen su
 
 | Status | Count |
 |---|---|
-| `Wired` | 57 |
+| `Wired` | 58 |
 | `Inert` | 37 |
 | `Absent` | 43 |
-| **Total** | **137** |
+| **Total** | **138** |
 
 **Read that again, with the correction applied.** This is materially better than the first pass
 reported, because Phases 1 and 2 of the scale-harden build closed the whole foundation. The picture
-now: **57 wired, 37 inert, 43 absent** (F39 findings-to-report provenance by S13; F126 population header detection by S2; F127-F128 the Systeligon rule-engine shell by S1; F129 the numeric rule library by S6; F130-F136 extraction, flows and the S8/S9/S14/S15 rules; F137 the signed rule-pack storage by S10/S11 — all added 2026-10-29). F35 (report templates) and F37 (report graph root) were
+now: **58 wired, 37 inert, 43 absent** (F39 findings-to-report provenance by S13; F126 population header detection by S2; F127-F128 the Systeligon rule-engine shell by S1; F129 the numeric rule library by S6; F130-F136 extraction, flows and the S8/S9/S14/S15 rules; F137 the signed rule-pack storage by S10/S11; F138 the single product-name module by S16 — all added 2026-10-29). F35 (report templates) and F37 (report graph root) were
 `Inert` here and are now written and read end to end, so they were corrected on 2026-10-29. The
 remaining `Inert` rows are the genuine, still-open
 unwired features — the monitor runtime, the evidence bytes, the tamper alarm, the SIRA write path,

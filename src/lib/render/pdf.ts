@@ -9,6 +9,7 @@
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
 import { fillTemplate, mmToPt, pageDimensions, type BrandingSpec } from './branding';
+import { PRODUCT_NAME } from '../product';
 
 export interface PdfTextBlock {
   kind: 'heading' | 'paragraph';
@@ -160,8 +161,8 @@ export async function renderPdf(spec: BrandingSpec, model: PdfDocumentModel): Pr
   const stamp = new Date(model.timestamp ?? FIXED_PDF_EPOCH);
   pdf.setCreationDate(stamp);
   pdf.setModificationDate(stamp);
-  pdf.setProducer('Provio');
-  pdf.setCreator('Provio');
+  pdf.setProducer(PRODUCT_NAME);
+  pdf.setCreator(PRODUCT_NAME);
 
   let heading: PDFFont;
   let body: PDFFont;

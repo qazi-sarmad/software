@@ -21,6 +21,7 @@
     "check-dead-code": "node scripts/check-dead-code.mjs",
     "check-rpc-parity": "node scripts/check-rpc-parity.mjs",
     "check-two-sources": "node scripts/check-two-sources.mjs",
+    "gen:name": "node scripts/sync-product-name.mjs",
     "tutorials:placeholder": "node scripts/record-tutorials.mjs --placeholder",
     "screenshots": "node scripts/screenshot-all.mjs"
   },

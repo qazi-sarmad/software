@@ -7,6 +7,7 @@ import {
   DEFAULT_MAX_SIZE_BYTES,
 } from '../../lib/glassbox';
 import { computeSha256 } from '../../lib/ledger';
+import { PRODUCT_NAME } from '../../lib/product';
 import { GlassBoxToken } from '../../types';
 import {
   ShieldCheck,
@@ -152,7 +153,7 @@ export const GlassBoxPublicRoute: React.FC<GlassBoxPublicRouteProps> = ({ tokenF
               P
             </div>
             <div>
-              <h1 className="font-serif-title text-apple-20 font-bold text-primary">Provio GlassBox</h1>
+              <h1 className="font-serif-title text-apple-20 font-bold text-primary">{PRODUCT_NAME} GlassBox</h1>
               <p className="text-apple-11 text-secondary uppercase tracking-wider font-semibold">
                 Secure Auditee Submission Portal
               </p>

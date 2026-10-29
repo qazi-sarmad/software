@@ -5,7 +5,7 @@ import {
 } from './links';
 
 const link = (over: Partial<HyperlinkSpec> = {}): HyperlinkSpec => ({
-  id: 'l1', label: 'Provio', url: 'https://example.test/x', underline: true, ...over,
+  id: 'l1', label: 'Example', url: 'https://example.test/x', underline: true, ...over,
 });
 
 describe('hyperlinks', () => {

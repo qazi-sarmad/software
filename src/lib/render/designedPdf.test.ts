@@ -80,7 +80,7 @@ describe('renderDesignedPdf', () => {
     const layout: Partial<FormatLayout> = {
       columns: 2,
       shapes: [defaultShape('callout', 'c1', 1, 10, 10, 1)],
-      links: [{ id: 'l1', label: 'Provio', url: 'https://example.test', underline: true }],
+      links: [{ id: 'l1', label: 'Example', url: 'https://example.test', underline: true }],
       crossReferences: [{ id: 'r1', kind: 'heading', targetKey: 'sec-1', label: 'see' }],
       numberedHeadings: true,
       defaultTableStyle: 'zebra',
@@ -123,13 +123,13 @@ describe('renderDocx with a design', () => {
 
   it('appends the link list and the cross-reference list', async () => {
     const m = model({
-      links: [{ id: 'l1', label: 'Provio site', url: 'https://example.test', underline: true }],
+      links: [{ id: 'l1', label: 'Example site', url: 'https://example.test', underline: true }],
       crossReferences: [{ id: 'r1', kind: 'heading', targetKey: 'sec-1', label: 'see' }],
     });
     const bytes = await renderDocx(m);
     const text = await docxPlainText(bytes);
     expect(text).toContain('Links');
-    expect(text).toContain('Provio site');
+    expect(text).toContain('Example site');
     expect(text).toContain('References');
     expect(text).toContain('see Section 1');
   });

@@ -6,6 +6,7 @@ import {
 } from '../../data/hostingFit';
 import { storeSecret } from '../../data/secrets';
 import { InlineError } from '../common/InlineError';
+import { PRODUCT_NAME } from '../../lib/product';
 import { HoldToConfirm } from '../common/HoldToConfirm';
 import { Database, Plus, Lock, RefreshCw, Download, CheckCircle } from '../common/Icons';
 
@@ -137,7 +138,7 @@ export const OrgHostingPanel: React.FC = () => {
           <Database className="w-4 h-4" /> Target database connection
         </h3>
         <p className="text-apple-12 text-secondary">
-          Connecting a target database is the first step of moving Provio to your own infrastructure.
+          Connecting a target database is the first step of moving {PRODUCT_NAME} to your own infrastructure.
           The password is stored encrypted and is never shown again.
         </p>
         <div className="grid grid-cols-2 gap-3">
