@@ -407,7 +407,7 @@ is real.** A beautiful dashboard over an unwired engine is a better-looking lie.
 | U1 | Every dashboard number drills to its exact filtered records | DONE |
 | U2 | Command palette (Cmd/Ctrl-K) | DONE |
 | U3 | Work queue as the front door | DONE |
-| U4 | Live activity spine on the existing `liveSync` transport | TODO |
+| U4 | Live activity spine on the existing `liveSync` transport | DONE |
 | U5 | Motion that signals state change only; universal `prefers-reduced-motion` | DEFERRED (motion curves are design) |
 | U6 | Guided empty states | TODO |
 | U7 | Density toggle, remembered per user | DEFERRED (density values are design) |

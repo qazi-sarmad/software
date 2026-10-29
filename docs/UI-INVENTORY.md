@@ -1112,11 +1112,11 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 - **Data modules:** `src/data/plan.ts`
 - **RPCs reachable via those modules:** `plan_approval_config`, `plan_history`
 - **Tables reachable via those modules:** `plan_items`, `plans`
-- **Testids (7):** `gantt-approve-shift`, `gantt-shift-error`, `DB-01-cap-hub-drilldown`, `DB-01-tile-entities`, `DB-01-tile-engagements`, `DB-01-tile-issues`, `DB-01-tile-workpapers`
+- **Testids (11):** `gantt-approve-shift`, `gantt-shift-error`, `DB-01-cap-hub-drilldown`, `DB-01-tile-entities`, `DB-01-tile-engagements`, `DB-01-tile-issues`, `DB-01-tile-workpapers`, `DB-01-activity-spine`, `DB-01-activity-spine-transport`, `DB-01-activity-spine-empty`, `DB-01-activity-spine-list`
 - **Explain ids (1):** `standard.12.2`
 - **IIA standards addressed (1):** `12.2`
 - **Drilldown targets (5):** `DB-01-tile-entities` → entities, `DB-01-tile-engagements` → engagements, `DB-01-tile-issues` → issues, `DB-01-tile-workpapers` → workpapers, `DB-01-cap-hub-drilldown` → caps
-- **States:** loading (skeleton tiles); empty (no engagements in scope); ready; the Board Pack block carries its own loading/empty/error states.
+- **States:** loading (skeleton tiles); empty (no engagements in scope); ready; the Board Pack block carries its own loading/empty/error states. The activity spine carries its own quiet empty state ("Nothing has happened yet").
 - **Tutorial key:** — (no key)
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
   named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
@@ -1871,6 +1871,7 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 
 | RPC | Module | Parameters | Scope |
 |---|---|---|---|
+| `activity_spine_list` | `src/data/activity.ts` | `p_limit`, `p_since` | tenant |
 | `add_entity` | `src/data/mutations.ts` | `p_universe_id`, `p_name`, `p_kind` | tenant |
 | `admin_upload_branding_asset` | `src/data/branding.ts` | `p_org`, `p_kind`, `p_filename`, `p_mime`, `p_base64` | platform |
 | `alert_list` | `src/data/writing.ts` | `p_org` | tenant |
@@ -2010,8 +2011,8 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 
 - Screens documented: 99 (contract sections: 48 Appendix A + 44 Appendix B).
 - Tutorial keys: 80.
-- RPCs catalogued: 134.
-- Data modules: 60; exported data functions: 395.
+- RPCs catalogued: 135.
+- Data modules: 61; exported data functions: 397.
 - Contract testids not found verbatim in `src/` (placeholder or dynamic): 193.
   - audit-file-view-builder, audit-file-view-certificate, audit-file-view-conclusion, audit-file-view-documents, audit-file-view-ethics, audit-file-view-execution, audit-file-view-findings, audit-file-view-planning, audit-file-view-population, audit-file-view-report, audit-file-view-review, audit-file-view-rowtesting, audit-file-view-sampling, data-front-door-kind, hosting-test, invite-user, issues-view-patterns, oa-branding-colour-accent, oa-branding-colour-background, oa-branding-colour-primary, oa-branding-colour-text, oa-branding-margin-0, oa-branding-margin-3, oa-certificate-enabled-verification, oa-escalation-result, oa-escalation-saved, oa-governance-signoff-conclusion, oa-governance-signoff-planning, oa-governance-signoff-testing, org-control-tab-auditors, org-control-tab-automation, org-control-tab-branding, org-control-tab-connectors, org-control-tab-features, org-control-tab-formats, org-control-tab-governance, org-control-tab-hosting, org-control-tab-people, org-control-tab-setup, org-control-tab-tutorials …
 

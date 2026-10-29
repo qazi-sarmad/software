@@ -11,6 +11,7 @@ import { HoverPreview } from '../common/HoverPreview';
 import { DrilldownPanel } from '../explain/DrilldownPanel';
 import { StandardsAffordance } from '../explain/StandardsAffordance';
 import { IntegrityAlarmBanner } from './IntegrityAlarmBanner';
+import { ActivitySpine } from './ActivitySpine';
 import { useDrilldown } from '../../hooks/useDrilldown';
 import {
   engagementsInProgress,
@@ -304,6 +305,10 @@ export const ExecutiveDashboardTab: React.FC = () => {
 
       {/* Deterministic capability library (D1-D4): the twenty capabilities over the data in scope. */}
       <CapabilityLibraryPanel />
+
+      {/* The live activity spine (U4): a quiet stream of what is happening, on the existing
+          liveSync transport (Realtime when available, a bounded poll otherwise). */}
+      <ActivitySpine />
     </div>
   );
 };

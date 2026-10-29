@@ -271,6 +271,7 @@ Each is a pure function under `src/lib/`, with direct unit tests and a screen su
 | F123 | Population-level forensic analytics | `Absent` | D7 |
 | F124 | Policy-to-control gap analysis | `Absent` | D8 |
 | F125 | Assurance-over-assurance | `Absent` | D9 |
+| F126 | Live activity spine | `Wired` | `ActivitySpine.tsx` (DB-01) renders the pure `src/lib/activitySpine.ts` layer (sentence, kind, age) over the rights-gated `activity_spine_list` RPC (`supabase/migrations/0116_activity_spine.sql`) via `src/data/activity.ts` on the existing `liveSync` transport (Realtime when available, bounded poll otherwise) | U4 |
 
 ---
 
@@ -278,10 +279,10 @@ Each is a pure function under `src/lib/`, with direct unit tests and a screen su
 
 | Status | Count |
 |---|---|
-| `Wired` | 78 |
+| `Wired` | 79 |
 | `Inert` | 23 |
 | `Absent` | 24 |
-| **Total** | **125** |
+| **Total** | **126** |
 
 **Read that again, with the correction applied.** This is materially better than the first pass
 reported, because Phases 1 and 2 of the scale-harden build closed the whole foundation, the S17-S20

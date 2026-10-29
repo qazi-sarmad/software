@@ -765,9 +765,10 @@ The landing tab: portfolio tiles (engagements, CAPs, findings, seals), a CAP rad
 - **Route:** Tab `executive` (nav strip "Dashboard"). Not a route.
 - **Rights:** any signed-in member; each tile degrades to its empty state when the scope holds no records.
 - **Data:** `AlertCircle`, `CheckCircle2`, `ChevronRight`, `Clock`, `ExternalLink`, `ShieldCheck`, `X`, `motion`, `updatePlanItemDates` — through `src/data/*.ts`; components never import the database client (rule M8).
-- **Testids:** `gantt-approve-shift`, `gantt-shift-error`, `DB-01-cap-hub-drilldown`, `DB-01-tile-entities`, `DB-01-tile-engagements`, `DB-01-tile-issues`, `DB-01-tile-workpapers`
-- **States:** loading (skeleton tiles); empty (no engagements in scope); ready; the Board Pack block carries its own loading/empty/error states.
+- **Testids:** `gantt-approve-shift`, `gantt-shift-error`, `DB-01-cap-hub-drilldown`, `DB-01-tile-entities`, `DB-01-tile-engagements`, `DB-01-tile-issues`, `DB-01-tile-workpapers`, `DB-01-activity-spine`, `DB-01-activity-spine-transport`, `DB-01-activity-spine-empty`, `DB-01-activity-spine-list`
+- **States:** loading (skeleton tiles); empty (no engagements in scope); ready; the Board Pack block carries its own loading/empty/error states. The activity spine carries its own quiet empty state ("Nothing has happened yet").
 - **Drilldown (E5/U1):** every tile number opens the exact scoped/filtered records it was counted from, in the non-blocking `DrilldownPanel` (`role="complementary"`, testid prefix `DB-01-drilldown`). The CAP hub number (`DB-01-cap-hub-drilldown`) drills to its CAPs. The open family is mirrored to the URL hash (`#drill=<kind>`) so a state is deep-linkable; the hash carries only the family name, never a tenant id.
+- **Live activity spine (U4):** a quiet stream of the organisation's recent activity (actor, verb, subject, age) on the existing `liveSync` transport — Realtime when a socket is available, a bounded poll otherwise. The sentence and the kind are the pure `src/lib/activitySpine.ts` layer; the read is the rights-gated `activity_spine_list` RPC (migration 0116), which reduces `detail` to the fields a sentence needs and drops the rest (Law L2). A scoped member gets the empty state, never an error.
 - **Tutorial key:** oa.boardpack-use (the Board Pack block)
 
 ## DB-02 — Deterministic capability library (D1-D4)
