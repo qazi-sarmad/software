@@ -48,6 +48,86 @@ describe('SiraModelEditor', () => {
     wrap('cia', <SiraModelEditor model={MODEL} />);
     expect(screen.queryByTestId('sira-model-locked')).toBeNull();
   });
+
+  // S18: the editor's controls are real writes. With the three setters handed in, an editor-holder
+  // gets an editable aggregation select, a factor form and a band form; the save buttons call the
+  // setters with the drafted values, so the panel cannot save a value nothing reads.
+  it('offers editable controls only when the write handlers are handed in', () => {
+    const noop = () => {};
+    wrap('cia', <SiraModelEditor model={MODEL} onSetAggregation={noop} onUpsertFactor={noop} onSetBand={noop} />);
+    expect(screen.getByTestId('sira-model-aggregation')).toBeTruthy();
+    expect(screen.getByTestId('sira-factor-form')).toBeTruthy();
+    expect(screen.getByTestId('sira-band-form')).toBeTruthy();
+  });
+
+  it('falls back to a read-only aggregation line without the write handlers', () => {
+    wrap('cia', <SiraModelEditor model={MODEL} />);
+    expect(screen.queryByTestId('sira-model-aggregation')).toBeNull();
+    expect(screen.getByTestId('sira-aggregation')).toBeTruthy();
+  });
+
+  it('saves a factor through the handed-in setter', () => {
+    const calls: Array<[string, string, number, number]> = [];
+    wrap('cia', (
+      <SiraModelEditor
+        model={MODEL}
+        onSetAggregation={() => {}}
+        onUpsertFactor={(k, l, w, o) => calls.push([k, l, w, o])}
+        onSetBand={() => {}}
+      />
+    ));
+    fireEvent.change(screen.getByTestId('sira-factor-key'), { target: { value: 'fraud' } });
+    fireEvent.change(screen.getByTestId('sira-factor-label'), { target: { value: 'Fraud risk' } });
+    fireEvent.change(screen.getByTestId('sira-factor-weight'), { target: { value: '2' } });
+    fireEvent.change(screen.getByTestId('sira-factor-ordinal'), { target: { value: '3' } });
+    fireEvent.click(screen.getByTestId('sira-factor-save'));
+    expect(calls).toEqual([['fraud', 'Fraud risk', 2, 3]]);
+  });
+
+  it('saves a band through the handed-in setter', () => {
+    const calls: Array<[string, number, number, number]> = [];
+    wrap('cia', (
+      <SiraModelEditor
+        model={MODEL}
+        onSetAggregation={() => {}}
+        onUpsertFactor={() => {}}
+        onSetBand={(n, min, max, o) => calls.push([n, min, max, o])}
+      />
+    ));
+    fireEvent.change(screen.getByTestId('sira-band-name'), { target: { value: 'Extreme' } });
+    fireEvent.change(screen.getByTestId('sira-band-min'), { target: { value: '90' } });
+    fireEvent.change(screen.getByTestId('sira-band-max'), { target: { value: '100' } });
+    fireEvent.change(screen.getByTestId('sira-band-ordinal'), { target: { value: '5' } });
+    fireEvent.click(screen.getByTestId('sira-band-save'));
+    expect(calls).toEqual([['Extreme', 90, 100, 5]]);
+  });
+
+  it('changes the aggregation through the handed-in setter', () => {
+    const calls: string[] = [];
+    wrap('cia', (
+      <SiraModelEditor
+        model={MODEL}
+        onSetAggregation={(m) => calls.push(m)}
+        onUpsertFactor={() => {}}
+        onSetBand={() => {}}
+      />
+    ));
+    fireEvent.change(screen.getByTestId('sira-model-aggregation'), { target: { value: 'maximum' } });
+    expect(calls).toEqual(['maximum']);
+  });
+
+  it('renders an inline error, never a blocking dialog', () => {
+    wrap('cia', (
+      <SiraModelEditor
+        model={MODEL}
+        error="The change could not be saved."
+        onSetAggregation={() => {}}
+        onUpsertFactor={() => {}}
+        onSetBand={() => {}}
+      />
+    ));
+    expect(screen.getByTestId('sira-model-error').textContent).toMatch(/could not be saved/);
+  });
 });
 
 describe('SiraCyclePanel', () => {

@@ -1303,18 +1303,18 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 
 ### `SR-02` — SIRA model editor (S1)
 
-- **Purpose:** Edit the SIRA model: aggregation, factors and bands; a locked model is read-only.
+- **Purpose:** Edit the SIRA model: aggregation, factors and bands; a locked model is read-only. Every control is a
 - **Route / location:** The `sira_model` inspector window.
 - **Rights required:** `edit_config`.
-- **Data functions (`src/data/*.ts`):** none (pure/UI only)
-- **Data modules:** none (pure/UI only)
-- **RPCs reachable via those modules:** none
-- **Tables reachable via those modules:** none
-- **Testids (7):** `sira-aggregation`, `sira-bands`, `sira-factors`, `sira-model`, `sira-model-empty`, `sira-model-locked`, `sira-model-version`
-- **Explain ids (0):** — (no explain affordance)
-- **IIA standards addressed (0):** —
+- **Data functions (`src/data/*.ts`):** `setSiraAggregation`, `setSiraBand`, `siraModelSnapshot`, `upsertSiraFactor`
+- **Data modules:** `src/data/sira.ts`
+- **RPCs reachable via those modules:** `propose_emergent_risks`, `remind_sira_acceptance`, `seed_sira_next_cycle`, `sira_acceptance_state`, `sira_carry_forward_pack`, `sira_model_snapshot`, `sira_publish_block`
+- **Tables reachable via those modules:** `risks_library`, `sira_carry_forward`, `sira_cycles`, `sira_emergent_risks`, `sira_scores`
+- **Testids (23):** `sira-aggregation`, `sira-bands`, `sira-factors`, `sira-model`, `sira-model-aggregation`, `sira-model-empty`, `sira-model-error`, `sira-model-locked`, `sira-model-version`, `sira-factor-form`, `sira-factor-key`, `sira-factor-label`, `sira-factor-ordinal`, `sira-factor-save`, `sira-factor-weight`, `sira-factor-edit-<key>`, `sira-band-form`, `sira-band-name`, `sira-band-min`, `sira-band-max`, `sira-band-ordinal`, `sira-band-save`, `sira-band-edit-<name>`
+- **Explain ids (2):** `field.sira.aggregation`, `standard.13.2`
+- **IIA standards addressed (1):** `13.2`
 - **Drilldown targets (0):** — (no aggregate)
-- **States:** loading; empty (`sira-model-empty`); locked (`sira-model-locked`); ready.
+- **States:** loading; empty (`sira-model-empty`); locked (`sira-model-locked`); ready; error (`sira-model-error`).
 - **Tutorial key:** — (no key)
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
   named in the purpose. The chrome that carries every hop is listed under *Common chrome*.

@@ -276,6 +276,33 @@ components, context or hooks. Only the reads were wired (`listCycles`, `listEmer
 submit or publish handler passed. The write path is now wired through `SiraCyclesInspector.tsx` (see
 the S18/S19 section above), so this prerequisite no longer blocks anything.
 
+### S18 — the SIRA model editor defect (2026-10-28, third session, re-audit under the ONE RULE)
+
+**Verified defect, closed.** The re-audit that closed the cycle and carry-forward write paths missed
+the *model* write path. Three findings, each confirmed by the call site:
+
+1. `SiraTab.tsx` opened the model inspector with `openInspector('sira_model', { model: null })` — a
+   hardcoded `null`, so `SiraModelEditor` rendered its `sira-model-empty` state for every org even
+   when a model existed. The button could never show a model.
+2. `SiraModelEditor`'s docstring promised editable controls that did not exist; it was read-only.
+3. `setSiraAggregation`, `upsertSiraFactor` and `setSiraBand` (`src/data/sira.ts`) had **zero
+   callers**. The backing RPCs — `admin_set_sira_aggregation`, `admin_upsert_sira_factor`,
+   `admin_set_sira_band` — were rights-gated and SQL-tested (`supabase/tests/26_sira_model.sql`) but
+   no UI reached them: a config panel's write path that saved a value nothing could set.
+
+| Piece | What it does |
+|---|---|
+| `src/components/sira/SiraModelInspector.tsx` (new) | The connected inspector: loads `siraModelSnapshot(orgId)` through `src/data` and wires the three setters. A write re-reads the snapshot, so the version bump the database records is visible immediately. Errors go to an `InlineError`, never a blocking dialog. |
+| `src/components/sira/SiraModelEditor.tsx` | Now takes optional `onSetAggregation`/`onUpsertFactor`/`onSetBand`; with `edit_config` **and** the handlers it renders an aggregation select, a factor form and a band form; without them it falls back to the read-only display. Still presentational, so it is tested without a database. |
+| `src/components/common/RecordContent.tsx` | The `sira_model` case mounts `SiraModelInspector` (no more `data?.model ?? null`). |
+| `src/components/sira/SiraTab.tsx` | The "SIRA model" button calls `openInspector('sira_model')` — no null payload. |
+| `src/lib/explain/entries.fields.ts` | New `field.sira.aggregation` entry (E1) so the aggregation control explains itself; `standard.13.2` gains `SR-02` in `implementedBy` so the screen's standards chip is honest. |
+
+**Tests.** `SiraPanels.test.tsx` grew 5 cases (the editable/read-only split, factor save, band save,
+aggregation change, inline error). Contract section SR-02 updated; `docs/UI-INVENTORY.md`
+regenerated (SR-02 now names 4 data functions, 2 explain ids, 1 standard, 23 testids). Register row
+F127 added (`Wired`), counts 83→84 / 126→127.
+
 ---
 
 ## T-series — trust and attestation
@@ -694,21 +721,21 @@ turning it into a hard CI gate. Do not duplicate it.
 
 ---
 
-## Session verification (2026-10-28, this session)
+## Session verification (2026-10-28, SIRA-model session — most recent)
 
-Every gate run locally, in full, after the dead-export sweep. No gate is reported from memory.
+Re-run in full after the SIRA model editor fix. Every number below is from a gate run in this
+session, not from memory.
 
 | Gate | Result |
 |---|---|
 | `npx tsc --noEmit` | PASS (exit 0) |
-| `npx vitest run` | PASS — **255 files / 2954 tests** |
+| `npx vitest run` | PASS — **255 files / 2956 tests** |
 | `npx vite build` | PASS (chunk-size warning only) |
-| `node scripts/check-shrink.mjs` | PASS — 57 files, no >10% shrink |
-| `node scripts/check-tokens.mjs` | PASS — 209 files, 0 violations |
+| `node scripts/check-shrink.mjs` | PASS — 54 files, no >10% shrink |
+| `node scripts/check-tokens.mjs` | PASS — 207 files, 0 violations |
 | `node scripts/check-ui-contract.mjs` | PASS — 48 Appendix A screens |
-| `node scripts/check-feature-register.mjs` | PASS — 126 features: 83 Wired / 20 Inert / 23 Absent |
+| `node scripts/check-feature-register.mjs` | PASS — 127 features: 84 Wired / 20 Inert / 23 Absent |
 | `npm run check-tutorials` | PASS — every tutorial key has a GIF (69 current, 11 stale) |
-| `bash scripts/local-sql-harness-docker.sh` | PASS — migrations applied twice, all SQL tests passed twice |
 | `src/guards/uiInventory.test.ts` | PASS — the committed inventory equals the generator output byte-for-byte |
 
 **Counts vs the locked baseline** (baseline: 106 migrations / 110 SQL tests / 205 vitest files /
@@ -719,7 +746,7 @@ Every gate run locally, in full, after the dead-export sweep. No gate is reporte
 | Migrations | 106 | 114 | +8 (`0110`-`0117`) |
 | SQL test files | 110 | 118 | +8 |
 | Vitest files | 205 | 255 | +50 |
-| Vitest tests | 2403 | 2954 | +551 |
+| Vitest tests | 2403 | 2956 | +553 |
 | Playwright specs | 30 | 30 | 0 |
 | Guards | 21 | 26 | +5 (G7-G10 + provenance-adjacent) |
 
@@ -730,7 +757,19 @@ dashboard, pending, issues and report screens), `AttestationPanel`/`IncidentWiza
 `CapabilityLibraryPanel` + `ActivitySpine` + `GuidedFirstRun` (`ExecutiveDashboardTab`), `FrontDoor`
 (`PendingTasksTab`), `CommandPalette` + `ShortcutSheet` (`App.tsx`), `buildInventory`
 (`ImportWizardPanel`), `verifyEvidenceFile` (`EvidenceTab`), `recordSiraScore`/`submitEmergentRisk`
-(`SiraScoringPanel` via `SiraCyclesInspector`). `ReviewCommentsDock.tsx` is confirmed gone.
+(`SiraScoringPanel` via `SiraCyclesInspector`), `setSiraAggregation`/`upsertSiraFactor`/`setSiraBand`
+(`SiraModelInspector`, this session). `ReviewCommentsDock.tsx` is confirmed gone.
+
+### Session verification (2026-10-28, earlier — dead-component sweep session, historical)
+
+| Gate | Result |
+|---|---|
+| `npx vitest run` | PASS — 255 files / 2948 tests |
+| `node scripts/check-feature-register.mjs` | PASS — 126 features: 83 Wired / 20 Inert / 23 Absent |
+| `node scripts/check-shrink.mjs` | PASS — 57 files, no >10% shrink |
+| `bash scripts/local-sql-harness-docker.sh` | PASS — migrations applied twice, all SQL tests passed twice |
+
+Every gate run locally, in full, after the dead-export sweep. No gate is reported from memory.
 
 ---
 

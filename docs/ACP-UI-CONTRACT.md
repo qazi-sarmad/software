@@ -890,13 +890,15 @@ The Strategic Internal Risk Assessment (spec §7): the risk table, the persisted
 
 ## SR-02 — SIRA model editor (S1)
 
-Edit the SIRA model: aggregation, factors and bands; a locked model is read-only.
+Edit the SIRA model: aggregation, factors and bands; a locked model is read-only. Every control is a
+real write (the aggregation, factor and band setters), versioned by the database so a change is never
+silent.
 
 - **Route:** The `sira_model` inspector window.
 - **Rights:** `edit_config`.
-- **Data:** none (pure/UI only) — through `src/data/*.ts`; components never import the database client (rule M8).
-- **Testids:** `sira-aggregation`, `sira-bands`, `sira-factors`, `sira-model`, `sira-model-empty`, `sira-model-locked`, `sira-model-version`
-- **States:** loading; empty (`sira-model-empty`); locked (`sira-model-locked`); ready.
+- **Data:** `src/data/sira.ts` — `setSiraAggregation`, `siraModelSnapshot`, `setSiraBand`, `upsertSiraFactor`; components never import the database client (rule M8).
+- **Testids:** `sira-aggregation`, `sira-bands`, `sira-factors`, `sira-model`, `sira-model-aggregation`, `sira-model-empty`, `sira-model-error`, `sira-model-locked`, `sira-model-version`, `sira-factor-form`, `sira-factor-key`, `sira-factor-label`, `sira-factor-ordinal`, `sira-factor-save`, `sira-factor-weight`, `sira-factor-edit-<key>`, `sira-band-form`, `sira-band-name`, `sira-band-min`, `sira-band-max`, `sira-band-ordinal`, `sira-band-save`, `sira-band-edit-<name>`
+- **States:** loading; empty (`sira-model-empty`); locked (`sira-model-locked`); ready; error (`sira-model-error`).
 - **Tutorial key:** —
 
 ## SR-03 — SIRA cycles inspector (S1)

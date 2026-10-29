@@ -176,6 +176,18 @@ export const FIELD_ENTRIES: ExplainEntry[] = [
     related: ['term.chain_of_custody', 'step.evidence_verify'],
     source: 'SYSTELIGON.md §6.0, §6.2',
   },
+  {
+    id: 'field.sira.aggregation',
+    kind: 'field',
+    title: 'SIRA aggregation',
+    summary: 'The rule that combines the weighted SIRA factors into one risk index.',
+    effect:
+      'Changing it re-scores every entity on the next run and bumps the model version, so two scores are never compared across two rules without the version to say so.',
+    iiaStandards: ['9.3', '13.2'],
+    minRight: 'edit_config',
+    related: ['term.risk_rating', 'term.inherent_risk', 'term.residual_risk'],
+    source: 'SYSTELIGON.md §8.2; 0019_sira_model.sql',
+  },
 ];
 
 export const STATUS_ENTRIES: ExplainEntry[] = [
