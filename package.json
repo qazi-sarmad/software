@@ -23,7 +23,8 @@
     "check-two-sources": "node scripts/check-two-sources.mjs",
     "gen:name": "node scripts/sync-product-name.mjs",
     "tutorials:placeholder": "node scripts/record-tutorials.mjs --placeholder",
-    "screenshots": "node scripts/screenshot-all.mjs"
+    "screenshots": "node scripts/screenshot-all.mjs",
+    "gen:design": "node scripts/gen-design-spec.mjs"
   },
   "dependencies": {
     "@fontsource/atkinson-hyperlegible": "^5.2.5",

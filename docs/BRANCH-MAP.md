@@ -21,22 +21,41 @@ main                                   untouched. Nothing merges here without th
       │                                (branched from 6f47cf8)
       │
       └── feature/systeligon-build-v1  Builder B — E1-E7 + E9-E10, U1-U4 + U6 + U8 + U14, S17-S21, T3-T7, D1-D4, F1-F7, G7-G10
-                                       ledger: docs/SYSTELIGON-TASKS.md
+           │                           ledger: docs/SYSTELIGON-TASKS.md
+           │
+           └── feature/systeligon-unified-v1   THE INTEGRATION — the merge of A and B, the only tree
+                │                              carrying both halves. Ledger: docs/CONTINUOUS-BUILD.md
+                │
+                ├── feature/systeligon-builder-continuous   the builder's own tree
+                │                                           docs: CONTINUOUS-BUILD, BUILDER-BASELINE
+                │
+                └── feature/systeligon-design-spec          the designer's tree — docs only, no product code
+                                                            docs: DESIGN-SPEC (generated), DESIGN-BRIEF
 ```
 
 `feature/systeligon-v1` is the **common ancestor for documents**. Both builders merge *from* it; no
 builder pushes *to* it. That is what keeps the two work trees independent.
 
+`feature/systeligon-unified-v1` is where A and B meet. It resolved the migration-number collision
+(see the reservation table below) and is the base for the two long-lived side trees: the builder's
+(`feature/systeligon-builder-continuous`) and the designer's (`feature/systeligon-design-spec`). The
+designer's tree carries **no product code** — only the generated catalogue and the brief — so it can
+never conflict with a build.
+
 ---
 
 ## Ownership
 
-| Branch | Owner | Scope | Ledger | Migration range |
+| Branch | Owner | Scope | Ledger / docs | Migration range |
 |---|---|---|---|---|
-| `feature/scale-harden-v1` | Builder A | Phases 3-6, the C-series, gates G1-G6 | `docs/SCALE-TASKS.md` | `0107`-`0113` |
-| `feature/systeligon-build-v1` | Builder B | E1-E7 + E9-E10, U1-U4 + U6 + U8 + U14, S17-S21, T3-T7, D1-D4, F1-F7, G7-G10 | `docs/SYSTELIGON-TASKS.md` | `0114`+ |
+| `feature/scale-harden-v1` | Builder A | Phases 3-6, the C-series, gates G1-G6 | `docs/SCALE-TASKS.md` | `0107`-`0118` |
+| `feature/systeligon-build-v1` | Builder B | E1-E7 + E9-E10, U1-U4 + U6 + U8 + U14, S17-S21, T3-T7, D1-D4, F1-F7, G7-G10 | `docs/SYSTELIGON-TASKS.md` | `0110`-`0117` (renumbered on merge) |
+| `feature/systeligon-unified-v1` | the integration | the merge of A and B; the last-mile queue | `docs/CONTINUOUS-BUILD.md` | next free: `0127` |
+| `feature/systeligon-builder-continuous` | the builder | the last-mile queue (L1-L7), on top of unified | `docs/CONTINUOUS-BUILD.md`, `docs/BUILDER-BASELINE.md` | next free: `0127` |
+| `feature/systeligon-design-spec` | the designer | the UI redesign catalogue and the design language — **docs only** | `docs/DESIGN-SPEC.md` (generated), `docs/DESIGN-BRIEF.md` | none (no code) |
 | `feature/systeligon-v1` | nobody builds here | specs, register, gates, this map | — | none |
 | `main` | the owner | — | — | — |
+
 
 **One branch owns one ledger.** No two branches edit the same ledger file. That is the whole tracking
 mechanism: to know whether something is done, read the ledger for the branch that owns it, and
