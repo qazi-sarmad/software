@@ -271,6 +271,7 @@ Each is a pure function under `src/lib/`, with direct unit tests and a screen su
 | F123 | Population-level forensic analytics | `Absent` | D7 |
 | F124 | Policy-to-control gap analysis | `Absent` | D8 |
 | F125 | Assurance-over-assurance | `Absent` | D9 |
+| F126 | Population header detection and confirm-before-count | `Wired` | `checkPopulationCsv` (`src/lib/population.ts`) called from `TestingStepsTab.tsx`; it detects the header row and proposes it; ambiguous or non-first-row headers are proposed and confirmed before the count; rows above the header are ignored, the header row is not counted (spec §2.1, S2) | — |
 
 ---
 
@@ -278,14 +279,14 @@ Each is a pure function under `src/lib/`, with direct unit tests and a screen su
 
 | Status | Count |
 |---|---|
-| `Wired` | 54 |
+| `Wired` | 55 |
 | `Inert` | 27 |
 | `Absent` | 44 |
-| **Total** | **125** |
+| **Total** | **126** |
 
 **Read that again, with the correction applied.** This is materially better than the first pass
 reported, because Phases 1 and 2 of the scale-harden build closed the whole foundation. The picture
-now: **54 wired, 27 inert, 44 absent.** F35 (report templates) and F37 (report graph root) were
+now: **55 wired, 27 inert, 44 absent** (F126, population header detection, added 2026-10-29 by S2). F35 (report templates) and F37 (report graph root) were
 `Inert` here and are now written and read end to end, so they were corrected on 2026-10-29. The
 remaining `Inert` rows are the genuine, still-open
 unwired features — the monitor runtime, the evidence bytes, the tamper alarm, the SIRA write path,

@@ -1187,8 +1187,8 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Data modules:** `src/data/population.ts`
 - **RPCs reachable via those modules:** none
 - **Tables reachable via those modules:** `populations`
-- **Testids (15):** `population-browse`, `population-dropzone`, `population-empty`, `population-error`, `population-file-input`, `population-hash`, `population-loading`, `population-panel`, `population-register`, `population-gate`, `population-status`, `control-total`, `population-errors`, `gate-message`, `finalize-test`
-- **States:** loading; empty; hashed; locked; error inline.
+- **Testids (17):** `population-browse`, `population-dropzone`, `population-empty`, `population-error`, `population-file-input`, `population-hash`, `population-loading`, `population-panel`, `population-register`, `population-gate`, `population-status`, `control-total`, `population-errors`, `gate-message`, `finalize-test`, `header-confirm`, `header-confirm-0`
+- **States:** loading; empty; hashed; locked; error inline; header detected and awaiting confirmation (S2 — the engine proposes the header row, the auditor confirms it, rows above it are ignored and the header row is not counted).
 - **Tutorial key:** — (no key)
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
   named in the purpose. The chrome that carries every hop is listed under *Common chrome*.

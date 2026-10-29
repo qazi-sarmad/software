@@ -934,8 +934,8 @@ Register a population file, show its SHA-256 hash, and lock the population (hold
 - **Route:** Audit File window, view "Population" (`audit-file-view-population`).
 - **Rights:** `perform_work`.
 - **Data:** `PopulationRow`, `lockPopulation`, `registerPopulation`, `sha256Hex` — through `src/data/*.ts`; components never import the database client (rule M8).
-- **Testids:** `population-browse`, `population-dropzone`, `population-empty`, `population-error`, `population-file-input`, `population-hash`, `population-loading`, `population-panel`, `population-register`, `population-gate`, `population-status`, `control-total`, `population-errors`, `gate-message`, `finalize-test`
-- **States:** loading; empty; hashed; locked; error inline.
+- **Testids:** `population-browse`, `population-dropzone`, `population-empty`, `population-error`, `population-file-input`, `population-hash`, `population-loading`, `population-panel`, `population-register`, `population-gate`, `population-status`, `control-total`, `population-errors`, `gate-message`, `finalize-test`, `header-confirm`, `header-confirm-0`
+- **States:** loading; empty; hashed; locked; error inline; header detected and awaiting confirmation (S2 — the engine proposes the header row, the auditor confirms it, rows above it are ignored and the header row is not counted).
 - **Tutorial key:** —
 
 ## AF-06 — Sampling panel (S1)

@@ -1311,6 +1311,36 @@ decideEmergentRisk all have ZERO callers; only the reads are wired from SiraTab.
 extractDocument (the doc-extract edge function is deployed but unreachable from the UI).
 Work packages: R1-R7 (the missing middle, in dependency order), S13-S21, T3-T7, C1-C7, U9-U16, D1-D9.
 
+### S2 — population header detection, confirm-before-count (2026-10-29)
+
+**DONE.** Spec §2.1: *"today it assumes row 1 is the header. The engine must instead detect, propose,
+and confirm."* `src/lib/population.ts` had `const [header, ...body] = table;` — the assumption.
+
+What changed:
+
+- `detectHeader(table)` (new, pure): scores each of the first `HEADER_SCAN_LIMIT` (8) rows by how many
+  of the ref/date/amount column families its labels recognise, returns the best candidate and whether
+  the choice was **confident** (`true` only when exactly one row scores best *and* it is row 1).
+- `checkPopulationCsv(text, controlTotal, { headerRow })` now detects the header and, when the choice is
+  not confident, **refuses to count** and returns a message naming the detected header and the competing
+  rows, with `headerConfirmed: false`. The auditor confirms a row index (or the detected row by default)
+  and the count is re-run.
+- **Rows above the header are preamble, not data.** `body` is `table.slice(headerIndex + 1)`, so a title
+  line or a note above the header is never counted and never reported as a bad row. Issue line numbers
+  stay true to the file.
+- The reachable surface is `TestingStepsTab.tsx` — the panel the Audit File window actually mounts (the
+  register row F126 says `TestingStepsTab` deliberately, because `PopulationPanel.tsx` is the 4H draft
+  panel and remains unwired; see the wiring audit). It holds the file bytes, shows the propose prompt
+  (`header-confirm`, `header-confirm-0`), and re-runs the check on confirmation.
+
+**Tests:** `population.test.ts` 5 + 6 new (detection confidence, non-first-row detection, tie, no-labels;
+ask-before-count, confirmed count, preamble ignored, line-number truth, no double-report). Full suite
+215 files / 2,482 tests green. All gates green. Register row F126 added (`Wired`), counts 55/27/44.
+Contract testids `header-confirm`, `header-confirm-0` documented; `UI-INVENTORY.md` regenerated.
+
+**Not in this item, so not claimed:** S1 (the `src/lib/systeligon/` shell the rest of the S-series needs)
+and the pricing/sampling consumers of a confirmed header. S2 is the header behaviour alone.
+
 ## Environment facts (for the next session)
 
 - The sandbox has **no host Postgres** and **no Docker socket for the user**, but
