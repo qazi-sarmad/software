@@ -61,6 +61,10 @@ test.describe('Phase 0: honest prototype', () => {
   test('[E2E] nav shows exactly the 7 tabs in order, with no Reports or Calendar tab', async ({ page }) => {
     await signIn(page, AUDIT_USER_EMAIL);
     const nav = page.getByRole('navigation', { name: 'Navigation Strip' });
+    // `evaluateAll` does not auto-wait, so a snapshot taken while the shell is still hydrating
+    // (rights not yet resolved → zero visible tabs) reads an empty list. Wait for the first tab
+    // before snapshotting, then assert the full ordered set.
+    await expect(nav.getByRole('button', { name: 'Dashboard' })).toBeVisible();
     const titles = await nav.getByRole('button').evaluateAll((els) =>
       els.map((el) => el.getAttribute('title'))
     );
@@ -98,7 +102,11 @@ test.describe('Phase 0: honest prototype', () => {
     expect(errors).toEqual([]);
   });
 
+  // /dev/palette is guarded by `import.meta.env.DEV` (src/App.tsx) so it does not exist in the
+  // production bundle the G1 gate serves. Under E2E_PROD=1 the route 404s by design; the dev-server
+  // run is where this test has meaning.
   test('/dev/palette (development only) shows all 3 presets in light and dark', async ({ page }) => {
+    test.skip(process.env.E2E_PROD === '1', 'the dev-only palette route is not in the production bundle');
     await page.goto('/dev/palette');
     for (const preset of ['ledger', 'porcelain', 'bone']) {
       for (const mode of ['light', 'dark']) {

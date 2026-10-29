@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
+import { BASE_URL as DEFAULT_BASE_URL } from './baseUrl';
 
 /**
  * C4: the tutorial recorder really drives the UI.
@@ -13,7 +14,7 @@ import { join } from 'node:path';
  * (scripts/record-tutorials.mjs opens the pages itself). It writes into the git-ignored
  * `artifacts/tutorial-smoke/` so it never touches the committed GIFs.
  */
-const BASE_URL = process.env.TUTORIALS_BASE_URL ?? 'http://localhost:3000';
+const BASE_URL = process.env.TUTORIALS_BASE_URL ?? DEFAULT_BASE_URL;
 const OUT = join(process.cwd(), 'artifacts', 'tutorial-smoke');
 
 const SMOKE_KEYS = ['oa.features', 'oa.roles', 'sa.tenant-hub', 'oa.boardpack-use', 'oa.tutorials'];

@@ -805,9 +805,61 @@ and returns what it did. That is the same split the email pipeline already uses.
 
 | # | Task | Status |
 |---|---|---|
-| 6.1 | Full system suite against a production build | TODO |
+| 6.1 | Full system suite against a production build | DONE |
 | 6.2 | Multi-org isolation under concurrency | TODO |
 | 6.3 | `docs/DEMO-SCRIPT.md` using only tested flows | TODO |
+
+### Task 6.1 — the full suite against a production build (2026-10-28)
+
+Ran the whole Playwright suite against the built bundle, not the dev server:
+
+```
+$ npx supabase start                      # local stack: all 116 migrations applied
+$ curl -s http://127.0.0.1:54321/rest/v1/ -o /dev/null -w '%{http_code}'   # 200
+$ source .env.e2e-local                   # E2E_PROD=1 -> webServer = vite build && vite preview (4173)
+$ npx playwright test --project=chromium
+  143 passed, 3 skipped (2.9m)
+```
+
+**Three spec-side defects the production run surfaced (not product defects), each fixed so the G1 gate
+is honest:**
+
+1. `e2e/acp-control-plane.spec.ts` hardcoded `BASE_URL = 'http://localhost:3000'` for the hand-built
+   browser context in the Dual Session test. Under `E2E_PROD=1` nothing listens on 3000, so the context
+   got `ERR_CONNECTION_REFUSED`. Fixed with a shared `e2e/baseUrl.ts` (`4173` under `E2E_PROD`, else
+   `3000`) used by both this spec and the recorder.
+2. `e2e/c4-tutorial-record.spec.ts` defaulted `BASE_URL` to 3000; same cause, same helper fix.
+3. `e2e/smoke.spec.ts` `/dev/palette` drives a route guarded by `import.meta.env.DEV`
+   (`src/App.tsx:470`), so it cannot exist in the production bundle. It now `test.skip`s under
+   `E2E_PROD=1` — the dev run is where it has meaning.
+
+One test was also made **web-first**: the "7 tabs in order" assertion called `evaluateAll` (which does
+not auto-wait) and could snapshot the nav while the shell was still hydrating (`visibleTabs` empty →
+the "restricted" branch). It now waits for the first tab before snapshotting. This is a test-harness
+timing bug, but it is also a real transient state the shell shows; recorded for the U2 (functional
+states) work.
+
+The 3 skips are honest and expected: two board-pack specs self-skip when no pack exists on the project,
+and the dev-only palette spec skips under the production build.
+
+Gate set at this commit (all run locally, all PASS):
+
+| Gate | Command | Result |
+|---|---|---|
+| Type check | `npx tsc --noEmit` | PASS |
+| Unit tests | `env -u VITE_SUPABASE_URL … npx vitest run` | PASS — 215 files / 2474 tests |
+| Build | `npx vite build` | PASS |
+| Shrink | `node scripts/check-shrink.mjs` | PASS (58 files) |
+| Tokens | `node scripts/check-tokens.mjs` | PASS (189 files, 0 violations) |
+| UI contract | `node scripts/check-ui-contract.mjs` | PASS (48 screens) |
+| Tutorials | `npm run check-tutorials` | PASS (69 current, 12 stale — pre-existing) |
+| G2 dead code | `node scripts/check-dead-code.mjs` | PASS (533 fns, 39 allow-listed) |
+| G3 config effect | `node scripts/check-config-effect.mjs` | PASS (50 rows, 41 ENFORCED) |
+| G4 wiring | `node scripts/check-wiring.mjs` | PASS (17 allow-listed, 28 test-only) |
+| G5 two sources | `node scripts/check-two-sources.mjs` | PASS (0 allow-listed) |
+| G6 RPC parity | `node scripts/check-rpc-parity.mjs` | PASS (116 RPCs, 10 service-only) |
+| G1 prod E2E | `E2E_PROD=1 npx playwright test --project=chromium` | PASS — 143 passed, 3 skipped |
+| SQL harness | `bash scripts/local-sql-harness-docker.sh` | PASS — "migrations applied twice / all SQL tests passed twice" |
 
 ### Phase 6, pre-work — the workpaper-creation path the product was missing (2026-10-28)
 
