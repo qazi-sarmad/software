@@ -14,3 +14,8 @@ export { runRules, assertValidRule, assertValidPack, type RunOptions } from './r
 export { RuleRegistry, ruleFingerprint, type RuleVersionRecord } from './versioning';
 export { definePack, releasedRules, packRules } from './packs';
 export { structuralRules, minutesRequiredElements, policyCoverage } from './rules/structural';
+export {
+  numericRules, duplicateRows, nearDuplicateRows, sequenceGaps, outliersZScore, outliersIqr,
+  benfordFirstDigit, roundNumbers, weekendPostings, sameUserCreateApprove, missingAttributes,
+} from './rules/numeric';
+export { justBelowThreshold } from './rules/threshold';

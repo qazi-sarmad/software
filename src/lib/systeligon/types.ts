@@ -15,11 +15,13 @@ export type RuleKind =
   | 'near_duplicates'
   | 'sequence_gaps'
   | 'round_numbers'
+  | 'outliers'
   | 'just_below_threshold'
   | 'out_of_hours'
   | 'segregation_of_duties'
   | 'reconciliation_break'
   | 'completeness'
+  | 'missing_attributes'
   | 'rate_velocity'
   | 'cross_source'
   // §3.2 — structural document review

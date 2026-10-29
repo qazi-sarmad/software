@@ -2,7 +2,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   runRules, assertValidRule, RuleRegistry, ruleFingerprint,
-  definePack, packRules, releasedRules, structuralRules,
+  definePack, packRules, releasedRules, structuralRules, numericRules, justBelowThreshold,
   type SysteligonRule, type RuleInput, type RuleFinding,
 } from './index';
 
@@ -167,5 +167,42 @@ describe('structural rules (S1, spec §3.2/§3.3)', () => {
     const r = runRules(structuralRules, { rows: [], documents: doc }, { evaluatedAt: AT });
     expect(r.findings.some((f) => f.refs.includes('pol.c2'))).toBe(true);
     expect(r.findings.some((f) => f.refs.includes('pol.c1'))).toBe(false);
+  });
+});
+
+describe('numeric rules (S6, spec §3.1)', () => {
+  it('ports the analytics checks into versioned rules with provenance', () => {
+    const rows: RuleInput['rows'] = [
+      { ref: 'a', values: { amount: 100, date: '2026-01-03', user: 'u1', approver: 'u1', seq: 1 } },
+      { ref: 'b', values: { amount: 100, date: '2026-01-03', user: 'u1', approver: 'u1', seq: 3 } },
+    ];
+    const r = runRules(numericRules, { rows }, { evaluatedAt: AT });
+    // Segregation of duties: both rows have the same creator and approver.
+    const sod = r.findings.filter((f) => f.ruleId === 'numeric.segregation_of_duties');
+    expect(sod.map((f) => f.refs[0]).sort()).toEqual(['a', 'b']);
+    expect(sod.every((f) => f.ruleVersion === 1 && f.kind === 'segregation_of_duties')).toBe(true);
+    // Sequence gap: 2 is missing before row b.
+    expect(r.findings.some((f) => f.ruleId === 'numeric.sequence_gaps' && f.refs[0] === 'b')).toBe(true);
+    // Every finding names the rule and its version — the provenance a sealed report stores.
+    expect(r.findings.every((f) => f.ruleId && f.ruleVersion >= 1)).toBe(true);
+  });
+
+  it('benford reports on digits, not rows, so it carries no row refs', () => {
+    const rows: RuleInput['rows'] = Array.from({ length: 200 }, (_, i) => ({
+      ref: `r${i}`, values: { amount: 100 + i }, // all first digit 1..2 → deviates
+    }));
+    const r = runRules(numericRules.filter((x) => x.id === 'numeric.benford_first_digit'), { rows }, { evaluatedAt: AT });
+    expect(r.findings.length).toBeGreaterThan(0);
+    expect(r.findings.every((f) => f.refs.length === 0)).toBe(true);
+  });
+
+  it('just-below-threshold flags the band under the limit and nothing else', () => {
+    const rows: RuleInput['rows'] = [
+      { ref: 'under', values: { amount: 9800 } }, // inside the 5% band below 10000
+      { ref: 'at', values: { amount: 10000 } }, // at the limit — not flagged
+      { ref: 'low', values: { amount: 500 } }, // well below — not flagged
+    ];
+    const r = runRules([justBelowThreshold], { rows }, { evaluatedAt: AT });
+    expect(r.findings.map((f) => f.refs[0])).toEqual(['under']);
   });
 });
