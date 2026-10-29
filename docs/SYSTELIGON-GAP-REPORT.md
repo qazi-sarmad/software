@@ -1,9 +1,10 @@
 # Provio / Systeligon — external review briefing
 
 **For:** an independent reviewer who has not seen this repository before.
-**Date:** 2026-10-29 (regenerated — the previous edition understated the build in both directions: it
-described surfaces as unbuilt that are built, and it did not report that several `FEATURE-REGISTER.md`
-rows are stale in the *understating* direction. This edition corrects both and states the new picture.)
+**Date:** 2026-10-29 (regenerated again — the previous edition understated the build in both
+directions: it described surfaces as unbuilt that are built, and it did not report that several
+`FEATURE-REGISTER.md` rows are stale in the *understating* direction. This edition corrects both, and
+records the L2 rule-pack surface as built. It states the new picture.)
 
 **Subject:** what Provio is, what was wrong with it, what has been built, and — stated as plainly as
 everything else — what is still only planned.
@@ -36,7 +37,7 @@ nothing reads.
 | `feature/systeligon-build-v1` | `51c4156` | Builder B: the explain layer (E, U), Systeligon S17–S21, T3–T7, D1–D4, fonts (F), gates G7–G10. |
 | `feature/writing-engine` | `c45bb81` | The deterministic report-writing engine (merged into both builder branches). |
 | `feature/systeligon-unified-v1` | `ceb85fd` | The A+B reconciliation branch: one migration set, the collision resolved (§13.9). |
-| `feature/systeligon-builder-continuous` | `5200f4b` | **This branch.** The unified set plus the team directory (U4) and the first screen that mounts the S1–S16 engine (L1). |
+| `feature/systeligon-builder-continuous` | `385c550` | **This branch.** The unified set plus the team directory (U4), the first screen that mounts the S1–S16 engine (L1), and the rule-pack management surface (L2, this session). |
 
 **How to read this.** Every figure marked **verified** I reproduced against the repository in this
 session, with the command named. Figures that come from a builder's ledger and that I did not
@@ -49,15 +50,17 @@ both and I say so.
 **The correction this edition carries — in both directions.**
 
 1. The previous edition was written before the L1 rule-run screen existed and described the engine's
-   surfaces as unbuilt. On this branch **the rule-run screen is mounted** (`RuleRunTab.tsx`, §10) and
-   the register rows **F127–F138 exist** (verified: `check-feature-register` reports **138 features:
-   87 `Wired`, 28 `Inert`, 23 `Absent`**, exit 0).
+   surfaces as unbuilt. On this branch **the rule-run screen is mounted** (`RuleRunTab.tsx`, §10), **the
+   rule-pack management surface is mounted** (`RulePackPanel.tsx`, §10) and the register rows
+   **F127–F138 exist** (verified: `check-feature-register` reports **138 features: 94 `Wired`, 27
+   `Inert`, 17 `Absent`**, exit 0).
 2. The previous edition did not report the *opposite* staleness, which is the more dangerous kind:
-   several `FEATURE-REGISTER.md` rows still say `Absent` or `Inert` for features that are **built and
+   several `FEATURE-REGISTER.md` rows still said `Absent` or `Inert` for features that are **built and
    wired on this branch** — **F28/F29** (procedure and test-step templates), **F39** (findings-to-report
-   provenance), and the C-series **F53/F54/F55** (alert enrichment, ad-hoc suggestion, triage). The
-   register understates the build. §13.11 records each against its real call site. A register that
-   understates is the same defect class as one that overstates: a document that does not match the code.
+   provenance), and the C-series **F53/F54/F55** (alert enrichment, ad-hoc suggestion, triage). This
+   edition **corrects those six rows** to `Wired` against their real call sites (§13.11), so the register
+   no longer understates the build. A register that understates is the same defect class as one that
+   overstates: a document that does not match the code.
 
 **Source of truth in this repository** (verified present):
 
@@ -176,8 +179,8 @@ Three mechanisms produced this:
 1. **A status vocabulary that permitted ambiguity.** `Partial` absorbed every state between "does
    not exist" and "works", so a document could claim progress indefinitely without ever being wrong.
    `Partial` is not a status; it is a place to hide. The current `FEATURE-REGISTER.md` uses exactly
-   three values — `Wired`, `Inert`, `Absent` — and **verified this session** contains **87 `Wired`,
-   28 `Inert`, 23 `Absent`** and **no `Partial`**.
+   three values — `Wired`, `Inert`, `Absent` — and **verified this session** contains **94 `Wired`,
+   27 `Inert`, 17 `Absent`** and **no `Partial`**.
 2. **Tests cited as proof of function.** The suite was green and "structurally incapable of catching
    the integration gaps, because the integration is exactly what it stubs out." Green tests were used
    as a proxy for a working product. They are not that.
@@ -318,19 +321,25 @@ and `index.ts`.
 | **S7** | Extraction tier 1 wired (`extractDocument` → `doc-extract`, register F43 `Wired`); tier 2 an OCR seam that loads a bundled local engine lazily and **refuses a remote engine**; tier 3 declared-parser structured extraction that reports its own coverage | **BUILT** (`extract/`), tiers 2–3 **UI unwired** (§13.2) |
 | **S8** | Structural document rules: a contract must carry a signature, an approval a date, no date after the report date, every open action item has a later record | **BUILT** (`rules/documents.ts`) — **UI unwired** |
 | **S9** | Pattern rules: hardcoded credentials, `SELECT *`, an external call with no error handling, an unbounded loop, a disabled check, a hardcoded environment value, each finding citing its line | **BUILT** (`rules/patterns.ts`) — **UI unwired** |
-| **S10/S11** | Rule packs per audit type + an ad-hoc rule builder; signed OTA distribution with append-only shipped versions and refusal logging | **BUILT** (`packs.ts`, `ota.ts`, `src/data/rulePacks.ts`, `0117_systeligon_rule_packs.sql`) — **pack UI unwired** (§13.1) |
+| **S10/S11** | Rule packs per audit type + an ad-hoc rule builder; signed OTA distribution with append-only shipped versions and refusal logging | **BUILT & wired** (`packs.ts`, `ota.ts`, `src/data/rulePacks.ts`, `0117_systeligon_rule_packs.sql`, `0128_rule_pack_release.sql`, `RulePackPanel.tsx` — the pack manager, L2) |
 | **S13** | Findings-to-report provenance: `findingsToClaims` copies each finding's rule id/version onto a report claim, the ledger records it, and `commitReportGraph` re-roots so the findings sit *inside* the tamper-evident root | **BUILT & wired** (`provenance.ts`, `src/data/reportGraph.ts`, `0118_systeligon_findings.sql`; `ReportEditorPanel.tsx` calls `commitReportGraph`) |
 | **S14** | Sequential minutes: an action-item register following each item forward — carried, vanished, closed no-evidence, reopened, closed-before-raised, closed-by-non-owner, owner/due changed, due passed | **BUILT** (`minutes.ts`, `rules/sequential.ts`) — **UI unwired** |
 | **S15** | Policy/procedure/regulation comparison reporting its own coverage (parsed/matched/could-not-interpret); an unparsed clause is not a clean clause | **BUILT** (`policydiff.ts`) — **UI unwired** |
 | **S16** | The product/engine name in ONE constants module so a rename is one commit | **BUILT & wired** (`src/lib/product.ts`, `scripts/sync-product-name.mjs`, the Edge mirror, `src/guards/productName.test.ts`) |
 
-**The engine's first product surface is now mounted.** `src/components/audit/RuleRunTab.tsx` is a
+**The engine's first product surfaces are now mounted.** `src/components/audit/RuleRunTab.tsx` is a
 sub-tab ("Rule Run", contract AF-16) of `PaperWorkbenchModal.tsx`; it evaluates `runRules` over a
 population's rows and records the run through `recordSysteligonFindings` (`src/data/systeligon.ts`),
 which re-roots the findings into the report graph. That is L1, and it is the screen the whole engine
 exists to feed. It turns F127 and F129 `Wired` and removes `recordSysteligonFindings` from the wiring
-allow-list. The remaining surfaces — the pack manager (L2) and the extraction mount (L3) — are §13.1
-and §13.2.
+allow-list. **The rule-pack manager is the second surface** (`RulePackPanel.tsx`, contract OA-33, L2):
+it lists the org's packs, generates and registers a signing key, signs a pack, verifies the signature
+locally against the public key it holds and only then sends it, releases a draft, reads the refusal
+log, and builds an ad-hoc rule. `RuleRunTab.tsx` now reads the **released** pack through
+`getReleasedRulePack`/`resolveReleasedRules` and runs it, so "release it to let the engine run it" is a
+fact, not a promise; the in-code library is the fallback and a `rule-run-pack-note` names which rule
+set ran. It turns F137 `Wired`. The remaining surfaces — the extraction mount (L3) and the other
+engine families — are §13.1 and §13.2.
 
 ## 11. Systeligon — trust, attestation, capability, explain, fonts (built by Builder B)
 
@@ -371,7 +380,7 @@ about itself (**verified this session**, all exit 0):
 | G4 wiring | `check-wiring.mjs` — every `src/data` export is reachable from a screen, test-only, or allow-listed | PASS (10 allow-listed, 25 test-only) |
 | G5 two sources | `check-two-sources.mjs` — no component reads both seed and database | PASS |
 | G6 RPC parity | `check-rpc-parity.mjs` — every RPC the UI calls exists | PASS |
-| R0 feature register | `check-feature-register.mjs` — the register is honest | PASS (138 features: 87/28/23) |
+| R0 feature register | `check-feature-register.mjs` — the register is honest | PASS (138 features: 94/27/17) |
 
 Plus G7–G10 on Builder B (explain coverage, drilldown, IIA honesty, font licence). Each was designed
 from a specific audit finding — G5 is the two-UIs problem, G3 the inert settings, G2 the uncalled
@@ -381,10 +390,10 @@ functions.
 
 | Metric | `main` | `scale-harden-v1` | `systeligon-build-v1` | `systeligon-unified-v1` | `writing-engine` | **this branch** |
 |---|---|---|---|---|---|---|
-| Migrations | 87 | 116 | 114 | 126 | 94 | **127** |
-| SQL test files | 92 | 121 | 118 | 131 | 97 | **132** |
-| Vitest files | 144 | 215 | 255 | 273 | 164 | **279** |
-| Vitest tests | — | — | — | — | — | **3,198 passing** |
+| Migrations | 87 | 116 | 114 | 126 | 94 | **128** |
+| SQL test files | 92 | 121 | 118 | 131 | 97 | **133** |
+| Vitest files | 144 | 215 | 255 | 273 | 164 | **281** |
+| Vitest tests | — | — | — | — | — | **3,209 passing** |
 | Playwright specs | 25 | 30 | 30 | 30 | 25 | **30** |
 | Guards | 18 | 22 | 26 | 28 | 19 | **28** |
 
@@ -400,17 +409,22 @@ This section is rewritten. An earlier edition listed the entire S1–S16 engine 
 What genuinely remains is smaller, and it is stated with the same rule: nothing below is built unless
 it says so.
 
-## 13.1 The engine's screens — the library is built, two surfaces remain unmounted
+## 13.1 The engine's screens — the library is built, one surface remains unmounted
 
-**Verified.** The engine is a tested, versioned library. The first product surface — the rule-run
-screen (`RuleRunTab.tsx`, L1) — is now mounted (§10). Two surfaces remain:
+**Verified.** The engine is a tested, versioned library. Two product surfaces are now mounted:
 
-- **The rule-pack management UI (L2).** `src/data/rulePacks.ts` (`listRulePacks`,
-  `saveSignedRulePack`) has **no screen caller** (verified: 0 component refs). The ad-hoc rule builder
-  and the pack browser are part of this surface. Register F128/F137 remain `Inert` on this ground.
-- The other engine families (flows S3/S4/S5/S12, documents S8, patterns S9, minutes S14, policy S15)
-  are **built, pure and tested, and reached by no screen** (verified: 0 component refs each). Mounting
-  them is the same work class as L2 — a surface per family — and is delegated to the builder (§13.8).
+- **The rule-run screen (L1)** — `RuleRunTab.tsx`, contract AF-16, §10. Mounted.
+- **The rule-pack management UI (L2)** — `RulePackPanel.tsx`, contract OA-33, §10. Mounted. It lists
+  packs, registers a signing key, signs and verifies a pack, releases a draft, reads the refusal log
+  and builds an ad-hoc rule. `0128_rule_pack_release.sql` supplies the release transition the storage
+  half lacked. Register F137 is now `Wired` on this ground (F128 stays `Inert`: `RuleRegistry` and `packRules` still have no screen caller, though `definePack`/`releasedRules` now do).
+
+One surface remains:
+
+- **The other engine families** (flows S3/S4/S5/S12, documents S8, patterns S9, minutes S14, policy
+  S15) are **built, pure and tested, and reached by no screen** (verified: 0 component refs each).
+  Mounting them is the same work class as L2 — a surface per family — and is delegated to the builder
+  (§13.8).
 
 This is the same defect class as §1 in miniature: a working engine with a surface still to mount.
 
@@ -487,8 +501,8 @@ authoritative work list; the builder prompt delegates all of it except the desig
 | S7 | Document extraction tiers 1–3, with source hashes | **BUILT** — tier 1 wired; tiers 2–3 seams built, UI unwired; bundled OCR engine pending | — |
 | S8 | Structural document review rules | **BUILT** — UI unwired | S7 |
 | S9 | Pattern rules (minutes, config, source, Power Query) | **BUILT** — UI unwired | S7 |
-| S10 | Rule packs per audit type + adhoc rule builder | **BUILT** — UI unwired | S1 |
-| S11 | Signed OTA rule-pack distribution | **BUILT** — UI unwired | S1 |
+| S10 | Rule packs per audit type + adhoc rule builder | **BUILT & wired** (`RulePackPanel.tsx`, L2) | S1 |
+| S11 | Signed OTA rule-pack distribution | **BUILT & wired** (`RulePackPanel.tsx`, `0128_rule_pack_release.sql`, L2) | S1 |
 | S12 | Override visibility across stages | **BUILT** — UI unwired | S3 |
 | S13 | Report writer under Systeligon | **PARTLY BUILT** — provenance done; org-format editor adoption remains | — |
 | S14 | Sequential minutes: action-item register | **BUILT** — UI unwired | S7 |
@@ -549,7 +563,7 @@ authoritative work list; the builder prompt delegates all of it except the desig
 |---|---|---|---|
 | G1–G6 | Production-build E2E; no dead code; config proving tests; data-export imports; no seed+DB; RPC existence | A | **BUILT** |
 | G7–G10 | Explain coverage; drilldown; IIA honesty; font licence | B | **BUILT** |
-| R0 | Feature register honesty | A | **BUILT** (138 features, 87/28/23) |
+| R0 | Feature register honesty | A | **BUILT** (138 features, 94/27/17) |
 
 ### Builder A's unbuilt UI/UX rows
 
@@ -580,7 +594,7 @@ authoritative work list; the builder prompt delegates all of it except the desig
 | # | Task | State |
 |---|---|---|
 | L1 | The rule-run screen (mounts S1–S16) | **BUILT** (`RuleRunTab.tsx`) |
-| L2 | The rule-pack management UI (S10/S11) + ad-hoc rule builder | **OPEN** |
+| L2 | The rule-pack management UI (S10/S11) + ad-hoc rule builder | **BUILT** (`RulePackPanel.tsx`, contract OA-33; `0128_rule_pack_release.sql`; release-aware `RuleRunTab.tsx`) |
 | L3 | The three-tier extraction flow in the audit-file UI + the bundled OCR engine artifact | **OPEN** |
 | L4 | S13 remainder — org-format editor adoption | **OPEN** |
 | L5 | C7 — anomaly to SIRA | **OPEN** |
@@ -640,8 +654,10 @@ this report failed to catch. Each is recorded here against its real call site:
 
 **F30 is genuinely `Absent`** — the stage machine is still three hardcoded strings
 (`src/types/index.ts:74`). The register is right about that one and wrong about the six above.
-Correcting these six rows is a build task (§13.8), and the gate will not force it until they are
-moved — which is exactly why they must be recorded here rather than left implicit.
+**The six rows are now corrected** (this session, `docs/FEATURE-REGISTER.md`): F28/F29/F39/F53/F54/F55
+are `Wired`, and the count block reads **94/27/17**. `check-feature-register` passes with no
+understating rows left. The correction is a build task that is now done, not a task still to do — which
+is the only honest way to record it.
 
 ---
 
@@ -654,25 +670,27 @@ Systeligon is **a built rule engine whose surfaces are nearly all mounted.**
 automation rules); the **entire `src/lib/systeligon/` rule engine — S1 through S16** (schema, runner,
 append-only versioning, packs, signed OTA, the accepted/declined flows, Mode A/B verification,
 override visibility, the numeric/structural/pattern/sequential rule families, minutes tracking,
-policy comparison, and the single-name module); the **first surface that mounts it** (the rule-run
-screen, L1); header detection wired into the population flow; findings-to-report provenance inside the
-tamper-evident root; document recognition with archive-bomb and traversal limits; SIRA continuity and
-two-key acceptance; evidence storage with real bytes; the attestation package and an independent
-third-party verifier; the incident wizard and the tamper alarm; the deterministic capability library;
-the explain layer; the functional interface rows; self-hosted fonts; the Phase 1–6 repair that makes
-the app read its own database, proven by a production-build test; and the anti-theatre gates.
+policy comparison, and the single-name module); **two surfaces that mount it** (the rule-run screen,
+L1, and the rule-pack manager, L2, with the release transition and a release-aware rule run); header
+detection wired into the population flow; findings-to-report provenance inside the tamper-evident
+root; document recognition with archive-bomb and traversal limits; SIRA continuity and two-key
+acceptance; evidence storage with real bytes; the attestation package and an independent third-party
+verifier; the incident wizard and the tamper alarm; the deterministic capability library; the explain
+layer; the functional interface rows; self-hosted fonts; the Phase 1–6 repair that makes the app read
+its own database, proven by a production-build test; and the anti-theatre gates.
 
-**Planned and unwritten:** the rule-pack and ad-hoc-rule management UI (L2); the remaining engine
-surfaces (flows, documents, patterns, minutes, policy); the three-tier extraction flow in the
-audit-file UI and the bundled OCR engine as a shipped artifact (L3); the org-format editor adoption
-half of S13 (L4); **C7** (anomaly to SIRA, now unblocked) (L5); **A-U2** (every screen's functional
-states) (L6); **A-U3** (guided first-run to a sealed report, reconciled with B's work) (L7); the R3
-configuration-honesty remainder; the D5–D9 adjacent capability products; the stale tutorial media;
-and the deliberately deferred **visual** design rows.
+**Planned and unwritten:** the remaining engine surfaces (flows, documents, patterns, minutes,
+policy); the three-tier extraction flow in the audit-file UI and the bundled OCR engine as a shipped
+artifact (L3); the org-format editor adoption half of S13 (L4); **C7** (anomaly to SIRA, now
+unblocked) (L5); **A-U2** (every screen's functional states) (L6); **A-U3** (guided first-run to a
+sealed report, reconciled with B's work) (L7); the R3 configuration-honesty remainder; the D5–D9
+adjacent capability products; the stale tutorial media; and the deliberately deferred **visual**
+design rows.
 
 **The difference matters, and it is the point.** An earlier edition of this briefing described the
 S1–S16 engine as a specification and unwritten. That edition was itself an example of the defect the
 project exists to catch: it described a state of the code that had already changed. This edition says
-what the previous one should have: the engine is built and gated, its first surface is mounted, and
-what remains is the wiring of the rest of its surfaces, one orchestration feature (C7), two functional
-UI rows, the adjacent capability products, and a design language the owner has not yet settled.
+what the previous one should have: the engine is built and gated, two of its surfaces are mounted
+(L1 and L2), and what remains is the wiring of the rest of its surfaces, one orchestration feature
+(C7), two functional UI rows, the adjacent capability products, and a design language the owner has
+not yet settled.

@@ -1578,7 +1578,7 @@ the earlier claims true rather than decorative.
 - **`src/lib/systeligon/released.ts`** — `resolveReleasedRules(pack)` turns a released pack's stored
   rules back into executable rules by `id@version`, and **reports** any rule it cannot reconstruct
   (`missing`) rather than substituting a different one. 3 unit tests.
-- **`src/components/admin/RulePackPanel.tsx`** (contract OA-33), mounted as the `rulepacks` tab of
+- **`src/components/admin/RulePackPanel.tsx`** (contract OA-33), mounted as the `packs` tab of
   `OrgControlPanel.tsx`. Lists packs (newest version per name), generates and registers a signing key,
   **signs a pack, verifies the signature locally against the public key it holds, and only then sends**
   it (`saveSignedRulePackArtifact`) — never sends what it cannot verify; releases a draft; and reads the
@@ -1597,7 +1597,7 @@ the earlier claims true rather than decorative.
   rules reader; a caller without `edit_config` refused; org isolation) + `released.test.ts` (3) +
   `rulePacks.test.ts` (5, inert) + `anchoring.test.ts` `generateSigningKey` (1). SQL harness green
   twice. Register F137 `Inert → Wired`; F128 evidence corrected (`definePack`/`releasedRules` now have a
-  caller). Counts **88/27/23**. `tsc --noEmit` clean; G2–G6 and R0 green; UI contract green.
+  caller). Counts corrected to **94/27/17** in the same batch (§13.11: F28/F29/F39/F53/F54/F55 moved Absent→Wired). `tsc --noEmit` clean; G2–G6 and R0 green; UI contract green.
 
 ## Environment facts (for the next session)
 

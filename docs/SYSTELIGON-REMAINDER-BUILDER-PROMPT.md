@@ -4,11 +4,12 @@ Paste the block below into a fresh session. It is self-contained: the session ne
 It is the brief for the builder that finishes the unbuilt part of the specification, established by
 `docs/SYSTELIGON-GAP-REPORT.md` (read that first).
 
-This supersedes the earlier "remainder" prompt, which listed the whole S1–S16 rule engine as work and
-described the engine's screens as entirely unbuilt. The engine is **built** and its first surface (the
-rule-run screen, L1) is now **mounted**. What remains is the rest of the last mile. **Apart from the
-design language, the entire remainder is delegated to the builder** — every item in §13.8 of the gap
-report except the DEFERRED visual rows.
+This supersedes the earlier "remainder" prompt, which listed the whole S1–S16 rule engine as work,
+described the engine's screens as entirely unbuilt, and left L2 open. Since then: the engine is
+**built**, **two** of its surfaces are **mounted** (the rule-run screen L1 and the rule-pack manager
+L2), the release transition exists (`0128_rule_pack_release.sql`), and six understated register rows
+are corrected. **Apart from the design language, the entire remainder is delegated to the builder** —
+every item in §13.8 of the gap report except the DEFERRED visual rows.
 
 ---
 
@@ -30,28 +31,29 @@ The branches are built and pushed:
   incident wizard, tamper alarm), D1-D4 (capability library), F1-F7 (self-hosted fonts), gates G7-G10.
 - feature/writing-engine (c45bb81) — the deterministic report-writing engine.
 - feature/systeligon-unified-v1 (ceb85fd) — the A+B reconciliation: ONE migration set, collision resolved.
-- feature/systeligon-builder-continuous (5200f4b) — THE UNIFIED SET PLUS U4 (team directory) AND L1
-  (the rule-run screen). THIS is your starting point; branch from it.
+- feature/systeligon-builder-continuous (385c550) — THE UNIFIED SET PLUS U4 (team directory), L1 (the
+  rule-run screen) AND L2 (the rule-pack management surface). THIS is your starting point; branch from it.
 - main (a697190) — the untouched default branch, still carrying the original production defect.
 Read docs/SYSTELIGON-GAP-REPORT.md for the full verified built/planned picture. Its §13.8 is your
 authoritative work list. Everything in it except the DEFERRED design rows is yours.
 
 WHAT IS LEFT — this is YOUR work, and it is the last mile, not the engine
-The engine is built. Most of its SCREENS are not. That is the whole remainder, and it is the same
-defect class the whole programme exists to catch — a working library with no reachable surface — in
-miniature. The guard is the same: find the call site. If nothing calls it, it is dead code and you
-must say so. L1 (the rule-run screen) is DONE; the rest of the engine's surfaces are not.
+The engine is built and two of its surfaces are mounted (L1, L2). Most of its OTHER surfaces are not.
+That is the whole remainder, and it is the same defect class the whole programme exists to catch — a
+working library with no reachable surface — in miniature. The guard is the same: find the call site.
+If nothing calls it, it is dead code and you must say so. L1 and L2 are DONE; the rest of the engine's
+surfaces are not.
 
 YOUR BRANCH
-Branch from feature/systeligon-builder-continuous (it carries the unified migration set, U4 and L1).
-Suggested name feature/systeligon-lastmile-v1. Never touch main. Never force-push. Push after every
-coherent unit of work. Do NOT rebase onto feature/systeligon-build-v1 or feature/scale-harden-v1 —
-the unified branch already reconciles both; work from the unified set so you do not re-open the
+Branch from feature/systeligon-builder-continuous (it carries the unified migration set, U4, L1 and
+L2). Suggested name feature/systeligon-lastmile-v1. Never touch main. Never force-push. Push after
+every coherent unit of work. Do NOT rebase onto feature/systeligon-build-v1 or feature/scale-harden-v1
+— the unified branch already reconciles both; work from the unified set so you do not re-open the
 migration collision.
 
 FIRST ACTION — lock your baseline and prove the tree whole
-Run the full gate set on the starting branch and record the counts (migrations 127, SQL test files 132,
-vitest 279 files / 3198 tests, playwright 30 specs, guards 28 — verify these yourself, they are your
+Run the full gate set on the starting branch and record the counts (migrations 128, SQL test files 133,
+vitest 281 files / 3209 tests, playwright 30 specs, guards 28 — verify these yourself, they are your
 baseline). Run the SQL harness twice: bash scripts/local-sql-harness-docker.sh. It must print
 "migrations applied twice / all SQL tests passed twice". If it does not, fix that before any new work —
 a red harness masks every test after the failure.
@@ -84,7 +86,8 @@ THE LAWS (never violate)
   Time is always an argument; never read the clock inside a pure function.
 - Every interactive element carries data-testid="<screenId>-<element>".
 - No blocking modals. Non-modal chrome is role="complementary".
-- Platform crypto and existing hashing primitives only.
+- Platform crypto and existing hashing primitives only. Key generation is the platform primitive
+  (`generateSigningKey` in src/lib/anchoring.ts) — never a bespoke RNG.
 - A rule, an extraction step and an update path NEVER call anything external.
 - Order is bytes -> row -> ledger, never the reverse, wherever evidence or an artifact is written.
 
@@ -94,9 +97,10 @@ green test is NOT proof a feature works. Never trust a doc, and never trust a pa
 something is wired. Find the call site. If nothing calls it, it is dead code and you must say so.
 Use `node scripts/check-wiring.mjs` (and `scripts/audit-wiring.mjs` for the raw export list). It
 resolves the real import graph, alias-aware. Name-based greps lie here.
-This cuts BOTH ways: the register can also UNDERSTATE the build. §13.11 of the gap report lists six
-register rows (F28, F29, F39, F53, F54, F55) that still say Absent/Inert for features that are built
-and wired. Correcting those rows is part of your work.
+This cuts BOTH ways: the register can also UNDERSTATE the build. §13.11 of the gap report listed six
+register rows (F28, F29, F39, F53, F54, F55) that said Absent/Inert for features that are built and
+wired. Those six are now corrected on the starting branch. Keep the rule: if you find another stale row,
+correct it in the same commit as the work that proves it.
 
 ENVIRONMENT
 - No host Postgres, but the sandbox can run PostgreSQL 17 in Docker (`sudo -n docker`); the sanctioned
@@ -111,7 +115,12 @@ ENVIRONMENT
   npm run check-tutorials | bash scripts/local-sql-harness-docker.sh | npx playwright test
 - E2E_PROD=1 runs Playwright against the built bundle (not the dev server). Use it for any proof.
 - The register gate reads docs/FEATURE-REGISTER.md. The moment you wire an Inert row, update it in the
-  same commit or the gate fails (that is rule (6) of the gate working as designed).
+  same commit or the gate fails (that is rule (6) of the gate working as designed). The generated
+  docs/UI-INVENTORY.md must be regenerated with `npx tsx scripts/gen-ui-inventory.mjs` whenever a screen,
+  testid or RPC changes — `src/guards/uiInventory.test.ts` fails on drift.
+- A new screen needs a contract section in docs/ACP-UI-CONTRACT.md (check-ui-contract fails otherwise).
+- Never leave a raw product/engine-name literal in live code outside src/lib/product.ts —
+  src/guards/productName.test.ts fails the build. Import PRODUCT_NAME / ENGINE_NAME instead.
 
 LEDGER RULE
 Update docs/SCALE-TASKS.md (the live ledger) IN THE SAME COMMIT as the work. Status values are exactly:
@@ -121,7 +130,7 @@ you add, add a FEATURE-REGISTER row in the same commit.
 READ FIRST, IN THIS ORDER
 1. docs/SYSTELIGON-GAP-REPORT.md   — the verified built/planned picture, and your work list (§13.8)
 2. docs/SYSTELIGON.md              — the forensic engine spec. YOUR PRIMARY DOCUMENT.
-3. docs/SCALE-TASKS.md             — the live ledger, including the S1-S16 build
+3. docs/SCALE-TASKS.md             — the live ledger, including the S1-S16 build and L1/L2
 4. docs/FEATURE-REGISTER.md        — every feature and its true wiring status, gated
 5. docs/SPEC-v10.md                — the authoritative product specification
 6. docs/BRANCH-MAP.md              — scope, ledger and migration reservation
@@ -132,15 +141,16 @@ IGNORE ALL of docs/archive/ — 63 pre-audit docs, each stamped stale.
 YOUR WORK — the last mile, in this order (all of §13.8 except the DEFERRED design rows)
 ===============================================================
 
-L1  DONE. The rule-run screen (RuleRunTab.tsx) mounts the engine; do not rebuild it. Verify it still
-    passes and leave it.
+L1  DONE. The rule-run screen (RuleRunTab.tsx, contract AF-16) mounts the engine and now reads the
+    released pack through getReleasedRulePack/resolveReleasedRules, falling back to the in-code library
+    when no pack is released. Verify it still passes and leave it.
 
-L2  The rule-pack management UI (S10/S11) — highest-value open item.
-    src/data/rulePacks.ts (listRulePacks, saveSignedRulePack) has no screen caller. Build the surface
-    that lists packs, shows a pack's rules and versions, and saves a signed pack (the signature is
-    verified server-side in rule_pack_save; an unverifiable save is refused and logged). The ad-hoc
-    rule builder (pick a source, a condition, a threshold; save as a versioned artifact via
-    buildAdhocRule) is part of this surface. Turn F128/F137 Inert -> Wired.
+L2  DONE. The rule-pack management UI (S10/S11, contract OA-33, RulePackPanel.tsx) is mounted: it
+    lists packs, generates and registers a signing key, signs a pack, verifies the signature locally
+    before sending it, releases a draft, reads the refusal log, and builds an ad-hoc rule. The release
+    transition is 0128_rule_pack_release.sql (rule_pack_release, signing_key_register,
+    rule_pack_refusals_list, rule_pack_released_rules). F137 is Wired; F128 stays Inert because
+    RuleRegistry and packRules still have no screen caller. Verify and leave it.
 
 L2b The remaining engine surfaces — one screen per family, all built and unreached today:
     - flows (S3/S4/S5/S12): buildAcceptedTestingSet, applyFloor, parsePastedBlock, verifyRows,
@@ -149,7 +159,8 @@ L2b The remaining engine surfaces — one screen per family, all built and unrea
     - patterns (S9): patternRules. Mount in the audit-file / source-review UI.
     - minutes (S14): buildActionRegister, itemHistory. Mount a minutes surface.
     - policy (S15): compareDocuments. Mount a policy-comparison surface.
-    Turn F132-F136 Inert -> Wired as each lands.
+    Turn F132-F136 Inert -> Wired as each lands. Each needs a contract section, testids and a regenerated
+    UI-INVENTORY.md.
 
 L3  Extraction in the audit-file UI (S7).
     Tier 1 is wired (extractDocument -> doc-extract) but the flow is thin. Mount the full three-tier
@@ -191,8 +202,9 @@ D5-D9 — the adjacent capability products (only if the owner wants them; they a
     forensic analytics, policy-to-control gap analysis, assurance-over-assurance. Raise with the owner
     before starting; they are new products, not last-mile wiring.
 
-Register honesty — correct the six stale rows this report found (F28, F29, F39, F53, F54, F55) in the
-    same commit as the work that proves them, so the register stops understating the build.
+Register honesty — the six stale rows (F28, F29, F39, F53, F54, F55) are ALREADY corrected on the
+    starting branch (94 Wired / 27 Inert / 17 Absent). Keep the rule for any further stale row you find:
+    correct it in the same commit as the work that proves it.
 
 Tutorial media — re-record the 25 GIFs whose ui_hash is stale (`npm run check-tutorials` lists them).
     Build work; do it once the surfaces above stop moving.
@@ -210,7 +222,8 @@ E8, U5, U7, U9-U13, A-U1 — the design-language rows. The owner has not settled
 - Every finding names its rule, its version, and its source rows, and re-runs identically. (S1, S6.)
 - No rule, no extraction step and no update path calls anything external; the no-AI guard still
   passes. (L1, S6, S7, S11.)
-- A sealed report records the rule-pack version that scored it. (S10, S11 — wire the pack UI.)
+- A sealed report records the rule-pack version that scored it. (S10, S11 — the pack UI is built; the
+  engine runs the released pack; verify end to end.)
 - The editor adopts an uploaded report's structure and typography, and formatting stays editable at
   every stage without altering a fact. (S13 remainder.)
 
@@ -218,7 +231,7 @@ E8, U5, U7, U9-U13, A-U1 — the design-language rows. The owner has not settled
 PROCESS
 ===============================================================
 - Commit after each task with a conventional message; update docs/SCALE-TASKS.md and
-  docs/FEATURE-REGISTER.md IN THE SAME COMMIT.
+  docs/FEATURE-REGISTER.md IN THE SAME COMMIT. A commit message is the report — say what changed and why.
 - Run the full local gate set after every code change; fix failures before proceeding.
 - A rename of the product/engine name is now ONE commit: edit src/lib/product.ts and run
   `npm run gen:name` (S16).
@@ -240,7 +253,7 @@ OWNER ACTIONS (do not attempt these; restate them in your close-out)
 - Settle the design language — themes, motion, typography, density, audience profiles, headers — so
   the DEFERRED visual rows (E8, U5, U7, U9-U13, A-U1) can be built once, not twice.
 
-BEGIN: lock your baseline and prove the tree whole, then work continuously through L2, L2b, L3, L4,
-L5, L6, L7, the R3 remainder and the register-honesty rows — and close on the specification's section
+BEGIN: lock your baseline and prove the tree whole, then work continuously through L2b, L3, L4, L5, L6,
+L7, the R3 remainder and any remaining register-honesty rows — and close on the specification's section
 14 acceptance list.
 ```
