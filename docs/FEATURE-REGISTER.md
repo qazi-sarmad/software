@@ -117,7 +117,7 @@ feature to be testable.
 | F40 | Evidence upload control | `Inert` | `EvidenceTab.tsx` computes a SHA-256 then calls `attachEvidenceToWorkpaper`, which writes **React state only** — zero storage calls | S20 |
 | F41 | Evidence bytes stored | `Absent` | `evidence_files` (0035) has **no** `storage_path`; **no bucket is created anywhere** | S20 |
 | F42 | Evidence re-derived on verify | `Absent` | Nothing to re-derive — the bytes were never kept | S20 |
-| F43 | Document extraction (edge function) | `Inert` | `extractDocument` exists in `src/data/documents.ts` but **no screen calls it**; the `doc-extract` function is deployed but unreachable from the UI | R2 |
+| F43 | Document extraction (edge function) | `Wired` | `extractDocument` (`src/data/documents.ts`) invokes the `doc-extract` Edge Function, which re-checks the caller's right and org and reads the file itself; `DocumentViewerPanel.tsx` now runs it on "Queue extraction" instead of the 0035 stub. Tier 1 wiring (S7) | R2 |
 | F44 | Extraction stub queue | `Wired` | `request_extraction` RPC | — |
 | F45 | Document recognition (magic bytes, archives) | `Absent` | Routing is extension-only (`isDocx(filename)`); no `.rar`; no office-in-zip handling | S17 |
 | F46 | Evidence completeness (Mode A) | `Inert` | Depends on F41 | S20 |
@@ -275,6 +275,8 @@ Each is a pure function under `src/lib/`, with direct unit tests and a screen su
 | F127 | Systeligon rule schema and runner (S1) | `Inert` | The engine shell in `src/lib/systeligon/` (`types.ts`, `runner.ts`): a rule declares id/version/kind/params/appliesTo/standards/status/severity and a pure `evaluate`; `runRules` runs the applicable released rules, re-stamps provenance from the rule so a finding cannot misreport its identity, turns a throwing rule into a finding rather than a crash, and sorts findings deterministically. Test-only so far (`systeligon.test.ts`, 16 tests); no screen calls it yet — S6/S8/S9/S10 build the library and packs onto it | S1 |
 | F128 | Systeligon rule versioning and packs (S1) | `Inert` | `src/lib/systeligon/versioning.ts` (`RuleRegistry`, append-only: a re-registered id@version with a changed fingerprint throws, an older version cannot follow a newer one) and `packs.ts` (`definePack` validates target and duplicates). Test-only so far; signed OTA distribution is S11 | S1 |
 | F129 | Systeligon numeric forensic rule library (S6) | `Inert` | `src/lib/systeligon/rules/numeric.ts` wraps the tested checks in `analyticsEngine.ts` (duplicates, near-duplicates, sequence gaps, z-score and IQR outliers, Benford first digit, round numbers, out-of-hours, same-user create/approve, missing attributes) as versioned rules with provenance, plus `rules/threshold.ts` (just-below-threshold). The checks are not duplicated — `analyticsEngine` stays the single implementation. Test-only so far; no screen consumes a run yet | S6 |
+| F130 | Systeligon structured document extraction, tier 3 (S7) | `Inert` | `src/lib/systeligon/extract/structured.ts` parses text into a `ParsedDocument` with declared parsers (vendor/date/amount/reference/period fields, numbered clauses, action items, signatures, cross-references) and reports its own coverage (lines/parsed/uninterpreted). Pure and deterministic. Test-only so far | S7 |
+| F131 | Systeligon OCR seam, tier 2 (S7) | `Inert` | `src/lib/systeligon/extract/ocr.ts` decides whether a scan needs OCR (`needsOcr`), runs an injected local engine lazily, and **refuses a remote engine** so nothing leaves the tenant (L2). The bundled model is a build artifact wired as a dependency, not vendored here (D6). Test-only so far | S7 |
 
 ---
 
@@ -282,10 +284,10 @@ Each is a pure function under `src/lib/`, with direct unit tests and a screen su
 
 | Status | Count |
 |---|---|
-| `Wired` | 55 |
-| `Inert` | 30 |
+| `Wired` | 56 |
+| `Inert` | 31 |
 | `Absent` | 44 |
-| **Total** | **129** |
+| **Total** | **131** |
 
 **Read that again, with the correction applied.** This is materially better than the first pass
 reported, because Phases 1 and 2 of the scale-harden build closed the whole foundation. The picture

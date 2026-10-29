@@ -19,3 +19,5 @@ export {
   benfordFirstDigit, roundNumbers, weekendPostings, sameUserCreateApprove, missingAttributes,
 } from './rules/numeric';
 export { justBelowThreshold } from './rules/threshold';
+export { parseDocumentStructure, hasSignature, FIELD_PARSERS, type StructuredExtraction } from './extract/structured';
+export { needsOcr, runOcr, type OcrEngine, type OcrText, type OcrOutcome, type ExtractionHint } from './extract/ocr';

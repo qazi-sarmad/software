@@ -122,3 +122,24 @@ the rest of the harness, no permission assumptions.
 `postgresql` resolves to (16 on `ubuntu-24.04`). The suite needs only `security_invoker` (PG15+), so
 the header now says "15+" and names no version. Verified: harness green on PG16 in the runner's package
 set and PG17 locally.
+
+## D6 — The OCR engine is a wire-up, not a vendored model (2026-10-29)
+
+**Spec §5** lists three extraction tiers; tier 2 is "OCR (lazy-loaded, bundled). Only for scans and
+images with no text layer." S7 builds the tier-2 *seam* and the tier-3 parser, both pure and tested.
+It does **not** vendor a multi-megabyte WASM OCR model into this environment.
+
+**Why.** The model and its trained data are a build artifact, not logic. Vendoring one would add
+megabytes to the tag, pin a specific model version inside a commit that is about rule-engine shape,
+and cannot be tested here anyway. The decision that actually matters is the contract around the engine,
+and that is what S7 writes:
+
+- `needsOcr(hint)` OCRs a document **only** when tier 1 produced no text and the file is a scan
+  (`pdf`, or an image surfacing as `unknown`). A legacy binary is stored, never OCR'd.
+- `runOcr(bytes, hint, engine)` takes the engine as a dependency, so a build that never OCRs never
+  ships one — that is what "lazy-loaded" means at the code level.
+- A **remote** engine is refused with a reason. Nothing leaves the tenant (L2).
+- With no engine, the scan is stored and reported `unsupported` with the reason. It never invents text.
+
+**To finish tier 2** a consumer passes a bundled local `OcrEngine` (e.g. a tesseract WASM build) into
+`runOcr`. That is a packaging task with a clear seam, recorded in `docs/FEATURE-REGISTER.md` F131.

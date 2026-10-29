@@ -1379,6 +1379,26 @@ reachable from a screen.
 skip, dedup, throwing rule, target filter; validation; append-only versioning, latest/history,
 fingerprint; packs; the two structural rules). Full suite 216 files / 2,510 tests green. All gates green.
 
+### S7 — document extraction tiers 1–3 (2026-10-29)
+
+**DONE (tier 1 wired; tiers 2–3 built as pure seams).** Queue item 11. Spec §5 and §20.
+
+- **Tier 1 wired.** `DocumentViewerPanel.tsx` now calls `extractDocument` (`src/data/documents.ts`),
+  which invokes the `doc-extract` Edge Function — the function re-checks the caller's right and org,
+  reads the file itself and returns the outcome. Before this the panel called the 0035 `requestExtraction`
+  stub, which wrote a pending row nobody filled. Register F43 moves `Inert` → `Wired`.
+- **Tier 3** `src/lib/systeligon/extract/structured.ts` — parses extracted text into the `ParsedDocument`
+  structure the §3.2/§3.3 rules consume: declared field parsers (vendor/date/amount/reference/period),
+  numbered clauses with cross-references, action items with owner/due, signature blocks. It reports its
+  own coverage (lines / parsed / uninterpreted) so a clause it could not read is counted, never dropped.
+- **Tier 2 seam** `src/lib/systeligon/extract/ocr.ts` — `needsOcr` OCRs only a scan with no text layer;
+  `runOcr` takes a **local** engine as a dependency (lazy-loaded) and **refuses a remote engine**, so
+  nothing leaves the tenant (L2). With no engine the scan is stored and reported `unsupported`. The
+  bundled model is a packaging task with a clear seam (D6, register F131).
+
+**Tests:** `extract.test.ts` 8 tests. Full suite 217 files / 2,529 tests green; all gates and build green.
+Register F130/F131 added; F43 flipped to `Wired`; counts 56/31/44.
+
 ## Environment facts (for the next session)
 
 - The sandbox has **no host Postgres** and **no Docker socket for the user**, but
