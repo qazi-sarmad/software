@@ -15,8 +15,9 @@ import { renderDesignedPdf } from '../lib/render/designedPdf';
 import { renderDocx } from '../lib/render/docx';
 import { documentFromReportBlocks, toPdfModel, footerLine, type DocumentModel, type ReportBlockInput } from '../lib/render/document';
 import { DEFAULT_BRANDING, resolveHexColour, type BrandingSpec } from '../lib/render/branding';
-import { DEFAULT_FORMAT_LAYOUT, toContentsSpec, toPdfTypography, type FormatLayout } from '../lib/writing/reportFormat';
+import { DEFAULT_FORMAT_LAYOUT, toContentsSpec, toPdfTypography, resolveTypography, type FormatLayout } from '../lib/writing/reportFormat';
 import { designFromFormat, hasDesign } from '../lib/writing/renderDesign';
+import { loadReportFonts } from './fontBytes';
 import { sha256Hex } from '../lib/population';
 
 export const REPORT_BUCKET = 'reports';
@@ -94,11 +95,20 @@ export async function renderAndStoreReportFiles(input: ReportFileInput): Promise
   const docxHash = await hashOf(docxBytes);
 
   const pdfModel = buildReportModel(input, docxHash, frozenLabel);
+  // WP-F: embed the format's chosen self-hosted font, so the frozen PDF prints the face the canvas
+  // showed rather than the renderer's standard font. The loader returns undefined when a font's
+  // bytes are unavailable (offline), and the renderer then falls back to its standard font.
+  const layout = input.layout ?? DEFAULT_FORMAT_LAYOUT;
+  const typo = resolveTypography(layout);
+  const fonts = await loadReportFonts(
+    { family: layout.fontHeading, weight: typo.headingWeight },
+    { family: layout.fontBody, weight: typo.bodyWeight },
+  );
   // WP-D: a format that asks for a designed page prints through the designed renderer; every other
   // format keeps the plain flow, so an old format renders exactly as before.
-  const pdfBytes = pdfModel.design && hasDesign(input.layout ?? DEFAULT_FORMAT_LAYOUT)
-    ? await renderDesignedPdf(spec, pdfModel)
-    : await renderPdf(spec, toPdfModel(pdfModel, undefined, toPdfTypography(input.layout ?? DEFAULT_FORMAT_LAYOUT)));
+  const pdfBytes = pdfModel.design && hasDesign(layout)
+    ? await renderDesignedPdf(spec, pdfModel, fonts)
+    : await renderPdf(spec, toPdfModel(pdfModel, undefined, toPdfTypography(layout), fonts));
   const pdfHash = await hashOf(pdfBytes);
 
   const base = `${input.orgId}/reports/${input.reportVersionId}`;

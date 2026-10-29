@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
 import { PDFDocument } from 'pdf-lib';
 import JSZip from 'jszip';
 import { renderDesignedPdf, pageNumberText } from './designedPdf';
@@ -42,6 +43,17 @@ describe('renderDesignedPdf', () => {
     expect(bytes.length).toBeGreaterThan(500);
     const doc = await PDFDocument.load(bytes);
     expect(doc.getPageCount()).toBeGreaterThanOrEqual(1);
+  });
+
+  it('embeds the format font bytes when the freeze path supplies them (WP-F)', async () => {
+    const bytes = readFileSync('node_modules/@fontsource/source-serif-4/files/source-serif-4-latin-400-normal.woff2');
+    const spec = { orgId: 'o', ...DEFAULT_BRANDING };
+    const plain = await renderDesignedPdf(spec, model());
+    const withFont = await renderDesignedPdf(spec, model(), { headingFontBytes: new Uint8Array(bytes), bodyFontBytes: new Uint8Array(bytes) });
+    expect(Buffer.from(withFont.slice(0, 5)).toString('latin1')).toBe('%PDF-');
+    // A real embedded face adds a font program (kilobytes), not the standard-font stub.
+    expect(withFont.length).toBeGreaterThan(plain.length + 1000);
+    expect((await PDFDocument.load(withFont)).getPageCount()).toBeGreaterThanOrEqual(1);
   });
 
   it('is deterministic: the same model yields byte-identical bytes', async () => {

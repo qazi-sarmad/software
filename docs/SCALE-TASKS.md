@@ -881,10 +881,18 @@ RPC target named in `src/data/**` or `supabase/functions/**`, the RPC catalogue 
   and does **not** build in B's scope (BRANCH-MAP merge rule 5). **Four are this branch's own**, and
   each is a real wiring gap this gate surfaced:
   - `src/data/fontBytes.ts::{fontUrl,loadFontBytes,loadReportFonts}` — the WP-F report-font path.
-    A format's `fontHeading` / `fontBody` is validated, shown on the canvas and stored, but the freeze
-    path (`renderAndStoreReportFiles`) never calls `loadReportFonts`, so the **frozen PDF embeds the
-    standard font, not the chosen one**. That is a config-effect defect (G3) as well as a wiring gap;
-    recorded here and to be closed under G3.
+    **FIXED** (this commit). A format's `fontHeading` / `fontBody` was validated, shown on the canvas
+    and stored, but the freeze path (`renderAndStoreReportFiles`) never called `loadReportFonts`, so
+    the **frozen PDF embedded the standard font, not the chosen one**. `renderAndStoreReportFiles` now
+    loads the format's font bytes and passes them to both PDF renderers (`toPdfModel` gained a `fonts`
+    argument; `renderDesignedPdf` gained the same). Closing it exposed a **latent production bug**: the
+    self-hosted faces are WOFF2, and fontkit's subsetter throws *lazily* during `pdf.save()` for some
+    glyph sets (a heading containing a digit — which every real report has), so the existing
+    `try { subset: true } catch { subset: false }` fallback in `embedCustomFont` could not catch it and
+    the freeze would fail. Both renderers now choose by container signature: a WOFF2 face is embedded
+    whole, a raw TTF/OTF is subset. Proven by `src/data/fontBytes.test.ts`,
+    `render.test.ts` ("carries heading and body font bytes …") and `designedPdf.test.ts`
+    ("embeds the format font bytes …").
   - `src/data/reportGraph.ts::getReportGraph` — the reader for the committed report graph and claims
     ("the screen's drilldown", Phase 2.6). The writer is wired; the reader has no caller, so the
     committed root is not drilldownable yet.

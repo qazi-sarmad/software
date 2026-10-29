@@ -224,11 +224,14 @@ export interface ContentsEntry {
 
 /** Adapt the shared model to the PDF renderer's own model type. `timestamp` pins the PDF metadata
  *  (creation/modification date) so the bytes are reproducible; it is passed in, never read. The
- *  optional `typography` carries the report format's resolved sizes to the printer (WP-C3). */
+ *  optional `typography` carries the report format's resolved sizes to the printer (WP-C3), and
+ *  `fonts` carries the self-hosted font bytes the format chose (WP-F) so the printed page embeds
+ *  the face the canvas showed rather than the renderer's standard font. */
 export function toPdfModel(
   model: DocumentModel,
   timestamp?: string,
   typography?: PdfDocumentModel['typography'],
+  fonts?: { headingFontBytes?: Uint8Array; bodyFontBytes?: Uint8Array },
 ): PdfDocumentModel {
   const sections: PdfSection[] = [];
   // WP-T: the contents page comes first, before the body, exactly as the format ordered it.
@@ -271,5 +274,8 @@ export function toPdfModel(
   }
   const line = footerLine(model.footer);
   if (line) sections.push({ heading: 'Document control', blocks: [{ kind: 'paragraph', text: line }] });
-  return { title: model.title, subtitle: model.subtitle, sections, timestamp, typography };
+  return {
+    title: model.title, subtitle: model.subtitle, sections, timestamp, typography,
+    headingFontBytes: fonts?.headingFontBytes, bodyFontBytes: fonts?.bodyFontBytes,
+  };
 }
