@@ -72,6 +72,7 @@ export const FEATURE_RPC_MAP: Record<string, string> = {
   signature_record: 'integrity_anchoring',
   // S10/S11: Systeligon rule packs (0117).
   rule_pack_save: 'systeligon_rule_packs',
+  systeligon_finding_record: 'systeligon_findings',
 };
 
 /**

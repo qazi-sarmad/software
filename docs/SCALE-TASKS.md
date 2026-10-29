@@ -1461,8 +1461,35 @@ closes the authoritative half and the caller.
   `rule_pack_save` mapped in `src/lib/featureMap.ts` (F25 rule 5).
 - **Tests:** `supabase/tests/119_systeligon_rule_packs.sql` (RLS, no direct write, immutability,
   duplicate logged, unknown key logged, no-right refused, isolation) + `ota.test.ts` (7) +
-  `rulePacks.test.ts` (2, inert). SQL harness green twice. Register F137 added (Inert — no screen
+  `rulePacks.test.ts` (2, inert). SQL harness green twice.   Register F137 added (Inert — no screen
   calls it yet); counts 56/37/44.
+
+### S13 — findings-to-report provenance, F39 (2026-10-29)
+
+**DONE.** Queue item 16. Spec §9.4. The report must cite every rule finding with its provenance
+intact, and the committed claim graph must re-verify it.
+
+- `src/lib/systeligon/provenance.ts` — `findingsToClaims(RuleFinding[]) → Claim[]`. Each claim copies
+  the finding's `ruleId`/`ruleVersion` onto the claim (never invented), phrase `findings.rule_finding`,
+  section `findings`, and carries the flagged references. Pure; 7 tests.
+- `src/lib/writing/seedPhrases.ts` — the "Findings-with-provenance" phrase family that renders a
+  claim naming its rule id and version.
+- **The writer, so the reader is not the defect the audit found.** `supabase/migrations/0118_systeligon_findings.sql`
+  — `systeligon_finding_record(p_engagement_id, p_evaluated_at, p_findings)` appends one `rule_finding`
+  ledger entry per finding, idempotently per (engagement, instant, rule, version); feature
+  `systeligon_findings`; `perform_work` or `review_and_approve`; the evaluation instant is required
+  (the engine never reads a clock). `src/data/systeligon.ts` calls it; mapped in `featureMap.ts`.
+- **The reader.** `loadSysteligonFindings` (`src/data/reportGraph.ts`) reads those ledger entries;
+  `commitReportGraph` appends the finding claims to the plan-built claims, re-roots via `graphHashes`,
+  and calls `report_graph_commit`, which re-derives every claim hash and the root (0103). So the
+  findings' evidence is inside the tamper-evident root, not beside it.
+- **Tests:** `supabase/tests/120_systeligon_findings.sql` (records, idempotent, instant required, rule
+  provenance required, org isolation) + `provenance.test.ts` (7) + `systeligon.test.ts` (2, inert).
+  SQL harness green twice. Register F39 `Absent → Wired`; counts **57/37/43**.
+- **Open wiring gap (recorded, not hidden):** `recordSysteligonFindings` has no screen caller yet — the
+  rule-run screen that would call it is not built. It is in `scripts/wiring-allow.json` as
+  `a-own-unwired` with a real reason; `loadSysteligonFindings` is reached through `commitReportGraph`
+  (called from `ReportEditorPanel.tsx:177`).
 
 ## Environment facts (for the next session)
 

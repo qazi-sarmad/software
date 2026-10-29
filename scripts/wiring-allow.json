@@ -21,5 +21,6 @@
   "src/data/writing.ts::listCellReviews": { "category": "builder-b", "reason": "Per-cell workbook review status (W2.9); the workbook UI does not surface it yet. Builder B's per BRANCH-MAP (WK-* screens)." },
   "src/data/writing.ts::listPhrases": { "category": "builder-b", "reason": "Phrase-library reader; ReportBuilderPanel references a phrase type but not this reader. Builder B's per BRANCH-MAP." },
   "src/data/writing.ts::releasePhrase": { "category": "builder-b", "reason": "Platform-only phrase release once every cell is reviewed (W2.9); no screen offers it. Builder B's per BRANCH-MAP." },
-  "src/data/writing.ts::reviewCell": { "category": "builder-b", "reason": "Marks one workbook cell reviewed (W2.9); no screen offers it. Builder B's per BRANCH-MAP." }
+  "src/data/writing.ts::reviewCell": { "category": "builder-b", "reason": "Marks one workbook cell reviewed (W2.9); no screen offers it. Builder B's per BRANCH-MAP." },
+  "src/data/systeligon.ts::recordSysteligonFindings": { "category": "a-own-unwired", "reason": "S13 writer that records a rule run's findings to the ledger (RPC systeligon_finding_record, 0118); the report side (loadSysteligonFindings, F39) is wired and green, but the rule-run screen that calls it is not built yet. Reported as a wiring gap; wire it or hide the surface." }
 }

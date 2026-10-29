@@ -256,6 +256,23 @@ export const SEED_PHRASE_SPECS: SeedPhraseSpec[] = [
     }
   },
 
+  // --- Findings-with-provenance (S13, §9.4) ---------------------------------------
+  // A Systeligon finding is rendered with its rule id, version and reason intact — the report
+  // states that the finding exists and cites it; it never paraphrases the reason into new prose.
+  {
+    id: 'findings.rule_finding',
+    role: 'findings',
+    claimLevel: 'calculated',
+    modelScope: [],
+    template: '{refs} — rule {rule} (v{version}) reported a {kind} finding of {severity} severity: {reason}',
+    byFormality: {
+      1: 'Rule {rule} (v{version}) flagged {refs}: a {kind} finding, {severity} severity. {reason}',
+      2: 'Rule {rule} (v{version}) reported a {kind} finding of {severity} severity on {refs}: {reason}',
+      4: 'Rule {rule} (version {version}) reported a {kind} finding of {severity} severity concerning {refs}: {reason}',
+      5: 'Rule {rule} (version {version}) reported a {kind} finding of {severity} severity concerning {refs}. The stated basis is: {reason}',
+    },
+  },
+
   // --- Alert summary (W11.4, model M12) ------------------------------------------
   {
     id: 'alert_summary.by_rule',

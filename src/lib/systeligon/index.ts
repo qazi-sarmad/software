@@ -36,3 +36,6 @@ export {
   type RowDecision, type RemarkClaim, type TestedRow, type RequiredRow, type PopulationRow,
   type EvidenceRecord, type RowVerification, type VerificationMode, type CarriedOverride,
 } from './flows';
+export {
+  findingToClaim, findingsToClaims, type FindingClaim, type ProvenanceSet, type RefKind,
+} from './provenance';

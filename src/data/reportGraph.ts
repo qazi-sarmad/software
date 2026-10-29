@@ -9,9 +9,12 @@
  */
 import { callRpc, getClient, type DataResult } from './db';
 import { deriveEngagementGraph, type ReportRecordSet } from '../lib/writing/derive';
+import { claimCanonical, claimHash, graphHashes } from '../lib/writing/graph';
+import { findingsToClaims } from '../lib/systeligon/provenance';
 import { ENGINE_VERSION } from '../lib/writing/fixtures';
 import { DEFAULT_REGISTER } from '../lib/writing/registers';
-import type { EngineVersion, Locale, Register } from '../lib/writing/types';
+import type { Claim, EngineVersion, Locale, Register } from '../lib/writing/types';
+import type { RuleFinding } from '../lib/systeligon/types';
 
 export interface ReportGraphRow {
   id: string;
@@ -98,9 +101,11 @@ export async function loadReportRecordSet(engagementId: string): Promise<ReportR
   };
 }
 
+interface DetailedClaim { claim: Claim; canonical: string; claimHash: string; }
+
 /** The claim facts the writer verifies, in graph order. */
-function claimsPayload(derived: Awaited<ReturnType<typeof deriveEngagementGraph>>) {
-  return derived.claims.map((c, i) => ({
+function claimsPayload(claims: DetailedClaim[]) {
+  return claims.map((c, i) => ({
     claim_id: c.claim.id,
     section_id: c.claim.sectionId,
     position: i + 1,
@@ -118,6 +123,30 @@ function claimsPayload(derived: Awaited<ReturnType<typeof deriveEngagementGraph>
     canonical: c.canonical,
     claim_hash: c.claimHash,
   }));
+}
+
+/**
+ * S13 (§9.4, F39): the rule findings recorded against an engagement, as the report must cite them.
+ * They live in the ledger's rule-evaluation payloads, so the report has its provenance available
+ * without a second copy that could drift. Unconfigured, or no evaluations, returns an empty list.
+ */
+export async function loadSysteligonFindings(engagementId: string): Promise<RuleFinding[]> {
+  const sb = getClient();
+  if (!sb) return [];
+  const { data, error } = await sb
+    .from('ledger_entries')
+    .select('payload')
+    .eq('action', 'rule_finding')
+    .eq('payload->>engagement_id', engagementId)
+    .order('seq', { ascending: true });
+  if (error) return [];
+  return (data ?? []).map((r) => (r.payload as { finding?: RuleFinding }).finding)
+    .filter((f): f is RuleFinding => !!f && typeof f.ruleId === 'string');
+}
+
+/** Detail a finding-derived claim the same way the engine details a plan-built one. */
+async function detail(claim: Claim): Promise<DetailedClaim> {
+  return { claim, canonical: claimCanonical(claim), claimHash: await claimHash(claim) };
 }
 
 export interface CommitReportGraphInput {
@@ -141,6 +170,19 @@ export async function commitReportGraph(input: CommitReportGraphInput): Promise<
   const locale = input.locale ?? 'en-GB';
   const versions = input.versions ?? ENGINE_VERSION;
   const derived = await deriveEngagementGraph(records, register, locale, versions);
+
+  // S13 (§9.4): the report cites the Systeligon findings with their rule provenance intact. They are
+  // appended to the plan-built claims, then the whole set is re-rooted, so the committed root covers
+  // the findings' evidence too and `report_graph_commit` re-derives exactly what is committed here.
+  const findings = await loadSysteligonFindings(input.engagementId);
+  const findingClaims = findings.length ? (await findingsToClaims(findings)).claims : [];
+  const detailed: DetailedClaim[] = [
+    ...derived.claims,
+    ...(await Promise.all(findingClaims.map(detail))),
+  ];
+  const allClaims = detailed.map((d) => d.claim);
+  const hashes = await graphHashes(allClaims);
+
   return callRpc('report_graph_commit', {
     p_report_version_id: input.reportVersionId,
     p_model_id: derived.graph.modelId,
@@ -152,9 +194,9 @@ export async function commitReportGraph(input: CommitReportGraphInput): Promise<
     p_template_version: versions.template,
     p_phrase_library_version: versions.phraseLibrary,
     p_fixed_timestamp: input.fixedTimestamp ?? new Date().toISOString(),
-    p_graph_root: derived.graphRoot,
-    p_render_hash: derived.graphRoot,
-    p_claims: claimsPayload(derived),
+    p_graph_root: hashes.graphRoot,
+    p_render_hash: hashes.graphRoot,
+    p_claims: claimsPayload(detailed),
   });
 }
 

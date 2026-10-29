@@ -106,7 +106,7 @@ feature to be testable.
 | F36 | Certificate config and verification | `Wired` | `certificate_config_save`, `verify_certificate`, `PublicVerifyRoute` | — |
 | F37 | Report graph root verification | `Wired` | Writer `report_graph_commit` (`0103_phase2_report_graph.sql:70`) called from `ReportEditorPanel.tsx:177`; verified via `report_graph_get` and `verify_report_root` (`src/data/certificate.ts:173`) | — |
 | F38 | Report writer adopts an uploaded format | `Absent` | §9 of SYSTELIGON — org format adoption, font/colour auto-detect | S13 |
-| F39 | Findings-to-report provenance | `Absent` | §9 — every generated element traces to a finding | S13 |
+| F39 | Findings-to-report provenance | `Wired` | §9.4 — `commitReportGraph` (called from `ReportEditorPanel.tsx:177`) now appends the rule findings to the report graph and re-roots it, so `report_graph_commit` re-verifies them. The bridge in `src/lib/systeligon/provenance.ts` copies each finding's rule id, version and flagged rows onto a claim (phrase findings.rule_finding, section findings); records load from the ledger (rule_finding payloads). Unconfigured returns none | S13 |
 
 ---
 
@@ -290,14 +290,14 @@ Each is a pure function under `src/lib/`, with direct unit tests and a screen su
 
 | Status | Count |
 |---|---|
-| `Wired` | 56 |
+| `Wired` | 57 |
 | `Inert` | 37 |
-| `Absent` | 44 |
+| `Absent` | 43 |
 | **Total** | **137** |
 
 **Read that again, with the correction applied.** This is materially better than the first pass
 reported, because Phases 1 and 2 of the scale-harden build closed the whole foundation. The picture
-now: **56 wired, 37 inert, 44 absent** (F126 population header detection by S2; F127-F128 the Systeligon rule-engine shell by S1; F129 the numeric rule library by S6; F130-F136 extraction, flows and the S8/S9/S14/S15 rules; F137 the signed rule-pack storage by S10/S11 — all added 2026-10-29). F35 (report templates) and F37 (report graph root) were
+now: **57 wired, 37 inert, 43 absent** (F39 findings-to-report provenance by S13; F126 population header detection by S2; F127-F128 the Systeligon rule-engine shell by S1; F129 the numeric rule library by S6; F130-F136 extraction, flows and the S8/S9/S14/S15 rules; F137 the signed rule-pack storage by S10/S11 — all added 2026-10-29). F35 (report templates) and F37 (report graph root) were
 `Inert` here and are now written and read end to end, so they were corrected on 2026-10-29. The
 remaining `Inert` rows are the genuine, still-open
 unwired features — the monitor runtime, the evidence bytes, the tamper alarm, the SIRA write path,
