@@ -11,6 +11,7 @@ import {
 } from '../../data/governance';
 import type { DataResult } from '../../data/db';
 import { InlineError } from '../common/InlineError';
+import { ExplainPopout } from '../explain/ExplainPopout';
 import { Plus, X, Check } from '../common/Icons';
 
 type LoadState = 'loading' | 'ready' | 'error';
@@ -134,10 +135,14 @@ export const OrgGovernancePanel: React.FC = () => {
               onChange={(e) => setLifecycle({ ...lifecycle, reportOpinionRequired: e.target.checked })}
               data-testid="oa-governance-opinion-required"
             />
-            <span>The overall opinion is required at Conclusion</span>
+            <ExplainPopout explainId="field.config.report_opinion_required" screenId="OA-22" element="explain-opinion-required">
+              <span>The overall opinion is required at Conclusion</span>
+            </ExplainPopout>
           </label>
           <label className="text-apple-12 text-secondary space-y-1">
-            <span>Testing grace period (hours, 0–336)</span>
+            <ExplainPopout explainId="field.config.testing_grace_hours" screenId="OA-22" element="explain-grace-hours">
+              <span>Testing grace period (hours, 0–336)</span>
+            </ExplainPopout>
             <input
               type="number"
               min={0}

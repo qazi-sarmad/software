@@ -354,5 +354,3 @@ export function canPerformAction(
   }
 }
 
-/** @deprecated Prefer canPerformCapability(user, 'cap_change_due_date', orgConfig) */
-export const canChangeCapDueDate = (user: User) => hasRight(user, 'manage_engagements');

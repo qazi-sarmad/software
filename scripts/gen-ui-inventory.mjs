@@ -6,12 +6,20 @@
  *   src/data/*.ts              every data function, RPC and table a screen may reach
  *   src/lib/tutorialKeys.json  every tutorial key
  *   src/**                     every data-testid that exists in the code (for the cross-check)
+ *   src/lib/explain/*          the explain catalogue, the IIA standards and their surfaces (E10)
+ *   src/lib/drilldownAggregates.ts  every aggregate and the family it drills to (E10)
  *
- * Run as `node scripts/gen-ui-inventory.mjs`. The document is derived: the contract stays the
- * authored interface; this file is the flat catalogue a designer can read without opening code.
+ * Run as `npx tsx scripts/gen-ui-inventory.mjs`. It is run through `tsx` because E10 makes the
+ * inventory a *derived* view of the pure explain and drilldown modules as well as the contract — the
+ * same data the app and the gates read, so the inventory cannot claim an explain id, a standard or a
+ * drilldown the code does not carry. The document is derived: the contract stays the authored
+ * interface; this file is the flat catalogue a designer can read without opening code.
  */
 import fs from 'node:fs';
 import path from 'node:path';
+import { IIA_STANDARDS } from '../src/lib/explain/iia.ts';
+import { AGGREGATE_SURFACES } from '../src/lib/drilldownAggregates.ts';
+import { explainMounts, explainIdsForScreen, DYNAMIC_EXPLAIN } from '../src/lib/uiInventoryAttribution.ts';
 
 const ROOT = path.resolve(new URL('..', import.meta.url).pathname);
 const read = (p) => fs.readFileSync(path.join(ROOT, p), 'utf8');
@@ -110,6 +118,32 @@ for (const s of sections) {
 const fnToModule = {};
 for (const [mod, d] of Object.entries(modules)) for (const fn of [...d.fns, ...d.consts]) fnToModule[fn] ??= mod;
 
+// ---- E10: explain ids, standards and drilldown targets per screen -----------
+// The three maps below are derived from the SAME pure modules the app and the gates read, so the
+// inventory cannot name an explain id, a standard or a drilldown the code does not carry.
+
+/** Source files (relative to src/) and their text, for the authored attribution scan. */
+const srcByRel = new Map();
+for (const f of walk(path.join(ROOT, 'src'))) {
+  if (!/\.(ts|tsx)$/.test(f) || /\.test\./.test(f)) continue;
+  srcByRel.set(path.relative(ROOT, f), fs.readFileSync(f, 'utf8'));
+}
+
+// Explain ids come from the AUTHORED mounts (`screenId="DB-01"` on an ExplainPopout / ExplainDetail
+// / StandardsAffordance), not from substring-matching a screen's testids across all of src/ — the
+// latter credited config screens with the whole catalogue and credited the dashboard with nothing.
+const explainMountMap = explainMounts(Object.fromEntries(srcByRel));
+
+/** Standards a screen addresses, from the catalogue's own `implementedBy` (the declared mapping). */
+function standardsForScreen(screenId) {
+  return IIA_STANDARDS.filter((s) => s.implementedBy.includes(screenId)).map((s) => s.id);
+}
+
+/** The aggregates a screen renders that drill to a family (E5/U1, G8). */
+function drillTargetsForScreen(screenId) {
+  return AGGREGATE_SURFACES.filter((a) => a.screenId === screenId);
+}
+
 const out = [];
 const w = (line = '') => out.push(line);
 
@@ -123,7 +157,7 @@ w('Certificate and External auditor surfaces) and Appendix B (the core audit wor
 w('chrome), so every screen a redesign must draw is here. Screens are grouped by area; each entry');
 w('gives screenId, purpose, route, rights, data functions, RPCs/tables, every data-testid, states,');
 w('tutorial key and connections. The RPC catalogue at the end lists every `platform_*` and');
-w('tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to regenerate; the');
+w('tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to regenerate; the');
 w('`uiInventory` guard fails if this file drifts from the contract.');
 w();
 w('## How to read a screen entry');
@@ -137,6 +171,9 @@ w('| rights | The session right(s) required; a caller without them sees the refu
 w('| data functions | The exact `src/data/*.ts` exports the screen calls. Components never reach the client. |');
 w("| RPCs / tables | The database functions and tables the screen's data modules reach. |");
 w('| testids | Every `data-testid` the screen exposes. |');
+w('| explain ids | Every explain-catalogue id the screen mounts (a popout that names its rule, method, field, status or standard). An empty list says the screen carries no explain affordance. |');
+w('| IIA standards addressed | The verified IIA 2024 numbers the screen addresses, from the standards catalogue. |');
+w('| drilldown targets | Every aggregate the screen renders and the record family it drills to (E5/U1). |');
 w('| states | loading / empty / error / ready / denied, named exactly. |');
 w('| tutorial key | The `tutorialKeys.json` key the screen binds its drawer to. |');
 w('| connections | Inbound and outbound navigation to other screens. |');
@@ -165,6 +202,22 @@ for (const [area, list] of byArea) {
     w(`- **Tables reachable via those modules:** ${tables.map((t) => '`' + t + '`').join(', ') || 'none'}`);
     const tids = [...s.testids.matchAll(/`([^`]+)`/g)].map((m) => m[1]);
     w(`- **Testids (${tids.length}):** ${tids.map((t) => '`' + t + '`').join(', ') || '—'}`);
+    // E10: the explain layer, the IIA standards and the drilldown targets, per screen. These three
+    // lines are the redesign's contract with the explain layer: a screen that shows a number must say
+    // what it is (explain ids) and where it goes (drilldown), and a screen that does audit work must
+    // name the standards it addresses. An empty line is meaningful — it says the screen carries no
+    // such surface, which the G7/G8 gates then hold it to.
+    const screenIds = s.ids;
+    const wiredExplain = [...new Set(screenIds.flatMap((id) => explainIdsForScreen(explainMountMap, id)))].sort();
+    const dynamic = wiredExplain.includes(DYNAMIC_EXPLAIN);
+    const explainCell = dynamic
+      ? 'dynamic (a mount resolves its id at runtime; the screen may open any entry)'
+      : wiredExplain.map((e) => '`' + e + '`').join(', ') || '— (no explain affordance)';
+    w(`- **Explain ids (${dynamic ? 'dynamic' : wiredExplain.length}):** ${explainCell}`);
+    const screenStd = [...new Set(screenIds.flatMap((id) => standardsForScreen(id)))].sort();
+    w(`- **IIA standards addressed (${screenStd.length}):** ${screenStd.map((n) => '`' + n + '`').join(', ') || '—'}`);
+    const drills = [...new Set(screenIds.flatMap((id) => drillTargetsForScreen(id)))];
+    w(`- **Drilldown targets (${drills.length}):** ${drills.length ? drills.map((d) => `\`${d.testId}\` → ${d.drill}`).join(', ') : '— (no aggregate)'}`);
     w(`- **States:** ${s.states || 'loading / empty / error / ready / denied'}`);
     const keys = [...new Set(tutorialKeys.filter((k) => s.ids.includes(k.screenId)).map((k) => k.key))];
     w(`- **Tutorial key:** ${keys.length ? keys.map((k) => '`' + k + '`').join(', ') : '— (no key)'}`);
@@ -253,5 +306,8 @@ w(`- Contract testids not found verbatim in \`src/\` (placeholder or dynamic): $
 if (missingInCode.length) w(`  - ${missingInCode.slice(0, 40).join(', ')}${missingInCode.length > 40 ? ' …' : ''}`);
 w();
 
-fs.writeFileSync(path.join(ROOT, 'docs/UI-INVENTORY.md'), out.join('\n') + '\n');
-console.log(`wrote docs/UI-INVENTORY.md: ${out.length} lines, ${sections.length} screens, ${allRpcs.length} RPCs`);
+// The output path defaults to docs/UI-INVENTORY.md; a caller (the guard) may pass another path so it
+// can generate into a temp file and diff without touching the committed doc.
+const outPath = process.argv[2] ? path.resolve(process.argv[2]) : path.join(ROOT, 'docs/UI-INVENTORY.md');
+fs.writeFileSync(outPath, out.join('\n') + '\n');
+console.log(`wrote ${path.relative(ROOT, outPath)}: ${out.length} lines, ${sections.length} screens, ${allRpcs.length} RPCs`);

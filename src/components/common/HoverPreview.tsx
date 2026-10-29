@@ -21,6 +21,8 @@ interface HoverPreviewProps {
   onClick?: () => void;
   className?: string;
   disabled?: boolean;
+  /** id for the popover, so the trigger can point `aria-describedby` at it (E2 a11y). */
+  tooltipId?: string;
 }
 
 export const HoverPreview: React.FC<HoverPreviewProps> = ({
@@ -29,6 +31,7 @@ export const HoverPreview: React.FC<HoverPreviewProps> = ({
   onClick,
   className = '',
   disabled = false,
+  tooltipId,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [coords, setCoords] = useState<{ x: number; y: number; placeAbove: boolean }>({
@@ -104,9 +107,21 @@ export const HoverPreview: React.FC<HoverPreviewProps> = ({
     setIsOpen(false);
   };
 
+  // Esc closes the popover without moving focus (E2 a11y: keyboard-reachable end to end).
+  const handleKeyDownClose = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Escape' && isOpen) {
+      e.stopPropagation();
+      setIsOpen(false);
+    }
+  };
+
   // A div with role="button" is focusable but not activatable by the keyboard unless we handle
   // Enter/Space ourselves; without this the trigger is a keyboard trap (D13).
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Escape') {
+      handleKeyDownClose(e);
+      return;
+    }
     if (disabled || !onClick) return;
     if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
       e.preventDefault();
@@ -162,8 +177,11 @@ export const HoverPreview: React.FC<HoverPreviewProps> = ({
       onClick={onClick}
       onKeyDown={handleKeyDown}
       tabIndex={0}
-      role="button"
+      // A trigger that opens the detail on click is a button; a pure explain trigger (no onClick)
+      // is not, so it carries no button role that would falsely promise activation (E2 a11y).
+      role={onClick ? 'button' : undefined}
       aria-disabled={disabled || undefined}
+      aria-describedby={isOpen && content && tooltipId ? tooltipId : undefined}
       data-testid="hover-preview-trigger"
     >
       {children}
@@ -172,6 +190,8 @@ export const HoverPreview: React.FC<HoverPreviewProps> = ({
           <AnimatePresence>
             {isOpen && content && (
               <motion.div
+                id={tooltipId}
+                role="tooltip"
                 data-testid="hover-preview-popover"
                 initial={{
                   opacity: 0,

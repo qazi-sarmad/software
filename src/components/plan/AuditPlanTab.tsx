@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useScopedData } from '../../hooks/useScopedData';
 import { useApp } from '../../context/AppContext';
 import { HoverPreview } from '../common/HoverPreview';
+import { StandardsAffordance } from '../explain/StandardsAffordance';
 import { InlineError } from '../common/InlineError';
 import { HoldToConfirm } from '../common/HoldToConfirm';
 import { listDeploymentRequests, listGateOutcomes, type DeploymentRequestRow, type GateOutcomeRow } from '../../data/deployment';
@@ -151,6 +152,7 @@ export const AuditPlanTab: React.FC = () => {
           <p className="text-apple-15 text-secondary mt-1">
             Scoped audit portfolio, testing roadmaps, and reviewer attestation sign-offs
           </p>
+          <StandardsAffordance kind="screen" target="AP-01" screenId="AP-01" element="standards" className="mt-2" />
         </div>
         <div className="flex flex-wrap gap-2">
           <button

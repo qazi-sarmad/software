@@ -14,6 +14,8 @@ import { ThemeProvider } from './context/ThemeContext';
 import { HeaderBar } from './components/common/HeaderBar';
 import { NavStrip } from './components/common/NavStrip';
 import { CommandPalette } from './components/common/CommandPalette';
+import { ShortcutSheet } from './components/common/ShortcutSheet';
+import { matchShortcut, matchSequence, isMacPlatform, type Shortcut } from './lib/keyboardShortcuts';
 import { FloatingWindowManager, type OpenWindow } from './components/common/FloatingWindowManager';
 import { RecordContent, INSPECTOR_TITLES, RECORD_TYPE_TO_INSPECTOR } from './components/common/RecordContent';
 import { ReviewCommentsGlobalDock } from './components/reviews/ReviewCommentsGlobalDock';
@@ -111,8 +113,61 @@ const LoadingFallback: React.FC = () => (
 );
 
 const AppContent: React.FC = () => {
-  const { activeTab, inspector, closeInspector, ledgerError, currentUser } = useApp();
+  const { activeTab, setActiveTab, inspector, closeInspector, ledgerError, currentUser, openInspector } = useApp();
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [isShortcutSheetOpen, setIsShortcutSheetOpen] = useState(false);
+
+  // The global keyboard layer (U8). `Cmd/Ctrl-K` opens the palette from anywhere; `?` opens the
+  // shortcut sheet; a `g`-prefixed sequence navigates without the mouse. The decisions (which
+  // shortcut a keydown is, and whether a bare letter must be suppressed inside a text field) live
+  // in the pure `src/lib/keyboardShortcuts.ts`; this effect only performs the resulting action.
+  useEffect(() => {
+    let pendingLeader: Shortcut | null = null;
+    let leaderTimer: number | undefined;
+    const clearLeader = () => {
+      pendingLeader = null;
+      if (leaderTimer) window.clearTimeout(leaderTimer);
+      leaderTimer = undefined;
+    };
+    const target = (e: KeyboardEvent) => e.target as HTMLElement | null;
+    const inEditable = (el: HTMLElement | null): boolean => {
+      if (!el) return false;
+      const tag = el.tagName;
+      return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || el.isContentEditable;
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      const editable = inEditable(target(e));
+      if (pendingLeader) {
+        const resolved = matchSequence(pendingLeader, e.key);
+        clearLeader();
+        if (resolved?.target.tab) {
+          e.preventDefault();
+          setActiveTab(resolved.target.tab);
+        }
+        return;
+      }
+      const hit = matchShortcut({ key: e.key, metaKey: e.metaKey, ctrlKey: e.ctrlKey, altKey: e.altKey, shiftKey: e.shiftKey, inEditable: editable }, isMacPlatform());
+      if (!hit) return;
+      if (hit.sequenceKey) {
+        e.preventDefault();
+        pendingLeader = hit;
+        leaderTimer = window.setTimeout(clearLeader, 1200);
+        return;
+      }
+      if (hit.target.commandPalette) {
+        e.preventDefault();
+        setIsCommandPaletteOpen((open) => !open);
+      } else if (hit.target.shortcutSheet) {
+        e.preventDefault();
+        setIsShortcutSheetOpen((open) => !open);
+      } else if (hit.target.inspector) {
+        e.preventDefault();
+        openInspector(hit.target.inspector as Parameters<typeof openInspector>[0]);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [setActiveTab, openInspector]);
 
   // One floating window for the current inspector record. The window id is derived from the record
   // so a re-opened record reuses the same window (and the dock restores it, not duplicates it).
@@ -181,6 +236,12 @@ const AppContent: React.FC = () => {
       <CommandPalette
         isOpen={isCommandPaletteOpen}
         onClose={() => setIsCommandPaletteOpen(false)}
+      />
+
+      {/* Keyboard shortcut sheet (U8). `?` opens it anywhere; non-blocking, never a modal. */}
+      <ShortcutSheet
+        isOpen={isShortcutSheetOpen}
+        onClose={() => setIsShortcutSheetOpen(false)}
       />
     </div>
   );

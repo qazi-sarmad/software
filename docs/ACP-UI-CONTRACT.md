@@ -352,16 +352,27 @@ under `acp.tutorial.autoplay`), so the same screen never autoplays twice. The e2
   facts are written; no JSON is typed by any user (F1, D-S4-pptx-theme).
 - **Testids:** `oa-branding`, `oa-branding-title`, `oa-branding-loading`, `oa-branding-readonly`,
   `oa-branding-form`, `oa-branding-font-heading`, `oa-branding-font-body`,
+  `oa-branding-font-heading-licence`, `oa-branding-font-body-licence`,
   `oa-branding-colour-primary`, `oa-branding-colour-accent`, `oa-branding-colour-text`,
   `oa-branding-colour-background`, `oa-branding-page-size`, `oa-branding-cover-style`,
   `oa-branding-margin-0`..`oa-branding-margin-3`, `oa-branding-header`, `oa-branding-footer`,
   `oa-branding-logo-light`, `oa-branding-logo-input`, `oa-branding-theme-upload`,
-  `oa-branding-theme-note`, `oa-branding-save`, `oa-branding-error`, `oa-branding-saved`,
+  `oa-branding-theme-note`, `oa-branding-font-upload`, `oa-branding-font-licence-label`,
+  `oa-branding-font-licence-ack`, `oa-branding-font-note`, `oa-branding-detected`,
+  `oa-branding-detected-note`, `oa-branding-detected-heading`, `oa-branding-detected-body`,
+  `oa-branding-detected-colours`, `oa-branding-detected-toupload`, `oa-branding-adopt`,
+  `oa-branding-assets`, `oa-branding-assets-empty`, `oa-branding-assets-list`,
+  `oa-branding-asset-<id>`,
+  `oa-branding-save`, `oa-branding-error`, `oa-branding-saved`,
   `oa-branding-preview`, `oa-branding-preview-header`, `oa-branding-preview-footer`,
   `oa-branding-preview-note`.
 - **States:** loading ("Loading branding…"); ready; error (`InlineError`); read-only (no save button,
   a plain notice). A save refusal (rights or entitlement) is shown in `oa-branding-error` in the
-  server's own words. An over-size asset is refused by the RPC.
+  server's own words. An over-size asset is refused by the RPC. A template upload detects the file's
+  own fonts, colours and page setup (F5) and offers to adopt them (F6); a house-font upload is refused
+  until the licence acknowledgement (`oa-branding-font-licence-ack`) is ticked (F4). The stored assets
+  (`oa-branding-assets`) list every logo, font and template the org holds, empty or populated, and
+  refresh after each successful upload.
 - **Tutorial keys:** `oa.branding`, `oa.pptx-theme`.
 
 ---
@@ -758,9 +769,24 @@ The landing tab: portfolio tiles (engagements, CAPs, findings, seals), a CAP rad
 - **Route:** Tab `executive` (nav strip "Dashboard"). Not a route.
 - **Rights:** any signed-in member; each tile degrades to its empty state when the scope holds no records.
 - **Data:** `AlertCircle`, `CheckCircle2`, `ChevronRight`, `Clock`, `ExternalLink`, `ShieldCheck`, `X`, `motion`, `updatePlanItemDates` — through `src/data/*.ts`; components never import the database client (rule M8).
-- **Testids:** `gantt-approve-shift`, `gantt-shift-error`
-- **States:** loading (skeleton tiles); empty (no engagements in scope); ready; the Board Pack block carries its own loading/empty/error states.
+- **Testids:** `gantt-approve-shift`, `gantt-shift-error`, `DB-01-cap-hub-drilldown`, `DB-01-tile-entities`, `DB-01-tile-engagements`, `DB-01-tile-issues`, `DB-01-tile-workpapers`, `DB-01-activity-spine`, `DB-01-activity-spine-transport`, `DB-01-activity-spine-empty`, `DB-01-activity-spine-list`
+- **States:** loading (skeleton tiles); empty (no engagements in scope); ready; the Board Pack block carries its own loading/empty/error states. The activity spine carries its own quiet empty state ("Nothing has happened yet").
+- **Drilldown (E5/U1):** every tile number opens the exact scoped/filtered records it was counted from, in the non-blocking `DrilldownPanel` (`role="complementary"`, testid prefix `DB-01-drilldown`). The CAP hub number (`DB-01-cap-hub-drilldown`) drills to its CAPs. The open family is mirrored to the URL hash (`#drill=<kind>`) so a state is deep-linkable; the hash carries only the family name, never a tenant id.
+- **Live activity spine (U4):** a quiet stream of the organisation's recent activity (actor, verb, subject, age) on the existing `liveSync` transport — Realtime when a socket is available, a bounded poll otherwise. The sentence and the kind are the pure `src/lib/activitySpine.ts` layer; the read is the rights-gated `activity_spine_list` RPC (migration 0116), which reduces `detail` to the fields a sentence needs and drops the rest (Law L2). A scoped member gets the empty state, never an error.
 - **Tutorial key:** oa.boardpack-use (the Board Pack block)
+
+## DB-02 — Deterministic capability library (D1-D4)
+
+The screen surface for the twenty deterministic capabilities across four families (risk and control, population and evidence, process and governance, assurance operations). Each is a pure function under `src/lib/capabilities/`; the panel hands one call site (`evaluateCapability`) the rows the caller may see, the organisation's thresholds and the current day.
+
+- **Route:** The capability block on the Dashboard tab (`executive`), below the Board Pack block.
+- **Rights:** any signed-in member reads the families their scope allows; `edit_config` to change the thresholds.
+- **Data:** `capability_config_get`, `capability_config_save`, `capability_run_record`, `capability_runs_list` — through `src/data/capabilities.ts`; components never import the database client (rule M8). With no Supabase environment the panel says "not configured" rather than showing a wall of zeros.
+- **Testids:** `DB-02-panel`, `DB-02-unconfigured`, `DB-02-record`, `DB-02-kind-risk_control`, `DB-02-kind-population_evidence`, `DB-02-kind-process_governance`, `DB-02-kind-assurance_ops`, `DB-02-kind-summary`, `DB-02-list`, `DB-02-cap-<id>`, `DB-02-cap-<id>-toggle`, `DB-02-cap-<id>-headline`, `DB-02-cap-<id>-status`, `DB-02-cap-<id>-rule`, `DB-02-cap-<id>-needs`, `DB-02-cap-<id>-rows`, `DB-02-cap-<id>-refs-<i>`, `DB-02-tolerance`, `DB-02-sample`, `DB-02-ageing`, `DB-02-save`, `DB-02-save-denied`, `DB-02-runs`, `DB-02-runs-empty`, `DB-02-message`, `DB-02-error`, `DB-02-explain`
+- **States:** loading; unconfigured (no tenant database — says so, never a wall of zeros); ready; per-capability `ready` (findings), `empty` (an honest clean result) and `awaiting_input` (names the missing input).
+- **Explain (E1/E2):** the panel carries the `screen.DB-02` explain affordance and the IIA standards affordance for the screen.
+- **Determinism (L1):** no model call; every finding names the rule that produced it and the records behind it. A run records the input hash and the derived findings, never the tenant rows (L2).
+- **Tutorial key:** —
 
 ## WQ-01 — Work Queue (S1)
 
@@ -769,8 +795,9 @@ The user-specific queue: my workpapers, what awaits my sign-off, what awaits my 
 - **Route:** Tab `pending` (nav strip "Work Queue").
 - **Rights:** any signed-in member; each section is filtered by the caller's rights.
 - **Data:** none (pure/UI only) — through `src/data/*.ts`; components never import the database client (rule M8).
-- **Testids:** `pending-comments`, `tab-pending`
+- **Testids:** `pending-comments`, `tab-pending`, `WQ-01-front-door`, `WQ-01-front-door-count`, `WQ-01-front-door-summary`, `WQ-01-front-door-empty`, `WQ-01-front-door-list`
 - **States:** loading; empty per section ("Nothing awaiting you"); ready; error inline.
+- **Front door (U3):** the first element on the tab is the consequence-ordered list of what needs this user today, built by the pure `src/lib/frontDoor.ts` rule (overdue CAP → overdue audit → approval → sign-off → comment → open workpaper). Each row is one click from its action; the summary line reads in the spec's shape ("3 CAPs overdue. 1 report awaiting your approval."). Rows carry `data-front-door-kind`. Never a chart, never a modal.
 - **Tutorial key:** —
 
 ## AU-01 — Audit Universe (S1)
@@ -874,13 +901,17 @@ Edit the SIRA model: aggregation, factors and bands; a locked model is read-only
 
 ## SR-03 — SIRA cycles inspector (S1)
 
-Create a SIRA cycle, record scores, publish the cycle, and decide emergent risks with a reason.
+Create a SIRA cycle, score it, publish the cycle, decide emergent risks with a reason, and close
+the two-key acceptance (S18/S19): the finaliser endorses a published cycle, a different auditor
+accepts it, and the next cycle is blocked while proposals are outstanding. The scoring panel is the
+surface that DRIVES the SIRA write path (`recordSiraScore`, `submitEmergentRisk`).
 
 - **Route:** The `sira_cycles` inspector window.
-- **Rights:** `manage_engagements` to create/publish; `review_and_approve` to decide an emergent risk.
-- **Data:** none (pure/UI only) — through `src/data/*.ts`; components never import the database client (rule M8).
-- **Testids:** `emergent-empty`, `emergent-risks`, `sira-create-cycle`, `sira-cycle-panel`, `sira-cycles`, `sira-cycles-empty`
-- **States:** loading; empty (`sira-cycles-empty`, `emergent-empty`); ready.
+- **Rights:** `manage_engagements` to create/publish/endorse/score; `review_and_approve` to decide an emergent risk and to accept.
+- **Data:** `createSiraCycle`, `publishSiraCycle`, `recordSiraScore`, `submitEmergentRisk`, `decideEmergentRisk`, `proposeEmergentRisks`, `carryForwardPack`, `seedNextCycle`, `endorseSiraCycle`, `decideSiraAcceptance`, `remindSiraAcceptance`, `siraAcceptanceState`, `siraPublishBlock`, `listCycles`, `listCarryForward`, `listEmergentRisks`, `listRisks`, `listScores`, `siraModelSnapshot` (`src/data/sira.ts`); the pure rule `scoreMatrix`/`summariseCycle`/`validateFactorValues`/`previewScore`/`emergentRiskIsValid` (`src/lib/siraScoring.ts`) — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `emergent-empty`, `emergent-risks`, `emergent-submit`, `emergent-submit-description`, `emergent-submit-locked`, `emergent-submit-title`, `sira-carry-forward-chain`, `sira-carry-forward-`, `sira-create-cycle`, `sira-cycle-panel`, `sira-cycles`, `sira-cycles-empty`, `sira-cycles-inspector`, `sira-cycles-unscoped`, `sira-pack-`, `sira-record-score`, `sira-remind`, `sira-score-entity`, `sira-score-list`, `sira-score-preview`, `sira-score-risk`, `sira-scoring-frozen`, `sira-scoring-locked`, `sira-scoring-no-cycle`, `sira-scoring-no-model`, `sira-scoring-panel`, `sira-scoring-summary`, `sira-seed-`
+- **States:** loading; empty (`sira-cycles-empty`, `emergent-empty`); unscoped (`sira-cycles-unscoped`); ready; publish blocked; awaiting acceptance; pack built; the persisted carry-forward chain (`sira-carry-forward-chain`); scoring with no draft cycle (`sira-scoring-no-cycle`), a frozen cycle (`sira-scoring-frozen`), no model (`sira-scoring-no-model`), locked (`sira-scoring-locked`).
+- **Drilldown (E5/U1):** the score list (`sira-score-list`) names the exact entity × risk cells behind the cycle's scored count.
 - **Tutorial key:** —
 
 ## AF-01 — Audit File window (S1)
@@ -933,9 +964,9 @@ Register a population file, show its SHA-256 hash, and lock the population (hold
 
 - **Route:** Audit File window, view "Population" (`audit-file-view-population`).
 - **Rights:** `perform_work`.
-- **Data:** `PopulationRow`, `lockPopulation`, `registerPopulation`, `sha256Hex` — through `src/data/*.ts`; components never import the database client (rule M8).
-- **Testids:** `population-browse`, `population-dropzone`, `population-empty`, `population-error`, `population-file-input`, `population-hash`, `population-loading`, `population-panel`, `population-register`, `population-gate`, `population-status`, `control-total`, `population-errors`, `gate-message`, `finalize-test`, `header-confirm`, `header-confirm-0`
-- **States:** loading; empty; hashed; locked; error inline; header detected and awaiting confirmation (S2 — the engine proposes the header row, the auditor confirms it, rows above it are ignored and the header row is not counted).
+- **Data:** `PopulationProfile`, `PopulationRecordRead`, `PopulationRow`, `listPopulationRecords`, `lockPopulation`, `populationProfile`, `registerPopulation`, `sha256Hex` — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `population-browse`, `population-dropzone`, `population-empty`, `population-error`, `population-file-input`, `population-hash`, `population-loading`, `population-panel`, `population-register`, `population-gate`, `population-status`, `population-profile-<id>`, `population-profile-view-<id>`, `population-profile-summary-<id>`, `population-profile-flags-<id>`, `control-total`, `population-errors`, `gate-message`, `finalize-test`, `header-confirm`, `header-confirm-0`
+- **States:** loading; empty; hashed; locked; profile loading; profile ready (row count, value coverage, duplicate density, period, flags); error inline; header detected and awaiting confirmation (S2 — the engine proposes the header row, the auditor confirms it, rows above it are ignored and the header row is not counted).
 - **Tutorial key:** —
 
 ## AF-06 — Sampling panel (S1)
@@ -1018,6 +1049,20 @@ Search the engagement's evidence documents, extract text on request, and read th
 - **States:** loading; empty; search results; error inline.
 - **Tutorial key:** —
 
+## AF-15 — Evidence vault (workpaper) (S20)
+
+The evidence vault inside a workpaper's workbench: upload a file, see every stored artifact with its
+SHA-256, re-derive the hash from the stored bytes to verify, and download through a short-lived
+signed URL. When no storage bucket is wired the screen says "session only" honestly rather than
+claiming a hash-lock it cannot keep.
+
+- **Route:** the `workbench` inspector window, sub-tab "Evidence Vault".
+- **Rights:** `perform_work` to upload; any member of the org reads.
+- **Data:** `EVIDENCE_MAX_BYTES`, `EvidenceFileRow`, `evidenceSignedUrl`, `evidenceStorageReady`, `listEvidenceFiles`, `uploadEvidence`, `verifyEvidenceFile` — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `evidence-error`, `evidence-storage-note`, `evidence-upload`
+- **States:** loading; session-only (no bucket); empty; stored; verifying; verified; mismatch.
+- **Tutorial key:** —
+
 ## AF-12 — Deployment gate (S1)
 
 Run the deployment gate for an engagement: the ordered steps, each outcome, the required right, and the next action.
@@ -1046,9 +1091,9 @@ Compose the engagement report from its sections and blocks, comment on a block, 
 
 - **Route:** Audit File window, view "Report" (`audit-file-view-report`).
 - **Rights:** `perform_work` to compose/comment; `approve_plan` to freeze.
-- **Data:** `CapRow`, `ReportBlockRow`, `ReportCommentRow`, `ReportGraphView`, `ReportVersionRow`, `StoredReportFiles`, `acknowledgePreflight`, `addReportComment`, `checkCapReconciliation`, `commitReportGraph`, `freezeReport`, `getActiveReportLayout`, `getReportGraph`, `issueReport`, `listCaps`, `listPreflightAcknowledgements`, `listPreflightBlocking`, `listPreflightItems`, `listReportBlocks`, `listReportComments`, `listReportVersions`, `openReportCommentCount`, `renderAndStoreReportFiles`, `reportFooterPreview`, `resolveReportComment` — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Data:** `CapRow`, `ReportBlockRow`, `ReportCommentRow`, `ReportFileInput`, `ReportGraphView`, `ReportVersionRow`, `StoredReportFiles`, `acknowledgePreflight`, `addReportComment`, `checkCapReconciliation`, `commitReportGraph`, `freezeReport`, `getActiveReportLayout`, `getReportGraph`, `issueReport`, `listCaps`, `listPreflightAcknowledgements`, `listPreflightBlocking`, `listPreflightItems`, `listReportBlocks`, `listReportComments`, `listReportVersions`, `openReportCommentCount`, `renderAndStoreReportFiles`, `reportFooterPreview`, `resolveReportComment` — through `src/data/*.ts`; components never import the database client (rule M8).
 - **Testids:** `report-caps-note`, `report-comment-add`, `report-comment-input`, `report-comments`, `report-comments-empty`, `report-compose`, `report-editor`, `report-empty`, `report-error`, `report-file-docx`, `report-file-pdf`, `report-files`, `report-footer-preview`, `report-freeze`, `report-freeze-blocked`, `report-freeze-panel`, `report-graph-close`, `report-graph-empty`, `report-graph-open`, `report-graph-panel`, `report-issue`, `report-loading`, `report-notice`, `report-open-comments`, `report-placeholder-count`, `report-preflight-ack-check`, `report-preflight-ack-form`, `report-preflight-ack-item`, `report-preflight-ack-reason`, `report-preflight-ack-submit`, `report-preflight-acks`, `report-preflight-blocking`, `report-preflight-caps`, `report-preflight-comments`, `report-preflight-item-list`, `report-rights-note`, `report-section-empty`, `report-versions`
-- **States:** loading; empty; comments; pre-flight; freeze blocked; frozen; claim-graph drilldown open (root + claims, or its empty state); error inline.
+- **States:** loading; empty; comments; pre-flight; freeze blocked; frozen; error inline.
 - **Tutorial key:** —
 
 ## IR-01 — Issues & CAP Register (S1)
@@ -1152,14 +1197,22 @@ The header: the compact search that opens the command palette, the profile menu 
 
 ## CH-03 — Command palette (S1)
 
-The keyboard palette for jumping to a screen or a record.
+The keyboard palette for jumping to a screen, a record, an action or an explain entry. Cmd/Ctrl-K
+opens it anywhere.
 
-- **Route:** A non-blocking overlay opened from the header search.
-- **Rights:** any signed-in member.
-- **Data:** none (pure/UI only) — through `src/data/*.ts`; components never import the database client (rule M8).
-- **Testids:** `command-palette`
-- **States:** hidden; open with results; no results.
+- **Route:** A non-blocking dropdown anchored below the header, never a modal.
+- **Rights:** any signed-in member; actions that need a right are hidden from a caller who lacks it
+  (`visibleCommands`).
+- **Data:** the caller's already-scoped records only (`useScopedData`, filtered through
+  `src/lib/access.ts`). The palette performs no access decision of its own (Law L2); it indexes
+  screens, actions and explain entries from the pure `src/lib/commandPalette.ts`.
+- **Testids:** `command-palette`, `command-palette-input`, `command-palette-close`,
+  `command-palette-empty`, `command-palette-explain`, `command-palette-item-<id>`,
+  `command-palette-option-<id>`, `command-palette-group-<kind>`.
+- **States:** hidden; open with results (screens, then actions, then explain, then records); no
+  results ("No matches within your permissions."); an explain row opened inline, non-modally.
 - **Tutorial key:** —
+
 
 ## CH-04 — Floating windows and dock (S1)
 
@@ -1194,6 +1247,29 @@ The audit calendar: the day detail panel opened from the header calendar.
 - **States:** loading; day detail; empty.
 - **Tutorial key:** —
 
+## CH-07 — Review comment history and popout (S21)
+
+The live review-comment surface: one comment's dialogue, or the full review trail across cycles. Each row carries the access-filtered hover/focus popout (author, age, workpaper, engagement, status, resolution path) and the open/cleared counts drill to the exact comments behind them. Non-blocking throughout.
+
+- **Route:** The `comment_history` inspector window, opened from the review dock ("View full comment history") and the Work Queue.
+- **Rights:** any member that may read audit working records; an observer (read-only with `view_all_scopes`) and a configuration-only principal see the redacted popout, never the text.
+- **Data:** `commentPopout`, `commentAgeDays`, `ageLabel`, `canViewComment` (`src/lib/commentPopout.ts`) — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `CH-07-comment-empty`, `CH-07-comment-list`, `CH-07-comment-popout-<id>`, `CH-07-comment-search`, `CH-07-comment-cycle-filter`, `CH-07-comment-status-all`, `CH-07-comment-status-open`, `CH-07-comment-status-cleared`, `CH-07-comment-<id>`, `CH-07-comment-age-<id>`, `CH-07-comment-state-<id>`, `CH-07-comment-resolution-<id>`, `CH-07-comment-open-<id>`, `CH-07-comment-reply-input-<id>`, `CH-07-comment-reply-<id>`, `CH-07-bubble-mine`, `CH-07-bubble-other`
+- **States:** single comment; full history; search; cycle filter; open/cleared filter; redacted (viewer may not read); empty ("no comments match"); drilldown open.
+- **Drilldown (E5/U1):** the open/cleared counts open the exact comments behind them in the non-blocking `DrilldownPanel` (testid prefix `CH-07-drilldown`), deep-linkable via `#drill=comments`.
+- **Tutorial key:** —
+
+## CH-08 — Keyboard shortcut sheet (U8)
+
+The `?` sheet: every shortcut the caller may use, grouped, with its key sequence. Non-blocking.
+
+- **Route:** A `role="complementary"` panel anchored below the header, opened by `?`; never a modal.
+- **Rights:** the sheet lists only the shortcuts whose right the caller holds (`groupedShortcuts`); a configuration-only principal sees no navigation rows.
+- **Data:** `SHORTCUTS`, `shortcutsFor`, `groupedShortcuts`, `formatChord`, `formatSequence`, `matchShortcut`, `matchSequence` (`src/lib/keyboardShortcuts.ts`) — pure; the sheet reads no tenant data.
+- **Testids:** `shortcut-sheet`, `shortcut-sheet-close`, `shortcut-sheet-list`, `shortcut-sheet-empty`, `shortcut-sheet-group-<group>`, `shortcut-sheet-item-<id>`
+- **States:** closed; open with the caller's shortcuts grouped; empty (no shortcut available to the caller).
+- **Tutorial key:** —
+
 ## OA-25 — Cross-universe view-only sharing (SCALE-1, §2)
 
 Grant, view and revoke an intra-organisation, view-only share of a universe to a same-tenant member, and (in grantee mode) read the universes shared with me.
@@ -1211,20 +1287,20 @@ Read and filter the activity log, run an archive by period, and export a record 
 
 - **Route:** The `activity_log` inspector window and the export panel.
 - **Rights:** `manage_engagements`/`perform_work`; the export panel refuses without the right.
-- **Data:** `ActivityLogRow`, `ArchiveJobRow`, `ExportFormat`, `ExportLogRow`, `exportActivityLog`, `exportCapRegister`, `exportEngagementBundle`, `exportFullTenant`, `exportLedger`, `exportSiraResults`, `exportWorkpaper`, `listActivityLog`, `listArchiveJobs`, `listExports`, `logExport` — through `src/data/*.ts`; components never import the database client (rule M8).
-- **Testids:** `activity-archive`, `activity-archived-notice`, `activity-empty`, `activity-error`, `activity-export`, `activity-filter`, `activity-filters`, `activity-loading`, `activity-log-panel`, `activity-since`, `activity-table`, `activity-until`, `archive-jobs`, `archive-jobs-empty`, `export-confirmation`, `export-confirmation-hash`, `export-controls`, `export-denied`, `export-error`, `export-history`, `export-history-empty`, `export-history-loading`, `export-no-right`, `export-panel`, `export-run`
-- **States:** loading; empty; table; export confirmation; history loading/empty; no-right.
+- **Data:** `ActivityLogRow`, `ArchiveJobRow`, `ExportFormat`, `ExportLogRow`, `PopulationArchiveRow`, `archivePopulation`, `exportActivityLog`, `exportCapRegister`, `exportEngagementBundle`, `exportFullTenant`, `exportLedger`, `exportSiraResults`, `exportWorkpaper`, `listActivityLog`, `listArchiveJobs`, `listExports`, `listPopulationArchiveDue`, `listPopulationArchives`, `logExport`, `uploadArchiveJob` — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `activity-archive`, `activity-archived-notice`, `activity-empty`, `activity-error`, `activity-export`, `activity-filter`, `activity-filters`, `activity-loading`, `activity-log-panel`, `activity-since`, `activity-table`, `activity-until`, `archive-jobs`, `archive-jobs-empty`, `archive-upload-<id>`, `export-confirmation`, `export-confirmation-hash`, `export-controls`, `export-denied`, `export-error`, `export-history`, `export-history-empty`, `export-history-loading`, `export-no-right`, `export-panel`, `export-run`, `population-archive-<id>`, `population-archive-row-<id>`, `population-archived-notice`, `population-archives`, `population-due-<id>`, `population-due-empty`, `population-due-list`, `population-retention`
+- **States:** loading; empty; table; export confirmation; history loading/empty; no-right; population retention due/empty/archived; pending upload.
 - **Tutorial key:** —
 
 ## OA-27 — Import wizard (S1)
 
-Import a workpaper source (upload, choose file, DOCX tables), map it, validate it, preview the valid/invalid counts, and commit it; the job history is listed.
+Import a workpaper source (upload, choose file, DOCX tables), map it, validate it, preview the valid/invalid counts, and commit it; the job history is listed. The file's format is decided by its MAGIC BYTES, not its extension: a file whose bytes disagree with its name is imported under its true kind and the disagreement is shown, or refused with the real kind named.
 
 - **Route:** The `import_wizard` inspector window.
 - **Rights:** `manage_engagements`; a caller without it sees `import-no-right`.
-- **Data:** `ImportJobRow`, `ImportType`, `ImportValidation`, `listImportJobs`, `startImport`, `validateImport` — through `src/data/*.ts`; components never import the database client (rule M8).
-- **Testids:** `import-choose-file`, `import-commit`, `import-confirm`, `import-denied`, `import-docx-tables`, `import-done`, `import-error`, `import-errors`, `import-file-input`, `import-history`, `import-history-empty`, `import-invalid-count`, `import-mapping`, `import-no-right`, `import-preview`, `import-steps`, `import-upload`, `import-valid-count`, `import-validate`, `import-wizard`
-- **States:** no-right; upload; mapping; validated; preview; done; history loading/empty.
+- **Data:** `ImportJobRow`, `ImportType`, `ImportValidation`, `listImportJobs`, `startImport`, `validateImport` — through `src/data/*.ts`; components never import the database client (rule M8). The file inventory (S17) is read by `buildInventory` (`src/lib/recognition`), which sniffs magic bytes, unpacks archives under the safety limits, reads document metadata, and returns the counts the operator confirms.
+- **Testids:** `import-choose-file`, `import-commit`, `import-confirm`, `import-denied`, `import-docx-tables`, `import-done`, `import-error`, `import-errors`, `import-file-input`, `import-history`, `import-history-empty`, `import-invalid-count`, `import-inventory`, `import-inventory-archive`, `import-inventory-counts`, `import-inventory-metadata`, `import-inventory-note`, `import-mapping`, `import-no-right`, `import-preview`, `import-recognised`, `import-recognition-note`, `import-steps`, `import-upload`, `import-valid-count`, `import-validate`, `import-wizard`
+- **States:** no-right; upload; recognised (kind, size, SHA-256); inventory (metadata, archive members + compression ratio, refusal reason); bytes/name disagreement; mapping; validated; preview; done; history loading/empty.
 - **Tutorial key:** —
 
 ## OA-28 — Org settings inspector (S1)
@@ -1236,6 +1312,39 @@ The organisation settings inspector: sampling, severity levels and email provide
 - **Data:** `EMAIL_PROVIDERS`, `EmailSettingsRow`, `SEVERITY_COLOR_TOKENS`, `SamplingRuleRow`, `SeverityLevelRow`, `deleteSeverityLevel`, `getEmailSettings`, `listSamplingRules`, `listSeverityLevels`, `setEmailProvider`, `upsertSamplingRule`, `upsertSeverityLevel` — through `src/data/*.ts`; components never import the database client (rule M8).
 - **Testids:** `org-settings-denied`, `org-settings-email`, `org-settings-error`, `org-settings-loading`, `org-settings-no-right`, `org-settings-panel`, `org-settings-result`, `org-settings-sampling`, `org-settings-severity`, `org-settings-tabs`
 - **States:** no-right; loading; tabs; ready.
+- **Tutorial key:** —
+
+## OA-29 — Integrity alarm (T7, §11.3a)
+
+The tamper alarm: read the organisation's integrity alerts (severity-split by the database rule), acknowledge one, and re-verify the ledger chain on demand. A single object that fails to verify is a warning; a broken ledger chain, an invalid signature or a failed timestamp is an incident. This is tamper-evidence, never tamper-prevention: it proves that a change happened and preserves the before and after hashes.
+
+- **Route:** The Assurance control plane (`org_control` inspector), tab `integrity`; the DB-01 dashboard banner (`DB-01-integrity-banner`) opens it.
+- **Rights:** an integrity owner — `review_and_approve` or `edit_config`, or a Level-1/Level-2 Head; the database RPC re-checks the right and a caller without it is refused.
+- **Data:** `IntegrityAlertRow`, `acknowledgeIntegrityAlert`, `ledgerContinuityCheck`, `listIntegrityAlerts` — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `DB-01-integrity-banner`, `DB-01-integrity-banner-text`, `OA-29-alert-acknowledge-<id>`, `OA-29-alert-acknowledged-<id>`, `OA-29-alert-actual-<id>`, `OA-29-alert-expected-<id>`, `OA-29-alert-kind-<id>`, `OA-29-alert-raised-<id>`, `OA-29-alert-sentence-<id>`, `OA-29-alert-severity-<id>`, `OA-29-empty`, `OA-29-error`, `OA-29-headline`, `OA-29-icon-incident`, `OA-29-icon-ok`, `OA-29-list`, `OA-29-load-error`, `OA-29-loading`, `OA-29-panel`, `OA-29-verify-ledger`, `OA-29-verify-result`
+- **States:** loading; empty (no alerts — the verified state); ready with incidents/warnings; acknowledged; verify result; error.
+- **Tutorial key:** —
+
+## OA-30 — Attestation (T3/T4/T5, §11.3)
+
+The portable attestation package: list the organisation's signed subjects, build a self-contained package for one (roots, signatures, timestamps, the versions that scored it, the Merkle leaves and the verification instructions), export it as JSON, and verify a package — one built here or one dropped in from elsewhere — against its own contents and its embedded public keys. The verification is the same procedure the standalone verifier (`scripts/verify-attestation.mjs`) implements, so an outsider can re-derive the root without trusting the producer. This is tamper-evidence: it proves structure and provenance, not the truth of the underlying claims.
+
+- **Route:** The Assurance control plane (`org_control` inspector), tab `attestation`.
+- **Rights:** an integrity owner — `review_and_approve` or `edit_config`, or a Level-1/Level-2 Head; the database RPCs (`attestation_subjects_list`, `attestation_input_get`) re-check the right and a caller without it is refused.
+- **Data:** `AttestationSubjectRow`, `listAttestationSubjects`, `loadAttestationInput`, `buildAttestationPackage`, `parseAttestationPackage`, `verifyAttestationPackage` — through `src/data/*.ts` and `src/lib/*.ts`; components never import the database client (rule M8).
+- **Testids:** `OA-30-build-<id>`, `OA-30-empty`, `OA-30-error`, `OA-30-explain-attestation`, `OA-30-export`, `OA-30-headline`, `OA-30-icon`, `OA-30-leaf-count`, `OA-30-load-error`, `OA-30-loading`, `OA-30-merkle-root`, `OA-30-package`, `OA-30-package-root`, `OA-30-package-title`, `OA-30-panel`, `OA-30-problems`, `OA-30-signature-count`, `OA-30-subject-<id>`, `OA-30-subjects`, `OA-30-timestamp-count`, `OA-30-verdict`, `OA-30-verify-drop`, `OA-30-verify-drop-label`, `OA-30-versions`
+- **States:** loading; empty (nothing signed yet); ready with signed subjects; package built and verified; package built and NOT verified; error.
+- **Tutorial key:** —
+
+## OA-31 — Integrity incident wizard (T6, §11.3a)
+
+The guided response to a detected tamper. It shows, in plain words, what changed, when and by whom, and what it affects (which engagement, archive, population or the ledger chain), then offers restore / re-derive and re-seal / freeze the engagement / escalate — each requiring a reason — and re-runs verification at the end so the incident closes on proof rather than assertion. Every step is appended to the incident's own append-only trail, so an incident cannot be quietly closed. This is tamper-evidence, never tamper-prevention.
+
+- **Route:** The Assurance control plane (`org_control` inspector), tab `incidents`.
+- **Rights:** an integrity owner — `review_and_approve` or `edit_config`, or a Level-1/Level-2 Head; every `integrity_incident_*` RPC re-checks the right and a caller without it is refused.
+- **Data:** `IntegrityIncidentRow`, `IncidentActionRow`, `incidentModel`, `incidentStatus`, `availableActions`, `listIntegrityIncidents`, `openIntegrityIncident`, `incidentAction`, `verifyIntegrityIncident` — through `src/data/*.ts` and `src/lib/*.ts`; components never import the database client (rule M8).
+- **Testids:** `OA-31-actual`, `OA-31-affects`, `OA-31-boundary`, `OA-31-denied`, `OA-31-detail`, `OA-31-empty`, `OA-31-error`, `OA-31-expected`, `OA-31-headline`, `OA-31-icon`, `OA-31-incident-<id>`, `OA-31-incident-status-<id>`, `OA-31-list`, `OA-31-load-error`, `OA-31-loading`, `OA-31-open-<alertId>`, `OA-31-openable`, `OA-31-openable-<alertId>`, `OA-31-opened`, `OA-31-outcome`, `OA-31-panel`, `OA-31-reason`, `OA-31-step-annotate`, `OA-31-step-escalate`, `OA-31-step-freeze`, `OA-31-step-rederive`, `OA-31-step-restore`, `OA-31-trail`, `OA-31-trail-<n>`, `OA-31-unconfigured`, `OA-31-verify`, `OA-31-what-changed`
+- **States:** denied (not an integrity owner); loading; not configured (no database connection — never shown as an empty healthy panel); empty (no incidents); alerts with no incident yet (the entry point); ready with a selected incident and its trail; a step's computed outcome; error.
 - **Tutorial key:** —
 
 ## SA-16 — Guided provisioning (SCALE-1, WP3)

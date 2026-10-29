@@ -16,7 +16,7 @@ import {
 } from '../../data/reports';
 import { checkCapReconciliation, type CapRow, listCaps } from '../../data/caps';
 import { commitReportGraph, getReportGraph, type ReportGraphView } from '../../data/reportGraph';
-import { renderAndStoreReportFiles, reportFooterPreview, type StoredReportFiles } from '../../data/reportFiles';
+import { renderAndStoreReportFiles, reportFooterPreview, type ReportFileInput, type StoredReportFiles } from '../../data/reportFiles';
 import { getActiveReportLayout } from '../../data/writing';
 import type { FormatLayout } from '../../lib/writing/reportFormat';
 import { acknowledgePreflight, listPreflightAcknowledgements, listPreflightBlocking, listPreflightItems, type PreflightItemRow } from '../../data/preflight';
@@ -25,6 +25,7 @@ import { hasRight } from '../../lib/rights';
 import { rightReason, rightReasonFor } from '../../lib/rightLabels';
 import { formatFieldPairs } from '../../lib/readable';
 import { InlineError } from '../common/InlineError';
+import { StandardsAffordance } from '../explain/StandardsAffordance';
 import { HoldToConfirm } from '../common/HoldToConfirm';
 import { AlertTriangle, CheckCircle2, FileText, Layers, Send } from '../common/Icons';
 
@@ -48,6 +49,7 @@ export const ReportEditorPanel: React.FC<{ engagementId: string }> = ({ engageme
   const orgId = currentUser.orgId ?? '';
   const engagementLabel = engagementId;
   const [reportHashes, setReportHashes] = useState<StoredReportFiles | null>(null);
+  const [footerPreview, setFooterPreview] = useState<string | null>(null);
   const [versions, setVersions] = useState<ReportVersionRow[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [blocks, setBlocks] = useState<ReportBlockRow[]>([]);
@@ -94,11 +96,19 @@ export const ReportEditorPanel: React.FC<{ engagementId: string }> = ({ engageme
         setComments(cs);
         setOpenComments(oc);
         setCapOk(await checkCapReconciliation(current));
+        // §15.6: the committed claim graph for this version. It was written on freeze and, until now,
+        // never read back — the root `verify_report_root` proves had no screen to show it on.
+        try {
+          setGraph(await getReportGraph(current));
+        } catch {
+          setGraph(null);
+        }
       } else {
         setBlocks([]);
         setComments([]);
         setOpenComments(0);
         setCapOk(null);
+        setGraph(null);
       }
       setCaps(await listCaps(engagementId));
       setPreflightAcks(await listPreflightAcknowledgements(engagementId));
@@ -217,7 +227,7 @@ export const ReportEditorPanel: React.FC<{ engagementId: string }> = ({ engageme
     } catch {
       layout = undefined;
     }
-    const stored = await renderAndStoreReportFiles({
+    const input: ReportFileInput = {
       reportVersionId,
       orgId,
       title: engagementLabel || 'Audit report',
@@ -228,8 +238,12 @@ export const ReportEditorPanel: React.FC<{ engagementId: string }> = ({ engageme
       userLabel: currentUser?.name ?? currentUser?.email ?? 'auditor',
       frozenAt: new Date().toISOString(),
       layout,
-    });
+    };
+    const stored = await renderAndStoreReportFiles(input);
     setReportHashes(stored);
+    // §18: show the exact footer the printed DOCX carries, so the on-screen preview and the file
+    // agree. The same `footerLine` the renderer prints is used, keyed on the stored DOCX hash.
+    setFooterPreview(reportFooterPreview(input, stored.docx.sha256));
     return stored;
   };
 
@@ -323,7 +337,7 @@ export const ReportEditorPanel: React.FC<{ engagementId: string }> = ({ engageme
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_220px] gap-4">
           <div className="space-y-4 min-w-0">
-            {/* Section tabs */}
+            {/* Section tabs. Each carries the IIA standards it satisfies (E6 §5.4 item 5). */}
             <div role="tablist" aria-label="Report sections" className="flex flex-wrap items-center gap-1 border-b border-hairline pb-2">
               {sections.map((s) => (
                 <button
@@ -341,6 +355,7 @@ export const ReportEditorPanel: React.FC<{ engagementId: string }> = ({ engageme
                 </button>
               ))}
             </div>
+            <StandardsAffordance kind="section" target={section} screenId="WK-11" element="standards-section" label="This section satisfies" />
 
             {sectionBlocks.length === 0 ? (
               <div className="p-5 text-center text-apple-12 text-secondary bg-surface-elevated rounded-xl" data-testid="report-section-empty">

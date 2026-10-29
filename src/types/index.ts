@@ -310,7 +310,7 @@ export type LedgerEntry = {
   eventType: LedgerEventType;
   entityId: string;
   recordId: string;
-  recordType: 'engagement' | 'workpaper' | 'plan' | 'control' | 'observation' | 'evidence' | 'cap_item' | 'entity' | 'population';
+  recordType: 'engagement' | 'workpaper' | 'plan' | 'control' | 'observation' | 'evidence' | 'cap_item' | 'entity' | 'population' | 'universe';
   payloadSummary: string;
   payloadHash: string;
   justification?: string;

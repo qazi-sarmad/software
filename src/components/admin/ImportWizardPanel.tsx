@@ -13,8 +13,10 @@ import {
 import { InlineError } from '../common/InlineError';
 import { Select } from '../common/Select';
 import { Upload, CheckCircle2, AlertTriangle, RefreshCw, ChevronRight } from '../common/Icons';
-import { isSpreadsheet, parseSpreadsheet } from '../../lib/xlsx';
-import { isDocx, parseDocxTables } from '../../lib/docxImport';
+import { parseSpreadsheet } from '../../lib/xlsx';
+import { parseDocxTables } from '../../lib/docxImport';
+import { recogniseBytes, sniffBytes, buildInventory, type Inventory } from '../../lib/recognition';
+import { sha256Bytes } from '../../lib/render/inspect';
 
 type Step = 'upload' | 'mapping' | 'confirm';
 
@@ -67,6 +69,12 @@ export const ImportWizardPanel: React.FC<ImportWizardPanelProps> = () => {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<number | null>(null);
+  // When the bytes and the extension disagree, say so rather than silently importing under the name.
+  const [recognitionNote, setRecognitionNote] = useState<string | null>(null);
+  // The inventory line for the file just chosen (S17): what it IS, and its hash.
+  const [recognised, setRecognised] = useState<{ kind: string; sha256: string; byteSize: number } | null>(null);
+  // The full S17 inventory for the chosen file: metadata, archive members, and any refusal.
+  const [inventory, setInventory] = useState<Inventory | null>(null);
   // A DOCX can hold several tables; when it does, the operator picks which one to import.
   const [docxSheets, setDocxSheets] = useState<ParsedSheetChoice[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -96,10 +104,28 @@ export const ImportWizardPanel: React.FC<ImportWizardPanelProps> = () => {
 
   const onFile = async (file: File) => {
     setError(null);
+    setRecognitionNote(null);
     setDocxSheets([]);
+    setInventory(null);
     try {
       const buf = await file.arrayBuffer();
-      if (isDocx(file.name)) {
+      // Recognise the bytes before routing (S17). The extension is a claim; the magic bytes are the
+      // fact. A file whose bytes disagree with its name is still imported when the bytes are a format
+      // the wizard can read — with the disagreement stated — and refused when they are not, rather
+      // than being handed to a parser that would misread it.
+      const bytes = new Uint8Array(buf);
+      const kind = await sniffBytes(file.name, bytes);
+      const recognition = recogniseBytes(file.name, bytes);
+      if (!recognition.agrees && recognition.claimed !== 'unknown') {
+        setRecognitionNote(recognition.detail);
+      }
+      // The full inventory (S17): metadata the file carries, an archive's members under the safety
+      // limits, and any refusal (a zip bomb or an unsafe path) — stated, never hidden.
+      setInventory(await buildInventory([{ filename: file.name, bytes }], sha256Bytes));
+      // The inventory line the operator confirms: what the file IS and its fingerprint (S17). The
+      // hash is of the file the user chose, computed in their own browser; nothing leaves the tenant.
+      setRecognised({ kind, sha256: await sha256Bytes(bytes), byteSize: bytes.length });
+      if (kind === 'docx') {
         const sheets = await parseDocxTables(buf);
         if (sheets.length === 0) throw new Error('The document has no table to import.');
         if (sheets.length === 1) {
@@ -112,10 +138,19 @@ export const ImportWizardPanel: React.FC<ImportWizardPanelProps> = () => {
         setStep('mapping');
         return;
       }
-      const { headers: h, rows: r } = isSpreadsheet(file.name)
-        ? await parseSpreadsheet(buf)
-        : parseCsv(new TextDecoder().decode(buf));
-      applySheet(file.name, h, r);
+      if (kind === 'xlsx' || kind === 'csv' || kind === 'text') {
+        const { headers: h, rows: r } = kind === 'xlsx'
+          ? await parseSpreadsheet(buf)
+          : parseCsv(new TextDecoder().decode(bytes));
+        applySheet(file.name, h, r);
+        return;
+      }
+      // Anything else cannot be imported as a table. Name what it really is.
+      throw new Error(
+        kind === 'unknown'
+          ? 'This file is not a CSV, XLSX or DOCX; its contents are not a table.'
+          : `This file is a ${kind.toUpperCase()} file, not a table. Choose a CSV, XLSX or DOCX.`
+      );
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not read the file.');
     }
@@ -181,6 +216,9 @@ export const ImportWizardPanel: React.FC<ImportWizardPanelProps> = () => {
     setFilename('');
     setJobId(null);
     setValidation(null);
+    setRecognitionNote(null);
+    setRecognised(null);
+    setInventory(null);
     setError(null);
   };
 
@@ -202,6 +240,12 @@ export const ImportWizardPanel: React.FC<ImportWizardPanelProps> = () => {
       </div>
 
       <InlineError message={error} testId="import-error" onDismiss={() => setError(null)} />
+
+      {recognitionNote && (
+        <div className="flex items-center gap-2 px-3 py-2 rounded-xl text-apple-12 text-primary bg-cinnabar-subtle border border-cinnabar" data-testid="import-recognition-note">
+          <AlertTriangle className="w-4 h-4 text-cinnabar" /> {recognitionNote} The file was read as what its bytes say.
+        </div>
+      )}
 
       {done !== null && (
         <div className="flex items-center gap-2 px-3 py-2 rounded-xl text-apple-12 text-primary bg-verdigris-subtle border border-verdigris" data-testid="import-done">
@@ -248,6 +292,48 @@ export const ImportWizardPanel: React.FC<ImportWizardPanelProps> = () => {
             onChange={(e) => { const f = e.target.files?.[0]; if (f) void onFile(f); }}
           />
           <p className="text-apple-11 text-secondary">CSV, XLSX and DOCX tables are parsed in the browser, on the file you chose.</p>
+          {recognised && (
+            <p className="text-apple-11 text-secondary" data-testid="import-recognised">
+              Recognised: <span className="font-semibold text-primary">{recognised.kind.toUpperCase()}</span>
+              {' · '}{(recognised.byteSize / 1024).toFixed(1)} KB
+              {recognised.sha256 && <> · SHA-256 <span className="font-mono text-tertiary">{recognised.sha256.slice(0, 16)}…</span></>}
+            </p>
+          )}
+          {inventory && inventory.items[0] && (
+            <div className="space-y-1.5 text-apple-11 text-secondary" data-testid="import-inventory">
+              <p data-testid="import-inventory-counts">
+                Inventory: {inventory.importable} importable
+                {inventory.unrecognised > 0 && <> · {inventory.unrecognised} unrecognised</>}
+                {inventory.refused > 0 && <> · <span className="text-cinnabar">{inventory.refused} refused</span></>}
+              </p>
+              {(inventory.items[0].metadata.title || inventory.items[0].metadata.author || inventory.items[0].metadata.application || inventory.items[0].metadata.created) && (
+                <p data-testid="import-inventory-metadata">
+                  Metadata the file carries:{' '}
+                  {[
+                    inventory.items[0].metadata.title && `title "${inventory.items[0].metadata.title}"`,
+                    inventory.items[0].metadata.author && `author ${inventory.items[0].metadata.author}`,
+                    inventory.items[0].metadata.application && `application ${inventory.items[0].metadata.application}`,
+                    inventory.items[0].metadata.created && `created ${inventory.items[0].metadata.created}`,
+                  ].filter(Boolean).join(' · ')}
+                </p>
+              )}
+              {inventory.items[0].archive && (
+                <p data-testid="import-inventory-archive">
+                  Archive: {inventory.items[0].archive!.entries.length} member{inventory.items[0].archive!.entries.length === 1 ? '' : 's'},{' '}
+                  {(inventory.items[0].archive!.totalBytes / 1024).toFixed(1)} KB uncompressed
+                  {inventory.items[0].archive!.ratio > 0 && <> · compression ratio {inventory.items[0].archive!.ratio.toFixed(1)}×</>}
+                  {' — '}
+                  <span className="font-mono text-tertiary">
+                    {inventory.items[0].archive!.entries.slice(0, 4).map((e) => e.path).join(', ')}
+                    {inventory.items[0].archive!.entries.length > 4 ? ', …' : ''}
+                  </span>
+                </p>
+              )}
+              {inventory.items[0].note && (
+                <p className="text-cinnabar" data-testid="import-inventory-note">{inventory.items[0].note}</p>
+              )}
+            </div>
+          )}
         </section>
       )}
 

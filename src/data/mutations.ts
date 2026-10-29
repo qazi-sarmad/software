@@ -31,6 +31,17 @@ export function reopenEngagement(engagementId: string, justification: string): P
   return callRpc('reopen_engagement', { p_engagement_id: engagementId, p_justification: justification });
 }
 
+/** Create a universe in the caller's organisation (U6, migration 0117). Returns the new id. */
+export async function createUniverse(
+  name: string, domain: string | null
+): Promise<{ ok: true; id: string } | { ok: false; reason: string }> {
+  const sb = getClient();
+  if (!sb) return { ok: false, reason: NOT_CONFIGURED_REASON };
+  const { data, error } = await sb.rpc('create_universe', { p_name: name, p_domain: domain });
+  if (error) return { ok: false, reason: error.message };
+  return { ok: true, id: String(data) };
+}
+
 /** Create a draft auditable entity in a universe (migration 0100). Returns the new id. */
 export async function addEntity(
   universeId: string, name: string, kind: string | null

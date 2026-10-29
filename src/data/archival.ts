@@ -25,12 +25,14 @@ export interface ArchiveJobRow {
 export interface IntegrityAlertRow {
   id: string;
   kind: string;
+  severity: 'warning' | 'incident';
   objectType: string;
   objectId: string | null;
   expectedHash: string | null;
   actualHash: string | null;
   raisedAt: string | null;
   acknowledgedAt: string | null;
+  acknowledgedBy: string | null;
 }
 
 export interface PopulationArchiveRow {
@@ -89,25 +91,46 @@ export async function uploadArchiveJob(archiveId: string): Promise<DataResult> {
   return { ok: false, reason: `the archive was not verified (status: ${status ?? 'unknown'})` };
 }
 
+/**
+ * The organisation's integrity alerts (T7), incident-first. Reads through `integrity_alerts_list`,
+ * which is rights-gated (an integrity owner is required) and annotates each alert with its severity
+ * from the database rule — so the app never re-implements the split between a single hash mismatch
+ * and a broken ledger chain. An empty list is a normal answer, not an error.
+ */
 export async function listIntegrityAlerts(): Promise<IntegrityAlertRow[]> {
   const sb = getClient();
   if (!sb) return [];
-  const { data, error } = await sb
-    .from('integrity_alerts')
-    .select('id, kind, object_type, object_id, expected_hash, actual_hash, raised_at, acknowledged_at')
-    .order('raised_at', { ascending: false })
-    .limit(200);
+  const { data, error } = await sb.rpc('integrity_alerts_list');
   if (error) throw new Error(error.message);
-  return (data ?? []).map((a) => ({
+  return ((data ?? []) as Array<Record<string, unknown>>).map((a) => ({
     id: a.id as string,
     kind: a.kind as string,
+    severity: (a.severity as 'warning' | 'incident' | null) ?? 'warning',
     objectType: a.object_type as string,
     objectId: (a.object_id as string | null) ?? null,
     expectedHash: (a.expected_hash as string | null) ?? null,
     actualHash: (a.actual_hash as string | null) ?? null,
     raisedAt: (a.raised_at as string | null) ?? null,
     acknowledgedAt: (a.acknowledged_at as string | null) ?? null,
+    acknowledgedBy: (a.acknowledged_by as string | null) ?? null,
   }));
+}
+
+/** Record that a human has seen an integrity alert; the row is never edited and the annotation is
+ *  ledgered (T7). */
+export function acknowledgeIntegrityAlert(id: string): Promise<DataResult> {
+  return callRpc('integrity_alert_acknowledge', { p_id: id });
+}
+
+/** Re-verify the ledger chain on demand (T7). Returns the first broken sequence, or null when the
+ *  chain is intact. A break raises an integrity incident. `null` here means "verified", not "unknown",
+ *  so a caller must distinguish a transport failure (thrown) from an intact chain. */
+export async function ledgerContinuityCheck(orgId?: string): Promise<bigint | null> {
+  const sb = getClient();
+  if (!sb) throw new Error('The data module is not configured.');
+  const { data, error } = await sb.rpc('ledger_continuity_check', orgId ? { p_org: orgId } : {});
+  if (error) throw new Error(error.message);
+  return data === null || data === undefined ? null : BigInt(data as number | string);
 }
 
 /** Record a population's archive (C2.5, §25.4). Requires manage_engagements. Rows are not removed. */

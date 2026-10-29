@@ -19,9 +19,11 @@ const recordFn = vi.fn();
 const signOffWp = vi.fn();
 const listResults = vi.fn();
 const raise = vi.fn();
+const listRecords = vi.fn();
 
 vi.mock('../../data/population', () => ({
   listPopulations: () => listPops(),
+  listPopulationRecords: (...a: unknown[]) => listRecords(...a),
   lockPopulation: (...a: unknown[]) => lockPop(...a),
   registerPopulation: () => Promise.resolve({ ok: true }),
   sha256Hex: () => Promise.resolve('deadbeef'),
@@ -85,6 +87,7 @@ describe('Phase 4 UI panels (4I)', () => {
     signOffWp.mockResolvedValue({ ok: true });
     listResults.mockResolvedValue([]);
     raise.mockResolvedValue({ ok: true });
+    listRecords.mockResolvedValue([]);
     createWp.mockResolvedValue({ ok: true, id: 'w-new' });
   });
 
@@ -105,6 +108,28 @@ describe('Phase 4 UI panels (4I)', () => {
     holdToConfirm(screen.getByTestId('population-lock-p1'));
     vi.useRealTimers();
     await waitFor(() => expect(lockPop).toHaveBeenCalledWith('p1'));
+  });
+
+  it('population: profiles a locked population with the pure populationProfile rule', async () => {
+    listPops.mockResolvedValue([
+      { id: 'p1', engagementId: 'e1', workpaperId: null, filename: 'gl.csv', rowCount: 3, sha256: 'abc', status: 'locked', verifiedAt: null, verifiedBy: null },
+    ]);
+    listRecords.mockResolvedValue([
+      { rowRef: 1, amountCents: 100, date: '2026-01-01', category: 'sales' },
+      { rowRef: 2, amountCents: 100, date: '2026-01-01', category: 'sales' },
+      { rowRef: 3, amountCents: null, date: '2026-01-02', category: 'sales' },
+    ]);
+    render(<PopulationPanel engagementId="e1" />);
+    await waitFor(() => expect(screen.getByTestId('population-row-p1')).toBeTruthy());
+    fireEvent.click(screen.getByTestId('population-profile-p1'));
+    await waitFor(() => expect(listRecords).toHaveBeenCalledWith('p1'));
+    await waitFor(() => expect(screen.getByTestId('population-profile-view-p1')).toBeTruthy());
+    const summary = screen.getByTestId('population-profile-summary-p1').textContent ?? '';
+    expect(summary).toContain('3 rows');
+    expect(summary).toContain('2 with a value');
+    expect(summary).toContain('1 missing a value');
+    expect(summary).toContain('1 duplicate');
+    expect(screen.getByTestId('population-profile-flags-p1').textContent).toContain('duplicates');
   });
 
   it('sampling: shows a designed empty rule state and a seed preview', async () => {

@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { execFileSync } from 'node:child_process';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
 
 /**
  * WP7: docs/UI-INVENTORY.md is the single source of truth for the parallel UI redesign, so it must
@@ -29,7 +31,7 @@ const APPENDIX_A = [
 
 // Appendix B: the core audit workspace, auth and chrome the Appendix A ids never covered.
 const APPENDIX_B = [
-  'DB-01', 'WQ-01',
+  'DB-01', 'DB-02', 'WQ-01',
   'AU-01', 'AU-02',
   ...Array.from({ length: 5 }, (_, i) => `AP-${String(i + 1).padStart(2, '0')}`),
   ...Array.from({ length: 3 }, (_, i) => `SR-${String(i + 1).padStart(2, '0')}`),
@@ -70,6 +72,11 @@ describe('UI inventory covers every Appendix A screen (WP7)', () => {
       '- **Tutorial key:**',
       '- **Rights required:**',
       '- **States:**',
+      // E10: the explain layer, the standards and the drilldown targets are part of the inventory's
+      // contract with the redesign, so their absence is drift, not a formatting choice.
+      '- **Explain ids',
+      '- **IIA standards addressed',
+      '- **Drilldown targets',
     ]) {
       expect(inventory, `field ${field} absent`).toContain(field);
     }
@@ -86,5 +93,24 @@ describe('UI inventory covers every Appendix A screen (WP7)', () => {
     const catalogue = inventory.slice(inventory.indexOf('## RPC catalogue'));
     const missing = [...rpcs].filter((r) => !catalogue.includes('`' + r + '`')).sort();
     expect(missing, `RPCs absent from the catalogue: ${missing.join(', ')}`).toEqual([]);
+  });
+
+  // E10 defect fix: nothing ran the generator, so a drift in the derived fields (explain ids,
+  // standards, drilldown targets) could sit in CI unseen. This regenerates into a temp file and
+  // requires it to equal the committed doc byte-for-byte — the only check that catches a stale
+  // derived field. It runs the same `npx tsx` invocation the doc tells a reader to use.
+  it('the committed inventory is exactly what the generator produces', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'ui-inventory-'));
+    const out = join(dir, 'UI-INVENTORY.md');
+    try {
+      execFileSync('npx', ['tsx', 'scripts/gen-ui-inventory.mjs', out], { cwd: ROOT, stdio: 'pipe' });
+      const generated = readFileSync(out, 'utf8');
+      expect(
+        generated,
+        'docs/UI-INVENTORY.md is stale — run `npx tsx scripts/gen-ui-inventory.mjs` and commit the result'
+      ).toBe(inventory);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });

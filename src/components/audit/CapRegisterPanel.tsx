@@ -5,6 +5,7 @@ import { hasRight } from '../../lib/rights';
 import { rightReason, rightReasonFor } from '../../lib/rightLabels';
 import { InlineError } from '../common/InlineError';
 import { HoldToConfirm } from '../common/HoldToConfirm';
+import { ExplainPopout } from '../explain/ExplainPopout';
 import { CheckCircle2, Clock, ShieldCheck } from '../common/Icons';
 
 const CAP_STATUS_CHIP: Record<CapStatus, string> = {
@@ -104,12 +105,24 @@ export const CapRegisterPanel: React.FC<{ engagementId: string }> = ({ engagemen
                   <span className="text-apple-12 font-semibold text-primary">
                     {c.responsibleDept ?? 'Unassigned department'}
                   </span>
-                  <span
-                    data-testid={`cap-status-${c.id}`}
-                    className={`px-2 py-0.5 rounded text-apple-11 font-semibold border ${CAP_STATUS_CHIP[c.status]}`}
+                  <ExplainPopout
+                    explainId={
+                      c.status === 'overdue_unverified' || c.status === 'verified_closed_delay'
+                        ? 'status.cap.overdue'
+                        : closed
+                          ? 'status.cap.closed'
+                          : 'status.cap.open'
+                    }
+                    screenId="IR-02"
+                    element={`explain-cap-status-${c.id}`}
                   >
-                    {CAP_STATUS_LABEL[c.status]}
-                  </span>
+                    <span
+                      data-testid={`cap-status-${c.id}`}
+                      className={`px-2 py-0.5 rounded text-apple-11 font-semibold border ${CAP_STATUS_CHIP[c.status]}`}
+                    >
+                      {CAP_STATUS_LABEL[c.status]}
+                    </span>
+                  </ExplainPopout>
                 </div>
                 <div className="flex items-center gap-3 text-apple-11 text-secondary">
                   <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> Due {c.dueDate ?? '—'}</span>
