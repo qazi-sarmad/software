@@ -15,8 +15,8 @@ import {
   type ReportCommentRow,
 } from '../../data/reports';
 import { checkCapReconciliation, type CapRow, listCaps } from '../../data/caps';
-import { commitReportGraph } from '../../data/reportGraph';
-import { renderAndStoreReportFiles, type StoredReportFiles } from '../../data/reportFiles';
+import { commitReportGraph, getReportGraph, type ReportGraphView } from '../../data/reportGraph';
+import { renderAndStoreReportFiles, reportFooterPreview, type ReportFileInput, type StoredReportFiles } from '../../data/reportFiles';
 import { getActiveReportLayout } from '../../data/writing';
 import type { FormatLayout } from '../../lib/writing/reportFormat';
 import { acknowledgePreflight, listPreflightAcknowledgements, listPreflightBlocking, listPreflightItems, type PreflightItemRow } from '../../data/preflight';
@@ -49,6 +49,8 @@ export const ReportEditorPanel: React.FC<{ engagementId: string }> = ({ engageme
   const orgId = currentUser.orgId ?? '';
   const engagementLabel = engagementId;
   const [reportHashes, setReportHashes] = useState<StoredReportFiles | null>(null);
+  const [graph, setGraph] = useState<ReportGraphView | null>(null);
+  const [footerPreview, setFooterPreview] = useState<string | null>(null);
   const [versions, setVersions] = useState<ReportVersionRow[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [blocks, setBlocks] = useState<ReportBlockRow[]>([]);
@@ -90,11 +92,19 @@ export const ReportEditorPanel: React.FC<{ engagementId: string }> = ({ engageme
         setComments(cs);
         setOpenComments(oc);
         setCapOk(await checkCapReconciliation(current));
+        // §15.6: the committed claim graph for this version. It was written on freeze and, until now,
+        // never read back — the root `verify_report_root` proves had no screen to show it on.
+        try {
+          setGraph(await getReportGraph(current));
+        } catch {
+          setGraph(null);
+        }
       } else {
         setBlocks([]);
         setComments([]);
         setOpenComments(0);
         setCapOk(null);
+        setGraph(null);
       }
       setCaps(await listCaps(engagementId));
       setPreflightAcks(await listPreflightAcknowledgements(engagementId));
@@ -190,7 +200,7 @@ export const ReportEditorPanel: React.FC<{ engagementId: string }> = ({ engageme
     } catch {
       layout = undefined;
     }
-    const stored = await renderAndStoreReportFiles({
+    const input: ReportFileInput = {
       reportVersionId,
       orgId,
       title: engagementLabel || 'Audit report',
@@ -201,8 +211,12 @@ export const ReportEditorPanel: React.FC<{ engagementId: string }> = ({ engageme
       userLabel: currentUser?.name ?? currentUser?.email ?? 'auditor',
       frozenAt: new Date().toISOString(),
       layout,
-    });
+    };
+    const stored = await renderAndStoreReportFiles(input);
     setReportHashes(stored);
+    // §18: show the exact footer the printed DOCX carries, so the on-screen preview and the file
+    // agree. The same `footerLine` the renderer prints is used, keyed on the stored DOCX hash.
+    setFooterPreview(reportFooterPreview(input, stored.docx.sha256));
     return stored;
   };
 
@@ -347,6 +361,40 @@ export const ReportEditorPanel: React.FC<{ engagementId: string }> = ({ engageme
                 ))}
               </div>
             )}
+
+            {/* §15.6: the committed claim graph for this version (E5/U1 drilldown). The root
+                `verify_report_root` proves is read back and shown, with the claims behind it, so a
+                reader can reach the exact claims that produced the report's root. */}
+            <div className="p-4 rounded-2xl bg-surface border border-hairline space-y-2" data-testid="report-graph-panel">
+              <div className="text-apple-13 font-semibold text-primary flex items-center gap-2">
+                <Layers className="w-3.5 h-3.5" /> Claim graph
+                {graph && graph.graphs.length > 0 && (
+                  <span className="px-2 py-0.5 rounded text-apple-11 font-semibold bg-surface-sunken text-secondary" data-testid="report-graph-claim-count">
+                    {graph.graphs[0].claimCount} claim{graph.graphs[0].claimCount === 1 ? '' : 's'}
+                  </span>
+                )}
+              </div>
+              {!graph || graph.graphs.length === 0 ? (
+                <div className="text-apple-12 text-secondary" data-testid="report-graph-empty">
+                  No claim graph has been committed for this version yet. It is written when the report is frozen.
+                </div>
+              ) : (
+                <>
+                  <div className="text-apple-11 text-secondary" data-testid="report-graph-root">
+                    Root: <span className="font-mono">{graph.graphs[0].graphRoot.slice(0, 16)}…</span>
+                    {graph.graphs[0].ledgerSeq !== null && ` · ledger #${graph.graphs[0].ledgerSeq}`}
+                  </div>
+                  <ul className="space-y-0.5" data-testid="report-graph-claims">
+                    {graph.claims.map((c) => (
+                      <li key={c.claimId} className="flex items-center justify-between gap-3 text-apple-11" data-testid={`report-graph-claim-${c.claimId}`}>
+                        <span className="text-primary truncate">{c.sectionId} · {c.kind}</span>
+                        <span className="text-secondary font-mono shrink-0">{c.claimHash.slice(0, 10)}…</span>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+            </div>
 
             {/* Management comments */}
             <div className="p-4 rounded-2xl bg-surface border border-hairline space-y-3" data-testid="report-comments">
@@ -527,6 +575,11 @@ export const ReportEditorPanel: React.FC<{ engagementId: string }> = ({ engageme
                   <div data-testid="report-file-docx">
                     Editable DOCX: {reportHashes.docx.sha256.slice(0, 16)}… ({reportHashes.docx.bytes} bytes)
                   </div>
+                  {footerPreview && (
+                    <div data-testid="report-footer-preview">
+                      Printed footer: {footerPreview}
+                    </div>
+                  )}
                 </div>
               )}
             </div>

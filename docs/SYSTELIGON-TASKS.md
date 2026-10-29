@@ -552,6 +552,45 @@ the populated and empty lists.
 
 ---
 
+## Dead-export sweep (2026-10-28, re-audit under the ONE RULE)
+
+Ran `node scripts/audit-wiring.mjs` and a transitive-reachability pass over the whole export graph.
+Every export with no reachable caller was resolved by wire-or-delete, never left as prose.
+
+**Wired — population retention (§25.4, `C2.5`).** `archivePopulation`, `listPopulationArchiveDue`,
+`listPopulationArchives` and `uploadArchiveJob` in `src/data/archival.ts` had zero callers while the
+SQL behind them (`archive_population`, `population_archive_due`, `population_archives`,
+`archive_jobs`) was built and tested. They are now the "Population retention" section of
+`ActivityLogPanel.tsx` (OA-26): the due list reads `population_archive_due`, "Archive" calls
+`archive_population` (rows are not removed; the content hash is recorded so the bytes can be
+re-derived), a pending activity job exposes an "Upload" button over `uploadArchiveJob` (the
+`archive-upload` edge function hashes what it stored and the database decides whether the job is
+done). Testids `population-retention`, `population-due-*`, `population-archive-*`,
+`population-archived-notice`, `population-archives`, `population-archive-row-*`, `archive-upload-*`.
+`phase7Panels.test.tsx` +2 (the due→archive flow, the pending upload).
+
+**Deleted — `canChangeCapDueDate`.** `src/lib/access.ts` exported `canChangeCapDueDate` with a
+`@deprecated` tag, zero callers, and no supporting surface: there is no CAP due-date-change RPC
+anywhere (only `cap_is_overdue`/`cap_due_soon_days`, which read a date) and no UI to change one. The
+capability system (`canPerformCapability(user, 'cap_change_due_date', orgConfig)`) supersedes it, so
+the dead export was removed rather than wired to nothing. The rights it read (`manage_engagements`)
+stay; `hasRight` is unchanged.
+
+**Register corrections found by the same pass.** Three rows were stale in the *opposite* direction —
+they claimed `Inert` for work that is now wired. Corrected in `docs/FEATURE-REGISTER.md`: F3
+(`verify_ledger` is reached by `ledger_continuity_check`, T7), F34 (the pre-flight engine is consumed
+by `freeze_report`, Phase 2), F37 (`report_graphs` has a writer — `commitReportGraph` — and a reader —
+`verifyReportRoot`). F39 stays `Absent` (findings-to-report provenance is `S13`, not this branch's).
+Honest count moves 80/23/23 → **83 Wired / 20 Inert / 23 Absent**.
+
+**Left as `Inert`, correctly, and named here so no one re-derives it:** F43 `extractDocument`
+(`src/data/documents.ts`) — the `doc-extract` edge function is real and the wrapper is correct, but
+the call site belongs to Builder A's R2/C2.6 and the function is a deployment step, not this branch's.
+F49-F59 (monitor runtime, alert persistence/delivery, connector adapters) are Builder A's C-series.
+Neither is in this ledger's scope, so neither is touched.
+
+---
+
 ## Gates to add on this branch
 
 | Gate | Fails when | Status |

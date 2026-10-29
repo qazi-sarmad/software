@@ -56,7 +56,7 @@ feature to be testable.
 |---|---|---|---|---|---|
 | F1 | Tenant data loaded from the database into the shell | `Wired` | `loadTenantSnapshot()` (`src/data/tenant.ts`), called from `src/App.tsx:237` and `AppContext.tsx:177`; `snapshotToSeed()` replaces the seed inside `AuthGate`. Phase 1, SCALE-TASKS 1.1-1.3. (SCALE-TASKS 1.2 refers to a tenant data provider component; the mechanism actually shipped is these two functions called directly from the auth gate. Naming discrepancy in the ledger, not a functional gap.) | — | `e2e/phase1-production-build.spec.ts` (G1) |
 | F2 | Engagement stage persisted | `Wired` | `set_engagement_stage` (`0101_phase2_lifecycle.sql:149`), append-only transition log, called from `AppContext.tsx`; `src/context/stageAdvance.test.tsx` | — | Phase 2 2.1 |
-| F3 | Ledger verified against the database | `Inert` | `verify_ledger` (`0007:97`) still has **0** production callers — the chain is written but never verified against the DB | T7 | SQL test tampering a ledger row, then `verify_ledger` returns false |
+| F3 | Ledger verified against the database | `Wired` | `ledger_continuity_check` (`0112_integrity_alarm.sql:257`) calls `verify_ledger` (`0007:97`), raises an integrity incident on a break, and is called from `IntegrityAlarmPanel.tsx:74`; the chain is now verified, not just written | T7 | SQL test tampering a ledger row, then `verify_ledger` returns false |
 | F4 | Report graph root persisted | `Wired` | `commitReportGraph` (`src/data/reportGraph.ts:144`) called from `ReportEditorPanel.tsx:149`; read back by `verifyReportRoot` (`PublicVerifyRoute.tsx:43`). Phase 2, 2.6 | — | `104_phase2_report_graph.sql` |
 | F5 | Pre-flight engine consumed at freeze | `Wired` | `freeze_report` computes open items from real tables and refuses while any is unacknowledged (`0102_phase2_preflight_gate.sql`); `ReportEditorPanel.tsx:22` uses the preflight data module. Phase 2, 2.5 | — | Phase 2 2.5 |
 | F6 | Sampling linked to row testing | `Wired` | `workpaper_rows` seeded from `lock_sample` (`0104_phase2_row_seeding.sql`); method-aware draw `0105`; value coverage `0106`. Phase 2, 2.7-2.9 | — | `105_phase2_row_seeding.sql` |
@@ -101,10 +101,10 @@ feature to be testable.
 | F31 | Report compose, comment, freeze, issue | `Wired` | `freeze_report`, `issue_report` gated on rights and open comments; `ReportEditorPanel` | — |
 | F32 | Report file render + upload (PDF/DOCX) | `Wired` | `src/data/reportFiles.ts` uploads to the `reports` bucket | S20 |
 | F33 | Pre-flight acknowledgement storage | `Wired` | `preflight_acks` + `acknowledgePreflight` in `ReportEditorPanel` | — |
-| F34 | Pre-flight engine (the eight checks) | `Inert` | Engine exists; not consumed at freeze (F5) | R2 |
+| F34 | Pre-flight engine (the eight checks) | `Wired` | `freeze_report` computes the open pre-flight items from real tables and refuses while any is unacknowledged (`0102_phase2_preflight_gate.sql`); `preflightBlocking`/`listPreflightItems` drive `ReportEditorPanel` | R2 |
 | F35 | Report templates | `Inert` | `report_template_save` exists; readers never called | R3 |
 | F36 | Certificate config and verification | `Wired` | `certificate_config_save`, `verify_certificate`, `PublicVerifyRoute` | — |
-| F37 | Report graph root verification | `Inert` | No writer for `report_graphs` (F4) | R2 |
+| F37 | Report graph root verification | `Wired` | `commitReportGraph` writes the graph (`ReportEditorPanel.tsx:160`) and `verifyReportRoot` re-derives the root (`PublicVerifyRoute.tsx:43`); `ReportEditorPanel` reads the committed graph back (`getReportGraph` → `report-graph-panel`) | R2 |
 | F38 | Report writer adopts an uploaded format | `Wired` | §9 of SYSTELIGON — the org format is the `BrandingSpec` the writer reads (`src/data/reportFiles.ts`); font/colour auto-detect via `src/lib/fonts/detect.ts`, adopted in `OrgBrandingPanel.tsx` | F5, F6 |
 | F39 | Findings-to-report provenance | `Absent` | §9 — every generated element traces to a finding | S13 |
 
@@ -279,8 +279,8 @@ Each is a pure function under `src/lib/`, with direct unit tests and a screen su
 
 | Status | Count |
 |---|---|
-| `Wired` | 80 |
-| `Inert` | 23 |
+| `Wired` | 83 |
+| `Inert` | 20 |
 | `Absent` | 23 |
 | **Total** | **126** |
 
@@ -288,7 +288,7 @@ Each is a pure function under `src/lib/`, with direct unit tests and a screen su
 reported, because Phases 1 and 2 of the scale-harden build closed the whole foundation, the S17-S20
 work packages closed the evidence-bytes and SIRA-write-path gaps, T7 closed the tamper alarm and
 the ledger verification, and T3/T4/T5 closed the portable attestation package, the third-party
-verifier and the attestation screen. The picture now: **71 wired, 23 inert, 31 absent.** The remaining
+verifier and the attestation screen. The picture now: **83 wired, 20 inert, 23 absent.** The remaining
 `Inert` rows are the genuine, still-open unwired features — the monitor runtime, the alert persistence
 and delivery, the connector adapters. Every one of those is a defect, and every one looks like a
 working feature in the UI.
