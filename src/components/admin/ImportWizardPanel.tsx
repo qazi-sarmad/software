@@ -15,7 +15,7 @@ import { Select } from '../common/Select';
 import { Upload, CheckCircle2, AlertTriangle, RefreshCw, ChevronRight } from '../common/Icons';
 import { parseSpreadsheet } from '../../lib/xlsx';
 import { parseDocxTables } from '../../lib/docxImport';
-import { recogniseBytes, sniffBytes } from '../../lib/recognition';
+import { recogniseBytes, sniffBytes, buildInventory, type Inventory } from '../../lib/recognition';
 import { sha256Bytes } from '../../lib/render/inspect';
 
 type Step = 'upload' | 'mapping' | 'confirm';
@@ -73,6 +73,8 @@ export const ImportWizardPanel: React.FC<ImportWizardPanelProps> = () => {
   const [recognitionNote, setRecognitionNote] = useState<string | null>(null);
   // The inventory line for the file just chosen (S17): what it IS, and its hash.
   const [recognised, setRecognised] = useState<{ kind: string; sha256: string; byteSize: number } | null>(null);
+  // The full S17 inventory for the chosen file: metadata, archive members, and any refusal.
+  const [inventory, setInventory] = useState<Inventory | null>(null);
   // A DOCX can hold several tables; when it does, the operator picks which one to import.
   const [docxSheets, setDocxSheets] = useState<ParsedSheetChoice[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -104,6 +106,7 @@ export const ImportWizardPanel: React.FC<ImportWizardPanelProps> = () => {
     setError(null);
     setRecognitionNote(null);
     setDocxSheets([]);
+    setInventory(null);
     try {
       const buf = await file.arrayBuffer();
       // Recognise the bytes before routing (S17). The extension is a claim; the magic bytes are the
@@ -116,6 +119,9 @@ export const ImportWizardPanel: React.FC<ImportWizardPanelProps> = () => {
       if (!recognition.agrees && recognition.claimed !== 'unknown') {
         setRecognitionNote(recognition.detail);
       }
+      // The full inventory (S17): metadata the file carries, an archive's members under the safety
+      // limits, and any refusal (a zip bomb or an unsafe path) — stated, never hidden.
+      setInventory(await buildInventory([{ filename: file.name, bytes }], sha256Bytes));
       // The inventory line the operator confirms: what the file IS and its fingerprint (S17). The
       // hash is of the file the user chose, computed in their own browser; nothing leaves the tenant.
       setRecognised({ kind, sha256: await sha256Bytes(bytes), byteSize: bytes.length });
@@ -212,6 +218,7 @@ export const ImportWizardPanel: React.FC<ImportWizardPanelProps> = () => {
     setValidation(null);
     setRecognitionNote(null);
     setRecognised(null);
+    setInventory(null);
     setError(null);
   };
 
@@ -291,6 +298,41 @@ export const ImportWizardPanel: React.FC<ImportWizardPanelProps> = () => {
               {' · '}{(recognised.byteSize / 1024).toFixed(1)} KB
               {recognised.sha256 && <> · SHA-256 <span className="font-mono text-tertiary">{recognised.sha256.slice(0, 16)}…</span></>}
             </p>
+          )}
+          {inventory && inventory.items[0] && (
+            <div className="space-y-1.5 text-apple-11 text-secondary" data-testid="import-inventory">
+              <p data-testid="import-inventory-counts">
+                Inventory: {inventory.importable} importable
+                {inventory.unrecognised > 0 && <> · {inventory.unrecognised} unrecognised</>}
+                {inventory.refused > 0 && <> · <span className="text-cinnabar">{inventory.refused} refused</span></>}
+              </p>
+              {(inventory.items[0].metadata.title || inventory.items[0].metadata.author || inventory.items[0].metadata.application || inventory.items[0].metadata.created) && (
+                <p data-testid="import-inventory-metadata">
+                  Metadata the file carries:{' '}
+                  {[
+                    inventory.items[0].metadata.title && `title "${inventory.items[0].metadata.title}"`,
+                    inventory.items[0].metadata.author && `author ${inventory.items[0].metadata.author}`,
+                    inventory.items[0].metadata.application && `application ${inventory.items[0].metadata.application}`,
+                    inventory.items[0].metadata.created && `created ${inventory.items[0].metadata.created}`,
+                  ].filter(Boolean).join(' · ')}
+                </p>
+              )}
+              {inventory.items[0].archive && (
+                <p data-testid="import-inventory-archive">
+                  Archive: {inventory.items[0].archive!.entries.length} member{inventory.items[0].archive!.entries.length === 1 ? '' : 's'},{' '}
+                  {(inventory.items[0].archive!.totalBytes / 1024).toFixed(1)} KB uncompressed
+                  {inventory.items[0].archive!.ratio > 0 && <> · compression ratio {inventory.items[0].archive!.ratio.toFixed(1)}×</>}
+                  {' — '}
+                  <span className="font-mono text-tertiary">
+                    {inventory.items[0].archive!.entries.slice(0, 4).map((e) => e.path).join(', ')}
+                    {inventory.items[0].archive!.entries.length > 4 ? ', …' : ''}
+                  </span>
+                </p>
+              )}
+              {inventory.items[0].note && (
+                <p className="text-cinnabar" data-testid="import-inventory-note">{inventory.items[0].note}</p>
+              )}
+            </div>
           )}
         </section>
       )}

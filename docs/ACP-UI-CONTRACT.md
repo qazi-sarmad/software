@@ -1280,9 +1280,9 @@ Import a workpaper source (upload, choose file, DOCX tables), map it, validate i
 
 - **Route:** The `import_wizard` inspector window.
 - **Rights:** `manage_engagements`; a caller without it sees `import-no-right`.
-- **Data:** `ImportJobRow`, `ImportType`, `ImportValidation`, `listImportJobs`, `startImport`, `validateImport` — through `src/data/*.ts`; components never import the database client (rule M8).
-- **Testids:** `import-choose-file`, `import-commit`, `import-confirm`, `import-denied`, `import-docx-tables`, `import-done`, `import-error`, `import-errors`, `import-file-input`, `import-history`, `import-history-empty`, `import-invalid-count`, `import-mapping`, `import-no-right`, `import-preview`, `import-recognised`, `import-recognition-note`, `import-steps`, `import-upload`, `import-valid-count`, `import-validate`, `import-wizard`
-- **States:** no-right; upload; recognised (kind, size, SHA-256); bytes/name disagreement; mapping; validated; preview; done; history loading/empty.
+- **Data:** `ImportJobRow`, `ImportType`, `ImportValidation`, `listImportJobs`, `startImport`, `validateImport` — through `src/data/*.ts`; components never import the database client (rule M8). The file inventory (S17) is read by `buildInventory` (`src/lib/recognition`), which sniffs magic bytes, unpacks archives under the safety limits, reads document metadata, and returns the counts the operator confirms.
+- **Testids:** `import-choose-file`, `import-commit`, `import-confirm`, `import-denied`, `import-docx-tables`, `import-done`, `import-error`, `import-errors`, `import-file-input`, `import-history`, `import-history-empty`, `import-invalid-count`, `import-inventory`, `import-inventory-archive`, `import-inventory-counts`, `import-inventory-metadata`, `import-inventory-note`, `import-mapping`, `import-no-right`, `import-preview`, `import-recognised`, `import-recognition-note`, `import-steps`, `import-upload`, `import-valid-count`, `import-validate`, `import-wizard`
+- **States:** no-right; upload; recognised (kind, size, SHA-256); inventory (metadata, archive members + compression ratio, refusal reason); bytes/name disagreement; mapping; validated; preview; done; history loading/empty.
 - **Tutorial key:** —
 
 ## OA-28 — Org settings inspector (S1)

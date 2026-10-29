@@ -164,6 +164,18 @@ A file whose bytes disagree with its name is imported under its true kind when t
 (with the disagreement shown), and refused with the real kind named when it is not. The upload step
 shows the inventory line (kind, size, SHA-256). 48 unit tests.
 
+**Correction (2026-10-28, re-audit under the ONE RULE).** The row claimed the full inventory was
+wired, but `node scripts/audit-wiring.mjs` showed `buildInventory` — the documented "inventory the
+user confirms before import" entry point — had **zero** production callers, and with it the whole
+`inspectFile`/`unpackArchive`/`readOfficeMetadata`/`parsePdfInfo` machinery. The wizard only called
+the light `sniffBytes`/`recogniseBytes`, so the upload step showed the kind, size and SHA-256 but
+never the metadata, the archive members, the compression ratio or the refusal reason. Now
+`onFile` calls `buildInventory([...], sha256Bytes)` and the upload step renders the inventory:
+`import-inventory`, `import-inventory-counts` (importable / unrecognised / refused), and — when the
+file carries them — `import-inventory-metadata`, `import-inventory-archive` (members + ratio) and
+`import-inventory-note` (the refusal). `ImportWizardPanel.test.tsx` (3) pins the counts for an
+importable PDF and for an unrecognised file, and the no-right state.
+
 ### S18/S19 — what was built (2026-10-28)
 
 **The prerequisite first: the SIRA write path was inert, and is now wired.** The audit's finding was
