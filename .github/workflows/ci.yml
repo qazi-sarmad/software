@@ -61,22 +61,25 @@ jobs:
       - name: 6c. UI contract
         run: node scripts/check-ui-contract.mjs
 
-      - name: 7. Migrations and SQL tests (test project only)
+   - name: 7. Migrations and SQL tests (runner-local PostgreSQL)
+        # Previously this applied 106 migrations and 110 test files to the hosted test project with
+        # one `psql -f` per file: 216 connections and ~16k DDL/WAL statements per run. That is what
+        # exhausted the project's Disk IO budget. The suite needs no cloud data (the shim supplies
+        # the Supabase parts), so it now runs against a throwaway cluster inside the runner and the
+        # hosted project is never touched by this step.
         if: ${{ hashFiles('supabase/migrations/**') != '' }}
-        env:
-          TEST_SUPABASE_DB_URL: ${{ secrets.TEST_SUPABASE_DB_URL }}
         run: |
           sudo apt-get update
-          sudo apt-get install -y postgresql-client
-          # Never echo the URL. Fail loudly if the secret is empty.
-          if [ -z "$TEST_SUPABASE_DB_URL" ]; then echo "::error::TEST_SUPABASE_DB_URL is empty"; exit 1; fi
-          for f in supabase/migrations/*.sql; do
-            psql "$TEST_SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f "$f"
-          done
-          for f in supabase/tests/*.sql; do
-            psql "$TEST_SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f "$f"
-          done
-
+          sudo apt-get install -y postgresql postgresql-client
+          # The runner image ships a cluster that is often already running, and `pg_ctlcluster start`
+          # exits 2 in that case ("Cluster is already running"), so the start is best-effort and
+          # connectivity is what we actually assert. Version is read from the filesystem rather than
+          # pinned: the suite needs no version-specific syntax (only security_invoker, PG15+).
+          PGVER="$(ls /usr/lib/postgresql | sort -V | tail -1)"
+          sudo pg_ctlcluster "$PGVER" main start || true
+          sudo -n -u postgres psql -tAc 'select 1' >/dev/null || { echo "::error::postgres not reachable"; exit 1; }
+          bash scripts/local-sql-harness.sh
+          
       - name: 8. Playwright
         env:
           VITE_SUPABASE_URL: ${{ secrets.TEST_SUPABASE_URL }}
