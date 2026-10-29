@@ -21,7 +21,12 @@ export {
 } from './rules/numeric';
 export { justBelowThreshold } from './rules/threshold';
 export { parseDocumentStructure, hasSignature, FIELD_PARSERS, type StructuredExtraction } from './extract/structured';
-export { needsOcr, runOcr, type OcrEngine, type OcrText, type OcrOutcome, type ExtractionHint } from './extract/ocr';
+export { needsOcr, runOcr, runOcrWithLanguages, type OcrEngine, type OcrText, type OcrOutcome, type ExtractionHint } from './extract/ocr';
+export {
+  OCR_LANGUAGES, OCR_ENGINE_CHOICES, DEFAULT_OCR_LANGUAGE,
+  buildOcrEngineConfig, defaultOcrEngineConfig, ocrLanguage, packTraineddata,
+  type OcrLanguage, type OcrScript, type OcrDirection, type OcrEngineConfig, type OcrEngineChoice,
+} from './extract/ocrLanguages';
 export { documentRules, contractSignature, approvalDate, dateAfterReport, absentFollowThrough } from './rules/documents';
 export { patternRules, hardcodedCredentials, selectStar, externalCallNoErrorHandling, unboundedLoop, disabledCheck, hardcodedEnvironment } from './rules/patterns';
 export { sequentialRules, actionItemRegister, policyComparison } from './rules/sequential';

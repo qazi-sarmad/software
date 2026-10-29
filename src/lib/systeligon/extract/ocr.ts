@@ -40,6 +40,11 @@ export interface OcrEngine {
   name: string;
   /** True when the engine sends anything off the machine. A remote engine is refused (L2). */
   remote: boolean;
+  /**
+   * The languages the engine was configured to read, as a tesseract `lang` string (`eng+urd`). A
+   * caller sets this from `buildOcrEngineConfig`; when absent the engine's own default is used.
+   */
+  lang?: string;
   recognize(bytes: Uint8Array): Promise<OcrText>;
 }
 
@@ -54,6 +59,10 @@ export interface OcrOutcome {
   text: string | null;
   engine: string | null;
   reason: string | null;
+  /** The `lang` string the engine was configured with, when the run reached the engine. */
+  lang?: string;
+  /** Requested languages that could not be loaded, so a caller can say so honestly. */
+  missing?: { code: string; reason: string }[];
 }
 
 /**
@@ -74,10 +83,30 @@ export async function runOcr(bytes: Uint8Array, hint: ExtractionHint, engine: Oc
     const result = await engine.recognize(bytes);
     const text = result.text ?? '';
     if (text.trim().length === 0) {
-      return { status: 'unsupported', text: null, engine: engine.name, reason: 'OCR produced no text' };
+      return { status: 'unsupported', text: null, engine: engine.name, reason: 'OCR produced no text', lang: engine.lang };
     }
-    return { status: 'done', text, engine: engine.name, reason: null };
+    return { status: 'done', text, engine: engine.name, reason: null, lang: engine.lang };
   } catch (e) {
-    return { status: 'unsupported', text: null, engine: engine.name, reason: e instanceof Error ? e.message : 'OCR failed' };
+    return { status: 'unsupported', text: null, engine: engine.name, reason: e instanceof Error ? e.message : 'OCR failed', lang: engine.lang };
   }
+}
+
+/**
+ * Run OCR with an explicit language configuration, reporting any language that could not be loaded.
+ * This is the entry point a caller that cares about language uses; `runOcr` remains the seam for a
+ * caller that does not. Fails closed exactly as `runOcr` does, and additionally carries the `lang`
+ * string and the `missing` list so a scan read in the wrong language is never presented as read.
+ */
+export async function runOcrWithLanguages(
+  bytes: Uint8Array,
+  hint: ExtractionHint,
+  engine: OcrEngine | null | undefined,
+  requestedLanguages: string[],
+  availablePacks: import('./ocrLanguages').OcrLanguage['pack'][] = ['core'],
+): Promise<OcrOutcome> {
+  const { buildOcrEngineConfig } = await import('./ocrLanguages');
+  const config = buildOcrEngineConfig(requestedLanguages, availablePacks);
+  const configured: OcrEngine | null | undefined = engine ? { ...engine, lang: config.lang } : engine;
+  const outcome = await runOcr(bytes, hint, configured);
+  return { ...outcome, lang: config.lang, missing: config.missing };
 }
