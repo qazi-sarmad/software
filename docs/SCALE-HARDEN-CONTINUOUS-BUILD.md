@@ -163,51 +163,103 @@ that is the defect class this whole project is organised against.
 corrections belong in one commit, because the second without the first leaves CI red for the same
 reason, and the comment fix without either leaves a lie in the file.
 
+### 3.1 WP-IMPORT — the migration path for real client data (do this before the S-series)
+
+**Why this is near the front.** It unblocks real-client testing, and every other queue item is easier to
+verify once a real dataset is in the system instead of a fixture. Full analysis in
+`docs/EVALUATION-REAL-USE.md` §4.
+
+**What exists and is reachable — do not rebuild it.** The three-step wizard
+(`src/components/admin/ImportWizardPanel.tsx`, lazy-mounted from `RecordContent.tsx:122`), the DB-backed
+validation RPCs (`0042_imports.sql`: `start_import`, `validate_import`, `commit_import`), prior-year
+import (`0044_prior_year_import.sql`), and the `import_jobs` + `activity_log` trail. **Reuse all of it.**
+
+**The exact gap.** `import_type` is fixed by a CHECK constraint:
+
+```sql
+import_type text not null check (import_type in ('rcm', 'entities', 'users', 'populations'))
+```
+
+and `commit_import` writes only three tables (`entities`, `risks_library`, `org_members`). So a client
+can bring a **risk-control matrix, an entity list, a user list and populations** — and nothing else. No
+engagements, findings, CAPs, workpapers, SIRA cycles or conclusions. Prior-year import copies four item
+types from an **existing engagement in the same org**; it is not a way in for a client with no data here.
+
+**Build:**
+
+1. Widen the `import_type` CHECK to the full entity set — engagements, findings, caps, workpapers,
+   sira_cycles, conclusions. **This constraint is the hard gate; everything else needs it.**
+2. A **historical import type**: one file, all entity types, ordered, cross-references resolved. A
+   client's history is one dataset, not four disjoint lists.
+3. **Dependency ordering and referential resolution** — engagements before findings before CAPs;
+   natural keys (`ENG-2024-001`) mapped to new uuids. An import that half-lands is worse than none.
+4. **Dry-run mode** — validate the whole file, report every error, write nothing. A non-technical owner
+   will not accept a partial import.
+5. **Idempotent re-run** — the same file twice must not duplicate. Testing is iterative.
+6. **Per-row `import_jobs` trail.** L3 applies to imports like everything else.
+7. **Template files** — one XLSX per entity type, with headers and a worked example. The owner is
+   non-technical.
+8. **A migration-status screen** — what landed, what failed, what was skipped, and why.
+9. **SQL tests for the refusal paths** — cross-org rows, missing parents, malformed dates. The testing
+   rules require both the happy path and the RLS refusal.
+10. **Playwright happy path** — upload a template, map, commit, see the data.
+
+**Estimated ~1,500–2,500 LOC, ~4 migrations, ~2 screens.** Well-bounded, and it reuses the existing
+wizard, the validation RPC shape and `import_jobs`.
+
+**The caution that matters.** Import is a write path into tenant data. It must go through the same RLS
+and `jwt_org_id()` discipline as everything else, must be append-only in the ledger, and the dry-run must
+be genuinely side-effect-free. **An import path is a classic place to smuggle in a cross-tenant read** —
+test the refusal path explicitly.
+
+8. **WP-IMPORT — the migration path for real client data.** Detail in §3.1. Before the S-series,
+   because it unblocks real-client testing and makes every later item verifiable against real data.
+
 **Then the build remainder:**
 
-8. **S2 — header detection + confirm-before-count.** `population.ts:94` is still
+9. **S2 — header detection + confirm-before-count.** `population.ts:94` is still
    `const [header, ...body] = table;` — the assumption, unchanged. Detect, propose, confirm, then
    register with hash and confirmed count.
-9. **S1 — `src/lib/systeligon/`.** Rule schema, runner, versioning, result shape. **This directory does
+10. **S1 — `src/lib/systeligon/`.** Rule schema, runner, versioning, result shape. **This directory does
    not exist on any branch and there is no `rules/` directory anywhere.** Nothing else in the S-series
    can precede it.
-10. **S6 — the forensic rule library**, one pure module per family, each versioned and tested. The
+11. **S6 — the forensic rule library**, one pure module per family, each versioned and tested. The
    numeric forensics exist in `analyticsEngine.ts` but are **not versioned rules with provenance**.
    Port them into S1's shape; do not duplicate them.
-11. **S7 tiers 2–3 — OCR and structured extraction.** OCR is **not built anywhere**
+12. **S7 tiers 2–3 — OCR and structured extraction.** OCR is **not built anywhere**
     (`grep -iE "ocr|tesseract"` over every branch and every `package.json` returns nothing). Tier 2 per
     spec §5: **bundled, not called, loaded on demand, nothing leaves the tenant.** Tier 3: declared
     parsers for vendor/date/amount/reference/period/signature-presence. Tier 1 is partial and unwired —
     `extractDocument` is `F43 → Inert`; wire it.
-12. **S3/S4/S5/S12 — the two flows and verification.** Accepted flow (flag → rows → evidence → verify →
+13. **S3/S4/S5/S12 — the two flows and verification.** Accepted flow (flag → rows → evidence → verify →
     revert/override, with the override carried forward to the next reviewer); declined flow (floor as a
     **minimum, never a ceiling**, paste-to-fill, auto-add); Mode A / Mode B org-configurable.
-13. **S8/S9/S14/S15 — document review, pattern rules, minutes, policy comparison.** Spec §3.2 and §3.3.
+14. **S8/S9/S14/S15 — document review, pattern rules, minutes, policy comparison.** Spec §3.2 and §3.3.
     **S15 must report its own coverage** — clauses parsed, matched, and **could not be interpreted** —
     because an unparsed clause is not a clean clause.
-14. **S10/S11 — rule packs and signed OTA distribution.** Packs **signed** (reuse `signing_keys` from
+15. **S10/S11 — rule packs and signed OTA distribution.** Packs **signed** (reuse `signing_keys` from
     `0096`), versioned and append-only; an unsigned or unverifiable pack is **refused** and the refusal
     logged.
-15. **S13 remainder — findings-to-report provenance** (`F39 → Absent`).
-16. **S16 — the name in one constants module.**
-17. **C1–C7 — continuous assurance.** The rule library is built (`monitors.ts`, six kinds, pure); **the
+16. **S13 remainder — findings-to-report provenance** (`F39 → Absent`).
+17. **S16 — the name in one constants module.**
+18. **C1–C7 — continuous assurance.** The rule library is built (`monitors.ts`, six kinds, pure); **the
     engine that drives it is not.** `rule_engine_process`, `alert_record`, `connector_run_start`/`_finish`
     and `staged_record_ingest` all have **0 production refs** (`F49`–`F59`). Build the scheduled runner,
     persist alerts, emit `watcher.signal`, then enrichment, delivery, the suggestion and remediation
     paths, triage, and anomaly-to-SIRA.
-18. **T1/T2 — the scheduled sweeps.** `ledger_continuity_check()` and the alarm are built; the schedules
+19. **T1/T2 — the scheduled sweeps.** `ledger_continuity_check()` and the alarm are built; the schedules
     are not.
-19. **R5 — methodology and test-step templates** (`F28`–`F30`: no `test_step_templates` table, no
+20. **R5 — methodology and test-step templates** (`F28`–`F30`: no `test_step_templates` table, no
     `procedure_templates` table, three hardcoded stage strings).
-20. **R6 — multi-tenant scale and isolation** (`F84` no SQL test with ≥3 concurrent orgs; `F85`
+21. **R6 — multi-tenant scale and isolation** (`F84` no SQL test with ≥3 concurrent orgs; `F85`
     support-grant refs legacy-name only; `F86` every support read logged).
-21. **R7 — Super Admin guided provisioning** (`F92`: the SA-01 wizard covers some steps; model the full
+22. **R7 — Super Admin guided provisioning** (`F92`: the SA-01 wizard covers some steps; model the full
     path).
-22. **R3 remainder — configuration honesty** (`F35`, `F72`–`F76`, `F78`, `F79` still `Inert`).
-23. **D5–D9 — adjacent capability products** (`F121`–`F125`).
-24. **Re-record the tutorial media.** `check-tutorials` reports 69 current and **11 stale**; the
+23. **R3 remainder — configuration honesty** (`F35`, `F72`–`F76`, `F78`, `F79` still `Inert`).
+24. **D5–D9 — adjacent capability products** (`F121`–`F125`).
+25. **Re-record the tutorial media.** `check-tutorials` reports 69 current and **11 stale**; the
     committed GIFs are placeholders. This is build work, not an owner action.
-25. **Reachability audit of both engines.** Grep every export of `src/lib/writing/` and every
+26. **Reachability audit of both engines.** Grep every export of `src/lib/writing/` and every
     audit-engine module for a production call site. The audit found `report_graphs` unwritten and
     `rule_engine_process` uncalled. **Do this continuously, not once** — run it after every queue item
     that adds a module.
