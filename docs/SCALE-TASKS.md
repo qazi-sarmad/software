@@ -1421,6 +1421,25 @@ Register F130/F131 added; F43 flipped to `Wired`; counts 56/31/44.
 **Tests:** `flows.test.ts` 15 tests. Full suite 218 files / 2,546 tests green; all gates and build
 green. Register F132 added; counts 56/32/44.
 
+### S8/S9/S14/S15 — document review, patterns, minutes, policy comparison (2026-10-29)
+
+**DONE (pure; screen wiring later).** Queue item 13. Spec §3.2/§3.3.
+
+- **S8** `rules/documents.ts` — a contract carries a signature, an approval a date, no document date is
+  after the report date (`reportDate` is an argument), and an open action item has a later record.
+- **S9** `rules/patterns.ts` — hardcoded credentials, `SELECT *`, an external call with no error
+  handling, an unbounded loop, a disabled check, a hardcoded environment value, over `sourceFiles` text.
+- **S14** `minutes.ts` + `rules/sequential.ts` — the action-item register across a minutes series:
+  carried forward, vanished, closed with no evidence, reopened, closed before raised, closed by a
+  non-owner, owner/due changed, due passed. The history refs are the evidence.
+- **S15** `policydiff.ts` + `rules/sequential.ts` — policy-no-procedure, procedure-no-policy,
+  regulation-uncovered, stated-differently, control-no-procedure. Matched on shared references, defined
+  terms and cross-references, and **reports its own coverage** (parsed / matched / could not interpret).
+  An unparsed clause is emitted as an info finding, never dropped.
+
+**Tests:** `rules/documents.test.ts` 7 tests. Full suite 219 files / 2,563 tests green; gates + build
+green. Register F133–F136 added; counts 56/36/44.
+
 ## Environment facts (for the next session)
 
 - The sandbox has **no host Postgres** and **no Docker socket for the user**, but

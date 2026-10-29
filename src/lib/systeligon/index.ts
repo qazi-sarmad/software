@@ -21,6 +21,11 @@ export {
 export { justBelowThreshold } from './rules/threshold';
 export { parseDocumentStructure, hasSignature, FIELD_PARSERS, type StructuredExtraction } from './extract/structured';
 export { needsOcr, runOcr, type OcrEngine, type OcrText, type OcrOutcome, type ExtractionHint } from './extract/ocr';
+export { documentRules, contractSignature, approvalDate, dateAfterReport, absentFollowThrough } from './rules/documents';
+export { patternRules, hardcodedCredentials, selectStar, externalCallNoErrorHandling, unboundedLoop, disabledCheck, hardcodedEnvironment } from './rules/patterns';
+export { sequentialRules, actionItemRegister, policyComparison } from './rules/sequential';
+export { buildActionRegister, itemHistory, type ActionAppearance, type ActionFinding, type ActionFindingKind } from './minutes';
+export { compareDocuments, type MatchFinding, type ComparisonCoverage, type ComparisonResult, type MatchKind, type PassageRef } from './policydiff';
 export {
   requiredRowsFromFindings, buildAcceptedTestingSet, applyFloor, parsePastedBlock,
   verifyCompleteness, verifyEvidence, verifyRows, carriedOverrides,

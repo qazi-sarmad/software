@@ -278,6 +278,10 @@ Each is a pure function under `src/lib/`, with direct unit tests and a screen su
 | F130 | Systeligon structured document extraction, tier 3 (S7) | `Inert` | `src/lib/systeligon/extract/structured.ts` parses text into a `ParsedDocument` with declared parsers (vendor/date/amount/reference/period fields, numbered clauses, action items, signatures, cross-references) and reports its own coverage (lines/parsed/uninterpreted). Pure and deterministic. Test-only so far | S7 |
 | F131 | Systeligon OCR seam, tier 2 (S7) | `Inert` | `src/lib/systeligon/extract/ocr.ts` decides whether a scan needs OCR (`needsOcr`), runs an injected local engine lazily, and **refuses a remote engine** so nothing leaves the tenant (L2). The bundled model is a build artifact wired as a dependency, not vendored here (D6). Test-only so far | S7 |
 | F132 | Systeligon flows and verification (S3/S4/S5/S12) | `Inert` | `src/lib/systeligon/flows.ts`: the accepted flow (required rows from findings, then auto-add), the declined flow (`applyFloor` — the floor is a minimum, never a ceiling; `parsePastedBlock` maps a pasted header onto the columns), Mode A completeness and Mode B evidence verification (§6, fails closed with every reason), and the §2.2 override carried forward to the next reviewer. Pure; time is an argument. Test-only so far | S3/S4/S5/S12 |
+| F133 | Systeligon structural document rules (S8) | `Inert` | `src/lib/systeligon/rules/documents.ts`: a contract must carry a signature, an approval a date, no document date is after the report date, and every open action item has a later record. Pure; `reportDate` is an argument. Test-only so far | S8 |
+| F134 | Systeligon pattern rules (S9) | `Inert` | `src/lib/systeligon/rules/patterns.ts`: hardcoded credentials, `SELECT *`, an external call with no error handling, an unbounded loop, a disabled check, a hardcoded environment value — over `sourceFiles` text, each finding citing the line. Pure. Test-only so far | S9 |
+| F135 | Systeligon action-item register (S14) | `Inert` | `src/lib/systeligon/minutes.ts` + `rules/sequential.ts`: follows each action item across a minutes series — carried forward, vanished, closed no-evidence, reopened, closed-before-raised, closed-by-non-owner, owner/due changed, due passed — citing every appearance as the history. Pure; `asOf` is an argument. Test-only so far | S14 |
+| F136 | Systeligon policy/procedure/regulation comparison (S15) | `Inert` | `src/lib/systeligon/policydiff.ts` + `rules/sequential.ts`: policy-no-procedure, procedure-no-policy, regulation-uncovered, stated-differently, control-no-procedure, matched on shared references/terms/cross-refs, and **reports its own coverage** (parsed/matched/could-not-interpret). Pure. Test-only so far | S15 |
 
 ---
 
@@ -286,13 +290,13 @@ Each is a pure function under `src/lib/`, with direct unit tests and a screen su
 | Status | Count |
 |---|---|
 | `Wired` | 56 |
-| `Inert` | 32 |
+| `Inert` | 36 |
 | `Absent` | 44 |
-| **Total** | **132** |
+| **Total** | **136** |
 
 **Read that again, with the correction applied.** This is materially better than the first pass
 reported, because Phases 1 and 2 of the scale-harden build closed the whole foundation. The picture
-now: **55 wired, 29 inert, 44 absent** (F126 population header detection by S2; F127-F128 the Systeligon rule-engine shell by S1; F129 the numeric rule library by S6; F130-F132 extraction and flows, all added 2026-10-29). F35 (report templates) and F37 (report graph root) were
+now: **55 wired, 29 inert, 44 absent** (F126 population header detection by S2; F127-F128 the Systeligon rule-engine shell by S1; F129 the numeric rule library by S6; F130-F136 extraction, flows and the S8/S9/S14/S15 rules, all added 2026-10-29). F35 (report templates) and F37 (report graph root) were
 `Inert` here and are now written and read end to end, so they were corrected on 2026-10-29. The
 remaining `Inert` rows are the genuine, still-open
 unwired features — the monitor runtime, the evidence bytes, the tamper alarm, the SIRA write path,

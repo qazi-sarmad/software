@@ -86,6 +86,8 @@ export interface RuleInput {
   sources?: Record<string, ReadonlyArray<{ ref: string; values: Record<string, unknown> }>>;
   /** Parsed document structure for §3.2/§3.3 rules. Absent for population-only runs. */
   documents?: ParsedDocument[];
+  /** Source/config text for §3.3 pattern rules. Each entry is one file's text. */
+  sourceFiles?: ReadonlyArray<{ ref: string; text: string }>;
   /** Free-form scope labels a rule may narrow on (period, entity). Never used to invent findings. */
   scope?: Record<string, string>;
 }
@@ -100,8 +102,16 @@ export interface DocumentElement {
   line: number;
   label?: string;
   value?: string;
+  /** The element's own text, for action items and obligation sentences. */
+  text?: string;
+  /** Declared attributes (an action item's owner, due date, status). */
+  attributes?: Record<string, string>;
   /** Reference numbers / defined terms this element cites, for cross-document matching. */
   crossRefs?: string[];
+  /** Defined terms this element uses, for policy/procedure/regulation matching (§3.3). */
+  terms?: string[];
+  /** Obligation verbs present, e.g. `must`, `shall` (§3.3). */
+  obligation?: string[];
 }
 
 /**
