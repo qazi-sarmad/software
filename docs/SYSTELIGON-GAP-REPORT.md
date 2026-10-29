@@ -307,13 +307,15 @@ called unwritten. It is built, tested and gated. **Verified this session:**
   ocr), `rules/` (numeric, threshold, structural, documents, patterns, sequential) and `index.ts`
   (17 re-exports). **Verified:** **1,893 lines** of non-test source across **6 test files**, and the
   S-series alone runs **63 tests, all passing**.
-- Register rows **F126–F138** were added as the work landed: **F126** header detection (S2),
-  **F127/F128** the rule schema, runner, versioning and packs (S1), **F129** the numeric rule library
-  (S6), **F130/F131** structured extraction and the OCR seam (S7), **F132** the accepted/declined
-  flows and Mode A/B verification (S3/S4/S5/S12), **F133** structural document rules (S8), **F134**
-  pattern rules (S9), **F135** the action-item register (S14), **F136** policy/procedure/regulation
-  comparison (S15), **F137** signed rule-pack storage (S10/S11), **F138** the single product-name
-  module (S16).
+- **The register rows for the S-series do not exist.** An earlier edition of this report claimed
+  rows **F126–F138** were added as the work landed (F126 header detection, F127/F128 the rule schema
+  and runner, F129 the numeric library, F130/F131 extraction, F132 the flows, F133/F134 document and
+  pattern rules, F135 the action-item register, F136 policy comparison, F137 signed packs, F138 the
+  product name). **Verified this session: that is false.** The register ends at **F126** (Live
+  activity spine) on this branch; A's register ends at F125 and B's at F126. **No F127–F138 row
+  exists on any branch.** The engine rows below are described in prose only, so the register — the
+  one machine-checked honesty surface — cannot hold their wiring to account. Writing them is the
+  first item of the remainder queue (see `docs/CONTINUOUS-BUILD-REPORT.md` §5.0).
 
 | Row | What it is | State |
 |---|---|---|
@@ -534,7 +536,7 @@ Rows marked `BUILT` are listed for completeness so the boundary of this section 
 |---|---|---|---|
 | G1–G6 | Production-build E2E; no dead code; config proving tests; data-export imports; no seed+DB; RPC existence | A | **BUILT** |
 | G7–G10 | Explain coverage; drilldown; IIA honesty; font licence | B | **BUILT** |
-| R0 | Feature register honesty | A | **BUILT** (138 features, 58/37/43) |
+| R0 | Feature register honesty | A | **BUILT** (126 features, 84/19/23 — verified on the unified branch) |
 
 ### Builder A's unbuilt UI/UX rows
 
