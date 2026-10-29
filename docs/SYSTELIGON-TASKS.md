@@ -621,6 +621,46 @@ turning it into a hard CI gate. Do not duplicate it.
 
 ---
 
+## Session verification (2026-10-28, this session)
+
+Every gate run locally, in full, after the dead-export sweep. No gate is reported from memory.
+
+| Gate | Result |
+|---|---|
+| `npx tsc --noEmit` | PASS (exit 0) |
+| `npx vitest run` | PASS — **255 files / 2954 tests** |
+| `npx vite build` | PASS (chunk-size warning only) |
+| `node scripts/check-shrink.mjs` | PASS — 57 files, no >10% shrink |
+| `node scripts/check-tokens.mjs` | PASS — 209 files, 0 violations |
+| `node scripts/check-ui-contract.mjs` | PASS — 48 Appendix A screens |
+| `node scripts/check-feature-register.mjs` | PASS — 126 features: 83 Wired / 20 Inert / 23 Absent |
+| `npm run check-tutorials` | PASS — every tutorial key has a GIF (69 current, 11 stale) |
+| `bash scripts/local-sql-harness-docker.sh` | PASS — migrations applied twice, all SQL tests passed twice |
+| `src/guards/uiInventory.test.ts` | PASS — the committed inventory equals the generator output byte-for-byte |
+
+**Counts vs the locked baseline** (baseline: 106 migrations / 110 SQL tests / 205 vitest files /
+30 Playwright specs / 21 guards):
+
+| Metric | Baseline | Now | Delta |
+|---|---|---|---|
+| Migrations | 106 | 114 | +8 (`0110`-`0117`) |
+| SQL test files | 110 | 118 | +8 |
+| Vitest files | 205 | 255 | +50 |
+| Vitest tests | 2403 | 2954 | +551 |
+| Playwright specs | 30 | 30 | 0 |
+| Guards | 21 | 26 | +5 (G7-G10 + provenance-adjacent) |
+
+**Wiring re-verified by call site, not by test, under the ONE RULE:** `explainFor` (via
+`useExplain`), `ExplainPopout`/`StandardsAffordance` (mounted across the plan, universe, audit-file,
+dashboard, pending, issues and report screens), `AttestationPanel`/`IncidentWizardPanel`/
+`IntegrityAlarmPanel` (mounted in `OrgControlPanel` tabs `attestation`/`incidents`/`integrity`),
+`CapabilityLibraryPanel` + `ActivitySpine` + `GuidedFirstRun` (`ExecutiveDashboardTab`), `FrontDoor`
+(`PendingTasksTab`), `CommandPalette` + `ShortcutSheet` (`App.tsx`), `buildInventory`
+(`ImportWizardPanel`), `verifyEvidenceFile` (`EvidenceTab`), `recordSiraScore`/`submitEmergentRisk`
+(`SiraScoringPanel` via `SiraCyclesInspector`). `ReviewCommentsDock.tsx` is confirmed gone.
+
+---
+
 ## Maintenance
 
 - **Update this file in the same commit as the work.** No exceptions.
