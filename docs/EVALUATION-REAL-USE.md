@@ -26,14 +26,26 @@
 
 **Every gate green locally.** The build is in good shape.
 
-**Two blockers that only bite in CI, not locally:**
+> **CORRECTION — 2026-10-29, after re-checking.** The two CI blockers originally recorded here
+> (**step 7 running against the hosted project**, and **`@electric-sql/pglite` undeclared**) were
+> **both fixed by the builder on this branch in commit `404cd25`**. Step 7 now runs
+> `scripts/local-sql-harness.sh` against a runner-local PostgreSQL 17, ported from `main`; `pglite`
+> is declared at `^0.5.13`. The original text is kept below only to show what was true at `fc0ccda`.
+>
+> **The migration-collision framing here was also too strong.** There are **no duplicate migration
+> numbers within the branch.** A and B used 0110–0117 with different filenames, so the collision is
+> cross-branch, not intra-branch. `404cd25` records the decision: every new migration takes **0118+**,
+> and `BRANCH-MAP.md`'s reservation table was corrected. That is a merge-time rule, not a defect.
+>
+> **CI is nevertheless NOT green right now** — see §8. It went green at `03d5af5` (run 40851647488,
+> 30m31s) and has failed at step 8 on every push since.
 
-- `@electric-sql/pglite` is **present in `node_modules`** but declared in **no `package.json`**. The three
-  gates that import it pass here because it happens to be installed. CI fails at
-  `FAIL: @electric-sql/pglite is not installed`. **One line fixes it.**
-- **A's step 7 still runs against the hosted test project.** `main` already fixed this to a runner-local
-  cluster. Port `main`'s step 7 into A's file — §3.0 of `SCALE-HARDEN-CONTINUOUS-BUILD.md` has the
-  verbatim YAML.
+**Superseded (true at `fc0ccda`, fixed at `404cd25`):**
+
+- `@electric-sql/pglite` was present in `node_modules` but declared in no `package.json`. CI failed at
+  `FAIL: @electric-sql/pglite is not installed`. **Now declared.**
+- **A's step 7 ran against the hosted test project.** `main` had already fixed this to a runner-local
+  cluster; `404cd25` ported it. **Now runner-local.**
 
 ## 2. The headline defect is FIXED
 
@@ -159,25 +171,70 @@ engine, materiality, trial balance — i.e. the separate product in `NOTES-EXTER
 **Weakest surface:** the read path's silent-failure behaviour (§2). Everything renders; nothing
 distinguishes "denied" from "empty".
 
-## 6. What remains — ordered
+## 6. What remains — corrected 2026-10-29
 
-**Blocking, in order:**
+**CI status (this is the live issue).** The branch **went green once**: `03d5af5`, run **40851647488**,
+`gates` 30m31s, all steps passed. Since then **every push has failed at step 8**:
 
-1. Port `main`'s step 7 into A's `ci.yml` (§3.0 of the continuous-build prompt).
-2. Declare `@electric-sql/pglite` in `devDependencies`.
-3. Apply the analytics type fix to `main`.
-4. Renumber the collided migrations; update `BRANCH-MAP.md`.
-5. Settle one `UI-INVENTORY.md` and one generator.
-6. Fix A's stale `G1` row.
-7. Write `docs/SCALE-PLAN.md`.
+| Run | Commit | Step 8 | Note |
+|---|---|---|---|
+| 40851647488 | `03d5af5` audit(engines) | **✓ green** | 144 passed / 3 skipped; step 9 sweep timed out at 15m but is `continue-on-error` |
+| 40855036105 | `26c751f` S8/S9/S14/S15 | **✘** | C2.4 failed in `signOut()`, line 42 — `Open user profile menu` |
+| 40857677773 | `d8631ec` S10/S11 | **✘** | C2.4 failed at the **final** assertion — `member-<uuid>` not visible |
 
-**Then, first on merit — WP-IMPORT (§4).** It unblocks real-client testing, which makes every other item
-verifiable against real data instead of fixtures.
+**Steps 1–14 are green on the current head** (tsc, 221 files / 2,576 unit tests, build, tokens, shrink,
+tutorials, deploy list, ui-contract, G2–G6, runner-local SQL). **Only step 8 fails, and only C2.4.**
 
-**Then the existing queue:** S1–S16, C1–C7, T1/T2, R5–R7, R3 remainder, D5–D9, tutorial media,
-reachability audit.
+**C2.4 is flaky, not deterministically broken.** The evidence:
 
-**Held for the owner:** the design language (E8, U5, U7, U9–U13).
+- It **passed** in run 40851647488, in both the dev pass (23.9s) and the G1 production pass (19.4s).
+- It has failed at **two different points** in two consecutive runs — `signOut()` in one, the final
+  `member-<uuid>` assertion in the other. **A deterministic break fails at the same line every time.**
+- `playwright.config.ts` sets `fullyParallel: true` and `retries: process.env.CI ? 1 : 0`. Both attempts
+  failed, so it is not a single-attempt flake — it is a **race under parallel load**.
+- The two failing points share a cause: the spec is **stateful across the whole file** (it creates a
+  user, signs in as the invitee, accepts, signs out, signs back in as the Org Admin) while other specs
+  run concurrently against the **same shared hosted project**.
+
+**The likely mechanism:** the spec deletes residue at the start by email, then creates the account with
+`admin.createUser`. Under parallel load against the shared project, either the auth write or the
+`org_members` read is not yet visible when the UI reads it. `PeopleAdminPanel.load()` runs on mount, so
+a read that lands before the membership commits shows no row — exactly the second failure. The first
+failure (`signOut()` not finding the profile menu) is the same class: the shell had not finished
+resolving the session.
+
+**This is not a source defect in the product.** It is a test-isolation defect. The fix belongs in the
+spec, not in `src/`: either serialise C2.4 (`test.describe.configure({ mode: 'serial' })` plus a
+`test.describe` retry boundary), or poll the assertion instead of asserting on a single mount-time read.
+**Do not "fix" it by weakening the assertion** — that is the conditional-assertion defect class recorded
+in memory, and it would hide a real regression.
+
+**Also on step 9:** the screenshot sweep timed out after 15 minutes in the green run. It is
+`continue-on-error: true`, so it does not fail the job, but it captures nothing. Its own
+`timeout-minutes: 15` is doing its job (protecting the 45m job budget) — the sweep itself is too slow.
+
+**Real remaining work, in order:**
+
+1. **Fix the C2.4 flake** so step 8 is green. Test-side only. This is the one thing standing between the
+   branch and a fully green CI.
+2. **Speed up or trim the screenshot sweep** so step 9 produces artifacts instead of timing out.
+3. **`main` does not compile** — verified, see §1. `tsc` fails with the `period` error at
+   `src/lib/analytics.ts:68` and `:381`. `main` is the base for any deployment and has been red since
+   2026-10-26. Note `404cd25` records a **decision not to apply that fix on this branch** — applying it
+   here turns a clean `tsc` into 4 errors, because the two lineages' `analytics.ts` diverged. So this
+   must be fixed **on `main`**, not here.
+4. **Cross-branch migration numbering** — 0118+ for anything new. Already decided; just obey it.
+5. **One `UI-INVENTORY.md`.** There are still two: this branch has 1,685 lines, B has 2,038. They must
+   be reconciled into one before the parallel UI track starts.
+6. **WP-IMPORT** (§4) — still the highest-value *feature* work, once CI is green.
+
+**Ledger state on the branch** (`docs/SCALE-TASKS.md`): **46 DONE, 3 TODO, 1 BLOCKED.** The three TODOs
+are **U1** (pencil-style guided pointers), **U2** (every screen's functional states), **U3** (guided
+first-run zero → first sealed report) — **all three are design-language / UI-polish items, which are the
+owner's held work by the standing rule.** The BLOCKED row is **C7** (anomaly → SIRA), blocked on S18,
+not available on this branch alone. So **the engineering queue is essentially closed on this branch.**
+
+**Held for the owner:** the design language (E8, U5, U7, U9–U13) and U1–U3.
 
 ## 7. On outsourcing this to a second builder
 
