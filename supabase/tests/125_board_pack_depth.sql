@@ -1,4 +1,4 @@
--- Test 105: Board Pack depth (migration 0099, F10 / S7).
+-- Test 125: Board Pack depth (migration 0099, F10 / S7).
 --   * the boundary (from_ts, to_ts) is actually applied to every source row;
 --   * the snapshot now carries a real SIRA heatmap (entity x band) and a plan Gantt;
 --   * every figure the new fields add still carries refs (the F10 invariant);

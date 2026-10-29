@@ -1,4 +1,4 @@
--- 102_guided_provisioning.sql — WP3: the guided client provisioning path (migration 0097).
+-- 122_guided_provisioning.sql — WP3: the guided client provisioning path (migration 0097).
 --
 -- Proves both directions for every new RPC: the happy path as the platform administrator, and the
 -- RLS/authority refusal path as a tenant user. The harness runs this file twice against the same

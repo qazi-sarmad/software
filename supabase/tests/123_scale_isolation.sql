@@ -1,4 +1,4 @@
--- Test 103: SCALE-1 WP4. Multi-tenant scale and isolation.
+-- Test 123: SCALE-1 WP4. Multi-tenant scale and isolation.
 --
 -- Three concurrent organisations, data written in each, and the RLS paths that must keep them
 -- apart: the normal jwt_org_id() path, the cross-universe share path, the invitation-cap and

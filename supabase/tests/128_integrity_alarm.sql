@@ -1,4 +1,4 @@
--- Test 112 (T7): the integrity alarm. Detection existed and nothing told a human; this proves the
+-- Test 128 (T7): the integrity alarm. Detection existed and nothing told a human; this proves the
 -- alarm fires on every channel, that the severity split is a rule, that the read surface is gated to
 -- an integrity owner, that acknowledgement is an annotation (never an edit) and is ledgered, and that
 -- the ledger-continuity check re-verifies the chain and raises an incident when it breaks.

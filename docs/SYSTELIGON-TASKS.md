@@ -195,7 +195,7 @@ shares `siraCompute` with the RPC so the previewed score is the stored score.
 
 | Piece | What it does |
 |---|---|
-| `supabase/migrations/0110_sira_continuity_acceptance.sql` | Adds `sira_carry_forward` and `sira_acceptances`; adds the missing `band` column to `sira_scores` (selected by `listScores`, never created — a latent read bug); adds `sira_carry_forward_pack(cycle)`, `sira_seed_next_cycle_internal`, `propose_emergent_risks(cycle)`, `endorse_sira_cycle`, `decide_sira_acceptance`, `remind_sira_acceptance`, `sira_acceptance_status(cycle)`. All additive; RLS on both tables; reads allow `can_read_all_scopes()`, `review_and_approve` (an auditor must see what they are asked to accept) or an explicit scope. |
+| `supabase/migrations/0119_sira_continuity_acceptance.sql` | Adds `sira_carry_forward` and `sira_acceptances`; adds the missing `band` column to `sira_scores` (selected by `listScores`, never created — a latent read bug); adds `sira_carry_forward_pack(cycle)`, `sira_seed_next_cycle_internal`, `propose_emergent_risks(cycle)`, `endorse_sira_cycle`, `decide_sira_acceptance`, `remind_sira_acceptance`, `sira_acceptance_status(cycle)`. All additive; RLS on both tables; reads allow `can_read_all_scopes()`, `review_and_approve` (an auditor must see what they are asked to accept) or an explicit scope. |
 | `src/data/sira.ts` | Adds `decideEmergentRisk`, `proposeEmergentRisks`, `carryForwardPack`, `seedNextCycle`, `endorseSiraCycle`, `decideSiraAcceptance`, `remindSiraAcceptance`, `siraAcceptanceStatus` — thin RPC wrappers, no client in a component (M8). |
 | `src/components/sira/SiraCyclesInspector.tsx` | The connected inspector: create/publish a cycle, build the carry-forward pack, seed the next cycle, propose and decide emergent risks, endorse and accept. Every element carries a `sira-*` testid. |
 | `src/components/sira/SiraCyclePanel.tsx` | Renders the carry-forward pack, the two-key acceptance state, the publication block and the reminder count; the proposal's provenance and the mandatory decision reason. |
@@ -225,7 +225,7 @@ endorsed. Publication of the next-year cycle is blocked while proposals are outs
 and the reminder count is surfaced. One role able to both propose and close is a control weakness an
 external reviewer would flag; it is no longer possible.
 
-**Tests.** `supabase/tests/106_sira_continuity.sql` (applied twice, green) proves the pack, the
+**Tests.** `supabase/tests/126_sira_continuity.sql` (applied twice, green) proves the pack, the
 idempotent proposal, the two-key separation, the publication block and the silence finding.
 `src/components/sira/SiraPanels.test.tsx` (12 tests) proves the panel's states, the two controls being
 mutually exclusive, the block text and the proposal provenance.
@@ -239,12 +239,12 @@ created anywhere. Mode A / Mode B verification verified a hash of bytes nobody k
 
 | Piece | What it does |
 |---|---|
-| `supabase/migrations/0111_evidence_storage.sql` | Creates the four private buckets (`evidence`, `reports`, `archives`, `org-branding`) with org-scoped RLS on `storage.objects` keyed to `jwt_org_id()` by the leading path segment (guarded on the `storage` schema existing, so the SQL harness applies cleanly). Adds `storage_path`/`mime_type`/`byte_size`/`storage_bucket`/`registered_by`/`verified_*` to `evidence_files`. Adds `register_evidence_file` (re-checks the right, the seal, the size and the org prefix; writes the row THEN the ledger entry), `verify_evidence_file` (re-derives and compares, raises an integrity alert on a mismatch, records `no_stored_bytes` when there is nothing to verify), `evidence_files_for`, `evidence_max_bytes`, `evidence_storage_ready`. |
+| `supabase/migrations/0120_evidence_storage.sql` | Creates the four private buckets (`evidence`, `reports`, `archives`, `org-branding`) with org-scoped RLS on `storage.objects` keyed to `jwt_org_id()` by the leading path segment (guarded on the `storage` schema existing, so the SQL harness applies cleanly). Adds `storage_path`/`mime_type`/`byte_size`/`storage_bucket`/`registered_by`/`verified_*` to `evidence_files`. Adds `register_evidence_file` (re-checks the right, the seal, the size and the org prefix; writes the row THEN the ledger entry), `verify_evidence_file` (re-derives and compares, raises an integrity alert on a mismatch, records `no_stored_bytes` when there is nothing to verify), `evidence_files_for`, `evidence_max_bytes`, `evidence_storage_ready`. |
 | `src/data/evidence.ts` | Upload (bytes → row → ledger), list, verify, signed short-lived URL, readiness probe. A component never imports the client. |
 | `src/components/audit/EvidenceTab.tsx` | Uploads to the bucket when one is wired and shows the stored rows; otherwise keeps the honest in-memory path and labels it **"session only"** rather than claiming a hash-lock it cannot keep. Every element carries an `evidence-*` testid. |
 
 **Order is bytes → row → ledger, never the reverse**, so the ledger can never attest to bytes that
-were not stored. The size cap is enforced in the database, not only the request. `supabase/tests/107_evidence_storage.sql`
+were not stored. The size cap is enforced in the database, not only the request. `supabase/tests/127_evidence_storage.sql`
 (applied twice, green) proves the row, the org-prefix refusal, the cap, the hash shape, a matching
 verify, a mismatching verify that raises an alert, `no_stored_bytes`, cross-org refusal and the
 anonymous refusal.
@@ -293,7 +293,7 @@ ledger entry) and the archive check functions all already exist. Detection is co
 missing. Severity-split a single hash mismatch from a broken ledger chain — the second is an
 incident, not a warning. BOUNDARY: this is tamper-EVIDENCE, never tamper-prevention.
 
-**T7 implemented (2026-10-28).** `0112_integrity_alarm.sql`:
+**T7 implemented (2026-10-28).** `0121_integrity_alarm.sql`:
 `integrity_alert_severity(kind)` is the severity rule as data (ledger chain / signature / timestamp =
 incident; a single object = warning). `raise_integrity_alert` is redefined to fan out through
 `integrity_alert_notify` — an in-app `notification_emit` to each integrity owner
@@ -304,10 +304,10 @@ surface. `integrity_alert_acknowledge()` records that a human saw it and ledgers
 alert row stays immutable. `ledger_continuity_check()` re-verifies the chain and raises an incident on
 a break. The surface is `IntegrityAlarmPanel.tsx` (OA-29, the `org_control` `integrity` tab) plus
 `IntegrityAlarmBanner.tsx` (DB-01). `src/lib/integrityAlarm.ts` is the pure labelling/summary layer,
-pinned to the SQL rule by a parity test. SQL test `112_integrity_alarm.sql`; vitest
+pinned to the SQL rule by a parity test. SQL test `128_integrity_alarm.sql`; vitest
 `src/lib/integrityAlarm.test.ts` and `src/data/archival.integrityAlarm.test.ts`.
 
-**T6 implemented (2026-10-28).** The RESPONSE to the alarm. `0114_incident_wizard.sql`:
+**T6 implemented (2026-10-28).** The RESPONSE to the alarm. `0123_incident_wizard.sql`:
 `integrity_incidents` is the immutable incident header (select-only policy, no update grant); the
 `engagement_id` it affects is resolved once at open time by `integrity_incident_engagement(type, id)`
 (evidence file → its engagement, archive job → its engagement, ledger/report graph → none).
@@ -329,7 +329,7 @@ reason)` requires a reason (`a_reason_is_required`) and appends to the ledger;
 Head/platform admin). Surface `IncidentWizardPanel.tsx` (OA-31, the `org_control` `incidents` tab);
 pure layer `src/lib/incidentWizard.ts` (status, available actions, model, headline — time is an
 argument). Data module `src/data/incidents.ts` (inert without a Supabase env). SQL test
-`114_incident_wizard.sql`; vitest `src/lib/incidentWizard.test.ts`, `src/data/incidents.test.ts`,
+`130_incident_wizard.sql`; vitest `src/lib/incidentWizard.test.ts`, `src/data/incidents.test.ts`,
 `src/components/admin/IncidentWizardPanel.test.tsx`. Explain entries `term.incident` and `screen.OA-31`.
 BOUNDARY (never blurred): tamper-EVIDENCE, not tamper-prevention.
 
@@ -341,7 +341,7 @@ without our code, the published procedure to check it, and a screen to build and
 
 | Piece | What it does |
 |---|---|
-| `supabase/migrations/0113_attestation_package.sql` | Adds `report_claims.leaf_hash` and redefines `report_graph_commit` to record it — the gap that made the root un-re-foldable off-database, because the canonical claim text is not kept and a leaf cannot be recovered from `claim_hash`. Adds `attestation_input_get(kind, subject_id)` — one security-definer read that gathers a subject's roots, versions (incl. the distinct rule packs), Merkle leaves, signatures, public keys, timestamp tokens and ledger seq, for `report_graph_root` / `engagement_certificate` / `board_pack_data_hash`. Adds `attestation_subjects_list()` — the signed subjects an integrity owner can build a package for. Both refuse a caller who is not an integrity owner (`review_and_approve`/`edit_config`/Head/platform admin). |
+| `supabase/migrations/0122_attestation_package.sql` | Adds `report_claims.leaf_hash` and redefines `report_graph_commit` to record it — the gap that made the root un-re-foldable off-database, because the canonical claim text is not kept and a leaf cannot be recovered from `claim_hash`. Adds `attestation_input_get(kind, subject_id)` — one security-definer read that gathers a subject's roots, versions (incl. the distinct rule packs), Merkle leaves, signatures, public keys, timestamp tokens and ledger seq, for `report_graph_root` / `engagement_certificate` / `board_pack_data_hash`. Adds `attestation_subjects_list()` — the signed subjects an integrity owner can build a package for. Both refuse a caller who is not an integrity owner (`review_and_approve`/`edit_config`/Head/platform admin). |
 | `src/lib/attestation.ts` | The PURE package model: `buildAttestationPackage` (time is an argument; the package root is the SHA-256 of the canonical package without `packageRoot`), `packageRoot`, `merkleRootOfLeafHashes` (the exact mirror of `report_graph_root_of`: `'01'` node prefix, odd node promoted), `verifyAttestationPackage` (re-derives the root, re-folds the leaves, verifies every Ed25519 signature against the embedded keys, and returns a verdict — never throws), `parseAttestationPackage`, and `ATTESTATION_INSTRUCTIONS` (the procedure, as data). Only hashes, signatures, public keys, timestamps and version ids are carried (Law L2). |
 | `scripts/verify-attestation.mjs` | The STANDALONE third-party verifier: a self-contained Node script that imports only `node:crypto`/`node:fs`. It re-derives the package root, re-folds the Merkle root, verifies every Ed25519 signature (rebuilding the SPKI from the raw 32-byte key itself) and checks an `--expect-root` you supply. Exit 0 passes, 1 fails, with each step printed. This is the "independent tooling" half of T4. |
 | `docs/ATTESTATION-VERIFICATION.md` | The published procedure (T4), written for an outsider: what a package is, what it proves and what it does not, and the six steps to verify it in any language. |
@@ -352,7 +352,7 @@ without our code, the published procedure to check it, and a screen to build and
 builds a package with the in-product code and runs `scripts/verify-attestation.mjs` as a separate Node
 process; both must reach the same verdict on a good package and on a tampered one. A divergence is a
 build failure. Tests: `src/lib/attestation.test.ts` (15) + `src/lib/attestation.standalone.test.ts` (3);
-SQL `supabase/tests/113_attestation_package.sql` (19 assertions, applied twice).
+SQL `supabase/tests/129_attestation_package.sql` (19 assertions, applied twice).
 
 **Boundary (never blurred).** A package proves structure and provenance, not the truth of the claims.
 It is tamper-EVIDENCE, not tamper-prevention.
@@ -372,7 +372,7 @@ Each is a pure function under `src/lib/` with direct unit tests and a screen sur
 
 **D-series close-out.** Twenty pure capabilities across four families (`src/lib/capabilities/`), a
 single uniform evaluator (`evaluateCapability`) so no capability can be added and left unreachable,
-a data module (`src/data/capabilities.ts`), persistence + config-as-ledger (`0115_capability_library.sql`,
+a data module (`src/data/capabilities.ts`), persistence + config-as-ledger (`0124_capability_library.sql`,
 test `115`), and the screen surface (`CapabilityLibraryPanel.tsx`, screen `DB-02` on the dashboard).
 The evaluator is total: it never returns nothing, and it distinguishes `ready` (findings), `empty`
 (an honest clean result) and `awaiting_input` (naming the exact missing input) rather than showing an
@@ -480,13 +480,13 @@ still empty.
 
 | Piece | What it does |
 |---|---|
-| `supabase/migrations/0117_guided_first_run.sql` | `create_universe(name, domain)` — the first-run action. There was NO write path for a universe anywhere; every screen that writes reads an EXISTING universe, so an org with none was stuck. The RPC requires `edit_config`, writes the row, an `activity_log` entry and a ledger entry, and returns the new id. `get_org_data_state()` returns COUNTS (universes/entities/engagements) and an `is_empty` boolean for the caller's org — never a row of tenant content (Law L2), readable by any signed-in member because a brand-new org's members hold no audit right yet. |
+| `supabase/migrations/0126_guided_first_run.sql` | `create_universe(name, domain)` — the first-run action. There was NO write path for a universe anywhere; every screen that writes reads an EXISTING universe, so an org with none was stuck. The RPC requires `edit_config`, writes the row, an `activity_log` entry and a ledger entry, and returns the new id. `get_org_data_state()` returns COUNTS (universes/entities/engagements) and an `is_empty` boolean for the caller's org — never a row of tenant content (Law L2), readable by any signed-in member because a brand-new org's members hold no audit right yet. |
 | `src/lib/guidedFirstRun.ts` | The PURE rule: `guidedSteps(counts)` / `nextGuidedStep(user, counts)` / `visibleGuidedSteps`. The decision is a rule over the org data state, never a guess from scoped rows. Only the two countable first-run actions are steps; a done step is marked `done`, never hidden. |
 | `src/hooks/useOrgDataState.ts` | Centralises the org-state read so the dashboard and the panel share one authoritative decision. |
 | `src/components/dashboard/GuidedFirstRun.tsx` | The panel: a single guided action ("Create your first universe") with one button, the create form, and the done-steps list. Wired into `ExecutiveDashboardTab.tsx` (the guided step renders in place of the zero-wall; a no-actionable fallback covers the rest). |
 
 Tests: `src/lib/guidedFirstRun.test.ts`, `src/data/guidedFirstRun.test.ts`,
-`src/components/dashboard/GuidedFirstRun.test.tsx` (16) and `supabase/tests/117_guided_first_run.sql`
+`src/components/dashboard/GuidedFirstRun.test.tsx` (16) and `supabase/tests/133_guided_first_run.sql`
 (applied twice, green: the create path, the right refusal, the empty-name refusal, org scoping, the
 empty-org boolean, the anonymous refusal, and the null-org case).
 

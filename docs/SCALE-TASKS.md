@@ -871,7 +871,7 @@ Gate set at this commit (all run locally, all PASS):
 
 ### Task 6.2 — multi-org isolation under concurrency (2026-10-28)
 
-Serial isolation tests (`01_org_isolation.sql`, `103_scale_isolation.sql`) prove a session reads only
+Serial isolation tests (`01_org_isolation.sql`, `123_scale_isolation.sql`) prove a session reads only
 its own org **when it runs alone**. They cannot see the class of defect where the tenant boundary
 depends on shared per-request state — a pooled backend, a cached claim, a session-level GUC that
 survives a `DISCARD`. Only overlapping statements expose that. Phase 6.2 adds two independent

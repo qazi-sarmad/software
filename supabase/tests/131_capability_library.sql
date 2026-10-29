@@ -1,4 +1,4 @@
--- Test 115 (D1-D4): the deterministic capability library's persistence.
+-- Test 131 (D1-D4): the deterministic capability library's persistence.
 --
 -- The pure functions themselves are tested in vitest (src/lib/capabilities/*.test.ts). This proves
 -- the SQL half: the thresholds read back with their defaults, a change requires edit_config and a

@@ -1,4 +1,4 @@
--- Test 117 (U6): the guided first run.
+-- Test 133 (U6): the guided first run.
 --
 -- Two functions: `create_universe` (the first-run action, which had no write path anywhere) and
 -- `get_org_data_state` (the one fact the guided empty state needs — is this organisation still

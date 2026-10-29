@@ -45,8 +45,8 @@ session's tree; when you need its migrations, merge deliberately and resolve the
 FIRST ACTION — the migration-number collision is STILL live
 Both branches still claim the 0110-0116 range (verified: scale-harden runs
 0110_phase4_methodology..0116_phase6_workpaper_creation + 0117_systeligon_rule_packs +
-0118_systeligon_findings; systeligon-build runs 0110_sira_continuity_acceptance..
-0117_guided_first_run). A naive merge keeps one side and silently drops the other, and the SQL harness
+0118_systeligon_findings; systeligon-build runs 0119_sira_continuity_acceptance..
+0126_guided_first_run). A naive merge keeps one side and silently drops the other, and the SQL harness
 can stay green while a migration is missing. Before your first migration: merge the two sets,
 RENUMBERING the colliding files onto fresh numbers above 0119, keep both sides' content, reserve your
 own range from 0120, and run the SQL harness twice over the combined set to prove every migration from

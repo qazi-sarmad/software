@@ -52,7 +52,7 @@ Passwords are generated per run into `e2e/.auth/passwords.json` (git-ignored).
    roles with their rights matrix. The rights are enforced by RLS, not decoration — a Preparer sees
    no audit-config surface at all.
    *Proved by* `full-flow.spec.ts` › `[E2E] setup wizard and people administration are reachable`;
-   enforcement proved by `rls.spec.ts` and SQL test `103_scale_isolation.sql`.
+   enforcement proved by `rls.spec.ts` and SQL test `123_scale_isolation.sql`.
 
 ## Act 3 — The audit: universe to sealed report
 

@@ -1,4 +1,4 @@
--- Test 101: Item A. Integrity anchoring: signing keys, signatures, timestamp queueing, the token
+-- Test 121: Item A. Integrity anchoring: signing keys, signatures, timestamp queueing, the token
 -- checks, the minimum-authority policy, rights refusals and tenant isolation.
 --
 -- Every assertion that reads a ledger or activity row runs as the owner: those tables are visible

@@ -280,7 +280,7 @@ S-rows begin at S17:
   library, licence-restricted decompressor, so a `.rar` is recognised exactly and reported as an
   archive whose members cannot be listed, with the reason — never silently dropped, never guessed at.
   *(**Reported**: 48 unit tests.)*
-- **S18/S19 — SIRA continuity and two-key acceptance.** Migration `0110_sira_continuity_acceptance.sql`.
+- **S18/S19 — SIRA continuity and two-key acceptance.** Migration `0119_sira_continuity_acceptance.sql`.
   On publish, a carry-forward pack records prior score, band, movement, findings, failed controls,
   accepted emergent risks; the next cycle is seeded from it with provenance. `propose_emergent_risks`
   proposes from open findings; a human accepts or rejects with a mandatory reason, idempotently.
@@ -288,7 +288,7 @@ S-rows begin at S17:
   `review_and_approve` must accept. Publication is blocked while proposals are outstanding; silence is
   itself a finding.
 - **S20 — evidence storage**, called by the audit "the most serious gap found." Migration
-  `0111_evidence_storage.sql`. Four private buckets with RLS on `storage.objects` keyed to
+  `0120_evidence_storage.sql`. Four private buckets with RLS on `storage.objects` keyed to
   `jwt_org_id()` by path prefix; `register_evidence_file` re-checks right, seal, size, org prefix and
   writes row then ledger; `verify_evidence_file` re-derives, raises an alert on mismatch, records
   `no_stored_bytes` when there is nothing to verify. Order is bytes → row → ledger, never the reverse.
@@ -340,17 +340,17 @@ mount — exactly the wiring-by-grep rule this programme exists to enforce.
 
 All artifacts below are **verified present** on `feature/systeligon-build-v1`:
 
-- **Attestation** — `0113_attestation_package.sql` adds `report_claims.leaf_hash` and bakes a portable
+- **Attestation** — `0122_attestation_package.sql` adds `report_claims.leaf_hash` and bakes a portable
   package; `scripts/verify-attestation.mjs` and `docs/ATTESTATION-VERIFICATION.md` are an independent
   verifier and its procedure (T3–T5).
-- **Integrity and incident** — `0112_integrity_alarm.sql` wires the existing tamper alarm
-  (`integrity_alerts`, severity-split) and `0114_incident_wizard.sql` adds the guided incident wizard
+- **Integrity and incident** — `0121_integrity_alarm.sql` wires the existing tamper alarm
+  (`integrity_alerts`, severity-split) and `0123_incident_wizard.sql` adds the guided incident wizard
   (T1, T2, T6, T7).
-- **Capability library** — `0115_capability_library.sql` and `src/lib/capabilities/`
+- **Capability library** — `0124_capability_library.sql` and `src/lib/capabilities/`
   (`riskControl.ts`, `populationEvidence.ts`, `processGovernance.ts`, `assuranceOps.ts`) (D1–D4).
 - **Explain layer** — `src/lib/explain/` (`catalogue.ts`, `iia.ts`) and the `ExplainPopout`/`useExplain`
   surface, plus drilldown and standards views (E1–E7, E9, E10).
-- **Activity spine and guided first run** — `0116_activity_spine.sql` and `0117_guided_first_run.sql`;
+- **Activity spine and guided first run** — `0125_activity_spine.sql` and `0126_guided_first_run.sql`;
   `GuidedFirstRun.tsx` (U4, U6).
 - **Self-hosted fonts** — `src/lib/fonts/` catalogue with licence metadata and a lazy loader; the
   Google Fonts CDN link removed; font/colour/theme auto-detection from DOCX/PPTX wired into the org
@@ -544,26 +544,42 @@ Rows marked `BUILT` are listed for completeness so the boundary of this section 
 | A-U2 | Every screen's functional states (loading/empty/error/ready/denied) | **TODO** |
 | A-U3 | Guided first-run: zero → first sealed report | **TODO** (reconcile with B's `GuidedFirstRun.tsx`) |
 
-## 13.9 The one concrete integration hazard between the branches
+## 13.9 The migration-number collision — resolved on the unified branch
 
-This is a standing finding of this briefing. **Both branches claim the `0110`–`0116` migration-number
-range.** **Verified:**
+This was the standing integration hazard of earlier editions. **Both branches claimed the
+`0110`–`0117` migration-number range.** On `feature/systeligon-unified-v1` it is now **resolved and
+verified**, and the reconciliation is recorded here so it is not mistaken for an open item.
+
+**What the collision was:**
 
 - `feature/scale-harden-v1` carries `0110_phase4_methodology`, `0111_phase5_monitor_runner`,
   `0112_phase5_alert_enrichment`, `0113_phase5_delivery`, `0114_phase5_alert_actions`,
-  `0115_tenant_suspension_enforced`, `0116_phase6_workpaper_creation`, and now `0117_systeligon_rule_packs`,
-  `0118_systeligon_findings`.
-- `feature/systeligon-build-v1` carries `0110_sira_continuity_acceptance`, `0111_evidence_storage`,
-  `0112_integrity_alarm`, `0113_attestation_package`, `0114_incident_wizard`, `0115_capability_library`,
-  `0116_activity_spine`, `0117_guided_first_run`.
+  `0115_tenant_suspension_enforced`, `0116_phase6_workpaper_creation`, plus `0117_systeligon_rule_packs`
+  and `0118_systeligon_findings`.
+- `feature/systeligon-build-v1` carried its own `0110_sira_continuity_acceptance` through
+  `0117_guided_first_run` — eight files sharing the same numbers as the eight above.
 
-The namespace is shared; migrations apply by glob in filename order. When these two branches merge,
-one number maps to two different files. A `git merge` of truly divergent histories would conflict on
-the identical path; a squash or a regenerated tree would silently keep one and drop the other — **the
-dangerous case**, because a dropped migration is a dropped feature and the SQL harness would still be
-green if the surviving file happens to be valid. This must be resolved deliberately at integration
-time: renumber one side above the highest used number and prove both migrations still apply in one
-ordered run.
+**How it was resolved (verified):** the unified branch renumbered B's eight migrations above the
+highest number in use, to `0119_sira_continuity_acceptance`, `0120_evidence_storage`,
+`0121_integrity_alarm`, `0122_attestation_package`, `0123_incident_wizard`, `0124_capability_library`,
+`0125_activity_spine`, `0126_guided_first_run`. The renumber was **content-preserving** — each renamed
+file is byte-identical to its source (`git show <branch>:<path> | sha256sum`), and no migration file is
+absent from the unified tree (`git ls-tree` set difference on both source branches is empty once the
+renumber is accounted for). No migration was destroyed.
+
+**What was actually still wrong, and is now fixed:** the *SQL test* numbers were not renumbered with
+the migrations, leaving thirteen duplicate test numbers (`101`–`107`, `112`–`117`). The harness applies
+tests by glob, so two files at one number both ran — nothing was lost, but the numbering was untraceable.
+The thirteen B-side tests are renumbered to `121`–`133` (`git mv`), their header comments and the two
+machine-read references (`scripts/dead-code-allow.json`, `docs/CONFIG-EFFECT-MATRIX.md`) follow, and the
+prose in `SYSTELIGON-TASKS.md`, `SYSTELIGON-GAP-REPORT.md`, `FEATURE-REGISTER.md`, `SCALE-TASKS.md` and
+`DEMO-SCRIPT.md` is updated to match. Every test re-seeds through `00_lib.sql` and none includes another
+by number, so the renumber is order-independent and safe.
+
+**Why the lesson still stands:** the collision existed because a shared numeric namespace was written by
+two branches that could not see each other. The discipline that prevents a repeat is the one now
+enforced: **a new migration takes the next free number above the branch's own head, and any integration
+renumbers one side wholesale and proves both sides still apply in one ordered run.**
 
 ## 13.10 What the owner still has to do (not code)
 

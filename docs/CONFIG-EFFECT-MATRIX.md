@@ -101,7 +101,7 @@ call site that proves it.
 | `notification_templates` | The subject/blocks a queued notification renders from | `render_notification` | ENFORCED | `82_rpc_authority.sql` |
 | `upload_limits.max_file_mb` / `allowed_extensions` | The evidence upload size and file-type limits the client reads | `upload_limits_get` | ENFORCED | `91_org_governance_settings.sql`; `OrgGovernancePanel.test.tsx` |
 | `certificate_config` (10 field rows) | Which certificate fields appear, and in what order | `certificate_config_get`, `certificate_issue` | ENFORCED | `72_certificate.sql` §1 |
-| `anchoring_settings.min_authorities` | How many independent authorities a sealed report's root must be anchored against | `anchoring_status` | ENFORCED | `101_integrity_anchoring.sql` |
+| `anchoring_settings.min_authorities` | How many independent authorities a sealed report's root must be anchored against | `anchoring_status` | ENFORCED | `121_integrity_anchoring.sql` |
 
 ## 5. Insights and methodology
 

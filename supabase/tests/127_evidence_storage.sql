@@ -1,4 +1,4 @@
--- Test 107 (S20): evidence storage. The row records where the bytes live; a verify re-derives the
+-- Test 127 (S20): evidence storage. The row records where the bytes live; a verify re-derives the
 -- hash from the stored bytes; the path must stay under the caller's org; the size cap is enforced; a
 -- mismatch raises an integrity alert; and a row with no stored bytes is reported, not silently OK.
 \i supabase/tests/00_lib.sql

@@ -1,4 +1,4 @@
--- Test 106 (S18, S19): SIRA continuity and two-key acceptance.
+-- Test 126 (S18, S19): SIRA continuity and two-key acceptance.
 -- Publishing builds a carry-forward pack and seeds the next cycle; open findings propose emergent
 -- risks; the finaliser ENDORSES but a different auditor must ACCEPT; publication of the next cycle is
 -- blocked while a proposal is outstanding; silence is reminded and reported as a finding.

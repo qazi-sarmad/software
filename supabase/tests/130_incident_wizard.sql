@@ -1,4 +1,4 @@
--- Test 114 (T6): the guided integrity incident wizard.
+-- Test 130 (T6): the guided integrity incident wizard.
 --
 -- Proves: an alert opens (idempotently) into an incident that resolves what it affects; every guided
 -- step requires a reason and appends to the ledger; the append-only trail is immutable; the outcome

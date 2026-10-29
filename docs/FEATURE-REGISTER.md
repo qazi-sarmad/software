@@ -56,7 +56,7 @@ feature to be testable.
 |---|---|---|---|---|---|
 | F1 | Tenant data loaded from the database into the shell | `Wired` | `loadTenantSnapshot()` (`src/data/tenant.ts`), called from `src/App.tsx:237` and `AppContext.tsx:177`; `snapshotToSeed()` replaces the seed inside `AuthGate`. Phase 1, SCALE-TASKS 1.1-1.3. (SCALE-TASKS 1.2 refers to a tenant data provider component; the mechanism actually shipped is these two functions called directly from the auth gate. Naming discrepancy in the ledger, not a functional gap.) | — | `e2e/phase1-production-build.spec.ts` (G1) |
 | F2 | Engagement stage persisted | `Wired` | `set_engagement_stage` (`0101_phase2_lifecycle.sql:149`), append-only transition log, called from `AppContext.tsx`; `src/context/stageAdvance.test.tsx` | — | Phase 2 2.1 |
-| F3 | Ledger verified against the database | `Wired` | `ledger_continuity_check` (`0112_integrity_alarm.sql:257`) calls `verify_ledger` (`0007:97`), raises an integrity incident on a break, and is called from `IntegrityAlarmPanel.tsx:74`; the chain is now verified, not just written | T7 | SQL test tampering a ledger row, then `verify_ledger` returns false |
+| F3 | Ledger verified against the database | `Wired` | `ledger_continuity_check` (`0121_integrity_alarm.sql:257`) calls `verify_ledger` (`0007:97`), raises an integrity incident on a break, and is called from `IntegrityAlarmPanel.tsx:74`; the chain is now verified, not just written | T7 | SQL test tampering a ledger row, then `verify_ledger` returns false |
 | F4 | Report graph root persisted | `Wired` | `commitReportGraph` (`src/data/reportGraph.ts:144`) called from `ReportEditorPanel.tsx:149`; read back by `verifyReportRoot` (`PublicVerifyRoute.tsx:43`). Phase 2, 2.6 | — | `104_phase2_report_graph.sql` |
 | F5 | Pre-flight engine consumed at freeze | `Wired` | `freeze_report` computes open items from real tables and refuses while any is unacknowledged (`0102_phase2_preflight_gate.sql`); `ReportEditorPanel.tsx:22` uses the preflight data module. Phase 2, 2.5 | — | Phase 2 2.5 |
 | F6 | Sampling linked to row testing | `Wired` | `workpaper_rows` seeded from `lock_sample` (`0104_phase2_row_seeding.sql`); method-aware draw `0105`; value coverage `0106`. Phase 2, 2.7-2.9 | — | `105_phase2_row_seeding.sql` |
@@ -243,7 +243,7 @@ behaviour, or **remove it from the UI** and mark it deferred. No field may be vi
 | F111 | Density toggle | `Absent` | §11.1c U7 | U15 |
 | F112 | Contrast test covers all presets | `Inert` | `tokens.contrast.test.ts` covers three; must cover six at every phase | U9 |
 | F113 | Motion / theme / personalisation gates | `Absent` | §12.7 | U12 |
-| F114 | Guided empty states | `Wired` | A new organisation's dashboard shows `GuidedFirstRun.tsx` (DB-01) instead of a wall of zeros: the pure `src/lib/guidedFirstRun.ts` rule decides the step, `createUniverse` on the app context is the button's write path, and `src/data/guidedFirstRun.ts` reads the gated `get_org_data_state` RPC (`supabase/migrations/0117_guided_first_run.sql`). `create_universe` is the first-run action that had no write path anywhere | U6 |
+| F114 | Guided empty states | `Wired` | A new organisation's dashboard shows `GuidedFirstRun.tsx` (DB-01) instead of a wall of zeros: the pure `src/lib/guidedFirstRun.ts` rule decides the step, `createUniverse` on the app context is the button's write path, and `src/data/guidedFirstRun.ts` reads the gated `get_org_data_state` RPC (`supabase/migrations/0126_guided_first_run.sql`). `create_universe` is the first-run action that had no write path anywhere | U6 |
 | F115 | Onboarding tutorial drawer | `Wired` | `tutorialKeys.json`, `role="complementary"` | — |
 | F116 | Offline / self-hosted fonts | `Wired` | `src/lib/fonts/catalogue.ts` (curated repository + licence metadata), `loader.ts` (lazy loader), `detect.ts` (DOCX/PPTX font-colour auto-detect), consumed by `OrgBrandingPanel.tsx` (OA-02/OA-03); `index.html` loads no external font host | G10 (`src/guards/fontLicence.test.ts`) |
 
@@ -271,7 +271,7 @@ Each is a pure function under `src/lib/`, with direct unit tests and a screen su
 | F123 | Population-level forensic analytics | `Absent` | D7 |
 | F124 | Policy-to-control gap analysis | `Absent` | D8 |
 | F125 | Assurance-over-assurance | `Absent` | D9 |
-| F126 | Live activity spine | `Wired` | `ActivitySpine.tsx` (DB-01) renders the pure `src/lib/activitySpine.ts` layer (sentence, kind, age) over the rights-gated `activity_spine_list` RPC (`supabase/migrations/0116_activity_spine.sql`) via `src/data/activity.ts` on the existing `liveSync` transport (Realtime when available, bounded poll otherwise) | U4 |
+| F126 | Live activity spine | `Wired` | `ActivitySpine.tsx` (DB-01) renders the pure `src/lib/activitySpine.ts` layer (sentence, kind, age) over the rights-gated `activity_spine_list` RPC (`supabase/migrations/0125_activity_spine.sql`) via `src/data/activity.ts` on the existing `liveSync` transport (Realtime when available, bounded poll otherwise) | U4 |
 
 ---
 

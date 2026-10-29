@@ -1,4 +1,4 @@
--- Test 116 (U4): the live activity spine.
+-- Test 132 (U4): the live activity spine.
 --
 -- The spine is the organisation's recent activity as a SUMMARY stream: actor, action, object, a
 -- reduced detail object and the timestamp. This proves: the stream is rights-gated (a caller who may

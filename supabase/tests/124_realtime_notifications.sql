@@ -1,4 +1,4 @@
--- Test 104: SCALE-1 WP2 close-out. Realtime in-app notifications (§22) and the pop-out sync shape
+-- Test 124: SCALE-1 WP2 close-out. Realtime in-app notifications (§22) and the pop-out sync shape
 -- (§17.1).
 --
 -- §22: a notification raised for one member is visible to that member and to nobody else, through

@@ -1,4 +1,4 @@
--- Test 113 (T3/T4): the portable attestation package's data supply.
+-- Test 129 (T3/T4): the portable attestation package's data supply.
 --
 -- Proves: report_graph_commit records each claim's Merkle leaf hash, so a third party can re-fold the
 -- root from the package alone; attestation_input_get gathers a subject's facts (roots, versions,
