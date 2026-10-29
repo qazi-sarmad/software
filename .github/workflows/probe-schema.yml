@@ -1,6 +1,8 @@
 name: Probe hosted schema (temporary)
 
 on:
+  push:
+    branches: [feature/systeligon-unified-v1]
   workflow_dispatch:
 
 jobs:
