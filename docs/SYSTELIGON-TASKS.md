@@ -539,6 +539,17 @@ Tests: `src/data/fontBytes.test.ts` (3) and `src/lib/render/designedPdf.test.ts`
 embedded and the render stays byte-identical). The `render.test.ts` reproducibility sweep over every
 catalogue family still passes.
 
+### F4 — correction (2026-10-28, re-audit under the ONE RULE)
+
+The F4 row claimed the org font upload was wired, and the upload half was: `OrgBrandingPanel`
+acknowledges the licence and calls `uploadBrandingAsset`, which stores the bytes in
+`branding_assets`. But `listBrandingAssets` had **zero** callers — an org could upload a house font or
+logo and then never see that it had been stored, or what else was already there. The panel now loads
+`listBrandingAssets(orgId)` with the branding, refreshes it after every successful upload, and renders
+the stored assets (`oa-branding-assets`, `-list`, `-empty`, `oa-branding-asset-<id>`) so a licence
+acknowledgement is confirmed against what is actually stored. `OrgBrandingPanel.test.tsx` (+2) pins
+the populated and empty lists.
+
 ---
 
 ## Gates to add on this branch

@@ -2,7 +2,8 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useApp } from '../../context/AppContext';
 import { hasRight } from '../../lib/rights';
 import {
-  getBranding, saveBranding, savePptxTheme, uploadBrandingAsset, type BrandingFields,
+  getBranding, listBrandingAssets, saveBranding, savePptxTheme, uploadBrandingAsset,
+  type BrandingAsset, type BrandingFields,
 } from '../../data/branding';
 import { brandingFromRow, DEFAULT_BRANDING, fillTemplate, resolveHexColour, toCssColour, type BrandingSpec } from '../../lib/render/branding';
 import { extractPptxTheme } from '../../lib/render/pptx';
@@ -53,6 +54,13 @@ export const OrgBrandingPanel: React.FC = () => {
   /** F4: the licence acknowledgement a font upload requires before it is accepted. */
   const [fontLicenceAck, setFontLicenceAck] = useState(false);
   const [fontNote, setFontNote] = useState('');
+  /** F4: the org's stored assets, so an upload can be confirmed against what is actually stored. */
+  const [assets, setAssets] = useState<BrandingAsset[]>([]);
+
+  const refreshAssets = useCallback(async () => {
+    if (!orgId) { setAssets([]); return; }
+    try { setAssets(await listBrandingAssets(orgId)); } catch { setAssets([]); }
+  }, [orgId]);
 
   const load = useCallback(async () => {
     if (!orgId) { setState('ready'); return; }
@@ -60,12 +68,13 @@ export const OrgBrandingPanel: React.FC = () => {
     setLoadError('');
     try {
       setSpec(await getBranding(orgId));
+      await refreshAssets();
       setState('ready');
     } catch (err) {
       setLoadError(err instanceof Error ? err.message : 'Could not load the branding.');
       setState('error');
     }
-  }, [orgId]);
+  }, [orgId, refreshAssets]);
 
   useEffect(() => { void load(); }, [load]);
 
@@ -148,7 +157,10 @@ export const OrgBrandingPanel: React.FC = () => {
     const base64 = btoa(binary);
     const r = await uploadBrandingAsset(orgId, 'font', file.name, file.type || 'font/woff2', base64);
     setResult(r.ok ? { ok: true } : r);
-    if (r.ok) setFontNote(`Stored ${file.name}. It is yours and is recorded against your licence acknowledgement.`);
+    if (r.ok) {
+      setFontNote(`Stored ${file.name}. It is yours and is recorded against your licence acknowledgement.`);
+      await refreshAssets();
+    }
   };
 
   const onLogoFile = async (file: File, kind: 'logo_light' | 'logo_dark') => {
@@ -159,7 +171,10 @@ export const OrgBrandingPanel: React.FC = () => {
     const base64 = btoa(binary);
     const r = await uploadBrandingAsset(orgId, kind, file.name, file.type || 'application/octet-stream', base64);
     setResult(r.ok ? { ok: true } : r);
-    if (r.ok) { setDraft((d) => ({ ...d, [kind === 'logo_light' ? 'logoLightAssetId' : 'logoDarkAssetId']: r.id })); }
+    if (r.ok) {
+      setDraft((d) => ({ ...d, [kind === 'logo_light' ? 'logoLightAssetId' : 'logoDarkAssetId']: r.id }));
+      await refreshAssets();
+    }
   };
 
   const set = (patch: BrandingFields) => setDraft((d) => ({ ...d, ...patch }));
@@ -349,6 +364,26 @@ export const OrgBrandingPanel: React.FC = () => {
             <span>I confirm we are licensed to embed and redistribute this font in our reports.</span>
           </label>
           {fontNote && <p className="text-xs text-muted" data-testid="oa-branding-font-note">{fontNote}</p>}
+
+          {/* F4: what the org has actually stored — a font upload is confirmed against this list, not
+              against a note that could be stale. */}
+          <div className="rounded border border-border p-3 space-y-1" data-testid="oa-branding-assets">
+            <p className="text-xs font-medium text-primary">Stored assets</p>
+            {assets.length === 0 ? (
+              <p className="text-xs text-muted" data-testid="oa-branding-assets-empty">
+                No logos, fonts or templates have been stored yet.
+              </p>
+            ) : (
+              <ul className="text-xs text-muted space-y-0.5" data-testid="oa-branding-assets-list">
+                {assets.map((a) => (
+                  <li key={a.id} data-testid={`oa-branding-asset-${a.id}`}>
+                    <span className="font-medium text-secondary">{a.kind}</span> — {a.filename}
+                    {a.byteSize > 0 && <> · {(a.byteSize / 1024).toFixed(1)} KB</>}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
 
           {/* F5/F6: what we read from the uploaded template, and the offer to adopt it. */}
           {detected && proposal && (

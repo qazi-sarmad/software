@@ -361,6 +361,8 @@ under `acp.tutorial.autoplay`), so the same screen never autoplays twice. The e2
   `oa-branding-font-licence-ack`, `oa-branding-font-note`, `oa-branding-detected`,
   `oa-branding-detected-note`, `oa-branding-detected-heading`, `oa-branding-detected-body`,
   `oa-branding-detected-colours`, `oa-branding-detected-toupload`, `oa-branding-adopt`,
+  `oa-branding-assets`, `oa-branding-assets-empty`, `oa-branding-assets-list`,
+  `oa-branding-asset-<id>`,
   `oa-branding-save`, `oa-branding-error`, `oa-branding-saved`,
   `oa-branding-preview`, `oa-branding-preview-header`, `oa-branding-preview-footer`,
   `oa-branding-preview-note`.
@@ -368,7 +370,9 @@ under `acp.tutorial.autoplay`), so the same screen never autoplays twice. The e2
   a plain notice). A save refusal (rights or entitlement) is shown in `oa-branding-error` in the
   server's own words. An over-size asset is refused by the RPC. A template upload detects the file's
   own fonts, colours and page setup (F5) and offers to adopt them (F6); a house-font upload is refused
-  until the licence acknowledgement (`oa-branding-font-licence-ack`) is ticked (F4).
+  until the licence acknowledgement (`oa-branding-font-licence-ack`) is ticked (F4). The stored assets
+  (`oa-branding-assets`) list every logo, font and template the org holds, empty or populated, and
+  refresh after each successful upload.
 - **Tutorial keys:** `oa.branding`, `oa.pptx-theme`.
 
 ---
