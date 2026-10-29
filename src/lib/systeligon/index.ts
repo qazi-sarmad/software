@@ -21,3 +21,9 @@ export {
 export { justBelowThreshold } from './rules/threshold';
 export { parseDocumentStructure, hasSignature, FIELD_PARSERS, type StructuredExtraction } from './extract/structured';
 export { needsOcr, runOcr, type OcrEngine, type OcrText, type OcrOutcome, type ExtractionHint } from './extract/ocr';
+export {
+  requiredRowsFromFindings, buildAcceptedTestingSet, applyFloor, parsePastedBlock,
+  verifyCompleteness, verifyEvidence, verifyRows, carriedOverrides,
+  type RowDecision, type RemarkClaim, type TestedRow, type RequiredRow, type PopulationRow,
+  type EvidenceRecord, type RowVerification, type VerificationMode, type CarriedOverride,
+} from './flows';

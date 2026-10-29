@@ -1399,6 +1399,28 @@ fingerprint; packs; the two structural rules). Full suite 216 files / 2,510 test
 **Tests:** `extract.test.ts` 8 tests. Full suite 217 files / 2,529 tests green; all gates and build green.
 Register F130/F131 added; F43 flipped to `Wired`; counts 56/31/44.
 
+### S3/S4/S5/S12 — the flows and verification (2026-10-29)
+
+**DONE (pure flow logic; screen wiring is later).** Queue item 12. `src/lib/systeligon/flows.ts`.
+
+- **S3 accepted flow (§2.2)** — `requiredRowsFromFindings` takes the rows a rule run requires evidence
+  for (order-preserving, de-duplicated); `buildAcceptedTestingSet` then adds `autoAdd` untested rows,
+  marked `autoAdded` so the UI can tell them from required ones. A required row is never dropped.
+- **S4 declined flow (§2.3)** — `applyFloor` treats the floor as a **minimum, never a ceiling**: rows
+  tested earlier count toward it and are always kept; untested rows are added until the tested count
+  reaches the floor. `parsePastedBlock` splits a pasted block and, when the first line matches the
+  target's column headers, maps it onto them — deterministic clipboard parsing.
+- **S5 verification (§6)** — `verifyCompleteness` (Mode A: a closed decision and a remark) and
+  `verifyEvidence` (Mode B: reachable, declared type, recorded hash, period/entity/amount, internal
+  consistency). Both **fail closed**: a missing record or an unset value is a reason, never a silent
+  pass. `verifyRows` dispatches to the org-configured mode.
+- **S12 override (§2.2), carried forward** — `carriedOverrides` lists the rows closed despite a failed
+  verification, **only with a remark** (a closure without a remark is an invalid close, not an
+  override), with every reason, so the reviewer is shown them rather than having to find them.
+
+**Tests:** `flows.test.ts` 15 tests. Full suite 218 files / 2,546 tests green; all gates and build
+green. Register F132 added; counts 56/32/44.
+
 ## Environment facts (for the next session)
 
 - The sandbox has **no host Postgres** and **no Docker socket for the user**, but

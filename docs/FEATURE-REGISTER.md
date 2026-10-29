@@ -277,6 +277,7 @@ Each is a pure function under `src/lib/`, with direct unit tests and a screen su
 | F129 | Systeligon numeric forensic rule library (S6) | `Inert` | `src/lib/systeligon/rules/numeric.ts` wraps the tested checks in `analyticsEngine.ts` (duplicates, near-duplicates, sequence gaps, z-score and IQR outliers, Benford first digit, round numbers, out-of-hours, same-user create/approve, missing attributes) as versioned rules with provenance, plus `rules/threshold.ts` (just-below-threshold). The checks are not duplicated — `analyticsEngine` stays the single implementation. Test-only so far; no screen consumes a run yet | S6 |
 | F130 | Systeligon structured document extraction, tier 3 (S7) | `Inert` | `src/lib/systeligon/extract/structured.ts` parses text into a `ParsedDocument` with declared parsers (vendor/date/amount/reference/period fields, numbered clauses, action items, signatures, cross-references) and reports its own coverage (lines/parsed/uninterpreted). Pure and deterministic. Test-only so far | S7 |
 | F131 | Systeligon OCR seam, tier 2 (S7) | `Inert` | `src/lib/systeligon/extract/ocr.ts` decides whether a scan needs OCR (`needsOcr`), runs an injected local engine lazily, and **refuses a remote engine** so nothing leaves the tenant (L2). The bundled model is a build artifact wired as a dependency, not vendored here (D6). Test-only so far | S7 |
+| F132 | Systeligon flows and verification (S3/S4/S5/S12) | `Inert` | `src/lib/systeligon/flows.ts`: the accepted flow (required rows from findings, then auto-add), the declined flow (`applyFloor` — the floor is a minimum, never a ceiling; `parsePastedBlock` maps a pasted header onto the columns), Mode A completeness and Mode B evidence verification (§6, fails closed with every reason), and the §2.2 override carried forward to the next reviewer. Pure; time is an argument. Test-only so far | S3/S4/S5/S12 |
 
 ---
 
@@ -285,13 +286,13 @@ Each is a pure function under `src/lib/`, with direct unit tests and a screen su
 | Status | Count |
 |---|---|
 | `Wired` | 56 |
-| `Inert` | 31 |
+| `Inert` | 32 |
 | `Absent` | 44 |
-| **Total** | **131** |
+| **Total** | **132** |
 
 **Read that again, with the correction applied.** This is materially better than the first pass
 reported, because Phases 1 and 2 of the scale-harden build closed the whole foundation. The picture
-now: **55 wired, 29 inert, 44 absent** (F126 population header detection by S2; F127-F128 the Systeligon rule-engine shell by S1; F129 the numeric rule library by S6, both added 2026-10-29). F35 (report templates) and F37 (report graph root) were
+now: **55 wired, 29 inert, 44 absent** (F126 population header detection by S2; F127-F128 the Systeligon rule-engine shell by S1; F129 the numeric rule library by S6; F130-F132 extraction and flows, all added 2026-10-29). F35 (report templates) and F37 (report graph root) were
 `Inert` here and are now written and read end to end, so they were corrected on 2026-10-29. The
 remaining `Inert` rows are the genuine, still-open
 unwired features — the monitor runtime, the evidence bytes, the tamper alarm, the SIRA write path,
