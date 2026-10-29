@@ -61,7 +61,7 @@ jobs:
       - name: 6c. UI contract
         run: node scripts/check-ui-contract.mjs
 
-   - name: 7. Migrations and SQL tests (runner-local PostgreSQL)
+      - name: 7. Migrations and SQL tests (runner-local PostgreSQL)
         # Previously this applied 106 migrations and 110 test files to the hosted test project with
         # one `psql -f` per file: 216 connections and ~16k DDL/WAL statements per run. That is what
         # exhausted the project's Disk IO budget. The suite needs no cloud data (the shim supplies
@@ -79,7 +79,7 @@ jobs:
           sudo pg_ctlcluster "$PGVER" main start || true
           sudo -n -u postgres psql -tAc 'select 1' >/dev/null || { echo "::error::postgres not reachable"; exit 1; }
           bash scripts/local-sql-harness.sh
-          
+
       - name: 8. Playwright
         env:
           VITE_SUPABASE_URL: ${{ secrets.TEST_SUPABASE_URL }}
@@ -134,3 +134,33 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 14
+The only line that changed vs. your broken version
+Line 64. It must be 6 spaces then - name::
+
+      - name: 7. Migrations and SQL tests (runner-local PostgreSQL)
+Your version had 3 spaces. That single line made the whole file unparseable, which is why zero jobs were created.
+
+After pasting
+Commit to main
+Go to Actions → newest run
+Click step "7. Migrations and SQL tests (runner-local PostgreSQL)"
+Expect: migrations applied twice, then all SQL tests passed twice, in ~1–2 minutes
+Two honest caveats
+Line 122 has no blank line before it — - name: Upload screenshots sits directly after kill $DEV_PID || true. That's how your original file was; I preserved it. It's valid YAML and actionlint passes, so don't "fix" it.
+
+I have not tested this on a real runner. I validated the syntax with actionlint and proved the SQL harness runs green locally in 1m50s, but the runner environment itself is unverified. My one open risk: Ubuntu 24.04 installs PostgreSQL 16, while I tested on 17. The harness has no version pin and I found no PG17-only syntax, so it should work — but if step 7 fails, that's my first suspect and the log will confirm it.
+
+Paste the step-7 log here if it fails and I'll diagnose it directly — I can read your Actions API without a token now, since the repo is public.
+
+
+
+
+Code
+
+Default
+
+
+
+main
+
+Pull
