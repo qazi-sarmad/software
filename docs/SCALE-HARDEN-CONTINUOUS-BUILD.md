@@ -165,6 +165,13 @@ reason, and the comment fix without either leaves a lie in the file.
 
 ### 3.1 WP-IMPORT — the migration path for real client data (do this before the S-series)
 
+**Implementation-ready plan: `docs/WP-IMPORT-PLAN.md`.** Read it before starting. It corrects three
+assumptions in the sketch below — there is no `conclusions` or `reports` table (the targets are
+`conclusion_records`, `report_versions`, `report_blocks`), the dependency graph is deeper than three
+levels, and **no domain table carries a client-facing natural key**, which is the one real design
+decision in the work package. It also flags the hash-chained tables (`conclusion_records`,
+`report_versions`) as the highest-risk part.
+
 **Why this is near the front.** It unblocks real-client testing, and every other queue item is easier to
 verify once a real dataset is in the system instead of a fixture. Full analysis in
 `docs/EVALUATION-REAL-USE.md` §4.
