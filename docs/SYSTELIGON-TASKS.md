@@ -589,6 +589,25 @@ the call site belongs to Builder A's R2/C2.6 and the function is a deployment st
 F49-F59 (monitor runtime, alert persistence/delivery, connector adapters) are Builder A's C-series.
 Neither is in this ledger's scope, so neither is touched.
 
+**Full classification of every unreachable export in this branch's scope (T4, closed).** The
+reachability sweep over the 122 in-scope exports the import-graph walk could not reach resolves to
+three classes, and **none is genuinely dead**:
+
+| Class | Count | Meaning |
+|---|---|---|
+| Prod-referenced (import-graph false positive) | 85 | The walk missed a dynamic or aliased edge; each has a real call site (e.g. `packageRoot` → `AttestationPanel.tsx` + `scripts/verify-attestation.mjs`, `detectTheme` → `OrgBrandingPanel.tsx`). The four I wired this session are here. |
+| Gate-consumed (test-only, legitimate) | 37 | Consumed only by a guard or a unit test — e.g. `explainEntry`/`explainEntryIds` by **G7** `explainCoverage.test.ts`, `drillableAggregates` by **G8** `drilldownCoverage.test.ts`, `fontLicenceFor`/`isReportFont` by **G10** `fontLicence.test.ts`. The gates are part of the build, so this is a use, not an orphan. |
+| Dead (no reference at all, in scope) | **0** | — |
+
+**Out of scope, named honestly, not touched.** A whole-repo scan (not scope-limited) finds 28 exports
+with zero references anywhere: `src/data/{mutations,observations,planning,population,secrets,writing}.ts`
+and `src/lib/writing/{connectors,formatDesign,lineagePanel,locale,models,monitors,phrases,planner,
+realisation,registers,reportFormat,seedPhrases,verify,versioning}.ts` plus `src/lib/render/xlsx.ts`.
+Every one pre-dates this branch (`git show 0ac009f:<file>` carries the declaration) and none is touched
+here. They are the `src/lib/writing/` realisation engine and adjacent data wrappers — Builder A's
+territory and the SPEC branch's, not this ledger's. Deleting them from under another session's working
+tree is exactly the conflict the branch map exists to prevent, so they are reported, not removed.
+
 ---
 
 ## Gates to add on this branch
