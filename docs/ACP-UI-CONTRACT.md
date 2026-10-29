@@ -763,6 +763,19 @@ The landing tab: portfolio tiles (engagements, CAPs, findings, seals), a CAP rad
 - **Drilldown (E5/U1):** every tile number opens the exact scoped/filtered records it was counted from, in the non-blocking `DrilldownPanel` (`role="complementary"`, testid prefix `DB-01-drilldown`). The CAP hub number (`DB-01-cap-hub-drilldown`) drills to its CAPs. The open family is mirrored to the URL hash (`#drill=<kind>`) so a state is deep-linkable; the hash carries only the family name, never a tenant id.
 - **Tutorial key:** oa.boardpack-use (the Board Pack block)
 
+## DB-02 — Deterministic capability library (D1-D4)
+
+The screen surface for the twenty deterministic capabilities across four families (risk and control, population and evidence, process and governance, assurance operations). Each is a pure function under `src/lib/capabilities/`; the panel hands one call site (`evaluateCapability`) the rows the caller may see, the organisation's thresholds and the current day.
+
+- **Route:** The capability block on the Dashboard tab (`executive`), below the Board Pack block.
+- **Rights:** any signed-in member reads the families their scope allows; `edit_config` to change the thresholds.
+- **Data:** `capability_config_get`, `capability_config_save`, `capability_run_record`, `capability_runs_list` — through `src/data/capabilities.ts`; components never import the database client (rule M8). With no Supabase environment the panel says "not configured" rather than showing a wall of zeros.
+- **Testids:** `DB-02-panel`, `DB-02-unconfigured`, `DB-02-record`, `DB-02-kind-risk_control`, `DB-02-kind-population_evidence`, `DB-02-kind-process_governance`, `DB-02-kind-assurance_ops`, `DB-02-kind-summary`, `DB-02-list`, `DB-02-cap-<id>`, `DB-02-cap-<id>-toggle`, `DB-02-cap-<id>-headline`, `DB-02-cap-<id>-status`, `DB-02-cap-<id>-rule`, `DB-02-cap-<id>-needs`, `DB-02-cap-<id>-rows`, `DB-02-cap-<id>-refs-<i>`, `DB-02-tolerance`, `DB-02-sample`, `DB-02-ageing`, `DB-02-save`, `DB-02-save-denied`, `DB-02-runs`, `DB-02-runs-empty`, `DB-02-message`, `DB-02-error`, `DB-02-explain`
+- **States:** loading; unconfigured (no tenant database — says so, never a wall of zeros); ready; per-capability `ready` (findings), `empty` (an honest clean result) and `awaiting_input` (names the missing input).
+- **Explain (E1/E2):** the panel carries the `screen.DB-02` explain affordance and the IIA standards affordance for the screen.
+- **Determinism (L1):** no model call; every finding names the rule that produced it and the records behind it. A run records the input hash and the derived findings, never the tenant rows (L2).
+- **Tutorial key:** —
+
 ## WQ-01 — Work Queue (S1)
 
 The user-specific queue: my workpapers, what awaits my sign-off, what awaits my approval and (for a manager) the team's open work, built by the pure `src/lib/workQueue.ts` module.

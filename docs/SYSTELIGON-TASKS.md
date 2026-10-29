@@ -334,10 +334,19 @@ Each is a pure function under `src/lib/` with direct unit tests and a screen sur
 
 | # | Task | Status |
 |---|---|---|
-| D1 | Risk and control intelligence: residual-risk drift, control coverage matrix, effectiveness history, KCI, appetite breach | TODO |
-| D2 | Population and evidence intelligence: profile, stratification, sufficiency, freshness, chain of custody | TODO |
-| D3 | Process and governance intelligence: SoD matrix, delegation breach, policy exceptions, meeting governance, regulatory impact | TODO |
-| D4 | Assurance operations: engagement health, reviewer load, finding ageing, report consistency, trail completeness | TODO |
+| D1 | Risk and control intelligence: residual-risk drift, control coverage matrix, effectiveness history, KCI, appetite breach | DONE |
+| D2 | Population and evidence intelligence: profile, stratification, sufficiency, freshness, chain of custody | DONE |
+| D3 | Process and governance intelligence: SoD matrix, delegation breach, policy exceptions, meeting governance, regulatory impact | DONE |
+| D4 | Assurance operations: engagement health, reviewer load, finding ageing, report consistency, trail completeness | DONE |
+
+**D-series close-out.** Twenty pure capabilities across four families (`src/lib/capabilities/`), a
+single uniform evaluator (`evaluateCapability`) so no capability can be added and left unreachable,
+a data module (`src/data/capabilities.ts`), persistence + config-as-ledger (`0115_capability_library.sql`,
+test `115`), and the screen surface (`CapabilityLibraryPanel.tsx`, screen `DB-02` on the dashboard).
+The evaluator is total: it never returns nothing, and it distinguishes `ready` (findings), `empty`
+(an honest clean result) and `awaiting_input` (naming the exact missing input) rather than showing an
+empty result as a clean bill of health. Unit tests: 44 across the five capability test files + 6 for
+the data module + 7 for the panel. Register rows F117-F120 and F48 flipped to `Wired`.
 
 ---
 

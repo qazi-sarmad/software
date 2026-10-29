@@ -50,6 +50,41 @@ export function replaceLockedPopulation(populationId: string, rationale: string)
   return callRpc('replace_locked_population', { p_population_id: populationId, p_rationale: rationale });
 }
 
+/** A population row reduced to the fields the D2 capability family reads. */
+export interface PopulationRecordRead {
+  rowRef: number | string;
+  amountCents: number | null;
+  date: string | null;
+  category: string | null;
+}
+
+/**
+ * Read a population's rows for the deterministic capability library (D2). The row payload is free
+ * form, so the well-known keys are mapped and anything else is left null — the capability reports a
+ * missing value honestly rather than inventing one. RLS filters the rows to the caller's org.
+ */
+export async function listPopulationRecords(populationId: string): Promise<PopulationRecordRead[]> {
+  const sb = getClient();
+  if (!sb) return [];
+  const { data, error } = await sb
+    .from('population_rows')
+    .select('row_ref, data')
+    .eq('population_id', populationId);
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((r) => {
+    const payload = (r.data ?? {}) as Record<string, unknown>;
+    const amount = payload.amount ?? payload.amt ?? payload.value ?? payload.cents;
+    const date = payload.date ?? payload.txn_date ?? payload.transaction_date;
+    const category = payload.category ?? payload.dept ?? payload.account;
+    return {
+      rowRef: (r.row_ref as number) ?? 0,
+      amountCents: typeof amount === 'number' ? amount : null,
+      date: typeof date === 'string' ? date : null,
+      category: typeof category === 'string' ? category : null,
+    };
+  });
+}
+
 export async function listPopulations(engagementId: string): Promise<PopulationRow[]> {
   const sb = getClient();
   if (!sb) return [];

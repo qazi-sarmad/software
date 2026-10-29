@@ -6,6 +6,7 @@ import { CapRadialTracker } from './CapRadialTracker';
 import { CapTable } from './CapTable';
 import { EngagementGantt } from './EngagementGantt';
 import { BoardPackPanel } from '../pending/BoardPackPanel';
+import { CapabilityLibraryPanel } from './CapabilityLibraryPanel';
 import { HoverPreview } from '../common/HoverPreview';
 import { DrilldownPanel } from '../explain/DrilldownPanel';
 import { StandardsAffordance } from '../explain/StandardsAffordance';
@@ -300,6 +301,9 @@ export const ExecutiveDashboardTab: React.FC = () => {
 
       {/* Board Pack panel (F10): pack history, Generate, Open and the drillable web view. */}
       <BoardPackPanel />
+
+      {/* Deterministic capability library (D1-D4): the twenty capabilities over the data in scope. */}
+      <CapabilityLibraryPanel />
     </div>
   );
 };

@@ -31,7 +31,7 @@ const APPENDIX_A = [
 
 // Appendix B: the core audit workspace, auth and chrome the Appendix A ids never covered.
 const APPENDIX_B = [
-  'DB-01', 'WQ-01',
+  'DB-01', 'DB-02', 'WQ-01',
   'AU-01', 'AU-02',
   ...Array.from({ length: 5 }, (_, i) => `AP-${String(i + 1).padStart(2, '0')}`),
   ...Array.from({ length: 3 }, (_, i) => `SR-${String(i + 1).padStart(2, '0')}`),

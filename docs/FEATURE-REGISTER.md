@@ -122,7 +122,7 @@ feature to be testable.
 | F45 | Document recognition (magic bytes, archives) | `Wired` | `src/lib/recognition/` sniffs magic bytes, resolves office-in-zip by entry names, unpacks archives under limits, reads docProps//Info metadata; `ImportWizardPanel.tsx:onFile` routes on the sniffed kind and shows the inventory line | S17 |
 | F46 | Evidence completeness (Mode A) | `Wired` | Depends on F41, now present — `evidence_files_for(workpaper)` returns the stored rows with their storage facts | S20 |
 | F47 | Evidence verification (Mode B) | `Wired` | Depends on F41, now present — see F42 | S20 |
-| F48 | Chain of custody | `Absent` | D2 candidate | D2 |
+| F48 | Chain of custody | `Wired` | One of the twenty capabilities in `src/lib/capabilities/populationEvidence.ts`, evaluated by `evaluateCapability` and surfaced by `CapabilityLibraryPanel.tsx` (DB-02) | D2 |
 
 ---
 
@@ -253,12 +253,12 @@ behaviour, or **remove it from the UI** and mark it deferred. No field may be vi
 
 Each is a pure function under `src/lib/`, with direct unit tests and a screen surface.
 
-| # | Capability | Status | WP |
-|---|---|---|---|
-| F117 | Risk and control intelligence (drift, coverage matrix, effectiveness history, KCI, appetite breach) | `Absent` | D1 |
-| F118 | Population and evidence intelligence (profile, stratification, sufficiency, freshness, chain of custody) | `Absent` | D2 |
-| F119 | Process and governance intelligence (SoD matrix, delegation breach, policy exceptions, meeting governance, regulatory impact) | `Absent` | D3 |
-| F120 | Assurance operations (engagement health, reviewer load, finding ageing, report consistency, trail completeness) | `Absent` | D4 |
+| # | Capability | Status | Evidence | WP |
+|---|---|---|---|---|
+| F117 | Risk and control intelligence (drift, coverage matrix, effectiveness history, KCI, appetite breach) | `Wired` | Five pure functions in `src/lib/capabilities/riskControl.ts`, evaluated by `evaluateCapability` and surfaced by `CapabilityLibraryPanel.tsx` (DB-02) | D1 |
+| F118 | Population and evidence intelligence (profile, stratification, sufficiency, freshness, chain of custody) | `Wired` | Five pure functions in `src/lib/capabilities/populationEvidence.ts`, surfaced by `CapabilityLibraryPanel.tsx` (DB-02) | D2 |
+| F119 | Process and governance intelligence (SoD matrix, delegation breach, policy exceptions, meeting governance, regulatory impact) | `Wired` | Five pure functions in `src/lib/capabilities/processGovernance.ts`, surfaced by `CapabilityLibraryPanel.tsx` (DB-02) | D3 |
+| F120 | Assurance operations (engagement health, reviewer load, finding ageing, report consistency, trail completeness) | `Wired` | Five pure functions in `src/lib/capabilities/assuranceOps.ts`, surfaced by `CapabilityLibraryPanel.tsx` (DB-02) | D4 |
 
 ---
 
@@ -278,9 +278,9 @@ Each is a pure function under `src/lib/`, with direct unit tests and a screen su
 
 | Status | Count |
 |---|---|
-| `Wired` | 71 |
+| `Wired` | 76 |
 | `Inert` | 23 |
-| `Absent` | 31 |
+| `Absent` | 26 |
 | **Total** | **125** |
 
 **Read that again, with the correction applied.** This is materially better than the first pass

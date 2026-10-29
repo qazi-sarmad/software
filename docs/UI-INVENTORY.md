@@ -1121,6 +1121,24 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
   named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
 
+### `DB-02` — Deterministic capability library (D1-D4)
+
+- **Purpose:** The screen surface for the twenty deterministic capabilities across four families (risk and control, population and evidence, process and governance, assurance operations). Each is a pure function under `src/lib/capabilities/`; the panel hands one call site (`evaluateCapability`) the rows the caller may see, the organisation's thresholds and the current day.
+- **Route / location:** The capability block on the Dashboard tab (`executive`), below the Board Pack block.
+- **Rights required:** any signed-in member reads the families their scope allows; `edit_config` to change the thresholds.
+- **Data functions (`src/data/*.ts`):** `capability_config_get`, `capability_config_save`, `capability_run_record`, `capability_runs_list`
+- **Data modules:** none (pure/UI only)
+- **RPCs reachable via those modules:** none
+- **Tables reachable via those modules:** none
+- **Testids (27):** `DB-02-panel`, `DB-02-unconfigured`, `DB-02-record`, `DB-02-kind-risk_control`, `DB-02-kind-population_evidence`, `DB-02-kind-process_governance`, `DB-02-kind-assurance_ops`, `DB-02-kind-summary`, `DB-02-list`, `DB-02-cap-<id>`, `DB-02-cap-<id>-toggle`, `DB-02-cap-<id>-headline`, `DB-02-cap-<id>-status`, `DB-02-cap-<id>-rule`, `DB-02-cap-<id>-needs`, `DB-02-cap-<id>-rows`, `DB-02-cap-<id>-refs-<i>`, `DB-02-tolerance`, `DB-02-sample`, `DB-02-ageing`, `DB-02-save`, `DB-02-save-denied`, `DB-02-runs`, `DB-02-runs-empty`, `DB-02-message`, `DB-02-error`, `DB-02-explain`
+- **Explain ids (0):** — (no explain affordance)
+- **IIA standards addressed (0):** —
+- **Drilldown targets (0):** — (no aggregate)
+- **States:** loading; unconfigured (no tenant database — says so, never a wall of zeros); ready; per-capability `ready` (findings), `empty` (an honest clean result) and `awaiting_input` (names the missing input).
+- **Tutorial key:** — (no key)
+- **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
+  named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
+
 ### `WQ-01` — Work Queue (S1)
 
 - **Purpose:** The user-specific queue: my workpapers, what awaits my sign-off, what awaits my approval and (for a manager) the team's open work, built by the pure `src/lib/workQueue.ts` module.
@@ -1399,7 +1417,7 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 - **Data functions (`src/data/*.ts`):** `PopulationRow`, `lockPopulation`, `registerPopulation`, `sha256Hex`
 - **Data modules:** `src/data/population.ts`
 - **RPCs reachable via those modules:** none
-- **Tables reachable via those modules:** `populations`
+- **Tables reachable via those modules:** `population_rows`, `populations`
 - **Testids (15):** `population-browse`, `population-dropzone`, `population-empty`, `population-error`, `population-file-input`, `population-hash`, `population-loading`, `population-panel`, `population-register`, `population-gate`, `population-status`, `control-total`, `population-errors`, `gate-message`, `finalize-test`
 - **Explain ids (0):** — (no explain affordance)
 - **IIA standards addressed (1):** `14.1`
@@ -1863,6 +1881,8 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 | `board_pack_get` | `src/data/boardPack.ts` | `p_id` | tenant |
 | `board_pack_list` | `src/data/boardPack.ts` | `p_org`, `p_scope_key` | tenant |
 | `board_pack_sections_seed` | `src/data/boardPack.ts` | `p_org` | tenant |
+| `capability_config_get` | `src/data/capabilities.ts` | — | tenant |
+| `capability_runs_list` | `src/data/capabilities.ts` | `p_kind` | tenant |
 | `certificate_config_get` | `src/data/certificate.ts` | `p_org` | tenant |
 | `certificate_get` | `src/data/certificate.ts` | `p_certificate_id` | tenant |
 | `certificate_list` | `src/data/certificate.ts` | `p_org` | tenant |
@@ -1988,10 +2008,10 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 
 ## Coverage cross-check
 
-- Screens documented: 98 (contract sections: 48 Appendix A + 44 Appendix B).
+- Screens documented: 99 (contract sections: 48 Appendix A + 44 Appendix B).
 - Tutorial keys: 80.
-- RPCs catalogued: 132.
-- Data modules: 59; exported data functions: 388.
+- RPCs catalogued: 134.
+- Data modules: 60; exported data functions: 395.
 - Contract testids not found verbatim in `src/` (placeholder or dynamic): 193.
   - audit-file-view-builder, audit-file-view-certificate, audit-file-view-conclusion, audit-file-view-documents, audit-file-view-ethics, audit-file-view-execution, audit-file-view-findings, audit-file-view-planning, audit-file-view-population, audit-file-view-report, audit-file-view-review, audit-file-view-rowtesting, audit-file-view-sampling, data-front-door-kind, hosting-test, invite-user, issues-view-patterns, oa-branding-colour-accent, oa-branding-colour-background, oa-branding-colour-primary, oa-branding-colour-text, oa-branding-margin-0, oa-branding-margin-3, oa-certificate-enabled-verification, oa-escalation-result, oa-escalation-saved, oa-governance-signoff-conclusion, oa-governance-signoff-planning, oa-governance-signoff-testing, org-control-tab-auditors, org-control-tab-automation, org-control-tab-branding, org-control-tab-connectors, org-control-tab-features, org-control-tab-formats, org-control-tab-governance, org-control-tab-hosting, org-control-tab-people, org-control-tab-setup, org-control-tab-tutorials …
 
