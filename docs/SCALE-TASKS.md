@@ -821,7 +821,7 @@ branch builds G1–G6 and does not build G7–G10.
 | G1 | Production-build E2E (`npm run preview`, not `dev`) | TODO |
 | G2 | No-dead-code (every `public` fn has a production caller or is allow-listed) | DONE |
 | G3 | Config-effect (every configurable field has a proving test) | TODO |
-| G4 | Wiring (every `src/data/*.ts` export imported by a component or allow-listed) | TODO |
+| G4 | Wiring (every `src/data/*.ts` export imported by a component or allow-listed) | DONE |
 | G5 | Two-sources (no component reads both the seed and the database) | TODO |
 | G6 | RPC parity (every RPC the app calls exists in the final schema) | DONE |
 
@@ -853,6 +853,45 @@ RPC target named in `src/data/**` or `supabase/functions/**`, the RPC catalogue 
   seed in `0030`), `share_covers` (superseded by `has_active_share` in `0095`), `signing_keys_get`
   (no UI lists signing keys), and the two hosting-migration RPCs above. Reported so the owner can
   decide whether to remove or wire them.
+
+### G4 — wiring, DONE (2026-10-28)
+
+`scripts/check-wiring.mjs` + `scripts/wiring-allow.json`. It resolves the real import graph
+(alias-aware, namespace-aware, dynamic-import-aware), follows it transitively from the UI entry points
+(`src/components/**`, `src/context/**`, `src/hooks/**`, `App.tsx`, `main.tsx`) and reports every
+**value** export of a `src/data` module that no screen reaches. A `type` / `interface` is not counted
+(a type vanishes at runtime and is not dead code when unused).
+
+- **Result:** `PASS: check-wiring — every src/data value export is reachable from a screen, referenced
+  by a test, or allow-listed (23 allow-listed, 28 test-only).`
+- **Why a real graph, not a grep.** A name-based grep is wrong here in both directions: screens import
+  with aliases (`populateSuggestions` is the export `populate_planning_suggestions`) and with
+  namespaces (`import * as writes from '../data/mutations'`), so a grep both misses wired code and
+  flags it. This walks the statements. It also credits a name used by another reachable module
+  (intra-module use by a reachable sibling), which is how `buildReportModel` and `loadReportFonts`'
+  consumers are legitimately reachable without a direct screen import.
+- **A test-only export is not dead** (`docs/BRANCH-MAP.md`). 28 exports have no production caller but
+  are referenced by a `.test.ts`; the gate reports them as test-only and does not fail. The gate fails
+  only on an export with **no** production caller **and** no test reference.
+- **The gate also fails on a stale allow-list entry**, so the list cannot silently accumulate.
+- **Findings reported, not silently allow-listed (23).** Per `docs/BRANCH-MAP.md`, the inert set in
+  `src/data/**` is **Builder B's** to resolve (its S/T rows name `listIntegrityAlerts`,
+  `createSiraCycle`, `publishSiraCycle`, `recordSiraScore`, `submitEmergentRisk`, `decideEmergentRisk`
+  explicitly), so this branch records the list in `scripts/wiring-allow.json` with a per-entry reason
+  and does **not** build in B's scope (BRANCH-MAP merge rule 5). **Four are this branch's own**, and
+  each is a real wiring gap this gate surfaced:
+  - `src/data/fontBytes.ts::{fontUrl,loadFontBytes,loadReportFonts}` — the WP-F report-font path.
+    A format's `fontHeading` / `fontBody` is validated, shown on the canvas and stored, but the freeze
+    path (`renderAndStoreReportFiles`) never calls `loadReportFonts`, so the **frozen PDF embeds the
+    standard font, not the chosen one**. That is a config-effect defect (G3) as well as a wiring gap;
+    recorded here and to be closed under G3.
+  - `src/data/reportGraph.ts::getReportGraph` — the reader for the committed report graph and claims
+    ("the screen's drilldown", Phase 2.6). The writer is wired; the reader has no caller, so the
+    committed root is not drilldownable yet.
+  - `src/data/reportFiles.ts::reportFooterPreview` — the on-screen footer line whose own doc comment
+    says it exists so the screen and the file agree; no screen calls it.
+  - `src/data/mutations.ts::appendLedgerEntryDb` — a Phase 1.4 leftover; the database writes the
+    ledger entry itself on every state change, so the client-side appender has no caller.
 
 ### G6 — RPC parity, DONE (2026-10-28)
 
