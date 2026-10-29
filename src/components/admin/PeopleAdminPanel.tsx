@@ -24,8 +24,9 @@ import { Select } from '../common/Select';
 import { Check, Minus, Plus, User, Users, XCircle } from '../common/Icons';
 import { HoldToConfirm } from '../common/HoldToConfirm';
 import { ExplainPopout } from '../explain/ExplainPopout';
+import { TeamDirectoryPanel } from './TeamDirectoryPanel';
 
-type Tab = 'people' | 'roles';
+type Tab = 'people' | 'roles' | 'team';
 type LoadState = 'loading' | 'ready' | 'error';
 
 const RIGHT_LABELS: Record<Right, string> = {
@@ -192,7 +193,19 @@ export const PeopleAdminPanel: React.FC = () => {
           <User className="w-3.5 h-3.5 inline mr-1.5 stroke-[1.5]" />
           Roles &amp; rights
         </button>
+        <button
+          role="tab"
+          aria-selected={tab === 'team'}
+          data-testid="admin-tab-team"
+          onClick={() => setTab('team')}
+          className={`px-3 py-1.5 rounded-lg text-apple-12 font-semibold ${tab === 'team' ? 'bg-surface text-primary shadow-xs' : 'text-secondary'}`}
+        >
+          <Users className="w-3.5 h-3.5 inline mr-1.5 stroke-[1.5]" />
+          Team directory
+        </button>
       </div>
+
+      {tab === 'team' && <TeamDirectoryPanel />}
 
       {tab === 'people' && canManageUsers && (
         <section data-testid="admin-people" className="space-y-5">
