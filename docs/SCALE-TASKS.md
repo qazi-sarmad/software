@@ -807,7 +807,7 @@ and returns what it did. That is the same split the email pipeline already uses.
 |---|---|---|
 | 6.1 | Full system suite against a production build | DONE |
 | 6.2 | Multi-org isolation under concurrency | DONE |
-| 6.3 | `docs/DEMO-SCRIPT.md` using only tested flows | TODO |
+| 6.3 | `docs/DEMO-SCRIPT.md` using only tested flows | DONE |
 
 ### Task 6.1 — the full suite against a production build (2026-10-28)
 
@@ -905,6 +905,20 @@ $ source .env.e2e-local && npx playwright test e2e/rls.spec.ts --project=chromiu
 ```
 
 Counts after this task: SQL test files 120 → **121**; Playwright `rls.spec.ts` tests 13 → **14**.
+
+### Task 6.3 — `docs/DEMO-SCRIPT.md`, using only tested flows (2026-10-28)
+
+The demo script is written so that **every step names the passing test that proves it and the testid
+the presenter clicks**. If a step is not in the file it is not in the demo, so nothing on stage can be
+a surprise. The script covers five acts: platform guided provisioning, tenant guided setup, the audit
+from universe to sealed report, the credibility act (isolation, share, export, Board Pack, external
+portal, public certificate), and config-that-does-something.
+
+Every testid cited in the script was checked against the source and the specs (`grep`), and the
+Board Pack ids were corrected from the placeholder `board-pack-*` to the real `wk-boardpack-*` during
+that check. The script also carries a **Do not demo** list: C7 (blocked on S18), evidence file
+storage (bytes not stored yet, SYSTELIGON §6.0), the 12 stale tutorial GIFs, and everything under
+`docs/archive/`. Honesty about what is not ready is part of the deliverable.
 
 ### Phase 6, pre-work — the workpaper-creation path the product was missing (2026-10-28)
 

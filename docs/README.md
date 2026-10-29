@@ -11,6 +11,7 @@ There are nine documents you should trust. Everything else is history.
 | `FUNCTIONALITY-AUDIT.md` | The audit that found the missing middle. Historical record of the finding. |
 | `REMEDIATION-PLAN.md` | The plan being executed, and why it is in this order. |
 | `SCALE-TASKS.md` | Live task status. Updated in the same commit as the work. |
+| `DEMO-SCRIPT.md` | The demo walkthrough: every step names the passing test that proves it. |
 | `EXPLAIN-LAYER.md` | The popout / drilldown / access-filtered-detail / IIA-standards layer. |
 | `iia-standards-reference.md` | Verified IIA 2024 standard numbers and titles (structure only). |
 | `SYSTELIGON.md` | The deterministic forensic engine: spec, boundary, stretch roadmap. |
