@@ -1,13 +1,14 @@
 # Builder prompt — the Systeligon last mile (everything not yet built)
 
-Paste the block below into a fresh session. It is self-contained: the session needs no prior
-context. It is the brief for the builder that finishes the unbuilt part of the specification,
-established by `docs/SYSTELIGON-GAP-REPORT.md` (read that first).
+Paste the block below into a fresh session. It is self-contained: the session needs no prior context.
+It is the brief for the builder that finishes the unbuilt part of the specification, established by
+`docs/SYSTELIGON-GAP-REPORT.md` (read that first).
 
-This supersedes the earlier "remainder" prompt, which listed the whole S1–S16 rule engine as work.
-That engine is now **built** on `feature/scale-harden-v1`. What remains is the *last mile* — the
-screens that mount the engine, one orchestration feature, two functional UI rows, and the shipped OCR
-artifact. Apart from the design language, **the entire remainder is delegated to the builder.**
+This supersedes the earlier "remainder" prompt, which listed the whole S1–S16 rule engine as work and
+described the engine's screens as entirely unbuilt. The engine is **built** and its first surface (the
+rule-run screen, L1) is now **mounted**. What remains is the rest of the last mile. **Apart from the
+design language, the entire remainder is delegated to the builder** — every item in §13.8 of the gap
+report except the DEFERRED visual rows.
 
 ---
 
@@ -16,8 +17,8 @@ You are the builder LLM for Provio / Systeligon — a deterministic internal-aud
 assurance platform. Repo: https://github.com/qazi-sarmad/software   cwd: /workspace/project/software
 
 CONTEXT YOU INHERIT (verified — do not re-litigate, build on it)
-Four branches are built and pushed:
-- feature/scale-harden-v1  (Builder A, head 4719330) — Phases 1-6: the app reads its own database, the
+The branches are built and pushed:
+- feature/scale-harden-v1  (Builder A, head 0b14629) — Phases 1-6: the app reads its own database, the
   engagement lifecycle is real, pre-flight and the report-graph writer are wired, method-aware sampling
   is in, the C-series C1-C6 landed, gates G1-G6, R0. AND the ENTIRE Systeligon S1-S16 rule engine —
   schema, runner, versioning, packs, signed OTA, flows, Mode A/B verification, override visibility, the
@@ -28,29 +29,32 @@ Four branches are built and pushed:
   storage, comment popout), T3-T7 (attestation package, independent verifier, attestation screen,
   incident wizard, tamper alarm), D1-D4 (capability library), F1-F7 (self-hosted fonts), gates G7-G10.
 - feature/writing-engine (c45bb81) — the deterministic report-writing engine.
+- feature/systeligon-unified-v1 (ceb85fd) — the A+B reconciliation: ONE migration set, collision resolved.
+- feature/systeligon-builder-continuous (5200f4b) — THE UNIFIED SET PLUS U4 (team directory) AND L1
+  (the rule-run screen). THIS is your starting point; branch from it.
 - main (a697190) — the untouched default branch, still carrying the original production defect.
-Read docs/SYSTELIGON-GAP-REPORT.md for the full verified built/planned picture.
+Read docs/SYSTELIGON-GAP-REPORT.md for the full verified built/planned picture. Its §13.8 is your
+authoritative work list. Everything in it except the DEFERRED design rows is yours.
 
 WHAT IS LEFT — this is YOUR work, and it is the last mile, not the engine
-The engine is built. Its SCREENS are not. That is the whole remainder, and it is the same defect class
-the whole programme exists to catch — a working library with no reachable surface — in miniature. The
-guard is the same: find the call site. If nothing calls it, it is dead code and you must say so.
+The engine is built. Most of its SCREENS are not. That is the whole remainder, and it is the same
+defect class the whole programme exists to catch — a working library with no reachable surface — in
+miniature. The guard is the same: find the call site. If nothing calls it, it is dead code and you
+must say so. L1 (the rule-run screen) is DONE; the rest of the engine's surfaces are not.
 
 YOUR BRANCH
-Branch from feature/scale-harden-v1 (it now carries the S1-S16 engine you are wiring). Suggested name
-feature/systeligon-lastmile-v1. Do NOT rebase onto feature/systeligon-build-v1 — that is a second live
-session's tree; when you need its migrations, merge deliberately and resolve the number collision
-(below). Never touch main. Never force-push. Push after every coherent unit of work.
+Branch from feature/systeligon-builder-continuous (it carries the unified migration set, U4 and L1).
+Suggested name feature/systeligon-lastmile-v1. Never touch main. Never force-push. Push after every
+coherent unit of work. Do NOT rebase onto feature/systeligon-build-v1 or feature/scale-harden-v1 —
+the unified branch already reconciles both; work from the unified set so you do not re-open the
+migration collision.
 
-FIRST ACTION — the migration-number collision is STILL live
-Both branches still claim the 0110-0116 range (verified: scale-harden runs
-0110_phase4_methodology..0116_phase6_workpaper_creation + 0117_systeligon_rule_packs +
-0118_systeligon_findings; systeligon-build runs 0119_sira_continuity_acceptance..
-0126_guided_first_run). A naive merge keeps one side and silently drops the other, and the SQL harness
-can stay green while a migration is missing. Before your first migration: merge the two sets,
-RENUMBERING the colliding files onto fresh numbers above 0119, keep both sides' content, reserve your
-own range from 0120, and run the SQL harness twice over the combined set to prove every migration from
-both branches is present and applied exactly once in filename order.
+FIRST ACTION — lock your baseline and prove the tree whole
+Run the full gate set on the starting branch and record the counts (migrations 127, SQL test files 132,
+vitest 279 files / 3198 tests, playwright 30 specs, guards 28 — verify these yourself, they are your
+baseline). Run the SQL harness twice: bash scripts/local-sql-harness-docker.sh. It must print
+"migrations applied twice / all SQL tests passed twice". If it does not, fix that before any new work —
+a red harness masks every test after the failure.
 
 THE BOUNDARY — the one thing that is NOT yours
 The design language. The owner has not settled themes, motion, typography, density values, audience
@@ -90,28 +94,32 @@ green test is NOT proof a feature works. Never trust a doc, and never trust a pa
 something is wired. Find the call site. If nothing calls it, it is dead code and you must say so.
 Use `node scripts/check-wiring.mjs` (and `scripts/audit-wiring.mjs` for the raw export list). It
 resolves the real import graph, alias-aware. Name-based greps lie here.
+This cuts BOTH ways: the register can also UNDERSTATE the build. §13.11 of the gap report lists six
+register rows (F28, F29, F39, F53, F54, F55) that still say Absent/Inert for features that are built
+and wired. Correcting those rows is part of your work.
 
 ENVIRONMENT
-- No host Postgres, but the sandbox has PostgreSQL 17 running (`/usr/bin/psql`, `pg_lsclusters`); the
-  SQL harness is `bash scripts/local-sql-harness.sh` (db provio_local, applies the shim, migrations
-  twice, tests twice). A Docker harness (`local-sql-harness-docker.sh`) also exists.
+- No host Postgres, but the sandbox can run PostgreSQL 17 in Docker (`sudo -n docker`); the sanctioned
+  SQL harness is `bash scripts/local-sql-harness-docker.sh` (applies the shim, migrations twice, tests
+  twice). Probe container readiness over TCP (-h 127.0.0.1), never a socket — the initdb temp server
+  causes a false "ready".
 - Gates: npx tsc --noEmit | npx vitest run | npx vite build | node scripts/check-shrink.mjs |
   node scripts/check-tokens.mjs | node scripts/check-ui-contract.mjs |
   node scripts/check-feature-register.mjs | node scripts/check-wiring.mjs |
   node scripts/check-dead-code.mjs | node scripts/check-config-effect.mjs |
   node scripts/check-rpc-parity.mjs | node scripts/check-two-sources.mjs |
-  npm run check-tutorials | bash scripts/local-sql-harness.sh | npx playwright test
+  npm run check-tutorials | bash scripts/local-sql-harness-docker.sh | npx playwright test
 - E2E_PROD=1 runs Playwright against the built bundle (not the dev server). Use it for any proof.
 - The register gate reads docs/FEATURE-REGISTER.md. The moment you wire an Inert row, update it in the
   same commit or the gate fails (that is rule (6) of the gate working as designed).
 
 LEDGER RULE
-Update docs/SCALE-TASKS.md (the live ledger that now carries S1-S16) IN THE SAME COMMIT as the work.
-Status values are exactly: TODO / DOING / DONE / BLOCKED (owner). `Partial` is not a status and must
-never appear. For anything you add, add a FEATURE-REGISTER row in the same commit.
+Update docs/SCALE-TASKS.md (the live ledger) IN THE SAME COMMIT as the work. Status values are exactly:
+TODO / DOING / DONE / BLOCKED (owner). `Partial` is not a status and must never appear. For anything
+you add, add a FEATURE-REGISTER row in the same commit.
 
 READ FIRST, IN THIS ORDER
-1. docs/SYSTELIGON-GAP-REPORT.md   — the verified built/planned picture, and your work list
+1. docs/SYSTELIGON-GAP-REPORT.md   — the verified built/planned picture, and your work list (§13.8)
 2. docs/SYSTELIGON.md              — the forensic engine spec. YOUR PRIMARY DOCUMENT.
 3. docs/SCALE-TASKS.md             — the live ledger, including the S1-S16 build
 4. docs/FEATURE-REGISTER.md        — every feature and its true wiring status, gated
@@ -121,30 +129,34 @@ READ FIRST, IN THIS ORDER
 IGNORE ALL of docs/archive/ — 63 pre-audit docs, each stamped stale.
 
 ===============================================================
-YOUR WORK — the last mile, in this order
+YOUR WORK — the last mile, in this order (all of §13.8 except the DEFERRED design rows)
 ===============================================================
 
-L1  The rule-run screen (S1-S16 mounted; the highest-value item).
-    The engine runs; nothing on screen runs it. Build the surface that: picks a population, picks a
-    rule pack (S10), runs it (S1 runner), shows each finding with its rule id, version, severity and
-    the source rows it flagged, and calls recordSysteligonFindings (src/data/systeligon.ts) so the
-    findings are recorded to the ledger and re-rooted into the report graph (S13). This removes the
-    `a-own-unwired` allow-list entry for recordSysteligonFindings and turns F127-F129 from Inert to
-    Wired. It is the screen the whole engine exists to feed.
+L1  DONE. The rule-run screen (RuleRunTab.tsx) mounts the engine; do not rebuild it. Verify it still
+    passes and leave it.
 
-L2  The rule-pack management UI (S10/S11).
+L2  The rule-pack management UI (S10/S11) — highest-value open item.
     src/data/rulePacks.ts (listRulePacks, saveSignedRulePack) has no screen caller. Build the surface
     that lists packs, shows a pack's rules and versions, and saves a signed pack (the signature is
-    verified server-side in rule_pack_save; an unverifiable save is refused and logged). Turn F137
-    Inert -> Wired. The ad-hoc rule builder (pick a source, a condition, a threshold; save as a
-    versioned artifact) is part of this surface.
+    verified server-side in rule_pack_save; an unverifiable save is refused and logged). The ad-hoc
+    rule builder (pick a source, a condition, a threshold; save as a versioned artifact via
+    buildAdhocRule) is part of this surface. Turn F128/F137 Inert -> Wired.
+
+L2b The remaining engine surfaces — one screen per family, all built and unreached today:
+    - flows (S3/S4/S5/S12): buildAcceptedTestingSet, applyFloor, parsePastedBlock, verifyRows,
+      carriedOverrides. Mount in the row-testing / population flow.
+    - documents (S8): documentRules. Mount in the audit-file UI.
+    - patterns (S9): patternRules. Mount in the audit-file / source-review UI.
+    - minutes (S14): buildActionRegister, itemHistory. Mount a minutes surface.
+    - policy (S15): compareDocuments. Mount a policy-comparison surface.
+    Turn F132-F136 Inert -> Wired as each lands.
 
 L3  Extraction in the audit-file UI (S7).
     Tier 1 is wired (extractDocument -> doc-extract) but the flow is thin. Mount the full three-tier
-    extraction flow in the audit-file UI: recognise (S17), extract, show the source hash so a finding
-    traces to the exact bytes, and surface the OCR seam's coverage report. Then ship the bundled OCR
-    engine as a build artifact — decide the engine deliberately (a permissively licensed, bundled,
-    local implementation), record the decision, and keep the "refuse a remote engine" guarantee (L2).
+    extraction flow: recognise (S17), extract, show the source hash so a finding traces to the exact
+    bytes, and surface the OCR seam's coverage report. Then ship the bundled OCR engine as a build
+    artifact — decide the engine deliberately (a permissively licensed, bundled, local implementation),
+    record the decision, and keep the "refuse a remote engine" guarantee (L2). Turn F130/F131 Inert -> Wired.
 
 L4  S13 remainder — org-format editor adoption.
     Provenance is done. What remains: the editor adopts an uploaded report's structure and typography
@@ -155,7 +167,7 @@ L5  C7 — anomaly to SIRA.
     A resolved alert proposes an emergent risk carrying the alert id, the rule version and the
     affected rows. It was BLOCKED (S18); S18 is now built, so the blocker is gone. Build C7 on B's S18
     two-key acceptance channel. C7 lives in the C-series; record it in the ledger with that
-    cross-reference.
+    cross-reference. Turn F56 Absent -> Wired.
 
 L6  A-U2 — every screen's functional states.
     loading / empty / error / ready / denied. Functional, not visual. Every screen must be honest in
@@ -163,9 +175,27 @@ L6  A-U2 — every screen's functional states.
     empty one.
 
 L7  A-U3 — guided first-run to a sealed report, by reconciliation.
-    B built GuidedFirstRun.tsx and create_universe. RECONCILE rather than build a second
-    implementation (this repo's two-UIs problem is exactly that). Take what exists, close the gap to
-    "zero -> first sealed report", and delete any duplicate.
+    B built GuidedFirstRun.tsx (mounted in ExecutiveDashboardTab.tsx) and create_universe. RECONCILE
+    rather than build a second implementation (this repo's two-UIs problem is exactly that). Take what
+    exists, close the gap to "zero -> first sealed report", and delete any duplicate.
+
+R3 remainder — configuration honesty.
+    F35, F72-F76, F78, F79 remain Inert: a value is saved and versioned but no read path consults it.
+    Wire each read path (report templates; testing_mode; signoff_role_*; approval_chain;
+    anchoring_settings; report_opinion_required; workflow SLA/escalation) and move each row Inert ->
+    Wired. F30 (stage machine) is genuinely unbuilt — make the stage machine configurable, or record
+    it honestly as out of scope.
+
+D5-D9 — the adjacent capability products (only if the owner wants them; they are Absent, not started).
+    Continuous control monitoring (SOX/ICFR), verifiable third-party attestation, population-level
+    forensic analytics, policy-to-control gap analysis, assurance-over-assurance. Raise with the owner
+    before starting; they are new products, not last-mile wiring.
+
+Register honesty — correct the six stale rows this report found (F28, F29, F39, F53, F54, F55) in the
+    same commit as the work that proves them, so the register stops understating the build.
+
+Tutorial media — re-record the 25 GIFs whose ui_hash is stale (`npm run check-tutorials` lists them).
+    Build work; do it once the surfaces above stop moving.
 
 --- DEFERRED BY INSTRUCTION (do not build) ---
 E8, U5, U7, U9-U13, A-U1 — the design-language rows. The owner has not settled the design.
@@ -196,8 +226,8 @@ PROCESS
 - Never lie about status. If something is not done, say so and mark it so. Do not leave TODO or DOING
   rows behind, except the DEFERRED design rows.
 - Report at the end: exact counts vs your locked baseline (migrations, SQL tests, vitest files,
-  Playwright specs, guards), files changed, decisions taken (especially the OCR engine and the
-  migration renumbering), gate results, and the list of remaining pure-owner actions.
+  Playwright specs, guards), files changed, decisions taken (especially the OCR engine and any
+  migration numbering), gate results, and the list of remaining pure-owner actions.
 
 OWNER ACTIONS (do not attempt these; restate them in your close-out)
 - Make the repository private — the patent-disclosure clock is running (US 12 months; UK/EU
@@ -210,7 +240,7 @@ OWNER ACTIONS (do not attempt these; restate them in your close-out)
 - Settle the design language — themes, motion, typography, density, audience profiles, headers — so
   the DEFERRED visual rows (E8, U5, U7, U9-U13, A-U1) can be built once, not twice.
 
-BEGIN: resolve the combined migration set and prove it whole, lock your baseline, then work
-continuously through L1, L2, L3, L4, L5, L6, L7 — and close on the specification's section 14
-acceptance list.
+BEGIN: lock your baseline and prove the tree whole, then work continuously through L2, L2b, L3, L4,
+L5, L6, L7, the R3 remainder and the register-honesty rows — and close on the specification's section
+14 acceptance list.
 ```
