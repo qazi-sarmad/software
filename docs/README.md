@@ -19,6 +19,8 @@ There are nine documents you should trust. Everything else is history.
 | `BUILDER-PROMPT.md` | The paste-block for a fresh builder session (full scope, Phases 1-6). |
 | `SYSTELIGON-BUILDER-PROMPT.md` | The paste-block for **Builder B** — E1-E7 + E9-E10, the functional U rows (U1-U4, U6, U8, U14), S17-S21, T, D, F, G7-G10. The visual U rows and E8 are deferred pending the design language. |
 | `SYSTELIGON-TASKS.md` | The ledger for the concurrent Systeligon build. One branch, one ledger. |
+| `SCALE-HARDEN-BUILDER-PROMPT.md` | The paste-block for the **`feature/scale-harden-v1` builder** as of 2026-10-29: the analytics fix, the five defects, both engines, and the full built/planned remainder (S1-S16, C1-C7, D5-D9, R5-R7). The design language is the only item held for the owner. |
+| `EXTERNAL-REVIEW-BRIEFING.md` | The external review briefing, 2026-10-29: what was wrong, what was built, and what is planned but not built. |
 | `BRANCH-MAP.md` | **Which branch belongs to which builder, which ledger tracks it, and which migration numbers are reserved.** Read before creating a branch, a migration, or a ledger row. |
 
 ## Interface inputs (read by tooling, keep in sync)

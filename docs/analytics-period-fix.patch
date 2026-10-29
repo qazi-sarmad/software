@@ -1,0 +1,12 @@
+diff --git a/src/types/index.ts b/src/types/index.ts
+--- a/src/types/index.ts
++++ b/src/types/index.ts
+@@ -347,6 +347,8 @@ export type AnalysisResultRow = {
+   flagReason?: string;
+   ruleId: AnalyticsRule;
+   originalRowRef: number;
++  period: string;
++  periodLabel?: string;
+ };
+ 
+ export type ActionType =
