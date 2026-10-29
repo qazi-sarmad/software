@@ -11,6 +11,7 @@ export type {
   DocumentElement, ParsedDocument,
 } from './types';
 export { runRules, assertValidRule, assertValidPack, type RunOptions } from './runner';
+export { systeligonPopulationRules } from './library';
 export { RuleRegistry, ruleFingerprint, type RuleVersionRecord } from './versioning';
 export { definePack, releasedRules, packRules } from './packs';
 export { structuralRules, minutesRequiredElements, policyCoverage } from './rules/structural';

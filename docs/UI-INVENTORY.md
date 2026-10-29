@@ -1643,6 +1643,24 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
   named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
 
+### `AF-16` — Systeligon rule run (S1, S6, S13)
+
+- **Purpose:** Run the deterministic forensic rules over a locked population, read every finding with the rule id,
+- **Route / location:** the `workbench` inspector window, sub-tab "Rule Run".
+- **Rights required:** `perform_work` to run and to record; any member of the org reads.
+- **Data functions (`src/data/*.ts`):** `PopulationRecordRead`, `PopulationRow`, `RuleFinding`, `RuleInput`, `RuleRunResult`, `listPopulationRecords`, `listPopulations`, `recordSysteligonFindings`, `runRules`, `systeligonPopulationRules`
+- **Data modules:** `src/data/population.ts`, `src/data/systeligon.ts`
+- **RPCs reachable via those modules:** none
+- **Tables reachable via those modules:** `population_rows`, `populations`
+- **Testids (14):** `rule-run`, `rule-run-empty`, `rule-run-error`, `rule-run-finding-<i>`, `rule-run-findings`, `rule-run-findings-empty`, `rule-run-loading`, `rule-run-population`, `rule-run-record`, `rule-run-recorded`, `rule-run-rights-note`, `rule-run-run`, `rule-run-skipped`, `rule-run-summary`
+- **Explain ids (0):** — (no explain affordance)
+- **IIA standards addressed (0):** —
+- **Drilldown targets (0):** — (no aggregate)
+- **States:** loading; no population (`rule-run-empty`); reading rows; running; findings; none flagged (`rule-run-findings-empty`); recorded; error inline.
+- **Tutorial key:** — (no key)
+- **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
+  named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
+
 ### `AF-12` — Deployment gate (S1)
 
 - **Purpose:** Run the deployment gate for an engagement: the ordered steps, each outcome, the required right, and the next action.
@@ -2122,7 +2140,7 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 
 ## Coverage cross-check
 
-- Screens documented: 105 (contract sections: 48 Appendix A + 44 Appendix B).
+- Screens documented: 106 (contract sections: 48 Appendix A + 44 Appendix B).
 - Tutorial keys: 81.
 - RPCs catalogued: 140.
 - Data modules: 66; exported data functions: 425.

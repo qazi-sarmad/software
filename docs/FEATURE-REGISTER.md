@@ -287,9 +287,9 @@ this register exists to catch.
 
 | # | Capability | Status | Evidence / gap | WP |
 |---|---|---|---|---|
-| F127 | Rule schema, runner and result shape (S1) | `Inert` | `src/lib/systeligon/{types,runner}.ts` — `runRules` is pure, total and stably ordered, and turns a rule that throws into a finding against its own identity. **No screen calls `runRules`** (grep: 0 callers outside tests); the rule-run screen is L1 in `docs/CONTINUOUS-BUILD-REPORT.md` | S1 |
+| F127 | Rule schema, runner and result shape (S1) | `Wired` | `src/lib/systeligon/{types,runner}.ts` — `runRules` is pure, total and stably ordered, and turns a rule that throws into a finding against its own identity. **Wired** by the rule-run screen (`RuleRunTab.tsx`, workbench sub-tab "Rule Run", contract AF-16): it evaluates `runRules` over a population's rows and records the run via `recordSysteligonFindings` | S1 |
 | F128 | Rule versioning and packs (S1) | `Inert` | `src/lib/systeligon/{versioning,packs}.ts` — `RuleRegistry`, `definePack`, `releasedRules`, `packRules`; append-only versions, duplicate `id@version` collapses. **No screen calls `definePack`/`packRules`**; the pack browser is L2 | S1 |
-| F129 | Numeric forensic rules (S6) | `Inert` | `src/lib/systeligon/rules/{numeric,threshold}.ts` — 11 rules wrapping the tested `analyticsEngine` checks (Benford, duplicates, near-duplicates, sequence gaps, z-score and IQR outliers, round numbers, out-of-hours, SoD, missing attributes, just-below-threshold) with provenance. **No screen calls the rule set**; the surface is L1 | S6 |
+| F129 | Numeric forensic rules (S6) | `Wired` | `src/lib/systeligon/rules/{numeric,threshold}.ts` — 11 rules wrapping the tested `analyticsEngine` checks (Benford, duplicates, near-duplicates, sequence gaps, z-score and IQR outliers, round numbers, out-of-hours, SoD, missing attributes, just-below-threshold) with provenance. Assembled as `systeligonPopulationRules` (`library.ts`) and **run by the rule-run screen** (`RuleRunTab.tsx`) | S6 |
 | F130 | Structured document extraction, tier 3 (S7) | `Inert` | `src/lib/systeligon/extract/structured.ts` — `parseDocumentStructure`, `hasSignature`, `FIELD_PARSERS`, reporting its own coverage. **No screen calls `parseDocumentStructure`**; mounting it is L3 | S7 |
 | F131 | OCR seam, tier 2 (S7) | `Inert` | `src/lib/systeligon/extract/ocr.ts` — `needsOcr`, `runOcr`, a lazy bundled engine that **refuses a remote engine** so nothing leaves the tenant. **No screen calls `runOcr`**; the bundled engine is a build artifact (L3) | S7 |
 | F132 | Accepted/declined flows and Mode A/B verification (S3/S4/S5/S12) | `Inert` | `src/lib/systeligon/flows.ts` — `buildAcceptedTestingSet`, `applyFloor` (a minimum, never a ceiling), `parsePastedBlock`, `verifyRows`, `carriedOverrides`; pure, time is an argument. **No screen calls them** | S3/S4/S5/S12 |
@@ -298,7 +298,7 @@ this register exists to catch.
 | F135 | Action-item register from minutes (S14) | `Inert` | `src/lib/systeligon/minutes.ts` — `buildActionRegister`, `itemHistory`; carried / vanished / closed-no-evidence / reopened / closed-before-raised / closed-by-non-owner / owner-due-changed / due-passed. **No screen calls `buildActionRegister`** | S14 |
 | F136 | Policy/procedure/regulation comparison (S15) | `Inert` | `src/lib/systeligon/policydiff.ts` — `compareDocuments` reports its own coverage (parsed / matched / could-not-interpret), because an unparsed clause is not a clean clause. **No screen calls `compareDocuments`** | S15 |
 | F137 | Signed rule-pack storage (S10/S11) | `Inert` | `src/lib/systeligon/ota.ts` (`signPack`, `verifyPack`, `buildAdhocRule`) + `src/data/rulePacks.ts` (`listRulePacks`, `saveSignedRulePack`) + `0117_systeligon_rule_packs.sql` (`rule_pack_save`/`rule_pack_list`). **No screen calls `listRulePacks`/`saveSignedRulePack`** — the pack-management UI is L2 | S10/S11 |
-| F138 | Single product/engine name (S16) | `Wired` | `src/lib/product.ts` is the one constants module (product name, tagline, title and the engine name); `scripts/sync-product-name.mjs` mirrors it to the Edge functions, `src/guards/productName.test.ts` holds it, and ten screens read `PRODUCT_NAME` (`HeaderBar.tsx`, `SignInScreen.tsx`, `AttestationPanel.tsx`, …). The engine-name constant has no screen reader yet — honest, and the engine's own surface is L1 | S16 |
+| F138 | Single product/engine name (S16) | `Wired` | `src/lib/product.ts` is the one constants module (product name, tagline, title and the engine name); `scripts/sync-product-name.mjs` mirrors it to the Edge functions, `src/guards/productName.test.ts` holds it, and screens read it — `PRODUCT_NAME` in ten (`HeaderBar.tsx`, `SignInScreen.tsx`, `AttestationPanel.tsx`, …) and `ENGINE_NAME` in the rule-run screen (`RuleRunTab.tsx`) | S16 |
 
 ---
 
@@ -306,8 +306,8 @@ this register exists to catch.
 
 | Status | Count |
 |---|---|
-| `Wired` | 85 |
-| `Inert` | 30 |
+| `Wired` | 87 |
+| `Inert` | 28 |
 | `Absent` | 23 |
 | **Total** | **138** |
 
@@ -315,7 +315,7 @@ this register exists to catch.
 reported, because Phases 1 and 2 of the scale-harden build closed the whole foundation, the S17-S20
 work packages closed the evidence-bytes and SIRA-write-path gaps, T7 closed the tamper alarm and
 the ledger verification, and T3/T4/T5 closed the portable attestation package, the third-party
-verifier and the attestation screen. The picture now: **85 wired, 30 inert, 23 absent.** The remaining
+verifier and the attestation screen. The picture now: **87 wired, 28 inert, 23 absent.** The remaining
 `Inert` rows are the genuine, still-open unwired features — the monitor runtime, the alert persistence
 and delivery, the connector adapters, and (from §13b) the Systeligon engine's own surfaces. Every one
 of those is a defect, and every one looks like a working feature in the UI.

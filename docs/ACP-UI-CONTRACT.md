@@ -1063,6 +1063,21 @@ claiming a hash-lock it cannot keep.
 - **States:** loading; session-only (no bucket); empty; stored; verifying; verified; mismatch.
 - **Tutorial key:** —
 
+## AF-16 — Systeligon rule run (S1, S6, S13)
+
+Run the deterministic forensic rules over a locked population, read every finding with the rule id,
+its version, its severity and the exact source rows it flagged, and record the run to the ledger so
+the findings sit inside the report's tamper-evident root. Nothing is generated and nothing is
+guessed: a missing amount is reported as missing, not as zero, and a draft rule is skipped until a
+qualified human releases it.
+
+- **Route:** the `workbench` inspector window, sub-tab "Rule Run".
+- **Rights:** `perform_work` to run and to record; any member of the org reads.
+- **Data:** `PopulationRow`, `PopulationRecordRead`, `RuleFinding`, `RuleInput`, `RuleRunResult`, `listPopulationRecords`, `listPopulations`, `recordSysteligonFindings`, `runRules`, `systeligonPopulationRules` — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `rule-run`, `rule-run-empty`, `rule-run-error`, `rule-run-finding-<i>`, `rule-run-findings`, `rule-run-findings-empty`, `rule-run-loading`, `rule-run-population`, `rule-run-record`, `rule-run-recorded`, `rule-run-rights-note`, `rule-run-run`, `rule-run-skipped`, `rule-run-summary`
+- **States:** loading; no population (`rule-run-empty`); reading rows; running; findings; none flagged (`rule-run-findings-empty`); recorded; error inline.
+- **Tutorial key:** —
+
 ## AF-12 — Deployment gate (S1)
 
 Run the deployment gate for an engagement: the ordered steps, each outcome, the required right, and the next action.

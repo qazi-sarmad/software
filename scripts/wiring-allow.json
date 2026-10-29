@@ -1,7 +1,6 @@
 {
   "_readme": "Allow-list for scripts/check-wiring.mjs (gate G4). An entry means a src/data value export is unreachable from any screen and is deliberately kept. Every entry must carry a real reason. The gate also fails on a stale entry (one that has become reachable), so the list cannot silently accumulate. Per docs/BRANCH-MAP.md the inert set in src/data/** is Builder B's to resolve; this branch builds the gate, records the finding, and does not build in another builder's scope (rule 5).",
   "_builder-b": "Builder B's per docs/BRANCH-MAP.md ('The export sits in src/data/** ... Builder B'). Recorded here so the gate can pass without this branch re-implementing B's resolution. The owner sees the list; it is not silent.",
-  "_a-own-unwired": "This branch's own data export, built for a feature whose screen was not finished. Reported in docs/SCALE-TASKS.md as a wiring gap; wire it or hide the surface.",
   "src/data/admin.ts::rightsOfRoleRow": {
     "category": "builder-b",
     "reason": "Maps a RoleRow to its rights map; the People admin reads role rights through a different path. Builder B's inert set per BRANCH-MAP."
@@ -41,9 +40,5 @@
   "src/data/writing.ts::reviewCell": {
     "category": "builder-b",
     "reason": "Marks one workbook cell reviewed (W2.9); no screen offers it. Builder B's per BRANCH-MAP."
-  },
-  "src/data/systeligon.ts::recordSysteligonFindings": {
-    "category": "a-own-unwired",
-    "reason": "S13 writer that records a rule run's findings to the ledger (RPC systeligon_finding_record, 0118); the report side (loadSysteligonFindings, F39) is wired and green, but the rule-run screen that calls it is not built yet. Reported as a wiring gap; wire it or hide the surface."
   }
 }
