@@ -33,3 +33,40 @@ class the whole project is organised against. The branch is already green; the c
 leave it green.
 
 **If `main` needs it:** apply on a branch off `main` and open a PR, as the prompt itself allows.
+
+## D2 — UI-INVENTORY: one generator, canonical command `node scripts/gen-ui-inventory.mjs`
+
+**Queue item 5.** A and B both generate `docs/UI-INVENTORY.md`; A's header names
+`node scripts/gen-ui-inventory.mjs`, B's header names `npx tsx scripts/gen-ui-inventory.mjs`. Two
+commands for one generated file is the drift risk.
+
+**Decision:** the canonical command is **`node scripts/gen-ui-inventory.mjs`** — the plain Node
+invocation. `tsx` is a devDependency added for TypeScript entry points; this generator is `.mjs` and
+needs no transpiler, so `node` is the lower-dependency, more portable spelling. B's header comment is
+the only thing that needs changing at integration time (it does not affect output).
+
+**Evidence (reproduced on this branch):** `node scripts/gen-ui-inventory.mjs` → exit 0,
+*"1684 lines, 98 screens, 116 RPCs"*, and the regenerated file is **byte-identical** to the committed
+one (`diff -q` clean). A's header is therefore already the canonical, self-consistent state.
+
+## D3 — G1 row corrected to DONE; the gate is also now run by CI
+
+**Queue item 6.** The builder prompt says: "A's `G1` row says TODO but the work is done … Fix the row,
+not the code."
+
+**Decision:** corrected the ledger row to `DONE (2026-10-29)` and wrote the G1 section explaining it —
+**and** added the missing CI step, because the row's `TODO` was not the only thing wrong with G1.
+
+**Evidence.** The gate is real: `playwright.config.ts:45-51` serves the built bundle with
+`npm run build && npm run preview -- --port 4173 --strictPort` when `E2E_PROD=1`, and
+`e2e/phase1-production-build.spec.ts` runs only under that flag. But `grep -rn E2E_PROD
+.github/workflows/` returned **nothing**: no CI job ever set the flag, so the suite CI ran (step 8)
+was always the dev-server suite, and G1 had only ever run by hand. The ledger even contradicted
+itself — line 869 recorded *"G1 prod E2E … PASS — 143 passed, 3 skipped"* while line 984 said `TODO`.
+
+**Reasoning.** Fixing only the row would have marked a gate DONE that the pipeline never executes —
+the precise defect G1 was built to catch (the production build shipped empty while the dev suite
+stayed green). So step 8 now runs both: the dev suite first (fast feedback, unchanged), then
+`npm run build` + `E2E_PROD=1 npx playwright test --project=chromium`. Both hit the hosted test
+project, so the job's existing concurrency group still serialises them. The code was not at fault; the
+row and the pipeline both were.

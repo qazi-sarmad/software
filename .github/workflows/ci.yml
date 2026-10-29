@@ -93,7 +93,13 @@ jobs:
           sudo -n -u postgres psql -tAc 'select 1' >/dev/null || { echo "::error::postgres not reachable"; exit 1; }
           bash scripts/local-sql-harness.sh
 
-      - name: 8. Playwright
+      - name: 8. Playwright (dev server) and 8b. G1 production-build E2E
+        # Step 8 drives the dev server (fast feedback). Step 8b sets E2E_PROD=1 so the same suite
+        # runs against the built bundle from `vite preview` on 4173 — the G1 anti-theatre gate, which
+        # exists in playwright.config.ts and e2e/phase1-production-build.spec.ts but had no CI runner
+        # until now (no job step ever set E2E_PROD, so G1 never executed here while the ledger
+        # reported it PASS from a manual run). Both use the hosted test project, so the concurrency
+        # group above must still serialise this job against a second run.
         env:
           VITE_SUPABASE_URL: ${{ secrets.TEST_SUPABASE_URL }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.TEST_SUPABASE_PUBLISHABLE_KEY }}
@@ -103,6 +109,9 @@ jobs:
         run: |
           npx playwright install --with-deps chromium
           npx playwright test --project=chromium
+          echo "--- G1: production bundle ---"
+          npm run build
+          E2E_PROD=1 npx playwright test --project=chromium
 
       - name: 9. Screenshot sweep (all presets and themes)
         # C5.4 (spec §29). Captures every contract screen in three presets and two themes and

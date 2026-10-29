@@ -981,12 +981,28 @@ branch builds G1–G6 and does not build G7–G10.
 
 | # | Gate | Status |
 |---|---|---|
-| G1 | Production-build E2E (`npm run preview`, not `dev`) | TODO |
+| G1 | Production-build E2E (`npm run preview`, not `dev`) | DONE (2026-10-29) |
 | G2 | No-dead-code (every `public` fn has a production caller or is allow-listed) | DONE |
 | G3 | Config-effect (every configurable field has a proving test) | DONE |
 | G4 | Wiring (every `src/data/*.ts` export imported by a component or allow-listed) | DONE |
 | G5 | Two-sources (no component reads both the seed and the database) | DONE |
 | G6 | RPC parity (every RPC the app calls exists in the final schema) | DONE |
+
+### G1 — production-build E2E, DONE and now run by CI (2026-10-29)
+
+The gate exists and passes: `playwright.config.ts` sets the web server to
+`npm run build && npm run preview -- --port 4173 --strictPort` and the base URL to `:4173` when
+`E2E_PROD=1`, and `e2e/phase1-production-build.spec.ts` runs only under that flag. The ledger's old
+`TODO` row simply contradicted the file's own status table several hundred lines above it (the
+`G1 prod E2E` row that read *PASS — 143 passed, 3 skipped*). Corrected here; the code was not the fault.
+
+**The row was DONE but the gate had never run in CI.** No job step anywhere set `E2E_PROD=1`, so the
+suite CI executed was always the dev-server one. On this repository that is not a trivial omission:
+the whole reason G1 exists is the production build once shipped empty screens while the dev suite
+stayed green. A gate that is *written* and *passes locally* but is *never executed* is exactly the
+"documented, tested, not wired" class this ledger tracks. Fixed in the same session: CI step 8 now
+runs the dev suite and then `npm run build` + `E2E_PROD=1 npx playwright test --project=chromium`, so
+the row's DONE is enforced by the pipeline rather than by a manual run. Recorded as decision D3.
 
 ### G2 — no dead code, DONE (2026-10-28)
 
