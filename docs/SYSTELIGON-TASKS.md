@@ -610,6 +610,60 @@ tree is exactly the conflict the branch map exists to prevent, so they are repor
 
 ---
 
+## Scale hardening and the dead-component sweep (2026-10-28, second session)
+
+Two additions beyond the first session's close-out, both measured, both in scope.
+
+### `0118_org_id_indexes.sql` — the 31 missing tenant indexes
+
+Every tenant RLS policy filters `org_id = jwt_org_id()`, and 31 tables carrying that predicate had
+only their primary-key index. On the 1000-org scale database the missing index is the whole cost of
+the read:
+
+| Query | Before | After | Ratio |
+|---|---|---|---|
+| `population_rows` by org | 1139 ms | 11.5 ms | 99× |
+| `test_rows` by org | 911 ms | 5.8 ms | 157× |
+| `findings` by org | 660 ms | 7.4 ms | 89× |
+
+`supabase/tests/118_org_id_indexes.sql` is the regression guard: it fails the build if a future
+tenant table gains an `org_id` policy without a leading-column `org_id` index. Test 118 runs in the
+normal SQL harness (applied twice, passed twice).
+
+### `supabase/scale/` — the concurrency probe
+
+`01_isolation.sql` proves no cross-tenant leak sequentially. `06_concurrency.sh` proves the same
+under parallel load, where a pooled connection reuses a role and a leak would surface as a
+foreign-org row: 50 pgbench clients × 20 transactions, each acting as a random one of 1000 orgs,
+each transaction asserting (via a real `raise exception`, not a planner-folded `1/0`) that zero rows
+of another org are visible in `universes`, `entities`, `engagements`, `org_members` and
+`ledger_entries`. **Result: 1000/1000 transactions, 0 leaks.**
+
+### The dead-component sweep — three components deleted
+
+The whole-repo reachability pass left three *components* (not exports) with zero references
+anywhere, each superseded by a wired equivalent. Deleted, and recorded in `docs/baseline-lines.json`
+`removed` so `check-shrink` stays honest:
+
+| Deleted | Superseded by (wired) | Evidence |
+|---|---|---|
+| `src/components/dashboard/D3Sunburst.tsx` | `CapRadialTracker.tsx` | `ExecutiveDashboardTab.tsx:317` — "replaces Sunburst with D3 radial chart" |
+| `src/components/dashboard/GanttTimeWarp.tsx` | `EngagementGantt.tsx` | `ExecutiveDashboardTab.tsx` mounts `EngagementGantt`; `GanttTimeWarp` unreferenced |
+| `src/components/calendar/AuditCalendarTab.tsx` | `HeaderCalendarPanel.tsx` | UI contract CH-06 is the header panel; the tab is a dead duplicate |
+
+The remaining zero-reference exports are the `src/lib/writing/` realisation engine and adjacent data
+wrappers — Builder A's and the SPEC branch's territory, reported not removed (see the sweep above).
+
+### Gates re-run this session (after the deletions)
+
+`tsc --noEmit` 0 · `vitest run` 255 files / **2948 tests** pass · `vite build` ok ·
+`check-shrink` 54 files, no shrink · `check-tokens` 206 files, 0 violations · `check-ui-contract`
+48 screens · `check-feature-register` 126 (83 Wired / 20 Inert / 23 Absent) · `check-tutorials`
+69 current / 11 stale · SQL harness applied twice, tests passed twice. Playwright needs the
+`TEST_SUPABASE_URL`/`TEST_SUPABASE_SECRET_KEY` CI secrets, which are not available locally (owner
+credential) — every other gate ran here.
+
+
 ## Gates to add on this branch
 
 | Gate | Fails when | Status |

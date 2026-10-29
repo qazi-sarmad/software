@@ -38,15 +38,12 @@
     "src/components/audit/PaperWorkbenchModal.tsx": 80,
     "src/components/audit/AuditFileModal.tsx": 119,
     "src/components/calendar/HeaderCalendarPanel.tsx": 369,
-    "src/components/calendar/AuditCalendarTab.tsx": 211,
     "src/components/dashboard/CapInspector.tsx": 257,
     "src/components/dashboard/CapRadialTracker.tsx": 396,
     "src/components/dashboard/CapRadialTracker.test.tsx": 69,
     "src/components/dashboard/CapTable.tsx": 313,
-    "src/components/dashboard/D3Sunburst.tsx": 230,
     "src/components/dashboard/EngagementGantt.tsx": 492,
     "src/components/dashboard/ExecutiveDashboardTab.tsx": 201,
-    "src/components/dashboard/GanttTimeWarp.tsx": 136,
     "src/components/plan/AuditPlanTab.tsx": 306,
     "src/components/issues/IssuesRegisterTab.tsx": 185,
     "src/components/issues/ObservationDrilldown.tsx": 232,
@@ -61,6 +58,9 @@
   "moved": {},
   "removed": {
     "src/components/common/InspectorPanel.tsx": "deleted in H3c: the blocking inspector panel is replaced by the two-mode record view (FloatingWindow / RecordView). Recorded as D-H3.",
-    "src/components/reviews/ReviewCommentsDock.tsx": "deleted in U14/S21: mounted nowhere (verified by scripts/audit-wiring.mjs); the live review-comment surface is CommentHistoryPanel via ReviewCommentsGlobalDock."
+    "src/components/reviews/ReviewCommentsDock.tsx": "deleted in U14/S21: mounted nowhere (verified by scripts/audit-wiring.mjs); the live review-comment surface is CommentHistoryPanel via ReviewCommentsGlobalDock.",
+    "src/components/dashboard/D3Sunburst.tsx": "deleted in the dead-component sweep (Builder B): superseded by the wired CapRadialTracker (ExecutiveDashboardTab:317), zero references anywhere.",
+    "src/components/dashboard/GanttTimeWarp.tsx": "deleted in the dead-component sweep (Builder B): superseded by the wired EngagementGantt (ExecutiveDashboardTab), zero references anywhere.",
+    "src/components/calendar/AuditCalendarTab.tsx": "deleted in the dead-component sweep (Builder B): dead duplicate of the wired HeaderCalendarPanel (UI contract CH-06), zero references anywhere."
   }
 }
