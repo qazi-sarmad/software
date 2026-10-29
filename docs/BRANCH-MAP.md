@@ -93,12 +93,15 @@ harmless; a collision is not.
 | Range | Owner | Notes |
 |---|---|---|
 | `0001`-`0106` | shared | Already on every branch. Do not renumber. |
-| `0107`-`0110` | Builder A | **Consumed**: Phase 3 workflow enforcement, report templates, config effects, Phase 4 methodology. |
-| `0111`-`0113` | Builder A | Reserved for Phase 5 (`C1`-`C7`) and Phase 6. |
-| `0114` onward | Builder B | Start at `0114`. **This supersedes the `0110` line in `docs/SYSTELIGON-TASKS.md`**: Builder A reached `0110` before that reservation was known, and `0110_phase4_methodology.sql` is already committed on their branch. |
+| `0107`-`0117` | Builder A | **Consumed and collided.** Phase 3 workflow enforcement, report templates, config effects, Phase 4 methodology, Phase 5 (`0111`-`0114`), tenant suspension (`0115`), Phase 6 (`0116`-`0117`). When this table was first written it said `0114`+ was Builder B's; Builder A had already carried Phase 5 and Phase 6 into that range, and the two branches' `0110`-`0117` filenames differ. A real merge therefore lands two different files on each path (`0110`, `0111`, … `0117`) and a plain `git merge` resolves it **silently**, keeping one side and dropping the other. That is the exact failure this table exists to prevent; it is recorded here in full rather than hidden by a tidy reservation. |
+| `0118` onward | Builder B / this session | Start at `0118`. Builder B's Phase 5-6 work is currently at `0110`-`0117` on `feature/systeligon-build-v1`; those seven carry-over files keep their numbers (the work is committed and its ledger and SQL tests reference them by name), but **every new migration from here on takes `0118`+**. Builder A's `0110`-`0117` will be renumbered to `0118`+ at integration time, or A's branch is abandoned in favour of B's — either way no two distinct migrations share a path after the merge. |
 
 **Never write a migration below your own range.** This is the single most likely way for one builder
-to break the other's SQL harness.
+to break the other's SQL harness. The `0110`-`0117` collision is the live example: the harness applies
+files by glob in filename order and a gap is harmless, but **two files with the same leading number and
+different names is not** — one overwrites the other in a merge and the loss is silent while the run
+stays green. Before integrating any two branches, diff the two migration lists and prove no number
+maps to two files.
 
 ---
 

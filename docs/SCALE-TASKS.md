@@ -99,6 +99,14 @@ reservation is off by one. Decision recorded rather than silently renumbering a 
 **this branch's Phase 5 migrations start at `0111`**, leaving `0110` as-is. A future reader should
 treat `0107`–`0110` as this branch's and `0111`+ as free for whichever builder reaches it first.
 
+**Correction (2026-10-29).** The "no live collision" judgement above was measured too early. Builder B
+subsequently advanced into `0110`–`0117` on `feature/systeligon-build-v1` with **different filenames**
+from this branch's `0110`–`0117`, so the collision is now real on every number in that range, and a
+plain `git merge` would resolve it silently — keeping one side, dropping the other, and staying green.
+`docs/BRANCH-MAP.md`'s reservation table is corrected in the same commit as this note: `0110`–`0117`
+are recorded as **collided**, and every new migration takes `0118`+. The lesson is the one this ledger
+keeps re-learning: a reservation is only as good as the check that it still holds.
+
 ### Baseline counts (locked at branch point)
 
 | Metric | Baseline |
