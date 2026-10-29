@@ -897,15 +897,17 @@ Edit the SIRA model: aggregation, factors and bands; a locked model is read-only
 
 ## SR-03 — SIRA cycles inspector (S1)
 
-Create a SIRA cycle, record scores, publish the cycle, decide emergent risks with a reason, and close
+Create a SIRA cycle, score it, publish the cycle, decide emergent risks with a reason, and close
 the two-key acceptance (S18/S19): the finaliser endorses a published cycle, a different auditor
-accepts it, and the next cycle is blocked while proposals are outstanding.
+accepts it, and the next cycle is blocked while proposals are outstanding. The scoring panel is the
+surface that DRIVES the SIRA write path (`recordSiraScore`, `submitEmergentRisk`).
 
 - **Route:** The `sira_cycles` inspector window.
-- **Rights:** `manage_engagements` to create/publish/endorse; `review_and_approve` to decide an emergent risk and to accept.
-- **Data:** none (pure/UI only) — through `src/data/*.ts`; components never import the database client (rule M8).
-- **Testids:** `emergent-empty`, `emergent-risks`, `sira-create-cycle`, `sira-cycle-panel`, `sira-cycles`, `sira-cycles-empty`, `sira-cycles-inspector`, `sira-cycles-unscoped`, `sira-pack-`, `sira-remind`, `sira-seed-`
-- **States:** loading; empty (`sira-cycles-empty`, `emergent-empty`); unscoped (`sira-cycles-unscoped`); ready; publish blocked; awaiting acceptance; pack built.
+- **Rights:** `manage_engagements` to create/publish/endorse/score; `review_and_approve` to decide an emergent risk and to accept.
+- **Data:** `createSiraCycle`, `publishSiraCycle`, `recordSiraScore`, `submitEmergentRisk`, `decideEmergentRisk`, `proposeEmergentRisks`, `carryForwardPack`, `seedNextCycle`, `endorseSiraCycle`, `decideSiraAcceptance`, `remindSiraAcceptance`, `siraAcceptanceState`, `siraPublishBlock`, `listCycles`, `listEmergentRisks`, `listRisks`, `listScores`, `siraModelSnapshot` (`src/data/sira.ts`); the pure rule `scoreMatrix`/`summariseCycle`/`validateFactorValues`/`previewScore`/`emergentRiskIsValid` (`src/lib/siraScoring.ts`) — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `emergent-empty`, `emergent-risks`, `emergent-submit`, `emergent-submit-description`, `emergent-submit-locked`, `emergent-submit-title`, `sira-create-cycle`, `sira-cycle-panel`, `sira-cycles`, `sira-cycles-empty`, `sira-cycles-inspector`, `sira-cycles-unscoped`, `sira-pack-`, `sira-record-score`, `sira-remind`, `sira-score-entity`, `sira-score-list`, `sira-score-preview`, `sira-score-risk`, `sira-scoring-frozen`, `sira-scoring-locked`, `sira-scoring-no-cycle`, `sira-scoring-no-model`, `sira-scoring-panel`, `sira-scoring-summary`, `sira-seed-`
+- **States:** loading; empty (`sira-cycles-empty`, `emergent-empty`); unscoped (`sira-cycles-unscoped`); ready; publish blocked; awaiting acceptance; pack built; scoring with no draft cycle (`sira-scoring-no-cycle`), a frozen cycle (`sira-scoring-frozen`), no model (`sira-scoring-no-model`), locked (`sira-scoring-locked`).
+- **Drilldown (E5/U1):** the score list (`sira-score-list`) names the exact entity × risk cells behind the cycle's scored count.
 - **Tutorial key:** —
 
 ## AF-01 — Audit File window (S1)

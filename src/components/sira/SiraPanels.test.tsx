@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { SiraModelEditor } from './SiraModelEditor';
 import { SiraCyclePanel } from './SiraCyclePanel';
+import { SiraScoringPanel } from './SiraScoringPanel';
 import { AppProvider } from '../../context/AppContext';
 import { ThemeProvider } from '../../context/ThemeContext';
 import { testSeed, testUser } from '../../test/testUsers';
@@ -163,5 +164,77 @@ describe('SiraCyclePanel', () => {
     expect(screen.getByTestId('sira-pack-entity-c1-e1').textContent).toMatch(/Treasury: prior 72.5 \(High\) from 3 scores/);
     expect(screen.getByTestId('sira-pack-risks-c1').textContent).toMatch(/Vendor concentration/);
     expect(screen.getByTestId('sira-seed-c1')).toBeTruthy();
+  });
+});
+
+const SCORING_MODEL = {
+  aggregation: 'weighted_sum',
+  factors: [
+    { key: 'inherent_risk', label: 'Inherent risk', weight: 1, ordinal: 1 },
+    { key: 'materiality', label: 'Materiality', weight: 1, ordinal: 2 },
+  ],
+  scales: [{ point: 1, label: 'Low' }, { point: 5, label: 'High' }],
+  bands: [{ name: 'High', min: 60, max: 100, ordinal: 1 }],
+};
+
+describe('SiraScoringPanel (S18 write path)', () => {
+  it('refuses to score without a draft cycle, and says so', () => {
+    wrap('cia', (
+      <SiraScoringPanel cycle={null} universeId="u1" model={SCORING_MODEL} entities={[]} risks={[]} scores={[]} />
+    ));
+    expect(screen.getByTestId('sira-scoring-no-cycle')).toBeTruthy();
+  });
+
+  it('freezes a published cycle rather than offering a dead control', () => {
+    wrap('cia', (
+      <SiraScoringPanel cycle={{ id: 'c1', year: 2026, status: 'published' }} universeId="u1"
+        model={SCORING_MODEL} entities={[]} risks={[]} scores={[]} />
+    ));
+    expect(screen.getByTestId('sira-scoring-frozen')).toBeTruthy();
+    expect(screen.queryByTestId('sira-record-score')).toBeNull();
+  });
+
+  it('records a score through the callback with the factor values chosen', () => {
+    const seen: unknown[] = [];
+    wrap('cia', (
+      <SiraScoringPanel
+        cycle={{ id: 'c1', year: 2026, status: 'draft' }}
+        universeId="u1"
+        model={SCORING_MODEL}
+        entities={[{ id: 'e1', name: 'Treasury' }]}
+        risks={[{ id: 'r1', name: 'Fraud' }]}
+        scores={[]}
+        onRecordScore={(cycleId, entityId, riskId, fv) => seen.push({ cycleId, entityId, riskId, fv })}
+      />
+    ));
+    fireEvent.change(screen.getByTestId('sira-score-entity'), { target: { value: 'e1' } });
+    fireEvent.change(screen.getByTestId('sira-score-risk'), { target: { value: 'r1' } });
+    fireEvent.click(screen.getByTestId('sira-factor-materiality-5'));
+    fireEvent.click(screen.getByTestId('sira-record-score'));
+    expect(seen).toHaveLength(1);
+    expect(seen[0]).toMatchObject({ cycleId: 'c1', entityId: 'e1', riskId: 'r1' });
+    expect((seen[0] as { fv: Record<string, number> }).fv).toMatchObject({ materiality: 5, inherent_risk: 1 });
+  });
+
+  it('submits an emergent risk through the callback', () => {
+    const seen: unknown[] = [];
+    wrap('cia', (
+      <SiraScoringPanel cycle={null} universeId="u1" model={SCORING_MODEL} entities={[]} risks={[]} scores={[]}
+        onSubmitEmergentRisk={(universeId, title, description) => seen.push({ universeId, title, description })} />
+    ));
+    fireEvent.change(screen.getByTestId('emergent-submit-title'), { target: { value: 'New vendor risk' } });
+    fireEvent.change(screen.getByTestId('emergent-submit-description'), { target: { value: 'Concentration' } });
+    fireEvent.click(screen.getByTestId('emergent-submit'));
+    expect(seen).toHaveLength(1);
+    expect(seen[0]).toMatchObject({ universeId: 'u1', title: 'New vendor risk', description: 'Concentration' });
+  });
+
+  it('is read-only for a session without manage_engagements', () => {
+    wrap('preparer', (
+      <SiraScoringPanel cycle={{ id: 'c1', year: 2026, status: 'draft' }} universeId="u1"
+        model={SCORING_MODEL} entities={[{ id: 'e1', name: 'Treasury' }]} risks={[{ id: 'r1', name: 'Fraud' }]} scores={[]} />
+    ));
+    expect(screen.getByTestId('sira-scoring-locked')).toBeTruthy();
+    expect(screen.queryByTestId('sira-record-score')).toBeNull();
   });
 });

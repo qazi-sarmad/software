@@ -39,6 +39,14 @@ export interface SiraEmergentRisk {
   proposalReason: string | null;
 }
 
+/** A risk in the organisation's library (S18). `record_sira_score` requires one per score. */
+export interface SiraRisk {
+  id: string;
+  name: string;
+  code: string | null;
+  category: string | null;
+}
+
 export interface SiraCarryForward {
   id: string;
   fromCycleId: string;
@@ -308,6 +316,23 @@ export async function siraModelSnapshot(orgId: string): Promise<SiraModel | null
   const { data, error } = await sb.rpc('sira_model_snapshot', { p_org: orgId });
   if (error) throw new Error(error.message);
   return (data as SiraModel | null) ?? null;
+}
+
+/** The organisation's risk library (S18). A score is recorded against one of these risks. */
+export async function listRisks(): Promise<SiraRisk[]> {
+  const sb = getClient();
+  if (!sb) return [];
+  const { data, error } = await sb
+    .from('risks_library')
+    .select('id, name, code, category')
+    .order('name');
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((r) => ({
+    id: r.id as string,
+    name: r.name as string,
+    code: (r.code as string | null) ?? null,
+    category: (r.category as string | null) ?? null,
+  }));
 }
 
 export function setSiraAggregation(method: string): Promise<DataResult> {

@@ -5,18 +5,24 @@ import {
   SiraCyclePanel, type AcceptanceView, type CarryForwardPackView, type EmergentRiskView,
   type SiraCycleView,
 } from './SiraCyclePanel';
+import { SiraScoringPanel } from './SiraScoringPanel';
+import type { SiraModelView } from './SiraModelEditor';
 import {
   carryForwardPack, createSiraCycle, decideEmergentRisk, decideSiraAcceptance, endorseSiraCycle,
-  listCycles, listEmergentRisks, parseCarryForwardPack, proposeEmergentRisks, publishSiraCycle,
-  remindSiraAcceptance, seedNextCycle, siraAcceptanceState, siraPublishBlock,
+  listCycles, listEmergentRisks, listRisks, listScores, parseCarryForwardPack, proposeEmergentRisks,
+  publishSiraCycle, recordSiraScore, remindSiraAcceptance, seedNextCycle, siraAcceptanceState,
+  siraModelSnapshot, siraPublishBlock, submitEmergentRisk,
+  type SiraRisk, type SiraScore,
 } from '../../data/sira';
+import { listEntities, type EntityRow } from '../../data/universe';
 import { isUuid } from '../../lib/ids';
 
 /**
- * The connected SIRA cycles inspector (S18, S19). Loads the cycles, the emergent-risk queue and the
- * two-key acceptance state for one universe through src/data, and wires every write path: create,
- * publish, endorse, accept/reject, propose from findings, and remind. The presentational
- * `SiraCyclePanel` stays pure so it can be tested without a database.
+ * The connected SIRA cycles inspector (S18, S19). Loads the cycles, the emergent-risk queue, the
+ * two-key acceptance state and the scoring inputs (model, entities, risks, scores) for one universe
+ * through src/data, and wires every write path: create, publish, endorse, accept/reject, propose from
+ * findings, record a score, submit an emergent risk and remind. The presentational panels stay pure
+ * so they can be tested without a database.
  */
 export const SiraCyclesInspector: React.FC<{ universeId?: string }> = ({ universeId }) => {
   const { currentUser } = useApp();
@@ -24,6 +30,10 @@ export const SiraCyclesInspector: React.FC<{ universeId?: string }> = ({ univers
   const [emergent, setEmergent] = useState<EmergentRiskView[]>([]);
   const [acceptances, setAcceptances] = useState<Record<string, AcceptanceView>>({});
   const [packs, setPacks] = useState<Record<string, CarryForwardPackView>>({});
+  const [model, setModel] = useState<SiraModelView | null>(null);
+  const [entities, setEntities] = useState<EntityRow[]>([]);
+  const [risks, setRisks] = useState<SiraRisk[]>([]);
+  const [scores, setScores] = useState<SiraScore[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -35,13 +45,28 @@ export const SiraCyclesInspector: React.FC<{ universeId?: string }> = ({ univers
       setCycles([]);
       setEmergent([]);
       setAcceptances({});
+      setEntities([]);
+      setRisks([]);
+      setScores([]);
       return;
     }
     setError(null);
     try {
-      const [cs, es] = await Promise.all([listCycles(uid), listEmergentRisks(uid)]);
+      const [cs, es, ents, rks, mdl] = await Promise.all([
+        listCycles(uid),
+        listEmergentRisks(uid),
+        listEntities(uid),
+        listRisks(),
+        orgId ? siraModelSnapshot(orgId) : Promise.resolve(null),
+      ]);
       setCycles(cs);
       setEmergent(es);
+      setEntities(ents);
+      setRisks(rks);
+      setModel(mdl);
+      // The scores of the newest DRAFT cycle: the one the scoring panel can change.
+      const draft = cs.find((c) => c.status === 'draft');
+      setScores(draft ? await listScores(draft.id) : []);
       const acc: Record<string, AcceptanceView> = {};
       for (const c of cs) {
         if (c.status !== 'published') continue;
@@ -62,7 +87,7 @@ export const SiraCyclesInspector: React.FC<{ universeId?: string }> = ({ univers
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not load the SIRA cycles.');
     }
-  }, [uid]);
+  }, [uid, orgId]);
 
   useEffect(() => { void load(); }, [load]);
 
@@ -86,6 +111,8 @@ export const SiraCyclesInspector: React.FC<{ universeId?: string }> = ({ univers
       </div>
     );
   }
+
+  const draftCycle = cycles.find((c) => c.status === 'draft') ?? null;
 
   return (
     <div className="space-y-3" data-testid="sira-cycles-inspector">
@@ -117,6 +144,18 @@ export const SiraCyclesInspector: React.FC<{ universeId?: string }> = ({ univers
           if (pack) setPacks((p) => ({ ...p, [id]: pack }));
         })}
         onSeedNext={(id) => run(() => seedNextCycle(id))}
+      />
+      <SiraScoringPanel
+        cycle={draftCycle}
+        universeId={uid}
+        model={model}
+        entities={entities.map((e) => ({ id: e.id, name: e.name }))}
+        risks={risks.map((r) => ({ id: r.id, name: r.name }))}
+        scores={scores.map((s) => ({ entityId: s.entityId, riskId: s.riskId, score: s.score, band: s.band }))}
+        onRecordScore={(cycleId, entityId, riskId, factorValues) =>
+          run(() => recordSiraScore(cycleId, entityId, riskId, factorValues))}
+        onSubmitEmergentRisk={(universeId, title, description) =>
+          run(() => submitEmergentRisk(universeId, title, undefined, undefined, undefined, description ?? undefined))}
       />
     </div>
   );

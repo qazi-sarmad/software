@@ -171,6 +171,16 @@ exact — `createSiraCycle`, `publishSiraCycle`, `recordSiraScore`, `submitEmerg
 `decideEmergentRisk` had **zero callers**; only the reads were wired. Nothing was built on that
 surface until the surface could be driven.
 
+**Correction (2026-10-28, re-audit under the ONE RULE).** The wiring above was **incomplete**: it
+wired `createSiraCycle`/`publishSiraCycle`/`decideEmergentRisk`/`proposeEmergentRisks` but left
+`recordSiraScore` and `submitEmergentRisk` with **zero callers**, and `listScores`/`listCarryForward`
+likewise. A cycle could be created and published but never **scored**, so the carry-forward pack had
+nothing to carry — the engine was complete and unfed. Closed here: `SiraScoringPanel.tsx` (the factor
+matrix → `recordSiraScore`, and the manual emergent risk → `submitEmergentRisk`) is mounted by
+`SiraCyclesInspector`, which now loads the model, the entity list, the risk library and the draft
+cycle's scores. `src/lib/siraScoring.ts` is the pure rule (matrix, counts, validation, preview); it
+shares `siraCompute` with the RPC so the previewed score is the stored score.
+
 | Piece | What it does |
 |---|---|
 | `supabase/migrations/0110_sira_continuity_acceptance.sql` | Adds `sira_carry_forward` and `sira_acceptances`; adds the missing `band` column to `sira_scores` (selected by `listScores`, never created — a latent read bug); adds `sira_carry_forward_pack(cycle)`, `sira_seed_next_cycle_internal`, `propose_emergent_risks(cycle)`, `endorse_sira_cycle`, `decide_sira_acceptance`, `remind_sira_acceptance`, `sira_acceptance_status(cycle)`. All additive; RLS on both tables; reads allow `can_read_all_scopes()`, `review_and_approve` (an auditor must see what they are asked to accept) or an explicit scope. |

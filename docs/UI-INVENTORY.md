@@ -1291,7 +1291,7 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 - **Data functions (`src/data/*.ts`):** `PlanRow`, `PlanVersionRow`, `SiraCycle`, `SiraEmergentRisk`, `SiraModel`, `latestPlanForUniverse`, `listEmergentRisks`, `planHistory`, `siraModelSnapshot`
 - **Data modules:** `src/data/plan.ts`, `src/data/sira.ts`
 - **RPCs reachable via those modules:** `plan_approval_config`, `plan_history`, `propose_emergent_risks`, `remind_sira_acceptance`, `seed_sira_next_cycle`, `sira_acceptance_state`, `sira_carry_forward_pack`, `sira_model_snapshot`, `sira_publish_block`
-- **Tables reachable via those modules:** `plan_items`, `plans`, `sira_carry_forward`, `sira_cycles`, `sira_emergent_risks`, `sira_scores`
+- **Tables reachable via those modules:** `plan_items`, `plans`, `risks_library`, `sira_carry_forward`, `sira_cycles`, `sira_emergent_risks`, `sira_scores`
 - **Testids (9):** `sira-load-error`, `sira-open-cycles`, `sira-open-model`, `sira-persisted`, `sira-persisted-cycles`, `sira-persisted-model`, `sira-persisted-plan`, `sira-table`, `tab-sira`
 - **Explain ids (4):** `standard.13.2`, `standard.9.1`, `standard.9.2`, `standard.9.4`
 - **IIA standards addressed (4):** `13.2`, `9.1`, `9.2`, `9.4`
@@ -1321,18 +1321,18 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 
 ### `SR-03` — SIRA cycles inspector (S1)
 
-- **Purpose:** Create a SIRA cycle, record scores, publish the cycle, decide emergent risks with a reason, and close
+- **Purpose:** Create a SIRA cycle, score it, publish the cycle, decide emergent risks with a reason, and close
 - **Route / location:** The `sira_cycles` inspector window.
-- **Rights required:** `manage_engagements` to create/publish/endorse; `review_and_approve` to decide an emergent risk and to accept.
-- **Data functions (`src/data/*.ts`):** none (pure/UI only)
-- **Data modules:** none (pure/UI only)
-- **RPCs reachable via those modules:** none
-- **Tables reachable via those modules:** none
-- **Testids (11):** `emergent-empty`, `emergent-risks`, `sira-create-cycle`, `sira-cycle-panel`, `sira-cycles`, `sira-cycles-empty`, `sira-cycles-inspector`, `sira-cycles-unscoped`, `sira-pack-`, `sira-remind`, `sira-seed-`
+- **Rights required:** `manage_engagements` to create/publish/endorse/score; `review_and_approve` to decide an emergent risk and to accept.
+- **Data functions (`src/data/*.ts`):** `carryForwardPack`, `createSiraCycle`, `decideEmergentRisk`, `decideSiraAcceptance`, `emergentRiskIsValid`, `endorseSiraCycle`, `listCycles`, `listEmergentRisks`, `listRisks`, `listScores`, `previewScore`, `proposeEmergentRisks`, `publishSiraCycle`, `recordSiraScore`, `remindSiraAcceptance`, `scoreMatrix`, `seedNextCycle`, `siraAcceptanceState`, `siraModelSnapshot`, `siraPublishBlock`, `submitEmergentRisk`, `summariseCycle`, `validateFactorValues`
+- **Data modules:** `src/data/sira.ts`
+- **RPCs reachable via those modules:** `propose_emergent_risks`, `remind_sira_acceptance`, `seed_sira_next_cycle`, `sira_acceptance_state`, `sira_carry_forward_pack`, `sira_model_snapshot`, `sira_publish_block`
+- **Tables reachable via those modules:** `risks_library`, `sira_carry_forward`, `sira_cycles`, `sira_emergent_risks`, `sira_scores`
+- **Testids (26):** `emergent-empty`, `emergent-risks`, `emergent-submit`, `emergent-submit-description`, `emergent-submit-locked`, `emergent-submit-title`, `sira-create-cycle`, `sira-cycle-panel`, `sira-cycles`, `sira-cycles-empty`, `sira-cycles-inspector`, `sira-cycles-unscoped`, `sira-pack-`, `sira-record-score`, `sira-remind`, `sira-score-entity`, `sira-score-list`, `sira-score-preview`, `sira-score-risk`, `sira-scoring-frozen`, `sira-scoring-locked`, `sira-scoring-no-cycle`, `sira-scoring-no-model`, `sira-scoring-panel`, `sira-scoring-summary`, `sira-seed-`
 - **Explain ids (0):** — (no explain affordance)
 - **IIA standards addressed (0):** —
 - **Drilldown targets (0):** — (no aggregate)
-- **States:** loading; empty (`sira-cycles-empty`, `emergent-empty`); unscoped (`sira-cycles-unscoped`); ready; publish blocked; awaiting acceptance; pack built.
+- **States:** loading; empty (`sira-cycles-empty`, `emergent-empty`); unscoped (`sira-cycles-unscoped`); ready; publish blocked; awaiting acceptance; pack built; scoring with no draft cycle (`sira-scoring-no-cycle`), a frozen cycle (`sira-scoring-frozen`), no model (`sira-scoring-no-model`), locked (`sira-scoring-locked`).
 - **Tutorial key:** — (no key)
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
   named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
@@ -1915,7 +1915,7 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 | `confirm_prior_year_item` | `src/data/imports.ts` | `p_import_id` | tenant |
 | `connector_egress_allowed` | `src/data/writing.ts` | `p_org`, `p_host` | tenant |
 | `consultation_active` | `src/data/consultation.ts` | `p_org` | tenant |
-| `create_universe` | `src/data/guidedFirstRun.ts` | `p_name`, `p_domain` | tenant |
+| `create_universe` | `src/data/mutations.ts` | `p_name`, `p_domain` | tenant |
 | `decide_change` | `src/data/changeControl.ts` | `p_request_id`, `p_approve`, `p_reason` | tenant |
 | `deploy_engagement` | `src/data/deployment.ts` | `p_universe`, `p_entity`, `p_plan`, `p_period`, `p_title` | tenant |
 | `email_sender_profiles_list` | `src/data/senderProfiles.ts` | `p_org` | tenant |
