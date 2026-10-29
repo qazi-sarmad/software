@@ -1,0 +1,29 @@
+name: Probe hosted schema (temporary)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      TEST_SUPABASE_URL: ${{ secrets.TEST_SUPABASE_URL }}
+      TEST_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.TEST_SUPABASE_PUBLISHABLE_KEY }}
+      TEST_SUPABASE_SECRET_KEY: ${{ secrets.TEST_SUPABASE_SECRET_KEY }}
+      TEST_SUPABASE_DB_URL: ${{ secrets.TEST_SUPABASE_DB_URL }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --legacy-peer-deps
+      - name: Applied migration version
+        run: |
+          sudo apt-get update >/dev/null && sudo apt-get install -y postgresql-client >/dev/null
+          DB="${TEST_SUPABASE_DB_URL//[$'\r\n\t ']/}"
+          if [ -z "$DB" ]; then echo "TEST_SUPABASE_DB_URL is empty"; exit 0; fi
+          psql "$DB" -tAc "select coalesce(max(version), 'none') from supabase_migrations.schema_migrations" || echo "psql failed"
+      - name: Probe
+        run: npx tsx scripts/diag-schema.mjs
