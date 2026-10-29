@@ -63,16 +63,19 @@ begin
     'D-series: the run is listed with no kind filter');
 end $$;
 
--- The append-only trigger refuses an update and a delete even when the grant would allow it.
+-- The append-only trigger refuses an update and a delete. Run as the owner, which DOES hold the
+-- privilege, so this proves the trigger (not merely a missing grant) is what refuses the write.
+select provio_test.as_owner();
 do $$
 begin
   perform provio_test.assert_raises(
-    $$update capability_runs set finding_count = 99$$,
+    'update capability_runs set finding_count = 99',
     'append-only', 'D-series: a run cannot be updated');
   perform provio_test.assert_raises(
-    $$delete from capability_runs$$,
+    'delete from capability_runs',
     'append-only', 'D-series: a run cannot be deleted');
 end $$;
+select provio_test.as_user('10000000-0000-0000-0000-0000000000a1', 'a0000000-0000-0000-0000-000000000001', 'cia');
 
 -- An unknown kind is refused, and a missing inputs hash is refused.
 select provio_test.assert_raises(
