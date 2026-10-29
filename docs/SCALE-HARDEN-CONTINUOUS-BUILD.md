@@ -67,72 +67,147 @@ fix with it.
 
 **Blocking first:**
 
-1. **Apply the analytics type fix.** `src/lib/analytics.ts` writes a `period` field that
+1. **Update `.github/workflows/ci.yml` — port `main`'s step 7.** Detail in §3.0. This is first because
+   CI cannot go green without it, and it is the one change where A is *behind* `main`.
+2. **Add `@electric-sql/pglite` to `devDependencies`.** Three of the five gate scripts import it
+   (`check-dead-code.mjs`, `check-config-effect.mjs`, `check-rpc-parity.mjs`); `check-wiring.mjs` and
+   `check-two-sources.mjs` do not. It is in **no** `package.json` on **any** branch — installed
+   `--no-save` during the audit. A's CI ends `FAIL: @electric-sql/pglite is not installed` after 215
+   files / 2,474 tests green. **A's code is not the problem.**
+3. **Apply the analytics type fix.** `src/lib/analytics.ts` writes a `period` field that
    `AnalysisResultRow` in `src/types/index.ts` does not declare. Add, after `originalRowRef: number;`:
    `period: string;` and `periodLabel?: string;`. Apply with
    `git apply docs/analytics-period-fix.patch` (verified clean on `main`, `a697190`). Verified:
    `npx tsc --noEmit` → exit 0 (was 1, exactly 2 errors); `npx vitest run src/lib/analytics.test.ts` →
    5 passed. If fixing `main`, use a separate branch off `main` and open a PR.
-2. **Add `@electric-sql/pglite` to `devDependencies`.** Three gate scripts import it; it is in no
-   `package.json` on any branch. A's CI ends `FAIL: @electric-sql/pglite is not installed` after 215
-   files / 2,474 tests green. **A's code is not the problem.**
-3. **Renumber the collided migrations.** `0090`–`0106` are byte-identical on A and B; divergence starts
+4. **Renumber the collided migrations.** `0090`–`0106` are byte-identical on A and B; divergence starts
    at `0110`. Because the filenames differ, git merges this **cleanly and silently** into a broken
    replay order. Renumber B's `0110`–`0117` to `0118`–`0125`, or compact A's range and let B take the
    freed numbers. Update `BRANCH-MAP.md`'s reservation table **in the same commit** — that table is the
    mechanism, not the commentary.
-4. **Settle `UI-INVENTORY.md`** — one generator, one file, regenerating byte-identically. A's is
+5. **Settle `UI-INVENTORY.md`** — one generator, one file, regenerating byte-identically. A's is
    `node scripts/gen-ui-inventory.mjs`; B's header says `npx tsx scripts/gen-ui-inventory.mjs`. Two is
    zero.
-5. **Correct A's `G1` row** — it says TODO and the work is done (`playwright.config.ts` runs the
+6. **Correct A's `G1` row** — it says TODO and the work is done (`playwright.config.ts` runs the
    production build). Fix the row, not the code.
-6. **Write `docs/SCALE-PLAN.md`** — required by the original brief, present on no branch.
+7. **Write `docs/SCALE-PLAN.md`** — required by the original brief, present on no branch.
+
+### 3.0 The CI update, exactly
+
+**The defect.** A's step 7 (`7. Migrations and SQL tests (test project only)`) applies **116 migrations
+and 121 SQL test files to the HOSTED test project**, one `psql -f` per file — **237 network connections
+and roughly 16,000 DDL/WAL statements per run.** A's own comment on the job timeout admits it: *"the
+SQL step (network round-trips to the hosted test project) takes ~23m."*
+
+**`main` already fixed this, and A never received the fix.** `main`'s step 7 is
+`7. Migrations and SQL tests (runner-local PostgreSQL)`, and its comment states the reason plainly:
+*"That is what exhausted the project's Disk IO budget. The suite needs no cloud data (the shim supplies
+the Supabase parts), so it now runs against a throwaway cluster inside the runner and the hosted
+project is never touched by this step."*
+
+**The fix is to port `main`'s step 7 into A's file. Do not merge `main`'s `ci.yml` over A's** — A's
+file is *ahead* on one step (`6d. Anti-theatre gates`, G2–G6) which `main` does not have. Port step 7
+only, and keep 6d.
+
+Replace A's step 7 body with this (it is `main`'s, verbatim):
+
+```yaml
+      - name: 7. Migrations and SQL tests (runner-local PostgreSQL)
+        # Previously this applied 116 migrations and 121 test files to the hosted test project with
+        # one `psql -f` per file: 237 connections and ~16k DDL/WAL statements per run. That is what
+        # exhausted the project's Disk IO budget. The suite needs no cloud data (the shim supplies
+        # the Supabase parts), so it now runs against a throwaway cluster inside the runner and the
+        # hosted project is never touched by this step.
+        if: ${{ hashFiles('supabase/migrations/**') != '' }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql postgresql-client
+          # The runner image ships a cluster that is often already running, and `pg_ctlcluster start`
+          # exits 2 in that case ("Cluster is already running"), so the start is best-effort and
+          # connectivity is what we actually assert. Version is read from the filesystem rather than
+          # pinned: the suite needs no version-specific syntax (only security_invoker, PG15+).
+          PGVER="$(ls /usr/lib/postgresql | sort -V | tail -1)"
+          sudo pg_ctlcluster "$PGVER" main start || true
+          sudo -n -u postgres psql -tAc 'select 1' >/dev/null || { echo "::error::postgres not reachable"; exit 1; }
+          bash scripts/local-sql-harness.sh
+```
+
+**`scripts/local-sql-harness.sh` already exists on A** (verified) and on `main`, identical — it
+recreates the database, applies the Supabase shim, applies every migration **twice** and runs every SQL
+test **twice**, exiting non-zero on the first failure. No new script is needed. The
+`TEST_SUPABASE_DB_URL` env var is no longer required by this step; remove it.
+
+**Then fix the two comments the change invalidates.** Do not leave a stale justification in the file —
+that is the defect class this whole project is organised against.
+
+- **The job `timeout-minutes: 75`.** Its comment justifies the value by *"the SQL step (network
+  round-trips to the hosted test project) takes ~23m."* That is no longer true. Keep 75 (the screenshot
+  sweep still needs its 15m and Playwright its ~6m, and a generous ceiling is harmless), but **rewrite
+  the comment** so it describes the real reason.
+- **The `concurrency: provio-test-db` group.** Its comment says *"Two runs applying migrations at the
+  same time race on DDL."* After this change step 7 no longer touches the shared project — but **step 8
+  (Playwright) and step 9 (screenshot sweep) still do**, so the group is still required. **Keep it**,
+  and rewrite the comment to name the steps that actually need serialising.
+
+**Verify the change before you push.** A workflow edit that is not run is not a fix:
+
+1. Validate the YAML parses: `python3 -m pip install pyyaml && python3 -c "import yaml,sys; yaml.safe_load(open('.github/workflows/ci.yml'))"`.
+2. Reproduce step 7 locally, exactly as CI runs it: `bash scripts/local-sql-harness.sh` — it must pass
+   with migrations applied twice and tests run twice.
+3. Run step 6d locally, all five gates: `node scripts/check-dead-code.mjs && node scripts/check-config-effect.mjs && node scripts/check-wiring.mjs && node scripts/check-two-sources.mjs && node scripts/check-rpc-parity.mjs` — these pass only after item 2 (pglite) is done, which is why item 2 precedes the push.
+4. Push, then **watch the run** (`gh run watch` / `gh run list --branch feature/scale-harden-v1`). If CI
+   cannot be dispatched, record the local commands and their exact output as the evidence and say
+   plainly that it was local.
+
+**Commit both changes together** — the step 7 port, the pglite declaration and the two comment
+corrections belong in one commit, because the second without the first leaves CI red for the same
+reason, and the comment fix without either leaves a lie in the file.
 
 **Then the build remainder:**
 
-7. **S2 — header detection + confirm-before-count.** `population.ts:94` is still
+8. **S2 — header detection + confirm-before-count.** `population.ts:94` is still
    `const [header, ...body] = table;` — the assumption, unchanged. Detect, propose, confirm, then
    register with hash and confirmed count.
-8. **S1 — `src/lib/systeligon/`.** Rule schema, runner, versioning, result shape. **This directory does
+9. **S1 — `src/lib/systeligon/`.** Rule schema, runner, versioning, result shape. **This directory does
    not exist on any branch and there is no `rules/` directory anywhere.** Nothing else in the S-series
    can precede it.
-9. **S6 — the forensic rule library**, one pure module per family, each versioned and tested. The
+10. **S6 — the forensic rule library**, one pure module per family, each versioned and tested. The
    numeric forensics exist in `analyticsEngine.ts` but are **not versioned rules with provenance**.
    Port them into S1's shape; do not duplicate them.
-10. **S7 tiers 2–3 — OCR and structured extraction.** OCR is **not built anywhere**
+11. **S7 tiers 2–3 — OCR and structured extraction.** OCR is **not built anywhere**
     (`grep -iE "ocr|tesseract"` over every branch and every `package.json` returns nothing). Tier 2 per
     spec §5: **bundled, not called, loaded on demand, nothing leaves the tenant.** Tier 3: declared
     parsers for vendor/date/amount/reference/period/signature-presence. Tier 1 is partial and unwired —
     `extractDocument` is `F43 → Inert`; wire it.
-11. **S3/S4/S5/S12 — the two flows and verification.** Accepted flow (flag → rows → evidence → verify →
+12. **S3/S4/S5/S12 — the two flows and verification.** Accepted flow (flag → rows → evidence → verify →
     revert/override, with the override carried forward to the next reviewer); declined flow (floor as a
     **minimum, never a ceiling**, paste-to-fill, auto-add); Mode A / Mode B org-configurable.
-12. **S8/S9/S14/S15 — document review, pattern rules, minutes, policy comparison.** Spec §3.2 and §3.3.
+13. **S8/S9/S14/S15 — document review, pattern rules, minutes, policy comparison.** Spec §3.2 and §3.3.
     **S15 must report its own coverage** — clauses parsed, matched, and **could not be interpreted** —
     because an unparsed clause is not a clean clause.
-13. **S10/S11 — rule packs and signed OTA distribution.** Packs **signed** (reuse `signing_keys` from
+14. **S10/S11 — rule packs and signed OTA distribution.** Packs **signed** (reuse `signing_keys` from
     `0096`), versioned and append-only; an unsigned or unverifiable pack is **refused** and the refusal
     logged.
-14. **S13 remainder — findings-to-report provenance** (`F39 → Absent`).
-15. **S16 — the name in one constants module.**
-16. **C1–C7 — continuous assurance.** The rule library is built (`monitors.ts`, six kinds, pure); **the
+15. **S13 remainder — findings-to-report provenance** (`F39 → Absent`).
+16. **S16 — the name in one constants module.**
+17. **C1–C7 — continuous assurance.** The rule library is built (`monitors.ts`, six kinds, pure); **the
     engine that drives it is not.** `rule_engine_process`, `alert_record`, `connector_run_start`/`_finish`
     and `staged_record_ingest` all have **0 production refs** (`F49`–`F59`). Build the scheduled runner,
     persist alerts, emit `watcher.signal`, then enrichment, delivery, the suggestion and remediation
     paths, triage, and anomaly-to-SIRA.
-17. **T1/T2 — the scheduled sweeps.** `ledger_continuity_check()` and the alarm are built; the schedules
+18. **T1/T2 — the scheduled sweeps.** `ledger_continuity_check()` and the alarm are built; the schedules
     are not.
-18. **R5 — methodology and test-step templates** (`F28`–`F30`: no `test_step_templates` table, no
+19. **R5 — methodology and test-step templates** (`F28`–`F30`: no `test_step_templates` table, no
     `procedure_templates` table, three hardcoded stage strings).
-19. **R6 — multi-tenant scale and isolation** (`F84` no SQL test with ≥3 concurrent orgs; `F85`
+20. **R6 — multi-tenant scale and isolation** (`F84` no SQL test with ≥3 concurrent orgs; `F85`
     support-grant refs legacy-name only; `F86` every support read logged).
-20. **R7 — Super Admin guided provisioning** (`F92`: the SA-01 wizard covers some steps; model the full
+21. **R7 — Super Admin guided provisioning** (`F92`: the SA-01 wizard covers some steps; model the full
     path).
-21. **R3 remainder — configuration honesty** (`F35`, `F72`–`F76`, `F78`, `F79` still `Inert`).
-22. **D5–D9 — adjacent capability products** (`F121`–`F125`).
-23. **Re-record the tutorial media.** `check-tutorials` reports 69 current and **11 stale**; the
+22. **R3 remainder — configuration honesty** (`F35`, `F72`–`F76`, `F78`, `F79` still `Inert`).
+23. **D5–D9 — adjacent capability products** (`F121`–`F125`).
+24. **Re-record the tutorial media.** `check-tutorials` reports 69 current and **11 stale**; the
     committed GIFs are placeholders. This is build work, not an owner action.
-24. **Reachability audit of both engines.** Grep every export of `src/lib/writing/` and every
+25. **Reachability audit of both engines.** Grep every export of `src/lib/writing/` and every
     audit-engine module for a production call site. The audit found `report_graphs` unwritten and
     `rule_engine_process` uncalled. **Do this continuously, not once** — run it after every queue item
     that adds a module.
