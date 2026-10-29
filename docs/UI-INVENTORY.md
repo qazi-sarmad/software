@@ -773,6 +773,24 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
   named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
 
+### `OA-32` — team directory (spec §4.2, §5, §9)
+
+- **Purpose:** the resourcing view — every member with their working profile (picture, capacity, role), their workload, their home base and where they are on a date. Selecting a member opens their detail: the workload band, the engagements assigned to them, their upcoming trips, their travel preferences (home base, willingness, preferred regions, blackout dates), and a resourcing form that ranks who should take a given engagement and explains each verdict. A manager can also tag an engagement as requiring travel.
+- **Route / location:** Org Admin control plane, tab `Team directory` (`admin-tab-team`) on the People & Roles panel (`people-admin-panel`).
+- **Rights required:** `manage_team` or `manage_users` to see every member's travel and to write; a member sees and edits only their own travel and profile. The engagement travel tag needs `manage_engagements`.
+- **Data functions (`src/data/*.ts`):** `addTeamAssignment`, `addTeamTrip`, `availabilityOn`, `generatedAvatar`, `listDirectoryEngagements`, `listTeamDirectory`, `profileWorkload`, `recommendAssignee`, `removeTeamAssignment`, `removeTeamTrip`, `saveTeamProfile`, `saveTeamTravel`, `summariseTeam`, `tagEngagementTravel`
+- **Data modules:** `src/data/teamDirectory.ts`
+- **RPCs reachable via those modules:** `team_directory_get`
+- **Tables reachable via those modules:** `engagements`
+- **Testids (40):** `team`, `<prefix>-<element>`, `admin-tab-team`, `team-directory`, `team-grid`, `team-summary`, `team-resourcing`, `team-detail`, `team-detail-name`, `team-detail-close`, `team-profile-edit`, `team-avatar-url`, `team-capacity`, `team-travel-edit`, `team-home-base`, `team-regions`, `team-trips`, `team-trip-add`, `team-assignments`, `team-assignment-add`, `team-member-<userId>`, `team-avatar-<userId>`, `team-hover-<userId>`, `team-recommendations`, `team-rec-<userId>`, `team-req-engagement`, `team-req-travel`, `team-travel-tag`, `team-tag-engagement`, `team-tag-location`, `team-tag-save`, `team-empty`, `team-readonly`, `team-notice`, `team-loading`, `team-error`, `team-trip-<i>`, `team-trip-<i>-remove`, `team-assignment-<i>`, `team-assignment-<i>-remove`
+- **Explain ids (0):** — (no explain affordance)
+- **IIA standards addressed (0):** —
+- **Drilldown targets (0):** — (no aggregate)
+- **States:** loading, error, ready; an inline notice on a saved or refused write.
+- **Tutorial key:** — (no key)
+- **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
+  named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
+
 ### `OA-08` — templates hub (S2)
 
 - **Purpose:** the notification-template hub: every catalogue event, the tenant template that overrides the platform default, and the blocks each template is built from.
@@ -2128,6 +2146,7 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 | `support_grant_active` | `src/data/platform.ts` | `p_org` | tenant |
 | `support_list_engagements` | `src/data/platform.ts` | `p_org` | tenant |
 | `support_read_object` | `src/data/platform.ts` | `p_kind`, `p_id`, `p_org` | tenant |
+| `team_directory_get` | `src/data/teamDirectory.ts` | — | tenant |
 | `testing_signed_off` | `src/data/conclusion.ts` | `p_engagement_id` | tenant |
 | `unconfirmed_prior_year_imports` | `src/data/imports.ts` | `p_engagement_id` | tenant |
 | `validate_import` | `src/data/imports.ts` | `p_job_id`, `p_mapped_rows` | tenant |
@@ -2140,10 +2159,10 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 
 ## Coverage cross-check
 
-- Screens documented: 106 (contract sections: 48 Appendix A + 44 Appendix B).
+- Screens documented: 107 (contract sections: 48 Appendix A + 44 Appendix B).
 - Tutorial keys: 81.
-- RPCs catalogued: 140.
-- Data modules: 66; exported data functions: 425.
-- Contract testids not found verbatim in `src/` (placeholder or dynamic): 198.
+- RPCs catalogued: 141.
+- Data modules: 67; exported data functions: 434.
+- Contract testids not found verbatim in `src/` (placeholder or dynamic): 227.
   - audit-file-view-builder, audit-file-view-certificate, audit-file-view-conclusion, audit-file-view-documents, audit-file-view-ethics, audit-file-view-execution, audit-file-view-findings, audit-file-view-planning, audit-file-view-population, audit-file-view-report, audit-file-view-review, audit-file-view-rowtesting, audit-file-view-sampling, data-front-door-kind, hosting-test, invite-user, issues-view-patterns, oa-branding-colour-accent, oa-branding-colour-background, oa-branding-colour-primary, oa-branding-colour-text, oa-branding-margin-0, oa-branding-margin-3, oa-certificate-enabled-verification, oa-escalation-result, oa-escalation-saved, oa-governance-signoff-conclusion, oa-governance-signoff-planning, oa-governance-signoff-testing, org-control-tab-auditors, org-control-tab-automation, org-control-tab-branding, org-control-tab-connectors, org-control-tab-features, org-control-tab-formats, org-control-tab-governance, org-control-tab-hosting, org-control-tab-methodology, org-control-tab-people, org-control-tab-setup …
 

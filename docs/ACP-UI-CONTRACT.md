@@ -1468,6 +1468,38 @@ above. `docs/ACP-TUTORIALS.md` lists every key and its steps.
   (`admin-roles-readonly`), ready; an inline error on a refused write (`admin-error`).
 - **Tutorial key:** `oa.roles`.
 
+## OA-32 — team directory (spec §4.2, §5, §9)
+
+- **Purpose:** the resourcing view — every member with their working profile (picture, capacity,
+  role), their workload, their home base and where they are on a date. Selecting a member opens their
+  detail: the workload band, the engagements assigned to them, their upcoming trips, their travel
+  preferences (home base, willingness, preferred regions, blackout dates), and a resourcing form that
+  ranks who should take a given engagement and explains each verdict. A manager can also tag an
+  engagement as requiring travel.
+- **Route:** Org Admin control plane, tab `Team directory` (`admin-tab-team`) on the People & Roles
+  panel (`people-admin-panel`).
+- **Rights:** `manage_team` or `manage_users` to see every member's travel and to write; a member sees
+  and edits only their own travel and profile. The engagement travel tag needs `manage_engagements`.
+- **Data:** `listTeamDirectory(rightsByUser)`, `listDirectoryEngagements()`,
+  `saveTeamProfile(userId, avatarUrl, capacityHours)`,
+  `saveTeamTravel(userId, homeBase, willingness, regions, blackouts)`,
+  `addTeamTrip(...)`/`removeTeamTrip(id)`, `addTeamAssignment(...)`/`removeTeamAssignment(id)`,
+  `tagEngagementTravel(id, requiresTravel, location, from, to)` (`src/data/teamDirectory.ts`); the
+  pure model `profileWorkload`, `recommendAssignee`, `summariseTeam`, `availabilityOn`,
+  `generatedAvatar` (`src/lib/teamDirectory.ts`).
+- **Testids:** the panel is prefix-parameterised (prefix default `team`), so each id is
+  `<prefix>-<element>`: `admin-tab-team`, `team-directory`, `team-grid`, `team-summary`,
+  `team-resourcing`, `team-detail`, `team-detail-name`, `team-detail-close`, `team-profile-edit`,
+  `team-avatar-url`, `team-capacity`, `team-travel-edit`, `team-home-base`, `team-regions`,
+  `team-trips`, `team-trip-add`, `team-assignments`, `team-assignment-add`, `team-member-<userId>`,
+  `team-avatar-<userId>`, `team-hover-<userId>`, `team-recommendations`, `team-rec-<userId>`,
+  `team-req-engagement`, `team-req-travel`, `team-travel-tag`, `team-tag-engagement`,
+  `team-tag-location`, `team-tag-save`, `team-empty`, `team-readonly`, `team-notice`, `team-loading`,
+  `team-error`. Per-row ids are `team-trip-<i>` / `team-trip-<i>-remove` and
+  `team-assignment-<i>` / `team-assignment-<i>-remove`.
+- **States:** loading, error, ready; an inline notice on a saved or refused write.
+- **Tutorial key:** — (no key; `oa.team` is not registered, so none is claimed here).
+
 ## OA-08 — templates hub (S2)
 
 - **Purpose:** the notification-template hub: every catalogue event, the tenant template that

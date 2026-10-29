@@ -1201,6 +1201,43 @@ real test.
 | U1 | Pencil-style guided pointers (hand-drawn feel) on every flow | TODO |
 | U2 | Complete every screen's functional states (loading/empty/error/ready/denied) | TODO |
 | U3 | Guided first-run: zero → first sealed report with no further code | TODO |
+| U4 | Team directory: profile, workload, travel and resourcing (spec §4.2, §5, §9) | DONE |
+
+**U4 — DONE (2026-10-29).** The owner's ask: a written-but-unbuilt "team / profile / travel" concept
+(SPEC-v10 §4.2 audit teams, §5 "team workload", §9 "people, time and travel by engagement") is now
+built and reachable. A member has a working profile (picture, capacity) and travel preferences (home
+base, willingness none/limited/full, preferred regions, blackout dates); a manager sees everyone's,
+a member sees only their own (RLS on `team_travel` plus a `manage_team`/`manage_users` re-check in
+`team_directory_get`). Trips and assignments are added and removed by stamping (`removed_at`), never
+by deleting, so the calendar keeps its history. The resourcing form ranks who should take an
+engagement — a pure model (`recommendAssignee`) that excludes a member on a blackout, on another
+engagement, unwilling to travel, or without the right, and explains every verdict. An engagement can
+be tagged as requiring travel.
+
+- **Schema/RPCs:** `supabase/migrations/0127_team_directory.sql` — tables `team_profiles`,
+  `team_travel`, `team_travel_trips`, `team_assignments`; `engagements` gains `requires_travel`,
+  `travel_location`, `travel_from`, `travel_to`; RPCs `team_profile_save`, `team_travel_save`,
+  `team_trip_add`/`_remove`, `team_assignment_add`/`_remove`, `team_directory_get`,
+  `engagement_travel_tag`. Every write requires a team right, checks the target is a member of the
+  caller's org (cross-org is refused, not silently ignored), and logs a change. RLS is org-scoped with
+  no platform read (L2); travel is additionally personal.
+- **Model:** `src/lib/teamDirectory.ts` — `profileWorkload`, `recommendAssignee`, `summariseTeam`,
+  `availabilityOn`, `generatedAvatar`, `avatarInitials`; all pure, time as an argument (L4).
+- **Data:** `src/data/teamDirectory.ts` — `listTeamDirectory`, `listDirectoryEngagements`,
+  `saveTeamProfile`, `saveTeamTravel`, `addTeamTrip`/`removeTeamTrip`,
+  `addTeamAssignment`/`removeTeamAssignment`, `tagEngagementTravel`.
+- **Screen:** `src/components/admin/TeamDirectoryPanel.tsx` mounted as the Org Admin `Team directory`
+  tab (`admin-tab-team`) on the People & Roles panel. Contract section `OA-11`; UI inventory
+  regenerated (107 screens, 141 RPCs).
+- **Tests:** `src/lib/teamDirectory.test.ts` (7), `src/components/admin/TeamDirectoryPanel.test.tsx`
+  (6), `supabase/tests/100_team_directory.sql` (35 assertions — profile/travel save + read, trip and
+  assignment stamping, personal-travel visibility, travel tagging, cross-org refusal, no-anon). Full
+  vitest green; `tsc --noEmit` clean; guards green (`uiContractDrift`, `uiInventory`, `sourceGuards`,
+  `tutorialTargets`); `check-wiring`/`check-ui-contract`/`check-feature-register`/`check-tokens`/
+  `check-shrink` PASS.
+- **Not done, recorded:** no tutorial GIF for `oa.team` yet (the key is declared; GIFs regenerate in
+  Phase 6). `engagement_travel_tag` has no caller outside the team panel — it is reachable from the
+  panel's tag control, which is wired.
 
 **Overlap to resolve with Builder B before starting U1.** `docs/BRANCH-MAP.md` gives this branch `U1`
 (pencil-style guided pointers) and gives Builder B `E8` (`PencilGuide` + guidance data under
