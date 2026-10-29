@@ -1341,6 +1341,44 @@ Contract testids `header-confirm`, `header-confirm-0` documented; `UI-INVENTORY.
 **Not in this item, so not claimed:** S1 (the `src/lib/systeligon/` shell the rest of the S-series needs)
 and the pricing/sampling consumers of a confirmed header. S2 is the header behaviour alone.
 
+### S1 — the Systeligon rule engine shell (2026-10-29)
+
+**DONE (shell).** Queue item 9. Spec §4: rules live under `src/lib/systeligon/rules/`, pure and
+versioned; every rule declares `id`, `version`, `kind`, `params`, `appliesTo` and the IIA standards it
+supports; a rule pack is a named, versioned bundle per audit type.
+
+Built:
+
+- `src/lib/systeligon/types.ts` — the vocabulary: `SysteligonRule`, `RuleKind` (the §3.1/§3.2/§3.3
+  families), `RuleTarget`, `RuleStatus`, `RuleFinding`, `RuleRunResult`, `RulePack`, and the document
+  structure (`ParsedDocument`, `DocumentElement`) the §3.2/§3.3 rules match on.
+- `src/lib/systeligon/runner.ts` — `runRules(rules, input, { evaluatedAt, includeDrafts?, target? })`.
+  Pure and total: runs released rules (drafts only on request), re-stamps every finding's provenance
+  from the rule so a rule cannot misreport its own id or version, turns a throwing rule into a finding
+  against its own identity (silence about a rule that did not run is the same lie as an unparsed clause
+  reported clean), collapses a rule shipped twice, and sorts findings deterministically.
+- `src/lib/systeligon/versioning.ts` — `RuleRegistry`, append-only: a re-registered `id@version` with a
+  changed fingerprint throws (bump the version), and an older version cannot be registered after a
+  newer one. `ruleFingerprint` covers behaviour (kind/target/severity/params/evaluator) but not status,
+  so release is a lifecycle change, not a behavioural one.
+- `src/lib/systeligon/packs.ts` — `definePack` (validates target and duplicate `id@version`),
+  `releasedRules`, `packRules` (merges packs, collapsing duplicates).
+- `src/lib/systeligon/rules/structural.ts` — the first demonstrable rules: `doc.minutes_required_elements`
+  (§3.2, quorum + action-item owner/due date) and `doc.policy_clause_coverage` (§3.3, every policy
+  clause is cited by a procedure, matched on shared cross-references). These are new surface; they do
+  **not** duplicate `analyticsEngine.ts`, which stays the numeric library until S6 ports it into this
+  shape.
+
+**Status honestly `Inert`.** No screen calls the engine yet — S6 ports the numeric forensics into rule
+shape, S8/S9 add document/pattern rules, S10/S11 build packs and signed OTA distribution, and a
+consumer wires a run to a screen. Register rows F127 (schema + runner) and F128 (versioning + packs)
+record this. `check-wiring` accepts test-only; the register row is `Inert` because it is not yet
+reachable from a screen.
+
+**Tests:** `systeligon.test.ts` 16 tests (runner, provenance re-stamping, order-independence, draft
+skip, dedup, throwing rule, target filter; validation; append-only versioning, latest/history,
+fingerprint; packs; the two structural rules). Full suite 216 files / 2,510 tests green. All gates green.
+
 ## Environment facts (for the next session)
 
 - The sandbox has **no host Postgres** and **no Docker socket for the user**, but

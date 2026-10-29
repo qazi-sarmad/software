@@ -272,6 +272,8 @@ Each is a pure function under `src/lib/`, with direct unit tests and a screen su
 | F124 | Policy-to-control gap analysis | `Absent` | D8 |
 | F125 | Assurance-over-assurance | `Absent` | D9 |
 | F126 | Population header detection and confirm-before-count | `Wired` | `checkPopulationCsv` (`src/lib/population.ts`) called from `TestingStepsTab.tsx`; it detects the header row and proposes it; ambiguous or non-first-row headers are proposed and confirmed before the count; rows above the header are ignored, the header row is not counted (spec §2.1, S2) | — |
+| F127 | Systeligon rule schema and runner (S1) | `Inert` | The engine shell in `src/lib/systeligon/` (`types.ts`, `runner.ts`): a rule declares id/version/kind/params/appliesTo/standards/status/severity and a pure `evaluate`; `runRules` runs the applicable released rules, re-stamps provenance from the rule so a finding cannot misreport its identity, turns a throwing rule into a finding rather than a crash, and sorts findings deterministically. Test-only so far (`systeligon.test.ts`, 16 tests); no screen calls it yet — S6/S8/S9/S10 build the library and packs onto it | S1 |
+| F128 | Systeligon rule versioning and packs (S1) | `Inert` | `src/lib/systeligon/versioning.ts` (`RuleRegistry`, append-only: a re-registered id@version with a changed fingerprint throws, an older version cannot follow a newer one) and `packs.ts` (`definePack` validates target and duplicates). Test-only so far; signed OTA distribution is S11 | S1 |
 
 ---
 
@@ -280,13 +282,13 @@ Each is a pure function under `src/lib/`, with direct unit tests and a screen su
 | Status | Count |
 |---|---|
 | `Wired` | 55 |
-| `Inert` | 27 |
+| `Inert` | 29 |
 | `Absent` | 44 |
-| **Total** | **126** |
+| **Total** | **128** |
 
 **Read that again, with the correction applied.** This is materially better than the first pass
 reported, because Phases 1 and 2 of the scale-harden build closed the whole foundation. The picture
-now: **55 wired, 27 inert, 44 absent** (F126, population header detection, added 2026-10-29 by S2). F35 (report templates) and F37 (report graph root) were
+now: **55 wired, 29 inert, 44 absent** (F126 population header detection by S2; F127-F128 the Systeligon rule-engine shell by S1, both added 2026-10-29). F35 (report templates) and F37 (report graph root) were
 `Inert` here and are now written and read end to end, so they were corrected on 2026-10-29. The
 remaining `Inert` rows are the genuine, still-open
 unwired features — the monitor runtime, the evidence bytes, the tamper alarm, the SIRA write path,
