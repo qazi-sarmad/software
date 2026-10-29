@@ -117,8 +117,11 @@ fi
 #     (in-process), so they need no database; wiring and two-sources resolve the real import graph.
 # ---------------------------------------------------------------------------
 if [ -z "$FAILED" ]; then
-  step "8d. Dead code, wiring, two-sources, RPC parity (G2/G4/G5/G6)"
+  step "8d. Dead code, config-effect, wiring, two-sources, RPC parity (G2/G3/G4/G5/G6)"
   if node scripts/check-dead-code.mjs; then echo "PASS: 8d. Dead code (G2)"; else fail "8d. Dead code (G2)"; fi
+  if [ -z "$FAILED" ]; then
+    if node scripts/check-config-effect.mjs; then echo "PASS: 8d. Config effect (G3)"; else fail "8d. Config effect (G3)"; fi
+  fi
   if [ -z "$FAILED" ]; then
     if node scripts/check-wiring.mjs; then echo "PASS: 8d. Wiring (G4)"; else fail "8d. Wiring (G4)"; fi
   fi

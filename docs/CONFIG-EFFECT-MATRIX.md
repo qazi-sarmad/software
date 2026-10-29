@@ -50,14 +50,14 @@ call site that proves it.
 |---|---|---|---|---|
 | `org_lifecycle_settings.testing_mode` | `one_stage` needs only an operating (OET) workpaper before Conclusion; `two_stage` also needs a signed-off design (DEA) workpaper | `assert_conclusion_ready`, `set_engagement_stage`, `seal_engagement` | ENFORCED | `102_phase2_lifecycle.sql` §2 |
 | `org_lifecycle_settings.signoff_role_planning` | The team role that must sign Planning off; a caller without that role's rights is refused | `sign_planning` via `caller_meets_signoff_role` | ENFORCED | `102_phase2_lifecycle.sql` §3 |
-| `org_lifecycle_settings.signoff_role_testing` | The team role that must sign Testing off | `sign_testing` via `caller_meets_signoff_role` | ENFORCED | `102_phase2_lifecycle.sql` §3 |
+| `org_lifecycle_settings.signoff_role_testing` | The team role that must sign a workpaper's testing off | `sign_off_workpaper` via `caller_meets_signoff_role` | ENFORCED | `108_phase3_workflow_enforcement.sql` §4 |
 | `org_lifecycle_settings.signoff_role_conclusion` | The team role that must sign the Conclusion off | `sign_conclusion` via `caller_meets_signoff_role` | ENFORCED | `102_phase2_lifecycle.sql` §3 |
 | `org_lifecycle_settings.report_opinion_required` | When true, `sign_conclusion` is refused while the overall opinion is empty | `sign_conclusion` | **FIXED 3.6** | `110_phase3_config_effects.sql` §1 |
 | `org_lifecycle_settings.testing_grace_hours` | Testing stays locked for this many hours after the engagement is created, even before Planning sign-off | `testing_lock_active` (the workpaper trigger) | ENFORCED | `100_scale_harden.sql`, `0095` |
 | `workflow_settings.approval_chain` | An ordered array of `{"role"}` steps; before a plan is approved every step must be recorded in order by a caller holding that role | `approve_plan`, `approval_chain_ready` | ENFORCED | `102_phase2_lifecycle.sql` §4 |
 | `workflow_settings.sla_hours` | The due time a deployment/change request is given | `request_combined_deployment`, `request_change` | ENFORCED | `108_phase3_workflow_enforcement.sql` §1 |
 | `workflow_settings.escalation_role` | The role a request escalates to when it passes its escalation window | `deployment_requests_escalate_all`, `escalate_overdue_deployment_requests` | ENFORCED | `108_phase3_workflow_enforcement.sql` §2 |
-| `workflow_settings.escalation_hours` | How long after creation a pending request escalates (must be ≥ SLA) | same as above | ENFORCED | `108_phase3_workflow_enforcement.sql` §2 |
+| `workflow_settings.escalation_hours` | How long after creation a pending request escalates (must be ≥ SLA) | `escalate_overdue_deployment_requests`, `deployment_requests_escalate_all` | ENFORCED | `108_phase3_workflow_enforcement.sql` §2 |
 
 ## 3. Gates, approvals and rights
 
@@ -77,7 +77,7 @@ call site that proves it.
 | `change_control_settings.sla_hours` | The change request SLA | `request_change` | ENFORCED | `89_change_control.sql` |
 | `change_control_settings.escalate_right` | The right required to escalate a change | `deployment_requests_escalate_all` | ENFORCED | `89_change_control.sql` |
 | `tenant_settings.feature_flags` | Per-tenant feature switches, read by `has_feature` | `has_feature`, `platform_list_tenants` | ENFORCED | `74_feature_gates.sql` |
-| `tenant_settings.status` | `suspended` blocks writes across the product | read by ~120 RPCs' status guards | ENFORCED | `40_platform_control_plane.sql` |
+| `tenant_settings.status` | `suspended` stops the tenant's members being issued an org claim, so RLS shows them nothing until the platform lifts it | `custom_access_token_hook` via `tenant_is_active` | **FIXED G3** | `116_tenant_suspension.sql` |
 | `tenant_settings.usage_quota` | A tenant user limit (`{"users": n}`); when set, provisioning beyond it is refused | `admin_provision_member` via `tenant_user_limit` | **FIXED 3.6** | `110_phase3_config_effects.sql` §7 |
 | `invite_cap_settings.per_user_daily` | The per-user daily invitation cap | `invite_user_capped` | ENFORCED | `40_platform_control_plane.sql` |
 | `roles.rights` | The rights a role carries; `caller_has_right` reads them for every guard | `caller_has_right` | ENFORCED | `19_rights_closed.sql` |
@@ -95,8 +95,9 @@ call site that proves it.
 | `org_settings_extra.public_verify_show_title` | Whether the org name and engagement title appear on the public verification surface | `ext_verify_certificate`, `verify_certificate` | ENFORCED | `72_certificate.sql` |
 | `org_settings_extra.population_archive_after_months` | How old a finalised population must be before it is due for archival | `population_retention_months` | ENFORCED | `86_verified_archival.sql` §7 |
 | `org_settings_extra.cap_due_soon_days` | The window inside which a CAP is reported as "due soon" | `escalation_evaluate` via `cap_due_soon_days` | ENFORCED | `70_escalation.sql` |
-| `org_settings_extra.time_zone` | The time zone scheduled jobs evaluate "today" in | `scheduled_jobs` | ENFORCED | `74_scheduled_jobs.sql` |
+| `org_settings_extra.time_zone` | The time zone the org's calendar day is computed in, so a CAP due date is never compared to UTC midnight | `org_local_date` | ENFORCED | `83_scheduled_jobs.sql` |
 | `report_templates.plan` | The section list a composed report uses | `compose_report` | ENFORCED | `109_phase3_report_templates.sql` |
+| `report_templates.model_id` / `version` / `title` / `is_current` | The template's identity: which report model it belongs to, its version number, its title, and which version is current (only the current version's plan is read) | `report_template_save`, `report_template_list`, `compose_report` | ENFORCED | `109_phase3_report_templates.sql` |
 | `notification_templates` | The subject/blocks a queued notification renders from | `render_notification` | ENFORCED | `82_rpc_authority.sql` |
 | `upload_limits.max_file_mb` / `allowed_extensions` | The evidence upload size and file-type limits the client reads | `upload_limits_get` | ENFORCED | `91_org_governance_settings.sql`; `OrgGovernancePanel.test.tsx` |
 | `certificate_config` (10 field rows) | Which certificate fields appear, and in what order | `certificate_config_get`, `certificate_issue` | ENFORCED | `72_certificate.sql` §1 |
@@ -118,10 +119,13 @@ call site that proves it.
 | Table.field | Why it is deferred | Where it is surfaced |
 |---|---|---|
 | `usage_quota` keys other than `users` | The column is a free-form `jsonb`; Phase 3.6 enforced the `users` key (a user-seat quota). Other keys are not defined by the spec and are not read | none — no UI writes them |
+| `report_templates.default_register` / `allowed_registers` / `default_locale` | These columns are written only by the 0088 seed default and read by no function; the register a format renders at comes from `report_formats` (0091), which is where the editor and the composer both read it | none — no UI writes them on a template |
 
-There are no other unenforced configuration columns. The eight fields marked **FIXED 3.6** were the
-complete inert set: every column of every configuration table in §1 now has a reader that makes a
-decision, proven by the test named in its row.
+There are no other unenforced configuration columns. The fields marked **FIXED 3.6** were the inert
+set Phase 3.6 closed; `tenant_settings.status` (marked **FIXED G3**) was a further inert field the
+G3 gate surfaced and this phase enforced. Every remaining column of every configuration table in §1
+now has a reader that makes a decision, proven by the test named in its row, or is recorded in this
+section as deliberately deferred.
 
 ---
 

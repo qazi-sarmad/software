@@ -820,7 +820,7 @@ branch builds G1–G6 and does not build G7–G10.
 |---|---|---|
 | G1 | Production-build E2E (`npm run preview`, not `dev`) | TODO |
 | G2 | No-dead-code (every `public` fn has a production caller or is allow-listed) | DONE |
-| G3 | Config-effect (every configurable field has a proving test) | TODO |
+| G3 | Config-effect (every configurable field has a proving test) | DONE |
 | G4 | Wiring (every `src/data/*.ts` export imported by a component or allow-listed) | DONE |
 | G5 | Two-sources (no component reads both the seed and the database) | DONE |
 | G6 | RPC parity (every RPC the app calls exists in the final schema) | DONE |
@@ -962,6 +962,58 @@ production break the test suite cannot see, because the tests mock the client).
   ships the `pgcrypto` bundle but not the Supabase-specific `pg_cron` / `vault` / `pgsodium` shims
   some migrations reference, so the replay strips the `create extension` lines pglite does not
   provide. Without that the replay stops early and every later function looks missing.
+
+### G3 — config effect, DONE (2026-10-28)
+
+`scripts/check-config-effect.mjs`. It reads the **real** schema (pglite replay, the same trick as G2
+and G6) and checks `docs/CONFIG-EFFECT-MATRIX.md` against it, so the matrix cannot claim an effect the
+schema does not implement. It fails when: **A** a row's reader cell names no real function or view (a
+claim of enforcement with no call site); **B** a row's proving-test file does not exist; **C** a
+configuration-table column in the final schema has no row (or §6 deferred entry) in the matrix;
+**D** a row names a `table.column` that is not a real column; **E** an allow-list entry is stale. The
+allow-list (`scripts/config-effect-allow.json`) is empty — every row is backed by a real object and a
+real test.
+
+- **Result:** `PASS: check-config-effect — 50 matrix rows (41 ENFORCED); every reader is a real object,
+  every proving test exists, every config column is documented (0 allow-listed).`
+- **The gate found four false rows and one inert setting, and all five were fixed.**
+  1. `org_lifecycle_settings.signoff_role_testing` — the reader cell named `sign_testing`, which does
+     not exist; the real reader is `sign_off_workpaper` (proven by `108_phase3_workflow_enforcement.sql`
+     §4).
+  2. `org_settings_extra.time_zone` — the reader cell named `scheduled_jobs`, which is not a function,
+     and the proving test `74_scheduled_jobs.sql` does not exist. The real reader is `org_local_date`;
+     the real test is `83_scheduled_jobs.sql`.
+  3. `workflow_settings.escalation_hours` — the reader cell said "same as above", naming nothing; the
+     real readers are `escalate_overdue_deployment_requests` and `deployment_requests_escalate_all`.
+  4. `report_templates.{model_id,version,title,is_current,plan}` were undocumented; `default_register`,
+     `allowed_registers` and `default_locale` are written by no UI and read by no function, so they are
+     recorded in §6 as deferred, not falsely marked ENFORCED.
+  5. **`tenant_settings.status` — a stored-but-inert setting the matrix claimed was enforced.** The
+     row read: "`suspended` blocks writes across the product | read by ~120 RPCs' status guards |
+     ENFORCED". There is no such guard: an exhaustive search found only three reads in function bodies
+     (the two platform listing RPCs that echo it, and `guided_provisioning`), no RLS policy and no
+     trigger. Owner decision 1 (locked) is **enforce, do not remove**, so it is enforced now — see
+     below.
+- **How `tenant_settings.status` is enforced (`0115_tenant_suspension_enforced.sql`).** The broad
+  write chokepoint was rejected: 246 write functions exist, 163 guarded by a shared helper and 83
+  unguarded, so "block writes" is neither the current design nor a small change. The correct
+  chokepoint is the **access-token hook** (`custom_access_token_hook`, `0010`, extended in `0066`),
+  which is the only writer of the `org_id` and `user_role` claims — RLS and every org-scoped RPC
+  resolve identity from those claims, never from a header or body. A new named reader
+  `tenant_is_active(org_id)` returns false when `tenant_settings.status = 'suspended'`; the hook, for a
+  suspended org, stamps no `org_id` and no `user_role`, so the member is to RLS a user with no
+  membership and reads nothing (spec §4.5, no fallback org). Platform staff carry no `org_members` row
+  and are never suspended out, so the platform can always lift a suspension.
+- **Proven by** `116_tenant_suspension.sql`: `tenant_is_active` reflects the stored status; a suspended
+  member is issued no org claim and no role claim; with no org claim the member reads zero universes
+  and zero entities; platform staff keep the `platform_admin` role. **A first attempt at this
+  migration dropped the external-auditor branch that `0066` added to the hook, and the SQL harness
+  caught it** (`75_external_auditors.sql` §9: the hook no longer stamped `external_auditor`); the
+  migration now extends the `0066` body rather than the `0010` one, and the harness is green again.
+  This is the point of the one rule: a rewrite of an existing function must build on its latest
+  version, and only the SQL harness sees it.
+- **Wired into** `scripts/pre-pr-gates.sh` (step 6d), `scripts/ci-local.sh` (step 8d),
+  `.github/workflows/ci.yml` (step 6d) and `package.json` (`npm run check-config-effect`).
 
 ## UI / UX
 
