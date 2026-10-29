@@ -331,17 +331,25 @@ async function recordKey(page, def, baseUrl, creds) {
   const frames = [];
   const missing = [];
   const plan = captureFor(def);
-  await navigateTo(page, plan, baseUrl, creds);
-  await waitForSettled(page);
-  await waitForScreen(page, def);
-  // A screen that has rendered none of its own targets is usually a slow first paint: CI runs this
-  // recorder immediately after step 7 has hammered the shared project with the whole SQL suite, so
-  // the first RPCs of a session can wait on a cold schema cache and outlast waitForScreen. Re-open
-  // the screen once before declaring the key broken. A genuinely absent screen still fails twice.
-  if (!(await anyTargetPresent(page, def))) {
+  // A screen that has rendered none of its own targets, or whose navigation threw on an
+  // intermediate wait (the superadmin portal, the audit file, the issues register), is usually a
+  // slow first paint: CI runs this recorder immediately after step 7 has hammered the shared
+  // project with the whole SQL suite, so the first RPCs of a session can wait on a cold schema
+  // cache and outlast any fixed timeout. Re-open the screen once before declaring the key broken.
+  // A genuinely absent screen still fails twice.
+  const attempt = async () => {
     await navigateTo(page, plan, baseUrl, creds);
     await waitForSettled(page);
     await waitForScreen(page, def);
+  };
+  try {
+    await attempt();
+  } catch {
+    // Swallowed deliberately: the retry below is the second chance. If it also throws, the key
+    // fails and the error is reported, which is what an actually broken screen should do.
+  }
+  if (!(await anyTargetPresent(page, def))) {
+    await attempt();
   }
   await page.waitForTimeout(300);
   // The opening frame: the screen as reached, before any step is performed.
