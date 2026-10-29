@@ -447,13 +447,13 @@ different.
 
 | # | Task | Status |
 |---|---|---|
-| F1 | Remove the Google Fonts CDN link (`index.html:14`) — it leaks every client's IP to a third party and breaks offline | TODO |
-| F2 | `src/lib/fonts/` — catalogue, per-font licence metadata, lazy loader | TODO |
-| F3 | Curate and subset the bundled repository (do NOT attempt all ~1900 Google families) | TODO |
-| F4 | Org font upload via `branding_assets` with licence acknowledgement | TODO |
-| F5 | Font/colour/theme auto-detection from DOCX and PPTX | TODO |
-| F6 | Wire detection into the org report format | TODO |
-| F7 | Gate G10 — no bundled font without licence metadata and a redistributable flag | TODO |
+| F1 | Remove the Google Fonts CDN link (`index.html:14`) — it leaks every client's IP to a third party and breaks offline | DONE |
+| F2 | `src/lib/fonts/` — catalogue, per-font licence metadata, lazy loader | DONE |
+| F3 | Curate and subset the bundled repository (do NOT attempt all ~1900 Google families) | DONE |
+| F4 | Org font upload via `branding_assets` with licence acknowledgement | DONE |
+| F5 | Font/colour/theme auto-detection from DOCX and PPTX | DONE |
+| F6 | Wire detection into the org report format | DONE |
+| F7 | Gate G10 — no bundled font without licence metadata and a redistributable flag | DONE |
 
 ---
 
@@ -464,7 +464,7 @@ different.
 | G7 | an explain id has no catalogue entry | DONE |
 | G8 | an aggregate has no drilldown target | DONE |
 | G9 | an IIA reference does not match the verified numbering | DONE |
-| G10 | a bundled font has no licence metadata | TODO |
+| G10 | a bundled font has no licence metadata | DONE |
 
 `G2` (no-dead-code) already exists in spirit as `scripts/audit-wiring.mjs`; the other session owns
 turning it into a hard CI gate. Do not duplicate it.

@@ -6,6 +6,10 @@ import {
 } from '../../data/branding';
 import { brandingFromRow, DEFAULT_BRANDING, fillTemplate, resolveHexColour, toCssColour, type BrandingSpec } from '../../lib/render/branding';
 import { extractPptxTheme } from '../../lib/render/pptx';
+import {
+  detectTheme, fontFamilyNames, fontByFamily, licenceSummary, loadFont,
+  proposeTheme, type DetectedTheme, type ThemeProposal,
+} from '../../lib/fonts';
 import type { DataResult } from '../../data/db';
 import { InlineError } from '../common/InlineError';
 import { Select } from '../common/Select';
@@ -13,8 +17,8 @@ import { Check, Settings, Upload } from '../common/Icons';
 
 type LoadState = 'loading' | 'ready' | 'error';
 
-/** The bundled fonts a tenant may pick without uploading (F9). Uploaded fonts need an entitlement. */
-const BUNDLED_FONTS = ['Helvetica', 'Georgia', 'Times New Roman', 'Courier New', 'Arial'] as const;
+/** The bundled fonts a tenant may pick without uploading (F2, F3). Derived from the repository. */
+const BUNDLED_FONTS: readonly string[] = fontFamilyNames();
 const COLOUR_SLOTS: { key: keyof BrandingFields; label: string; testid: string }[] = [
   { key: 'colourPrimary', label: 'Primary', testid: 'oa-branding-colour-primary' },
   { key: 'colourAccent', label: 'Accent', testid: 'oa-branding-colour-accent' },
@@ -43,6 +47,12 @@ export const OrgBrandingPanel: React.FC = () => {
   const [result, setResult] = useState<DataResult | null>(null);
   const [busy, setBusy] = useState(false);
   const [themeNote, setThemeNote] = useState('');
+  /** The theme detected from an uploaded template (F5), and the proposal derived from it (F6). */
+  const [detected, setDetected] = useState<DetectedTheme | null>(null);
+  const [proposal, setProposal] = useState<ThemeProposal | null>(null);
+  /** F4: the licence acknowledgement a font upload requires before it is accepted. */
+  const [fontLicenceAck, setFontLicenceAck] = useState(false);
+  const [fontNote, setFontNote] = useState('');
 
   const load = useCallback(async () => {
     if (!orgId) { setState('ready'); return; }
@@ -92,16 +102,53 @@ export const OrgBrandingPanel: React.FC = () => {
   const onThemeFile = async (file: File) => {
     setThemeNote('');
     setResult(null);
+    setDetected(null);
+    setProposal(null);
     try {
       const bytes = new Uint8Array(await file.arrayBuffer());
       const theme = await extractPptxTheme(bytes);
       const r = await savePptxTheme(orgId, theme as unknown as Record<string, unknown>);
       if (!r.ok) { setResult(r); return; }
       setThemeNote(`We match your colours, fonts and logos; we do not reuse your slide layouts. Found ${theme.colours.length} colours.`);
+      // F5: read the fonts, colours and page setup out of the file itself, and offer to adopt them.
+      const isPptx = /\.(pptx|potx)$/i.test(file.name);
+      const det = await detectTheme(bytes, isPptx ? 'pptx' : 'docx');
+      setDetected(det);
+      setProposal(proposeTheme(det));
       await load();
     } catch (err) {
       setResult({ ok: false, reason: err instanceof Error ? err.message : 'Could not read that file.' });
     }
+  };
+
+  /** F6: adopt a detected theme's fonts and colours onto the org format draft (then save). */
+  const adoptProposal = () => {
+    if (!proposal) return;
+    const patch: BrandingFields = {};
+    if (proposal.fontHeading) patch.fontHeading = proposal.fontHeading;
+    if (proposal.fontBody) patch.fontBody = proposal.fontBody;
+    if (proposal.colourPrimary) patch.colourPrimary = proposal.colourPrimary;
+    if (proposal.colourAccent) patch.colourAccent = proposal.colourAccent;
+    if (proposal.colourText) patch.colourText = proposal.colourText;
+    if (proposal.colourBackground) patch.colourBackground = proposal.colourBackground;
+    set({ ...patch });
+  };
+
+  /** F4: upload a house font. Refused until the licence is acknowledged. */
+  const onFontFile = async (file: File) => {
+    setResult(null);
+    setFontNote('');
+    if (!fontLicenceAck) {
+      setResult({ ok: false, reason: 'Acknowledge the font licence before uploading it.' });
+      return;
+    }
+    const buf = new Uint8Array(await file.arrayBuffer());
+    let binary = '';
+    for (const b of buf) binary += String.fromCharCode(b);
+    const base64 = btoa(binary);
+    const r = await uploadBrandingAsset(orgId, 'font', file.name, file.type || 'font/woff2', base64);
+    setResult(r.ok ? { ok: true } : r);
+    if (r.ok) setFontNote(`Stored ${file.name}. It is yours and is recorded against your licence acknowledgement.`);
   };
 
   const onLogoFile = async (file: File, kind: 'logo_light' | 'logo_dark') => {
@@ -116,6 +163,16 @@ export const OrgBrandingPanel: React.FC = () => {
   };
 
   const set = (patch: BrandingFields) => setDraft((d) => ({ ...d, ...patch }));
+
+  // F2: lazy-load a chosen family so it renders without shipping every font up front. The chrome
+  // families are already loaded; a picked family is fetched on demand.
+  useEffect(() => {
+    void loadFont(preview.fontHeading).catch(() => false);
+    void loadFont(preview.fontBody).catch(() => false);
+  }, [preview.fontHeading, preview.fontBody]);
+
+  const headingLicence = fontByFamily(preview.fontHeading);
+  const bodyLicence = fontByFamily(preview.fontBody);
 
   if (state === 'loading') {
     return <div className="p-6 text-sm text-muted" data-testid="oa-branding-loading">Loading branding…</div>;
@@ -155,7 +212,9 @@ export const OrgBrandingPanel: React.FC = () => {
                   onChange={(v) => set({ fontHeading: v })} />
               ) : <span className="text-sm">{preview.fontHeading}</span>}
             </div>
-            <p className="text-xs text-muted mt-1">Only upload fonts you are licensed to embed.</p>
+            <p className="text-xs text-muted mt-1" data-testid="oa-branding-font-heading-licence">
+              {headingLicence ? licenceSummary(headingLicence) : 'Only upload fonts you are licensed to embed.'}
+            </p>
           </div>
 
           <div>
@@ -167,6 +226,11 @@ export const OrgBrandingPanel: React.FC = () => {
                   onChange={(v) => set({ fontBody: v })} />
               ) : <span className="text-sm">{preview.fontBody}</span>}
             </div>
+            {bodyLicence && (
+              <p className="text-xs text-muted mt-1" data-testid="oa-branding-font-body-licence">
+                {licenceSummary(bodyLicence)}
+              </p>
+            )}
           </div>
 
           <fieldset className="space-y-2">
@@ -257,14 +321,58 @@ export const OrgBrandingPanel: React.FC = () => {
               onClick={() => {
                 const el = document.createElement('input');
                 el.type = 'file';
-                el.accept = '.pptx,.potx';
+                el.accept = '.pptx,.potx,.docx';
                 el.onchange = () => { const f = el.files?.[0]; if (f) void onThemeFile(f); };
                 el.click();
               }}>
-              Upload .pptx theme
+              Upload a template (.docx/.pptx)
+            </button>
+            <button type="button" data-testid="oa-branding-font-upload" disabled={!canEdit}
+              className="px-3 py-1.5 rounded border border-border text-sm"
+              onClick={() => {
+                const el = document.createElement('input');
+                el.type = 'file';
+                el.accept = '.woff2,.woff,.ttf,.otf';
+                el.onchange = () => { const f = el.files?.[0]; if (f) void onFontFile(f); };
+                el.click();
+              }}>
+              <Upload className="w-4 h-4 inline mr-1" /> Upload a house font
             </button>
           </div>
           {themeNote && <p className="text-xs text-muted" data-testid="oa-branding-theme-note">{themeNote}</p>}
+
+          {/* F4: a font upload requires a licence acknowledgement, recorded with the asset. */}
+          <label className="flex items-start gap-2 text-xs text-muted" data-testid="oa-branding-font-licence-label">
+            <input type="checkbox" data-testid="oa-branding-font-licence-ack"
+              checked={fontLicenceAck} disabled={!canEdit}
+              onChange={(e) => setFontLicenceAck(e.target.checked)} />
+            <span>I confirm we are licensed to embed and redistribute this font in our reports.</span>
+          </label>
+          {fontNote && <p className="text-xs text-muted" data-testid="oa-branding-font-note">{fontNote}</p>}
+
+          {/* F5/F6: what we read from the uploaded template, and the offer to adopt it. */}
+          {detected && proposal && (
+            <div className="rounded border border-border p-3 space-y-2" data-testid="oa-branding-detected">
+              <p className="text-xs font-medium text-primary" data-testid="oa-branding-detected-note">{detected.note}</p>
+              <ul className="text-xs text-muted space-y-0.5">
+                <li data-testid="oa-branding-detected-heading">Heading font: {detected.headingFont ?? 'not set'}</li>
+                <li data-testid="oa-branding-detected-body">Body font: {detected.bodyFont ?? 'not set'}</li>
+                <li data-testid="oa-branding-detected-colours">Colours: {detected.colours.join(', ') || 'none'}</li>
+                {proposal.fontsToUpload.length > 0 && (
+                  <li className="text-cinnabar" data-testid="oa-branding-detected-toupload">
+                    Not in the repository, upload to use: {proposal.fontsToUpload.join(', ')}
+                  </li>
+                )}
+              </ul>
+              {canEdit && proposal.adoptable && (
+                <button type="button" data-testid="oa-branding-adopt"
+                  className="px-3 py-1.5 rounded border border-border text-sm"
+                  onClick={adoptProposal}>
+                  Adopt detected fonts and colours
+                </button>
+              )}
+            </div>
+          )}
 
           <div className="flex items-center gap-3">
             {canEdit && (

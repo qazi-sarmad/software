@@ -352,16 +352,23 @@ under `acp.tutorial.autoplay`), so the same screen never autoplays twice. The e2
   facts are written; no JSON is typed by any user (F1, D-S4-pptx-theme).
 - **Testids:** `oa-branding`, `oa-branding-title`, `oa-branding-loading`, `oa-branding-readonly`,
   `oa-branding-form`, `oa-branding-font-heading`, `oa-branding-font-body`,
+  `oa-branding-font-heading-licence`, `oa-branding-font-body-licence`,
   `oa-branding-colour-primary`, `oa-branding-colour-accent`, `oa-branding-colour-text`,
   `oa-branding-colour-background`, `oa-branding-page-size`, `oa-branding-cover-style`,
   `oa-branding-margin-0`..`oa-branding-margin-3`, `oa-branding-header`, `oa-branding-footer`,
   `oa-branding-logo-light`, `oa-branding-logo-input`, `oa-branding-theme-upload`,
-  `oa-branding-theme-note`, `oa-branding-save`, `oa-branding-error`, `oa-branding-saved`,
+  `oa-branding-theme-note`, `oa-branding-font-upload`, `oa-branding-font-licence-label`,
+  `oa-branding-font-licence-ack`, `oa-branding-font-note`, `oa-branding-detected`,
+  `oa-branding-detected-note`, `oa-branding-detected-heading`, `oa-branding-detected-body`,
+  `oa-branding-detected-colours`, `oa-branding-detected-toupload`, `oa-branding-adopt`,
+  `oa-branding-save`, `oa-branding-error`, `oa-branding-saved`,
   `oa-branding-preview`, `oa-branding-preview-header`, `oa-branding-preview-footer`,
   `oa-branding-preview-note`.
 - **States:** loading ("Loading branding…"); ready; error (`InlineError`); read-only (no save button,
   a plain notice). A save refusal (rights or entitlement) is shown in `oa-branding-error` in the
-  server's own words. An over-size asset is refused by the RPC.
+  server's own words. An over-size asset is refused by the RPC. A template upload detects the file's
+  own fonts, colours and page setup (F5) and offers to adopt them (F6); a house-font upload is refused
+  until the licence acknowledgement (`oa-branding-font-licence-ack`) is ticked (F4).
 - **Tutorial keys:** `oa.branding`, `oa.pptx-theme`.
 
 ---

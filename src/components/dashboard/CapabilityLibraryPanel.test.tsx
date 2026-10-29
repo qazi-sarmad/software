@@ -21,7 +21,7 @@ vi.mock('../../data/capabilities', async () => {
 });
 
 const scoped = {
-  currentUser: { id: 'u1', role: 'cia', rights: { edit_config: true } },
+  currentUser: { id: 'u1', role: 'cia', rights: { edit_config: true } as Record<string, boolean> },
   scopedEntities: [],
   scopedControls: [],
   scopedEngagements: [],

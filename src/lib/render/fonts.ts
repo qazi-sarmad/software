@@ -1,39 +1,37 @@
 /**
- * The report font catalogue (WP-F). Self-hosted Google Fonts, no external request.
+ * The report font catalogue (WP-F, F2). Derived from the single curated repository in
+ * `src/lib/fonts/catalogue.ts`, so the picker, the lazy loader and the licence metadata cannot
+ * disagree about what is bundled.
  *
- * Every family here is an Open Font Licence face shipped by an `@fontsource` package: the files are
- * part of the bundle, so choosing a report font costs nothing to operate — no Google Fonts request,
- * no API key, no per-render fee, and it works offline and inside the tenant boundary.
+ * Every family is a self-hosted `@fontsource` face: the files are part of the bundle, so choosing a
+ * report font costs nothing to operate — no Google Fonts request, no API key, no per-render fee, and
+ * it works offline and inside the tenant boundary.
  *
- * This module is pure: a catalogue, a validator and a deterministic file-name mapping. The bytes are
- * loaded (browser IO) by `src/data/fontBytes.ts`; the PDF renderer receives them as an argument, as
- * it already does. A format may only choose a family in this catalogue, exactly as it may only choose
- * a register the model allows.
+ * This module is pure: a derived catalogue, a validator and a deterministic file-name mapping. The
+ * bytes are loaded (browser IO) by `src/data/fontBytes.ts`; the PDF renderer receives them as an
+ * argument, as it already does. A format may only choose a family in this catalogue, exactly as it
+ * may only choose a register the model allows.
  */
+import { FONT_CATALOGUE, fontByFamily, type FontFamilyEntry } from '../fonts/catalogue';
 
 export interface ReportFontFamily {
   /** The CSS family name and the value stored in a format's layout. */
   family: string;
   /** The `@fontsource` package slug the file names derive from. */
   packageSlug: string;
-  category: 'sans' | 'serif';
+  category: 'sans' | 'serif' | 'mono';
   /** The weights the package ships for the latin subset and the UI loads. */
   weights: number[];
 }
 
 /**
- * The curated set. Two sans (Inter, IBM Plex Sans) and four serif (Source Serif 4, Lora, Merriweather,
- * Libre Baskerville). This is deliberately small: a curated list is what makes a picker intuitive,
- * and every entry is real, embedded, and free.
+ * The report-embeddable families from the repository. A family the repository marks non-embeddable
+ * (no redistributable licence) is excluded here, so a format can never choose a font that may not be
+ * embedded in a PDF.
  */
-export const REPORT_FONT_FAMILIES: ReportFontFamily[] = [
-  { family: 'Inter', packageSlug: 'inter', category: 'sans', weights: [400, 500, 600, 700] },
-  { family: 'IBM Plex Sans', packageSlug: 'ibm-plex-sans', category: 'sans', weights: [400, 600] },
-  { family: 'Source Serif 4', packageSlug: 'source-serif-4', category: 'serif', weights: [400, 600] },
-  { family: 'Lora', packageSlug: 'lora', category: 'serif', weights: [400, 600] },
-  { family: 'Merriweather', packageSlug: 'merriweather', category: 'serif', weights: [400, 700] },
-  { family: 'Libre Baskerville', packageSlug: 'libre-baskerville', category: 'serif', weights: [400] },
-];
+export const REPORT_FONT_FAMILIES: ReportFontFamily[] = FONT_CATALOGUE
+  .filter((f) => f.reportEmbeddable && f.licence.redistributable)
+  .map((f) => ({ family: f.family, packageSlug: f.slug, category: f.category, weights: f.weights }));
 
 export const REPORT_FONT_NAMES: string[] = REPORT_FONT_FAMILIES.map((f) => f.family);
 
@@ -66,4 +64,9 @@ export function fontFileStem(family: string, weight: number): string {
   const entry = fontFamily(family);
   if (!entry) throw new Error(`unknown font family "${family}"`);
   return `${entry.packageSlug}-latin-${resolveWeight(family, weight)}-normal`;
+}
+
+/** The full repository entry (with licence metadata) for a family, or undefined. */
+export function fontLicenceFor(family: string): FontFamilyEntry | undefined {
+  return fontByFamily(family);
 }

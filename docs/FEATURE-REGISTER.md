@@ -105,7 +105,7 @@ feature to be testable.
 | F35 | Report templates | `Inert` | `report_template_save` exists; readers never called | R3 |
 | F36 | Certificate config and verification | `Wired` | `certificate_config_save`, `verify_certificate`, `PublicVerifyRoute` | — |
 | F37 | Report graph root verification | `Inert` | No writer for `report_graphs` (F4) | R2 |
-| F38 | Report writer adopts an uploaded format | `Absent` | §9 of SYSTELIGON — org format adoption, font/colour auto-detect | S13 |
+| F38 | Report writer adopts an uploaded format | `Wired` | §9 of SYSTELIGON — the org format is the `BrandingSpec` the writer reads (`src/data/reportFiles.ts`); font/colour auto-detect via `src/lib/fonts/detect.ts`, adopted in `OrgBrandingPanel.tsx` | F5, F6 |
 | F39 | Findings-to-report provenance | `Absent` | §9 — every generated element traces to a finding | S13 |
 
 ---
@@ -245,7 +245,7 @@ behaviour, or **remove it from the UI** and mark it deferred. No field may be vi
 | F113 | Motion / theme / personalisation gates | `Absent` | §12.7 | U12 |
 | F114 | Guided empty states | `Absent` | §11.1c U6 | U16 |
 | F115 | Onboarding tutorial drawer | `Wired` | `tutorialKeys.json`, `role="complementary"` | — |
-| F116 | Offline / self-hosted fonts | `Absent` | `FONT-REPOSITORY.md` F1–F7; `index.html:14` still loads a Google Fonts CDN link | F1 |
+| F116 | Offline / self-hosted fonts | `Wired` | `src/lib/fonts/catalogue.ts` (curated repository + licence metadata), `loader.ts` (lazy loader), `detect.ts` (DOCX/PPTX font-colour auto-detect), consumed by `OrgBrandingPanel.tsx` (OA-02/OA-03); `index.html` loads no external font host | G10 (`src/guards/fontLicence.test.ts`) |
 
 ---
 
@@ -278,9 +278,9 @@ Each is a pure function under `src/lib/`, with direct unit tests and a screen su
 
 | Status | Count |
 |---|---|
-| `Wired` | 76 |
+| `Wired` | 78 |
 | `Inert` | 23 |
-| `Absent` | 26 |
+| `Absent` | 24 |
 | **Total** | **125** |
 
 **Read that again, with the correction applied.** This is materially better than the first pass
