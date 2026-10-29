@@ -7,7 +7,8 @@ import {
   type PopulationRow,
 } from '../../data/population';
 import { recordSysteligonFindings } from '../../data/systeligon';
-import { runRules, systeligonPopulationRules, type RuleFinding, type RuleInput, type RuleRunResult } from '../../lib/systeligon';
+import { getReleasedRulePack } from '../../data/rulePacks';
+import { runRules, systeligonPopulationRules, resolveReleasedRules, type RuleFinding, type RuleInput, type RuleRunResult, type SysteligonRule } from '../../lib/systeligon';
 import { ENGINE_NAME } from '../../lib/product';
 import { hasRight } from '../../lib/rights';
 import { rightReason } from '../../lib/rightLabels';
@@ -45,6 +46,10 @@ export const RuleRunTab: React.FC<RuleRunTabProps> = ({ workpaper }) => {
   const [recorded, setRecorded] = useState<number | null>(null);
   const [result, setResult] = useState<RuleRunResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // The released pack drives the run when one exists; the in-code library is the fallback. `packNote`
+  // names which rule set ran and reports any rule the client could not reconstruct.
+  const [ruleSet, setRuleSet] = useState<SysteligonRule[]>(systeligonPopulationRules);
+  const [packNote, setPackNote] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -63,6 +68,24 @@ export const RuleRunTab: React.FC<RuleRunTabProps> = ({ workpaper }) => {
   useEffect(() => {
     void load();
   }, [load]);
+
+  // Resolve the released pack once, so the run uses what was released. A released pack the client
+  // cannot fully reconstruct is reported, never silently swapped for the in-code default.
+  useEffect(() => {
+    let cancelled = false;
+    getReleasedRulePack()
+      .then((pack) => {
+        if (cancelled || !pack) return;
+        const { rules, missing } = resolveReleasedRules(pack);
+        setRuleSet(rules.length ? rules : systeligonPopulationRules);
+        setPackNote(
+          `Running released pack ${pack.name}@${pack.version} (${rules.length} rule(s)).` +
+          (missing.length ? ` ${missing.length} rule(s) could not be reconstructed: ${missing.join(', ')}.` : ''),
+        );
+      })
+      .catch(() => { /* no pack reader available: fall back to the shipped library */ });
+    return () => { cancelled = true; };
+  }, []);
 
   // Load the selected population's rows on demand. The engine reads the values; the panel never
   // invents one — a missing amount is passed through as null and the rule reports it honestly.
@@ -113,7 +136,7 @@ export const RuleRunTab: React.FC<RuleRunTabProps> = ({ workpaper }) => {
       };
       // The run instant is captured here and passed in: the engine never reads a clock.
       const evaluatedAt = new Date().toISOString();
-      setResult(runRules(systeligonPopulationRules, input, { evaluatedAt }));
+      setResult(runRules(ruleSet, input, { evaluatedAt }));
     } catch (e) {
       setError(e instanceof Error ? e.message : 'The rule run failed.');
     } finally {
@@ -150,6 +173,9 @@ export const RuleRunTab: React.FC<RuleRunTabProps> = ({ workpaper }) => {
           Deterministic forensic rules over a locked population. Every finding names the rule, its
           version and the source rows it flagged. No AI.
         </p>
+        {packNote && (
+          <p className="text-apple-11 text-secondary" data-testid="rule-run-pack-note">{packNote}</p>
+        )}
       </div>
 
       {!canRun && (

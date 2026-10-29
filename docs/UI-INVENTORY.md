@@ -953,6 +953,24 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
   named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
 
+### `OA-33` — Systeligon rule packs (S10/S11, spec §4/§8)
+
+- **Purpose:** The configuration surface for the signed rule packs the forensic engine runs. List the packs this
+- **Route / location:** the Org Admin control panel, tab "Rule packs" (`org-control-tab-packs`).
+- **Rights required:** `edit_config` to generate a key, register it, save a pack and release one; any member of the org reads the pack list and the refusal log.
+- **Data functions (`src/data/*.ts`):** `AdhocRuleSpec`, `RulePack`, `SysteligonRule`, `definePack`, `generateSigningKey`, `justBelowThreshold`, `listRulePackRefusals`, `listRulePacks`, `registerSigningKey`, `releaseRulePack`, `runAdhocRule`, `saveSignedRulePack`
+- **Data modules:** `src/data/rulePacks.ts`
+- **RPCs reachable via those modules:** `rule_pack_list`, `rule_pack_refusals_list`, `rule_pack_released_rules`
+- **Tables reachable via those modules:** none
+- **Testids (30):** `rule-pack-panel`, `rule-pack-loading`, `rule-pack-load-error`, `rule-pack-error`, `rule-pack-notice`, `rule-pack-rights-note`, `rule-pack-key`, `rule-pack-key-id`, `rule-pack-key-generate`, `rule-pack-key-register`, `rule-pack-key-fingerprint`, `rule-pack-list-section`, `rule-pack-empty`, `rule-pack-row-<i>`, `rule-pack-draft-<i>`, `rule-pack-released-<i>`, `rule-pack-release-<i>`, `rule-pack-save`, `rule-pack-adhoc`, `rule-pack-adhoc-id`, `rule-pack-adhoc-source`, `rule-pack-adhoc-condition`, `rule-pack-adhoc-threshold`, `rule-pack-adhoc-severity`, `rule-pack-adhoc-preview`, `rule-pack-adhoc-result`, `rule-pack-refusals`, `rule-pack-refusals-empty`, `rule-pack-refusal-list`, `rule-pack-refusal-<id>`
+- **Explain ids (0):** — (no explain affordance)
+- **IIA standards addressed (0):** —
+- **Drilldown targets (0):** — (no aggregate)
+- **States:** loading; error; a denied state (no `edit_config`); ready with the pack list, the key controls and the refusal log; empty (`rule-pack-empty`); an inline result or refusal after a save or release.
+- **Tutorial key:** — (no key)
+- **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
+  named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
+
 ## Engagement lifecycle
 
 ### `WK-08` — escalation cards and proposals (S6)
@@ -1670,7 +1688,7 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 - **Data modules:** `src/data/population.ts`, `src/data/systeligon.ts`
 - **RPCs reachable via those modules:** none
 - **Tables reachable via those modules:** `population_rows`, `populations`
-- **Testids (14):** `rule-run`, `rule-run-empty`, `rule-run-error`, `rule-run-finding-<i>`, `rule-run-findings`, `rule-run-findings-empty`, `rule-run-loading`, `rule-run-population`, `rule-run-record`, `rule-run-recorded`, `rule-run-rights-note`, `rule-run-run`, `rule-run-skipped`, `rule-run-summary`
+- **Testids (15):** `rule-run`, `rule-run-empty`, `rule-run-error`, `rule-run-finding-<i>`, `rule-run-findings`, `rule-run-findings-empty`, `rule-run-loading`, `rule-run-pack-note`, `rule-run-population`, `rule-run-record`, `rule-run-recorded`, `rule-run-rights-note`, `rule-run-run`, `rule-run-skipped`, `rule-run-summary`
 - **Explain ids (0):** — (no explain affordance)
 - **IIA standards addressed (0):** —
 - **Drilldown targets (0):** — (no aggregate)
@@ -2126,6 +2144,8 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 | `request_extraction` | `src/data/documents.ts` | `p_file_id` | tenant |
 | `revert_prior_year_item` | `src/data/imports.ts` | `p_import_id` | tenant |
 | `rule_pack_list` | `src/data/rulePacks.ts` | — | tenant |
+| `rule_pack_refusals_list` | `src/data/rulePacks.ts` | — | tenant |
+| `rule_pack_released_rules` | `src/data/rulePacks.ts` | — | tenant |
 | `sample_precision` | `src/data/sampling.ts` | `p_sample_id`, `p_conf` | tenant |
 | `sample_tested_rows` | `src/data/sampling.ts` | `p_sample_id` | tenant |
 | `search_documents` | `src/data/documents.ts` | `p_engagement_id`, `p_query`, `p_stage` | tenant |
@@ -2159,10 +2179,10 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 
 ## Coverage cross-check
 
-- Screens documented: 107 (contract sections: 48 Appendix A + 44 Appendix B).
+- Screens documented: 108 (contract sections: 48 Appendix A + 44 Appendix B).
 - Tutorial keys: 81.
-- RPCs catalogued: 141.
-- Data modules: 67; exported data functions: 434.
-- Contract testids not found verbatim in `src/` (placeholder or dynamic): 227.
-  - audit-file-view-builder, audit-file-view-certificate, audit-file-view-conclusion, audit-file-view-documents, audit-file-view-ethics, audit-file-view-execution, audit-file-view-findings, audit-file-view-planning, audit-file-view-population, audit-file-view-report, audit-file-view-review, audit-file-view-rowtesting, audit-file-view-sampling, data-front-door-kind, hosting-test, invite-user, issues-view-patterns, oa-branding-colour-accent, oa-branding-colour-background, oa-branding-colour-primary, oa-branding-colour-text, oa-branding-margin-0, oa-branding-margin-3, oa-certificate-enabled-verification, oa-escalation-result, oa-escalation-saved, oa-governance-signoff-conclusion, oa-governance-signoff-planning, oa-governance-signoff-testing, org-control-tab-auditors, org-control-tab-automation, org-control-tab-branding, org-control-tab-connectors, org-control-tab-features, org-control-tab-formats, org-control-tab-governance, org-control-tab-hosting, org-control-tab-methodology, org-control-tab-people, org-control-tab-setup …
+- RPCs catalogued: 143.
+- Data modules: 67; exported data functions: 439.
+- Contract testids not found verbatim in `src/` (placeholder or dynamic): 228.
+  - audit-file-view-builder, audit-file-view-certificate, audit-file-view-conclusion, audit-file-view-documents, audit-file-view-ethics, audit-file-view-execution, audit-file-view-findings, audit-file-view-planning, audit-file-view-population, audit-file-view-report, audit-file-view-review, audit-file-view-rowtesting, audit-file-view-sampling, data-front-door-kind, hosting-test, invite-user, issues-view-patterns, oa-branding-colour-accent, oa-branding-colour-background, oa-branding-colour-primary, oa-branding-colour-text, oa-branding-margin-0, oa-branding-margin-3, oa-certificate-enabled-verification, oa-escalation-result, oa-escalation-saved, oa-governance-signoff-conclusion, oa-governance-signoff-planning, oa-governance-signoff-testing, org-control-tab-auditors, org-control-tab-automation, org-control-tab-branding, org-control-tab-connectors, org-control-tab-features, org-control-tab-formats, org-control-tab-governance, org-control-tab-hosting, org-control-tab-methodology, org-control-tab-packs, org-control-tab-people …
 

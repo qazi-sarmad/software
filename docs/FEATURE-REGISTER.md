@@ -88,8 +88,8 @@ feature to be testable.
 | F25 | Conclusion and engagement seal | `Wired` | `supabase/migrations/0034_conclusion.sql` sets `sealed` | — |
 | F26 | Reopen a sealed engagement | `Wired` | `reopenEngagement` (`src/data/mutations.ts`) called from `AuditPlanTab.tsx:118` | — |
 | F27 | Ethics sign-off | `Wired` | `ethics` inspector kind + acks | — |
-| F28 | Test steps as configurable data | `Absent` | No `test_step_templates` table; steps are React state | R5 |
-| F29 | Procedure / methodology templates | `Absent` | No `procedure_templates` table | R5 |
+| F28 | Test steps as configurable data | `Wired` | `test_step_templates` / `procedure_templates` (`0110_phase4_methodology.sql`); `applyTemplateToWorkpaper` (`src/data/writing.ts`) is called from `ProcedureStepsPanel.tsx` | R5 |
+| F29 | Procedure / methodology templates | `Wired` | `MethodologyPanel.tsx` (mounted in `OrgControlPanel.tsx`) calls `listProcedureTemplates`/`saveProcedureTemplate`/`publishProcedureTemplate` | R5 |
 | F30 | Stage machine configurable | `Absent` | Three hardcoded strings `'planning' \| 'testing' \| 'conclusion'` | R5 |
 
 ---
@@ -106,7 +106,7 @@ feature to be testable.
 | F36 | Certificate config and verification | `Wired` | `certificate_config_save`, `verify_certificate`, `PublicVerifyRoute` | — |
 | F37 | Report graph root verification | `Wired` | `commitReportGraph` writes the graph (`ReportEditorPanel.tsx:160`) and `verifyReportRoot` re-derives the root (`PublicVerifyRoute.tsx:43`); `ReportEditorPanel` reads the committed graph back (`getReportGraph` → `report-graph-panel`) | R2 |
 | F38 | Report writer adopts an uploaded format | `Wired` | §9 of SYSTELIGON — the org format is the `BrandingSpec` the writer reads (`src/data/reportFiles.ts`); font/colour auto-detect via `src/lib/fonts/detect.ts`, adopted in `OrgBrandingPanel.tsx` | F5, F6 |
-| F39 | Findings-to-report provenance | `Absent` | §9 — every generated element traces to a finding | S13 |
+| F39 | Findings-to-report provenance | `Wired` | §9 — every generated element traces to a finding. `commitReportGraph` (`src/data/reportGraph.ts`) copies each finding's rule id/version onto a report claim through `src/lib/systeligon/provenance.ts` and is invoked from `ReportEditorPanel.tsx` | S13 |
 
 ---
 
@@ -134,9 +134,9 @@ feature to be testable.
 | F50 | Monitor runner (scheduled) | `Inert` | `rule_engine_process` — 0 production refs | C1 |
 | F51 | Alert persistence | `Inert` | `alert_record` — 0 production refs | C1 |
 | F52 | Alert to Work Queue | `Inert` | No delivery path; the delivery test is absent | C3 |
-| F53 | Alert enrichment (entity, dept, SIRA, inherent/residual, controls) | `Absent` | §11.1 — the fields do not exist on the alert | C2 |
-| F54 | Adhoc audit suggestion from an anomaly | `Absent` | §11.1 | C4 |
-| F55 | Alert triage surface | `Absent` | §11.1 | C6 |
+| F53 | Alert enrichment (entity, dept, SIRA, inherent/residual, controls) | `Wired` | §11.1 — `alert_enrichment` (`0112_phase5_alert_enrichment.sql`) resolves the fields; `listAlerts` (`src/data/writing.ts`) reads them and `ConnectorMonitorPanel.tsx` renders them on each alert | C2 |
+| F54 | Adhoc audit suggestion from an anomaly | `Wired` | §11.1 — `alertAdhocSuggestion`/`alertAdhocAuditRaise` (`src/data/writing.ts`) called from `AlertActionsPanel.tsx` | C4 |
+| F55 | Alert triage surface | `Wired` | §11.1 — `triageAlert` (`src/data/writing.ts`) called from `ConnectorMonitorPanel.tsx` | C6 |
 | F56 | Anomaly proposes emergent risk into SIRA | `Absent` | §11.1 | C7 |
 | F57 | Connector run start / finish | `Inert` | `connector_run_start` / `connector_run_finish` — 0 production refs | C1 |
 | F58 | Staged record ingest | `Inert` | `staged_record_ingest` — 0 production refs | C1 |
@@ -288,7 +288,7 @@ this register exists to catch.
 | # | Capability | Status | Evidence / gap | WP |
 |---|---|---|---|---|
 | F127 | Rule schema, runner and result shape (S1) | `Wired` | `src/lib/systeligon/{types,runner}.ts` — `runRules` is pure, total and stably ordered, and turns a rule that throws into a finding against its own identity. **Wired** by the rule-run screen (`RuleRunTab.tsx`, workbench sub-tab "Rule Run", contract AF-16): it evaluates `runRules` over a population's rows and records the run via `recordSysteligonFindings` | S1 |
-| F128 | Rule versioning and packs (S1) | `Inert` | `src/lib/systeligon/{versioning,packs}.ts` — `RuleRegistry`, `definePack`, `releasedRules`, `packRules`; append-only versions, duplicate `id@version` collapses. **No screen calls `definePack`/`packRules`**; the pack browser is L2 | S1 |
+| F128 | Rule versioning and packs (S1) | `Inert` | `src/lib/systeligon/{versioning,packs}.ts` — `RuleRegistry`, `definePack`, `releasedRules`, `packRules`; append-only versions, duplicate `id@version` collapses. `definePack`/`releasedRules` are now called by `RulePackPanel.tsx` (a pack is built from the released rules); `RuleRegistry` and `packRules` still have **no screen caller** | S1 |
 | F129 | Numeric forensic rules (S6) | `Wired` | `src/lib/systeligon/rules/{numeric,threshold}.ts` — 11 rules wrapping the tested `analyticsEngine` checks (Benford, duplicates, near-duplicates, sequence gaps, z-score and IQR outliers, round numbers, out-of-hours, SoD, missing attributes, just-below-threshold) with provenance. Assembled as `systeligonPopulationRules` (`library.ts`) and **run by the rule-run screen** (`RuleRunTab.tsx`) | S6 |
 | F130 | Structured document extraction, tier 3 (S7) | `Inert` | `src/lib/systeligon/extract/structured.ts` — `parseDocumentStructure`, `hasSignature`, `FIELD_PARSERS`, reporting its own coverage. **No screen calls `parseDocumentStructure`**; mounting it is L3 | S7 |
 | F131 | OCR seam, tier 2 (S7) | `Inert` | `src/lib/systeligon/extract/ocr.ts` — `needsOcr`, `runOcr`, a lazy bundled engine that **refuses a remote engine** so nothing leaves the tenant. **No screen calls `runOcr`**; the bundled engine is a build artifact (L3) | S7 |
@@ -297,7 +297,7 @@ this register exists to catch.
 | F134 | Pattern rules (S9) | `Inert` | `src/lib/systeligon/rules/patterns.ts` — hardcoded credentials, `SELECT *`, external call without error handling, unbounded loop, disabled check, hardcoded environment; each finding cites its line. **No screen calls `patternRules`** | S9 |
 | F135 | Action-item register from minutes (S14) | `Inert` | `src/lib/systeligon/minutes.ts` — `buildActionRegister`, `itemHistory`; carried / vanished / closed-no-evidence / reopened / closed-before-raised / closed-by-non-owner / owner-due-changed / due-passed. **No screen calls `buildActionRegister`** | S14 |
 | F136 | Policy/procedure/regulation comparison (S15) | `Inert` | `src/lib/systeligon/policydiff.ts` — `compareDocuments` reports its own coverage (parsed / matched / could-not-interpret), because an unparsed clause is not a clean clause. **No screen calls `compareDocuments`** | S15 |
-| F137 | Signed rule-pack storage (S10/S11) | `Inert` | `src/lib/systeligon/ota.ts` (`signPack`, `verifyPack`, `buildAdhocRule`) + `src/data/rulePacks.ts` (`listRulePacks`, `saveSignedRulePack`) + `0117_systeligon_rule_packs.sql` (`rule_pack_save`/`rule_pack_list`). **No screen calls `listRulePacks`/`saveSignedRulePack`** — the pack-management UI is L2 | S10/S11 |
+| F137 | Signed rule-pack storage (S10/S11) | `Wired` | `src/lib/systeligon/ota.ts` (`signPack`, `verifyPack`, `buildAdhocRule`) + `src/data/rulePacks.ts` (`listRulePacks`, `listRulePackRefusals`, `getReleasedRulePack`, `saveSignedRulePackArtifact`, `releaseRulePack`, `registerSigningKey`, `generateSigningKey`) + `0128_rule_pack_release.sql` (`rule_pack_save`/`rule_pack_list`/`rule_pack_release`/`rule_pack_refusals_list`/`rule_pack_released_rules`/`signing_key_register`). The pack-management screen is `RulePackPanel.tsx` (OA-33, mounted in `OrgControlPanel.tsx`): it lists packs, generates and registers a signing key, signs and verifies a draft, releases it and reads the refusal log. `RuleRunTab.tsx` reads the released pack through `getReleasedRulePack`/`resolveReleasedRules` and runs it | S10/S11 |
 | F138 | Single product/engine name (S16) | `Wired` | `src/lib/product.ts` is the one constants module (product name, tagline, title and the engine name); `scripts/sync-product-name.mjs` mirrors it to the Edge functions, `src/guards/productName.test.ts` holds it, and screens read it — `PRODUCT_NAME` in ten (`HeaderBar.tsx`, `SignInScreen.tsx`, `AttestationPanel.tsx`, …) and `ENGINE_NAME` in the rule-run screen (`RuleRunTab.tsx`) | S16 |
 
 ---
@@ -306,16 +306,16 @@ this register exists to catch.
 
 | Status | Count |
 |---|---|
-| `Wired` | 87 |
-| `Inert` | 28 |
-| `Absent` | 23 |
+| `Wired` | 94 |
+| `Inert` | 27 |
+| `Absent` | 17 |
 | **Total** | **138** |
 
 **Read that again, with the correction applied.** This is materially better than the first pass
 reported, because Phases 1 and 2 of the scale-harden build closed the whole foundation, the S17-S20
 work packages closed the evidence-bytes and SIRA-write-path gaps, T7 closed the tamper alarm and
 the ledger verification, and T3/T4/T5 closed the portable attestation package, the third-party
-verifier and the attestation screen. The picture now: **87 wired, 28 inert, 23 absent.** The remaining
+verifier and the attestation screen. The picture now: **94 wired, 27 inert, 17 absent.** The remaining
 `Inert` rows are the genuine, still-open unwired features — the monitor runtime, the alert persistence
 and delivery, the connector adapters, and (from §13b) the Systeligon engine's own surfaces. Every one
 of those is a defect, and every one looks like a working feature in the UI.

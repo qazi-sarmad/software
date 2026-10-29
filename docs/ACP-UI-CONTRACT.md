@@ -1074,7 +1074,7 @@ qualified human releases it.
 - **Route:** the `workbench` inspector window, sub-tab "Rule Run".
 - **Rights:** `perform_work` to run and to record; any member of the org reads.
 - **Data:** `PopulationRow`, `PopulationRecordRead`, `RuleFinding`, `RuleInput`, `RuleRunResult`, `listPopulationRecords`, `listPopulations`, `recordSysteligonFindings`, `runRules`, `systeligonPopulationRules` — through `src/data/*.ts`; components never import the database client (rule M8).
-- **Testids:** `rule-run`, `rule-run-empty`, `rule-run-error`, `rule-run-finding-<i>`, `rule-run-findings`, `rule-run-findings-empty`, `rule-run-loading`, `rule-run-population`, `rule-run-record`, `rule-run-recorded`, `rule-run-rights-note`, `rule-run-run`, `rule-run-skipped`, `rule-run-summary`
+- **Testids:** `rule-run`, `rule-run-empty`, `rule-run-error`, `rule-run-finding-<i>`, `rule-run-findings`, `rule-run-findings-empty`, `rule-run-loading`, `rule-run-pack-note`, `rule-run-population`, `rule-run-record`, `rule-run-recorded`, `rule-run-rights-note`, `rule-run-run`, `rule-run-skipped`, `rule-run-summary`
 - **States:** loading; no population (`rule-run-empty`); reading rows; running; findings; none flagged (`rule-run-findings-empty`); recorded; error inline.
 - **Tutorial key:** —
 
@@ -1868,3 +1868,36 @@ applied procedure shows the legacy seed steps instead, so nothing that worked be
 - **States:** loading; empty (no procedure applied); ready with the applied steps; an inline refusal
   after a failed apply or tick.
 - **Tutorial key:** `wk.testing`
+
+## OA-33 — Systeligon rule packs (S10/S11, spec §4/§8)
+
+The configuration surface for the signed rule packs the forensic engine runs. List the packs this
+organisation can run, see a pack's version and content hash, save a signed pack, release a draft so
+the engine may run it, and read the refusal log — a save the server cannot verify is refused and
+logged, and the log is shown here so a rejection is never silent. The ad-hoc rule builder turns a
+source attribute, a condition and a threshold into a versioned rule, previewed over fixed sample rows
+before it is saved.
+
+The signature is the control (§8): whoever can push a pack can change what the engine concludes, so
+a pack is signed over its content hash with the organisation's signing key. The keypair is generated
+in the browser; only the public half is registered, and registering retires the previous live key.
+
+- **Route:** the Org Admin control panel, tab "Rule packs" (`org-control-tab-packs`).
+- **Rights:** `edit_config` to generate a key, register it, save a pack and release one; any member of
+  the org reads the pack list and the refusal log.
+- **Data:** `listRulePacks`, `listRulePackRefusals`, `saveSignedRulePackArtifact`, `releaseRulePack`,
+  `registerSigningKey`, `generateSigningKey` (`src/data/rulePacks.ts`); `definePack`, `runAdhocRule`,
+  `justBelowThreshold`, `AdhocRuleSpec`, `RulePack`, `SysteligonRule` (`src/lib/systeligon`).
+- **Testids:** `rule-pack-panel`, `rule-pack-loading`, `rule-pack-load-error`, `rule-pack-error`,
+  `rule-pack-notice`, `rule-pack-rights-note`, `rule-pack-key`, `rule-pack-key-id`,
+  `rule-pack-key-generate`, `rule-pack-key-register`, `rule-pack-key-fingerprint`,
+  `rule-pack-list-section`, `rule-pack-empty`, `rule-pack-row-<i>`, `rule-pack-draft-<i>`,
+  `rule-pack-released-<i>`, `rule-pack-release-<i>`, `rule-pack-save`, `rule-pack-adhoc`,
+  `rule-pack-adhoc-id`, `rule-pack-adhoc-source`, `rule-pack-adhoc-condition`,
+  `rule-pack-adhoc-threshold`, `rule-pack-adhoc-severity`, `rule-pack-adhoc-preview`,
+  `rule-pack-adhoc-result`, `rule-pack-refusals`, `rule-pack-refusals-empty`, `rule-pack-refusal-list`,
+  `rule-pack-refusal-<id>`.
+- **States:** loading; error; a denied state (no `edit_config`); ready with the pack list, the key
+  controls and the refusal log; empty (`rule-pack-empty`); an inline result or refusal after a save or
+  release.
+- **Tutorial key:** `oa.governance`

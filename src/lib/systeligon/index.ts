@@ -45,3 +45,6 @@ export {
 export {
   findingToClaim, findingsToClaims, type FindingClaim, type ProvenanceSet, type RefKind,
 } from './provenance';
+export {
+  resolveReleasedRules, type ReleasedPack, type ReleasedPackRule,
+} from './released';

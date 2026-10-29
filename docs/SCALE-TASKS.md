@@ -1559,6 +1559,46 @@ is one commit, not a grep-and-pray across the tree.
 **Scope note:** this is the name constant. The product's *display* name in docs, marketing and the
 patent filing is an owner decision, not the builder's; S16 only makes the code name one edit.
 
+### L2 — the rule-pack management UI (S10/S11) — 2026-10-29
+
+**DONE.** Last-mile queue item 2 (docs/CONTINUOUS-BUILD.md §3). The storage half (F137) existed and was
+inert: `src/data/rulePacks.ts` had no screen caller. This mounts the surface and, in mounting it, makes
+the earlier claims true rather than decorative.
+
+- **`supabase/migrations/0128_rule_pack_release.sql`** — the release transition and key registration
+  the storage half lacked. `rule_pack_release(p_id)` flips a draft to released **once**, idempotently
+  (a second call returns `already_released` and does not double-log); the append-only trigger keeps the
+  rules immutable — only the release flag may change. `signing_key_register(key_id, public_key)`
+  retires the org's previous live key and stores the new one, logging `signing_key_registered`.
+  `rule_pack_refusals_list()` is the refusal reader §8 requires. `rule_pack_released_rules()` returns
+  the newest released pack and its stored rules, so the engine runs **what was released**, not the
+  in-code default. Grants: reads and writes through the RPCs, nothing direct on the tables.
+- **`src/lib/anchoring.ts`** — `generateSigningKey(crypto)` (Ed25519 keygen, raw public key hex + JWK
+  private key), the same WebCrypto primitive the anchoring path already uses.
+- **`src/lib/systeligon/released.ts`** — `resolveReleasedRules(pack)` turns a released pack's stored
+  rules back into executable rules by `id@version`, and **reports** any rule it cannot reconstruct
+  (`missing`) rather than substituting a different one. 3 unit tests.
+- **`src/components/admin/RulePackPanel.tsx`** (contract OA-33), mounted as the `rulepacks` tab of
+  `OrgControlPanel.tsx`. Lists packs (newest version per name), generates and registers a signing key,
+  **signs a pack, verifies the signature locally against the public key it holds, and only then sends**
+  it (`saveSignedRulePackArtifact`) — never sends what it cannot verify; releases a draft; and reads the
+  refusal log. The ad-hoc builder previews through `buildAdhocRule`, so the builder's own validation
+  runs before the preview.
+- **The loop the release closes.** `RuleRunTab.tsx` (L1) now reads the released pack through
+  `getReleasedRulePack`/`resolveReleasedRules` and runs it; the in-code library is the fallback, and a
+  `rule-run-pack-note` names which rule set ran and any rule that could not be reconstructed. So
+  "release it to let the engine run it" is a fact, not a promise. Contract AF-16 gains the testid.
+- **The defect the SQL harness found, again.** The first draft of test 134 ran the immutability
+  assertion as a *tenant*, which holds no direct UPDATE grant at all, so the raise was
+  `permission denied for table rule_packs`, not `append-only` — the test would have passed for the
+  wrong reason had the assertion not named the expected message. Fixed: the owner runs it.
+- **Tests:** `supabase/tests/134_rule_pack_release.sql` (key registration and retirement; release
+  one-way and idempotent, logged once; rules immutable after release; the refusal reader; the released-
+  rules reader; a caller without `edit_config` refused; org isolation) + `released.test.ts` (3) +
+  `rulePacks.test.ts` (5, inert) + `anchoring.test.ts` `generateSigningKey` (1). SQL harness green
+  twice. Register F137 `Inert → Wired`; F128 evidence corrected (`definePack`/`releasedRules` now have a
+  caller). Counts **88/27/23**. `tsc --noEmit` clean; G2–G6 and R0 green; UI contract green.
+
 ## Environment facts (for the next session)
 
 - The sandbox has **no host Postgres** and **no Docker socket for the user**, but
