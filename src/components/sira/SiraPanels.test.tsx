@@ -165,6 +165,24 @@ describe('SiraCyclePanel', () => {
     expect(screen.getByTestId('sira-pack-risks-c1').textContent).toMatch(/Vendor concentration/);
     expect(screen.getByTestId('sira-seed-c1')).toBeTruthy();
   });
+
+  it('renders the persisted carry-forward chain so the provenance survives a reload (S18)', () => {
+    wrap('cia', (
+      <SiraCyclePanel
+        cycles={[{ id: 'c2', year: 2027, status: 'draft', publishedAt: null }]}
+        emergent={[]}
+        carryForwards={[{ id: 'cf1', fromYear: 2026, toYear: 2027, createdAt: '2027-01-04T09:00:00Z' }]}
+      />
+    ));
+    expect(screen.getByTestId('sira-carry-forward-chain')).toBeTruthy();
+    expect(screen.getByTestId('sira-carry-forward-cf1').textContent).toMatch(/2026 → 2027/);
+    expect(screen.getByTestId('sira-carry-forward-cf1').textContent).toMatch(/2027-01-04/);
+  });
+
+  it('shows no carry-forward chain when none has been recorded', () => {
+    wrap('cia', <SiraCyclePanel cycles={[{ id: 'c1', year: 2026, status: 'draft', publishedAt: null }]} emergent={[]} />);
+    expect(screen.queryByTestId('sira-carry-forward-chain')).toBeNull();
+  });
 });
 
 const SCORING_MODEL = {

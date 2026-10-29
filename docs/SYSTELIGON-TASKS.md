@@ -207,6 +207,15 @@ provenance. `propose_emergent_risks` PROPOSES from open findings and anomalies t
 `submitEmergentRisk` channel; a human accepts or rejects with a mandatory reason. Idempotent — a
 re-run proposes nothing again.
 
+**Correction (2026-10-28, re-audit under the ONE RULE).** The carry-forward provenance was written
+(`sira_carry_forward` rows by `sira_seed_next_cycle_internal`) but never read: `listCarryForward` had
+**zero** production callers, so the recorded chain lived only in this session's `packs` state and
+vanished on reload — a table written and never read, the exact class of gap the ONE RULE exists to
+catch. `SiraCyclesInspector` now loads `listCarryForward(uid)` alongside the cycles and passes the
+chain to `SiraCyclePanel`, which renders it (`sira-carry-forward-chain`, `sira-carry-forward-<id>`,
+`2026 → 2027 · recorded <date>`) so the provenance survives a reload. `SiraPanels.test.tsx` pins the
+chain render and the no-chain case.
+
 **Two-key acceptance (S19).** The owner's correction is implemented exactly: the accept/reject control
 STAYS with the SIRA finaliser and is visible, reminded and shown — but the finaliser's decision is an
 **endorsement**, not a closure. A **different** auditor holding `review_and_approve` must accept.

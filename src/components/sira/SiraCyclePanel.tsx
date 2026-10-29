@@ -47,6 +47,14 @@ export interface CarryForwardPackView {
   acceptedRiskTitles: string[];
 }
 
+/** S18: one persisted carry-forward link (a cycle seeded from the prior year). */
+export interface CarryForwardLinkView {
+  id: string;
+  fromYear: number;
+  toYear: number;
+  createdAt: string | null;
+}
+
 export interface SiraCyclePanelProps {
   cycles: SiraCycleView[];
   emergent: EmergentRiskView[];
@@ -54,6 +62,8 @@ export interface SiraCyclePanelProps {
   acceptances?: Record<string, AcceptanceView>;
   /** S18: the carry-forward pack, keyed by cycle id, once built. */
   packs?: Record<string, CarryForwardPackView>;
+  /** S18: the persisted carry-forward chain for the universe, newest first (survives reload). */
+  carryForwards?: CarryForwardLinkView[];
   onCreateCycle?: (year: number) => void;
   onPublishCycle?: (cycleId: string) => void;
   onEndorseCycle?: (cycleId: string, note: string) => void;
@@ -78,7 +88,7 @@ const ACCEPTANCE_LABEL: Record<AcceptanceView['acceptanceStatus'], string> = {
  * endorsement, not a closure. Renders inside the sliding inspector.
  */
 export const SiraCyclePanel: React.FC<SiraCyclePanelProps> = ({
-  cycles, emergent, acceptances, packs, onCreateCycle, onPublishCycle, onEndorseCycle,
+  cycles, emergent, acceptances, packs, carryForwards, onCreateCycle, onPublishCycle, onEndorseCycle,
   onDecideAcceptance, onDecideEmergentRisk, onProposeEmergent, onBuildPack, onSeedNext,
 }) => {
   const { currentUser } = useApp();
@@ -328,6 +338,17 @@ export const SiraCyclePanel: React.FC<SiraCyclePanelProps> = ({
               );
             })}
           </ul>
+        )}
+        {carryForwards && carryForwards.length > 0 && (
+          <div data-testid="sira-carry-forward-chain" className="rounded-xl border border-hairline bg-surface-sunken p-2 space-y-1">
+            <p className="text-apple-11 font-semibold text-secondary">Carried forward (recorded)</p>
+            {carryForwards.map((cf) => (
+              <p key={cf.id} data-testid={`sira-carry-forward-${cf.id}`} className="text-apple-11 text-tertiary">
+                {cf.fromYear} → {cf.toYear}
+                {cf.createdAt ? ` · recorded ${cf.createdAt.slice(0, 10)}` : ''}
+              </p>
+            ))}
+          </div>
         )}
       </div>
 

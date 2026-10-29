@@ -2,16 +2,16 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { InlineError } from '../common/InlineError';
 import {
-  SiraCyclePanel, type AcceptanceView, type CarryForwardPackView, type EmergentRiskView,
-  type SiraCycleView,
+  SiraCyclePanel, type AcceptanceView, type CarryForwardLinkView, type CarryForwardPackView,
+  type EmergentRiskView, type SiraCycleView,
 } from './SiraCyclePanel';
 import { SiraScoringPanel } from './SiraScoringPanel';
 import type { SiraModelView } from './SiraModelEditor';
 import {
   carryForwardPack, createSiraCycle, decideEmergentRisk, decideSiraAcceptance, endorseSiraCycle,
-  listCycles, listEmergentRisks, listRisks, listScores, parseCarryForwardPack, proposeEmergentRisks,
-  publishSiraCycle, recordSiraScore, remindSiraAcceptance, seedNextCycle, siraAcceptanceState,
-  siraModelSnapshot, siraPublishBlock, submitEmergentRisk,
+  listCarryForward, listCycles, listEmergentRisks, listRisks, listScores, parseCarryForwardPack,
+  proposeEmergentRisks, publishSiraCycle, recordSiraScore, remindSiraAcceptance, seedNextCycle,
+  siraAcceptanceState, siraModelSnapshot, siraPublishBlock, submitEmergentRisk,
   type SiraRisk, type SiraScore,
 } from '../../data/sira';
 import { listEntities, type EntityRow } from '../../data/universe';
@@ -30,6 +30,7 @@ export const SiraCyclesInspector: React.FC<{ universeId?: string }> = ({ univers
   const [emergent, setEmergent] = useState<EmergentRiskView[]>([]);
   const [acceptances, setAcceptances] = useState<Record<string, AcceptanceView>>({});
   const [packs, setPacks] = useState<Record<string, CarryForwardPackView>>({});
+  const [carryForwards, setCarryForwards] = useState<CarryForwardLinkView[]>([]);
   const [model, setModel] = useState<SiraModelView | null>(null);
   const [entities, setEntities] = useState<EntityRow[]>([]);
   const [risks, setRisks] = useState<SiraRisk[]>([]);
@@ -45,6 +46,7 @@ export const SiraCyclesInspector: React.FC<{ universeId?: string }> = ({ univers
       setCycles([]);
       setEmergent([]);
       setAcceptances({});
+      setCarryForwards([]);
       setEntities([]);
       setRisks([]);
       setScores([]);
@@ -52,18 +54,24 @@ export const SiraCyclesInspector: React.FC<{ universeId?: string }> = ({ univers
     }
     setError(null);
     try {
-      const [cs, es, ents, rks, mdl] = await Promise.all([
+      const [cs, es, ents, rks, mdl, cfs] = await Promise.all([
         listCycles(uid),
         listEmergentRisks(uid),
         listEntities(uid),
         listRisks(),
         orgId ? siraModelSnapshot(orgId) : Promise.resolve(null),
+        listCarryForward(uid),
       ]);
       setCycles(cs);
       setEmergent(es);
       setEntities(ents);
       setRisks(rks);
       setModel(mdl);
+      // S18: the persisted carry-forward chain — the provenance that a cycle was seeded from the
+      // prior year, read back so it survives a reload rather than living only in this session.
+      setCarryForwards(cfs.map((cf) => ({
+        id: cf.id, fromYear: cf.fromYear, toYear: cf.toYear, createdAt: cf.createdAt,
+      })));
       // The scores of the newest DRAFT cycle: the one the scoring panel can change.
       const draft = cs.find((c) => c.status === 'draft');
       setScores(draft ? await listScores(draft.id) : []);
@@ -133,6 +141,7 @@ export const SiraCyclesInspector: React.FC<{ universeId?: string }> = ({ univers
         emergent={emergent}
         acceptances={acceptances}
         packs={packs}
+        carryForwards={carryForwards}
         onCreateCycle={(year) => run(() => createSiraCycle(uid, year))}
         onPublishCycle={(id) => run(() => publishSiraCycle(id))}
         onEndorseCycle={(id, note) => run(() => endorseSiraCycle(id, note))}
