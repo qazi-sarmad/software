@@ -809,6 +809,50 @@ and returns what it did. That is the same split the email pipeline already uses.
 | 6.2 | Multi-org isolation under concurrency | TODO |
 | 6.3 | `docs/DEMO-SCRIPT.md` using only tested flows | TODO |
 
+### Phase 6, pre-work — the workpaper-creation path the product was missing (2026-10-28)
+
+**This was a real product defect, found by grepping the call site, not by a failing test.** The
+`create_workpaper` ACTION exists in the rights model (`src/lib/access.ts`, mapped to `perform_work`),
+but no migration ever inserted a workpaper and no RPC created one:
+
+```
+$ grep -rn 'insert into workpapers' supabase/migrations/     # nothing
+```
+
+The Audit File's testing workspace gates its sampling and row-testing panels on `workpapers[0]`
+(`AuditFileModal.tsx`). In production (empty seed) an engagement therefore had **zero** workpapers,
+so `SamplingPanel` and `RowTestingPanel` were never mounted — the testing stage was unreachable and
+no workpaper could ever exist. The Playwright suite never caught it because it ran against the dev
+demo seed, which ships workpapers. This is exactly the "green test, empty screen" class the
+remediation plan names, and the reason the G1 production-build gate exists.
+
+What was built (migration `0116_phase6_workpaper_creation.sql`, SQL test
+`117_phase6_workpaper_creation.sql`):
+
+- `create_workpaper(p_engagement_id, p_control_id, p_title) returns uuid` — the one write path. It is
+  `security definer` (the repo convention for tenant writes), so it repeats the `guard_testing_lock`
+  rule explicitly rather than relying on the trigger (which exempts non-`authenticated` callers): a
+  testing workpaper needs a signed-off planning section (`planning_signed_off`, §10.1). It refuses a
+  caller without `perform_work`, an engagement outside the caller's org, and a sealed engagement. It
+  appends a `workpaper_created` ledger entry. A direct table insert by `authenticated` is still
+  refused by the trigger, so both paths agree.
+- `workpapers.title` (nullable) — the tenant loader hardcoded `'Working paper'`, so a created
+  workpaper had no name to show.
+- `createWorkpaper` in `src/data/mutations.ts` and as an `AppContext` action (RPC + reload, the
+  Phase-1 pattern), with a demo-seed branch that builds a full `WorkingPaper`.
+- `WorkpaperCreatePanel` (`src/components/audit/WorkpaperCreatePanel.tsx`) — the in-place,
+  non-blocking creation form, wired into the testing workspace above the two panels.
+- `SamplingPanel` and `RowTestingPanel` take `workpaperId: string | null` and render a **designed
+  empty state** instead of vanishing when the engagement has no workpaper. Before this they were
+  gated on `workpapers[0]` and simply did not render.
+
+Verified: `bash scripts/local-sql-harness-docker.sh` → "migrations applied twice / all SQL tests
+passed twice"; `npx vitest run` → 215 files / 2474 tests pass, including six new cases in
+`src/components/audit/phase4Panels.test.tsx` that render both panels with `workpaperId={null}` and
+assert the empty state is present (the panels cannot silently disappear again). Registered in
+`docs/ACP-UI-CONTRACT.md` (AF-06b, and the two no-workpaper testids) with `docs/UI-INVENTORY.md`
+regenerated.
+
 ## Six anti-theatre CI gates (G1–G6 — this branch's)
 
 `docs/BRANCH-MAP.md` records the split: **G1–G6 are this branch's; G7–G10 are Builder B's**

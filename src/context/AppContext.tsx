@@ -124,6 +124,9 @@ interface AppContextType {
   reopenEngagement: (engagementId: string, justification: string) => Promise<GateResult>;
   advanceEngagementStage: (engagementId: string, toStage: EngagementStage) => Promise<GateResult>;
   addEntity: (input: NewEntityInput) => Promise<{ ok: true; id: string } | { ok: false; reason: string }>;
+  createWorkpaper: (
+    engagementId: string, title: string, controlId?: string | null
+  ) => Promise<{ ok: true; id: string } | { ok: false; reason: string }>;
   finalizeTest: (workpaperId: string) => Promise<GateResult>;
   registerPopulation: (workpaperId: string, summary: PopulationSummary) => Promise<GateResult>;
   setTestStepCompleted: (workpaperId: string, stepId: string, completed: boolean) => GateResult;
@@ -350,6 +353,40 @@ export function AppProvider({ user, seed, children }: { user: User; seed: Tenant
       throw err;
     }
     setRawEntities((prev) => [...prev, entity]);
+    return { ok: true, id };
+  };
+
+  // Phase 6 (G1). The workpaper-creation path the product was missing: before 0116 nothing could
+  // create a workpaper, so in production the testing workspace's sampling and row-testing panels
+  // (gated on workpapers[0]) never rendered. Requires perform_work; the database refuses a sealed
+  // engagement and one whose planning is not signed off.
+  const createWorkpaper = async (
+    engagementId: string, title: string, controlId: string | null = null
+  ): Promise<{ ok: true; id: string } | { ok: false; reason: string }> => {
+    if (!hasRight(currentUser, 'perform_work')) {
+      return { ok: false, reason: rightReason('perform_work') };
+    }
+    const trimmed = title.trim();
+    if (!trimmed) return { ok: false, reason: 'A working paper needs a title.' };
+    if (!rawEngagements.some((e) => e.id === engagementId)) return { ok: false, reason: 'Choose a valid engagement.' };
+    if (useDatabase) {
+      const res = await writes.createWorkpaper(engagementId, controlId, trimmed);
+      if (!res.ok) return { ok: false, reason: res.reason };
+      await reload();
+      return { ok: true, id: res.id };
+    }
+    const id = `wp-${Date.now().toString(36)}`;
+    const eng = rawEngagements.find((e) => e.id === engagementId);
+    const workpaper: WorkingPaper = {
+      id, engagementId, controlId: controlId ?? '',
+      entityId: eng?.entityId ?? '', universeId: eng?.universeId,
+      refCode: id.slice(0, 8).toUpperCase(), title: trimmed,
+      status: 'not_started', preparerId: currentUser.id, reviewerId: '',
+      testSteps: [], procedureSteps: [],
+      populationCount: 0, sampleCount: 0, exceptionsIdentified: 0,
+      conclusion: '', evidenceItems: [],
+    };
+    setRawWorkpapers((prev) => [...prev, workpaper]);
     return { ok: true, id };
   };
 
@@ -849,6 +886,7 @@ export function AppProvider({ user, seed, children }: { user: User; seed: Tenant
         reopenEngagement,
         advanceEngagementStage,
         addEntity,
+        createWorkpaper,
         registerPopulation,
         setTestStepCompleted,
         finalizeTest,

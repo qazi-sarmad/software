@@ -1202,8 +1202,23 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Data modules:** `src/data/sampling.ts`
 - **RPCs reachable via those modules:** `get_sample_size`, `sample_precision`, `sample_tested_rows`, `value_coverage`
 - **Tables reachable via those modules:** `org_sampling_table`, `samples`
-- **Testids (19):** `sampling-calculation`, `sampling-compute`, `sampling-coverage`, `sampling-coverage-status`, `sampling-current`, `sampling-error`, `sampling-floor`, `sampling-loading`, `sampling-lock`, `sampling-locked`, `sampling-method`, `sampling-panel`, `sampling-paste`, `sampling-paste-count`, `sampling-precision`, `sampling-rules-empty`, `sampling-seed-preview`, `sampling-tested-rows`, `sampling-waive-reason`
-- **States:** loading; no rules (`sampling-rules-empty`); computed (`sampling-method`, `sampling-calculation`); high-value coverage (`sampling-coverage`, `sampling-coverage-status`; a missing item can be waived with a reason, `sampling-waive-reason`); exact interval (`sampling-precision`); tested rows from the sample (`sampling-tested-rows`); locked (`sampling-locked`); error inline.
+- **Testids (20):** `sampling-calculation`, `sampling-compute`, `sampling-coverage`, `sampling-coverage-status`, `sampling-current`, `sampling-error`, `sampling-floor`, `sampling-loading`, `sampling-lock`, `sampling-locked`, `sampling-method`, `sampling-no-workpaper`, `sampling-panel`, `sampling-paste`, `sampling-paste-count`, `sampling-precision`, `sampling-rules-empty`, `sampling-seed-preview`, `sampling-tested-rows`, `sampling-waive-reason`
+- **States:** loading; no workpaper (`sampling-no-workpaper`); no rules (`sampling-rules-empty`); computed (`sampling-method`, `sampling-calculation`); high-value coverage (`sampling-coverage`, `sampling-coverage-status`; a missing item can be waived with a reason, `sampling-waive-reason`); exact interval (`sampling-precision`); tested rows from the sample (`sampling-tested-rows`); locked (`sampling-locked`); error inline.
+- **Tutorial key:** — (no key)
+- **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
+  named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
+
+### `AF-06` — Working-paper creation (S1)
+
+- **Purpose:** Create the working paper the testing workspace runs against. Before migration 0116 no path created one, so
+- **Route / location:** Audit File window, view "Testing workspace" (`audit-file-workspace`).
+- **Rights required:** `perform_work` to create.
+- **Data functions (`src/data/*.ts`):** `createWorkpaper`
+- **Data modules:** `src/data/mutations.ts`
+- **RPCs reachable via those modules:** `add_entity`, `create_workpaper`
+- **Tables reachable via those modules:** none
+- **Testids (7):** `workpaper-create-cancel`, `workpaper-create-error`, `workpaper-create-open`, `workpaper-create-panel`, `workpaper-create-reason`, `workpaper-create-submit`, `workpaper-title`
+- **States:** closed; open; busy; error inline; denied (`workpaper-create-reason`).
 - **Tutorial key:** — (no key)
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
   named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
@@ -1215,10 +1230,10 @@ tenant-facing RPC with parameters. Run `node scripts/gen-ui-inventory.mjs` to re
 - **Rights required:** `perform_work` to record; `review_and_approve` to sign off; `can_reopen` to reopen.
 - **Data functions (`src/data/*.ts`):** `RowResult`, `WorkpaperRowRow`, `getWorkpaper`, `recordRow`, `reopenWorkpaper`, `signOffWorkpaper`
 - **Data modules:** `src/data/mutations.ts`, `src/data/rowTesting.ts`
-- **RPCs reachable via those modules:** `add_entity`
+- **RPCs reachable via those modules:** `add_entity`, `create_workpaper`
 - **Tables reachable via those modules:** `workpaper_rows`, `workpapers`
-- **Testids (10):** `rowtesting-empty`, `rowtesting-error`, `rowtesting-justification`, `rowtesting-loading`, `rowtesting-panel`, `rowtesting-preflight`, `rowtesting-reopen`, `rowtesting-signed-off`, `rowtesting-signoff`, `rowtesting-signoff-reason`
-- **States:** loading; empty; signed-off; preflight note; error inline.
+- **Testids (11):** `rowtesting-empty`, `rowtesting-error`, `rowtesting-justification`, `rowtesting-loading`, `rowtesting-no-workpaper`, `rowtesting-panel`, `rowtesting-preflight`, `rowtesting-reopen`, `rowtesting-signed-off`, `rowtesting-signoff`, `rowtesting-signoff-reason`
+- **States:** loading; no workpaper (`rowtesting-no-workpaper`); empty; signed-off; preflight note; error inline.
 - **Tutorial key:** — (no key)
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
   named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
@@ -1563,6 +1578,7 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 | `confirm_prior_year_item` | `src/data/imports.ts` | `p_import_id` | tenant |
 | `connector_egress_allowed` | `src/data/writing.ts` | `p_org`, `p_host` | tenant |
 | `consultation_active` | `src/data/consultation.ts` | `p_org` | tenant |
+| `create_workpaper` | `src/data/mutations.ts` | `p_engagement_id`, `p_control_id`, `p_title` | tenant |
 | `decide_change` | `src/data/changeControl.ts` | `p_request_id`, `p_approve`, `p_reason` | tenant |
 | `deploy_engagement` | `src/data/deployment.ts` | `p_universe`, `p_entity`, `p_plan`, `p_period`, `p_title` | tenant |
 | `email_sender_profiles_list` | `src/data/senderProfiles.ts` | `p_org` | tenant |
@@ -1659,10 +1675,10 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 
 ## Coverage cross-check
 
-- Screens documented: 97 (contract sections: 48 Appendix A + 44 Appendix B).
+- Screens documented: 98 (contract sections: 48 Appendix A + 44 Appendix B).
 - Tutorial keys: 81.
-- RPCs catalogued: 115.
-- Data modules: 58; exported data functions: 384.
+- RPCs catalogued: 116.
+- Data modules: 58; exported data functions: 385.
 - Contract testids not found verbatim in `src/` (placeholder or dynamic): 194.
   - audit-file-view-builder, audit-file-view-certificate, audit-file-view-conclusion, audit-file-view-documents, audit-file-view-ethics, audit-file-view-execution, audit-file-view-findings, audit-file-view-planning, audit-file-view-population, audit-file-view-report, audit-file-view-review, audit-file-view-rowtesting, audit-file-view-sampling, hosting-test, invite-user, issues-view-patterns, oa-branding-colour-accent, oa-branding-colour-background, oa-branding-colour-primary, oa-branding-colour-text, oa-branding-margin-0, oa-branding-margin-3, oa-certificate-enabled-verification, oa-escalation-result, oa-escalation-saved, oa-governance-signoff-conclusion, oa-governance-signoff-planning, oa-governance-signoff-testing, org-control-tab-auditors, org-control-tab-automation, org-control-tab-branding, org-control-tab-connectors, org-control-tab-features, org-control-tab-formats, org-control-tab-governance, org-control-tab-hosting, org-control-tab-methodology, org-control-tab-people, org-control-tab-setup, org-control-tab-templates …
 

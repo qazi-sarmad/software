@@ -945,8 +945,22 @@ Compute a deterministic sample (seed preview, mode, floor), paste an id list, an
 - **Route:** Audit File window, view "Sampling" (`audit-file-view-sampling`).
 - **Rights:** `perform_work`.
 - **Data:** `SampleMode`, `SampleRow`, `SamplingRuleRow`, `computeSample`, `getSample`, `getSampleSize`, `lockSample` — through `src/data/*.ts`; components never import the database client (rule M8).
-- **Testids:** `sampling-calculation`, `sampling-compute`, `sampling-coverage`, `sampling-coverage-status`, `sampling-current`, `sampling-error`, `sampling-floor`, `sampling-loading`, `sampling-lock`, `sampling-locked`, `sampling-method`, `sampling-panel`, `sampling-paste`, `sampling-paste-count`, `sampling-precision`, `sampling-rules-empty`, `sampling-seed-preview`, `sampling-tested-rows`, `sampling-waive-reason`
-- **States:** loading; no rules (`sampling-rules-empty`); computed (`sampling-method`, `sampling-calculation`); high-value coverage (`sampling-coverage`, `sampling-coverage-status`; a missing item can be waived with a reason, `sampling-waive-reason`); exact interval (`sampling-precision`); tested rows from the sample (`sampling-tested-rows`); locked (`sampling-locked`); error inline.
+- **Testids:** `sampling-calculation`, `sampling-compute`, `sampling-coverage`, `sampling-coverage-status`, `sampling-current`, `sampling-error`, `sampling-floor`, `sampling-loading`, `sampling-lock`, `sampling-locked`, `sampling-method`, `sampling-no-workpaper`, `sampling-panel`, `sampling-paste`, `sampling-paste-count`, `sampling-precision`, `sampling-rules-empty`, `sampling-seed-preview`, `sampling-tested-rows`, `sampling-waive-reason`
+- **States:** loading; no workpaper (`sampling-no-workpaper`); no rules (`sampling-rules-empty`); computed (`sampling-method`, `sampling-calculation`); high-value coverage (`sampling-coverage`, `sampling-coverage-status`; a missing item can be waived with a reason, `sampling-waive-reason`); exact interval (`sampling-precision`); tested rows from the sample (`sampling-tested-rows`); locked (`sampling-locked`); error inline.
+- **Tutorial key:** —
+
+## AF-06b — Working-paper creation (S1)
+
+Create the working paper the testing workspace runs against. Before migration 0116 no path created one, so
+the sampling and row-testing panels had nothing to bind to and rendered nothing in production. The form
+opens in place; the database's refusals (no `perform_work`, a sealed engagement, planning not signed off)
+are shown inline.
+
+- **Route:** Audit File window, view "Testing workspace" (`audit-file-workspace`).
+- **Rights:** `perform_work` to create.
+- **Data:** `createWorkpaper` — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `workpaper-create-cancel`, `workpaper-create-error`, `workpaper-create-open`, `workpaper-create-panel`, `workpaper-create-reason`, `workpaper-create-submit`, `workpaper-title`
+- **States:** closed; open; busy; error inline; denied (`workpaper-create-reason`).
 - **Tutorial key:** —
 
 ## AF-07 — Row testing panel (S1)
@@ -956,8 +970,8 @@ Record each sampled row's result and rationale, mark an exception, sign off the 
 - **Route:** Audit File window, view "Row testing" (`audit-file-view-rowtesting`).
 - **Rights:** `perform_work` to record; `review_and_approve` to sign off; `can_reopen` to reopen.
 - **Data:** `RowResult`, `WorkpaperRowRow`, `getWorkpaper`, `recordRow`, `reopenWorkpaper`, `signOffWorkpaper` — through `src/data/*.ts`; components never import the database client (rule M8).
-- **Testids:** `rowtesting-empty`, `rowtesting-error`, `rowtesting-justification`, `rowtesting-loading`, `rowtesting-panel`, `rowtesting-preflight`, `rowtesting-reopen`, `rowtesting-signed-off`, `rowtesting-signoff`, `rowtesting-signoff-reason`
-- **States:** loading; empty; signed-off; preflight note; error inline.
+- **Testids:** `rowtesting-empty`, `rowtesting-error`, `rowtesting-justification`, `rowtesting-loading`, `rowtesting-no-workpaper`, `rowtesting-panel`, `rowtesting-preflight`, `rowtesting-reopen`, `rowtesting-signed-off`, `rowtesting-signoff`, `rowtesting-signoff-reason`
+- **States:** loading; no workpaper (`rowtesting-no-workpaper`); empty; signed-off; preflight note; error inline.
 - **Tutorial key:** —
 
 ## AF-08 — Conclusion panel (S1)

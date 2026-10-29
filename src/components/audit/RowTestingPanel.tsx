@@ -26,7 +26,7 @@ const RESULTS: { id: RowResult; label: string; icon: React.FC<{ className?: stri
  * unverifiable controls, an exception flag, a rationale that is required for cross and unverifiable,
  * row status chips and a sign-off button whose pre-flight lists any incomplete rows. Non-blocking.
  */
-export const RowTestingPanel: React.FC<{ workpaperId: string }> = ({ workpaperId }) => {
+export const RowTestingPanel: React.FC<{ workpaperId: string | null }> = ({ workpaperId }) => {
   const { currentUser } = useApp();
   const [rows, setRows] = useState<WorkpaperRowRow[]>([]);
   const [status, setStatus] = useState<string>('open');
@@ -43,6 +43,12 @@ export const RowTestingPanel: React.FC<{ workpaperId: string }> = ({ workpaperId
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
+    if (!workpaperId) {
+      setRows([]);
+      setStatus('open');
+      setLoading(false);
+      return;
+    }
     try {
       const [rs, wp] = await Promise.all([listRows(workpaperId), getWorkpaper(workpaperId)]);
       setRows(rs);
@@ -63,6 +69,7 @@ export const RowTestingPanel: React.FC<{ workpaperId: string }> = ({ workpaperId
   );
 
   const setResult = async (row: WorkpaperRowRow, result: RowResult) => {
+    if (!workpaperId) return;
     const d = draft[row.rowRef] ?? { rationale: '', exception: false };
     const needsRationale = result === 'cross' || result === 'unverifiable';
     if (needsRationale && d.rationale.trim().length === 0) {
@@ -78,6 +85,7 @@ export const RowTestingPanel: React.FC<{ workpaperId: string }> = ({ workpaperId
   };
 
   const sign = async () => {
+    if (!workpaperId) return;
     setBusy(true);
     setError(null);
     const res = await signOffWorkpaper(workpaperId);
@@ -87,6 +95,7 @@ export const RowTestingPanel: React.FC<{ workpaperId: string }> = ({ workpaperId
   };
 
   const reopen = async () => {
+    if (!workpaperId) return;
     setBusy(true);
     setError(null);
     const res = await reopenWorkpaper(workpaperId, justification.trim());
@@ -100,6 +109,17 @@ export const RowTestingPanel: React.FC<{ workpaperId: string }> = ({ workpaperId
 
   if (loading) {
     return <div className="h-24 rounded-2xl bg-surface-sunken border border-hairline animate-pulse" data-testid="rowtesting-loading" />;
+  }
+
+  if (!workpaperId) {
+    return (
+      <div className="space-y-5" data-testid="rowtesting-panel">
+        <div className="p-6 text-center text-apple-12 text-secondary bg-surface-elevated rounded-xl" data-testid="rowtesting-no-workpaper">
+          Row testing runs against a working paper. This engagement has no working paper yet — create
+          one in the Testing workspace to record results.
+        </div>
+      </div>
+    );
   }
 
   const signedOff = status === 'signed_off';

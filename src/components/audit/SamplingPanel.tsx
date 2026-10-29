@@ -28,7 +28,7 @@ import { Sliders, Lock, CheckCircle2, Hash, Layers } from '../common/Icons';
  * seed preview for system mode and a paste area with per-row validation for auditor-paste mode. The
  * floor is enforced by the database; a locked sample is immutable.
  */
-export const SamplingPanel: React.FC<{ workpaperId: string }> = ({ workpaperId }) => {
+export const SamplingPanel: React.FC<{ workpaperId: string | null }> = ({ workpaperId }) => {
   const { currentUser } = useApp();
   const [rules, setRules] = useState<SamplingRuleRow[]>([]);
   const [sample, setSample] = useState<SampleRow | null>(null);
@@ -48,6 +48,15 @@ export const SamplingPanel: React.FC<{ workpaperId: string }> = ({ workpaperId }
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
+    if (!workpaperId) {
+      setRules([]);
+      setSample(null);
+      setCoverage(null);
+      setPrecision(null);
+      setTested([]);
+      setLoading(false);
+      return;
+    }
     try {
       const [rs, s] = await Promise.all([listSamplingRules(), getSample(workpaperId)]);
       setRules(rs);
@@ -87,6 +96,7 @@ export const SamplingPanel: React.FC<{ workpaperId: string }> = ({ workpaperId }
     .filter((l) => l.length > 0);
 
   const run = async () => {
+    if (!workpaperId) return;
     setBusy(true);
     setError(null);
     const items = mode === 'auditor_paste' ? pastedItems : undefined;
@@ -121,6 +131,17 @@ export const SamplingPanel: React.FC<{ workpaperId: string }> = ({ workpaperId }
 
   if (loading) {
     return <div className="h-24 rounded-2xl bg-surface-sunken border border-hairline animate-pulse" data-testid="sampling-loading" />;
+  }
+
+  if (!workpaperId) {
+    return (
+      <div className="space-y-5" data-testid="sampling-panel">
+        <div className="p-6 text-center text-apple-12 text-secondary bg-surface-elevated rounded-xl" data-testid="sampling-no-workpaper">
+          A sample is drawn against a working paper. This engagement has no working paper yet — create
+          one in the Testing workspace to enable sampling.
+        </div>
+      </div>
+    );
   }
 
   const seedPreview = sample?.seed ?? `sha256(population.sha256 || ${workpaperId})`;
