@@ -8,6 +8,13 @@
 \i supabase/tests/00_lib.sql
 select provio_test.seed();
 
+-- The platform administrator is a real account: platform_create_tenant writes invite_cap_events,
+-- whose invited_by column references auth.users, so without this row the provisioning step at §10
+-- fails on the foreign key. Seeded the same way test 123 seeds it.
+select provio_test.as_owner();
+insert into auth.users (id, email) values ('10000000-0000-0000-0000-0000000000f0', 'platform@qscorp.test')
+on conflict (id) do nothing;
+
 -- ===========================================================================
 -- 1. procedure_template_save writes a version with its ordered steps.
 -- ===========================================================================
