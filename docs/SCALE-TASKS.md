@@ -806,7 +806,7 @@ and returns what it did. That is the same split the email pipeline already uses.
 | # | Task | Status |
 |---|---|---|
 | 6.1 | Full system suite against a production build | DONE |
-| 6.2 | Multi-org isolation under concurrency | TODO |
+| 6.2 | Multi-org isolation under concurrency | DONE |
 | 6.3 | `docs/DEMO-SCRIPT.md` using only tested flows | TODO |
 
 ### Task 6.1 — the full suite against a production build (2026-10-28)
@@ -860,6 +860,51 @@ Gate set at this commit (all run locally, all PASS):
 | G6 RPC parity | `node scripts/check-rpc-parity.mjs` | PASS (116 RPCs, 10 service-only) |
 | G1 prod E2E | `E2E_PROD=1 npx playwright test --project=chromium` | PASS — 143 passed, 3 skipped |
 | SQL harness | `bash scripts/local-sql-harness-docker.sh` | PASS — "migrations applied twice / all SQL tests passed twice" |
+
+### Task 6.2 — multi-org isolation under concurrency (2026-10-28)
+
+Serial isolation tests (`01_org_isolation.sql`, `103_scale_isolation.sql`) prove a session reads only
+its own org **when it runs alone**. They cannot see the class of defect where the tenant boundary
+depends on shared per-request state — a pooled backend, a cached claim, a session-level GUC that
+survives a `DISCARD`. Only overlapping statements expose that. Phase 6.2 adds two independent
+concurrency proofs, one at the database layer and one through the real HTTP/RLS path the app uses.
+
+**1. `supabase/tests/118_phase6_concurrency_isolation.sql`** — real concurrent Postgres sessions via
+`dblink` (the same tool `15_ledger_concurrency.sql` uses). Four organisations are created through the
+platform path (`platform_seed_org_roles`), each with a universe, entity, engagement and a `cia`
+member. Then 4 orgs × 4 sessions = **16 statements are sent with `dblink_send_query` before any
+`dblink_get_result`**, so they are genuinely in flight together. Each session, as its own org:
+
+- reads its own universes — asserts exactly 1;
+- reads every other org's universes — asserts 0 (RLS);
+- attempts to write the *next* org's universe — asserts 0 rows affected (RLS).
+
+Every org is therefore written by a foreign session concurrently. A non-vacuity assertion runs first
+(as owner) proving the four foreign universes really exist, so a passing run means the rows were
+hidden, not absent. After the race, an owner check confirms no foreign write landed (every fixture
+universe keeps its name). The file runs twice against the same database in the harness and is
+idempotent.
+
+```
+$ bash /tmp/twice-test.sh supabase/tests/118_phase6_concurrency_isolation.sql
+migrations ok
+pass 1 OK
+pass 2 OK
+```
+
+**2. `e2e/rls.spec.ts` — `[E2E] concurrent reads from two orgs never cross the tenant boundary`.**
+The database test proves the policies; this proves the same boundary through PostgREST, which is what
+the app actually calls. Two org tokens (Org A admin, Org B admin) each fire the whole tenant-table
+list **three rounds**, all promises in flight via `Promise.all`, and every response is checked for a
+row whose `org_id` is not the caller's. Runs against the production build (`E2E_PROD=1`).
+
+```
+$ source .env.e2e-local && npx playwright test e2e/rls.spec.ts --project=chromium
+  14 passed (5.9s)
+  ✓ [E2E] concurrent reads from two orgs never cross the tenant boundary (436ms)
+```
+
+Counts after this task: SQL test files 120 → **121**; Playwright `rls.spec.ts` tests 13 → **14**.
 
 ### Phase 6, pre-work — the workpaper-creation path the product was missing (2026-10-28)
 
