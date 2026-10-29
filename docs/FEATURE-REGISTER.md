@@ -102,9 +102,9 @@ feature to be testable.
 | F32 | Report file render + upload (PDF/DOCX) | `Wired` | `src/data/reportFiles.ts` uploads to the `reports` bucket | S20 |
 | F33 | Pre-flight acknowledgement storage | `Wired` | `preflight_acks` + `acknowledgePreflight` in `ReportEditorPanel` | — |
 | F34 | Pre-flight engine (the eight checks) | `Inert` | Engine exists; not consumed at freeze (F5) | R2 |
-| F35 | Report templates | `Inert` | `report_template_save` exists; readers never called | R3 |
+| F35 | Report templates | `Wired` | `listReportTemplates` / `saveReportTemplate` (`src/data/governance.ts`) called from `ReportTemplatePanel.tsx:49`; RPCs `report_template_list` / `report_template_save` | — |
 | F36 | Certificate config and verification | `Wired` | `certificate_config_save`, `verify_certificate`, `PublicVerifyRoute` | — |
-| F37 | Report graph root verification | `Inert` | No writer for `report_graphs` (F4) | R2 |
+| F37 | Report graph root verification | `Wired` | Writer `report_graph_commit` (`0103_phase2_report_graph.sql:70`) called from `ReportEditorPanel.tsx:177`; verified via `report_graph_get` and `verify_report_root` (`src/data/certificate.ts:173`) | — |
 | F38 | Report writer adopts an uploaded format | `Absent` | §9 of SYSTELIGON — org format adoption, font/colour auto-detect | S13 |
 | F39 | Findings-to-report provenance | `Absent` | §9 — every generated element traces to a finding | S13 |
 
@@ -278,14 +278,16 @@ Each is a pure function under `src/lib/`, with direct unit tests and a screen su
 
 | Status | Count |
 |---|---|
-| `Wired` | 52 |
-| `Inert` | 29 |
+| `Wired` | 54 |
+| `Inert` | 27 |
 | `Absent` | 44 |
 | **Total** | **125** |
 
 **Read that again, with the correction applied.** This is materially better than the first pass
 reported, because Phases 1 and 2 of the scale-harden build closed the whole foundation. The picture
-now: **52 wired, 29 inert, 44 absent.** The remaining `Inert` rows are the genuine, still-open
+now: **54 wired, 27 inert, 44 absent.** F35 (report templates) and F37 (report graph root) were
+`Inert` here and are now written and read end to end, so they were corrected on 2026-10-29. The
+remaining `Inert` rows are the genuine, still-open
 unwired features — the monitor runtime, the evidence bytes, the tamper alarm, the SIRA write path,
 the ledger verification. Every one of those is a defect, and every one looks like a working feature
 in the UI.

@@ -70,3 +70,55 @@ stayed green). So step 8 now runs both: the dev suite first (fast feedback, unch
 `npm run build` + `E2E_PROD=1 npx playwright test --project=chromium`. Both hit the hosted test
 project, so the job's existing concurrency group still serialises them. The code was not at fault; the
 row and the pipeline both were.
+
+## D4 — two engines are inert; two register rows were stale; the register gate now runs in CI
+
+**Queue item 8.** The reachability audit of both engines.
+
+**Decision / findings** (full evidence in `docs/REACHABILITY-AUDIT.md`):
+
+1. **`src/lib/siraEngine.ts` and `src/lib/analyticsEngine.ts` have no production caller.** Resolving
+   the import graph from every screen under `src/components/` plus `App.tsx`, neither module is
+   reachable. `src/data/sira.ts` and `src/data/analytics.ts` each *say* in a comment that the pure
+   engine does the maths, but each imports only `{ callRpc } from './db'` and calls the SQL function
+   over RPC. The TS engines are parity mirrors proved by tests, not engines the product runs.
+2. **Six writing-engine modules are test-only** — `bundle, issue, lint, planner, seal, workbook`. They
+   form the report-*writer* cluster the app does not yet drive (the S13 remainder). Not a regression;
+   recorded as inert.
+3. **`monitors.ts` is reachable only as labels** — `ConnectorMonitorPanel` imports `MONITOR_KINDS`;
+   `evaluateMonitor` / `runMonitors` have no screen caller (C1's runner is the `pg_cron` job).
+4. **Two register rows were stale and are corrected**: F35 report templates → `Wired` (called from
+   `ReportTemplatePanel.tsx:49`); F37 report graph root → `Wired` (writer `report_graph_commit`,
+   `0103`, called from `ReportEditorPanel.tsx:177`). Counts 52/29/44 → **54/27/44**.
+5. **The register gate's blind spot, recorded not hidden:** rule (6) fires only on an evidence phrase
+   from a fixed list *and* a token that is a `src/data`/`src/lib` export. An `Inert` row naming a
+   **table or RPC** (F37 named `report_graphs`) escapes. Widening it needs a table/RPC call-site
+   check — its own work package.
+6. **`check-feature-register.mjs` is added to CI step 6d.** It was green but unrun; a green gate no CI
+   executes is the defect G1 taught us to look for.
+
+**Effect on the plan.** Phase 4–5 sharpens: the remaining work on the engines is not "write the
+engine" but "choose whether the TS engine or the SQL function is the one the product runs, and wire
+that one to a screen." No `SCALE-PLAN.md` phase changes order.
+
+## D5 — the local SQL harness's shim was read as user `postgres`; ported fix uses stdin
+
+**Found while watching the first CI run of the ported step 7.** Step 7 failed on the runner at
+`psql: error: …/scripts/local-sql-shim.sql: Permission denied` / `shim failed`.
+
+**Cause.** `scripts/local-sql-harness.sh` runs as `sudo -n -u postgres psql …`, and every migration
+and SQL test is fed on **stdin** (`run < "$f"`) precisely so the `postgres` user never needs to open a
+file the invoking user owns. The **shim** was the one exception: `run -f "$ROOT/scripts/local-sql-shim.sql"`.
+Under `-f`, *psql* (now running as `postgres`) opens the path itself; on CI the checkout lives at
+`/home/runner/work/...`, which `postgres` cannot traverse, so the open fails. Locally the checkout is
+under `/workspace` with looser permissions, which is why the harness passed twice here and failed only
+on the runner.
+
+**Decision:** feed the shim on stdin like every other file — `run < "$ROOT/scripts/local-sql-shim.sql"`.
+The invoking user (who can read the repo) opens the file; *psql* reads stdin. One line, same pattern as
+the rest of the harness, no permission assumptions.
+
+**Also:** the harness header claimed "assumes postgresql-17"; the ported CI step installs whatever
+`postgresql` resolves to (16 on `ubuntu-24.04`). The suite needs only `security_invoker` (PG15+), so
+the header now says "15+" and names no version. Verified: harness green on PG16 in the runner's package
+set and PG17 locally.

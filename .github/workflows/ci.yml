@@ -66,13 +66,19 @@ jobs:
       - name: 6c. UI contract
         run: node scripts/check-ui-contract.mjs
 
-      - name: 6d. Anti-theatre gates (G2 dead code, G3 config-effect, G4 wiring, G5 two-sources, G6 RPC parity)
+      - name: 6d. Anti-theatre gates (G2 dead code, G3 config-effect, G4 wiring, G5 two-sources, G6 RPC parity, R0 register)
+        # R0 (check-feature-register) is the automated form of "verify wiring by grepping the call
+        # site": it fails when a Wired row names a src/data or src/lib export no screen calls, and
+        # when an Inert row names one that IS called. It existed and was green but no CI step ran it,
+        # so a row could drift from the code unnoticed. It is the gate most likely to catch the exact
+        # defect this branch exists to close, so it belongs here.
         run: |
           node scripts/check-dead-code.mjs
           node scripts/check-config-effect.mjs
           node scripts/check-wiring.mjs
           node scripts/check-two-sources.mjs
           node scripts/check-rpc-parity.mjs
+          node scripts/check-feature-register.mjs
 
       - name: 7. Migrations and SQL tests (runner-local PostgreSQL)
         # Previously this applied 116 migrations and 121 test files to the hosted test project with
