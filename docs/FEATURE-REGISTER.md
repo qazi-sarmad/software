@@ -243,7 +243,7 @@ behaviour, or **remove it from the UI** and mark it deferred. No field may be vi
 | F111 | Density toggle | `Absent` | §11.1c U7 | U15 |
 | F112 | Contrast test covers all presets | `Inert` | `tokens.contrast.test.ts` covers three; must cover six at every phase | U9 |
 | F113 | Motion / theme / personalisation gates | `Absent` | §12.7 | U12 |
-| F114 | Guided empty states | `Absent` | §11.1c U6 | U16 |
+| F114 | Guided empty states | `Wired` | A new organisation's dashboard shows `GuidedFirstRun.tsx` (DB-01) instead of a wall of zeros: the pure `src/lib/guidedFirstRun.ts` rule decides the step, `createUniverse` on the app context is the button's write path, and `src/data/guidedFirstRun.ts` reads the gated `get_org_data_state` RPC (`supabase/migrations/0117_guided_first_run.sql`). `create_universe` is the first-run action that had no write path anywhere | U6 |
 | F115 | Onboarding tutorial drawer | `Wired` | `tutorialKeys.json`, `role="complementary"` | — |
 | F116 | Offline / self-hosted fonts | `Wired` | `src/lib/fonts/catalogue.ts` (curated repository + licence metadata), `loader.ts` (lazy loader), `detect.ts` (DOCX/PPTX font-colour auto-detect), consumed by `OrgBrandingPanel.tsx` (OA-02/OA-03); `index.html` loads no external font host | G10 (`src/guards/fontLicence.test.ts`) |
 
@@ -279,9 +279,9 @@ Each is a pure function under `src/lib/`, with direct unit tests and a screen su
 
 | Status | Count |
 |---|---|
-| `Wired` | 79 |
+| `Wired` | 80 |
 | `Inert` | 23 |
-| `Absent` | 24 |
+| `Absent` | 23 |
 | **Total** | **126** |
 
 **Read that again, with the correction applied.** This is materially better than the first pass

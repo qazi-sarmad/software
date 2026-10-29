@@ -1239,6 +1239,17 @@ The live review-comment surface: one comment's dialogue, or the full review trai
 - **Drilldown (E5/U1):** the open/cleared counts open the exact comments behind them in the non-blocking `DrilldownPanel` (testid prefix `CH-07-drilldown`), deep-linkable via `#drill=comments`.
 - **Tutorial key:** —
 
+## CH-08 — Keyboard shortcut sheet (U8)
+
+The `?` sheet: every shortcut the caller may use, grouped, with its key sequence. Non-blocking.
+
+- **Route:** A `role="complementary"` panel anchored below the header, opened by `?`; never a modal.
+- **Rights:** the sheet lists only the shortcuts whose right the caller holds (`groupedShortcuts`); a configuration-only principal sees no navigation rows.
+- **Data:** `SHORTCUTS`, `shortcutsFor`, `groupedShortcuts`, `formatChord`, `formatSequence`, `matchShortcut`, `matchSequence` (`src/lib/keyboardShortcuts.ts`) — pure; the sheet reads no tenant data.
+- **Testids:** `shortcut-sheet`, `shortcut-sheet-close`, `shortcut-sheet-list`, `shortcut-sheet-empty`, `shortcut-sheet-group-<group>`, `shortcut-sheet-item-<id>`
+- **States:** closed; open with the caller's shortcuts grouped; empty (no shortcut available to the caller).
+- **Tutorial key:** —
+
 ## OA-25 — Cross-universe view-only sharing (SCALE-1, §2)
 
 Grant, view and revoke an intra-organisation, view-only share of a universe to a same-tenant member, and (in grantee mode) read the universes shared with me.

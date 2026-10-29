@@ -12,6 +12,8 @@ import { DrilldownPanel } from '../explain/DrilldownPanel';
 import { StandardsAffordance } from '../explain/StandardsAffordance';
 import { IntegrityAlarmBanner } from './IntegrityAlarmBanner';
 import { ActivitySpine } from './ActivitySpine';
+import { GuidedFirstRun } from './GuidedFirstRun';
+import { useOrgDataState } from '../../hooks/useOrgDataState';
 import { useDrilldown } from '../../hooks/useDrilldown';
 import {
   engagementsInProgress,
@@ -45,6 +47,7 @@ export const ExecutiveDashboardTab: React.FC = () => {
   const filter = useFilterStore();
   const { setActiveTab, setSelectedEngagementId, openInspector, applyPlanItemDates } = useApp();
   const drill = useDrilldown();
+  const { isNew: orgIsNew } = useOrgDataState();
 
   // Every dashboard number is counted from these already-scoped, already-filtered rows, and the
   // drilldown reads the SAME rows, so a number and its drilldown can never disagree (E5/U1).
@@ -89,6 +92,28 @@ export const ExecutiveDashboardTab: React.FC = () => {
         break;
     }
   };
+
+  // U6: a brand-new organisation sees one guided action, never a wall of zeros. The decision is the
+  // pure rule over the org's data state (migration 0117 counts), not a guess from scoped rows.
+  if (orgIsNew) {
+    return (
+      <div className="max-w-7xl mx-auto px-6 py-8 space-y-8 animate-fade-in">
+        <div className="border-b border-hairline pb-6">
+          <span className="text-apple-12 font-medium tracking-wide uppercase text-accent">
+            Audit Platform
+          </span>
+          <h1 className="text-apple-28 font-bold text-primary tracking-tight mt-1">
+            Executive Assurance Cockpit
+          </h1>
+          <p className="text-apple-15 text-secondary mt-1">Welcome, {currentUser.name}.</p>
+        </div>
+        <GuidedFirstRun
+          screenId="DB-01"
+          onOpenSetup={() => openInspector('org_control', { tab: 'setup' })}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-8 space-y-8 animate-fade-in">

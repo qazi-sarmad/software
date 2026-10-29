@@ -1452,7 +1452,7 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 - **Rights required:** `perform_work` to record; `review_and_approve` to sign off; `can_reopen` to reopen.
 - **Data functions (`src/data/*.ts`):** `RowResult`, `WorkpaperRowRow`, `getWorkpaper`, `recordRow`, `reopenWorkpaper`, `signOffWorkpaper`
 - **Data modules:** `src/data/mutations.ts`, `src/data/rowTesting.ts`
-- **RPCs reachable via those modules:** `add_entity`
+- **RPCs reachable via those modules:** `add_entity`, `create_universe`
 - **Tables reachable via those modules:** `workpaper_rows`, `workpapers`
 - **Testids (10):** `rowtesting-empty`, `rowtesting-error`, `rowtesting-justification`, `rowtesting-loading`, `rowtesting-panel`, `rowtesting-preflight`, `rowtesting-reopen`, `rowtesting-signed-off`, `rowtesting-signoff`, `rowtesting-signoff-reason`
 - **Explain ids (0):** — (no explain affordance)
@@ -1825,6 +1825,24 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
   named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
 
+### `CH-08` — Keyboard shortcut sheet (U8)
+
+- **Purpose:** The `?` sheet: every shortcut the caller may use, grouped, with its key sequence. Non-blocking.
+- **Route / location:** A `role="complementary"` panel anchored below the header, opened by `?`; never a modal.
+- **Rights required:** the sheet lists only the shortcuts whose right the caller holds (`groupedShortcuts`); a configuration-only principal sees no navigation rows.
+- **Data functions (`src/data/*.ts`):** `SHORTCUTS`, `formatChord`, `formatSequence`, `groupedShortcuts`, `matchSequence`, `matchShortcut`, `shortcutsFor`
+- **Data modules:** none (pure/UI only)
+- **RPCs reachable via those modules:** none
+- **Tables reachable via those modules:** none
+- **Testids (6):** `shortcut-sheet`, `shortcut-sheet-close`, `shortcut-sheet-list`, `shortcut-sheet-empty`, `shortcut-sheet-group-<group>`, `shortcut-sheet-item-<id>`
+- **Explain ids (0):** — (no explain affordance)
+- **IIA standards addressed (0):** —
+- **Drilldown targets (0):** — (no aggregate)
+- **States:** closed; open with the caller's shortcuts grouped; empty (no shortcut available to the caller).
+- **Tutorial key:** — (no key)
+- **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
+  named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
+
 ## Chrome behaviour reference
 
 The chrome is present on every authenticated screen and is the only thing that moves the user
@@ -1897,6 +1915,7 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 | `confirm_prior_year_item` | `src/data/imports.ts` | `p_import_id` | tenant |
 | `connector_egress_allowed` | `src/data/writing.ts` | `p_org`, `p_host` | tenant |
 | `consultation_active` | `src/data/consultation.ts` | `p_org` | tenant |
+| `create_universe` | `src/data/guidedFirstRun.ts` | `p_name`, `p_domain` | tenant |
 | `decide_change` | `src/data/changeControl.ts` | `p_request_id`, `p_approve`, `p_reason` | tenant |
 | `deploy_engagement` | `src/data/deployment.ts` | `p_universe`, `p_entity`, `p_plan`, `p_period`, `p_title` | tenant |
 | `email_sender_profiles_list` | `src/data/senderProfiles.ts` | `p_org` | tenant |
@@ -1919,6 +1938,7 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 | `format_audience_list` | `src/data/writing.ts` | `p_format_id` | tenant |
 | `format_list` | `src/data/writing.ts` | `p_org` | tenant |
 | `get_branding` | `src/data/branding.ts` | `p_org` | tenant |
+| `get_org_data_state` | `src/data/guidedFirstRun.ts` | — | tenant |
 | `get_sample_size` | `src/data/sampling.ts` | `p_org_id`, `p_control_type`, `p_frequency`, `p_pop_band`, `p_pop_count` | tenant |
 | `get_user_preference` | `src/data/preferences.ts` | `p_key` | tenant |
 | `hosting_connection_list` | `src/data/hostingFit.ts` | `p_org` | tenant |
@@ -2009,10 +2029,10 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 
 ## Coverage cross-check
 
-- Screens documented: 99 (contract sections: 48 Appendix A + 44 Appendix B).
+- Screens documented: 100 (contract sections: 48 Appendix A + 44 Appendix B).
 - Tutorial keys: 80.
-- RPCs catalogued: 135.
-- Data modules: 61; exported data functions: 397.
+- RPCs catalogued: 137.
+- Data modules: 62; exported data functions: 400.
 - Contract testids not found verbatim in `src/` (placeholder or dynamic): 193.
   - audit-file-view-builder, audit-file-view-certificate, audit-file-view-conclusion, audit-file-view-documents, audit-file-view-ethics, audit-file-view-execution, audit-file-view-findings, audit-file-view-planning, audit-file-view-population, audit-file-view-report, audit-file-view-review, audit-file-view-rowtesting, audit-file-view-sampling, data-front-door-kind, hosting-test, invite-user, issues-view-patterns, oa-branding-colour-accent, oa-branding-colour-background, oa-branding-colour-primary, oa-branding-colour-text, oa-branding-margin-0, oa-branding-margin-3, oa-certificate-enabled-verification, oa-escalation-result, oa-escalation-saved, oa-governance-signoff-conclusion, oa-governance-signoff-planning, oa-governance-signoff-testing, org-control-tab-auditors, org-control-tab-automation, org-control-tab-branding, org-control-tab-connectors, org-control-tab-features, org-control-tab-formats, org-control-tab-governance, org-control-tab-hosting, org-control-tab-people, org-control-tab-setup, org-control-tab-tutorials …
 

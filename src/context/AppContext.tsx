@@ -73,6 +73,12 @@ export type NewEntityInput = {
   inherentRisk: 'low' | 'medium' | 'high' | 'critical';
 };
 
+/** U6: the first-run action. `domain` is an optional label; the name is required. */
+export type NewUniverseInput = {
+  name: string;
+  domain?: string;
+};
+
 interface AppContextType {
   /** The identity of the authenticated session. It is supplied by the sign-in boundary and never changed in-app. */
   currentUser: User;
@@ -125,6 +131,7 @@ interface AppContextType {
   reopenEngagement: (engagementId: string, justification: string) => Promise<GateResult>;
   advanceEngagementStage: (engagementId: string, toStage: EngagementStage) => Promise<GateResult>;
   addEntity: (input: NewEntityInput) => Promise<{ ok: true; id: string } | { ok: false; reason: string }>;
+  createUniverse: (input: NewUniverseInput) => Promise<{ ok: true; id: string } | { ok: false; reason: string }>;
   finalizeTest: (workpaperId: string) => Promise<GateResult>;
   registerPopulation: (workpaperId: string, summary: PopulationSummary) => Promise<GateResult>;
   setTestStepCompleted: (workpaperId: string, stepId: string, completed: boolean) => GateResult;
@@ -311,6 +318,44 @@ export function AppProvider({ user, seed, children }: { user: User; seed: Tenant
     );
     return { ok: true };
   });
+
+  const createUniverse = async (input: NewUniverseInput): Promise<{ ok: true; id: string } | { ok: false; reason: string }> => {
+    if (!hasRight(currentUser, 'edit_config')) {
+      return { ok: false, reason: rightReason('edit_config') };
+    }
+    const name = input.name.trim();
+    if (!name) return { ok: false, reason: 'A universe needs a name.' };
+    const domain = input.domain?.trim() || null;
+    if (useDatabase) {
+      const res = await writes.createUniverse(name, domain);
+      if (!res.ok) return { ok: false, reason: res.reason };
+      await reload();
+      return { ok: true, id: res.id };
+    }
+    // The demo path (no configured client): a local row plus a ledger entry, exactly as addEntity.
+    const id = `un-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+    const universe: AuditUniverse = {
+      id, name, code: name.toUpperCase().slice(0, 6), description: '',
+      totalEntities: 0, highRiskCount: 0, lastReviewDate: 'Never',
+    };
+    try {
+      const payloadHash = await computePayloadHash({ id, name, domain, timestamp: new Date().toISOString() });
+      await appendLedger({
+        actorId: currentUser.id, actorName: currentUser.name, actorRole: currentUser.role,
+        eventType: 'config_changed', entityId: id, recordId: id, recordType: 'universe',
+        payloadSummary: `Audit universe "${name}" created by ${currentUser.name}`,
+        payloadHash,
+      });
+    } catch (err) {
+      if (err instanceof HashUnavailableError) {
+        setLedgerError(err.message);
+        return { ok: false, reason: err.message };
+      }
+      throw err;
+    }
+    setRawUniverses((prev) => [...prev, universe]);
+    return { ok: true, id };
+  };
 
   const addEntity = async (input: NewEntityInput): Promise<{ ok: true; id: string } | { ok: false; reason: string }> => {
     if (!hasRight(currentUser, 'edit_config')) {
@@ -849,6 +894,7 @@ export function AppProvider({ user, seed, children }: { user: User; seed: Tenant
         reopenEngagement,
         advanceEngagementStage,
         addEntity,
+        createUniverse,
         registerPopulation,
         setTestStepCompleted,
         finalizeTest,

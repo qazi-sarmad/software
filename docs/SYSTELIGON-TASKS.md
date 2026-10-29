@@ -409,9 +409,9 @@ is real.** A beautiful dashboard over an unwired engine is a better-looking lie.
 | U3 | Work queue as the front door | DONE |
 | U4 | Live activity spine on the existing `liveSync` transport | DONE |
 | U5 | Motion that signals state change only; universal `prefers-reduced-motion` | DEFERRED (motion curves are design) |
-| U6 | Guided empty states | TODO |
+| U6 | Guided empty states | DONE |
 | U7 | Density toggle, remembered per user | DEFERRED (density values are design) |
-| U8 | Keyboard-first, with a `?` shortcut sheet | TODO |
+| U8 | Keyboard-first, with a `?` shortcut sheet | DONE |
 | U9 | Three new themes (`prism`, `bloom`, `slate`) as token blocks; contrast test covers all six | DEFERRED |
 | U10 | Four audience profiles (Focus, Expressive, Aesthetic, Assurance — Assurance is the default) | DEFERRED |
 | U11 | Time-of-day phases: pure `resolveDayPhase(minuteOfDay)`, time as an argument | DEFERRED |
@@ -440,6 +440,38 @@ thrown away?* For the deferred rows, yes. For the functional rows, no.
 **Do NOT:** gratuitous animation, vanity charts, dark patterns, or any "AI insight" badge. The
 product's claim is determinism; decorating it as magic undercuts the one thing that makes it
 different.
+
+### U6 — guided empty states (2026-10-28)
+
+A new org's dashboard must not be a wall of zeros. Two things were missing for that to be real rather
+than decorative: a way to CREATE a universe at all, and the one fact that says whether the org is
+still empty.
+
+| Piece | What it does |
+|---|---|
+| `supabase/migrations/0117_guided_first_run.sql` | `create_universe(name, domain)` — the first-run action. There was NO write path for a universe anywhere; every screen that writes reads an EXISTING universe, so an org with none was stuck. The RPC requires `edit_config`, writes the row, an `activity_log` entry and a ledger entry, and returns the new id. `get_org_data_state()` returns COUNTS (universes/entities/engagements) and an `is_empty` boolean for the caller's org — never a row of tenant content (Law L2), readable by any signed-in member because a brand-new org's members hold no audit right yet. |
+| `src/lib/guidedFirstRun.ts` | The PURE rule: `guidedSteps(counts)` / `nextGuidedStep(user, counts)` / `visibleGuidedSteps`. The decision is a rule over the org data state, never a guess from scoped rows. Only the two countable first-run actions are steps; a done step is marked `done`, never hidden. |
+| `src/hooks/useOrgDataState.ts` | Centralises the org-state read so the dashboard and the panel share one authoritative decision. |
+| `src/components/dashboard/GuidedFirstRun.tsx` | The panel: a single guided action ("Create your first universe") with one button, the create form, and the done-steps list. Wired into `ExecutiveDashboardTab.tsx` (the guided step renders in place of the zero-wall; a no-actionable fallback covers the rest). |
+
+Tests: `src/lib/guidedFirstRun.test.ts`, `src/data/guidedFirstRun.test.ts`,
+`src/components/dashboard/GuidedFirstRun.test.tsx` (16) and `supabase/tests/117_guided_first_run.sql`
+(applied twice, green: the create path, the right refusal, the empty-name refusal, org scoping, the
+empty-org boolean, the anonymous refusal, and the null-org case).
+
+### U8 — keyboard-first, with a `?` shortcut sheet (2026-10-28)
+
+Every action reachable without a mouse, and `?` opens the shortcut sheet. The deterministic half is
+the catalogue, the rights filter and the pure matcher; the shell only performs the resulting action.
+
+| Piece | What it does |
+|---|---|
+| `src/lib/keyboardShortcuts.ts` | The shortcut catalogue as data (`SHORTCUTS`), `shortcutsFor` (rights filter — a configuration-only principal sees no navigation), `groupedShortcuts`, `formatChord`/`formatSequence` (⌘ on macOS, Ctrl elsewhere), and the PURE matchers `matchShortcut`/`matchSequence`. A bare-letter chord is suppressed inside a text field, so typing "g" in a search box never navigates; a `mod`-chord still fires there, which is what makes Cmd-K work from anywhere. |
+| `src/components/common/ShortcutSheet.tsx` | The `?` sheet: a `role="complementary"` panel anchored below the header (non-blocking, never a modal), listing only the caller's shortcuts with their key sequences. |
+| `src/App.tsx` | The global keydown layer: `mod-k` toggles the palette, `?` toggles the sheet, and `g`-prefixed sequences (`g d`, `g w`, `g u`, `g p`, `g s`, `g a`, `g i`) navigate to the seven screens without the mouse. |
+
+Contract section CH-08 added; `docs/UI-INVENTORY.md` regenerated (100 screens). Tests:
+`src/lib/keyboardShortcuts.test.ts` (12) and `src/components/common/ShortcutSheet.test.tsx` (4).
 
 ---
 
