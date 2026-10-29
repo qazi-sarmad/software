@@ -16,8 +16,9 @@ import { canRedo, canUndo, initHistory, moveItem, pushHistory, redo, undo, type 
 import { REPORT_FONT_FAMILIES, REPORT_FONT_NAMES } from '../../lib/render/fonts';
 import { FormatCanvas } from './FormatCanvas';
 import { DesignPane } from './DesignPane';
+import { purposeForModel, type ReportPurpose } from '../../lib/writing/designRecommendations';
 import {
-  CONTENTS_LIMITS, DEFAULT_FORMAT_LAYOUT, HEADING_LABEL_LIMITS, REPORT_PALETTE, RHETORICAL_ROLES, TYPOGRAPHY_LIMITS, applyFormat,
+  CONTENTS_LIMITS, DEFAULT_FORMAT_LAYOUT, HEADING_LABEL_LIMITS, REPORT_PALETTE, RHETORICAL_ROLES, TYPOGRAPHY_LIMITS, applyFormat, mergeStoredLayout,
   defaultFormat, formatBodyHash, validateFormat,
   type BlockRole, type FormatBlock, type FormatLayout, type RegisterChoice, type ReportFormat,
 } from '../../lib/writing/reportFormat';
@@ -60,6 +61,8 @@ export const ReportFormatPanel: React.FC<{ prefix?: string }> = ({ prefix = 'wk-
   // The live draft the editor mutates. It starts from the newest version of the selected format.
   const [draft, setDraft] = useState<ReportFormat | null>(null);
   const [audiences, setAudiences] = useState<FormatAudienceRow[]>([]);
+  // What the format is for, so the design adviser reads the right conditions. Defaults per the model.
+  const [purpose, setPurpose] = useState<ReportPurpose>('audit_report');
   // Undo/redo for the draft (WP-C2). Each edit pushes the previous draft; undo/redo move the cursor.
   const [history, setHistory] = useState<History<ReportFormat> | null>(null);
 
@@ -98,7 +101,9 @@ export const ReportFormatPanel: React.FC<{ prefix?: string }> = ({ prefix = 'wk-
       id: newest.id, orgId, formatKey: newest.formatKey, version: newest.version, label: newest.label,
       status: newest.status, modelId: newest.modelId,
       blocks: (newest.blocks as FormatBlock[]) ?? [],
-      layout: { ...DEFAULT_FORMAT_LAYOUT, ...(newest.layout as Partial<FormatLayout>) },
+      // Deep-merge the nested specs: a stored layout that carries only part of `chrome`, `grid` or
+      // `contents` must not drop the fields the canvas and the renderers read by name.
+      layout: mergeStoredLayout(newest.layout as Partial<FormatLayout>),
       defaultLocale: newest.defaultLocale, audiences: [], createdBy: '', createdAt: newest.createdAt,
       bodyHash: newest.bodyHash,
     });
@@ -108,6 +113,9 @@ export const ReportFormatPanel: React.FC<{ prefix?: string }> = ({ prefix = 'wk-
 
   /** The model the draft targets, and the plan its sections come from. */
   const model = useMemo(() => REPORT_MODELS.find((m) => m.modelId === draft?.modelId) ?? REPORT_MODELS[0], [draft?.modelId]);
+
+  // Keep the adviser's purpose in step with the format's model, so a board pack is advised as one.
+  useEffect(() => { if (draft) setPurpose(purposeForModel(draft.modelId)); }, [draft?.modelId]);
 
   /** The plan sections as the editor needs them, in plan order. */
   const plan = useMemo(() => model.plan.sections.map((s) => ({ key: s.id, role: s.role, label: s.heading })), [model]);
@@ -528,6 +536,8 @@ export const ReportFormatPanel: React.FC<{ prefix?: string }> = ({ prefix = 'wk-
           }}
           fonts={{ heading: draft.layout.fontHeading, body: draft.layout.fontBody }}
           onReorder={reorderBlocks}
+          purpose={purpose}
+          onPurposeChange={setPurpose}
         />
       )}
 

@@ -609,6 +609,24 @@ export function formatCanonicalKey(format: ReportFormat): string {
 }
 
 /**
+ * Merge a stored layout over the defaults, one level into the nested specs. A layout persisted by an
+ * earlier version, or written by a caller that set only `{ headerEnabled: true }`, must not drop the
+ * header/footer templates, the grid steps or the contents fields the canvas and the renderers read by
+ * name — an absent template is `undefined.replace`, which crashes the designer. Shallow-merging the
+ * whole layout is not enough; `chrome`, `grid` and `contents` are merged field by field.
+ */
+export function mergeStoredLayout(stored: Partial<FormatLayout> | null | undefined): FormatLayout {
+  const s = stored ?? {};
+  return {
+    ...DEFAULT_FORMAT_LAYOUT,
+    ...s,
+    contents: { ...DEFAULT_CONTENTS_STYLE, ...(s.contents ?? {}) },
+    grid: { ...DEFAULT_GRID, ...(s.grid ?? {}) },
+    chrome: { ...DEFAULT_CHROME, ...(s.chrome ?? {}) },
+  };
+}
+
+/**
  * The resolved typography for a layout (WP-C1): the heading and body sizes, weights and line height,
  * with the weight snapped to what the chosen family actually ships. The canvas and the PDF renderer
  * both read this, so what the editor shows is what the document prints. Pure; no clock, no IO.

@@ -110,4 +110,40 @@ describe('ReportFormatPanel: the live canvas editor (WP-C2)', () => {
     await waitFor(() => expect(screen.getByTestId('wk-format-readonly')).toBeTruthy());
     expect((screen.getByTestId('wk-format-save') as HTMLButtonElement).disabled).toBe(true);
   });
+
+  it('advises on the design and applies a suggestion in one click (the design adviser)', async () => {
+    render(<ReportFormatPanel />);
+    await waitFor(() => expect(screen.getByTestId('wk-format-pane-design')).toBeTruthy());
+    fireEvent.click(screen.getByTestId('wk-format-pane-design'));
+    // A default layout has no running header, so the adviser proposes one.
+    await waitFor(() => expect(screen.getByTestId('wk-format-design-rec-page.no_running_head')).toBeTruthy());
+    expect(screen.getByTestId('wk-format-design-quality').textContent).toMatch(/Quality \d+\/100/);
+    fireEvent.click(screen.getByTestId('wk-format-design-rec-page.no_running_head-apply'));
+    // Applying the suggestion turns the header on, and the suggestion leaves the list.
+    await waitFor(() => {
+      const header = screen.getByTestId('wk-format-design-header-enabled') as HTMLInputElement;
+      expect(header.checked).toBe(true);
+    });
+    await waitFor(() => expect(screen.queryByTestId('wk-format-design-rec-page.no_running_head')).toBeNull());
+  });
+
+  it('reports no defects for a layout that meets every structural rule', async () => {
+    // A layout that already meets every rule: header on, numbered headings, readable type. Colour
+    // advice may still remain (it depends on the brand), but there must be no defect or warning.
+    listFormats.mockResolvedValue([{ ...row, layout: {
+      fontSizePt: 11, lineHeightPct: 140, headingScalePct: 160, columns: 1,
+      marginLeftMm: 22, numberedHeadings: true,
+      // Real brand hex colours, as a configured organisation has, so the colour rules pass.
+      colourPrimary: '#2f6f5e', colourAccent: '#c9a227', colourText: '#14161b', colourBackground: '#ffffff',
+      tableBorder: '#e5e5e5', tableRowAlternate: '#f5f5f5',
+      grid: { visible: true, snap: true, sizeMm: 5, rulers: true, subdivisions: 2 },
+      chrome: { headerEnabled: true, footerEnabled: true, pageNumber: 'page-n-of-total' },
+    } }]);
+    render(<ReportFormatPanel />);
+    await waitFor(() => expect(screen.getByTestId('wk-format-pane-design')).toBeTruthy());
+    fireEvent.click(screen.getByTestId('wk-format-pane-design'));
+    await waitFor(() => expect(screen.getByTestId('wk-format-design-rec-summary')).toBeTruthy());
+    expect(screen.getByTestId('wk-format-design-rec-summary').textContent).toContain('0 defect(s)');
+    expect(screen.getByTestId('wk-format-design-rec-summary').textContent).toContain('0 warning(s)');
+  });
 });
