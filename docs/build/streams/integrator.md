@@ -117,6 +117,13 @@ the designer's call, not the integrator's.
 | OA-41 deploy from the plan (file owner, early approval, suggestions) | Absent | Wired | `PlanDeploymentPanel.tsx` (`plan-open-deployment` in `AuditPlanTab.tsx`) | `PlanDeploymentPanel.test.tsx` (8); `supabase/tests/144_engagement_owner_deployment.sql` | `0200_engagement_owner_deployment.sql` | `_this commit_` |
 | OA-42 prior-year roll-forward & export check | Absent | Wired | `PriorYearRollforwardPanel.tsx` (`plan-open-rollforward` in `AuditPlanTab.tsx`) | `PlanDeploymentPanel.test.tsx` (8); `supabase/tests/145_prior_year_rollforward.sql` | `0201_prior_year_rollforward.sql` | `_this commit_` |
 
+### Flagged for the integrator (not edited — shared ledger)
+
+- `docs/FEATURE-REGISTER.md` §13 closing prose (the paragraph under the honest count) still names
+  F57–F59 as the "four remaining `Inert`" rows, but the table above it (and the count table) record
+  them `Wired` with call sites. The prose is stale; the table is right. The register is the
+  integrator's file, so this is recorded here, not fixed in place.
+
 ### S17 — the deterministic scale generator (`docs/build/SCALE-PROGRAMME.md` §4)
 
 The programme assigns the generator to the integrator; it did not exist. Built it:
