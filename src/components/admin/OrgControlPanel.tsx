@@ -28,10 +28,11 @@ import { IntegrityAlarmPanel } from './IntegrityAlarmPanel';
 import { AttestationPanel } from './AttestationPanel';
 import { IncidentWizardPanel } from './IncidentWizardPanel';
 import { RulePackPanel } from './RulePackPanel';
+import { ArchivedFileRolePanel } from './ArchivedFileRolePanel';
 import { InlineError } from '../common/InlineError';
-import { Check, Lock, Zap, Sliders, Users, Shield, ShieldAlert, ShieldCheck, History, Database, FileCheck } from '../common/Icons';
+import { Check, Lock, Zap, Sliders, Users, Shield, ShieldAlert, ShieldCheck, History, Database, FileCheck, Archive } from '../common/Icons';
 
-type Tab = 'features' | 'branding' | 'email' | 'automation' | 'escalation' | 'setup' | 'consultation' | 'auditors' | 'hosting' | 'governance' | 'templates' | 'methodology' | 'history' | 'changes' | 'tutorials' | 'connectors' | 'formats' | 'sharing' | 'integrity' | 'attestation' | 'incidents' | 'packs';
+type Tab = 'features' | 'branding' | 'email' | 'automation' | 'escalation' | 'setup' | 'consultation' | 'auditors' | 'hosting' | 'governance' | 'templates' | 'methodology' | 'history' | 'changes' | 'tutorials' | 'connectors' | 'formats' | 'sharing' | 'integrity' | 'attestation' | 'incidents' | 'packs' | 'archived-role';
 type LoadState = 'loading' | 'ready' | 'error';
 
 /** F18: every configuration tab carries its own "Show me how" tutorial key (Appendix A). */
@@ -58,6 +59,7 @@ const TAB_TUTORIAL: Record<Tab, { key: string; title: string }> = {
   attestation: { key: 'oa.governance', title: 'OA-30 attestation' },
   incidents: { key: 'oa.governance', title: 'OA-31 incident wizard' },
   packs: { key: 'oa.governance', title: `OA-33 ${ENGINE_NAME} rule packs` },
+  'archived-role': { key: 'oa.governance', title: 'OA-41 archived-file custodian role' },
 };
 
 /**
@@ -167,6 +169,7 @@ export const OrgControlPanel: React.FC<{ initialTab?: Tab }> = ({ initialTab }) 
           { id: 'attestation', label: 'Attestation', icon: FileCheck },
           { id: 'incidents', label: 'Incidents', icon: ShieldAlert },
           { id: 'packs', label: 'Rule packs', icon: ShieldCheck },
+          { id: 'archived-role', label: 'Archived files', icon: Archive },
         ] as { id: Tab; label: string; icon: React.FC<{ className?: string }> }[]).map((t) => {
           const Icon = t.icon;
           return (
@@ -289,6 +292,7 @@ export const OrgControlPanel: React.FC<{ initialTab?: Tab }> = ({ initialTab }) 
       {tab === 'attestation' && <AttestationPanel screenId="OA-30" />}
       {tab === 'incidents' && <IncidentWizardPanel screenId="OA-31" />}
       {tab === 'packs' && <RulePackPanel screenId="OA-33" />}
+      {tab === 'archived-role' && <ArchivedFileRolePanel screenId="OA-41" />}
       {tab === 'hosting' && <OrgHostingPanel />}
       {tab === 'governance' && <OrgGovernancePanel />}
       {tab === 'templates' && <ReportTemplatePanel />}

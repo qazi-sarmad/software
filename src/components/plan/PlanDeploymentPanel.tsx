@@ -14,9 +14,10 @@ import {
 } from '../../data/planDeployment';
 import { listPlanItems, latestPlanForUniverse, type PlanItemRow } from '../../data/plan';
 import { listMembers, type MemberRow } from '../../data/admin';
+import { listFileOwnerAudit, type FileOwnerAuditRow } from '../../data/fileOwnership';
 import { InlineError } from '../common/InlineError';
 import { Select } from '../common/Select';
-import { Check, Shield, XCircle } from '../common/Icons';
+import { Check, Shield, XCircle, ShieldAlert } from '../common/Icons';
 
 export interface PlanDeploymentPanelProps {
   universeId?: string;
@@ -43,6 +44,7 @@ export const PlanDeploymentPanel: React.FC<PlanDeploymentPanelProps> = ({ univer
   const [members, setMembers] = useState<MemberRow[]>([]);
   const [deployments, setDeployments] = useState<DeploymentRow[]>([]);
   const [owners, setOwners] = useState<FileOwnerRow[]>([]);
+  const [ownerAudit, setOwnerAudit] = useState<FileOwnerAuditRow[]>([]);
   const [suggestions, setSuggestions] = useState<Record<string, DeploymentSuggestion[]>>({});
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -65,6 +67,7 @@ export const PlanDeploymentPanel: React.FC<PlanDeploymentPanelProps> = ({ univer
       for (const d of deps) withSuggestions[d.id] = await listDeploymentSuggestions(d.id);
       setSuggestions(withSuggestions);
       setOwners(await listFileOwners());
+      setOwnerAudit(await listFileOwnerAudit());
       if (universeId) {
         const plan = await latestPlanForUniverse(universeId);
         setItems(plan ? await listPlanItems(plan.id) : []);
@@ -233,6 +236,53 @@ export const PlanDeploymentPanel: React.FC<PlanDeploymentPanelProps> = ({ univer
               <span className="text-apple-11 text-secondary">v{o.version}</span>
             </div>
           ))
+        )}
+      </section>
+
+      {/* File owner accountability (0202) ----------------------------------- */}
+      <section className="rounded-2xl border border-hairline bg-surface p-4 space-y-2">
+        <div className="flex items-center gap-2">
+          <ShieldAlert className="w-4 h-4 stroke-[1.5] text-accent" />
+          <h4 className="text-apple-14 font-semibold text-primary">Every audit file has an owner</h4>
+        </div>
+        <p className="text-apple-12 text-secondary">
+          A file cannot exist or be sealed without an owner. A file given one by default needs its
+          assignment confirmed by a person.
+        </p>
+        {loading ? (
+          <p data-testid="deployment-plan-owner-audit-loading" className="text-apple-12 text-secondary">Loading…</p>
+        ) : ownerAudit.length === 0 ? (
+          <p data-testid="deployment-plan-owner-audit-empty" className="text-apple-12 text-secondary">
+            No audit file exists in this organisation yet.
+          </p>
+        ) : (
+          <ul className="divide-y divide-hairline" data-testid="deployment-plan-owner-audit">
+            {ownerAudit.map((f) => (
+              <li
+                key={f.engagementId}
+                data-testid={`deployment-plan-owner-audit-${f.engagementId}`}
+                className="flex flex-wrap items-center gap-x-4 gap-y-1 py-2"
+              >
+                <span className="text-apple-13 text-primary">{f.title}</span>
+                <span className="text-apple-12 text-secondary">{f.universeName || '—'}</span>
+                <span className="text-apple-12 text-secondary">{f.stage}</span>
+                <span className="text-apple-12 text-secondary">
+                  owner {f.ownerName || (f.ownerUserId ? f.ownerUserId.slice(0, 8) : '—')}
+                </span>
+                {f.backfillRequired && (
+                  <span
+                    data-testid={`deployment-plan-owner-audit-flag-${f.engagementId}`}
+                    className="rounded-lg border border-cinnabar bg-cinnabar-subtle px-2 py-0.5 text-apple-11 text-primary"
+                  >
+                    assignment needs confirming
+                  </span>
+                )}
+                {f.sealed && (
+                  <span className="rounded-lg border border-hairline px-2 py-0.5 text-apple-11 text-secondary">sealed</span>
+                )}
+              </li>
+            ))}
+          </ul>
         )}
       </section>
 

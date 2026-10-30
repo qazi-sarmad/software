@@ -809,6 +809,24 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
   named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
 
+### `OA-41` — archived-file custodian role (owner 2026-10-30)
+
+- **Purpose:** An archived file outlives the person who owned it, so its custodian is a ROLE the organisation
+- **Route / location:** the Org Admin control panel, tab "Archived files" (`org-control-tab-archived-role`).
+- **Rights required:** `manage_roles` to change the custodian role; any member of the org reads it.
+- **Data functions (`src/data/*.ts`):** `archived_file_custodians`, `archived_file_role_default`, `archived_file_role_effective`, `archived_file_role_get`, `archived_file_role_set`, `getArchivedFileRole`, `listArchivedFileCustodians`, `setArchivedFileRole`
+- **Data modules:** `src/data/fileOwnership.ts`
+- **RPCs reachable via those modules:** `archived_file_custodians`, `archived_file_role_get`, `archived_file_role_set`, `engagement_owner_audit_list`
+- **Tables reachable via those modules:** none
+- **Testids (18):** `archived-role-panel`, `archived-role-loading`, `archived-role-load-error`, `archived-role-current`, `archived-role-value`, `archived-role-version`, `archived-role-reason`, `archived-role-readonly`, `archived-role-form`, `archived-role-select`, `archived-role-reason-input`, `archived-role-why`, `archived-role-save`, `archived-role-error`, `archived-role-notice`, `archived-role-archives`, `archived-role-archives-empty`, `archived-role-archive-<id>`
+- **Explain ids (0):** — (no explain affordance)
+- **IIA standards addressed (0):** —
+- **Drilldown targets (0):** — (no aggregate)
+- **States:** loading; load error (`archived-role-load-error`); read-only without `manage_roles` (`archived-role-readonly`); the platform default before the org chooses; an inline error on a refused write (`archived-role-error`); no archived file yet (`archived-role-archives-empty`).
+- **Tutorial key:** — (no key)
+- **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
+  named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
+
 ### `OA-32` — team directory (spec §4.2, §5, §9)
 
 - **Purpose:** the resourcing view — every member with their working profile (picture, capacity, role), their workload, their home base and where they are on a date. Selecting a member opens their detail: the workload band, the engagements assigned to them, their upcoming trips, their travel preferences (home base, willingness, preferred regions, blackout dates), and a resourcing form that ranks who should take a given engagement and explains each verdict. A manager can also tag an engagement as requiring travel.
@@ -1522,15 +1540,15 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 - **Purpose:** The file owner and the deployment of an engagement from a plan item. Deploy when the plan is due; an
 - **Route / location:** Audit Plan header button `Deploy from plan` (`plan-open-deployment`), the `deployment_plan` inspector window.
 - **Rights required:** `manage_engagements` to name a file owner or deploy; the org's configured `engagement_gate_settings.approve_right` (default `approve_plan`) to approve an early deployment.
-- **Data functions (`src/data/*.ts`):** `decideDeployment`, `deployFromPlan`, `deployment_suggestions_list`, `engagement_deploy_from_plan`, `engagement_deployment_decide`, `engagement_deployments_list`, `engagement_file_owner_set`, `engagement_file_owners_list`, `listDeploymentSuggestions`, `listDeployments`, `listFileOwners`, `setFileOwner`
-- **Data modules:** `src/data/planDeployment.ts`
-- **RPCs reachable via those modules:** `deployment_suggestions_list`, `engagement_deploy_from_plan`, `engagement_deployment_decide`, `engagement_deployments_list`, `engagement_file_owners_list`
+- **Data functions (`src/data/*.ts`):** `decideDeployment`, `deployFromPlan`, `deployment_suggestions_list`, `engagement_deploy_from_plan`, `engagement_deployment_decide`, `engagement_deployments_list`, `engagement_file_owner_set`, `engagement_file_owners_list`, `engagement_owner_audit_list`, `listDeploymentSuggestions`, `listDeployments`, `listFileOwnerAudit`, `listFileOwners`, `setFileOwner`
+- **Data modules:** `src/data/fileOwnership.ts`, `src/data/planDeployment.ts`
+- **RPCs reachable via those modules:** `archived_file_custodians`, `archived_file_role_get`, `archived_file_role_set`, `deployment_suggestions_list`, `engagement_deploy_from_plan`, `engagement_deployment_decide`, `engagement_deployments_list`, `engagement_file_owners_list`, `engagement_owner_audit_list`
 - **Tables reachable via those modules:** none
-- **Testids (24):** `plan-open-deployment`, `deployment-plan-panel`, `deployment-plan-error`, `deployment-plan-notice`, `deployment-plan-owner-user`, `deployment-plan-owner-reason`, `deployment-plan-owner-save`, `deployment-plan-item`, `deployment-plan-date`, `deployment-plan-reason`, `deployment-plan-submit`, `deployment-plan-readonly`, `deployment-plan-loading`, `deployment-plan-pending-empty`, `deployment-plan-pending-<id>`, `deployment-plan-pending-reason-<id>`, `deployment-plan-decision-reason-<id>`, `deployment-plan-approve-<id>`, `deployment-plan-refuse-<id>`, `deployment-plan-suggestions-empty`, `deployment-plan-suggestions-<id>`, `deployment-plan-suggestion-<id>-<target>`, `deployment-plan-owners-empty`, `deployment-plan-owner-<id>`
+- **Testids (29):** `plan-open-deployment`, `deployment-plan-panel`, `deployment-plan-error`, `deployment-plan-notice`, `deployment-plan-owner-user`, `deployment-plan-owner-reason`, `deployment-plan-owner-save`, `deployment-plan-item`, `deployment-plan-date`, `deployment-plan-reason`, `deployment-plan-submit`, `deployment-plan-readonly`, `deployment-plan-loading`, `deployment-plan-pending-empty`, `deployment-plan-pending-<id>`, `deployment-plan-pending-reason-<id>`, `deployment-plan-decision-reason-<id>`, `deployment-plan-approve-<id>`, `deployment-plan-refuse-<id>`, `deployment-plan-suggestions-empty`, `deployment-plan-suggestions-<id>`, `deployment-plan-suggestion-<id>-<target>`, `deployment-plan-owners-empty`, `deployment-plan-owner-<id>`, `deployment-plan-owner-audit-loading`, `deployment-plan-owner-audit-empty`, `deployment-plan-owner-audit`, `deployment-plan-owner-audit-<id>`, `deployment-plan-owner-audit-flag-<id>`
 - **Explain ids (0):** — (no explain affordance)
 - **IIA standards addressed (0):** —
 - **Drilldown targets (0):** — (no aggregate)
-- **States:** loading; read-only without `manage_engagements` (`deployment-plan-readonly`); no pending early deployment (`deployment-plan-pending-empty`); an early deployment refused for a short reason; an early deployment held for approval; an inline error on a refused write (`deployment-plan-error`).
+- **States:** loading; read-only without `manage_engagements` (`deployment-plan-readonly`); no pending early deployment (`deployment-plan-pending-empty`); an early deployment refused for a short reason; an early deployment held for approval; an inline error on a refused write (`deployment-plan-error`); no audit file yet (`deployment-plan-owner-audit-empty`); a file whose owner was named by default (`deployment-plan-owner-audit-flag-<id>`).
 - **Tutorial key:** — (no key)
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
   named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
@@ -2218,6 +2236,9 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 | `admin_upload_branding_asset` | `src/data/branding.ts` | `p_org`, `p_kind`, `p_filename`, `p_mime`, `p_base64` | platform |
 | `alert_adhoc_suggestion` | `src/data/writing.ts` | `p_org`, `p_alert_id` | tenant |
 | `alert_list` | `src/data/writing.ts` | `p_org` | tenant |
+| `archived_file_custodians` | `src/data/fileOwnership.ts` | — | tenant |
+| `archived_file_role_get` | `src/data/fileOwnership.ts` | — | tenant |
+| `archived_file_role_set` | `src/data/fileOwnership.ts` | `p_role_slug`, `p_reason` | tenant |
 | `attestation_input_get` | `src/data/attestation.ts` | `p_kind`, `p_subject_id` | tenant |
 | `attestation_subjects_list` | `src/data/attestation.ts` | — | tenant |
 | `automation_rule_list` | `src/data/automation.ts` | `p_org` | tenant |
@@ -2253,6 +2274,7 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 | `engagement_deployment_decide` | `src/data/planDeployment.ts` | `p_deployment`, `p_approve`, `p_reason` | tenant |
 | `engagement_deployments_list` | `src/data/planDeployment.ts` | — | tenant |
 | `engagement_file_owners_list` | `src/data/planDeployment.ts` | — | tenant |
+| `engagement_owner_audit_list` | `src/data/fileOwnership.ts` | — | tenant |
 | `entity_approval_config` | `src/data/universe.ts` | `p_org` | tenant |
 | `entity_history` | `src/data/universe.ts` | `p_entity_id` | tenant |
 | `escalation_event_list` | `src/data/escalation.ts` | `p_org` | tenant |
@@ -2378,10 +2400,10 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 
 ## Coverage cross-check
 
-- Screens documented: 118 (contract sections: 48 Appendix A + 44 Appendix B).
+- Screens documented: 119 (contract sections: 48 Appendix A + 44 Appendix B).
 - Tutorial keys: 81.
-- RPCs catalogued: 162.
-- Data modules: 78; exported data functions: 512.
-- Contract testids not found verbatim in `src/` (placeholder or dynamic): 238.
-  - assurance-tab-d5, assurance-tab-d7, assurance-tab-d8, assurance-tab-d9, audit-file-view-builder, audit-file-view-certificate, audit-file-view-conclusion, audit-file-view-documents, audit-file-view-ethics, audit-file-view-execution, audit-file-view-findings, audit-file-view-planning, audit-file-view-population, audit-file-view-report, audit-file-view-review, audit-file-view-rowtesting, audit-file-view-sampling, data-front-door-kind, hosting-test, invite-user, issues-view-patterns, oa-branding-colour-accent, oa-branding-colour-background, oa-branding-colour-primary, oa-branding-colour-text, oa-branding-margin-0, oa-branding-margin-3, oa-certificate-enabled-verification, oa-escalation-result, oa-escalation-saved, oa-governance-signoff-conclusion, oa-governance-signoff-planning, oa-governance-signoff-testing, org-control-tab-auditors, org-control-tab-automation, org-control-tab-branding, org-control-tab-connectors, org-control-tab-features, org-control-tab-formats, org-control-tab-governance …
+- RPCs catalogued: 166.
+- Data modules: 79; exported data functions: 516.
+- Contract testids not found verbatim in `src/` (placeholder or dynamic): 239.
+  - assurance-tab-d5, assurance-tab-d7, assurance-tab-d8, assurance-tab-d9, audit-file-view-builder, audit-file-view-certificate, audit-file-view-conclusion, audit-file-view-documents, audit-file-view-ethics, audit-file-view-execution, audit-file-view-findings, audit-file-view-planning, audit-file-view-population, audit-file-view-report, audit-file-view-review, audit-file-view-rowtesting, audit-file-view-sampling, data-front-door-kind, hosting-test, invite-user, issues-view-patterns, oa-branding-colour-accent, oa-branding-colour-background, oa-branding-colour-primary, oa-branding-colour-text, oa-branding-margin-0, oa-branding-margin-3, oa-certificate-enabled-verification, oa-escalation-result, oa-escalation-saved, oa-governance-signoff-conclusion, oa-governance-signoff-planning, oa-governance-signoff-testing, org-control-tab-archived-role, org-control-tab-auditors, org-control-tab-automation, org-control-tab-branding, org-control-tab-connectors, org-control-tab-features, org-control-tab-formats …
 

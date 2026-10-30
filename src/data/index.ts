@@ -38,3 +38,4 @@ export * as documentReview from './documentReview';
 // --- TRUNK: plan deployment and prior-year roll-forward (owner 2026-10-30) --------------------------
 export * as planDeployment from './planDeployment';
 export * as priorYearRollforward from './priorYearRollforward';
+export * as fileOwnership from './fileOwnership';

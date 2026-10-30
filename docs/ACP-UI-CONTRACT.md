@@ -889,9 +889,10 @@ suggestions — DATA to act on, never an automatic write to another surface.
 - **Rights:** `manage_engagements` to name a file owner or deploy; the org's configured
   `engagement_gate_settings.approve_right` (default `approve_plan`) to approve an early deployment.
 - **Data:** `deployFromPlan`, `decideDeployment`, `setFileOwner`, `listFileOwners`, `listDeployments`,
-  `listDeploymentSuggestions` (`src/data/planDeployment.ts`). RPCs `engagement_deploy_from_plan`,
-  `engagement_deployment_decide`, `engagement_file_owner_set`, `engagement_file_owners_list`,
-  `engagement_deployments_list`, `deployment_suggestions_list` (migration 0200).
+  `listDeploymentSuggestions` (`src/data/planDeployment.ts`); `listFileOwnerAudit` (`src/data/fileOwnership.ts`).
+  RPCs `engagement_deploy_from_plan`, `engagement_deployment_decide`, `engagement_file_owner_set`,
+  `engagement_file_owners_list`, `engagement_deployments_list`, `deployment_suggestions_list`
+  (migration 0200), `engagement_owner_audit_list` (migration 0202).
 - **Testids:** `plan-open-deployment`, `deployment-plan-panel`, `deployment-plan-error`,
   `deployment-plan-notice`, `deployment-plan-owner-user`, `deployment-plan-owner-reason`,
   `deployment-plan-owner-save`, `deployment-plan-item`, `deployment-plan-date`,
@@ -900,10 +901,14 @@ suggestions — DATA to act on, never an automatic write to another surface.
   `deployment-plan-pending-reason-<id>`, `deployment-plan-decision-reason-<id>`,
   `deployment-plan-approve-<id>`, `deployment-plan-refuse-<id>`, `deployment-plan-suggestions-empty`,
   `deployment-plan-suggestions-<id>`, `deployment-plan-suggestion-<id>-<target>`,
-  `deployment-plan-owners-empty`, `deployment-plan-owner-<id>`.
+  `deployment-plan-owners-empty`, `deployment-plan-owner-<id>`, `deployment-plan-owner-audit-loading`,
+  `deployment-plan-owner-audit-empty`, `deployment-plan-owner-audit`,
+  `deployment-plan-owner-audit-<id>`, `deployment-plan-owner-audit-flag-<id>`.
 - **States:** loading; read-only without `manage_engagements` (`deployment-plan-readonly`); no pending
   early deployment (`deployment-plan-pending-empty`); an early deployment refused for a short reason;
-  an early deployment held for approval; an inline error on a refused write (`deployment-plan-error`).
+  an early deployment held for approval; an inline error on a refused write (`deployment-plan-error`);
+  no audit file yet (`deployment-plan-owner-audit-empty`); a file whose owner was named by default
+  (`deployment-plan-owner-audit-flag-<id>`).
 - **Tutorial key:** none (no key is claimed until the media exists).
 
 ## AP-07 — Prior-year roll-forward &amp; export check (owner 2026-10-30)
@@ -1605,6 +1610,30 @@ above. `docs/ACP-TUTORIALS.md` lists every key and its steps.
 - **States:** loading, load error (`rolescope-load-error`), read-only without `manage_roles`/
   `manage_users` (`rolescope-readonly`), ready; an inline error on a refused write (`rolescope-error`);
   empty defaults (`rolescope-defaults-empty`) and empty assignments (`rolescope-assignments-empty`).
+- **Tutorial key:** none (no key is claimed until the media exists — `tutorialRegistryCoverage.test.ts`).
+
+## OA-41 — archived-file custodian role (owner 2026-10-30)
+
+An archived file outlives the person who owned it, so its custodian is a ROLE the organisation
+chooses, not a person. This surface makes that choice. The choice is permanent in two senses: every
+change is versioned and appended to the ledger, and the configuration itself can never be deleted, so
+there is always someone accountable for an archive. The lower half lists every archived file with its
+custodian role and the person who owned it, so the setting is visibly in force.
+
+- **Route:** the Org Admin control panel, tab "Archived files" (`org-control-tab-archived-role`).
+- **Rights:** `manage_roles` to change the custodian role; any member of the org reads it.
+- **Data:** `getArchivedFileRole()`, `setArchivedFileRole(roleSlug, reason)`,
+  `listArchivedFileCustodians()` (`src/data/fileOwnership.ts`). RPCs `archived_file_role_get`,
+  `archived_file_role_set`, `archived_file_custodians`, `archived_file_role_effective`,
+  `archived_file_role_default` (migration 0203).
+- **Testids:** `archived-role-panel`, `archived-role-loading`, `archived-role-load-error`,
+  `archived-role-current`, `archived-role-value`, `archived-role-version`, `archived-role-reason`,
+  `archived-role-readonly`, `archived-role-form`, `archived-role-select`, `archived-role-reason-input`,
+  `archived-role-why`, `archived-role-save`, `archived-role-error`, `archived-role-notice`,
+  `archived-role-archives`, `archived-role-archives-empty`, `archived-role-archive-<id>`.
+- **States:** loading; load error (`archived-role-load-error`); read-only without `manage_roles`
+  (`archived-role-readonly`); the platform default before the org chooses; an inline error on a refused
+  write (`archived-role-error`); no archived file yet (`archived-role-archives-empty`).
 - **Tutorial key:** none (no key is claimed until the media exists — `tutorialRegistryCoverage.test.ts`).
 
 ## OA-32 — team directory (spec §4.2, §5, §9)

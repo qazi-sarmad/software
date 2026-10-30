@@ -75,6 +75,7 @@ export const MOUNTED_SCREENS: ScreenMount[] = [
   { screenId: 'OA-34', title: 'Assurance capabilities (D5/D7/D8/D9)', owner: 's2', path: 'src/components/assurance/AssuranceCapabilitiesPanel.tsx', status: 'mounted' },
   { screenId: 'OA-37', title: 'Client classification (D10)', owner: 's3', path: 'src/components/universe/ClientClassificationPanel.tsx', status: 'mounted' },
   { screenId: 'SR-04', title: 'Risk library and dynamic risk assessment (D14/D15)', owner: 's3', path: 'src/components/sira/RiskLibraryPanel.tsx', status: 'mounted' },
+  { screenId: 'OA-41', title: 'Archived-file custodian role', owner: 'trunk', path: 'src/components/admin/ArchivedFileRolePanel.tsx', status: 'mounted' },
 ];
 
 /**
