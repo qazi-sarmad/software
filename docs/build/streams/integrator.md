@@ -73,4 +73,30 @@ Created at `968e30d`:
 
 | Row (Fnn / Dnn) | Was | Now | Call site | Test that proves it | Migration | Commit |
 |---|---|---|---|---|---|---|
-| — mount points (§4) | Absent | Wired | `src/nav/registry.ts`, `src/data/index.ts`, `src/lib/capabilities/registry.ts` | `src/guards/mountPoints.test.ts` | — | _this commit_ |
+| — mount points (§4) | Absent | Wired | `src/nav/registry.ts`, `src/data/index.ts`, `src/lib/capabilities/registry.ts` | `src/guards/mountPoints.test.ts` | — | `7a11cf9` |
+| — map ⟷ latest prompts | Stale | Reconciled | `docs/build/OWNERSHIP.md` §1/§2/§4.1 | `src/guards/mountPoints.test.ts` | — | `_this commit_` |
+| — `tutorialTargets` flake | Flaky (7.3 s timeout) | Fixed | `src/guards/tutorialTargets.test.ts` | the same guard, now 0.8 s | — | `_this commit_` |
+
+### Reconciliation with the latest prompts (`0f3a095`, `968e30d`)
+
+Two commits landed on the trunk ahead of this session. Read and applied:
+
+- **`docs/design/DESIGNER-PROMPT.md` (0f3a095)** renames the design branch to
+  `feature/systeligon-design-spec` and **splits** the design ownership: the designer authors the design
+  language (`src/styles/tokens.css` **values** + `docs/design/**`) and writes **no product UI code**;
+  the **builder owns `src/lib/theme/**`** (the implementation that reads the frozen tokens).
+  OWNERSHIP.md §1 and §2 updated to match — the old map had `src/lib/theme/**` under DESIGN and the old
+  branch name `feature/design-language-v1`.
+- **The Shari'ah corrections (docs only, `968e30d`/`0f3a095`)** re-frame the SBP Compendium as the
+  Pakistan **amendment overlay** on the AAOIFI standards, not a subset. No code or ledger change needed
+  here; recorded so D11's builder reads the corrected framing.
+
+### `tutorialTargets` flake — root cause and fix
+
+`renderersOf` re-read the **entire** `src` tree from disk synchronously for *every* tutorial step, so
+the test ran ~7 s and tripped vitest's 5 s default timeout intermittently (it passed alone, failed in
+the full run). It is a trunk guard, so the integrator fixed the root cause: cache the non-test `.tsx?`
+file index once (`srcIndex()`), match every step against the cache. 7.3 s → 0.79 s; the guard's
+assertions are unchanged.
+
+_Full run after the fix: 282 files / 3240 tests green; `tsc --noEmit` clean; all gates PASS._

@@ -12,22 +12,30 @@ import { TUTORIAL_KEYS } from '../lib/tutorialKeys';
  * which only `src/components/superadmin/SuperAdminTutorials.tsx` declares, so the key depended on
  * another portal's implementation detail.
  */
-function renderersOf(testid: string): string[] {
-  const literal = testid.includes('<') ? testid.split('<')[0] : testid;
-  const hits: string[] = [];
+/** Every non-test `.tsx?` file under `src`, with its text, read once and cached. */
+let SRC_INDEX: { path: string; text: string }[] | null = null;
+function srcIndex(): { path: string; text: string }[] {
+  if (SRC_INDEX) return SRC_INDEX;
+  const out: { path: string; text: string }[] = [];
   const walk = (dir: string) => {
     for (const name of readdirSync(dir)) {
       const p = join(dir, name);
       if (statSync(p).isDirectory()) { walk(p); continue; }
       if (!/\.tsx?$/.test(name) || /\.test\./.test(name)) continue;
-      const text = readFileSync(p, 'utf8');
-      if (text.includes(`"${literal}`) || text.includes(`'${literal}`) || text.includes(`\`${literal}`)) {
-        hits.push(relative(process.cwd(), p));
-      }
+      out.push({ path: relative(process.cwd(), p), text: readFileSync(p, 'utf8') });
     }
   };
   walk(resolve(process.cwd(), 'src'));
-  return hits;
+  SRC_INDEX = out;
+  return out;
+}
+
+function renderersOf(testid: string): string[] {
+  const literal = testid.includes('<') ? testid.split('<')[0] : testid;
+  const needles = [`"${literal}`, `'${literal}`, `\`${literal}`];
+  return srcIndex()
+    .filter((f) => needles.some((n) => f.text.includes(n)))
+    .map((f) => f.path);
 }
 
 /**

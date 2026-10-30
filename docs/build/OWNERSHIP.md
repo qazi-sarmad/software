@@ -13,8 +13,8 @@ owns; anything it needs from another stream it reads, never edits.
 
 | Branch | Stream | Scope | Owner |
 |---|---|---|---|
-| `feature/systeligon-builder-continuous` | **TRUNK / integrator** | the mount points, the ledgers, the merge | the integrator agent |
-| `feature/design-language-v1` | **DESIGN** | the design system (contract §2) | the design agent |
+| `feature/systeligon-builder-continuous` | **TRUNK / integrator** | the mount points, the ledgers, the merge, and the `src/lib/theme/**` implementation | the integrator agent |
+| `feature/systeligon-design-spec` | **DESIGN** | the design language — token **values** (`src/styles/tokens.css`) and the contract (`docs/design/**`); no product UI code | the design agent |
 | `feature/build-core-engine` | **S1** | the rule engine, scopes, rule packs, standards distribution | stream 1 |
 | `feature/build-assurance-caps` | **S2** | D5 / D7 / D8 / D9 | stream 2 |
 | `feature/build-risk-planning` | **S3** | D10 / D14 / D15 | stream 3 |
@@ -32,7 +32,8 @@ it from the owner** and works around it meanwhile.
 
 | Path / pattern | Owner |
 |---|---|
-| `docs/design/**`, `src/styles/tokens.css`, `src/lib/theme/**`, `src/context/PersonalisationContext.tsx` | **DESIGN** |
+| `docs/design/**`, `src/styles/tokens.css` (token **values**), `src/context/PersonalisationContext.tsx` | **DESIGN** |
+| `src/lib/theme/**` (the implementation the frozen tokens are read through) | **TRUNK / integrator** |
 | `src/lib/systeligon/types.ts`, `runner.ts`, `versioning.ts`, `packs.ts`, `ota.ts`, `rules/**`, `flows.ts`, `extract/**` | **S1** |
 | `src/components/audit/RuleRunTab.tsx`, `RulePackPanel.tsx` | **S1** |
 | `src/data/rulePacks.ts`, `src/data/population.ts` | **S1** |
@@ -88,10 +89,33 @@ these once, on the trunk, before any stream branches:
 3. A **capability registry** (`src/lib/capabilities/registry.ts`) listing each capability family, same
    pattern.
 4. A **guard runner** entry so a stream's new `src/guards/<stream>.test.ts` is picked up without editing
-   the existing guard config.
+   the existing guard config. (No config change is needed: vitest's `src/guards/**/*.test.ts` glob already
+   picks up any new guard file, and the integrator's `src/guards/mountPoints.test.ts` is the guard that
+   proves the three registries above are well-formed.)
 
 Until the integrator has committed §4, no stream branches. This is the one serial step; everything after
 it is parallel.
+
+### 4.1 How a stream fills its slot (the contract, settled by the integrator)
+
+The registry lists **every planned screen** and points each slot at the component path its owner stream
+will create. A stream **never edits `src/nav/registry.ts`** — it creates its own component file at the
+path its slot names. At merge time the integrator flips that slot's `status` from `planned` to `mounted`
+and wires the render into `App.tsx`/the tab map (which the integrator owns). This is the only reading
+that satisfies both "the registry already lists every planned screen" (so no stream edits it) and "the
+registry points at a placeholder until the owner stream replaces it" (so the flip happens at merge).
+
+The integrator's mount-point guard (`src/guards/mountPoints.test.ts`) enforces the invariants: every slot
+has a unique id and a known owner; a `mounted` slot's file exists; **every planned slot's path sits inside
+a directory the map (§2) grants its owner stream**; the capability registry names exactly the kinds the
+data layer defines. A stream that needs a screen directory the map does not grant asks the integrator; it
+does not invent a path.
+
+The slots pre-created for the streams are the NEW surfaces each scope names — S2 `OA-34`
+(`src/components/assurance/`), S3 `OA-37` + `SR-04` (`src/components/universe/`, `src/components/sira/`),
+S4 `SA-19`/`SA-20`/`SA-21` (`src/components/superadmin/`), S7 `OA-36` (`src/components/documents/`).
+S1's `AF-16` + `OA-33` and S5's `OA-23` are already **mounted**: those streams extend an existing screen
+rather than add one, so their scope is served by lib/data modules and no new slot.
 
 ## 5. `data-testid` prefixes (so the two branches' tests never collide)
 
