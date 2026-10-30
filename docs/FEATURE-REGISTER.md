@@ -300,11 +300,12 @@ this register exists to catch.
 | F137 | Signed rule-pack storage (S10/S11) | `Wired` | `src/lib/systeligon/ota.ts` (`signPack`, `verifyPack`, `buildAdhocRule`) + `src/data/rulePacks.ts` (`listRulePacks`, `listRulePackRefusals`, `getReleasedRulePack`, `saveSignedRulePackArtifact`, `releaseRulePack`, `registerSigningKey`, `generateSigningKey`) + `0128_rule_pack_release.sql` (`rule_pack_save`/`rule_pack_list`/`rule_pack_release`/`rule_pack_refusals_list`/`rule_pack_released_rules`/`signing_key_register`). The pack-management screen is `RulePackPanel.tsx` (OA-33, mounted in `OrgControlPanel.tsx`): it lists packs, generates and registers a signing key, signs and verifies a draft, releases it and reads the refusal log. `RuleRunTab.tsx` reads the released pack through `getReleasedRulePack`/`resolveReleasedRules` and runs it | S10/S11 |
 | F138 | Single product/engine name (S16) | `Wired` | `src/lib/product.ts` is the one constants module (product name, tagline, title and the engine name); `scripts/sync-product-name.mjs` mirrors it to the Edge functions, `src/guards/productName.test.ts` holds it, and screens read it — `PRODUCT_NAME` in ten (`HeaderBar.tsx`, `SignInScreen.tsx`, `AttestationPanel.tsx`, …) and `ENGINE_NAME` in the rule-run screen (`RuleRunTab.tsx`) | S16 |
 | F139 | Client classification at onboarding, and the ICFR trigger | `Absent` | D10 — owner decision 2026-10-29; source `docs/PAKISTAN-ASSURANCE-REGIMES.md` |
-| F140 | Audit domains (Management / Shari'ah / IT) and their rule packs | `Absent` | D11 — owner decision 2026-10-29; model `docs/AUDIT-DOMAINS-MODEL.md`; IT pack from `docs/ASSURANCE-RULEBOOKS.md` §1; Shari'ah pack from AAOIFI SS 1–54 (`docs/Shariah Standards-AAOIFI.pdf`), Pakistan SGF overlay pending verification |
+| F140 | Audit domains (Management / Shari'ah / IT) and their rule packs | `Absent` | D11 — owner decision 2026-10-29; model `docs/AUDIT-DOMAINS-MODEL.md`; IT pack from `docs/ASSURANCE-RULEBOOKS.md` §1; Shari'ah pack from AAOIFI SS 1–54 + SBP Compendium (31 Oct 2024) + SBP SGF (1 Jan 2025) — all verified in-repo |
 | F141 | Actionable traffic-signal readiness panels (Super Admin + Org Admin) | `Absent` | D12 — owner decision 2026-10-29; corrective-action flow + complaint management + self-diagnostic |
 | F142 | Deployment and environment readiness in the Super Admin | `Absent` | D13 — owner decision 2026-10-29 |
 | F143 | Risk library, auto-adjusted factors and manual override | `Absent` | D14 — owner decision 2026-10-29; source `docs/RISK-ASSESSMENT-MODEL.md` |
 | F144 | Dynamic risk assessment (inputs, ERM map, triggers, narrative) | `Absent` | D15 — owner decision 2026-10-29; source `docs/ASSURANCE-RULEBOOKS.md` §6 + `docs/Risk Assessment, reimagined.pdf` |
+| F145 | Standards distribution — Super Admin rollout of signed rule-base packs to entitled tenants | `Absent` | D16 — owner decision 2026-10-30; source `docs/STANDARDS-DISTRIBUTION.md`; reuses `has_feature` (0051/0052) + `ota.ts` signing (0128) |
 
 ---
 
@@ -314,8 +315,8 @@ this register exists to catch.
 |---|---|
 | `Wired` | 94 |
 | `Inert` | 27 |
-| `Absent` | 23 |
-| **Total** | **144** |
+| `Absent` | 24 |
+| **Total** | **145** |
 
 **Read that again, with the correction applied.** This is materially better than the first pass
 reported, because Phases 1 and 2 of the scale-harden build closed the whole foundation, the S17-S20

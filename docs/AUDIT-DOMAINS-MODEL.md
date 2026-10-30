@@ -27,7 +27,7 @@ Organisation (tenant)
 │
 ├── Universe: Shari'ah Audit      (discipline = shariah)      [offered when is_islamic]
 │     rule base:  AAOIFI SS 1–54 structural rules (D11)
-│     control set: AAOIFI Shari'ah Standards; SBP Shari'ah Governance Framework (verify first)
+│     control set: AAOIFI SS 1–54; SBP Compendium (31 Oct 2024); SBP SGF (1 Jan 2025) — all verified
 │     reports:     a Shari'ah review report + the SSB reporting pack
 │
 └── Universe: IT Audit            (discipline = it)           [offered when the tenant has IT scope]
@@ -96,9 +96,9 @@ three defaults plus org-defined domains, each mapped to a rule pack and a contro
 ### Shari'ah audit (container only — D11 builds it)
 - Rule base: the AAOIFI SS 1–54 **structural** rules (riba, gharar, maysir, ownership sequence,
   profit-distribution integrity, zakah, Shari'ah governance) — see `docs/ASSURANCE-RULEBOOKS.md` §5.
-- Control set: the AAOIFI Shari'ah Standards (verified, in this repo); the **SBP Shari'ah Governance
-  Framework** (NOT verified — the builder must verify against the primary SBP source before asserting
-  any Pakistan-specific requirement).
+- Control set: the **AAOIFI Shari'ah Standards** (verified), the **SBP Compendium** (verified, 31 Oct
+  2024) and the **SBP Shari'ah Governance Framework** (verified, effective 1 Jan 2025) — all in this
+  repo. A Pakistan-specific rule cites the Compendium or the SGF, not the wider AAOIFI set.
 - Reports: a Shari'ah review report and the SSB reporting pack.
 - **The honesty rule stands**: a Shari'ah rule is asserted only against a verified standard, and the
   substantive Shari'ah judgment is always the SSB's, never the product's.
@@ -121,6 +121,6 @@ pack. The default is a starting point an admin can change — never a hard const
 - `universes.domain` (or a new `audit_type`) is set and read by a screen.
 - A universe of each discipline loads its own rule base in the rule-run screen.
 - The three defaults are seeded; an org can add a fourth and point it at a rule pack.
-- A Shari'ah universe runs only verified AAOIFI-based rules, or is honestly blocked pending SGF
-  verification.
+- A Shari'ah universe runs only rules citing a verified source (AAOIFI SS, the SBP Compendium, or
+  the SBP SGF).
 - Every rule in every pack names its control id and source.

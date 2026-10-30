@@ -211,13 +211,29 @@ financial institution are marked **[audit]**:
    transactions follow the fatwas. The **Shari'ah review** is performed by the institution's own
    Shari'ah-compliance function and reported to the SSB.
 
-> **The verification gate (unchanged, and the reason the Shari'ah pack is honest).** The AAOIFI
-> standards above ARE verified from the PDF in this repo. The **SBP Shari'ah Governance Framework**
-> for Pakistan's Islamic banks was NOT reachable from the build environment (sbp.org.pk returns 403).
-> So the Shari'ah pack may be built from AAOIFI **SS 1–54** as verified here, but the Pakistan-specific
-> SGF overlay must be verified by the owner or the builder against the primary SBP source before any
-> Pakistan-specific Shari'ah rule is asserted. Do not invent an SGF requirement. A guessed Shari'ah
-> rule is a religious-compliance claim the product has no right to make.
+> **Verification status (updated 2026-10-30).** All three sources are now verified and in this repo:
+> `docs/Shariah Standards-AAOIFI.pdf` (the 54 AAOIFI Shari'ah Standards, 2015 English ed.);
+> `docs/COMPENDIUM OF SHARIAH STANDARDS ADOPTED BY STATE BANK OF PAKISTAN.pdf` (the SBP-adopted
+> AAOIFI subset + SBP's own Sharikat ul Milk / Diminishing Musharakah standard, **updated 31 Oct
+> 2024**); and `docs/SHARIAH GOVERNANCE FRAMEWORK.pdf` (the SBP SGF for Islamic Banking Institutions,
+> **effective 1 Jan 2025**). The Shari'ah pack is therefore fully buildable for the Pakistan context.
+>
+> **The Compendium is a SUBSET, not all 54.** SBP has adopted 38 items. Standards in the AAOIFI set
+> but NOT in the SBP Compendium include SS 1 (Trading in Currencies), 6 (Conversion of a Conventional
+> Bank), 20 (Sale of Commodities in Organized Markets), 21 (Financial Paper), 26 (Islamic Insurance),
+> 27 (Indices), 29 (Fatwa Ethics), 30 (Tawarruq), 31 (Gharar), 33 (Waqf), 35 (Zakah), 40 (Mudarabah
+> Profit Distribution), 41 (Islamic Reinsurance), 43 (Insolvency), 44 (Liquidity), 47 (Profit
+> Calculation). Encode the AAOIFI layer from SS 1–54 and the **SBP layer from the Compendium's own
+> list**; a Pakistan-specific rule cites the Compendium, not the wider AAOIFI set.
+>
+> **The SGF is the governance spine of the Pakistan Shari'ah audit** (its §7 Internal Shariah Audit,
+> §8 External Shariah Audit, the Shariah Board and its Annexure-B report, the RSBM, the SCD, PD, the
+> Fit-and-Proper Criteria and the Annexure-C external-audit-report format). Its **mandatory quarterly
+> post-disbursement audit of profit-and-loss distribution** is a concrete, recurring rule.
+>
+> **Still a rule of honesty**: a *future* edition of any of these must be re-verified against its
+> primary source before it becomes a pack version (see `docs/STANDARDS-DISTRIBUTION.md` §4). And the
+> substantive Shari'ah judgment is always the Shari'ah Supervisory Board's, never the product's.
 
 ---
 

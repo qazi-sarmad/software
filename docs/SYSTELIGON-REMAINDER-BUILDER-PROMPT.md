@@ -150,6 +150,14 @@ READ FIRST, IN THIS ORDER
    The verified source for the Shari'ah pack (D11). Cite SS (n) + title on every rule.
 13. docs/Risk Assessment, reimagined.pdf — PwC 2026 survey. Shapes the model/defaults for D15, not a
    finding rule. The deterministic input taxonomy is in docs/ASSURANCE-RULEBOOKS.md §6.
+14. docs/COMPENDIUM OF SHARIAH STANDARDS ADOPTED BY STATE BANK OF PAKISTAN.pdf — the SBP-adopted
+   AAOIFI subset + SBP's own Sharikat ul Milk / Diminishing Musharakah standard (updated 31 Oct 2024).
+   The Pakistan Shari'ah overlay for D11. Cite the standard number + the SBP circular.
+15. docs/SHARIAH GOVERNANCE FRAMEWORK.pdf — the SBP SGF for IBIs (effective 1 Jan 2025). The
+   governance spine of the Pakistan Shari'ah audit (D11): SB, RSBM, SCD, PD, ISA, ESA, FAPC, the SB
+   report and the external-audit-report format.
+16. docs/STANDARDS-DISTRIBUTION.md — the Super Admin rollout of signed rule-base packs to entitled
+   tenants (D16), and the rule-scope answer (population vs any other scope).
 IGNORE ALL of docs/archive/ — 63 pre-audit docs, each stamped stale.
 
 ===============================================================
@@ -320,21 +328,28 @@ D11 — The audit-domain axis: three universes, three rule bases. NEW; owner ins
       controls, 4 themes) / NIST 800-53 Rev. 5 families in docs/ASSURANCE-RULEBOOKS.md §1: change
       management, access control and privileged access, backup and DR, SDLC, patch management, logging
       and monitoring. Named, versioned rules, each citing its control id.
-    - **Shari'ah audit pack** — the AAOIFI Shari'ah Standards ARE verified: docs/Shariah Standards-AAOIFI.pdf
-      (2015 English ed., 54 standards) and docs/ASSURANCE-RULEBOOKS.md §5. Encode the STRUCTURAL rules
-      from SS 1–54 — riba (SS 1/3/19), gharar (SS 31), ownership sequence (SS 8/18), profit-distribution
-      integrity (SS 12/13/40), zakah (SS 35), Shari'ah governance / SSB and fatwa (SS 29). Cite the
-      exact SS number and title on every rule. THE PAKISTAN OVERLAY IS NOT VERIFIED: the SBP Shari'ah
-      Governance Framework was NOT reachable (sbp.org.pk 403). Encode AAOIFI SS rules; do NOT assert any
-      Pakistan-specific SGF requirement until it is verified against the primary SBP source. A guessed
-      Shari'ah rule is a religious-compliance claim the product has no right to make. The substantive
-      Shari'ah judgment is always the SSB's, never the product's.
+    - **Shari'ah audit pack** — FULLY VERIFIED NOW. Three verified sources are in this repo:
+      `docs/Shariah Standards-AAOIFI.pdf` (the 54 AAOIFI Shari'ah Standards, 2015 English ed.),
+      `docs/COMPENDIUM OF SHARIAH STANDARDS ADOPTED BY STATE BANK OF PAKISTAN.pdf` (the SBP-adopted
+      AAOIFI subset + SBP's own Sharikat ul Milk / Diminishing Musharakah standard, updated 31 Oct
+      2024), and `docs/SHARIAH GOVERNANCE FRAMEWORK.pdf` (the SBP SGF for IBIs, effective 1 Jan 2025).
+      See docs/ASSURANCE-RULEBOOKS.md §5. Build the pack in TWO layers:
+        (a) the AAOIFI structural rules from SS 1–54 — riba (SS 1/3/19), gharar (SS 31), ownership
+            sequence (SS 8/18), profit-distribution integrity (SS 12/13/40), zakah (SS 35);
+        (b) the SBP overlay — the adopted-standard subset in the Compendium (note SBP has NOT adopted
+            every AAOIFI standard: the Compendium carries 38 items, e.g. it does NOT include SS 1, 6,
+            20, 21, 26, 27, 29, 30, 31, 33, 35, 40, 41, 43, 44, 47) and the SGF governance rules (SB
+            role and report, RSBM, SCD, PD, ISA — including the mandatory quarterly post-disbursement
+            profit-and-loss-distribution audit, ESA, FAPC, and the Annexure-B Shariah Board report /
+            Annexure-C external audit report formats).
+      Cite the exact standard number and title (and the SBP circular where the Compendium gives one)
+      on every rule. The substantive Shari'ah judgment is always the SSB's, never the product's.
     - Surface: the universe settings screen sets the discipline; the rule-run screen loads the matching
       pack; the risk library offers the discipline's risks (see D14). Each pack needs a contract section,
       testids and a regenerated UI-INVENTORY.md.
     - Acceptance: a universe of each discipline runs its own pack; the three defaults are seeded and an
       org can add a fourth; every rule names its control id and source; a Shari'ah universe runs only
-      verified AAOIFI-based rules or is honestly blocked pending SGF verification.
+      verified AAOIFI rules or the SBP Compendium/SGF overlay, each citing its source.
 
 D12 — Traffic-signal readiness panels that ACT (Super Admin + Org Admin). NEW; owner instruction 2026-10-29.
     The owner wants the control panels, especially at deployment and onboarding, to read as LIVID
@@ -446,6 +461,52 @@ D15 — Dynamic risk assessment: the PwC model made deterministic. NEW; owner in
       gap; a KRI breach produces a plan-change proposal with rationale and does not rewrite the plan;
       the narrative is generated from data; the no-AI guard passes.
 
+D16 — Standards distribution: roll out rule-base updates through the Super Admin to paying tenants.
+    NEW; owner instruction 2026-10-30. Read docs/STANDARDS-DISTRIBUTION.md FIRST — it is the spec.
+    Every rule base the product ships (the forensic core, the ICFR/SOX set, the IT set, the AAOIFI
+    Shari'ah pack, the SBP Compendium pack, the SGF pack, the PwC risk taxonomy) becomes a signed,
+    versioned **standards pack** the Super Admin rolls out to ENTITLED tenants.
+    - The entitlement gate ALREADY EXISTS: `src/data/entitlements.ts` + `has_feature` (0051/0052) +
+      `SuperAdminFeatures.tsx`, with price classes free / included / add_on / custom. REUSE it — do not
+      build a second entitlement system. A standards pack is a feature; its price class is add_on or
+      custom for the licensed packs; the forensic core and ICFR baseline are included.
+    - The signing machinery ALREADY EXISTS: `src/lib/systeligon/ota.ts` (`signPack`, `verifyPack`,
+      `packContentHash`) and `0128_rule_pack_release.sql`. EXTEND it with a **source-provenance block**
+      (document + edition + standard number) on each pack, and a **`scopes: RuleTarget[]`** field.
+    - Build the distribution tables: `standards_packs` (platform catalogue, append-only: pack_id,
+      version, discipline, sources, rules, content_hash, signature, released_at), `org_standards_
+      subscriptions` (per-tenant subscribed_version, applied_at, applied_by, reason; append-only), and
+      `standards_rollout_log` (who rolled what to whom, per-tenant outcome). All RLS-guarded; counts and
+      booleans only cross to the platform role (L2).
+    - Build `standards_rollout(pack_id, version, org_ids[])`: verify the signature (refuse an unsigned
+      or content-changed pack), check `has_feature(org, pack_id)` per org, SKIP and RECORD a non-entitled
+      org (never silently apply), append a subscription row and switch the effective version for an
+      entitled org that has not pinned one, and return the per-tenant outcome.
+    - Tenant side: the rule run loads the SUBSCRIBED version, not "the latest"; a sealed report
+      re-derives on the version it sealed with; a tenant with the right may PIN a version (recorded with
+      a reason) or request the latest; a "standards" section shows the version it is on and what is
+      available. Only the Super Admin rolls an entitled pack forward.
+    - Super Admin surface: a "Standards" tab on `SuperAdminPortal.tsx` — the catalogue (pack, version,
+      discipline, sources, released date), per-pack rollout (pick version + tenants, roll out, read the
+      per-tenant outcome), a tenant's pack/version/pin view, and the rollout history. Honest states: a
+      pack with no entitled tenant says so; a failed rollout shows the reason, never a green tick.
+    - **The scope answer (owner question)**: the rules are NOT tied to population — a rule declares its
+      `appliesTo` scope (`RuleTarget = population | journal | document | minutes | policy | config |
+      ledger`, already in types.ts) and `runRules(..., { target })` runs the matching scope. Add a
+      **scope selector** to the run surface so a subscribed pack's non-population rules are reachable,
+      and seal the **scope** alongside the rule id + version on every finding, so a population finding
+      and a document finding are never conflated in a sealed report. A pack declares the scopes it covers.
+    - **The report-writing invariant (owner instruction)**: D16 must NOT disturb the composer. The
+      matrix stays 5 formality × 5 tone × 2 voice × 2 locale = 100 cells × 12 models = **1,200
+      compositions** (`registers.ts`, `locale.ts`, `models.ts`, `matrix.test.ts`). For a fixed pack
+      version and claim set, all 1,200 combinations still share ONE graph root; only the render hash
+      varies. The matrix test must still pass unchanged.
+    - Acceptance: a standards pack is signed and versioned with a source-provenance block; the Super
+      Admin rolls it to entitled tenants and a non-entitled tenant is skipped and recorded; a tenant
+      runs the subscribed version and a sealed report re-derives on its own version; a pin is recorded
+      with a reason; the run surface offers a pack's scopes and seals the scope with each finding; the
+      1,200-combination matrix still passes with one graph root.
+
 D13 — Deployment and environment readiness in the Super Admin. NEW; owner instruction 2026-10-29.
     The owner asked whether deployment should be part of the Super Admin. The answer, and the work:
     - **The app is a static SPA; the environment is three separate deployments**, and only one of them
@@ -472,11 +533,11 @@ D13 — Deployment and environment readiness in the Super Admin. NEW; owner inst
       clean deploy end to end.
 
 Register honesty — the six stale rows (F28, F29, F39, F53, F54, F55) are ALREADY corrected on the
-    starting branch (94 Wired / 27 Inert / 21 Absent). Keep the rule for any further stale row you find:
+    starting branch (94 Wired / 27 Inert / 24 Absent). Keep the rule for any further stale row you find:
     correct it in the same commit as the work that proves it.
 
 THE 27 INERT AND 21 ABSENT ROWS ARE YOURS — all of them. NEW; owner instruction 2026-10-29.
-    Owner instruction, verbatim in effect: hand ALL 27 Inert and ALL 21 Absent rows to the builder in
+    Owner instruction, verbatim in effect: hand ALL 27 Inert and ALL 24 Absent rows to the builder in
     this continuous-build prompt, worked through with at most a 15-second pause between them. Nothing in
     the register is left out of scope, and nothing is parked behind a design decision except the DEFERRED
     design rows below. The full list is in docs/FEATURE-REGISTER.md §14 and restated here so you do not
@@ -498,7 +559,7 @@ THE 27 INERT AND 21 ABSENT ROWS ARE YOURS — all of them. NEW; owner instructio
       Note: F49–F52 and F57–F59 are the C-series monitor/connector runtime; F72–F79 are the R3
       configuration-honesty rows; F128–F136 are the Systeligon engine surfaces (L2b/L3).
 
-    The 21 `Absent` rows (does not exist — build it or, for the two removals, record why not):
+    The 24 `Absent` rows (does not exist — build it or, for the one removal, record why not):
       F30 configurable stage machine · F56 anomaly→emergent-risk→SIRA · F84 multi-org isolation under
       concurrency · F86 support access logged · F92 guided zero-to-first-report wizard · F98 realtime
       pop-out sync · F105 additional themes · F106 audience profiles · F107 time-of-day phases ·
@@ -508,9 +569,11 @@ THE 27 INERT AND 21 ABSENT ROWS ARE YOURS — all of them. NEW; owner instructio
       (D7) · F124 policy-to-control gap analysis (D8) · F125 assurance-over-assurance (D9) ·
       F139 client classification + ICFR trigger (D10) · F140 audit domains + rule packs (D11) ·
       F141 actionable traffic-signal readiness (D12) · F142 deployment readiness (D13).
-      Also build D14 (risk library / auto-adjusted factors / override) and D15 (dynamic risk
-      assessment) — see docs/RISK-ASSESSMENT-MODEL.md and docs/ASSURANCE-RULEBOOKS.md §6 — they are new
-      rows (F143/F144) to add to the register as you build them.
+      Also build D14 (risk library / auto-adjusted factors / override), D15 (dynamic risk assessment)
+      and D16 (standards distribution — roll rule-base updates out through the Super Admin to entitled
+      tenants) — see docs/RISK-ASSESSMENT-MODEL.md, docs/ASSURANCE-RULEBOOKS.md §6 and
+      docs/STANDARDS-DISTRIBUTION.md — they are new rows F143/F144/F145 to add to the register as you
+      build them.
 
     The two rows NOT to build, and the one caveat:
       - F122 (D6) — removed by the owner. Record it as removed, with the date, and move on.
@@ -555,8 +618,8 @@ E8, U5, U7, U9-U13, A-U1 — the design-language rows. The owner has not settled
   "SMC" is told it is exempt; no obligation is asserted without a citation.
 - D11: a universe of each discipline (Management / Shari'ah / IT) runs its own rule base; the three
   defaults are seeded and an org can add a fourth; every rule names its control id and source; a
-  Shari'ah universe runs only verified AAOIFI-based rules or is honestly blocked pending SGF
-  verification.
+  Shari'ah universe runs only rules citing a verified source (AAOIFI SS, the SBP Compendium or the
+  SBP SGF).
 - D12: every readiness signal names its check and its reason; an un-evaluated check is amber, never
   green by default; every non-green signal offers a "Fix this" deep-link and a "Contact Super Admin"
   action; a complaint gets a code, an auto-generated bundle with logs, and an email to the Super Admin;
@@ -569,7 +632,12 @@ E8, U5, U7, U9-U13, A-U1 — the design-language rows. The owner has not settled
 - D15: the risk taxonomy is shared and seeded; the ERM map surfaces an uncovered top risk as a gap; a
   KRI breach produces a plan-change proposal with rationale and does not rewrite the plan; the
   narrative is generated from data.
-- Every register row: the 27 `Inert` and 21 `Absent` rows are each moved honestly (wired + proved, or
+- D16: every rule base is a signed, versioned standards pack with a source-provenance block; the Super
+  Admin rolls a pack version to entitled tenants and a non-entitled tenant is skipped and recorded; a
+  tenant runs the subscribed version and a sealed report re-derives on its own version; a pin is
+  recorded with a reason; the run surface offers a pack's scopes and seals the scope with each finding;
+  the composer still yields 1,200 combinations with one graph root per fixed claim set and pack version.
+- Every register row: the 27 `Inert` and 24 `Absent` rows are each moved honestly (wired + proved, or
   said plainly to be unwired), with the register corrected in the same commit. F122 (D6) is recorded as
   removed, not built. Only the DEFERRED design rows are held back.
 - No D-capability rule calls anything external; the no-AI guard still passes. (L1.)
@@ -604,7 +672,7 @@ OWNER ACTIONS (do not attempt these; restate them in your close-out)
   the DEFERRED visual rows (E8, U5, U7, U9-U13, A-U1) can be built once, not twice.
 
 BEGIN: lock your baseline and prove the tree whole, then work continuously through L2b, L3, L4, L5, L6,
-L7, the R3 remainder, D5/D7/D8/D9, D10/D11/D12/D13, D14/D15, EVERY remaining Inert and Absent register
-row (27 and 21 of them — at most a 15-second pause between rows), and the tutorial media — and close on
-the specification's section 14 acceptance list. Commit messages are the report.
+L7, the R3 remainder, D5/D7/D8/D9, D10/D11/D12/D13, D14/D15/D16, EVERY remaining Inert and Absent
+register row (27 and 24 of them — at most a 15-second pause between rows), and the tutorial media —
+and close on the specification's section 14 acceptance list. Commit messages are the report.
 ```
