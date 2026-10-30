@@ -41,3 +41,5 @@ F85 (support access grant/revoke), F30 (configurable stage machine).
 ## Status
 | Row | Was | Now | Call site | Test | Migration | Commit |
 |---|---|---|---|---|---|---|
+| F30 | Absent | Wired | `src/components/admin/StageMachinePanel.tsx:158` (mounted by `OrgGovernancePanel.tsx:176`); read path `src/data/lifecycle.ts:48`; DB write path `supabase/migrations/0179_stage_machine.sql:207` (`set_engagement_stage` reads the machine) | `src/components/admin/StageMachinePanel.test.tsx` (5), `supabase/tests/138_stage_machine.sql` (happy + 6 refusals), `supabase/tests/102_phase2_lifecycle.sql` (unchanged default behaviour) | `0179_stage_machine.sql` | pending |
+| F85 | Absent | Wired | `src/components/superadmin/SuperAdminSupport.tsx` (grant/revoke/list) | `src/components/superadmin/SuperAdminSupport.test.tsx` (9) | `0031_platform_control_plane.sql` | pending |

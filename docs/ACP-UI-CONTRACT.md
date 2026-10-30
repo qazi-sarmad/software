@@ -1671,7 +1671,14 @@ that guard. SA-13 owns those testids in the contract; the tenant view owns `org-
   `oa-governance-bi-value-<checkKey>`, `oa-governance-bi-save-<checkKey>`, `oa-governance-uploads`,
   `oa-governance-max-file-mb`, `oa-governance-ext-<ext>`, `oa-governance-uploads-save`,
   `oa-governance-retention`, `oa-governance-export-schedule`, `oa-governance-activity-retention`,
-  `oa-governance-population-retention`, `oa-governance-retention-save`., `oa-governance-grace-hours`
+  `oa-governance-population-retention`, `oa-governance-retention-save`., `oa-governance-grace-hours`,
+  `oa-governance-stage-section`, `oa-governance-stage-machine`, `oa-governance-stage-loading`,
+  `oa-governance-stage-error`, `oa-governance-stage-result`, `oa-governance-stage-custom`,
+  `oa-governance-stage-list`, `oa-governance-stage-<key>`, `oa-governance-stage-label-<key>`,
+  `oa-governance-stage-inuse-<key>`, `oa-governance-stage-remove-<key>`, `oa-governance-stage-add-row`,
+  `oa-governance-stage-new-key`, `oa-governance-stage-new-label`, `oa-governance-stage-new-anchor`,
+  `oa-governance-stage-add`, `oa-governance-stage-save`, `oa-governance-stage-reset`,
+  `oa-governance-stage-saved`
 - **States:** loading, error, empty, ready; an inline result line reports a saved change or the plain
   refusal (a value outside the platform range, an unknown role tag, an unsupported format).
 
