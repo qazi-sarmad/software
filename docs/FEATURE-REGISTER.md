@@ -266,11 +266,11 @@ Each is a pure function under `src/lib/`, with direct unit tests and a screen su
 
 | # | Capability | Status | WP |
 |---|---|---|---|
-| F121 | Continuous control monitoring (SOX / ICFR) | `Absent` | D5 |
-| F122 | Verifiable third-party attestation | `Absent` | D6 |
-| F123 | Population-level forensic analytics | `Absent` | D7 |
-| F124 | Policy-to-control gap analysis | `Absent` | D8 |
-| F125 | Assurance-over-assurance | `Absent` | D9 |
+| F121 | Continuous control monitoring (SOX / ICFR) | `Absent` | D5 — IN SCOPE (owner 2026-10-29) |
+| F122 | Verifiable third-party attestation | `Absent` | D6 — REMOVED by owner 2026-10-29; do not build |
+| F123 | Population-level forensic analytics | `Absent` | D7 — IN SCOPE (owner 2026-10-29) |
+| F124 | Policy-to-control gap analysis | `Absent` | D8 — IN SCOPE (owner 2026-10-29) |
+| F125 | Assurance-over-assurance | `Absent` | D9 — IN SCOPE (owner 2026-10-29) |
 | F126 | Live activity spine | `Wired` | `ActivitySpine.tsx` (DB-01) renders the pure `src/lib/activitySpine.ts` layer (sentence, kind, age) over the rights-gated `activity_spine_list` RPC (`supabase/migrations/0125_activity_spine.sql`) via `src/data/activity.ts` on the existing `liveSync` transport (Realtime when available, bounded poll otherwise) | U4 |
 
 ---

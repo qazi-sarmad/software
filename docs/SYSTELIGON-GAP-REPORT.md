@@ -552,7 +552,8 @@ authoritative work list; the builder prompt delegates all of it except the desig
 | # | Task | State |
 |---|---|---|
 | D1–D4 | Risk-control, population-evidence, process-governance, assurance-ops intelligence | **BUILT** |
-| D5–D9 | Continuous control monitoring (SOX/ICFR), verifiable third-party attestation, population-level forensic analytics, policy-to-control gap analysis, assurance-over-assurance | **Unbuilt** (adjacent capability products; F121–F125 `Absent`) |
+| D5, D7, D8, D9 | Continuous control monitoring (SOX/ICFR), population-level forensic analytics, policy-to-control gap analysis, assurance-over-assurance | **IN SCOPE** (owner decision 2026-10-29) — `Absent`; full-depth work packages in the builder prompt, grounded in `docs/ASSURANCE-RULEBOOKS.md` |
+| D6 | Verifiable third-party attestation | **REMOVED** (owner decision 2026-10-29) — not to be built |
 | E1–E7, E9, E10 | Explain catalogue, popout, IIA data, hover cards, drilldown, standards views, gates | **BUILT** |
 | E8 | `PencilGuide` + guided first-run data | **DEFERRED** (design) |
 | F1–F7 | Self-hosted fonts, catalogue, subsetting, upload, auto-detect, wiring, licence gate | **BUILT** |
@@ -587,7 +588,8 @@ authoritative work list; the builder prompt delegates all of it except the desig
 
 | # | Task | State |
 |---|---|---|
-| D5–D9 | Continuous control monitoring (SOX/ICFR), verifiable third-party attestation, population-level forensic analytics, policy-to-control gap analysis, assurance-over-assurance (`F121`–`F125`) | **Unbuilt** — `Absent` in the register |
+| D5, D7, D8, D9 | Continuous control monitoring (SOX/ICFR), population-level forensic analytics, policy-to-control gap analysis, assurance-over-assurance (`F121`, `F123`–`F125`) | **IN SCOPE** — owner decision 2026-10-29; `Absent` in the register; full-depth packages in `docs/SYSTELIGON-REMAINDER-BUILDER-PROMPT.md`, grounded in `docs/ASSURANCE-RULEBOOKS.md` |
+| D6 | Verifiable third-party attestation (`F122`) | **REMOVED** — owner decision 2026-10-29 |
 
 ### The remainder the build must still close
 
@@ -683,9 +685,9 @@ its own database, proven by a production-build test; and the anti-theatre gates.
 policy); the three-tier extraction flow in the audit-file UI and the bundled OCR engine as a shipped
 artifact (L3); the org-format editor adoption half of S13 (L4); **C7** (anomaly to SIRA, now
 unblocked) (L5); **A-U2** (every screen's functional states) (L6); **A-U3** (guided first-run to a
-sealed report, reconciled with B's work) (L7); the R3 configuration-honesty remainder; the D5–D9
-adjacent capability products; the stale tutorial media; and the deliberately deferred **visual**
-design rows.
+sealed report, reconciled with B's work) (L7); the R3 configuration-honesty remainder; the four
+in-scope adjacent capability products D5, D7, D8 and D9 (D6 removed by owner decision); the stale
+tutorial media; and the deliberately deferred **visual** design rows.
 
 **The difference matters, and it is the point.** An earlier edition of this briefing described the
 S1–S16 engine as a specification and unwritten. That edition was itself an example of the defect the

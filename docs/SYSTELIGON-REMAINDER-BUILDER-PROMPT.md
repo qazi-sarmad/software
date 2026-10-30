@@ -135,6 +135,8 @@ READ FIRST, IN THIS ORDER
 5. docs/SPEC-v10.md                — the authoritative product specification
 6. docs/BRANCH-MAP.md              — scope, ledger and migration reservation
 7. docs/iia-standards-reference.md — VERIFIED IIA 2024 numbering. Use these; never guess.
+8. docs/ASSURANCE-RULEBOOKS.md     — VERIFIED control sets, forensic standards and quality standards
+   for D5/D7/D8/D9. The rule citations come from here. Never invent a standard number or a count.
 IGNORE ALL of docs/archive/ — 63 pre-audit docs, each stamped stale.
 
 ===============================================================
@@ -197,10 +199,75 @@ R3 remainder — configuration honesty.
     Wired. F30 (stage machine) is genuinely unbuilt — make the stage machine configurable, or record
     it honestly as out of scope.
 
-D5-D9 — the adjacent capability products (only if the owner wants them; they are Absent, not started).
-    Continuous control monitoring (SOX/ICFR), verifiable third-party attestation, population-level
-    forensic analytics, policy-to-control gap analysis, assurance-over-assurance. Raise with the owner
-    before starting; they are new products, not last-mile wiring.
+D5, D7, D8, D9 — the adjacent capability products. THE OWNER HAS NOW SETTLED THE SCOPE: all four are
+    IN SCOPE, at full depth, working end-to-end. D6 (verifiable third-party attestation) is REMOVED —
+    do not build it. These are new capability products, not last-mile wiring, and they are held to the
+    SAME standard as the engine: deterministic, no AI, every rule named and versioned and citing a
+    verified source. Read docs/ASSURANCE-RULEBOOKS.md FIRST — it is the verified source reference for
+    all four, and it is where the rule citations come from. Ground every rule in it; never invent a
+    standard number, a control count or a threshold. Where a source is licensed, encode the structure
+    and paraphrase — never paste licensed text into the product, a UI string or a rule description.
+
+    THE BAR (the owner's words, made checkable). "Working end-to-end, extraordinarily, with the
+    highest skill embedded in its rule base." Concretely, each of the four must be: a real rule base
+    (not a demo), reachable from a screen, backed by migrations + tests + a regenerated register row,
+    with every rule naming its source and re-running identically forever. A capability that computes a
+    number no screen shows is the exact defect this programme exists to catch — it is NOT done.
+
+D5 — Continuous control monitoring (SOX / ICFR). F121 Absent -> Wired.
+    Reuse the monitors + connectors + rule engine; control testing is what the engine already does.
+    - Encode the COSO ICIF-2013 taxonomy (5 components, 17 principles) as a versioned control set,
+      and the assertion mapping + deficiency-severity ladder from PCAOB AS 2201 (see
+      ASSURANCE-RULEBOOKS.md §1). Also load ISO/IEC 27001:2022 Annex A (93 controls, 4 themes) and
+      NIST SP 800-53 Rev.5 families as alternate control sets — same machinery, different taxonomy.
+    - Severity is a RULE, never a model: deficiency / significant deficiency / material weakness,
+      with materiality and significance as versioned configuration.
+    - A control is monitored on a schedule (pg_cron) against live signals; a failing test opens a
+      finding that names the control, the principle, the rule version and the source rows.
+    - Surface: a control-monitoring screen (contract section + testids + regenerated UI-INVENTORY.md).
+    - Acceptance: a control configured once is monitored continuously, a breach opens a finding with
+      its rule and rows named, and the run re-derives identically.
+
+D7 — Population-level forensic analytics. F123 Absent -> Wired.
+    The existing analyticsEngine runs over a sample; D7 runs the forensic set over the WHOLE population.
+    - Run every existing forensic rule (duplicates, near-duplicates, sequence gaps, z-score/IQR
+      outliers, Benford first digit, round numbers, weekend postings, same-user create-approve, missing
+      attributes, period variance, GL-to-TB) over a complete population.
+    - Add the PCAOB AS 2401 / AU-C 240 journal-entry family as named, versioned rules (unusual
+      accounts, unusual user, unusual time, round numbers, back-dated, closed-period, missing
+      description) and Benford second digit. See ASSURANCE-RULEBOOKS.md §2.
+    - Depends on the population-rows writer (B's 0119) being present — without it a population has no
+      rows and every draw raises population_gate. Confirm that writer is on your starting tree first.
+    - Surface: a population-forensics screen with a drilldown from each finding to its rows.
+    - Acceptance: a population with planted anomalies is flagged with each anomaly named by rule,
+      version and row; a clean population yields no false positive.
+
+D8 — Policy-to-control gap analysis. F124 Absent -> Wired.
+    Reuse the policy/procedure comparison (S15 compareDocuments) and the gov.regulatory capability.
+    - Encode a regulation as a set of obligations (id, source clause, subject); compute
+      obligation × control -> covered / partially covered / gap, with the clause named. Generalise the
+      ISO 27001:2022 Statement of Applicability shape (ASSURANCE-RULEBOOKS.md §3).
+    - Version drift: a policy aligned to an older regulation version is a finding naming the clauses
+      that moved.
+    - Surface: a policy-comparison / coverage-matrix screen.
+    - Acceptance: a corpus of policies against a regulation produces a coverage matrix where every gap
+      names the obligation and clause, and the result re-derives identically.
+
+D9 — Assurance-over-assurance. F125 Absent -> Wired.
+    Audit the audit function against the IIA Global Internal Audit Standards (2024) — numbering from
+    docs/iia-standards-reference.md, never guessed (ASSURANCE-RULEBOOKS.md §4).
+    - Reuse B's self-diagnostic (0120_self_diagnostic.sql), the assuranceOps capability family, the
+      analytics-of-the-analytics checks (sira_vs_planning, controls_vs_tests) and the hash-chained
+      ledger. Do NOT build a second self-diagnostic — reconcile, as in L7.
+    - Measure conformance to 8.3, 8.4, 12.1-12.3, 13.1-13.6, 14.1-14.6, 15.1-15.2 and produce the
+      evidence pack an external quality-assessment reviewer would request.
+    - Surface: the conformance screen; counts, flags and one broken-ledger sequence only — never a row
+      of tenant content (Law L2).
+    - Acceptance: the function's conformance is computed from its own records, each measure cites its
+      standard number, and the pack re-derives identically.
+
+    D6 (verifiable third-party attestation) is REMOVED from scope by owner instruction. If you find
+    F122 referenced, mark it honestly as removed, not Absent, and note the owner decision.
 
 Register honesty — the six stale rows (F28, F29, F39, F53, F54, F55) are ALREADY corrected on the
     starting branch (94 Wired / 27 Inert / 17 Absent). Keep the rule for any further stale row you find:
@@ -226,6 +293,15 @@ E8, U5, U7, U9-U13, A-U1 — the design-language rows. The owner has not settled
   engine runs the released pack; verify end to end.)
 - The editor adopts an uploaded report's structure and typography, and formatting stays editable at
   every stage without altering a fact. (S13 remainder.)
+- D5: a control configured once is monitored continuously; a breach opens a finding naming the
+  control, the principle, the rule version and the source rows; the run re-derives identically.
+- D7: a population with planted anomalies is flagged over the whole population, each anomaly named by
+  rule, version and row; a clean population yields no false positive.
+- D8: a policy corpus against a regulation yields a coverage matrix where every gap names the
+  obligation and clause, and the result re-derives identically.
+- D9: the audit function's conformance to the IIA 2024 standards is computed from its own records,
+  each measure cites its standard number, and the evidence pack re-derives identically.
+- No D-capability rule calls anything external; the no-AI guard still passes. (L1.)
 
 ===============================================================
 PROCESS
@@ -254,6 +330,6 @@ OWNER ACTIONS (do not attempt these; restate them in your close-out)
   the DEFERRED visual rows (E8, U5, U7, U9-U13, A-U1) can be built once, not twice.
 
 BEGIN: lock your baseline and prove the tree whole, then work continuously through L2b, L3, L4, L5, L6,
-L7, the R3 remainder and any remaining register-honesty rows — and close on the specification's section
-14 acceptance list.
+L7, the R3 remainder, D5/D7/D8/D9, and any remaining register-honesty rows — and close on the
+specification's section 14 acceptance list.
 ```
