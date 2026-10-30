@@ -1514,6 +1514,43 @@ above. `docs/ACP-TUTORIALS.md` lists every key and its steps.
   (`admin-roles-readonly`), ready; an inline error on a refused write (`admin-error`).
 - **Tutorial key:** `oa.roles`.
 
+## OA-40 — scoped roles and access (owner 2026-10-30)
+
+- **Purpose:** make every role configurable at every level. Two things the flat membership role
+  cannot express: the DEFAULT roles an organisation applies at the org, at a universe and at one
+  engagement, and the ASSIGNMENTS a person holds at a scope (the same person is a Reviewer on one
+  engagement and the Preparer on another). The resolution — the most specific scope with a grant wins,
+  the rights of every role at that scope are unioned, and with no scoped grant the membership role
+  stands — is shown on screen and re-derived by the database, so a drift is visible rather than hidden.
+- **Route:** Org Admin control plane → People & Roles (`people-admin-panel`), tab `Scoped access`
+  (`admin-tab-scoped`).
+- **Rights:** `manage_roles` to configure a default; `manage_users` to assign a role. The resolution is
+  read with either.
+- **Data:** `listScopeDefaults()`, `listRoleAssignments()`, `setScopeDefault(...)`,
+  `clearScopeDefault(id)`, `assignRole(userId, scopeKind, universeId, engagementId, roleSlug, reason)`,
+  `unassignRole(id)`, `effectiveAccess(userId, engagementId)`, `listScopeTargets()`
+  (`src/data/roleScope.ts`); the pure model `resolveAccess`, `rolesAt`, `unionRights`,
+  `applicableDefaults`, `explainAccess`, `rightsForSlug`, `rightsInOrder` (`src/lib/roleAccess.ts`).
+  RPCs `role_scope_default_set`, `role_scope_default_clear`, `role_assign`, `role_unassign`,
+  `role_effective`, `role_effective_has_right`, `role_scope_defaults_list`, `role_assignments_list`
+  (migration 0199).
+- **Testids:** `admin-tab-scoped`, `rolescope-panel`, `rolescope-loading`, `rolescope-load-error`,
+  `rolescope-readonly`, `rolescope-error`, `rolescope-defaults`, `rolescope-defaults-empty`,
+  `rolescope-default-<id>`, `rolescope-default-state-<id>`, `rolescope-default-clear-<id>`,
+  `rolescope-default-form`, `rolescope-default-scope`, `rolescope-default-universe`,
+  `rolescope-default-engagement`, `rolescope-default-role`, `rolescope-default-save`,
+  `rolescope-assignments`, `rolescope-assignments-empty`, `rolescope-assignment-<id>`,
+  `rolescope-assignment-default-<id>`, `rolescope-assignment-remove-<id>`, `rolescope-assign-form`,
+  `rolescope-assign-user`, `rolescope-assign-scope`, `rolescope-assign-universe`,
+  `rolescope-assign-engagement`, `rolescope-assign-role`, `rolescope-assign-save`, `rolescope-preview`,
+  `rolescope-preview-none`, `rolescope-preview-roles`, `rolescope-preview-rights`,
+  `rolescope-effective-user`, `rolescope-effective-engagement`, `rolescope-effective-result`,
+  `rolescope-effective-reason`, `rolescope-effective-rights`, `rolescope-effective-agrees`.
+- **States:** loading, load error (`rolescope-load-error`), read-only without `manage_roles`/
+  `manage_users` (`rolescope-readonly`), ready; an inline error on a refused write (`rolescope-error`);
+  empty defaults (`rolescope-defaults-empty`) and empty assignments (`rolescope-assignments-empty`).
+- **Tutorial key:** none (no key is claimed until the media exists — `tutorialRegistryCoverage.test.ts`).
+
 ## OA-32 — team directory (spec §4.2, §5, §9)
 
 - **Purpose:** the resourcing view — every member with their working profile (picture, capacity,

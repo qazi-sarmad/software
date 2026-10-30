@@ -26,6 +26,7 @@
   "population_archive_page": { "category": "test-only", "test": "supabase/tests/86_verified_archival.sql", "reason": "Pages an archived population; pinned by the verified-archival tests." },
   "population_archive_verify": { "category": "test-only", "test": "supabase/tests/86_verified_archival.sql", "reason": "Verifies an archived population's chain; pinned by the verified-archival tests." },
   "remove_conclusion_exception": { "category": "test-only", "test": "supabase/tests/43_conclusion.sql", "reason": "Removes a conclusion exception with a reason; pinned by the conclusion tests." },
+  "role_effective_has_right": { "category": "test-only", "test": "supabase/tests/143_role_scope_config.sql", "reason": "The scoped rights predicate: a person's effective rights at an engagement from the nearest scoped role grant. Pinned by test 143 §6; the screen reads the same answer through role_effective." },
   "scheduled_export_due": { "category": "test-only", "test": "supabase/tests/110_phase3_config_effects.sql", "reason": "Turns export_retention_settings.export_schedule into a decision (Phase 3.6); pinned by test 110 §4b." },
   "select_sira_risk": { "category": "test-only", "test": "supabase/tests/26_sira_model.sql", "reason": "Records that a library risk applies to an entity; pinned by the SIRA-model tests." },
   "signature_record": { "category": "test-only", "test": "supabase/tests/121_integrity_anchoring.sql", "reason": "Records a signature; pinned by the integrity-anchoring tests. The anchoring flow writes it server-side." },

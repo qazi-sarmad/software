@@ -21,12 +21,13 @@ import {
   type ScopeRow,
 } from '../../data/admin';
 import { Select } from '../common/Select';
-import { Check, Minus, Plus, User, Users, XCircle } from '../common/Icons';
+import { Check, Minus, Plus, Shield, User, Users, XCircle } from '../common/Icons';
 import { HoldToConfirm } from '../common/HoldToConfirm';
 import { ExplainPopout } from '../explain/ExplainPopout';
 import { TeamDirectoryPanel } from './TeamDirectoryPanel';
+import { RoleScopePanel } from './RoleScopePanel';
 
-type Tab = 'people' | 'roles' | 'team';
+type Tab = 'people' | 'roles' | 'scoped' | 'team';
 type LoadState = 'loading' | 'ready' | 'error';
 
 const RIGHT_LABELS: Record<Right, string> = {
@@ -195,6 +196,16 @@ export const PeopleAdminPanel: React.FC = () => {
         </button>
         <button
           role="tab"
+          aria-selected={tab === 'scoped'}
+          data-testid="admin-tab-scoped"
+          onClick={() => setTab('scoped')}
+          className={`px-3 py-1.5 rounded-lg text-apple-12 font-semibold ${tab === 'scoped' ? 'bg-surface text-primary shadow-xs' : 'text-secondary'}`}
+        >
+          <Shield className="w-3.5 h-3.5 inline mr-1.5 stroke-[1.5]" />
+          Scoped access
+        </button>
+        <button
+          role="tab"
           aria-selected={tab === 'team'}
           data-testid="admin-tab-team"
           onClick={() => setTab('team')}
@@ -206,6 +217,7 @@ export const PeopleAdminPanel: React.FC = () => {
       </div>
 
       {tab === 'team' && <TeamDirectoryPanel />}
+      {tab === 'scoped' && <RoleScopePanel />}
 
       {tab === 'people' && canManageUsers && (
         <section data-testid="admin-people" className="space-y-5">

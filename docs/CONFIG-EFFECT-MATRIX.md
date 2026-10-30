@@ -81,6 +81,9 @@ call site that proves it.
 | `tenant_settings.usage_quota` | A tenant user limit (`{"users": n}`); when set, provisioning beyond it is refused | `admin_provision_member` via `tenant_user_limit` | **FIXED 3.6** | `110_phase3_config_effects.sql` §7 |
 | `invite_cap_settings.per_user_daily` | The per-user daily invitation cap | `invite_user_capped` | ENFORCED | `40_platform_control_plane.sql` |
 | `roles.rights` | The rights a role carries; `caller_has_right` reads them for every guard | `caller_has_right` | ENFORCED | `19_rights_closed.sql` |
+| `role_scope_defaults.is_default` | A scope's default role: `role_assign` with no explicit role applies the nearest enabled default (engagement → universe → org), so a configured default decides which role a new team inherits; a disabled row applies nothing | `role_assign` via `applicableDefaults` / `role_effective` | ENFORCED | `143_role_scope_config.sql` §3–§4, §11 |
+| `role_scope_defaults.role_slug` | Which role the default confers at that scope; `role_effective` unions its rights, and `role_effective_has_right` decides a scoped request without a role-name comparison | `role_effective`, `role_effective_has_right` | ENFORCED | `143_role_scope_config.sql` §6, §8 |
+| `role_assignments.role_slug` | A person's role at a scope; the most specific scope with a grant wins, so a person is a Reviewer on one engagement and the Preparer on another | `role_effective` | ENFORCED | `143_role_scope_config.sql` §3–§5 |
 
 ## 4. Reporting, retention and evidence
 
