@@ -24,6 +24,8 @@ values ('a3000000-0000-0000-0000-0000000000c1', 'a0000000-0000-0000-0000-0000000
 
 -- ===========================================================================
 -- 1. The file owner. The CIA names the Preparer as the file owner of an engagement.
+--    0202: a file is never ownerless — creating it named the accountable person by default as
+--    version 1, and the CIA's explicit naming is a versioned handover (version 2).
 -- ===========================================================================
 select provio_test.as_user('10000000-0000-0000-0000-0000000000a1', 'a0000000-0000-0000-0000-000000000001', 'cia');
 do $$
@@ -31,6 +33,9 @@ declare
   v_id uuid;
   v_version int;
 begin
+  perform provio_test.assert_eq(
+    (select version from engagement_file_owners where engagement_id = '50000000-0000-0000-0000-0000000000a1'),
+    1, 'O1: the file owner is named by default when the file is created (version 1)');
   v_id := public.engagement_file_owner_set('50000000-0000-0000-0000-0000000000a1',
                                            '10000000-0000-0000-0000-0000000000a2',
                                            'a3000000-0000-0000-0000-0000000000c1', 'named at plan time');
@@ -40,12 +45,12 @@ begin
     '10000000-0000-0000-0000-0000000000a2'::uuid, 'O1: the owner is the named person');
   perform provio_test.assert_eq(
     (select version from engagement_file_owners where engagement_id = '50000000-0000-0000-0000-0000000000a1'),
-    1, 'O1: the first assignment is version 1');
+    2, 'O1: naming a person over the default is a versioned handover');
   -- A re-assignment is a new version, not a second row.
   perform public.engagement_file_owner_set('50000000-0000-0000-0000-0000000000a1',
                                            '10000000-0000-0000-0000-0000000000a4', null, 'handover');
   select version into v_version from engagement_file_owners where engagement_id = '50000000-0000-0000-0000-0000000000a1';
-  perform provio_test.assert_eq(v_version, 2, 'O1: a re-assignment bumps the version');
+  perform provio_test.assert_eq(v_version, 3, 'O1: a re-assignment bumps the version');
   perform provio_test.assert_eq(
     (select count(*) from engagement_file_owners where engagement_id = '50000000-0000-0000-0000-0000000000a1'),
     1::bigint, 'O1: one owner row per engagement');
@@ -192,8 +197,13 @@ end $$;
 select provio_test.as_user('10000000-0000-0000-0000-0000000000b3', 'b0000000-0000-0000-0000-000000000001', 'org_admin');
 do $$
 begin
-  perform provio_test.assert_eq((select count(*) from engagement_file_owners_list()), 0::bigint,
-    'O9: org B sees none of org A''s file owners');
+  -- 0202: every file has an owner, so org B sees the owner of its OWN file (B-Eng1) and none of
+  -- org A's. The isolation proof is that no owner row belongs to org A.
+  perform provio_test.assert_eq((select count(*) from engagement_file_owners_list()), 1::bigint,
+    'O9: org B sees only its own file''s owner');
+  perform provio_test.assert_eq(
+    (select count(*) from engagement_file_owners_list() where engagement_id = '50000000-0000-0000-0000-0000000000a1'),
+    0::bigint, 'O9: org B sees none of org A''s file owners');
   perform provio_test.assert_eq((select count(*) from engagement_deployments_list()), 0::bigint,
     'O9: org B sees none of org A''s deployments');
 end $$;
