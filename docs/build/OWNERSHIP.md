@@ -47,6 +47,7 @@ it from the owner** and works around it meanwhile.
 | `src/lib/writing/monitors.ts` | **S5** (S1 reads it, never edits) |
 | `src/data/connectors*.ts`, `src/lib/systeligon/connectorCatalogue.ts` | **S5** |
 | `src/data/notifications.ts`, `src/data/email*.ts` | **S5** |
+| `src/components/monitor/**`, `src/components/writing/**` (the connector/monitor screen OA-23 lives here) | **S5** |
 | `src/lib/lifecycle/**`, `src/data/lifecycle*.ts` | **S6** |
 | `src/components/admin/**` (OrgControlPanel, settings screens) — **except** `RulePackPanel.tsx`, which is S1's | **S6** |
 | `src/lib/systeligon/extract/**` (already moved there; S7 owns the module, S1 owns the `minutes.ts`/`policydiff.ts` rule logic it feeds) | **S7** |

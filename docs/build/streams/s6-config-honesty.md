@@ -1,8 +1,9 @@
 # Stream S6 — configuration honesty R3 (`feature/build-config-honesty`)
 
 Cut from the trunk after the mount points. Owns `src/lib/lifecycle/**`, `src/data/lifecycle*.ts`,
-`src/components/admin/**` (OrgControlPanel and the settings screens), and the `lifecycle-` / `signoff-`
-/ `workflow-` testids. Migrations `0179`–`0188`.
+`src/components/admin/**` (OrgControlPanel and the settings screens — **except**
+`src/components/admin/RulePackPanel.tsx`, which is S1's), and the `lifecycle-` / `signoff-` /
+`workflow-` testids. Migrations `0179`–`0188`.
 
 ## Scope
 The R3 rows: settings that are stored and displayed but that no code reads. Make each one READ, or

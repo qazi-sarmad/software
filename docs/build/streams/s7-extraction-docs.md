@@ -1,8 +1,9 @@
 # Stream S7 — extraction + document/minutes/policy surfaces (`feature/build-extraction`)
 
-Cut from the trunk after the mount points. Owns the extraction module (moving `src/lib/extract/**` to
-`src/lib/systeligon/extract/**`), `src/components/documents/**`, and the `docreview-` / `minutes-` /
-`policydiff-` / `extract-` testids. Migrations `0189`–`0198`.
+Cut from the trunk after the mount points. Owns the extraction module at its final path
+`src/lib/systeligon/extract/**` (the module is already there; no move remains),
+`src/components/documents/**`, and the `docreview-` / `minutes-` / `policydiff-` / `extract-` testids.
+Migrations `0189`–`0198`.
 
 ## Scope
 Mount the S7/S8/S9/S14/S15 engine surfaces (F130–F136 are S1's rule data; S7 owns the SCREENS that

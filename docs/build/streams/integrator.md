@@ -19,8 +19,9 @@ Read from the tree, not from a document:
 | Guard files (`src/guards/*.test.ts`) | 28 |
 | Register gate | `PASS: 145 features: 94 Wired, 27 Inert, 24 Absent` |
 
-At the head `c88e267` (after the concurrent-build work): 129 migrations, 134 SQL tests,
-**282 vitest files / 3240 tests**, **29 guards** (the integrator's `mountPoints.test.ts` added).
+At the head after the concurrent-build work: 129 migrations, 134 SQL tests,
+**283 vitest files / 3242 tests**, **30 guards** (the integrator's `mountPoints.test.ts` and
+`ownershipMap.test.ts` added).
 
 All gates green at baseline: `npm run build`, `tsc --noEmit`, `vitest run`, the SQL harness twice
 (`migrations applied twice` / `all SQL tests passed twice`), and
@@ -108,6 +109,9 @@ the designer's call, not the integrator's.
 | — OWNERSHIP `admin/**` double-claim | Collision | Fixed | `docs/build/OWNERSHIP.md` §2 (`RulePackPanel.tsx` is S1's) | `src/guards/mountPoints.test.ts` | — | `2006405` |
 | — OWNERSHIP `extract/**` double-claim | Collision | Fixed | `docs/build/OWNERSHIP.md` §2 (S7 owns the moved module) | `src/guards/mountPoints.test.ts` | — | `_this commit_` |
 | — data barrel missed S4 | Incomplete | Fixed | `src/data/index.ts` (platform / entitlements / deployment) | `src/guards/mountPoints.test.ts` | — | `2006405` |
+| — `components/writing/**` unowned | Ungranted | Fixed | `docs/build/OWNERSHIP.md` §2 (S5 owns it; OA-23 lives there) | `src/guards/ownershipMap.test.ts` | — | `_this commit_` |
+| — stream briefs vs §2 drift | Stale | Reconciled | `docs/build/streams/{s1-core-engine,s5-monitor-runtime,s6-config-honesty,s7-extraction-docs}.md` | `src/guards/ownershipMap.test.ts` | — | `_this commit_` |
+| — ownership-map guard | Absent | Built | `src/guards/ownershipMap.test.ts` (reads §2; each stream screen granted to exactly one stream) | the guard itself, proved to fail on a re-introduced double-claim | — | `_this commit_` |
 
 ### S17 — the deterministic scale generator (`docs/build/SCALE-PROGRAMME.md` §4)
 

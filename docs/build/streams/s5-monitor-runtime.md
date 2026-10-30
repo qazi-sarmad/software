@@ -3,8 +3,9 @@
 Cut from the trunk after the mount points. Owns the monitor runtime (moving
 `src/lib/systeligon/monitors.ts` to `src/lib/monitor/**`), `src/lib/writing/monitors.ts` (read-only to
 others), `src/data/connectors*.ts`, `src/lib/systeligon/connectorCatalogue.ts`,
-`src/data/notifications.ts`, `src/data/email*.ts`, and the `monitor-` / `connector-` / `alert-`
-testids. Migrations `0169`–`0178`.
+`src/data/notifications.ts`, `src/data/email*.ts`, `src/components/monitor/**`,
+`src/components/writing/**` (the mounted connector screen OA-23 lives there), and the `monitor-` /
+`connector-` / `alert-` testids. Migrations `0169`–`0178`.
 
 ## Scope
 The dead monitor runtime: `rule_engine_process`, `alert_record`, the scheduled runner, alert→Work Queue

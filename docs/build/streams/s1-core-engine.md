@@ -1,7 +1,8 @@
 # Stream S1 — core engine, scopes, rule packs, standards distribution (`feature/build-core-engine`)
 
 Cut from the trunk after the mount points. Owns `src/lib/systeligon/**` (types, runner, versioning,
-packs, ota, rules, flows, extract), `src/components/audit/{RuleRunTab,RulePackPanel}.tsx`,
+packs, ota, rules, flows, minutes, policydiff — NOT `extract/**`, which is S7's),
+`src/components/audit/RuleRunTab.tsx`, `src/components/admin/RulePackPanel.tsx`,
 `src/data/{rulePacks,population}.ts`, and the `rulerun-` / `rulepack-` / `standards-` testids.
 Migrations `0129`–`0138`.
 
