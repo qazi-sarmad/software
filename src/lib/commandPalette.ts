@@ -202,6 +202,15 @@ export const ACTION_COMMANDS: CommandItem[] = [
   },
   {
     kind: 'action',
+    id: 'action.adhoc_review',
+    label: 'Build an ad-hoc rule',
+    hint: 'Describe one condition and preview it',
+    keywords: ['adhoc', 'ad-hoc', 'build rule', 'condition', 'threshold', 'custom rule'],
+    minRight: 'perform_work',
+    target: { inspector: 'adhoc_review' },
+  },
+  {
+    kind: 'action',
     id: 'action.account_settings',
     label: 'Account settings',
     hint: 'Your profile and preferences',

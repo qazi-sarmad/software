@@ -29,6 +29,7 @@ const OrgControlPanel = lazy(() => import('../admin/OrgControlPanel').then((m) =
 const SharedWithMePanel = lazy(() => import('../admin/SharePanel').then((m) => ({ default: m.SharePanel })));
 const FindingDrilldown = lazy(() => import('../issues/FindingDrilldown').then((m) => ({ default: m.FindingDrilldown })));
 const GlobalSearchPanel = lazy(() => import('../documents/GlobalSearchPanel').then((m) => ({ default: m.GlobalSearchPanel })));
+const AdhocReviewPanel = lazy(() => import('../documents/AdhocReviewPanel').then((m) => ({ default: m.AdhocReviewPanel })));
 const StandardsView = lazy(() => import('../explain/StandardsView').then((m) => ({ default: m.StandardsView })));
 
 export const INSPECTOR_TITLES: Record<InspectorType, string> = {
@@ -56,6 +57,7 @@ export const INSPECTOR_TITLES: Record<InspectorType, string> = {
   shared_with_me: 'Shared with you',
   finding: 'Audit Finding',
   global_search: 'Search all documents',
+  adhoc_review: 'Build an ad-hoc rule',
   standards: 'IIA Standards',
 };
 
@@ -134,6 +136,8 @@ export const RecordContent: React.FC<RecordContentProps> = ({ type, data, onClos
           return <FindingDrilldown findingId={data?.findingId} />;
         case 'global_search':
           return <GlobalSearchPanel />;
+        case 'adhoc_review':
+          return <AdhocReviewPanel />;
         case 'standards':
           return <StandardsView screenId="OA-19" />;
         default:

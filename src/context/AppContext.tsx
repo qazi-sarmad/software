@@ -55,6 +55,7 @@ export type InspectorType =
   | 'shared_with_me'
   | 'finding'
   | 'global_search'
+  | 'adhoc_review'
   | 'standards';
 
 export interface InspectorState {

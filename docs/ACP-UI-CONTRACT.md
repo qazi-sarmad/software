@@ -1971,3 +1971,26 @@ an unplaceable snippet.
   a load error; empty (nothing within the caller's access matches); ready with the count and the
   ranked hits, each naming its place.
 - **Tutorial key:** —
+
+## OA-38 — Ad-hoc review builder (S7)
+
+The auditor's own condition builder — a SEPARATE module from the document-review screen (OA-36). The
+system's review flow runs unprompted; this screen exists only when the auditor asks for it. They
+describe ONE condition of their own (a source attribute, an operator and a threshold), see a
+deterministic preview over a fixed sample, and release it as a normal versioned rule. The built rule
+runs through the same runner and its findings carry its id and version like any shipped rule. It is a
+declared condition over the data, not a model: nothing is inferred and nothing is generated.
+
+- **Route:** the "Build an ad-hoc rule" action in the command palette (`Cmd/Ctrl-K`).
+- **Rights:** `perform_work` to build and preview a rule; a principal without it sees the reason and
+  no builder.
+- **Data:** pure — `buildAdhocRule`, `runAdhocRule` (`src/lib/systeligon`). The preview runs over a
+  fixed sample, so it reads no tenant row and no clock (the run instant is captured at Run and passed
+  in).
+- **Testids:** `adhoc-review-panel`, `adhoc-review-rights-note`, `adhoc-review-form`,
+  `adhoc-review-title`, `adhoc-review-source`, `adhoc-review-condition`, `adhoc-review-threshold`,
+  `adhoc-review-threshold2`, `adhoc-review-severity`, `adhoc-review-result`, `adhoc-review-summary`,
+  `adhoc-review-preview`, `adhoc-review-findings`, `adhoc-review-finding-<i>`, `adhoc-review-empty`.
+- **States:** denied (no `perform_work`); ready (the builder form); an invalid spec (a named refusal,
+  nothing previewed); a preview with its findings, or an honest empty preview.
+- **Tutorial key:** —

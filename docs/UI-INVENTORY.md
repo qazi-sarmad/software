@@ -1007,6 +1007,24 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
   named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
 
+### `OA-38` — Ad-hoc review builder (S7)
+
+- **Purpose:** The auditor's own condition builder — a SEPARATE module from the document-review screen (OA-36). The
+- **Route / location:** the "Build an ad-hoc rule" action in the command palette (`Cmd/Ctrl-K`).
+- **Rights required:** `perform_work` to build and preview a rule; a principal without it sees the reason and no builder.
+- **Data functions (`src/data/*.ts`):** `buildAdhocRule`, `runAdhocRule`
+- **Data modules:** none (pure/UI only)
+- **RPCs reachable via those modules:** none
+- **Tables reachable via those modules:** none
+- **Testids (15):** `adhoc-review-panel`, `adhoc-review-rights-note`, `adhoc-review-form`, `adhoc-review-title`, `adhoc-review-source`, `adhoc-review-condition`, `adhoc-review-threshold`, `adhoc-review-threshold2`, `adhoc-review-severity`, `adhoc-review-result`, `adhoc-review-summary`, `adhoc-review-preview`, `adhoc-review-findings`, `adhoc-review-finding-<i>`, `adhoc-review-empty`
+- **Explain ids (0):** — (no explain affordance)
+- **IIA standards addressed (0):** —
+- **Drilldown targets (0):** — (no aggregate)
+- **States:** denied (no `perform_work`); ready (the builder form); an invalid spec (a named refusal, nothing previewed); a preview with its findings, or an honest empty preview.
+- **Tutorial key:** — (no key)
+- **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
+  named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
+
 ## Engagement lifecycle
 
 ### `WK-08` — escalation cards and proposals (S6)
@@ -2218,7 +2236,7 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 
 ## Coverage cross-check
 
-- Screens documented: 110 (contract sections: 48 Appendix A + 44 Appendix B).
+- Screens documented: 111 (contract sections: 48 Appendix A + 44 Appendix B).
 - Tutorial keys: 81.
 - RPCs catalogued: 146.
 - Data modules: 74; exported data functions: 443.

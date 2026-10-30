@@ -26,6 +26,7 @@ import { WorkpaperCreatePanel } from '../audit/WorkpaperCreatePanel';
 import { FindingsPanel } from '../audit/FindingsPanel';
 import { ConclusionPanel } from '../audit/ConclusionPanel';
 import { DocumentViewerPanel } from '../audit/DocumentViewerPanel';
+import { DocumentReviewPanel } from '../documents/DocumentReviewPanel';
 import { ReportEditorPanel } from '../audit/ReportEditorPanel';
 import { CapRegisterPanel } from '../audit/CapRegisterPanel';
 import { AsOfTimeline } from '../audit/AsOfTimeline';
@@ -194,6 +195,8 @@ export const AuditFileModal: React.FC = () => {
       ) : phaseView === 'documents' ? (
         <div className="space-y-6" data-testid="audit-file-documents">
           <DocumentViewerPanel engagementId={engagement.id} />
+          {/* S7: the document/minutes/policy review runs over this engagement's documents. */}
+          <DocumentReviewPanel engagementId={engagement.id} />
         </div>
       ) : phaseView === 'report' ? (
         <div className="space-y-6" data-testid="audit-file-report">

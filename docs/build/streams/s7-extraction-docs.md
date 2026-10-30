@@ -39,4 +39,29 @@ F136 (policy/procedure comparison screen), F92 (guided zero-to-first-report wiza
 ## Status
 | Row | Was | Now | Call site | Test | Migration | Commit |
 |---|---|---|---|---|---|---|
-| OA-39 global document search | Absent | Wired | `src/components/documents/GlobalSearchPanel.tsx` mounted via `RecordContent.tsx` inspector `global_search`, reached from the palette action `action.global_search` (`src/lib/commandPalette.ts`) | `src/components/documents/GlobalSearchPanel.test.tsx` (8), `supabase/tests/136_global_document_search.sql` | `0190_global_document_search.sql` | _this commit_ |
+| OA-39 global document search | Absent | Wired | `src/components/documents/GlobalSearchPanel.tsx` mounted via `RecordContent.tsx` inspector `global_search`, reached from the palette action `action.global_search` (`src/lib/commandPalette.ts`) | `src/components/documents/GlobalSearchPanel.test.tsx` (8), `supabase/tests/136_global_document_search.sql` | `0190_global_document_search.sql` | `d300cac` |
+| OA-36 documents/minutes/policy review | Built, unmounted | Wired | `src/components/documents/DocumentReviewPanel.tsx` mounted in `AuditFileModal.tsx` `phaseView === 'documents'` (engagement id) | `src/components/documents/DocumentReviewPanel.test.tsx` | `0189_document_review.sql` | _this commit_ |
+| OA-38 ad-hoc review builder | Built, unmounted | Wired | `src/components/documents/AdhocReviewPanel.tsx` mounted via `RecordContent.tsx` inspector `adhoc_review`, reached from the palette action `action.adhoc_review` | `src/components/documents/AdhocReviewPanel.test.tsx` | — | _this commit_ |
+| F130 structured extraction tier 3 | Inert | Wired | `DocumentReviewPanel.tsx` calls `parseDocumentStructure` (mounted OA-36) | `DocumentReviewPanel.test.tsx` | — | _this commit_ |
+| F131 OCR seam tier 2 | Inert | Wired | `DocumentReviewPanel.tsx` calls `needsOcr`/`runOcr` (mounted OA-36) | `DocumentReviewPanel.test.tsx` | — | _this commit_ |
+| F135 minutes action register | Inert | Wired | `DocumentReviewPanel.tsx` calls `buildActionRegister` (mounted OA-36) | `DocumentReviewPanel.test.tsx` | — | _this commit_ |
+| F136 policy comparison | Inert | Wired | `DocumentReviewPanel.tsx` calls `compareDocuments` (mounted OA-36) | `DocumentReviewPanel.test.tsx` | — | _this commit_ |
+
+### Blocker for the integrator (owner action)
+
+`node scripts/check-feature-register.mjs` is RED with 9 problems, all rule (6): the register rows
+F130/F131/F135/F136 still say `Inert` with the evidence "**No screen calls `parseDocumentStructure`**"
+(and `needsOcr`/`runOcr`, `buildActionRegister`, `compareDocuments`), but the now-mounted OA-36 screen
+calls each. `docs/FEATURE-REGISTER.md` is the integrator's file (§6), so the fix is the integrator's:
+flip F130/F131/F135/F136 to `Wired` with the call site `src/components/documents/DocumentReviewPanel.tsx`
+and the test `src/components/documents/DocumentReviewPanel.test.tsx`, then update the §14 counts. The
+gate was already red before this session's commits (proved: `git stash -u` → PASS; with the untracked
+S7 panel → FAIL), so the red is the S7 stream's own unmounted work, now mounted, awaiting the register
+row move.
+
+## Decisions
+- **OA-36/OA-38/OA-39 mount path.** The seven-tab NavStrip is fixed by SPEC-v10 §5 and the trunk owns
+  it, so the S7 screens are mounted without adding a tab: OA-36 joins the engagement's `documents`
+  phase inside `AuditFileModal`; OA-38 and OA-39 are reached from the command palette
+  (`Cmd/Ctrl-K`) through the `global_search` / `adhoc_review` inspector surfaces in `RecordContent.tsx`.
+  Each is registered in `src/nav/registry.ts` as `mounted`.
