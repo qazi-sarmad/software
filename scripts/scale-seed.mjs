@@ -48,6 +48,7 @@ const TARGET_SETTINGS = {
     scale_pop_rows: 1000000,
     scale_ledger: 5000000,
     scale_evidence: 100000,
+    scale_users_per_org: 13, // 8 * 313 orgs * 13 users ~= 32,552; --users-per-org overrides
   },
 };
 
@@ -70,6 +71,7 @@ const structFactor = target ? Number(opt('factor', '313')) : factor;
 
 const gucs = [
   `select set_config('provio_test.scale_factor', '${structFactor}', false);`,
+  ...(opt('users-per-org', null) ? [`select set_config('provio_test.scale_users_per_org', '${opt('users-per-org', null)}', false);`] : []),
   ...(target
     ? Object.entries(TARGET_SETTINGS.provio_test).map(
         ([k, v]) => `select set_config('${k}', '${v}', false);`)
@@ -92,6 +94,8 @@ select
   (select count(*) from population_rows where data ? 'ref' or data ? 'hostile') as population_rows,
   (select count(*) from evidence_files where filename like 'SCALE-%') as evidence_files,
   (select count(*) from ledger_entries where action like 'SCALE-%') as ledger_entries,
+  (select count(*) from org_members m join orgs o on o.id = m.org_id
+     where o.name like 'SCALE-B-%') as users,
   (select md5(string_agg(sha256, '' order by sha256)) from populations p
      where exists (select 1 from universes u where u.org_id = p.org_id and u.name like 'SCALE-%')) as population_hash_fingerprint;
 `;

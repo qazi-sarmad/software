@@ -141,18 +141,34 @@ create or replace function provio_test.scale_seed_b(p_factor int) returns int
 language plpgsql as $$
 declare
   v_orgs int := 8 * p_factor;
+  v_users_per_org int := coalesce(nullif(current_setting('provio_test.scale_users_per_org', true), '')::int, 1);
   v_org uuid;
   v_univ uuid;
   v_eng uuid;
   v_pop uuid;
   n int;
 begin
+  -- auth.users has no FK to orgs, so `reset_data()`'s `truncate orgs cascade` does not reach the
+  -- scale accounts; clear them here so the file is idempotent across the harness's two passes.
+  delete from auth.users where email like 'scale-b%@example.test';
+
   for n in 1..v_orgs loop
     v_org := provio_test.det_uuid('5ca1eb00', n);
     insert into orgs (id, name, is_demo) values (v_org, format('%sB-%s', provio_test.scale_org_prefix(), n), false);
 
     insert into roles (id, org_id, name, slug, is_seed, rights)
     values (provio_test.det_uuid('5ca1eb06', n), v_org, 'CIA', 'cia', true, provio_test.scale_cia_rights());
+
+    -- The org's accounts: v_users_per_org real auth.users rows, each an org_member holding the CIA
+    -- role. This is the §1 "users" dimension (a high-factor run with a high users_per_org reaches the
+    -- 50,000-user shape). Default 1 keeps the CI harness light.
+    insert into auth.users (id, email)
+    select provio_test.det_uuid('5ca1eb07', n * 1000 + i), format('scale-b%s-u%s@example.test', n, i)
+    from generate_series(1, v_users_per_org) i;
+
+    insert into org_members (org_id, user_id, role_id, hierarchy_level)
+    select v_org, provio_test.det_uuid('5ca1eb07', n * 1000 + i), provio_test.det_uuid('5ca1eb06', n), 3
+    from generate_series(1, v_users_per_org) i;
 
     v_univ := provio_test.det_uuid('5ca1eb01', n);
     insert into universes (id, org_id, name) values (v_univ, v_org, format('SCALE-B%s-U1', n));
@@ -299,6 +315,11 @@ begin
   perform provio_test.assert_eq(
     (select count(*)::int from orgs where name like provio_test.scale_org_prefix() || 'B-%'), 8 * v_factor,
     'scale B: every long-tail org exists');
+  perform provio_test.assert_eq(
+    (select count(*)::int from org_members m join orgs o on o.id = m.org_id
+      where o.name like provio_test.scale_org_prefix() || 'B-%'),
+    8 * v_factor * coalesce(nullif(current_setting('provio_test.scale_users_per_org', true), '')::int, 1),
+    'scale B: the long-tail user count matches the factor x users-per-org');
 end $$;
 
 -- ---------------------------------------------------------------------------

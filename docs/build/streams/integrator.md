@@ -95,7 +95,10 @@ The programme assigns the generator to the integrator; it did not exist. Built i
   see their own rows and none of the others'.
 - **`scripts/scale-seed.mjs`** drives it at a chosen scale: `--factor=N`, or `--target` for the §1
   designated shape (2,000 engagements, 1,000,000 population rows, 100,000 evidence rows, 5,000,000
-  ledger entries; structural factor 313 → 5,008 entities / 1,252 universes), or `--clean`.
+  ledger entries; structural factor 313 → 5,008 entities / 1,252 universes), or `--clean`. The users
+  dimension (§1: 50,000 accounts) is Shape B's `scale_users_per_org` knob: each long-tail org gets
+  that many real `auth.users` accounts, each an `org_members` row holding the org's CIA role; the
+  runner's `--users-per-org=N` sets it (8 orgs × factor × N accounts).
 - **L5 forced the cleanup design.** The generator writes `ledger_entries`, which is append-only for
   **every** role, so a fixture DELETE is impossible — the only sanctioned clear is `TRUNCATE`, which
   does not fire the row-level append-only triggers. `scale_cleanup()` therefore calls the seed's own
