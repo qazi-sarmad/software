@@ -69,6 +69,29 @@ Created at `968e30d`:
 5. **Empty typed stubs** are created for the data modules a stream owns but has not written yet, so
    the barrel is complete up front and the owning stream fills only its own stub.
 
+## The stream branches (§4 — the gate for every stream)
+
+Created from the trunk head `ceba781`, so each carries the mount points:
+
+| Branch | Head | Notes |
+|---|---|---|
+| `feature/build-core-engine` (S1) | `ceba781` | |
+| `feature/build-assurance-caps` (S2) | `ceba781` | |
+| `feature/build-risk-planning` (S3) | `ceba781` | |
+| `feature/build-platform-control` (S4) | `ceba781` | |
+| `feature/build-monitor-runtime` (S5) | `ceba781` | |
+| `feature/build-config-honesty` (S6) | `ceba781` | |
+| `feature/build-extraction` (S7) | `ceba781` | |
+
+**The DESIGN branch needs the integrator's attention.** `feature/systeligon-design-spec` already exists
+at `bc7fd15` (the designer's auto-updating-spec branch, created 2026-10-29) but is cut from `ceb85fd`,
+**before** the mount points (`ceb85fd` is the trunk's parent, `968e30d` added the mount points). It
+therefore lacks `src/nav/registry.ts`, `src/data/index.ts`, `src/lib/capabilities/registry.ts` and the
+current `docs/build/**`. The DESIGN agent should re-cut or rebase onto `ceba781` (or the current trunk)
+before writing the theme implementation, or its branch will not see the mount points the streams share.
+Flagged, not acted on: the design branch is the designer's tree (OWNERSHIP.md §2), so re-cutting it is
+the designer's call, not the integrator's.
+
 ## Status
 
 | Row (Fnn / Dnn) | Was | Now | Call site | Test that proves it | Migration | Commit |
