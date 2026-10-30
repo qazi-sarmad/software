@@ -1623,7 +1623,10 @@ custodian role and the person who owned it, so the setting is visibly in force.
 - **Route:** the Org Admin control panel, tab "Archived files" (`org-control-tab-archived-role`).
 - **Rights:** `manage_roles` to change the custodian role; any member of the org reads it.
 - **Data:** `getArchivedFileRole()`, `setArchivedFileRole(roleSlug, reason)`,
-  `listArchivedFileCustodians()` (`src/data/fileOwnership.ts`). RPCs `archived_file_role_get`,
+  `listArchivedFileCustodians()`, `listCustodianRoles()` (`src/data/fileOwnership.ts`). The picker is
+  fed the organisation's REAL roles (read from `roles` via `listRoles`, `src/data/admin.ts`), so an
+  offered role is always one the database will accept; the draft defaults to the role in force.
+  RPCs `archived_file_role_get`,
   `archived_file_role_set`, `archived_file_custodians`, `archived_file_role_effective`,
   `archived_file_role_default` (migration 0203).
 - **Testids:** `archived-role-panel`, `archived-role-loading`, `archived-role-load-error`,

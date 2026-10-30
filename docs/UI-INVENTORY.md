@@ -814,10 +814,10 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 - **Purpose:** An archived file outlives the person who owned it, so its custodian is a ROLE the organisation
 - **Route / location:** the Org Admin control panel, tab "Archived files" (`org-control-tab-archived-role`).
 - **Rights required:** `manage_roles` to change the custodian role; any member of the org reads it.
-- **Data functions (`src/data/*.ts`):** `archived_file_custodians`, `archived_file_role_default`, `archived_file_role_effective`, `archived_file_role_get`, `archived_file_role_set`, `getArchivedFileRole`, `listArchivedFileCustodians`, `setArchivedFileRole`
-- **Data modules:** `src/data/fileOwnership.ts`
-- **RPCs reachable via those modules:** `archived_file_custodians`, `archived_file_role_get`, `archived_file_role_set`, `engagement_owner_audit_list`
-- **Tables reachable via those modules:** none
+- **Data functions (`src/data/*.ts`):** `archived_file_custodians`, `archived_file_role_default`, `archived_file_role_effective`, `archived_file_role_get`, `archived_file_role_set`, `getArchivedFileRole`, `listArchivedFileCustodians`, `listCustodianRoles`, `listRoles`, `roles`, `setArchivedFileRole`
+- **Data modules:** `src/data/admin.ts`, `src/data/fileOwnership.ts`
+- **RPCs reachable via those modules:** `archived_file_custodians`, `archived_file_role_get`, `archived_file_role_set`, `engagement_owner_audit_list`, `invite_status`, `invite_user_capped`
+- **Tables reachable via those modules:** `org_members`, `roles`, `user_scopes`
 - **Testids (18):** `archived-role-panel`, `archived-role-loading`, `archived-role-load-error`, `archived-role-current`, `archived-role-value`, `archived-role-version`, `archived-role-reason`, `archived-role-readonly`, `archived-role-form`, `archived-role-select`, `archived-role-reason-input`, `archived-role-why`, `archived-role-save`, `archived-role-error`, `archived-role-notice`, `archived-role-archives`, `archived-role-archives-empty`, `archived-role-archive-<id>`
 - **Explain ids (0):** — (no explain affordance)
 - **IIA standards addressed (0):** —
