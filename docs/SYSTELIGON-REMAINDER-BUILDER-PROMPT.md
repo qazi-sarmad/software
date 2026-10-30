@@ -31,8 +31,10 @@ The branches are built and pushed:
   incident wizard, tamper alarm), D1-D4 (capability library), F1-F7 (self-hosted fonts), gates G7-G10.
 - feature/writing-engine (c45bb81) — the deterministic report-writing engine.
 - feature/systeligon-unified-v1 (ceb85fd) — the A+B reconciliation: ONE migration set, collision resolved.
-- feature/systeligon-builder-continuous (385c550) — THE UNIFIED SET PLUS U4 (team directory), L1 (the
-  rule-run screen) AND L2 (the rule-pack management surface). THIS is your starting point; branch from it.
+- feature/systeligon-builder-continuous (cd2e352) — THE UNIFIED SET PLUS U4 (team directory), L1 (the
+  rule-run screen), L2 (the rule-pack management surface), the D5/D7/D8/D9 and D10-D13 work packages,
+  and the verified references docs/ASSURANCE-RULEBOOKS.md and docs/PAKISTAN-ASSURANCE-REGIMES.md.
+  THIS is your starting point; branch from it.
 - main (a697190) — the untouched default branch, still carrying the original production defect.
 Read docs/SYSTELIGON-GAP-REPORT.md for the full verified built/planned picture. Its §13.8 is your
 authoritative work list. Everything in it except the DEFERRED design rows is yours.
