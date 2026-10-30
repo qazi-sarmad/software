@@ -218,9 +218,9 @@ behaviour, or **remove it from the UI** and mark it deferred. No field may be vi
 | # | Capability | Status | Evidence / gap | WP |
 |---|---|---|---|---|
 | F95 | Notification templates | `Wired` | `render_notification` enforced | — |
-| F96 | In-app notification delivery | `Inert` | No test proves delivery into the Work Queue | C3 |
+| F96 | In-app notification delivery | `Wired` | Delivery is proved at the database: `supabase/tests/114_phase5_delivery.sql` §2 asserts the triager sees the alert through `notifications_list()` (the Work Queue read path) and a non-triager does not. The screen path is `e2e/s15-notifications.spec.ts`: a notification raised in the database reaches the Work Queue and the bell without a reload | C3 |
 | F97 | Realtime transport | `Wired` | `liveSync` | — |
-| F98 | Realtime pop-out sync | `Absent` | No Playwright coverage; poll fallback unproven | C3 |
+| F98 | Realtime pop-out sync | `Wired` | `e2e/s14-popout-sync.spec.ts` (SCALE-1 §17.1) proves the pop-out and its parent converge on the same record: a revision published in either window is visible to the other, and the same-origin storage channel (`useRecordRevisionSync.ts`, policy in `src/lib/liveSync.ts`) converges the two windows even when Realtime is unavailable — the documented fallback, exercised | C3 |
 | F99 | Email dispatch | `Wired` | `email-dispatch` edge function, `email_dispatch_set_token` | — |
 
 ---
@@ -241,7 +241,7 @@ behaviour, or **remove it from the UI** and mark it deferred. No field may be vi
 | F109 | Animated headers | `Absent` | §12.5 | U13 |
 | F110 | Command palette | `Wired` | `CommandPalette.tsx` (Cmd/Ctrl-K) over the pure `rankCommands`/`visibleCommands`/`recordCommands` in `src/lib/commandPalette.ts`; screens, records, actions and explain entries; non-blocking | U2 |
 | F111 | Density toggle | `Absent` | §11.1c U7 | U15 |
-| F112 | Contrast test covers all presets | `Inert` | `tokens.contrast.test.ts` covers three; must cover six at every phase | U9 |
+| F112 | Contrast test covers all presets | `Wired` | `src/styles/tokens.contrast.test.ts` covers all six presets (ledger-light, ledger-dark, porcelain-light, porcelain-dark, bone-light, bone-dark): it iterates `SELECTORS` and asserts every text and accent token meets WCAG AA (4.5:1) on both canvas and surface, and that no banned warning hue appears | U9 |
 | F113 | Motion / theme / personalisation gates | `Absent` | §12.7 | U12 |
 | F114 | Guided empty states | `Wired` | A new organisation's dashboard shows `GuidedFirstRun.tsx` (DB-01) instead of a wall of zeros: the pure `src/lib/guidedFirstRun.ts` rule decides the step, `createUniverse` on the app context is the button's write path, and `src/data/guidedFirstRun.ts` reads the gated `get_org_data_state` RPC (`supabase/migrations/0126_guided_first_run.sql`). `create_universe` is the first-run action that had no write path anywhere | U6 |
 | F115 | Onboarding tutorial drawer | `Wired` | `tutorialKeys.json`, `role="complementary"` | — |
@@ -313,21 +313,23 @@ this register exists to catch.
 
 | Status | Count |
 |---|---|
-| `Wired` | 115 |
-| `Inert` | 8 |
-| `Absent` | 22 |
+| `Wired` | 118 |
+| `Inert` | 6 |
+| `Absent` | 21 |
 | **Total** | **145** |
 
 **Read that again, with the correction applied.** This pass corrected a systematic understatement:
 the register's own gate passes on a stale claim, so rows that name a thing as dead were re-checked
 against the code and the SQL tests. The document surfaces (S7's OA-36 review), the monitor cluster
-(the `monitor-runner` scheduled job reaches F49–F52), the support-grant surface (F84–F86) and the
-whole "stored but inert" configuration list (F35, F72–F79) are all **built, wired and tested** — the
+(the `monitor-runner` scheduled job reaches F49–F52), the support-grant surface (F84–F86), the
+notification delivery and the pop-out sync (F96, F98), the contrast coverage (F112) and the whole
+"stored but inert" configuration list (F35, F72–F79) are all **built, wired and tested** — the
 Phase 2/3 migrations (`0101`, `0107`, `0109`) landed the enforcement and `supabase/tests/102`–`110`
-prove it. The eight remaining `Inert` rows are the genuine, still-open defects: the connector run and
-ingest RPCs and the adapter runner (F57–F59), the rule-versioning registry and pack merge (F128), the
-accepted/declined flow engine (F132), the in-app delivery test (F96), and the two design rows
-(F108, F112). Every one is a defect, and every one looks like a working feature in the UI.
+prove it, while the delivery and sync rows are proved by `supabase/tests/114` and the Playwright
+specs `s14`/`s15`. The six remaining `Inert` rows are the genuine, still-open defects: the connector
+run and ingest RPCs and the adapter runner (F57–F59), the rule-versioning registry and pack merge
+(F128), the accepted/declined flow engine (F132), and the motion system (F108). Every one is a defect,
+and every one looks like a working feature in the UI.
 
 **The order of work is not negotiable, and R1 and R2 are already done.** R1 (the app reads its own
 database) and R2 (the lifecycle is real) closed in Phases 1-2. R3 (the configuration is honest) is
