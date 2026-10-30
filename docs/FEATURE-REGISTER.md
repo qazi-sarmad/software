@@ -273,6 +273,7 @@ Each is a pure function under `src/lib/`, with direct unit tests and a screen su
 | F125 | Assurance-over-assurance | `Absent` | D9 |
 | F126 | Live activity spine | `Wired` | `ActivitySpine.tsx` (DB-01) renders the pure `src/lib/activitySpine.ts` layer (sentence, kind, age) over the rights-gated `activity_spine_list` RPC (`supabase/migrations/0116_activity_spine.sql`) via `src/data/activity.ts` on the existing `liveSync` transport (Realtime when available, bounded poll otherwise) | U4 |
 | F127 | SIRA model config writes (aggregation, factor, band) | `Wired` | `setSiraAggregation`, `upsertSiraFactor`, `setSiraBand` (`src/data/sira.ts`) drive `admin_set_sira_aggregation` / `admin_upsert_sira_factor` / `admin_set_sira_band`, wired from `SiraModelInspector.tsx` (SR-02) | S18 |
+| F128 | Self-diagnostic (the engine checks itself) | `Wired` | `DiagnosticPanel.tsx` (DB-03) runs the pure `runDiagnostics`/`summariseFindings` (`src/lib/diagnostics.ts`) over the counts-and-flags snapshot from `getOrgDiagnosticSnapshot`/`getPlatformDiagnosticSnapshot` (`src/data/diagnostics.ts`, `org_diagnostic_snapshot`/`platform_diagnostic_snapshot`, migration `0120`), mounted on `ExecutiveDashboardTab.tsx` (org scope) and `SuperAdminSupport.tsx` (platform scope); `destinationForScreen` (`src/lib/diagnosticNav.ts`) resolves each finding's screen | — |
 
 ---
 
@@ -280,10 +281,10 @@ Each is a pure function under `src/lib/`, with direct unit tests and a screen su
 
 | Status | Count |
 |---|---|
-| `Wired` | 84 |
+| `Wired` | 85 |
 | `Inert` | 20 |
 | `Absent` | 23 |
-| **Total** | **127** |
+| **Total** | **128** |
 
 **Read that again, with the correction applied.** This is materially better than the first pass
 reported, because Phases 1 and 2 of the scale-harden build closed the whole foundation, the S17-S20

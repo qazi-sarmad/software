@@ -691,6 +691,54 @@ wrappers — Builder A's and the SPEC branch's territory, reported not removed (
 credential) — every other gate ran here.
 
 
+
+## Population rows writer + self-diagnostic (2026-10-28, third session)
+
+Two gaps that the audit found by the call site, both closed and wired.
+
+### `0119_population_rows.sql` — the population rows writer
+
+`population_rows` had **no production writer**. `lock_population` / `replace_locked_population` existed
+and the sample draw read the table, so a population could be verified and locked while carrying no
+rows — no draw could ever succeed, and nothing in the UI could put a row in. Closed with:
+
+| Piece | What it does |
+|---|---|
+| `import_population_rows(population_id, rows, append)` | Stores the positional payload: `{row_ref, data}` objects, or bare values the database numbers by position. Re-checks the caller's right and the population's org. `append` keeps the existing rows; the default replaces them. |
+| `list_population_rows(population_id, limit)` | A bounded, org-scoped page ordered by `row_ref`. |
+| `src/lib/populationPaste.ts` | The PURE paste parser: a header row maps columns BY POSITION, `parsePopulationPaste` reports per-line rejections and extra-column warnings, `toSampleItems` emits the `{row_ref, data}` payload. A paste is never auto-padded to the floor — inventing rows would fabricate evidence. |
+| `PopulationPanel.tsx` | The paste grid: preview the mapped columns and parsed count, store against a registered population. |
+| `SamplingPanel.tsx` | The auditor-paste mode now emits `{row_ref}` objects (the RPC reads `item ->> 'row_ref'`, so a bare number was silently refused) and reports non-integer lines and the shortfall against the floor without padding. |
+
+Tests: `src/lib/populationPaste.test.ts`, `supabase/tests/119_population_rows.sql`.
+
+### `0120_self_diagnostic.sql` + the self-diagnostic surface (DB-03, F128)
+
+The engine could not check itself. `org_diagnostic_snapshot()` and `platform_diagnostic_snapshot()`
+return COUNTS, FLAGS and one broken-ledger sequence — never a row of tenant content (Law L2). The pure
+`runDiagnostics`/`summariseFindings` (`src/lib/diagnostics.ts`) reads that snapshot and names, for
+every finding, the rule, the severity, the exact numbers behind it and the remedy.
+
+| Piece | What it does |
+|---|---|
+| `src/lib/diagnostics.ts` | The rule tables (`ORG_DIAGNOSTIC_RULES`, `PLATFORM_DIAGNOSTIC_RULES`), the pure `runDiagnostics` (severity-ordered) and `summariseFindings` (counts + one headline). Time is data (`as_of`), never read from the clock. |
+| `src/lib/diagnosticNav.ts` | The PURE map from a finding's screen id to the shell action that opens it (`OA-29` → integrity, `OA-31` → incidents, `AF-13` → the audit-file tab). An id with no destination returns null. |
+| `src/data/diagnostics.ts` | `getOrgDiagnosticSnapshot` / `getPlatformDiagnosticSnapshot`; null when not configured; a non-platform caller's refusal is the honest not-available state, not an error. |
+| `src/components/admin/DiagnosticPanel.tsx` | The surface (DB-03). Org scope on `ExecutiveDashboardTab.tsx`; platform scope on `SuperAdminSupport.tsx`. Non-blocking; every element carries a `diagnostic-*` testid; each finding names its rule id and offers Open when the screen is reachable. |
+
+Tests: `src/lib/diagnostics.test.ts`, `src/data/diagnostics.test.ts`,
+`src/lib/diagnosticNav.test.ts`, `src/components/admin/DiagnosticPanel.test.tsx`,
+`supabase/tests/120_self_diagnostic.sql`.
+
+**Wiring re-verified by call site under the ONE RULE:** `runDiagnostics`/`summariseFindings` →
+`DiagnosticPanel`; `DiagnosticPanel` → `ExecutiveDashboardTab` (org) and `SuperAdminSupport`
+(platform); `getOrgDiagnosticSnapshot`/`getPlatformDiagnosticSnapshot` → `DiagnosticPanel`;
+`destinationForScreen` → `DiagnosticPanel`; `importPopulationRows` → `PopulationPanel`;
+`parsePopulationPaste`/`toSampleItems` → `PopulationPanel`. Before this session `node
+scripts/audit-wiring.mjs` reported all of `src/lib/diagnostics.ts`, `src/data/diagnostics.ts` and
+`src/lib/diagnosticNav.ts` as exports with no reachable caller.
+
+
 ## Gates to add on this branch
 
 | Gate | Fails when | Status |
@@ -721,7 +769,40 @@ turning it into a hard CI gate. Do not duplicate it.
 
 ---
 
-## Session verification (2026-10-28, SIRA-model session — most recent)
+## Session verification (2026-10-28, population-rows + self-diagnostic session — most recent)
+
+Re-run in full after wiring the population rows writer and the self-diagnostic surface. Every number
+below is from a gate run in this session, not from memory.
+
+| Gate | Result |
+|---|---|
+| `npx tsc --noEmit` | PASS (exit 0) |
+| `npx vitest run` | PASS — **260 files / 3011 tests** |
+| `npx vite build` | PASS (chunk-size warning only) |
+| `node scripts/check-shrink.mjs` | PASS — 54 files, no >10% shrink |
+| `node scripts/check-tokens.mjs` | PASS — 209 files, 0 violations |
+| `node scripts/check-ui-contract.mjs` | PASS — 48 Appendix A screens |
+| `node scripts/check-feature-register.mjs` | PASS — 128 features: 85 Wired / 20 Inert / 23 Absent |
+| `npm run check-tutorials` | PASS — every tutorial key has a GIF (68 current, 12 stale) |
+| `bash scripts/local-sql-harness-docker.sh` | PASS — migrations applied twice, all SQL tests passed twice (incl. new 119/120) |
+| `src/guards/uiInventory.test.ts` | PASS — the committed inventory equals the generator output byte-for-byte (101 screens) |
+| `npx playwright test` | NOT RUN locally — needs `SUPABASE_URL`/`SUPABASE_SECRET_KEY` (owner credential) |
+
+**Counts vs the locked baseline** (baseline: 106 migrations / 110 SQL tests / 205 vitest files /
+30 Playwright specs / 21 guards):
+
+| Metric | Baseline | Now | Delta |
+|---|---|---|---|
+| Migrations | 106 | 120 | +14 (`0110`-`0120`) |
+| SQL test files | 110 | 121 | +11 |
+| Vitest files | 205 | 260 | +55 |
+| Vitest tests | 2403 | 3011 | +608 |
+| Playwright specs | 30 | 30 | 0 |
+| Guards | 21 | 26 | +5 (G7-G10 + provenance-adjacent) |
+
+
+
+## Session verification (2026-10-28, SIRA-model session — historical)
 
 Re-run in full after the SIRA model editor fix. Every number below is from a gate run in this
 session, not from memory.
