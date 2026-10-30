@@ -1065,17 +1065,35 @@ claiming a hash-lock it cannot keep.
 
 ## AF-16 — Systeligon rule run (S1, S6, S13)
 
-Run the deterministic forensic rules over a locked population, read every finding with the rule id,
-its version, its severity and the exact source rows it flagged, and record the run to the ledger so
-the findings sit inside the report's tamper-evident root. Nothing is generated and nothing is
-guessed: a missing amount is reported as missing, not as zero, and a draft rule is skipped until a
-qualified human releases it.
+Run the deterministic forensic rules over a locked population or the organisation's own
+configuration, read every finding with the rule id, its version, its scope, its severity and the
+exact source rows it flagged, and record the run to the ledger so the findings sit inside the
+report's tamper-evident root. Nothing is generated and nothing is guessed: a missing amount is
+reported as missing, not as zero, a draft rule is skipped until a qualified human releases it, and a
+scope with no input yields no findings rather than an invented one.
+
+The run is sealed with its **scope** (spec §5): the surface offers the scopes the shipped rule base
+covers (population, config, …), and each finding records the scope it was found under, so a
+population finding and a config finding of the same rule can never be conflated in a sealed report.
+
+Below the findings sits the **accepted/declined testing flow and Mode A/B verification** (S3/S4/S5/
+S12, spec §2.2/§2.3/§6): the rows the findings named are the rows that *require* evidence; the
+accepted flow builds exactly those, the declined flow fixes a floor that is a minimum and never a
+ceiling; verification under Mode A (completeness) or Mode B (evidence vs remark) fails closed on an
+open row, a blank remark or a missing piece of evidence, and an override — a row closed despite a
+failed verification and carrying a remark — is carried forward and shown.
 
 - **Route:** the `workbench` inspector window, sub-tab "Rule Run".
-- **Rights:** `perform_work` to run and to record; any member of the org reads.
-- **Data:** `PopulationRow`, `PopulationRecordRead`, `RuleFinding`, `RuleInput`, `RuleRunResult`, `listPopulationRecords`, `listPopulations`, `recordSysteligonFindings`, `runRules`, `systeligonPopulationRules` — through `src/data/*.ts`; components never import the database client (rule M8).
-- **Testids:** `rule-run`, `rule-run-empty`, `rule-run-error`, `rule-run-finding-<i>`, `rule-run-findings`, `rule-run-findings-empty`, `rule-run-loading`, `rule-run-pack-note`, `rule-run-population`, `rule-run-record`, `rule-run-recorded`, `rule-run-rights-note`, `rule-run-run`, `rule-run-skipped`, `rule-run-summary`
-- **States:** loading; no population (`rule-run-empty`); reading rows; running; findings; none flagged (`rule-run-findings-empty`); recorded; error inline.
+- **Rights:** `perform_work` to run, to record, to build the tested set and to verify; any member of
+  the org reads.
+- **Data:** `PopulationRow`, `PopulationRecordRead`, `ConfigSource`, `EvidenceRecord`,
+  `RuleFinding`, `RuleInput`, `RuleRunResult`, `TestedRow`, `RowVerification`, `CarriedOverride`,
+  `listPopulationRecords`, `listPopulations`, `listConfigSources`, `listEvidenceRecords`,
+  `recordSysteligonFindings`, `runRules`, `systeligonRuleLibrary`, `systeligonScopes`,
+  `buildAcceptedTestingSet`, `applyFloor`, `parsePastedBlock`, `verifyRows`, `carriedOverrides` —
+  through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `rule-run`, `rule-run-empty`, `rule-run-error`, `rule-run-finding-<i>`, `rule-run-findings`, `rule-run-findings-empty`, `rule-run-loading`, `rule-run-pack-note`, `rule-run-population`, `rule-run-record`, `rule-run-recorded`, `rule-run-rights-note`, `rule-run-run`, `rule-run-scope`, `rule-run-scope-note`, `rule-run-skipped`, `rule-run-summary`, `flow-verify`, `flow-verify-rights-note`, `flow-verify-error`, `flow-verify-flow`, `flow-verify-floor`, `flow-verify-mode`, `flow-verify-build`, `flow-verify-note`, `flow-verify-paste`, `flow-verify-paste-apply`, `flow-verify-rows`, `flow-verify-row-<i>`, `flow-verify-verify`, `flow-verify-result`, `flow-verify-failed`, `flow-verify-fail-<ref>`, `flow-verify-overrides`
+- **States:** loading; no population (`rule-run-empty`); reading rows; running; findings; none flagged (`rule-run-findings-empty`); recorded; error inline; the flow's empty set, its verified and not-verified counts, and the carried overrides.
 - **Tutorial key:** —
 
 ## AF-12 — Deployment gate (S1)
@@ -1891,8 +1909,9 @@ in the browser; only the public half is registered, and registering retires the 
 - **Testids:** `rule-pack-panel`, `rule-pack-loading`, `rule-pack-load-error`, `rule-pack-error`,
   `rule-pack-notice`, `rule-pack-rights-note`, `rule-pack-key`, `rule-pack-key-id`,
   `rule-pack-key-generate`, `rule-pack-key-register`, `rule-pack-key-fingerprint`,
-  `rule-pack-list-section`, `rule-pack-empty`, `rule-pack-row-<i>`, `rule-pack-draft-<i>`,
-  `rule-pack-released-<i>`, `rule-pack-release-<i>`, `rule-pack-save`, `rule-pack-adhoc`,
+  `rule-pack-list-section`, `rule-pack-empty`, `rule-pack-registry`, `rule-pack-row-<i>`,
+  `rule-pack-draft-<i>`, `rule-pack-released-<i>`, `rule-pack-release-<i>`, `rule-pack-save`,
+  `rule-pack-adhoc`,
   `rule-pack-adhoc-id`, `rule-pack-adhoc-source`, `rule-pack-adhoc-condition`,
   `rule-pack-adhoc-threshold`, `rule-pack-adhoc-severity`, `rule-pack-adhoc-preview`,
   `rule-pack-adhoc-result`, `rule-pack-refusals`, `rule-pack-refusals-empty`, `rule-pack-refusal-list`,

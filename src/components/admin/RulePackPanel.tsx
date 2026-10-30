@@ -9,7 +9,9 @@ import {
   generateSigningKey, signPack, verifyPack, buildAdhocRule, runAdhocRule,
   type RulePackSummary, type RulePackRefusalRow, type CryptoLike, type AdhocRuleSpec,
 } from '../../data/rulePacks';
-import { definePack, releasedRules, systeligonPopulationRules } from '../../lib/systeligon';
+import {
+  definePack, releasedRules, packRules, RuleRegistry, systeligonPopulationRules,
+} from '../../lib/systeligon';
 import { fromHex } from '../../lib/anchoring';
 import type { RulePack } from '../../lib/systeligon';
 import { ENGINE_NAME } from '../../lib/product';
@@ -58,6 +60,23 @@ export const RulePackPanel: React.FC<{ screenId?: string }> = ({ screenId = 'OA-
     source: 'amount', condition: 'gt', threshold: 0, severity: 'medium',
   });
   const [adhocPreview, setAdhocPreview] = useState<string | null>(null);
+
+  /**
+   * The shipped rule base, held in the append-only `RuleRegistry`. The registry is what makes the
+   * engine's rule set provable: it refuses a duplicate `id@version` with a different definition, and
+   * `packRules` assembles the flat run set from it (the same call the engine's run takes). The
+   * registry summary is shown so a rule change is visible as a new version, never a silent edit.
+   */
+  const registry = useMemo(() => {
+    const r = new RuleRegistry();
+    r.registerAll(systeligonPopulationRules);
+    return r;
+  }, []);
+  const registrySummary = useMemo(() => {
+    const history = registry.history();
+    const ids = new Set(history.map((h) => h.id));
+    return { rules: history.length, ids: ids.size, refs: registry.refs() };
+  }, [registry]);
 
   const load = useCallback(async () => {
     setState('loading');
@@ -122,8 +141,13 @@ export const RulePackPanel: React.FC<{ screenId?: string }> = ({ screenId = 'OA-
     try {
       // Only released rules ship in a pack: a draft never runs, so it is not put in the pack the
       // engine runs. `releasedRules` is the engine's own filter, reused here so the two agree.
+      // The run set is assembled by `packRules` over the registry, so the pack ships exactly the
+      // rules the registry holds — the same call the engine's run makes.
+      const shipped = packRules([
+        { name: 'audit-default', version: 1, target: 'population', rules: registry.refs().map((ref) => registry.get(ref.id, ref.version)!) },
+      ]);
       const pack: RulePack = definePack('audit-default', 1, 'population', releasedRules({
-        name: 'audit-default', version: 1, target: 'population', rules: systeligonPopulationRules,
+        name: 'audit-default', version: 1, target: 'population', rules: shipped,
       }));
       const signedAt = new Date().toISOString();
       const signed = await signPack(c, pack, keyId, signedAt, key.privateKey);
@@ -253,6 +277,9 @@ export const RulePackPanel: React.FC<{ screenId?: string }> = ({ screenId = 'OA-
           <section className="space-y-2" data-testid="rule-pack-list-section">
             <div className="flex items-center justify-between">
               <h3 className="text-apple-12 font-medium text-primary uppercase">Packs</h3>
+              <span className="text-apple-11 text-secondary" data-testid="rule-pack-registry">
+                registry holds {registrySummary.rules} rule version(s) across {registrySummary.ids} id(s)
+              </span>
               <button type="button" data-testid="rule-pack-save" disabled={!canEdit || busy === 'save' || !key}
                 onClick={() => void saveShippedPack()}
                 className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-apple-12 font-medium border border-hairline text-primary hover:bg-surface-hover disabled:opacity-50">

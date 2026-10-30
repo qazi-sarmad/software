@@ -63,6 +63,9 @@ export async function findingToClaim(
       { name: 'version', kind: 'number', value: finding.ruleVersion },
       { name: 'kind', kind: 'text', value: finding.kind },
       { name: 'severity', kind: 'text', value: finding.severity },
+      // The scope is part of the claim's facts: a population finding and a document finding of the
+      // same rule must not hash to one claim, or a sealed report could conflate the two scopes.
+      { name: 'scope', kind: 'text', value: finding.scope ?? 'population' },
       { name: 'reason', kind: 'text', value: finding.reason },
       { name: 'refs', kind: 'list', value: [...finding.refs] },
     ],

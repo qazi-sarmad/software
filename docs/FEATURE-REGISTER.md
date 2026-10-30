@@ -288,11 +288,11 @@ this register exists to catch.
 | # | Capability | Status | Evidence / gap | WP |
 |---|---|---|---|---|
 | F127 | Rule schema, runner and result shape (S1) | `Wired` | `src/lib/systeligon/{types,runner}.ts` — `runRules` is pure, total and stably ordered, and turns a rule that throws into a finding against its own identity. **Wired** by the rule-run screen (`RuleRunTab.tsx`, workbench sub-tab "Rule Run", contract AF-16): it evaluates `runRules` over a population's rows and records the run via `recordSysteligonFindings` | S1 |
-| F128 | Rule versioning and packs (S1) | `Inert` | `src/lib/systeligon/{versioning,packs}.ts` — `RuleRegistry`, `definePack`, `releasedRules`, `packRules`; append-only versions, duplicate `id@version` collapses. `definePack`/`releasedRules` are now called by `RulePackPanel.tsx` (a pack is built from the released rules); `RuleRegistry` and `packRules` still have **no screen caller** | S1 |
+| F128 | Rule versioning and packs (S1) | `Wired` | `src/lib/systeligon/{versioning,packs}.ts` — `RuleRegistry`, `definePack`, `releasedRules`, `packRules`; append-only versions, duplicate `id@version` collapses. All four are called by `RulePackPanel.tsx` (OA-33): the registry holds the shipped base (`registry.registerAll(systeligonPopulationRules)`, `registry.history()` renders the append-only summary) and `packRules` assembles the flat run set the pack signs. Proved by `RulePackPanel.test.tsx` ('reports the shipped rule base from the append-only RuleRegistry', 'saves the shipped pack assembled by packRules over the registry') | S1 |
 | F129 | Numeric forensic rules (S6) | `Wired` | `src/lib/systeligon/rules/{numeric,threshold}.ts` — 11 rules wrapping the tested `analyticsEngine` checks (Benford, duplicates, near-duplicates, sequence gaps, z-score and IQR outliers, round numbers, out-of-hours, SoD, missing attributes, just-below-threshold) with provenance. Assembled as `systeligonPopulationRules` (`library.ts`) and **run by the rule-run screen** (`RuleRunTab.tsx`) | S6 |
 | F130 | Structured document extraction, tier 3 (S7) | `Inert` | `src/lib/systeligon/extract/structured.ts` — `parseDocumentStructure`, `hasSignature`, `FIELD_PARSERS`, reporting its own coverage. **No screen calls `parseDocumentStructure`**; mounting it is L3 | S7 |
 | F131 | OCR seam, tier 2 (S7) | `Inert` | `src/lib/systeligon/extract/ocr.ts` — `needsOcr`, `runOcr`, a lazy bundled engine that **refuses a remote engine** so nothing leaves the tenant. **No screen calls `runOcr`**; the bundled engine is a build artifact (L3) | S7 |
-| F132 | Accepted/declined flows and Mode A/B verification (S3/S4/S5/S12) | `Inert` | `src/lib/systeligon/flows.ts` — `buildAcceptedTestingSet`, `applyFloor` (a minimum, never a ceiling), `parsePastedBlock`, `verifyRows`, `carriedOverrides`; pure, time is an argument. **No screen calls them** | S3/S4/S5/S12 |
+| F132 | Accepted/declined flows and Mode A/B verification (S3/S4/S5/S12) | `Wired` | `src/lib/systeligon/flows.ts` — `buildAcceptedTestingSet`, `applyFloor` (a minimum, never a ceiling), `parsePastedBlock`, `verifyRows`, `carriedOverrides`; pure, time is an argument. Called by `FlowVerifyPanel.tsx` (the accepted/declined flow and Mode A/B on the rule-run screen, AF-16): the rows a run's findings named are the required set, the declined flow fixes a floor, and an override closed despite a failed verification is carried forward. Proved by `FlowVerifyPanel.test.tsx` (9) | S3/S4/S5/S12 |
 | F133 | Structural document rules (S8) | `Inert` | `src/lib/systeligon/rules/documents.ts` — contract signature, approval date, no date after the report date, absent follow-through. **No screen calls `documentRules`** | S8 |
 | F134 | Pattern rules (S9) | `Inert` | `src/lib/systeligon/rules/patterns.ts` — hardcoded credentials, `SELECT *`, external call without error handling, unbounded loop, disabled check, hardcoded environment; each finding cites its line. **No screen calls `patternRules`** | S9 |
 | F135 | Action-item register from minutes (S14) | `Inert` | `src/lib/systeligon/minutes.ts` — `buildActionRegister`, `itemHistory`; carried / vanished / closed-no-evidence / reopened / closed-before-raised / closed-by-non-owner / owner-due-changed / due-passed. **No screen calls `buildActionRegister`** | S14 |
@@ -313,8 +313,8 @@ this register exists to catch.
 
 | Status | Count |
 |---|---|
-| `Wired` | 94 |
-| `Inert` | 27 |
+| `Wired` | 96 |
+| `Inert` | 25 |
 | `Absent` | 24 |
 | **Total** | **145** |
 
@@ -322,7 +322,7 @@ this register exists to catch.
 reported, because Phases 1 and 2 of the scale-harden build closed the whole foundation, the S17-S20
 work packages closed the evidence-bytes and SIRA-write-path gaps, T7 closed the tamper alarm and
 the ledger verification, and T3/T4/T5 closed the portable attestation package, the third-party
-verifier and the attestation screen. The picture now: **94 wired, 27 inert, 17 absent.** The remaining
+verifier and the attestation screen. The picture now: **96 wired, 25 inert, 24 absent.** The remaining
 `Inert` rows are the genuine, still-open unwired features — the monitor runtime, the alert persistence
 and delivery, the connector adapters, and (from §13b) the Systeligon engine's own surfaces. Every one
 of those is a defect, and every one looks like a working feature in the UI.
