@@ -50,7 +50,8 @@ const TARGET_SETTINGS = {
     scale_pop_rows: 1000000,
     scale_ledger: 5000000,
     scale_evidence: 100000,
-    scale_users_per_org: 13, // 8 * 313 orgs * 13 users ~= 32,552; --users-per-org overrides
+    // §1 "50,000 users": Shape B makes 8*313 = 2,504 orgs, so 20 users each reaches 50,080.
+    scale_users_per_org: 20,
   },
 };
 
