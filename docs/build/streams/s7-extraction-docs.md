@@ -49,6 +49,17 @@ F136 (policy/procedure comparison screen), F92 (guided zero-to-first-report wiza
 | F133 structural document rules (S8) | Inert | Wired | `DocumentReviewPanel.tsx` runs the `structural` review option, whose `documentRules` reach the engine via `src/lib/systeligon/extract/reviewOptions.ts` (mounted OA-36) | `DocumentReviewPanel.test.tsx` ('runs the structural document rules when that option is selected') | — | _this commit_ |
 | F92 guided zero-to-first-report wizard | Absent | Absent (out of S7 scope) | — the mount points give it no slot; it is SA-01's (S4) surface | — | — | — |
 
+## Branch counts (locked, this session)
+
+- vitest: **289 files / 3,329 tests green** (`npx vitest run`).
+- SQL harness (`bash scripts/local-sql-harness-docker.sh`): green — "migrations applied twice /
+  all SQL tests passed twice"; **130 migrations / 136 SQL test files**.
+- Guards: **30** (`src/guards/*.test.ts`).
+- `tsc --noEmit` clean.
+- Gates PASS: check-wiring, check-dead-code, check-ui-contract, check-two-sources, check-tokens,
+  check-shrink, check-config-effect, check-rpc-parity, check-function-deploy-list, check-tutorials.
+- Gate RED: `check-feature-register` (9 rule-(6) problems) — integrator's file, see the blocker above.
+
 ### Blocker for the integrator (owner action)
 
 `node scripts/check-feature-register.mjs` is RED with 9 problems, all rule (6): the register rows
