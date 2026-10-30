@@ -52,7 +52,7 @@ const CONFIG_TABLES = [
   'entity_approval_settings', 'export_retention_settings', 'invite_cap_settings',
   'org_lifecycle_settings', 'org_settings_extra', 'pattern_settings', 'plan_approval_settings',
   'tenant_settings', 'workflow_settings', 'certificate_config', 'report_templates',
-  'notification_templates', 'methodology_scales', 'upload_limits',
+  'notification_templates', 'methodology_scales', 'upload_limits', 'archived_file_role',
 ];
 
 async function loadSchema() {

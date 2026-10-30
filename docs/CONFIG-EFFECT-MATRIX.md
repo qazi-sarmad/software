@@ -37,6 +37,9 @@ eight fields Phase 3.6 fixed.
 | `change_control_settings` | 4 | 4 | 0 |
 | `report_templates` | 1 | 1 | 0 |
 | `notification_templates` | 1 | 1 | 0 |
+| `archived_file_role` | 3 | 3 | 0 |
+| `population_archives.custodian_role_slug` | 1 | 1 | 0 |
+| `engagement_file_owners` | 1 | 1 | 0 |
 
 The eight fields Phase 3.6 fixed (previously stored and echoed, read by no decision) are marked
 **FIXED 3.6** below. Every other row was already enforced before Phase 3.6; the reader named is the
@@ -116,6 +119,19 @@ call site that proves it.
 | `pattern_settings.severities` | The severities included in the corpus | `pattern_findings` | ENFORCED | `77_time_travel_patterns.sql` |
 | `pattern_settings.visibility_right` | The right required to read the pattern corpus | `pattern_findings` | **FIXED 3.6** | `110_phase3_config_effects.sql` §3 |
 | `methodology_scales` | The scoring scale points used by SIRA | `sira_compute` | ENFORCED | `91_org_governance_settings.sql`; `26_sira_model.sql` |
+
+## 5b. File ownership and archived-file custody (owner 2026-10-30)
+
+Two invariants: no audit file exists or is sealed without an owner, and an archived file has a
+permanently configurable custodian role. Neither is "stored and echoed" — the reader is a decision the
+product makes, and the proving test exercises it.
+
+| Table.field | Effect | Reader | Status | Proving test |
+|---|---|---|---|---|
+| `archived_file_role.role_slug` | The role accountable for every archived file; an archive is stamped with the role in force when it is created | `archived_file_role_effective` (read by `archive_population`) | ENFORCED | `147_archived_file_role.sql` §3 |
+| `archived_file_role.version` / `archived_file_role.reason` | The version and reason of the custodian choice, both appended to the ledger on every change | `archived_file_role_set` | ENFORCED | `147_archived_file_role.sql` §2 |
+| `population_archives.custodian_role_slug` | The custodian role an archive carries, reported by the custodian reader | `archived_file_custodians` | ENFORCED | `147_archived_file_role.sql` §3 |
+| `engagement_file_owners` | The accountable person for an existing audit file; an unowned file is refused at seal | `seal_engagement` | ENFORCED | `146_file_owner_invariant.sql` |
 
 ## 6. Hidden / deferred (offered nowhere, recorded honestly)
 
