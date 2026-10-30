@@ -2,27 +2,14 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { hasRight } from '../../lib/rights';
 import {
-  getArchivedFileRole, setArchivedFileRole, listArchivedFileCustodians,
-  type ArchivedFileCustodianRow, type ArchivedFileRole,
+  getArchivedFileRole, setArchivedFileRole, listArchivedFileCustodians, listCustodianRoles,
+  type ArchivedFileCustodianRow, type ArchivedFileRole, type CustodianRoleOption,
 } from '../../data/fileOwnership';
 import { InlineError } from '../common/InlineError';
 import { Select } from '../common/Select';
 import { Check, Lock, ShieldCheck, Archive } from '../common/Icons';
 
 type LoadState = 'loading' | 'ready' | 'error';
-
-/** The seeded roles a tenant may choose as the custodian of an archived file. */
-const CUSTODIAN_ROLES: { slug: string; name: string; why: string }[] = [
-  { slug: 'cia', name: 'CIA', why: 'The accountable head of the function. The default.' },
-  { slug: 'org_admin', name: 'Org Admin', why: 'The organisation administrator.' },
-  { slug: 'audit_manager', name: 'Audit Manager', why: 'The manager accountable for the engagement.' },
-  { slug: 'reviewer', name: 'Reviewer', why: 'The independent reviewer.' },
-  { slug: 'observer', name: 'Observer', why: 'A read-only holder of the record.' },
-];
-
-/** A stable, human label for a role slug, falling back to the slug. */
-const roleLabel = (slug: string) =>
-  CUSTODIAN_ROLES.find((r) => r.slug === slug)?.name ?? slug;
 
 /**
  * OA-41 — archived-file custodian role (owner 2026-10-30).
@@ -44,6 +31,7 @@ export const ArchivedFileRolePanel: React.FC<{ screenId?: string }> = ({ screenI
   const [loadError, setLoadError] = useState('');
   const [role, setRole] = useState<ArchivedFileRole | null>(null);
   const [archives, setArchives] = useState<ArchivedFileCustodianRow[]>([]);
+  const [roles, setRoles] = useState<CustodianRoleOption[]>([]);
   const [draft, setDraft] = useState<string>('');
   const [reason, setReason] = useState('');
   const [notice, setNotice] = useState('');
@@ -54,10 +42,13 @@ export const ArchivedFileRolePanel: React.FC<{ screenId?: string }> = ({ screenI
     setState('loading');
     setLoadError('');
     try {
-      const [r, a] = await Promise.all([getArchivedFileRole(), listArchivedFileCustodians()]);
+      const [r, a, ro] = await Promise.all([
+        getArchivedFileRole(), listArchivedFileCustodians(), listCustodianRoles(),
+      ]);
       setRole(r);
       setArchives(a);
-      setDraft(r?.roleSlug ?? 'cia');
+      setRoles(ro);
+      setDraft(r?.roleSlug ?? ro[0]?.slug ?? 'cia');
       setState('ready');
     } catch (err) {
       setLoadError(err instanceof Error ? err.message : 'Could not load the custodian configuration.');
@@ -66,6 +57,11 @@ export const ArchivedFileRolePanel: React.FC<{ screenId?: string }> = ({ screenI
   }, []);
 
   useEffect(() => { void load(); }, [load]);
+
+  const roleLabel = useCallback(
+    (slug: string) => roles.find((r) => r.slug === slug)?.name ?? slug,
+    [roles],
+  );
 
   const changed = useMemo(
     () => Boolean(role) && draft !== role?.roleSlug,
@@ -90,7 +86,7 @@ export const ArchivedFileRolePanel: React.FC<{ screenId?: string }> = ({ screenI
     } finally {
       setBusy(false);
     }
-  }, [canManage, changed, draft, reason, reasonTooShort, load]);
+  }, [canManage, changed, draft, reason, reasonTooShort, load, roleLabel]);
 
   return (
     <section data-testid="archived-role-panel" data-screen={screenId} className="space-y-5">
@@ -165,7 +161,7 @@ export const ArchivedFileRolePanel: React.FC<{ screenId?: string }> = ({ screenI
                     ariaLabel="Custodian role for archived files"
                     value={draft}
                     onChange={setDraft}
-                    options={CUSTODIAN_ROLES.map((r) => ({ value: r.slug, label: r.name, hint: r.why }))}
+                    options={roles.map((r) => ({ value: r.slug, label: r.name, hint: r.why }))}
                   />
                 </label>
                 <label className="space-y-1">
@@ -183,7 +179,7 @@ export const ArchivedFileRolePanel: React.FC<{ screenId?: string }> = ({ screenI
                 </label>
               </div>
               <p data-testid="archived-role-why" className="text-apple-12 text-secondary">
-                {CUSTODIAN_ROLES.find((r) => r.slug === draft)?.why ?? ''}
+                {roles.find((r) => r.slug === draft)?.why ?? ''}
               </p>
               <div className="flex items-center justify-between gap-3">
                 <p className="text-apple-12 text-secondary">

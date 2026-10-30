@@ -11,6 +11,35 @@
  * right the caller needs (manage_engagements to name an owner, manage_roles to change the custodian).
  */
 import { getClient } from './db';
+import { listRoles } from './admin';
+
+export interface CustodianRoleOption {
+  slug: string;
+  name: string;
+  /** A short, plain description for the seeded roles; empty for a tenant's own role. */
+  why: string;
+}
+
+/** A plain description for the roles every tenant is seeded with. */
+const SEEDED_ROLE_WHY: Record<string, string> = {
+  cia: 'The accountable head of the function. The platform default.',
+  org_admin: 'The organisation administrator.',
+  audit_manager: 'The manager accountable for the engagement.',
+  reviewer: 'The independent reviewer.',
+  preparer: 'The person who prepares the work.',
+  observer: 'A read-only holder of the record.',
+  auditee: 'The audited party.',
+};
+
+/**
+ * The roles this organisation may choose as the custodian of an archived file. The options are the
+ * organisation's REAL roles, read from the roles table, so an offered role is always one the
+ * database will accept — never a hard-coded list that a refusal would contradict.
+ */
+export async function listCustodianRoles(): Promise<CustodianRoleOption[]> {
+  const roles = await listRoles();
+  return roles.map((r) => ({ slug: r.slug, name: r.name, why: SEEDED_ROLE_WHY[r.slug] ?? '' }));
+}
 
 export interface FileOwnerAuditRow {
   engagementId: string;

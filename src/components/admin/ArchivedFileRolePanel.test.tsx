@@ -5,13 +5,23 @@ import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 const getRoleFn = vi.fn();
 const setRoleFn = vi.fn();
 const listCustodiansFn = vi.fn();
+const listRolesFn = vi.fn();
 
 vi.mock('../../data/fileOwnership', () => ({
   getArchivedFileRole: () => getRoleFn(),
   setArchivedFileRole: (...a: unknown[]) => setRoleFn(...a),
   listArchivedFileCustodians: () => listCustodiansFn(),
+  listCustodianRoles: () => listRolesFn(),
   listFileOwnerAudit: () => Promise.resolve([]),
 }));
+
+const orgRoles = [
+  { slug: 'cia', name: 'CIA', why: 'The accountable head of the function. The platform default.' },
+  { slug: 'org_admin', name: 'Org Admin', why: 'The organisation administrator.' },
+  { slug: 'audit_manager', name: 'Audit Manager', why: 'The manager accountable for the engagement.' },
+  { slug: 'reviewer', name: 'Reviewer', why: 'The independent reviewer.' },
+  { slug: 'forensic_lead', name: 'Forensic Lead', why: '' },
+];
 
 const userRef = { current: { role: 'cia', rights: { manage_roles: true }, orgId: 'org-1' } };
 vi.mock('../../context/AppContext', () => ({ useApp: () => ({ currentUser: userRef.current }) }));
@@ -32,14 +42,25 @@ describe('ArchivedFileRolePanel (OA-41)', () => {
     userRef.current = admin as never;
     getRoleFn.mockResolvedValue(defaultRole);
     listCustodiansFn.mockResolvedValue([]);
+    listRolesFn.mockResolvedValue(orgRoles);
     setRoleFn.mockResolvedValue(1);
   });
 
   it('shows a loading state while the configuration is read', () => {
     getRoleFn.mockReturnValue(new Promise(() => {}));
     listCustodiansFn.mockReturnValue(new Promise(() => {}));
+    listRolesFn.mockReturnValue(new Promise(() => {}));
     render(<ArchivedFileRolePanel />);
     expect(screen.getByTestId('archived-role-loading')).toBeTruthy();
+  });
+
+  it('offers the organisation\'s real roles, including its own, not a hard-coded list', async () => {
+    render(<ArchivedFileRolePanel />);
+    await waitFor(() => expect(screen.getByTestId('archived-role-select')).toBeTruthy());
+    fireEvent.click(screen.getByTestId('archived-role-select'));
+    await waitFor(() => expect(screen.getByText('Forensic Lead')).toBeTruthy());
+    expect(screen.getAllByText('CIA').length).toBeGreaterThan(0);
+    expect(screen.getByText('Org Admin')).toBeTruthy();
   });
 
   it('shows the custodian role in force and the platform default', async () => {
