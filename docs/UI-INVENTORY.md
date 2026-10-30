@@ -958,7 +958,7 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 - **Purpose:** The configuration surface for the signed rule packs the forensic engine runs. List the packs this
 - **Route / location:** the Org Admin control panel, tab "Rule packs" (`org-control-tab-packs`).
 - **Rights required:** `edit_config` to generate a key, register it, save a pack and release one; any member of the org reads the pack list and the refusal log.
-- **Data functions (`src/data/*.ts`):** `AdhocRuleSpec`, `RulePack`, `SysteligonRule`, `definePack`, `generateSigningKey`, `justBelowThreshold`, `listRulePackRefusals`, `listRulePacks`, `registerSigningKey`, `releaseRulePack`, `runAdhocRule`, `saveSignedRulePack`
+- **Data functions (`src/data/*.ts`):** `AdhocRuleSpec`, `RulePack`, `SysteligonRule`, `definePack`, `generateSigningKey`, `justBelowThreshold`, `listRulePackRefusals`, `listRulePacks`, `registerSigningKey`, `releaseRulePack`, `runAdhocRule`, `saveSignedRulePackArtifact`
 - **Data modules:** `src/data/rulePacks.ts`
 - **RPCs reachable via those modules:** `rule_pack_list`, `rule_pack_refusals_list`, `rule_pack_released_rules`
 - **Tables reachable via those modules:** none
