@@ -46,6 +46,8 @@ F136 (policy/procedure comparison screen), F92 (guided zero-to-first-report wiza
 | F131 OCR seam tier 2 | Inert | Wired | `DocumentReviewPanel.tsx` calls `needsOcr`/`runOcr` (mounted OA-36) | `DocumentReviewPanel.test.tsx` | — | _this commit_ |
 | F135 minutes action register | Inert | Wired | `DocumentReviewPanel.tsx` calls `buildActionRegister` (mounted OA-36) | `DocumentReviewPanel.test.tsx` | — | _this commit_ |
 | F136 policy comparison | Inert | Wired | `DocumentReviewPanel.tsx` calls `compareDocuments` (mounted OA-36) | `DocumentReviewPanel.test.tsx` | — | _this commit_ |
+| F133 structural document rules (S8) | Inert | Wired | `DocumentReviewPanel.tsx` runs the `structural` review option, whose `documentRules` reach the engine via `src/lib/systeligon/extract/reviewOptions.ts` (mounted OA-36) | `DocumentReviewPanel.test.tsx` ('runs the structural document rules when that option is selected') | — | _this commit_ |
+| F92 guided zero-to-first-report wizard | Absent | Absent (out of S7 scope) | — the mount points give it no slot; it is SA-01's (S4) surface | — | — | — |
 
 ### Blocker for the integrator (owner action)
 
@@ -58,6 +60,13 @@ and the test `src/components/documents/DocumentReviewPanel.test.tsx`, then updat
 gate was already red before this session's commits (proved: `git stash -u` → PASS; with the untracked
 S7 panel → FAIL), so the red is the S7 stream's own unmounted work, now mounted, awaiting the register
 row move.
+
+F133 (structural document rules) is **also** stale-Inert but the gate does not flag it: the screen
+reaches `documentRules` through `src/lib/systeligon/extract/reviewOptions.ts`, and the gate's rule (6)
+only inspects UI files for a direct reference. The row should move to `Wired` on the same evidence —
+the new panel test `runs the structural document rules when that option is selected` proves a
+`doc.absent_follow_through` finding reaches the screen.
+
 
 ## Scale
 - `src/lib/systeligon/extract/documentScale.test.ts` — the document-scope run at volume (SCALE-PROGRAMME

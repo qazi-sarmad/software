@@ -149,6 +149,24 @@ describe('OA-36 document review', () => {
     expect(screen.getByTestId('policydiff')).toBeTruthy();
   });
 
+  it('runs the structural document rules when that option is selected', async () => {
+    // A minutes document whose action item never reappears: the structural document rules
+    // (`documentRules`) include the absent-follow-through check, so this run must report it.
+    listFiles.mockResolvedValue([{ id: 'f1', filename: 'min.docx' }]);
+    loadText.mockResolvedValue({ ok: true, text: MINUTES, status: 'done' });
+    render(<DocumentReviewPanel engagementId="e1" />);
+
+    await waitFor(() => expect(screen.getByTestId('docreview-options')).toBeTruthy());
+    fireEvent.click(screen.getByTestId('docreview-option-toggle-all')); // clear all
+    fireEvent.click(screen.getByTestId('docreview-option-structural'));
+    fireEvent.change(screen.getByTestId('docreview-declared-0'), { target: { value: 'minutes' } });
+    fireEvent.click(screen.getByTestId('docreview-run'));
+
+    await waitFor(() => expect(screen.getByTestId('docreview-findings')).toBeTruthy());
+    const rows = screen.getAllByTestId(/^docreview-finding-/);
+    expect(rows.some((r) => r.textContent?.includes('doc.absent_follow_through'))).toBe(true);
+  });
+
   it('records the run’s findings to the ledger through the data module', async () => {
     listFiles.mockResolvedValue([{ id: 'f1', filename: 'min.docx' }]);
     loadText.mockResolvedValue({ ok: true, text: REGULATION, status: 'done' });
