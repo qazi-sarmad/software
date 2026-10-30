@@ -241,3 +241,49 @@ begin
 end $$;
 
 select provio_test.as_owner();
+
+-- ===========================================================================
+-- 11. D7 at volume (SCALE-PROGRAMME §5 flow 7): a forensic run over a large finding batch records
+--     each finding exactly once, a replay records nothing new, and the ledger chain still verifies.
+--     The batch size is the GUC `provio_test.scale_factor` (default 1), so the CI harness stays fast
+--     while a dedicated scale run reaches the target; the STRUCTURE is the same at any factor.
+-- ===========================================================================
+select provio_test.as_user('10000000-0000-0000-0000-0000000000a1', 'a0000000-0000-0000-0000-000000000001', 'cia');
+do $$
+declare
+  v_org uuid := 'a0000000-0000-0000-0000-000000000001';
+  v_batch int := 200 * coalesce(nullif(current_setting('provio_test.scale_factor', true), ''), '1')::int;
+  v_findings jsonb := '[]'::jsonb;
+  v_added int;
+  v_i int;
+  v_before bigint;
+begin
+  -- Section 7 already recorded one forensic finding, so the batch is measured against that baseline.
+  select count(*) into v_before from ledger_entries where org_id = v_org and action = 'forensic_finding';
+  -- A batch of distinct forensic rules, each naming its rule id and version. No clock, no random:
+  -- the rule id is a pure function of the index.
+  for v_i in 1..v_batch loop
+    v_findings := v_findings || jsonb_build_object(
+      'ruleId', 'forensic.scale.' || v_i, 'ruleVersion', 1, 'checkId', 'duplicates',
+      'flaggedCount', v_i, 'rowRefs', jsonb_build_array(v_i), 'source', 'ISA 530 — population completeness',
+      'reason', format('%s rows matched', v_i));
+  end loop;
+
+  v_added := public.forensic_finding_record(v_org, null, null, '2026-10-30T00:00:00.000Z', v_findings);
+  perform provio_test.assert_eq(v_added, v_batch,
+    format('D7: the run over %s findings records every one exactly once', v_batch));
+  perform provio_test.assert_eq(
+    (select count(*) from ledger_entries where org_id = v_org and action = 'forensic_finding'),
+    v_before + v_batch, 'D7: the ledger holds exactly one entry per finding, no partial write');
+
+  -- A replay of the identical run at the same instant adds nothing (idempotent at volume).
+  v_added := public.forensic_finding_record(v_org, null, null, '2026-10-30T00:00:00.000Z', v_findings);
+  perform provio_test.assert_eq(v_added, 0, 'D7: replaying the same run at the same instant adds nothing');
+  perform provio_test.assert_eq(
+    (select count(*) from ledger_entries where org_id = v_org and action = 'forensic_finding'),
+    v_before + v_batch, 'D7: the entry count is unchanged on the replay');
+
+  perform provio_test.assert_eq(public.verify_ledger(v_org), null::bigint,
+    'D7: the ledger chain verifies over the whole batch');
+end $$;
+select provio_test.as_owner();

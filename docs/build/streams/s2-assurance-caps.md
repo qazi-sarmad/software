@@ -61,3 +61,10 @@ F124 (D8 policy-to-control gap analysis), F125 (D9 assurance-over-assurance).
 - Trap fixed: `/**` inside a `--` SQL comment breaks `check-dead-code`'s comment stripper
   (`/*[\s\S]*?\*/` swallows the rest of the concatenated migrations). Never write `/*` in a migration
   comment.
+- Scale (SCALE-PROGRAMME §5 flow 7): `src/lib/assurance/scale.test.ts` runs the whole D7 forensic pack
+  over a deterministic 1,000,000-row population and proves the sealed result (rule id, version,
+  flagged count, flagged rows) is byte-identical across two runs, in bounded time; the pack is not
+  silently dropped at volume (all 11 rules run). `supabase/tests/141_assurance_capabilities.sql` §11
+  runs a finding batch sized by the GUC `provio_test.scale_factor` (default 1), proves every finding
+  records exactly once, a replay at the same instant records nothing, and the ledger chain still
+  verifies. F123 stays `Wired` — this is the scale evidence, not a new row.
