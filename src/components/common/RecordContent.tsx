@@ -32,6 +32,8 @@ const GlobalSearchPanel = lazy(() => import('../documents/GlobalSearchPanel').th
 const AdhocReviewPanel = lazy(() => import('../documents/AdhocReviewPanel').then((m) => ({ default: m.AdhocReviewPanel })));
 const StandardsView = lazy(() => import('../explain/StandardsView').then((m) => ({ default: m.StandardsView })));
 const AssuranceCapabilitiesPanel = lazy(() => import('../assurance/AssuranceCapabilitiesPanel').then((m) => ({ default: m.AssuranceCapabilitiesPanel })));
+const ClientClassificationPanel = lazy(() => import('../universe/ClientClassificationPanel').then((m) => ({ default: m.ClientClassificationPanel })));
+const RiskLibraryPanel = lazy(() => import('../sira/RiskLibraryPanel').then((m) => ({ default: m.RiskLibraryPanel })));
 
 export const INSPECTOR_TITLES: Record<InspectorType, string> = {
   observation: 'Audit Observation & 5C Analysis',
@@ -60,6 +62,8 @@ export const INSPECTOR_TITLES: Record<InspectorType, string> = {
   global_search: 'Search all documents',
   adhoc_review: 'Build an ad-hoc rule',
   assurance_caps: 'Assurance capabilities',
+  classification: 'Client classification',
+  risk_library: 'Risk library & dynamic assessment',
   standards: 'IIA Standards',
 };
 
@@ -142,6 +146,10 @@ export const RecordContent: React.FC<RecordContentProps> = ({ type, data, onClos
           return <AdhocReviewPanel />;
         case 'assurance_caps':
           return <AssuranceCapabilitiesPanel />;
+        case 'classification':
+          return <ClientClassificationPanel />;
+        case 'risk_library':
+          return <RiskLibraryPanel />;
         case 'standards':
           return <StandardsView screenId="OA-19" />;
         default:

@@ -129,6 +129,18 @@ begin
       -- the immutability guarantee is unaffected; the platform signing key likewise accumulates.
       truncate standards_packs;
       delete from signing_keys where scope = 'platform';
+      -- S3 (0149). standards_library / standards_library_versions / risk_derivations are platform
+      -- catalogues with no FK to orgs (the standards_packs precedent), so `truncate orgs cascade`
+      -- does not reach their org-scoped rows. Clear the org rows; keep the platform rows (org_id null)
+      -- the migration seeds, so every run starts from the same state (M5).
+      delete from standards_library where org_id is not null;
+      delete from standards_library_versions where org_id is not null;
+      delete from risk_derivations where org_id is not null;
+      -- S3 (0151). The D15 dynamic-assessment tables carry org_id and are reached by the orgs cascade
+      -- only when they have an FK to orgs; clear them explicitly so a reused database starts clean.
+      delete from erm_theme_map where org_id is not null;
+      delete from erm_kri where org_id is not null;
+      delete from plan_change_proposals where org_id is not null;
       perform pg_advisory_unlock(hashtext('provio_test.seed'));
       return;
     exception when deadlock_detected or lock_not_available then

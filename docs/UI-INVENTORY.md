@@ -1061,6 +1061,24 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
   named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
 
+### `OA-37` — client classification and the standards library (S3: D10)
+
+- **Purpose:** The screen surface for the C1–C8 classification of docs/PAKISTAN-ASSURANCE-REGIMES.md and the
+- **Route / location:** the audit-universe surface (inspector `classification`; also reachable from the command palette action "Client classification").
+- **Rights required:** `edit_config` to set the classification, configure the library and derive risks; a principal without it sees a read-only notice and disabled actions.
+- **Data functions (`src/data/*.ts`):** `CLASSIFICATIONS`, `classification_set`, `classifyClient`, `deriveRisks`, `listClassificationObligations`, `listDerivedRisks`, `listStandards`, `obligationsFor`, `readClassification`, `risk_library_derive`, `selectableDisciplines`, `setClassification`, `standards_update_scope`, `updateStandard`
+- **Data modules:** `src/data/risk.ts`
+- **RPCs reachable via those modules:** `risk_factor_write`, `risk_library_derive`
+- **Tables reachable via those modules:** `classification_obligations`, `erm_kri`, `erm_theme_map`, `org_classification`, `plan_change_proposals`, `risks_library`, `sira_cycles`, `sira_scores`, `standards_library`
+- **Testids (32):** `classification-panel`, `classification-loading`, `classification-error`, `classification-empty`, `classification-current`, `classification-version`, `classification-regulator`, `classification-ia`, `classification-icfr`, `classification-numbering`, `classification-disciplines`, `classification-frameworks`, `classification-artifacts`, `classification-obligations`, `classification-obligation-<id>`, `classification-set`, `classification-pick`, `classification-islamic`, `classification-it`, `classification-save`, `classification-standards`, `classification-standard-<key>`, `classification-standard-scope-<key>`, `classification-standard-org-<key>`, `classification-standard-platform-<key>`, `classification-standard-all-<key>`, `classification-derive`, `classification-derive-run`, `classification-derived-count`, `classification-derived-empty`, `classification-notice`, `classification-denied`
+- **Explain ids (0):** — (no explain affordance)
+- **IIA standards addressed (0):** —
+- **Drilldown targets (0):** — (no aggregate)
+- **States:** denied (no `edit_config`); empty (no classification set); ready (the current classification, its obligations and the library); a named refusal from a writer, surfaced not swallowed; an error reading the classification.
+- **Tutorial key:** — (no key)
+- **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
+  named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
+
 ## Engagement lifecycle
 
 ### `WK-08` — escalation cards and proposals (S6)
@@ -1523,9 +1541,9 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 - **Route / location:** The `sira_cycles` inspector window.
 - **Rights required:** `manage_engagements` to create/publish/endorse/score; `review_and_approve` to decide an emergent risk and to accept.
 - **Data functions (`src/data/*.ts`):** `carryForwardPack`, `createSiraCycle`, `decideEmergentRisk`, `decideSiraAcceptance`, `emergentRiskIsValid`, `endorseSiraCycle`, `listCarryForward`, `listCycles`, `listEmergentRisks`, `listRisks`, `listScores`, `previewScore`, `proposeEmergentRisks`, `publishSiraCycle`, `recordSiraScore`, `remindSiraAcceptance`, `scoreMatrix`, `seedNextCycle`, `siraAcceptanceState`, `siraModelSnapshot`, `siraPublishBlock`, `submitEmergentRisk`, `summariseCycle`, `validateFactorValues`
-- **Data modules:** `src/data/sira.ts`
-- **RPCs reachable via those modules:** `propose_emergent_risks`, `remind_sira_acceptance`, `seed_sira_next_cycle`, `sira_acceptance_state`, `sira_carry_forward_pack`, `sira_model_snapshot`, `sira_publish_block`
-- **Tables reachable via those modules:** `risks_library`, `sira_carry_forward`, `sira_cycles`, `sira_emergent_risks`, `sira_scores`
+- **Data modules:** `src/data/risk.ts`, `src/data/sira.ts`
+- **RPCs reachable via those modules:** `propose_emergent_risks`, `remind_sira_acceptance`, `risk_factor_write`, `risk_library_derive`, `seed_sira_next_cycle`, `sira_acceptance_state`, `sira_carry_forward_pack`, `sira_model_snapshot`, `sira_publish_block`
+- **Tables reachable via those modules:** `classification_obligations`, `erm_kri`, `erm_theme_map`, `org_classification`, `plan_change_proposals`, `risks_library`, `sira_carry_forward`, `sira_cycles`, `sira_emergent_risks`, `sira_scores`, `standards_library`
 - **Testids (28):** `emergent-empty`, `emergent-risks`, `emergent-submit`, `emergent-submit-description`, `emergent-submit-locked`, `emergent-submit-title`, `sira-carry-forward-chain`, `sira-carry-forward-`, `sira-create-cycle`, `sira-cycle-panel`, `sira-cycles`, `sira-cycles-empty`, `sira-cycles-inspector`, `sira-cycles-unscoped`, `sira-pack-`, `sira-record-score`, `sira-remind`, `sira-score-entity`, `sira-score-list`, `sira-score-preview`, `sira-score-risk`, `sira-scoring-frozen`, `sira-scoring-locked`, `sira-scoring-no-cycle`, `sira-scoring-no-model`, `sira-scoring-panel`, `sira-scoring-summary`, `sira-seed-`
 - **Explain ids (0):** — (no explain affordance)
 - **IIA standards addressed (0):** —
@@ -1931,6 +1949,24 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
   named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
 
+### `SR-04` — risk library and dynamic risk assessment (S3: D14 / D15)
+
+- **Purpose:** The screen surface for the D14 auto-adjusted risk factors and the D15 dynamic risk assessment
+- **Route / location:** the risk surface (inspector `risk_library`; also reachable from the command palette action "Risk library & dynamic assessment").
+- **Rights required:** `manage_engagements` or `edit_config` to auto-compute, override or propose; a principal without either sees a read-only notice and disabled actions.
+- **Data functions (`src/data/*.ts`):** `RISK_TAXONOMY_THEMES`, `deriveFactors`, `ermMap`, `erm_theme_set`, `kriState`, `kri_value_set`, `listCycles`, `listErmThemes`, `listKris`, `listPlanChanges`, `listRiskLibrary`, `normalizeWeights`, `planChangeFor`, `plan_change_propose`, `proposePlanChange`, `readRiskScore`, `revertRiskOverride`, `riskToCoverageNarrative`, `risk_factor_write`, `risk_override_revert`, `risk_override_set`, `setErmTheme`, `setKriValue`, `setRiskOverride`, `writeRiskFactors`
+- **Data modules:** `src/data/risk.ts`
+- **RPCs reachable via those modules:** `risk_factor_write`, `risk_library_derive`
+- **Tables reachable via those modules:** `classification_obligations`, `erm_kri`, `erm_theme_map`, `org_classification`, `plan_change_proposals`, `risks_library`, `sira_cycles`, `sira_scores`, `standards_library`
+- **Testids (37):** `risk-panel`, `risk-loading`, `risk-error`, `risk-notice`, `risk-denied`, `risk-tabs`, `risk-tab-library`, `risk-tab-autocompute`, `risk-tab-erm`, `risk-tab-planning`, `risk-library`, `risk-library-row-<id>`, `risk-library-derived-count`, `risk-autocompute`, `risk-pick`, `risk-cycle`, `risk-autocompute-run`, `risk-factor-values`, `risk-factor-<key>`, `risk-override-factor`, `risk-override-value`, `risk-override-reason`, `risk-override-save`, `risk-override-revert`, `risk-erm`, `risk-erm-<theme>`, `risk-erm-gaps`, `risk-erm-empty`, `risk-kri-<id>`, `risk-kri-empty`, `risk-kri-add`, `risk-planning`, `risk-trigger-kind`, `risk-trigger-entity`, `risk-propose`, `risk-proposal-<id>`, `risk-proposals-empty`
+- **Explain ids (0):** — (no explain affordance)
+- **IIA standards addressed (0):** —
+- **Drilldown targets (0):** — (no aggregate)
+- **States:** denied (neither right); empty (no library rows); ready; a named refusal from a writer, surfaced not swallowed; an error reading the library.
+- **Tutorial key:** — (no key)
+- **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
+  named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
+
 ## Common chrome
 
 ### `CH-01` — Navigation strip (S1)
@@ -2236,6 +2272,8 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 | `request_change` | `src/data/changeControl.ts` | `p_engagement_id`, `p_change_class`, `p_title`, `p_payload`, `p_klass` | tenant |
 | `request_extraction` | `src/data/documents.ts` | `p_file_id` | tenant |
 | `revert_prior_year_item` | `src/data/imports.ts` | `p_import_id` | tenant |
+| `risk_factor_write` | `src/data/risk.ts` | `p_org`, `p_cycle`, `p_entity`, `p_risk`, `p_auto_values`, `p_overrides` | tenant |
+| `risk_library_derive` | `src/data/risk.ts` | `p_org`, `p_standards_key` | tenant |
 | `rule_pack_list` | `src/data/rulePacks.ts` | — | tenant |
 | `rule_pack_refusals_list` | `src/data/rulePacks.ts` | — | tenant |
 | `rule_pack_released_rules` | `src/data/rulePacks.ts` | — | tenant |
@@ -2274,10 +2312,10 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 
 ## Coverage cross-check
 
-- Screens documented: 113 (contract sections: 48 Appendix A + 44 Appendix B).
+- Screens documented: 115 (contract sections: 48 Appendix A + 44 Appendix B).
 - Tutorial keys: 81.
-- RPCs catalogued: 148.
-- Data modules: 75; exported data functions: 474.
-- Contract testids not found verbatim in `src/` (placeholder or dynamic): 234.
+- RPCs catalogued: 150.
+- Data modules: 75; exported data functions: 493.
+- Contract testids not found verbatim in `src/` (placeholder or dynamic): 238.
   - assurance-tab-d5, assurance-tab-d7, assurance-tab-d8, assurance-tab-d9, audit-file-view-builder, audit-file-view-certificate, audit-file-view-conclusion, audit-file-view-documents, audit-file-view-ethics, audit-file-view-execution, audit-file-view-findings, audit-file-view-planning, audit-file-view-population, audit-file-view-report, audit-file-view-review, audit-file-view-rowtesting, audit-file-view-sampling, data-front-door-kind, hosting-test, invite-user, issues-view-patterns, oa-branding-colour-accent, oa-branding-colour-background, oa-branding-colour-primary, oa-branding-colour-text, oa-branding-margin-0, oa-branding-margin-3, oa-certificate-enabled-verification, oa-escalation-result, oa-escalation-saved, oa-governance-signoff-conclusion, oa-governance-signoff-planning, oa-governance-signoff-testing, org-control-tab-auditors, org-control-tab-automation, org-control-tab-branding, org-control-tab-connectors, org-control-tab-features, org-control-tab-formats, org-control-tab-governance …
 

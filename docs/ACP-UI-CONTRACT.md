@@ -2098,3 +2098,79 @@ declared condition over the data, not a model: nothing is inferred and nothing i
 - **States:** denied (no `perform_work`); ready (the builder form); an invalid spec (a named refusal,
   nothing previewed); a preview with its findings, or an honest empty preview.
 - **Tutorial key:** —
+
+## OA-37 — client classification and the standards library (S3: D10)
+
+The screen surface for the C1–C8 classification of docs/PAKISTAN-ASSURANCE-REGIMES.md and the
+configurable framework/standard library it selects. The classification is a switch, not a label: it
+decides whether internal audit and ICFR are mandatory and at what rigour, the frameworks and artifacts
+the regime requires, the regulator's numbering the product cites, and the audit disciplines offered.
+A classification the matrix does not name is refused, never guessed; every obligation it creates names
+its clause.
+
+- **Route:** the audit-universe surface (inspector `classification`; also reachable from the command
+  palette action "Client classification").
+- **Rights:** `edit_config` to set the classification, configure the library and derive risks; a
+  principal without it sees a read-only notice and disabled actions.
+- **Data:** `readClassification`, `listClassificationObligations`, `setClassification`,
+  `listStandards`, `updateStandard`, `deriveRisks`, `listDerivedRisks` (`src/data/risk.ts`); the pure
+  matrix `CLASSIFICATIONS`, `classifyClient`, `obligationsFor` (`src/lib/risk/classification.ts`) and
+  the discipline set `selectableDisciplines` (`src/lib/risk/domains.ts`). Writers:
+  `classification_set`, `standards_update_scope`, `risk_library_derive` (`0149`).
+- **Configurability:** the standards library is updatable for one organisation (`This org`), for every
+  organisation at once (`All orgs`, platform administrator only), or as the platform default. An
+  all-orgs update writes one version and one ledger entry per org in a single transaction.
+- **Testids:** `classification-panel`, `classification-loading`, `classification-error`,
+  `classification-empty`, `classification-current`, `classification-version`, `classification-regulator`,
+  `classification-ia`, `classification-icfr`, `classification-numbering`, `classification-disciplines`,
+  `classification-frameworks`, `classification-artifacts`, `classification-obligations`,
+  `classification-obligation-<id>`, `classification-set`, `classification-pick`, `classification-islamic`,
+  `classification-it`, `classification-save`, `classification-standards`, `classification-standard-<key>`,
+  `classification-standard-scope-<key>`, `classification-standard-org-<key>`,
+  `classification-standard-platform-<key>`, `classification-standard-all-<key>`, `classification-derive`,
+  `classification-derive-run`, `classification-derived-count`, `classification-derived-empty`,
+  `classification-notice`, `classification-denied`.
+- **States:** denied (no `edit_config`); empty (no classification set); ready (the current
+  classification, its obligations and the library); a named refusal from a writer, surfaced not
+  swallowed; an error reading the classification.
+- **Tutorial key:** —
+
+## SR-04 — risk library and dynamic risk assessment (S3: D14 / D15)
+
+The screen surface for the D14 auto-adjusted risk factors and the D15 dynamic risk assessment
+(docs/RISK-ASSESSMENT-MODEL.md §8, docs/ASSURANCE-RULEBOOKS.md §6). Every auto-derived value is a
+proposal that names its rule and version; an input the facts do not carry is "unknown", never 0, and
+the factor weights normalise to exactly 100. Nothing is inferred and nothing is generated text.
+
+- **D14 — auto-adjusted factors.** The panel derives the risk's factors from the entity's facts and
+  writes them through `risk_factor_write`, which resolves the override over the auto value and
+  recomputes the score over the normalised weights. A manual override carries a mandatory reason and
+  keeps the auto value for provenance; it can be reverted.
+- **D15 — the dynamic assessment.** The ERM theme map gives each enterprise risk theme a coverage
+  verdict (direct / limited / monitoring / none); a top risk with no coverage is a gap. A KRI with no
+  value or no tolerance is "unknown", never within. A trigger (KRI breach, incident, management
+  request, strategic change) produces a plan-change proposal (track / defer / cancel / rescope) with a
+  rationale.
+
+- **Route:** the risk surface (inspector `risk_library`; also reachable from the command palette action
+  "Risk library & dynamic assessment").
+- **Rights:** `manage_engagements` or `edit_config` to auto-compute, override or propose; a principal
+  without either sees a read-only notice and disabled actions.
+- **Data:** `listRiskLibrary`, `readRiskScore`, `writeRiskFactors`, `setRiskOverride`,
+  `revertRiskOverride`, `listCycles`, `listErmThemes`, `listKris`, `listPlanChanges`, `setErmTheme`,
+  `setKriValue`, `proposePlanChange` (`src/data/risk.ts`); the pure engines
+  `deriveFactors` (`src/lib/risk/derivation.ts`), `ermMap`, `kriState`, `planChangeFor`,
+  `riskToCoverageNarrative`, `RISK_TAXONOMY_THEMES` (`src/lib/risk/dynamicAssessment.ts`) and
+  `normalizeWeights` (`src/lib/siraEngine.ts`). Writers: `risk_factor_write`, `risk_override_set`,
+  `risk_override_revert` (`0150`), `erm_theme_set`, `kri_value_set`, `plan_change_propose` (`0151`).
+- **Testids:** `risk-panel`, `risk-loading`, `risk-error`, `risk-notice`, `risk-denied`, `risk-tabs`,
+  `risk-tab-library`, `risk-tab-autocompute`, `risk-tab-erm`, `risk-tab-planning`, `risk-library`,
+  `risk-library-row-<id>`, `risk-library-derived-count`, `risk-autocompute`, `risk-pick`, `risk-cycle`,
+  `risk-autocompute-run`, `risk-factor-values`, `risk-factor-<key>`, `risk-override-factor`,
+  `risk-override-value`, `risk-override-reason`, `risk-override-save`, `risk-override-revert`,
+  `risk-erm`, `risk-erm-<theme>`, `risk-erm-gaps`, `risk-erm-empty`, `risk-kri-<id>`, `risk-kri-empty`,
+  `risk-kri-add`, `risk-planning`, `risk-trigger-kind`, `risk-trigger-entity`, `risk-propose`,
+  `risk-proposal-<id>`, `risk-proposals-empty`.
+- **States:** denied (neither right); empty (no library rows); ready; a named refusal from a writer,
+  surfaced not swallowed; an error reading the library.
+- **Tutorial key:** —
