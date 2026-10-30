@@ -1,14 +1,16 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import {
+  listConfigSources,
   listPopulationRecords,
   listPopulations,
+  type ConfigSource,
   type PopulationRecordRead,
   type PopulationRow,
 } from '../../data/population';
 import { recordSysteligonFindings } from '../../data/systeligon';
 import { getReleasedRulePack } from '../../data/rulePacks';
-import { runRules, systeligonPopulationRules, resolveReleasedRules, type RuleFinding, type RuleInput, type RuleRunResult, type SysteligonRule } from '../../lib/systeligon';
+import { runRules, systeligonPopulationRules, systeligonRuleLibrary, systeligonScopes, resolveReleasedRules, type RuleFinding, type RuleInput, type RuleRunResult, type RuleTarget, type SysteligonRule } from '../../lib/systeligon';
 import { ENGINE_NAME } from '../../lib/product';
 import { hasRight } from '../../lib/rights';
 import { rightReason } from '../../lib/rightLabels';
@@ -48,8 +50,13 @@ export const RuleRunTab: React.FC<RuleRunTabProps> = ({ workpaper }) => {
   const [error, setError] = useState<string | null>(null);
   // The released pack drives the run when one exists; the in-code library is the fallback. `packNote`
   // names which rule set ran and reports any rule the client could not reconstruct.
-  const [ruleSet, setRuleSet] = useState<SysteligonRule[]>(systeligonPopulationRules);
+  const [ruleSet, setRuleSet] = useState<SysteligonRule[]>(systeligonRuleLibrary);
   const [packNote, setPackNote] = useState<string | null>(null);
+  // The scope the run is sealed under (spec §5). The rule base is not tied to population: the run
+  // surface offers the scopes the shipped base covers, and each finding seals its scope alongside the
+  // rule id and version. Default `population` keeps the existing single-scope behaviour unchanged.
+  const [scope, setScope] = useState<RuleTarget>('population');
+  const [configSources, setConfigSources] = useState<ConfigSource[]>([]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -77,7 +84,7 @@ export const RuleRunTab: React.FC<RuleRunTabProps> = ({ workpaper }) => {
       .then((pack) => {
         if (cancelled || !pack) return;
         const { rules, missing } = resolveReleasedRules(pack);
-        setRuleSet(rules.length ? rules : systeligonPopulationRules);
+        setRuleSet(rules.length ? rules : systeligonRuleLibrary);
         setPackNote(
           `Running released pack ${pack.name}@${pack.version} (${rules.length} rule(s)).` +
           (missing.length ? ` ${missing.length} rule(s) could not be reconstructed: ${missing.join(', ')}.` : ''),
@@ -86,6 +93,17 @@ export const RuleRunTab: React.FC<RuleRunTabProps> = ({ workpaper }) => {
       .catch(() => { /* no pack reader available: fall back to the shipped library */ });
     return () => { cancelled = true; };
   }, []);
+
+  // When the config scope is selected, read the org's own configuration as text. It never leaves the
+  // tenant, and a rule that flags a line cites the exact line in the config it read.
+  useEffect(() => {
+    if (scope !== 'config') return;
+    let cancelled = false;
+    listConfigSources()
+      .then((src) => { if (!cancelled) setConfigSources(src); })
+      .catch((e) => { if (!cancelled) setError(e instanceof Error ? e.message : 'Could not read the configuration.'); });
+    return () => { cancelled = true; };
+  }, [scope]);
 
   // Load the selected population's rows on demand. The engine reads the values; the panel never
   // invents one — a missing amount is passed through as null and the rule reports it honestly.
@@ -123,20 +141,25 @@ export const RuleRunTab: React.FC<RuleRunTabProps> = ({ workpaper }) => {
   );
 
   const run = async () => {
-    if (!populationId) return;
+    if (scope !== 'config' && !populationId) return;
     setRunning(true);
     setError(null);
     setRecorded(null);
     try {
+      // The input a scope needs: the population rows for population/journal, the org's config text
+      // for the config scope. A scope with no input of its own runs over an empty input and honestly
+      // reports no findings, rather than inventing one.
       const input: RuleInput = {
         rows: records.map((r) => ({
           ref: String(r.rowRef),
           values: { amount: r.amountCents, date: r.date, category: r.category },
         })),
+        sourceFiles: scope === 'config' ? configSources : undefined,
       };
       // The run instant is captured here and passed in: the engine never reads a clock.
       const evaluatedAt = new Date().toISOString();
-      setResult(runRules(ruleSet, input, { evaluatedAt }));
+      // `target` narrows the run to the selected scope, and each finding seals that scope.
+      setResult(runRules(ruleSet, input, { evaluatedAt, target: scope }));
     } catch (e) {
       setError(e instanceof Error ? e.message : 'The rule run failed.');
     } finally {
@@ -145,7 +168,7 @@ export const RuleRunTab: React.FC<RuleRunTabProps> = ({ workpaper }) => {
   };
 
   const record = async () => {
-    if (!result || !populationId) return;
+    if (!result) return;
     setRecording(true);
     setError(null);
     try {
@@ -193,15 +216,36 @@ export const RuleRunTab: React.FC<RuleRunTabProps> = ({ workpaper }) => {
 
       <InlineError message={error} testId="rule-run-error" onDismiss={() => setError(null)} />
 
-      {!loading && populations.length === 0 && (
+      {!loading && scope === 'population' && populations.length === 0 && (
         <p className="text-apple-12 text-secondary" data-testid="rule-run-empty">
           This engagement has no population yet. Register and lock one in the population panel before
           running rules.
         </p>
       )}
 
-      {!loading && populations.length > 0 && (
+      {!loading && (scope === 'config' || populations.length > 0) && (
         <div className="flex flex-wrap items-end gap-3">
+          <div className="space-y-1">
+            <label className="text-apple-11 font-medium text-secondary uppercase" htmlFor="rule-run-scope">
+              Scope
+            </label>
+            <select
+              id="rule-run-scope"
+              data-testid="rule-run-scope"
+              value={scope}
+              onChange={(e) => {
+                setScope(e.target.value as RuleTarget);
+                setResult(null);
+                setRecorded(null);
+              }}
+              className="p-2 text-apple-12 rounded bg-surface border border-hairline text-primary"
+            >
+              {systeligonScopes.map((sc) => (
+                <option key={sc} value={sc}>{sc}</option>
+              ))}
+            </select>
+          </div>
+          {scope === 'population' && (
           <div className="space-y-1">
             <label className="text-apple-11 font-medium text-secondary uppercase" htmlFor="rule-run-population">
               Population
@@ -224,17 +268,24 @@ export const RuleRunTab: React.FC<RuleRunTabProps> = ({ workpaper }) => {
               ))}
             </select>
           </div>
+          )}
+          {scope === 'config' && (
+            <span className="text-apple-11 text-secondary" data-testid="rule-run-scope-note">
+              {configSources.length} configuration key(s) under test — the organisation's own config,
+              which never leaves the tenant.
+            </span>
+          )}
           <button
             type="button"
             data-testid="rule-run-run"
-            disabled={!canRun || !populationId || running || rowsBusy || rowsFor !== populationId}
+            disabled={!canRun || running || (scope !== 'config' && (!populationId || rowsBusy || rowsFor !== populationId))}
             onClick={() => void run()}
             className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-apple-12 font-medium bg-btn-primary-bg text-btn-primary-text disabled:opacity-50"
           >
             {running ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <ArrowRight className="w-3.5 h-3.5" />}
             Run rules
           </button>
-          {selected && (
+          {scope === 'population' && selected && (
             <span className="text-apple-11 text-secondary inline-flex items-center gap-1">
               <Database className="w-3.5 h-3.5" />
               {rowsBusy ? 'reading rows…' : `${records.length} rows read`}
@@ -269,6 +320,7 @@ export const RuleRunTab: React.FC<RuleRunTabProps> = ({ workpaper }) => {
                   <tr className="border-b border-hairline bg-surface-sunken text-secondary">
                     <th className="p-3 font-medium">Rule</th>
                     <th className="p-3 font-medium">Version</th>
+                    <th className="p-3 font-medium">Scope</th>
                     <th className="p-3 font-medium">Severity</th>
                     <th className="p-3 font-medium">Finding</th>
                     <th className="p-3 font-medium">Source rows</th>
@@ -279,6 +331,7 @@ export const RuleRunTab: React.FC<RuleRunTabProps> = ({ workpaper }) => {
                     <tr key={`${f.ruleId}@${f.ruleVersion}-${i}`} data-testid={`rule-run-finding-${i}`} className="hover:bg-surface-hover">
                       <td className="p-3 font-mono text-primary">{f.ruleId}</td>
                       <td className="p-3 font-mono text-secondary">v{f.ruleVersion}</td>
+                      <td className="p-3 font-mono text-secondary">{f.scope ?? 'population'}</td>
                       <td className="p-3">
                         <span
                           className={`text-apple-11 font-semibold uppercase ${

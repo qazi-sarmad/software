@@ -85,6 +85,38 @@ export async function listPopulationRecords(populationId: string): Promise<Popul
   });
 }
 
+/**
+ * A configuration text under test by the `config` scope's pattern rules (S9, spec §5). The values are
+ * the org's own append-only `config_versions` rows, rendered to text so a pattern rule can cite the
+ * exact line. The org is the caller's own; RLS restricts the read to it.
+ */
+export interface ConfigSource {
+  ref: string;
+  text: string;
+}
+
+/**
+ * Read the org's configuration as text, one entry per key (newest version), for the config-scope
+ * pattern rules. Empty when unconfigured. Nothing leaves the tenant: this is the tenant's own config.
+ */
+export async function listConfigSources(): Promise<ConfigSource[]> {
+  const sb = getClient();
+  if (!sb) return [];
+  const { data, error } = await sb
+    .from('config_versions')
+    .select('key, value, version')
+    .order('key', { ascending: true })
+    .order('version', { ascending: false });
+  if (error) throw new Error(error.message);
+  const newest = new Map<string, ConfigSource>();
+  for (const r of data ?? []) {
+    const key = String(r.key);
+    if (newest.has(key)) continue; // rows are version-desc, so the first seen is the newest
+    newest.set(key, { ref: key, text: `${key}=${JSON.stringify(r.value)}` });
+  }
+  return [...newest.values()];
+}
+
 export async function listPopulations(engagementId: string): Promise<PopulationRow[]> {
   const sb = getClient();
   if (!sb) return [];

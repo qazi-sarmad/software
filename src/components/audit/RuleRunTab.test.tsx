@@ -4,11 +4,13 @@ import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 
 const listPops = vi.fn();
 const listRecords = vi.fn();
+const listConfig = vi.fn();
 const recordFindings = vi.fn();
 
 vi.mock('../../data/population', () => ({
   listPopulations: (...a: unknown[]) => listPops(...a),
   listPopulationRecords: (...a: unknown[]) => listRecords(...a),
+  listConfigSources: (...a: unknown[]) => listConfig(...a),
 }));
 vi.mock('../../data/systeligon', () => ({
   recordSysteligonFindings: (...a: unknown[]) => recordFindings(...a),
@@ -33,6 +35,7 @@ describe('RuleRunTab — the rule-run screen (S1/S6/S13)', () => {
     userRef.current = { role: 'cia', rights: { perform_work: true } } as never;
     listPops.mockResolvedValue([population]);
     listRecords.mockResolvedValue([]);
+    listConfig.mockResolvedValue([]);
     recordFindings.mockResolvedValue({ ok: true });
   });
 
@@ -97,5 +100,50 @@ describe('RuleRunTab — the rule-run screen (S1/S6/S13)', () => {
     render(<RuleRunTab workpaper={workpaper} />);
     await waitFor(() => expect(screen.getByTestId('rule-run-rights-note')).toBeTruthy());
     expect((screen.getByTestId('rule-run-run') as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  // §5 / F134 — the run surface is not tied to population: the config scope runs the pattern rules
+  // over the org's own config text, and each finding seals its scope.
+  it('offers the scopes the shipped rule base covers (F134)', async () => {
+    render(<RuleRunTab workpaper={workpaper} />);
+    await waitFor(() => expect(screen.getByTestId('rule-run-scope')).toBeTruthy());
+    const options = Array.from((screen.getByTestId('rule-run-scope') as HTMLSelectElement).options).map((o) => o.value);
+    expect(options).toContain('population');
+    expect(options).toContain('config');
+  });
+
+  it('runs the config scope over the org config and seals the scope on the finding (F134)', async () => {
+    listConfig.mockResolvedValue([
+      { ref: 'db.url', text: 'db.url="postgres://user@host/app"' },
+      { ref: 'auth', text: 'api_key="sk-live-1234567890"' },
+    ]);
+    render(<RuleRunTab workpaper={workpaper} />);
+    await waitFor(() => expect(screen.getByTestId('rule-run-scope')).toBeTruthy());
+    fireEvent.change(screen.getByTestId('rule-run-scope'), { target: { value: 'config' } });
+    await waitFor(() => expect(screen.getByTestId('rule-run-scope-note')).toBeTruthy());
+    const runBtn = () => screen.getByTestId('rule-run-run') as HTMLButtonElement;
+    await waitFor(() => expect(runBtn().disabled).toBe(false));
+    fireEvent.click(runBtn());
+    await waitFor(() => expect(screen.getByTestId('rule-run-findings')).toBeTruthy());
+    const table = screen.getByTestId('rule-run-findings').textContent ?? '';
+    // The credential and the hardcoded environment value are both flagged, and the scope is shown.
+    expect(table).toContain('pattern.hardcoded_credentials');
+    expect(table).toContain('config');
+    // The finding carries the scope into the ledger payload, not just the table.
+    fireEvent.click(screen.getByTestId('rule-run-record'));
+    await waitFor(() => expect(recordFindings).toHaveBeenCalled());
+    const findings = recordFindings.mock.calls[0][2] as Array<{ scope?: string }>;
+    expect(findings.every((f) => f.scope === 'config')).toBe(true);
+  });
+
+  it('reports an empty config honestly rather than inventing a finding (F134)', async () => {
+    listConfig.mockResolvedValue([]);
+    render(<RuleRunTab workpaper={workpaper} />);
+    await waitFor(() => expect(screen.getByTestId('rule-run-scope')).toBeTruthy());
+    fireEvent.change(screen.getByTestId('rule-run-scope'), { target: { value: 'config' } });
+    const runBtn = () => screen.getByTestId('rule-run-run') as HTMLButtonElement;
+    await waitFor(() => expect(runBtn().disabled).toBe(false));
+    fireEvent.click(runBtn());
+    await waitFor(() => expect(screen.getByTestId('rule-run-findings-empty')).toBeTruthy());
   });
 });

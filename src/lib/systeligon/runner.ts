@@ -54,12 +54,13 @@ export function assertValidPack(pack: RulePack): void {
   }
 }
 
-function makeFinding(rule: SysteligonRule, ctxRule: { evaluatedAt: string }, reason: string, refs: string[]): RuleFinding {
+function makeFinding(rule: SysteligonRule, scope: RuleTarget | undefined, reason: string, refs: string[]): RuleFinding {
   return {
     ruleId: rule.id,
     ruleVersion: rule.version,
     kind: rule.kind,
     severity: rule.severity,
+    scope: scope ?? rule.appliesTo,
     reason,
     refs: [...refs].sort(),
   };
@@ -86,14 +87,17 @@ export function runRules(rules: SysteligonRule[], input: RuleInput, options: Run
     if (target && rule.appliesTo !== target) continue;
     run.add(`${rule.id}@${rule.version}`);
     ran.push(ref);
+    // The scope is the run's target when one was given, else the rule's own — sealed with the
+    // finding so a population finding and a document finding can never be conflated.
+    const scope = target ?? rule.appliesTo;
     try {
       const ctx = { ruleId: rule.id, ruleVersion: rule.version, severity: rule.severity, evaluatedAt };
       for (const f of rule.evaluate(input, ctx)) {
         // Re-stamp provenance from the rule so a rule cannot misreport its own identity or version.
-        findings.push({ ...f, ruleId: rule.id, ruleVersion: rule.version, kind: rule.kind, severity: rule.severity });
+        findings.push({ ...f, ruleId: rule.id, ruleVersion: rule.version, kind: rule.kind, severity: rule.severity, scope });
       }
     } catch (e) {
-      findings.push(makeFinding(rule, { evaluatedAt }, `Rule ${rule.id} failed to run: ${e instanceof Error ? e.message : String(e)}`, []));
+      findings.push(makeFinding(rule, scope, `Rule ${rule.id} failed to run: ${e instanceof Error ? e.message : String(e)}`, []));
     }
   }
 

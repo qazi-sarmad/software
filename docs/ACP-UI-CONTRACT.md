@@ -1074,7 +1074,7 @@ qualified human releases it.
 - **Route:** the `workbench` inspector window, sub-tab "Rule Run".
 - **Rights:** `perform_work` to run and to record; any member of the org reads.
 - **Data:** `PopulationRow`, `PopulationRecordRead`, `RuleFinding`, `RuleInput`, `RuleRunResult`, `listPopulationRecords`, `listPopulations`, `recordSysteligonFindings`, `runRules`, `systeligonPopulationRules` — through `src/data/*.ts`; components never import the database client (rule M8).
-- **Testids:** `rule-run`, `rule-run-empty`, `rule-run-error`, `rule-run-finding-<i>`, `rule-run-findings`, `rule-run-findings-empty`, `rule-run-loading`, `rule-run-pack-note`, `rule-run-population`, `rule-run-record`, `rule-run-recorded`, `rule-run-rights-note`, `rule-run-run`, `rule-run-skipped`, `rule-run-summary`
+- **Testids:** `rule-run`, `rule-run-empty`, `rule-run-error`, `rule-run-finding-<i>`, `rule-run-findings`, `rule-run-findings-empty`, `rule-run-loading`, `rule-run-pack-note`, `rule-run-population`, `rule-run-record`, `rule-run-recorded`, `rule-run-rights-note`, `rule-run-run`, `rule-run-scope`, `rule-run-scope-note`, `rule-run-skipped`, `rule-run-summary`
 - **States:** loading; no population (`rule-run-empty`); reading rows; running; findings; none flagged (`rule-run-findings-empty`); recorded; error inline.
 - **Tutorial key:** —
 
@@ -1891,8 +1891,9 @@ in the browser; only the public half is registered, and registering retires the 
 - **Testids:** `rule-pack-panel`, `rule-pack-loading`, `rule-pack-load-error`, `rule-pack-error`,
   `rule-pack-notice`, `rule-pack-rights-note`, `rule-pack-key`, `rule-pack-key-id`,
   `rule-pack-key-generate`, `rule-pack-key-register`, `rule-pack-key-fingerprint`,
-  `rule-pack-list-section`, `rule-pack-empty`, `rule-pack-row-<i>`, `rule-pack-draft-<i>`,
-  `rule-pack-released-<i>`, `rule-pack-release-<i>`, `rule-pack-save`, `rule-pack-adhoc`,
+  `rule-pack-list-section`, `rule-pack-empty`, `rule-pack-registry`, `rule-pack-row-<i>`,
+  `rule-pack-draft-<i>`, `rule-pack-released-<i>`, `rule-pack-release-<i>`, `rule-pack-save`,
+  `rule-pack-adhoc`,
   `rule-pack-adhoc-id`, `rule-pack-adhoc-source`, `rule-pack-adhoc-condition`,
   `rule-pack-adhoc-threshold`, `rule-pack-adhoc-severity`, `rule-pack-adhoc-preview`,
   `rule-pack-adhoc-result`, `rule-pack-refusals`, `rule-pack-refusals-empty`, `rule-pack-refusal-list`,

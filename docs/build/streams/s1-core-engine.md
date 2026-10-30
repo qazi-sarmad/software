@@ -45,3 +45,5 @@ F134 (pattern rules), F135 (minutes action register), F136 (policy/procedure com
 ## Status
 | Row | Was | Now | Call site | Test | Migration | Commit |
 |---|---|---|---|---|---|---|
+| F128 | Inert | Wired | `src/components/admin/RulePackPanel.tsx:95` (RuleRegistry holds the shipped base), `:130` (packRules assembles the run set the pack signs) | `src/components/admin/RulePackPanel.test.tsx` (9: 'reports the shipped rule base from the append-only RuleRegistry', 'saves the shipped pack assembled by packRules over the registry') | — | pending |
+| F134 | Inert | Wired | `src/components/audit/RuleRunTab.tsx:196` (config scope reads `listConfigSources`), `:283` (`runRules(..., { target: 'config' })`) | `src/components/audit/RuleRunTab.test.tsx` (8: 'runs the config scope over the org config and seals the scope on the finding', 'reports an empty config honestly') | — | pending |
