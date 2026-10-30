@@ -40,3 +40,15 @@ notification delivery).
 ## Status
 | Row | Was | Now | Call site | Test | Migration | Commit |
 |---|---|---|---|---|---|---|
+| F57 | `Inert` | `Wired` | `runConnector` (`src/data/connectors.ts:96`) starts with `connector_run_start` and closes with `connector_run_finish`; called from the `Run now` button in `ConnectorMonitorPanel.tsx:196` | `src/data/connectors.test.ts` (6), `src/components/writing/ConnectorMonitorPanel.test.tsx` (3), `supabase/tests/139_connector_run_guards.sql` (4) | 0169 | this commit |
+| F58 | `Inert` | `Wired` | `runConnector` writes each mapped row with `staged_record_ingest` (`src/data/connectors.ts:56`); duplicate content hash counted `skipped` | `src/data/connectors.test.ts` (6), `supabase/tests/139_connector_run_guards.sql` (4) | 0169 | this commit |
+| F59 | `Inert` | `Wired` | `runConnector` resolves the adapter with `connectorById` and drives `fetch`/`map` through `browserTransport` (`src/data/connectors.ts`) | `src/components/writing/ConnectorMonitorPanel.test.tsx` (3) | — | this commit |
+
+### Notes
+- 0169 adds the connector-run lifecycle guards: a second finish is refused (`the run is already
+  finished`), a second start on a busy instance is refused (`a run is already in progress`), and an
+  ingest against a foreign/unknown run is refused (`no such run for this connector instance`). Each
+  refusal writes nothing. Staging after a finished run stays accepted (test 97 reconciles a finished
+  run), so the ingest guard is the run's existence and ownership, not its status.
+- The register total is now 125 Wired / 1 Inert / 19 Absent (the one remaining Inert is F128,
+  `RuleRegistry`/`packRules`). The integrator folds this table into the shared ledger.

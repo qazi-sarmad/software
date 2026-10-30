@@ -1430,25 +1430,29 @@ minimum number of independent authorities a stamp must carry before the seal cou
 ## SA-21 — standards distribution (D16, docs/STANDARDS-DISTRIBUTION.md)
 
 The platform standards catalogue: every rule base the product ships as a signed, versioned **standards
-pack**, a publish action that signs the shipped rule library with the platform key, and a rollout to
-entitled tenants that shows the per-tenant outcome. A tenant that does not pay for a pack is skipped
-and recorded, never silently applied.
+pack**, a publish action that signs the shipped rule library with the platform key, a rollout to
+entitled tenants that shows the per-tenant outcome, and a pin action that freezes a tenant on the
+version it currently runs. A tenant that does not pay for a pack is skipped and recorded, never
+silently applied; a pin needs a reason and is never moved forward by a later rollout.
 
 - **Route:** `/superadmin`, tab `Standards` (`superadmin-tab-standards`).
 - **Rights:** platform admin (`is_platform_admin()`); every write is a platform-only RPC
   (`platform_signing_key_register`, `standards_pack_publish`, `standards_rollout`), re-checked in the
   database. `standards_pin` is a tenant action gated on `edit_config` or a Head.
 - **Data:** `listStandardsCatalogue`, `listStandardsSubscriptions`, `registerPlatformSigningKey`,
-  `publishStandardsPack`, `rolloutStandardsPack`, `buildSignedStandardsPack` (`src/data/standards.ts`),
-  `listTenants` (`src/data/platform.ts`), `STANDARDS_CATALOGUE`, `SHIPPED_RULES`.
+  `publishStandardsPack`, `rolloutStandardsPack`, `pinStandardsVersion`, `buildSignedStandardsPack`
+  (`src/data/standards.ts`), `listTenants` (`src/data/platform.ts`), `STANDARDS_CATALOGUE`,
+  `SHIPPED_RULES`.
 - **Testids:** `superadmin-standards`, `superadmin-standards-loading`, `superadmin-standards-error`,
   `superadmin-standards-result`, `superadmin-standards-empty`, `superadmin-standards-catalogue`,
   `standards-catalogue-<packId>`, `standards-publish-pack`, `standards-publish-version`,
   `standards-publish`, `standards-shipped-rules`, `standards-rollout-tenants`,
-  `standards-rollout-<orgId>`, `standards-rollout`, `standards-subscriptions`,
+  `standards-rollout-<orgId>`, `standards-rollout`, `standards-pin-pack`, `standards-pin-version`,
+  `standards-pin-reason`, `standards-pin`, `standards-subscriptions`,
   `standards-subscriptions-empty`, `standards-subscription-<packId>`.
 - **States:** loading; error (with Retry); ready; empty tenant list; an inline result listing the
-  per-tenant outcome after a rollout, or the exact refusal after a publish.
+  per-tenant outcome after a rollout, the pinned version after a pin, or the exact refusal after a
+  publish or a pin (an empty reason and a version below 1 are refused before anything is sent).
 - **Tutorial key:** none recorded yet.
 
 ## Tutorials regenerated
@@ -1762,6 +1766,7 @@ platform holds, never a value this screen sees.
   `wk-connectors-panel`, `wk-connectors-tab-<id>`, `wk-connectors-catalogue`, `wk-connectors-label`,
   `wk-connectors-credential`, `wk-connectors-save`, `wk-connectors-saved`, `wk-connectors-instances`,
   `wk-connectors-instance-<id>`, `wk-connectors-runs`, `wk-connectors-runs-empty`,
+  `wk-connectors-instance-<id>-run`, `wk-connectors-run-result`,
   `wk-connectors-run-<id>`, `wk-connectors-staged`, `wk-connectors-staged-empty`,
   `wk-connectors-staged-<id>`, `wk-connectors-rules`, `wk-connectors-rules-empty`,
   `wk-connectors-rule-id`, `wk-connectors-rule-description`, `wk-connectors-rule-save`,

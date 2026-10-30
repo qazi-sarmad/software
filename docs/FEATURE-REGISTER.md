@@ -138,9 +138,9 @@ feature to be testable.
 | F54 | Adhoc audit suggestion from an anomaly | `Wired` | §11.1 — `alertAdhocSuggestion`/`alertAdhocAuditRaise` (`src/data/writing.ts`) called from `AlertActionsPanel.tsx` | C4 |
 | F55 | Alert triage surface | `Wired` | §11.1 — `triageAlert` (`src/data/writing.ts`) called from `ConnectorMonitorPanel.tsx` | C6 |
 | F56 | Anomaly proposes emergent risk into SIRA | `Absent` | §11.1 | C7 |
-| F57 | Connector run start / finish | `Inert` | `connector_run_start` / `connector_run_finish` — 0 production refs | C1 |
-| F58 | Staged record ingest | `Inert` | `staged_record_ingest` — 0 production refs | C1 |
-| F59 | Connector adapters (22) | `Inert` | `connectorCatalogue.ts` is data with no runner | C1 |
+| F57 | Connector run start / finish | `Wired` | `runConnector` (`src/data/connectors.ts`) is the caller: it starts a run with `connector_run_start`, closes it with `connector_run_finish`, and is invoked from the mounted connector screen (`ConnectorMonitorPanel.tsx`, the `Run now` button). 0169 adds the lifecycle guards (a second finish is refused, one live run per instance). Proved by `src/data/connectors.test.ts` (6) and `supabase/tests/139_connector_run_guards.sql` (4) | C1 |
+| F58 | Staged record ingest | `Wired` | `runConnector` maps each fetched row through the adapter's pure `map` and writes it with `staged_record_ingest` (idempotent by content hash: a duplicate is counted `skipped`, never `staged`). Reached from the `Run now` button in `ConnectorMonitorPanel.tsx`. Proved by `src/data/connectors.test.ts` (6) and `supabase/tests/139_connector_run_guards.sql` | C1 |
+| F59 | Connector adapters (22) | `Wired` | The 25 catalogue adapters (`src/lib/writing/connectorCatalogue.ts`) now have a runner: `runConnector` calls `connectorById(id)` to resolve the adapter and drives its `fetch`/`map` through the egress-checked `browserTransport`. Reached from the `Run now` button in `ConnectorMonitorPanel.tsx`. Proved by `src/components/writing/ConnectorMonitorPanel.test.tsx` (3) and `src/data/connectors.test.ts` | C1 |
 | F60 | Connector egress control | `Wired` | `connector_egress_allowed` consulted | — |
 | F61 | Connector credentials | `Wired` | Wizard-only, `secret_store`, service-role reads | — |
 
@@ -313,8 +313,8 @@ this register exists to catch.
 
 | Status | Count |
 |---|---|
-| `Wired` | 122 |
-| `Inert` | 4 |
+| `Wired` | 125 |
+| `Inert` | 1 |
 | `Absent` | 19 |
 | **Total** | **145** |
 

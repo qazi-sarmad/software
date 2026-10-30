@@ -8,8 +8,10 @@ import {
   releaseMonitorRule, saveConnectorInstance, saveMonitorRule, triageAlert, connectorEgressAllowed,
   type AlertRow, type ConnectorInstanceRow, type ConnectorRunRow, type MonitorRuleRow, type StagedRecordRow,
 } from '../../data/writing';
-import { catalogue } from '../../lib/writing/connectorCatalogue';
+import { catalogue, connectorById } from '../../lib/writing/connectorCatalogue';
 import { MONITOR_KINDS } from '../../lib/writing/monitors';
+import type { ConnectorInstance } from '../../lib/writing/connectors';
+import { browserTransport, runConnector } from '../../data/connectors';
 import { AlertActionsPanel } from './AlertActionsPanel';
 
 type LoadState = 'loading' | 'ready' | 'error';
@@ -74,6 +76,38 @@ export const ConnectorMonitorPanel: React.FC<{ prefix?: string; initialTab?: Tab
     if (r.ok) await load();
   };
 
+  const [running, setRunning] = useState<string | null>(null);
+  const [runMessage, setRunMessage] = useState<{ ok: boolean; text: string } | null>(null);
+
+  /**
+   * Run one connector instance now: fetch through the egress-checked browser transport, map each row,
+   * stage it, and record the run. The run is closed whatever happens, so the instance is never left
+   * 'running'. Nothing is reported as staged unless the RPC said the row was inserted.
+   */
+  const runNow = async (row: ConnectorInstanceRow) => {
+    const connector = connectorById(row.connectorId);
+    if (!connector) { setRunMessage({ ok: false, text: `No adapter is registered for ${row.connectorId}.` }); return; }
+    const base = typeof row.config.base_url === 'string' ? row.config.base_url : '';
+    let host = '';
+    try { host = base ? new URL(base).host : ''; } catch { host = ''; }
+    if (!host) { setRunMessage({ ok: false, text: 'The instance has no valid base URL to fetch from.' }); return; }
+    setRunning(row.id);
+    setRunMessage(null);
+    const instance: ConnectorInstance = {
+      id: row.id, orgId, connectorId: row.connectorId, config: row.config as Record<string, string>,
+      cursor: { value: null }, enabled: row.enabled,
+    };
+    const r = await runConnector({
+      orgId, connector, instance, transport: browserTransport([host]),
+      fetchedAt: new Date().toISOString(),
+    });
+    setRunning(null);
+    setRunMessage(r.ok
+      ? { ok: true, text: `Run finished: fetched ${r.fetched}, staged ${r.staged}, skipped ${r.skipped}.` }
+      : { ok: false, text: `Run refused: ${r.reason ?? 'unknown reason'}` });
+    await load();
+  };
+
   if (state === 'loading') {
     return <div className="py-8 text-center text-apple-13 text-secondary" data-testid={`${prefix}-loading`}>Loading connectors…</div>;
   }
@@ -92,6 +126,11 @@ export const ConnectorMonitorPanel: React.FC<{ prefix?: string; initialTab?: Tab
     <div className="space-y-4" data-testid={`${prefix}-panel`}>
       <InlineError message={result && result !== 'Saved.' ? result : null} testId={`${prefix}-result`} />
       {result === 'Saved.' && <div className="text-apple-12 text-verdigris" data-testid={`${prefix}-saved`}>Saved.</div>}
+      {runMessage && (
+        runMessage.ok
+          ? <div className="text-apple-12 text-verdigris" data-testid={`${prefix}-run-result`}>{runMessage.text}</div>
+          : <InlineError message={runMessage.text} testId={`${prefix}-run-result`} />
+      )}
       <div className="flex items-center gap-1 flex-wrap" role="tablist" aria-label="Connectors and monitoring">
         {([['catalogue', 'Catalogue'], ['runs', 'Runs'], ['staged', 'Staged records'], ['rules', 'Monitor rules'], ['alerts', 'Alerts']] as const).map(([id, lbl]) => (
           <button key={id} type="button" role="tab" aria-selected={tab === id} data-testid={`${prefix}-tab-${id}`}
@@ -150,6 +189,17 @@ export const ConnectorMonitorPanel: React.FC<{ prefix?: string; initialTab?: Tab
                     <span className="text-apple-11 uppercase tracking-wide text-secondary" data-testid={`${prefix}-instance-${i.id}-health`}>{i.health}</span>
                   </div>
                   <div className="text-apple-11 text-secondary">{i.connectorId}</div>
+                  <div className="mt-2 flex items-center gap-2">
+                    <button
+                      type="button"
+                      disabled={!canEdit || running !== null}
+                      onClick={() => void runNow(i)}
+                      data-testid={`${prefix}-instance-${i.id}-run`}
+                      className="px-3 py-1.5 rounded-lg bg-accent-subtle text-primary text-apple-12 font-semibold disabled:opacity-50"
+                    >
+                      {running === i.id ? 'Running…' : 'Run now'}
+                    </button>
+                  </div>
                 </li>
               ))}
             </ul>
