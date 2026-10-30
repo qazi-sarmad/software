@@ -1524,7 +1524,7 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 - **Rights required:** `perform_work`.
 - **Data functions (`src/data/*.ts`):** `PopulationProfile`, `PopulationRecordRead`, `PopulationRow`, `listPopulationRecords`, `lockPopulation`, `populationProfile`, `registerPopulation`, `sha256Hex`
 - **Data modules:** `src/data/population.ts`
-- **RPCs reachable via those modules:** none
+- **RPCs reachable via those modules:** `evidence_files_for`
 - **Tables reachable via those modules:** `config_versions`, `population_rows`, `populations`
 - **Testids (21):** `population-browse`, `population-dropzone`, `population-empty`, `population-error`, `population-file-input`, `population-hash`, `population-loading`, `population-panel`, `population-register`, `population-gate`, `population-status`, `population-profile-<id>`, `population-profile-view-<id>`, `population-profile-summary-<id>`, `population-profile-flags-<id>`, `control-total`, `population-errors`, `gate-message`, `finalize-test`, `header-confirm`, `header-confirm-0`
 - **Explain ids (0):** — (no explain affordance)
@@ -1681,18 +1681,18 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 
 ### `AF-16` — Systeligon rule run (S1, S6, S13)
 
-- **Purpose:** Run the deterministic forensic rules over a locked population, read every finding with the rule id,
+- **Purpose:** Run the deterministic forensic rules over a locked population or the organisation's own
 - **Route / location:** the `workbench` inspector window, sub-tab "Rule Run".
-- **Rights required:** `perform_work` to run and to record; any member of the org reads.
-- **Data functions (`src/data/*.ts`):** `PopulationRecordRead`, `PopulationRow`, `RuleFinding`, `RuleInput`, `RuleRunResult`, `listPopulationRecords`, `listPopulations`, `recordSysteligonFindings`, `runRules`, `systeligonPopulationRules`
+- **Rights required:** `perform_work` to run, to record, to build the tested set and to verify; any member of the org reads.
+- **Data functions (`src/data/*.ts`):** `CarriedOverride`, `ConfigSource`, `EvidenceRecord`, `PopulationRecordRead`, `PopulationRow`, `RowVerification`, `RuleFinding`, `RuleInput`, `RuleRunResult`, `TestedRow`, `applyFloor`, `buildAcceptedTestingSet`, `carriedOverrides`, `listConfigSources`, `listEvidenceRecords`, `listPopulationRecords`, `listPopulations`, `parsePastedBlock`, `recordSysteligonFindings`, `runRules`, `systeligonRuleLibrary`, `systeligonScopes`, `verifyRows`
 - **Data modules:** `src/data/population.ts`, `src/data/systeligon.ts`
-- **RPCs reachable via those modules:** none
+- **RPCs reachable via those modules:** `evidence_files_for`
 - **Tables reachable via those modules:** `config_versions`, `population_rows`, `populations`
-- **Testids (17):** `rule-run`, `rule-run-empty`, `rule-run-error`, `rule-run-finding-<i>`, `rule-run-findings`, `rule-run-findings-empty`, `rule-run-loading`, `rule-run-pack-note`, `rule-run-population`, `rule-run-record`, `rule-run-recorded`, `rule-run-rights-note`, `rule-run-run`, `rule-run-scope`, `rule-run-scope-note`, `rule-run-skipped`, `rule-run-summary`
+- **Testids (34):** `rule-run`, `rule-run-empty`, `rule-run-error`, `rule-run-finding-<i>`, `rule-run-findings`, `rule-run-findings-empty`, `rule-run-loading`, `rule-run-pack-note`, `rule-run-population`, `rule-run-record`, `rule-run-recorded`, `rule-run-rights-note`, `rule-run-run`, `rule-run-scope`, `rule-run-scope-note`, `rule-run-skipped`, `rule-run-summary`, `flow-verify`, `flow-verify-rights-note`, `flow-verify-error`, `flow-verify-flow`, `flow-verify-floor`, `flow-verify-mode`, `flow-verify-build`, `flow-verify-note`, `flow-verify-paste`, `flow-verify-paste-apply`, `flow-verify-rows`, `flow-verify-row-<i>`, `flow-verify-verify`, `flow-verify-result`, `flow-verify-failed`, `flow-verify-fail-<ref>`, `flow-verify-overrides`
 - **Explain ids (0):** — (no explain affordance)
 - **IIA standards addressed (0):** —
 - **Drilldown targets (0):** — (no aggregate)
-- **States:** loading; no population (`rule-run-empty`); reading rows; running; findings; none flagged (`rule-run-findings-empty`); recorded; error inline.
+- **States:** loading; no population (`rule-run-empty`); reading rows; running; findings; none flagged (`rule-run-findings-empty`); recorded; error inline; the flow's empty set, its verified and not-verified counts, and the carried overrides.
 - **Tutorial key:** — (no key)
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
   named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
@@ -2182,7 +2182,7 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 - Screens documented: 108 (contract sections: 48 Appendix A + 44 Appendix B).
 - Tutorial keys: 81.
 - RPCs catalogued: 143.
-- Data modules: 72; exported data functions: 440.
+- Data modules: 72; exported data functions: 441.
 - Contract testids not found verbatim in `src/` (placeholder or dynamic): 228.
   - audit-file-view-builder, audit-file-view-certificate, audit-file-view-conclusion, audit-file-view-documents, audit-file-view-ethics, audit-file-view-execution, audit-file-view-findings, audit-file-view-planning, audit-file-view-population, audit-file-view-report, audit-file-view-review, audit-file-view-rowtesting, audit-file-view-sampling, data-front-door-kind, hosting-test, invite-user, issues-view-patterns, oa-branding-colour-accent, oa-branding-colour-background, oa-branding-colour-primary, oa-branding-colour-text, oa-branding-margin-0, oa-branding-margin-3, oa-certificate-enabled-verification, oa-escalation-result, oa-escalation-saved, oa-governance-signoff-conclusion, oa-governance-signoff-planning, oa-governance-signoff-testing, org-control-tab-auditors, org-control-tab-automation, org-control-tab-branding, org-control-tab-connectors, org-control-tab-features, org-control-tab-formats, org-control-tab-governance, org-control-tab-hosting, org-control-tab-methodology, org-control-tab-packs, org-control-tab-people …
 

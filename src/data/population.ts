@@ -6,6 +6,7 @@
  * so the caller can compare it with the hash the database stored. Components never import the client.
  */
 import { callRpc, getClient, type DataResult } from './db';
+import type { EvidenceRecord } from '../lib/systeligon';
 
 export type PopulationStatus =
   | 'pending' | 'uploading' | 'verifying' | 'verified' | 'rejected' | 'locked' | 'archived';
@@ -115,6 +116,40 @@ export async function listConfigSources(): Promise<ConfigSource[]> {
     newest.set(key, { ref: key, text: `${key}=${JSON.stringify(r.value)}` });
   }
   return [...newest.values()];
+}
+
+/**
+ * The evidence a Mode-B (evidence-vs-remark) verification checks, in the shape `flows.ts` consumes
+ * (S5, spec §6). It is built from the workpaper's evidence files: a file is `reachable` when its bytes
+ * are stored (a session-only file has none), its `type` is derived from the filename so a mismatch is
+ * a real mismatch, and the recorded hash is the hash the store took at attachment. `period`, `entity`
+ * and `amount` are left unset — the store does not carry them, and Mode B must not invent a claim.
+ */
+export async function listEvidenceRecords(workpaperId: string): Promise<Record<string, EvidenceRecord>> {
+  const sb = getClient();
+  if (!sb) return {};
+  const { data, error } = await sb.rpc('evidence_files_for', { p_workpaper_id: workpaperId });
+  if (error) throw new Error(error.message);
+  const out: Record<string, EvidenceRecord> = {};
+  for (const r of (data ?? []) as Record<string, unknown>[]) {
+    const id = r.id as string;
+    const filename = (r.filename as string | null) ?? '';
+    const ext = filename.includes('.') ? filename.split('.').pop()!.toLowerCase() : '';
+    const type = ext === 'pdf' ? 'pdf'
+      : ext === 'csv' || ext === 'xlsx' || ext === 'xls' || ext === 'tsv' ? 'sheet'
+      : ext === 'png' || ext === 'jpg' || ext === 'jpeg' || ext === 'gif' || ext === 'webp' ? 'image'
+      : ext === 'txt' || ext === 'md' ? 'text'
+      : 'file';
+    out[id] = {
+      id,
+      // A session-only file has no stored bytes and can never be verified; reachable is the store's
+      // own answer, not assumed.
+      reachable: Boolean(r.storage_path),
+      type,
+      contentSha256: (r.content_sha256 as string | null) ?? '',
+    };
+  }
+  return out;
 }
 
 export async function listPopulations(engagementId: string): Promise<PopulationRow[]> {

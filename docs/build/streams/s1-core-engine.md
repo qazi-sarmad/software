@@ -47,3 +47,17 @@ F134 (pattern rules), F135 (minutes action register), F136 (policy/procedure com
 |---|---|---|---|---|---|---|
 | F128 | Inert | Wired | `src/components/admin/RulePackPanel.tsx:95` (RuleRegistry holds the shipped base), `:130` (packRules assembles the run set the pack signs) | `src/components/admin/RulePackPanel.test.tsx` (9: 'reports the shipped rule base from the append-only RuleRegistry', 'saves the shipped pack assembled by packRules over the registry') | — | pending |
 | F134 | Inert | Wired | `src/components/audit/RuleRunTab.tsx:196` (config scope reads `listConfigSources`), `:283` (`runRules(..., { target: 'config' })`) | `src/components/audit/RuleRunTab.test.tsx` (8: 'runs the config scope over the org config and seals the scope on the finding', 'reports an empty config honestly') | — | pending |
+| F132 | Inert | Wired | `src/components/audit/FlowVerifyPanel.tsx` — `buildAcceptedTestingSet` (:91), `applyFloor` (:99, a minimum never a ceiling), `parsePastedBlock` (:110), `verifyRows` (:132, Mode A/B), `carriedOverrides` (:136); mounted on the rule-run screen `src/components/audit/RuleRunTab.tsx:374`; evidence read by `src/data/population.ts:128` (`listEvidenceRecords`) | `src/components/audit/FlowVerifyPanel.test.tsx` (9: accepted set, empty accepted set, declined floor, Mode A open row, Mode A pass, Mode B no evidence, override carried, paste-to-fill, rights refusal) | — | pending |
+
+## Deliberately not done by S1 (overlap with S7 — no duplicate work)
+- **F130/F131/F133/F135/F136** and **F145 (D16 standards distribution)** are already built + wired on
+  `feature/build-extraction` (S7's branch), which mounts the `OA-36` document-review screen and the
+  `SA-21` Super Admin standards screen. S7 owns those SCREENS; this stream owns the S1 rule DATA.
+  Building D16 again here would collide on the `standards_packs` table and the `standards-` testids, so
+  S1 does not duplicate it. The integrator merges S7's migration `0191_standards_distribution.sql`.
+- **F128/F134/F132** are S1's and are wired above.
+
+## Scale (SCALE-PROGRAMME §2.3, §5 flow 7)
+| Row | Was | Now | Call site | Test | Migration | Commit |
+|---|---|---|---|---|---|---|
+| Rule run at volume | none | Proven | `src/lib/systeligon/runner.ts` (`runRules`) | `src/lib/systeligon/scale.test.ts` (2: byte-identical sealed payload across two runs over 1,000,000 rows; the same rules run at 10 rows as at 100,000) | — | pending |

@@ -5,12 +5,14 @@ import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 const listPops = vi.fn();
 const listRecords = vi.fn();
 const listConfig = vi.fn();
+const listEvidence = vi.fn();
 const recordFindings = vi.fn();
 
 vi.mock('../../data/population', () => ({
   listPopulations: (...a: unknown[]) => listPops(...a),
   listPopulationRecords: (...a: unknown[]) => listRecords(...a),
   listConfigSources: (...a: unknown[]) => listConfig(...a),
+  listEvidenceRecords: (...a: unknown[]) => listEvidence(...a),
 }));
 vi.mock('../../data/systeligon', () => ({
   recordSysteligonFindings: (...a: unknown[]) => recordFindings(...a),
@@ -36,6 +38,7 @@ describe('RuleRunTab — the rule-run screen (S1/S6/S13)', () => {
     listPops.mockResolvedValue([population]);
     listRecords.mockResolvedValue([]);
     listConfig.mockResolvedValue([]);
+    listEvidence.mockResolvedValue({});
     recordFindings.mockResolvedValue({ ok: true });
   });
 

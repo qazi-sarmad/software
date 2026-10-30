@@ -15,6 +15,7 @@ import { ENGINE_NAME } from '../../lib/product';
 import { hasRight } from '../../lib/rights';
 import { rightReason } from '../../lib/rightLabels';
 import { InlineError } from '../common/InlineError';
+import { FlowVerifyPanel } from './FlowVerifyPanel';
 import { ShieldCheck, ArrowRight, Zap, AlertTriangle, CheckCircle2, Database, RefreshCw } from '../common/Icons';
 
 /**
@@ -367,6 +368,17 @@ export const RuleRunTab: React.FC<RuleRunTabProps> = ({ workpaper }) => {
               </span>
             )}
           </div>
+
+          {/* S3/S4/S5/S12 — the accepted/declined flow the findings feed. The required rows are the
+              rows this very run named, so the flow is always over the run the operator just read. */}
+          <FlowVerifyPanel
+            workpaper={workpaper}
+            findings={result.findings}
+            rows={records.map((r) => ({
+              ref: String(r.rowRef),
+              values: { amount: r.amountCents, date: r.date, category: r.category },
+            }))}
+          />
         </div>
       )}
     </div>
