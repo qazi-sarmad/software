@@ -8,12 +8,14 @@ const grantActiveFn = vi.fn();
 const listEngagementsFn = vi.fn();
 const readObjectFn = vi.fn();
 const accessLogFn = vi.fn();
+const grantFn = vi.fn();
+const revokeFn = vi.fn();
 
 vi.mock('../../data/platform', () => ({
   listSupportGrants: () => listGrantsFn(),
   listJobHealth: () => listJobsFn(),
-  grantSupportAccess: () => Promise.resolve({ ok: true }),
-  revokeSupportAccess: () => Promise.resolve({ ok: true }),
+  grantSupportAccess: (org: string, opts: unknown, hours: number) => grantFn(org, opts, hours),
+  revokeSupportAccess: (id: string, reason: string) => revokeFn(id, reason),
   supportGrantActive: (org: string) => grantActiveFn(org),
   supportListEngagements: (org: string) => listEngagementsFn(org),
   supportReadObject: (k: string, id: string, org: string) => readObjectFn(k, id, org),
@@ -115,5 +117,57 @@ describe('SA-02 support session (C2.9)', () => {
     fireEvent.click(screen.getByTestId('superadmin-support-session-open'));
     await waitFor(() =>
       expect(screen.getByTestId('superadmin-support-session-error').textContent).toContain('platform administrator only'));
+  });
+});
+
+describe('SA-02 support access grant / revoke (F85, R6)', () => {
+  const renderReady = async () => {
+    listJobsFn.mockResolvedValue([]);
+    listGrantsFn.mockResolvedValue([]);
+    render(<SuperAdminSupport />);
+    await waitFor(() => expect(screen.getByTestId('superadmin-support-session')).toBeTruthy());
+  };
+
+  it('grants a time-boxed read grant and reloads the list', async () => {
+    grantFn.mockResolvedValue({ ok: true });
+    await renderReady();
+    fireEvent.change(screen.getAllByPlaceholderText('00000000-0000-0000-0000-000000000000')[0],
+      { target: { value: 'a0000000-0000-0000-0000-000000000001' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Grant access' }));
+    await waitFor(() =>
+      expect(grantFn).toHaveBeenCalledWith('a0000000-0000-0000-0000-000000000001', {}, 4));
+    // The reload happens only on a successful grant.
+    await waitFor(() => expect(listGrantsFn).toHaveBeenCalledTimes(2));
+  });
+
+  it('surfaces a refused grant inline and does not reload', async () => {
+    grantFn.mockResolvedValue({ ok: false, reason: 'not allowed: platform administrator only' });
+    await renderReady();
+    fireEvent.change(screen.getAllByPlaceholderText('00000000-0000-0000-0000-000000000000')[0],
+      { target: { value: 'a0000000-0000-0000-0000-000000000001' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Grant access' }));
+    await waitFor(() =>
+      expect(screen.getByTestId('superadmin-support-result').textContent).toContain('platform administrator only'));
+    expect(listGrantsFn).toHaveBeenCalledTimes(1);
+  });
+
+  it('requires a reason of at least four characters before a revoke is offered', async () => {
+    const grant = { id: 'g-1', orgId: 'a0000000-0000-0000-0000-000000000001', scope: 'content_read',
+      grantedBy: 'p', grantedAt: '2026-10-30T00:00:00Z', expiresAt: '2099-10-30T00:00:00Z',
+      revokedAt: null, revokeReason: null };
+    listGrantsFn.mockResolvedValue([grant]);
+    listJobsFn.mockResolvedValue([]);
+    render(<SuperAdminSupport />);
+    await waitFor(() => expect(screen.getByTestId('grant-g-1')).toBeTruthy());
+
+    const reason = screen.getByPlaceholderText('Reason');
+    fireEvent.change(reason, { target: { value: 'no' } });
+    expect((screen.getByRole('button', { name: 'Revoke' }) as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.change(reason, { target: { value: 'tenant asked' } });
+    expect((screen.getByRole('button', { name: 'Revoke' }) as HTMLButtonElement).disabled).toBe(false);
+
+    revokeFn.mockResolvedValue({ ok: true });
+    fireEvent.click(screen.getByRole('button', { name: 'Revoke' }));
+    await waitFor(() => expect(revokeFn).toHaveBeenCalledWith('g-1', 'tenant asked'));
   });
 });

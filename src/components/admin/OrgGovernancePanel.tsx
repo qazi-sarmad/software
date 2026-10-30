@@ -11,6 +11,7 @@ import {
 } from '../../data/governance';
 import type { DataResult } from '../../data/db';
 import { InlineError } from '../common/InlineError';
+import { StageMachinePanel } from './StageMachinePanel';
 import { ExplainPopout } from '../explain/ExplainPopout';
 import { Plus, X, Check } from '../common/Icons';
 
@@ -161,6 +162,18 @@ export const OrgGovernancePanel: React.FC = () => {
         >
           <Check className="w-3.5 h-3.5" /> Save lifecycle settings
         </button>
+      </section>
+
+      {/* R5 / F30 — the configurable stage machine. The lifecycle settings above govern WHAT each
+          stage requires; this governs the stages themselves and their order. */}
+      <section className="rounded-2xl border border-hairline bg-surface p-4 space-y-3" data-testid="oa-governance-stage-section">
+        <h3 className={heading}>Engagement stage machine</h3>
+        <p className="text-apple-12 text-secondary">
+          The stages an engagement moves through, in order. Planning, Testing and Conclusion are always
+          present, because the ethics check, the testing lock and the conclusion-readiness rule are
+          anchored to them; rename their labels or insert your own stages between them.
+        </p>
+        <StageMachinePanel />
       </section>
 
       {/* §14.2 — finding structure: names and role tags. */}
