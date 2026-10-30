@@ -590,7 +590,9 @@ authoritative work list; the builder prompt delegates all of it except the desig
 |---|---|---|
 | D5, D7, D8, D9 | Continuous control monitoring (SOX/ICFR), population-level forensic analytics, policy-to-control gap analysis, assurance-over-assurance (`F121`, `F123`–`F125`) | **IN SCOPE** — owner decision 2026-10-29; `Absent` in the register; full-depth packages in `docs/SYSTELIGON-REMAINDER-BUILDER-PROMPT.md`, grounded in `docs/ASSURANCE-RULEBOOKS.md` |
 | D6 | Verifiable third-party attestation (`F122`) | **REMOVED** — owner decision 2026-10-29 |
-| D10–D13 | Client classification + ICFR trigger, the audit-type axis (management/IT/Shari'ah), traffic-signal readiness panels, deployment readiness (`F139`–`F142`) | **IN SCOPE** — owner decision 2026-10-29; `Absent`; grounded in `docs/PAKISTAN-ASSURANCE-REGIMES.md` |
+| D10–D13 | Client classification + ICFR trigger, the audit-domain axis (Management/Shari'ah/IT), actionable traffic-signal readiness, deployment readiness (`F139`–`F142`) | **IN SCOPE** — owner decision 2026-10-29; `Absent`; grounded in `docs/PAKISTAN-ASSURANCE-REGIMES.md` and `docs/AUDIT-DOMAINS-MODEL.md` |
+| D14–D15 | Risk library + auto-adjusted factors + manual override; dynamic risk assessment (PwC model) (`F143`–`F144`) | **IN SCOPE** — owner decision 2026-10-29; `Absent`; grounded in `docs/RISK-ASSESSMENT-MODEL.md` and `docs/ASSURANCE-RULEBOOKS.md` §6 |
+| All 27 `Inert` + 21 `Absent` register rows | **HANDED TO THE BUILDER** — owner decision 2026-10-29, continuous-build cadence (≤15s between rows); only the DEFERRED design rows are held back |
 
 ### The remainder the build must still close
 

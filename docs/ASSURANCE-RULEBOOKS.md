@@ -1,4 +1,4 @@
-# Assurance rule books — verified source reference (D5 / D7 / D8 / D9)
+# Assurance rule books — verified source reference (D5 / D7 / D8 / D9 / D11 / D14 / D15)
 
 Numbering and structure verified 2026-10-29. This file records **structure, identifiers and titles
 only**. COSO, ISO, PCAOB, ISACA, IFAC and the IIA hold copyright on their texts; the product encodes
@@ -149,7 +149,114 @@ hash-chained ledger.
 
 ---
 
-## 5. The rule-citation law (applies to every rule in D5 / D7 / D8 / D9)
+## 5. Shari'ah assurance — the AAOIFI Shari'ah Standards (the spine of D11's Shari'ah pack)
+
+Source in this repository: `docs/Shariah Standards-AAOIFI.pdf` (the AAOIFI Shari'ah Standards, English
+edition, 2015, 1,262 pp, 54 standards). Verified 2026-10-29. Cite **SS (n)** with the standard's title;
+never paraphrase a ruling, encode the **structural requirement** the standard imposes and let the
+Shari'ah reviewer judge the substance.
+
+The 54 standards (SS 1–54). The ones that carry an auditable structural requirement for an Islamic
+financial institution are marked **[audit]**:
+
+| # | Title | # | Title |
+|---|---|---|---|
+| SS 1 | Trading in Currencies **[audit]** | SS 28 | Banking Services in Islamic Banks **[audit]** |
+| SS 2 | Debit Card, Charge Card and Credit Card **[audit]** | SS 29 | Stipulations and Ethics of Fatwa in the Institutional Framework |
+| SS 3 | Procrastinating Debtor **[audit]** | SS 30 | Monetization (Tawarruq) **[audit]** |
+| SS 4 | Settlement of Debt by Set-Off | SS 31 | Controls on Gharar in Financial Transactions **[audit]** |
+| SS 5 | Guarantees **[audit]** | SS 32 | Arbitration |
+| SS 6 | Conversion of a Conventional Bank to an Islamic Bank **[audit]** | SS 33 | Waqf **[audit]** |
+| SS 7 | Hawalah **[audit]** | SS 34 | Hiring of Persons **[audit]** |
+| SS 8 | Murabahah **[audit]** | SS 35 | Zakah **[audit]** |
+| SS 9 | Ijarah and Ijarah Muntahia Bittamleek **[audit]** | SS 36 | Impact of Contingent Incidents on Commitments |
+| SS 10 | Salam and Parallel Salam **[audit]** | SS 37 | Credit Agreement **[audit]** |
+| SS 11 | Istisna'a and Parallel Istisna'a **[audit]** | SS 38 | Online Financial Dealings **[audit]** |
+| SS 12 | Sharikah (Musharakah) and Modern Corporations **[audit]** | SS 39 | Mortgage and its Contemporary Applications **[audit]** |
+| SS 13 | Mudarabah **[audit]** | SS 40 | Distribution of Profit in Mudarabah-Based Investment Accounts **[audit]** |
+| SS 14 | Documentary Credit **[audit]** | SS 41 | Islamic Reinsurance **[audit]** |
+| SS 15 | Ju'alah **[audit]** | SS 42 | Financial Rights and How They Are Exercised and Transferred |
+| SS 16 | Commercial Papers **[audit]** | SS 43 | Insolvency **[audit]** |
+| SS 17 | Investment Sukuk **[audit]** | SS 44 | Obtaining and Deploying Liquidity **[audit]** |
+| SS 18 | Possession (Qabd) **[audit]** | SS 45 | Protection of Capital and Investments **[audit]** |
+| SS 19 | Loan (Qard) **[audit]** | SS 46 | Al-Wakalah Bi Al-Istithmar (Investment Agency) **[audit]** |
+| SS 20 | Sale of Commodities in Organized Markets **[audit]** | SS 47 | Rules for Calculating Profit in Financial Transactions **[audit]** |
+| SS 21 | Financial Paper (Shares and Bonds) **[audit]** | SS 48 | Options to Terminate Due to Breach of Trust **[audit]** |
+| SS 22 | Concession Contracts **[audit]** | SS 49 | Unilateral and Bilateral Promise **[audit]** |
+| SS 23 | Agency and the Act of an Uncommissioned Agent (Fodooli) **[audit]** | SS 50 | Irrigation Partnership (Musaqat) |
+| SS 24 | Syndicated Financing **[audit]** | SS 51 | Options to Revoke Contracts Due to Incomplete Performance |
+| SS 25 | Combination of Contracts **[audit]** | SS 52 | Options to Reconsider (Cooling-Off, Either-Or, Non-Payment) |
+| SS 26 | Islamic Insurance **[audit]** | SS 53 | 'Arboun (Earnest Money) |
+| SS 27 | Indices **[audit]** | SS 54 | Revocation of Contracts by Exercise of a Cooling-Off Option |
+
+**The structural requirements a Shari'ah audit tests** (encode these; each cites its SS):
+
+1. **Prohibition of Riba** — no interest in any contract. Applies across SS 1 (currency trading),
+   SS 3 (a procrastinating debtor may not be charged), SS 19 (a loan must return exactly the principal).
+   A structural rule: no profit or increase on a loan; no penalty income booked to the institution's
+   own account (it must go to charity).
+2. **Gharar (excessive uncertainty)** — SS 31 sets the controls; a contract whose subject, price or
+   delivery is indeterminate fails. Structural rule: required fields present and determinate.
+3. **Maysir (gambling) and prohibited object** — the subject of the sale must be permissible and
+   owned; SS 18 (possession) requires ownership before sale.
+4. **Sequence of contract and ownership** — SS 8 (Murabahah) requires the institution to own the asset
+   before selling it on; a Murabahah booking with no prior acquisition is a structural breach.
+5. **Profit-and-loss sharing integrity** — SS 12 (Musharakah), SS 13 (Mudarabah) and SS 40
+   (profit distribution) require the profit ratio to be agreed **before** the investment and the loss
+   to fall on the capital provider (Mudarabah) — a structural rule over the account data.
+6. **Zakah** — SS 35 sets the basis, the nisab and the rate; the institution's obligation to compute
+   and, where it acts as agent, to disclose is testable against the ledger.
+7. **Shari'ah governance** — SS 29 governs the fatwa function; the institution must have a
+   **Shari'ah Supervisory Board (SSB)**, its fatwas must be recorded, and the audit must test that
+   transactions follow the fatwas. The **Shari'ah review** is performed by the institution's own
+   Shari'ah-compliance function and reported to the SSB.
+
+> **The verification gate (unchanged, and the reason the Shari'ah pack is honest).** The AAOIFI
+> standards above ARE verified from the PDF in this repo. The **SBP Shari'ah Governance Framework**
+> for Pakistan's Islamic banks was NOT reachable from the build environment (sbp.org.pk returns 403).
+> So the Shari'ah pack may be built from AAOIFI **SS 1–54** as verified here, but the Pakistan-specific
+> SGF overlay must be verified by the owner or the builder against the primary SBP source before any
+> Pakistan-specific Shari'ah rule is asserted. Do not invent an SGF requirement. A guessed Shari'ah
+> rule is a religious-compliance claim the product has no right to make.
+
+---
+
+## 6. Risk-assessment inputs — the PwC dynamic-risk model (the spine of D15)
+
+Source: `docs/Risk Assessment, reimagined.pdf` (PwC, 2026 survey, 16 pp). Verified 2026-10-29. This is
+a **professional-practice survey**, not a standard — so it shapes the **model and the defaults**, not a
+rule that produces a finding. Cite it as the source of the input taxonomy and the refresh cadence, and
+keep the deterministic rules in §1–§4 as the finding-producers.
+
+Five themes, each a build requirement for D15:
+
+1. **Dynamic risk-assessment inputs.** Standardise signals across **ERM, incidents, strategy,
+   performance and external indicators**; establish a **common taxonomy** for trending; define
+   **risk appetite and tolerance**; link the signals to the risk universe. (Survey: 16% refresh
+   quarterly-or-continuously; 25% use KRIs/KPIs; 85% still rely on interviews; 87% use external
+   thought leadership.)
+2. **Alignment to ERM.** Share a **common risk taxonomy and language** between IA and ERM; map audit
+   topics and auditable entities to **enterprise risk themes**; use the mapping to show **coverage,
+   overlap and gaps**. The PwC worked example maps each of the top 7 ERM risks to a coverage verdict
+   (direct / limited / monitoring), an audit project and its **KRIs** — that mapping is the model.
+3. **Continuous audit planning.** Move from annual to **trigger-based** refresh: a KRI breach, an
+   incident, a management request or a strategic change reshapes coverage; plan changes are recorded
+   with rationale (track / defer / cancel / rescope).
+4. **Translating risk into coverage.** A decision-ready narrative: what changed, the drivers, the
+   affected people/process/technology, and the **tradeoffs** (what moved up, what moved down).
+5. **Use of AI.** PwC frames AI as summarisation, tagging and signal monitoring. **This product does
+   not use AI** (owner decision, and `src/guards/noAi.test.ts` enforces it). Encode the *deterministic*
+   equivalent: rules that flag a changed signal, a KRI breach or an emerging theme from data — the same
+   outcome without a model.
+
+The concrete input taxonomy to encode (all deterministic): prior audit results, SIRA score and band,
+open findings and their age, control-test failures, incident counts, KRI values against tolerance,
+management-request count, days since last audit, materiality, regulatory changes, and the ERM theme
+map. These are the **auto-adjustment factors** in D14.
+
+---
+
+## 7. The rule-citation law (applies to every rule in D5 / D7 / D8 / D9 / D11)
 
 1. Every rule carries a **named source** — a standard number, a framework id, or a statute.
 2. The rule id is **versioned**; a released rule is immutable; a change is a new version.

@@ -142,6 +142,14 @@ READ FIRST, IN THIS ORDER
 9. docs/PAKISTAN-ASSURANCE-REGIMES.md — VERIFIED client classification matrix (C1–C8) for D10, and the
    management / IT / Shari'ah audit-type axis for D11. The regulator and obligation citations come from
    here. Never invent a section number, a stage count or a framework name.
+10. docs/AUDIT-DOMAINS-MODEL.md     — the three-universe model (Management / Shari'ah / IT), each with
+   its own rule base. Read before D11.
+11. docs/RISK-ASSESSMENT-MODEL.md    — the risk library, auto-adjusted factors and manual override for
+   D14/D15. Read before building either.
+12. docs/Shariah Standards-AAOIFI.pdf — the AAOIFI Shari'ah Standards (2015 English ed., 54 standards).
+   The verified source for the Shari'ah pack (D11). Cite SS (n) + title on every rule.
+13. docs/Risk Assessment, reimagined.pdf — PwC 2026 survey. Shapes the model/defaults for D15, not a
+   finding rule. The deterministic input taxonomy is in docs/ASSURANCE-RULEBOOKS.md §6.
 IGNORE ALL of docs/archive/ — 63 pre-audit docs, each stamped stale.
 
 ===============================================================
@@ -297,33 +305,42 @@ D10 — Client classification at onboarding, and the ICFR trigger. NEW; owner in
       the LFR artifact; a tenant created as "SMC" is told it is exempt; the choice is versioned and
       reason-stamped; no obligation is asserted without a citation.
 
-D11 — The audit-type axis: management / IT / Shari'ah rule packs. NEW; owner instruction 2026-10-29.
-    The product names three audit types (docs/SPEC-v10.md; `universes.domain`). Management audit is
-    the product and is built. IT audit and Shari'ah audit are containers with no rule base — the same
-    "built container, no reachable rule" defect. Close it.
-    - Make `universes.domain` (or a new `audit_type`) a first-class, screen-set property of a universe
-      (today no screen reads or sets it), and key rule packs to it: a universe of type IT Audit loads
-      the IT pack; Shari'ah Audit loads the Shari'ah pack; Management Audit loads the default.
-    - **IT audit pack** — a real rule base over the COBIT 2019 objectives / ISO 27001:2022 Annex A /
-      NIST 800-53 families in docs/ASSURANCE-RULEBOOKS.md: change management, access control and
-      privileged access, backup and DR, SDLC, patch management, logging and monitoring. Named, versioned
-      rules, each citing its control id.
-    - **Shari'ah audit pack** — VERIFY FIRST, THEN ENCODE. In Pakistan a Shari'ah audit is grounded in
-      the SBP Shari'ah Governance Framework for Islamic banking, the institution's Shari'ah Supervisory
-      Board, and AAOIFI Shari'ah standards (GSIFI). The SGF was NOT verifiable in this environment
-      (SBP is 403 to curl). Verify the current SBP SGF and the applicable AAOIFI standards against the
-      primary source before encoding a single rule, cite the exact standard, and if it cannot be
-      verified, STOP and report it rather than inventing a Shari'ah rule. A guessed Shari'ah rule is a
-      religious-compliance claim the product has no right to make.
-    - Surface: the universe creation / settings screen sets the audit type; the rule-run screen loads
-      the matching pack. Each pack needs a contract section, testids and a regenerated UI-INVENTORY.md.
-    - Acceptance: a universe of type IT Audit runs the IT pack; a Shari'ah universe runs the verified
-      Shari'ah pack (or is honestly blocked pending verification); every rule names its control id.
+D11 — The audit-domain axis: three universes, three rule bases. NEW; owner instruction 2026-10-29.
+    Read docs/AUDIT-DOMAINS-MODEL.md FIRST — it is the model, and it answers the owner's question
+    (three default universes, selectable and configurable, each with its own rule base). Management
+    audit is the product and is built. IT audit and Shari'ah audit are containers with no rule base —
+    the same "built container, no reachable rule" defect. Close it.
+    - Seed three default universes per org — Management Audit, Shari'ah Audit, IT Audit — each an
+      ordinary `universes` row with `domain` (or a new `audit_type`) set. `universes.domain` exists
+      (`0003`) but NO screen reads or sets it. Make it first-class: the universe creation/settings
+      screen sets it, and the rule-run screen loads the matching rule base from it. The three are
+      DEFAULTS, not a hard limit — an org may add a fourth discipline and point it at a rule pack. Never
+      hard-code "exactly three".
+    - **IT audit pack** — a real rule base over the COBIT 2019 objectives / ISO 27001:2022 Annex A (93
+      controls, 4 themes) / NIST 800-53 Rev. 5 families in docs/ASSURANCE-RULEBOOKS.md §1: change
+      management, access control and privileged access, backup and DR, SDLC, patch management, logging
+      and monitoring. Named, versioned rules, each citing its control id.
+    - **Shari'ah audit pack** — the AAOIFI Shari'ah Standards ARE verified: docs/Shariah Standards-AAOIFI.pdf
+      (2015 English ed., 54 standards) and docs/ASSURANCE-RULEBOOKS.md §5. Encode the STRUCTURAL rules
+      from SS 1–54 — riba (SS 1/3/19), gharar (SS 31), ownership sequence (SS 8/18), profit-distribution
+      integrity (SS 12/13/40), zakah (SS 35), Shari'ah governance / SSB and fatwa (SS 29). Cite the
+      exact SS number and title on every rule. THE PAKISTAN OVERLAY IS NOT VERIFIED: the SBP Shari'ah
+      Governance Framework was NOT reachable (sbp.org.pk 403). Encode AAOIFI SS rules; do NOT assert any
+      Pakistan-specific SGF requirement until it is verified against the primary SBP source. A guessed
+      Shari'ah rule is a religious-compliance claim the product has no right to make. The substantive
+      Shari'ah judgment is always the SSB's, never the product's.
+    - Surface: the universe settings screen sets the discipline; the rule-run screen loads the matching
+      pack; the risk library offers the discipline's risks (see D14). Each pack needs a contract section,
+      testids and a regenerated UI-INVENTORY.md.
+    - Acceptance: a universe of each discipline runs its own pack; the three defaults are seeded and an
+      org can add a fourth; every rule names its control id and source; a Shari'ah universe runs only
+      verified AAOIFI-based rules or is honestly blocked pending SGF verification.
 
-D12 — Traffic-signal readiness panels (Super Admin + Org Admin). NEW; owner instruction 2026-10-29.
+D12 — Traffic-signal readiness panels that ACT (Super Admin + Org Admin). NEW; owner instruction 2026-10-29.
     The owner wants the control panels, especially at deployment and onboarding, to read as LIVID
     TRAFFIC SIGNALS: one glance tells a non-technical administrator what is ready, what is degraded and
-    what is broken. This is functional honesty made visual, not decoration.
+    what is broken. This is functional honesty made visual, not decoration. AND, owner instruction
+    2026-10-29 (second round): a signal is not a dead light — it must carry the FIX.
     - Extend `platform_provisioning_status` (0097) — already counts + booleans — into a full readiness
       signal set, and add the equivalent for the Org Admin. Each signal is a deterministic verdict:
       red / amber / green, with the reason in words. Reuse the existing `evaluateFit` verdict vocabulary
@@ -336,10 +353,98 @@ D12 — Traffic-signal readiness panels (Super Admin + Org Admin). NEW; owner in
     - **The honest rule**: a signal is never a wall of green. If a check cannot be evaluated (a bucket
       not wired, a function not deployed), the signal is amber with "not evaluated" named — never green
       by default. This is A-U2 (functional states) and the R3 config-honesty rule applied to readiness.
+    - **ACTIONABLE — the corrective-action direct flow (owner instruction).** Every non-green signal
+      carries, in the signal itself:
+        1. a **"Fix this" affordance** that deep-links to the exact configuration screen and field that
+           resolves it (e.g. an un-deployed Edge Function → the hosting/deploy surface; a missing
+           classification → the D10 onboarding picker; a missing bucket → the storage step). The flow
+           takes the admin to the fix, it does not merely describe it. Where the fix is a re-run, offer
+           the re-run; where it is a setting, open the setting.
+        2. a **"Contact Super Admin" action** that opens the complaint-management flow below, with the
+           whole issue auto-generated and attached.
+    - **Complaint management system (owner instruction).** A first-class, coded issue path, not a mailto:
+        - `complaints` table (org_id, code, severity, source_signal, title, body, status, created_by,
+          assigned_to, created_at, resolved_at) with a **human-readable code** (e.g. `PRV-<org>-0007`)
+          minted on create, org-scoped, RLS-guarded, and append-only on its event log (L5).
+        - `complaint_create` RPC: takes the signal id(s) and **auto-generates the entire issue** —
+          the failed check, its reason, the environment layer, and the **system logs** (the readiness
+          RPC's own output, the relevant error rows, the last migration/function-deploy state, the
+          build/env flags) — as a structured bundle. Never free-text only.
+        - **Emails the Super Admin directly** with that bundle. Reuse the existing email-dispatch
+          machinery and the platform-sender configuration (do NOT build a second sender). The email
+          carries the complaint code, the severity, the auto-generated bundle and a link back.
+        - A complaint-management surface (Super Admin: all complaints; Org Admin: this org's) to list,
+          filter by code/severity/status, assign, comment, and resolve — resolution recorded with a
+          reason (config-as-ledger).
+    - **Self-diagnostic, per-issue, segregated (owner instruction).** A `runDiagnostic(signalId)` path:
+        - runs the check for **one** signal **in isolation**, so one failing check cannot mask another
+          (issue-to-issue segregation — the same discipline as the RLS tests isolating tables).
+        - returns a structured result: pass / fail, the reason, the evidence it read, and — where it can
+          — a **suggested remediation** drawn from a seeded remediation catalogue keyed to the signal.
+        - is runnable from the signal itself ("Re-check"), and the result is recorded (who ran it, when,
+          what it found) so a later reviewer sees the history.
+        - **never mutates** state as a side effect of diagnosing; a diagnostic that changes state is not
+          a diagnostic. The fix is a separate, explicit action.
     - Surface: a readiness banner/section on SuperAdminProvisioning and OrgControlPanel. Non-blocking,
-      no modal (spec §27.5). Counts and booleans only cross to the platform role (L2).
+      no modal (spec §27.5). Counts and booleans only cross to the platform role (L2); the log bundle in
+      a complaint is the minimum needed and is org-scoped.
     - Acceptance: every signal names its check and its reason; an un-evaluated check is amber, never
-      green; the panel shows the same verdict the underlying RPC computes.
+      green; every non-green signal offers a "Fix this" deep-link and a "Contact Super Admin" action; a
+      complaint gets a code, an auto-generated bundle with logs, and an email to the Super Admin; a
+      self-diagnostic runs one signal in isolation, records its result, and changes no state.
+
+D14 — The risk library, auto-adjusted factors, and manual override. NEW; owner instruction 2026-10-29.
+    Read docs/RISK-ASSESSMENT-MODEL.md FIRST — it is the specification, and it is elaborate on purpose
+    (owner instruction: "ensure the risk libraries, and auto-adjusted factors (with manual override) is
+    present and is elaborate"). Today the SIRA model can be *scored* but cannot be *fed*: `risks_library`
+    is empty, there is no auto-adjustment, and there is no override.
+    - **The risk library, seeded and layered**: the universal layer (`risks_library.is_universal`), the
+      org layer (scoped by org_id), and **discipline packs** (management / IT / Shari'ah) loaded when a
+      universe is of that discipline (D11). Add `discipline`, `source`, `risk_type`, `is_emerging`,
+      default `inherent_rating`/`residual_rating`/`appetite`/`tolerance`. SEED it non-empty — management
+      from COSO ICIF-2013 + IIA 2024 + the seven PwC ERM themes; IT from COBIT 2019 / ISO 27001:2022 /
+      NIST 800-53; Shari'ah from AAOIFI SS 1–54. Versioned and reason-stamped (L5).
+    - **Auto-adjusted factors**: a proposal step that derives each SIRA factor value from data — prior
+      findings, time since audit, control-test failures, incidents, KRI breaches, change velocity,
+      regulatory exposure from the D10 classification — each proposal carrying `{proposed_value, inputs,
+      rule_id, rule_version, source}`. Show the proposal with its inputs; the auditor confirms. **An
+      unknown input yields "unknown", never 0.**
+    - **Manual override, elaborate and recorded**: `override_value` + MANDATORY `override_reason` +
+      `override_by`/`override_at` + `auto_value_at_override` + the overridden `rule_id`/`rule_version`.
+      An override is visible at every stage (reuse the S12 `carriedOverrides` vocabulary), never destroys
+      the auto value, is revertible (the revert recorded), and a band change it causes is flagged for D9.
+      Needs a right; a read-only user sees but cannot override. Extend `sira_scores` with `auto_values`
+      and `overrides` so a score is fully reconstructible.
+    - **KRI and appetite/tolerance**: a KRI is a named measure with a threshold and a tolerance band, a
+      deterministic breach verdict; risk appetite and tolerance are versioned org settings.
+    - Surface: the SIRA model screen shows auto values and overrides side by side; the library screen
+      lists, filters by discipline, and edits (versioned). No AI — `src/guards/noAi.test.ts` must pass.
+    - Acceptance: the library is seeded and non-empty; a factor is auto-proposed with inputs and rule
+      version named; an override requires a reason and shows the auto value; an override is visible
+      downstream and revertible; a band change from an override is flagged; an unknown input is
+      "unknown", not 0.
+
+D15 — Dynamic risk assessment: the PwC model made deterministic. NEW; owner instruction 2026-10-29.
+    Read docs/ASSURANCE-RULEBOOKS.md §6 and docs/Risk Assessment, reimagined.pdf. This is the process
+    around the library (D14), from a professional-practice survey — it shapes the MODEL and the
+    DEFAULTS, not a finding-producing rule. Five themes, all deterministic, NO AI.
+    - **Standardised inputs, common taxonomy**: one risk taxonomy shared by the library, the SIRA model,
+      ERM and the rule packs, so a risk trends across cycles and compares to the ERM register. Seeded,
+      org-extensible, versioned.
+    - **ERM mapping**: a table mapping each enterprise risk theme to the audit coverage addressing it,
+      with a coverage verdict (direct / limited / monitoring / none), the linked engagement or plan item,
+      and its KRIs — the PwC worked example as data. A top ERM risk with NO coverage is surfaced as a
+      gap. This is what lets a leader "see alignment, overlap, and coverage gaps".
+    - **Trigger-based refresh**: a deterministic trigger set (KRI breach, incident above band, control
+      test failure, strategic change, management request). Each produces a plan-change PROPOSAL
+      (track / defer / cancel / rescope) with rationale, which a human accepts — never an automatic plan
+      rewrite.
+    - **Risk-to-coverage narrative**: what changed since the last cycle, the drivers, the affected
+      people/process/technology, and the tradeoffs (what moved up, what moved down) — deterministic
+      text from data, rendered by the writing engine, no model.
+    - Acceptance: the taxonomy is shared and seeded; the ERM map surfaces an uncovered top risk as a
+      gap; a KRI breach produces a plan-change proposal with rationale and does not rewrite the plan;
+      the narrative is generated from data; the no-AI guard passes.
 
 D13 — Deployment and environment readiness in the Super Admin. NEW; owner instruction 2026-10-29.
     The owner asked whether deployment should be part of the Super Admin. The answer, and the work:
@@ -367,8 +472,55 @@ D13 — Deployment and environment readiness in the Super Admin. NEW; owner inst
       clean deploy end to end.
 
 Register honesty — the six stale rows (F28, F29, F39, F53, F54, F55) are ALREADY corrected on the
-    starting branch (94 Wired / 27 Inert / 17 Absent). Keep the rule for any further stale row you find:
+    starting branch (94 Wired / 27 Inert / 21 Absent). Keep the rule for any further stale row you find:
     correct it in the same commit as the work that proves it.
+
+THE 27 INERT AND 21 ABSENT ROWS ARE YOURS — all of them. NEW; owner instruction 2026-10-29.
+    Owner instruction, verbatim in effect: hand ALL 27 Inert and ALL 21 Absent rows to the builder in
+    this continuous-build prompt, worked through with at most a 15-second pause between them. Nothing in
+    the register is left out of scope, and nothing is parked behind a design decision except the DEFERRED
+    design rows below. The full list is in docs/FEATURE-REGISTER.md §14 and restated here so you do not
+    have to go looking. The rule for every row is the same and it is not negotiable: FIND THE CALL SITE.
+    A row is `Wired` only when a named screen or scheduled job calls it AND a test exercises it through
+    that path. If nothing calls it, it is `Inert` and you must say so; if it does not exist, it is
+    `Absent`. Correct the register in the same commit as the work that proves it.
+
+    The 27 `Inert` rows (a built thing with no reachable caller — wire it or say why not):
+      F35 report templates · F49 monitor rules · F50 monitor runner · F51 alert persistence ·
+      F52 alert→Work Queue delivery · F57 connector run start/finish · F58 staged record ingest ·
+      F59 the 22 connector adapters · F72 testing_mode · F73 signoff_role_* · F74 approval_chain ·
+      F75 report_templates readers · F76 anchoring_settings · F78 report_opinion_required ·
+      F79 workflow SLA/escalation · F85 support access grant/revoke · F96 in-app notification delivery ·
+      F108 motion system · F112 contrast test coverage · F128 rule versioning/packs (RuleRegistry,
+      packRules) · F130 structured extraction tier 3 · F131 OCR seam tier 2 · F132 accepted/declined
+      flows + Mode A/B · F133 structural document rules · F134 pattern rules · F135 minutes action
+      register · F136 policy/procedure comparison.
+      Note: F49–F52 and F57–F59 are the C-series monitor/connector runtime; F72–F79 are the R3
+      configuration-honesty rows; F128–F136 are the Systeligon engine surfaces (L2b/L3).
+
+    The 21 `Absent` rows (does not exist — build it or, for the two removals, record why not):
+      F30 configurable stage machine · F56 anomaly→emergent-risk→SIRA · F84 multi-org isolation under
+      concurrency · F86 support access logged · F92 guided zero-to-first-report wizard · F98 realtime
+      pop-out sync · F105 additional themes · F106 audience profiles · F107 time-of-day phases ·
+      F109 animated headers · F111 density toggle · F113 motion/theme/personalisation gates ·
+      F121 continuous control monitoring (D5) · F122 verifiable third-party attestation (D6 — REMOVED by
+      the owner, do NOT build; record it as removed, not absent) · F123 population forensic analytics
+      (D7) · F124 policy-to-control gap analysis (D8) · F125 assurance-over-assurance (D9) ·
+      F139 client classification + ICFR trigger (D10) · F140 audit domains + rule packs (D11) ·
+      F141 actionable traffic-signal readiness (D12) · F142 deployment readiness (D13).
+      Also build D14 (risk library / auto-adjusted factors / override) and D15 (dynamic risk
+      assessment) — see docs/RISK-ASSESSMENT-MODEL.md and docs/ASSURANCE-RULEBOOKS.md §6 — they are new
+      rows (F143/F144) to add to the register as you build them.
+
+    The two rows NOT to build, and the one caveat:
+      - F122 (D6) — removed by the owner. Record it as removed, with the date, and move on.
+      - F105/F106/F107/F109/F111/F113 and the other U/E/A design rows — DEFERRED below; do not build
+        until the owner settles the design language. They are the ONLY rows held back.
+
+    Work them with at most a 15-second pause between rows. If a row needs a surface that does not exist
+    yet, build the smallest honest surface that reaches it, prove it with a test through that path, and
+    correct the register row in the same commit. Commit messages are the report — say which row moved and
+    from what status to what status, with the call site and the test that proves it.
 
 Tutorial media — re-record the 25 GIFs whose ui_hash is stale (`npm run check-tutorials` lists them).
     Build work; do it once the surfaces above stop moving.
@@ -401,17 +553,33 @@ E8, U5, U7, U9-U13, A-U1 — the design-language rows. The owner has not settled
 - D10: a tenant's classification is set at onboarding, versioned and reason-stamped, and drives its
   obligations; a "Banking company / DFI" is offered the SBP ICFR control set and the LFR artifact; an
   "SMC" is told it is exempt; no obligation is asserted without a citation.
-- D11: a universe of type IT Audit runs the IT pack; a Shari'ah universe runs the verified Shari'ah
-  pack (or is honestly blocked pending verification); every rule names its control id.
+- D11: a universe of each discipline (Management / Shari'ah / IT) runs its own rule base; the three
+  defaults are seeded and an org can add a fourth; every rule names its control id and source; a
+  Shari'ah universe runs only verified AAOIFI-based rules or is honestly blocked pending SGF
+  verification.
 - D12: every readiness signal names its check and its reason; an un-evaluated check is amber, never
-  green by default.
+  green by default; every non-green signal offers a "Fix this" deep-link and a "Contact Super Admin"
+  action; a complaint gets a code, an auto-generated bundle with logs, and an email to the Super Admin;
+  a self-diagnostic runs one signal in isolation, records its result, and changes no state.
 - D13: the Super Admin shows the three-layer deployment readiness with honest per-layer verdicts, and
   `docs/DEPLOYMENT-RUNBOOK.md` reproduces a clean deploy end to end.
+- D14: the risk library is seeded and non-empty; a SIRA factor is auto-proposed with its inputs and its
+  rule version named; an override requires a reason, shows the auto value, is visible downstream and is
+  revertible; a band change from an override is flagged; an unknown input is "unknown", not 0.
+- D15: the risk taxonomy is shared and seeded; the ERM map surfaces an uncovered top risk as a gap; a
+  KRI breach produces a plan-change proposal with rationale and does not rewrite the plan; the
+  narrative is generated from data.
+- Every register row: the 27 `Inert` and 21 `Absent` rows are each moved honestly (wired + proved, or
+  said plainly to be unwired), with the register corrected in the same commit. F122 (D6) is recorded as
+  removed, not built. Only the DEFERRED design rows are held back.
 - No D-capability rule calls anything external; the no-AI guard still passes. (L1.)
 
 ===============================================================
 PROCESS
 ===============================================================
+- CONTINUOUS BUILD. You do not stop to ask, to plan, or to report progress. The commit message is the
+  report. No idle longer than 15 seconds for any reason — if a wait would exceed it, take the next queue
+  item instead. Work the rows back to back with at most a 15-second pause between them.
 - Commit after each task with a conventional message; update docs/SCALE-TASKS.md and
   docs/FEATURE-REGISTER.md IN THE SAME COMMIT. A commit message is the report — say what changed and why.
 - Run the full local gate set after every code change; fix failures before proceeding.
@@ -436,6 +604,7 @@ OWNER ACTIONS (do not attempt these; restate them in your close-out)
   the DEFERRED visual rows (E8, U5, U7, U9-U13, A-U1) can be built once, not twice.
 
 BEGIN: lock your baseline and prove the tree whole, then work continuously through L2b, L3, L4, L5, L6,
-L7, the R3 remainder, D5/D7/D8/D9, D10/D11/D12/D13, and any remaining register-honesty rows — and
-close on the specification's section 14 acceptance list.
+L7, the R3 remainder, D5/D7/D8/D9, D10/D11/D12/D13, D14/D15, EVERY remaining Inert and Absent register
+row (27 and 21 of them — at most a 15-second pause between rows), and the tutorial media — and close on
+the specification's section 14 acceptance list. Commit messages are the report.
 ```
