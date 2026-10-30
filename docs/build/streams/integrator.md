@@ -75,7 +75,34 @@ Created at `968e30d`:
 |---|---|---|---|---|---|---|
 | — mount points (§4) | Absent | Wired | `src/nav/registry.ts`, `src/data/index.ts`, `src/lib/capabilities/registry.ts` | `src/guards/mountPoints.test.ts` | — | `7a11cf9` |
 | — map ⟷ latest prompts | Stale | Reconciled | `docs/build/OWNERSHIP.md` §1/§2/§4.1 | `src/guards/mountPoints.test.ts` | — | `_this commit_` |
-| — `tutorialTargets` flake | Flaky (7.3 s timeout) | Fixed | `src/guards/tutorialTargets.test.ts` | the same guard, now 0.8 s | — | `_this commit_` |
+| — `tutorialTargets` flake | Flaky (7.3 s timeout) | Fixed | `src/guards/tutorialTargets.test.ts` | the same guard, now 0.8 s | — | `d599cb5` |
+| S17 scale generator | Absent | Built | `supabase/tests/99_scale_seed.sql`, `scripts/scale-seed.mjs` | the SQL harness runs 99 twice; `scale-seed.mjs --factor=3` twice gives an identical fingerprint | — | `_this commit_` |
+
+### S17 — the deterministic scale generator (`docs/build/SCALE-PROGRAMME.md` §4)
+
+The programme assigns the generator to the integrator; it did not exist. Built it:
+
+- **`supabase/tests/99_scale_seed.sql`** builds **Shape A** (the large tenant: universes → entities →
+  engagements → a population → evidence → a hash-chained ledger), **Shape B** (the long tail: small
+  orgs, each with a CIA role, so its own rows are visible under RLS), and **Shape C** (an adversarial
+  overlay on A: near-duplicate names, out-of-order approvals, just-below-threshold amounts). Every id
+  and value is a **pure function of an index** (`provio_test.det_uuid(tag, n)`) — no `now()`, no
+  `random()` — so a failure is reproducible.
+- It asserts the structure at the factor, that the stored population hash equals the hash recomputed
+  from the **pure formula** (determinism, L1), that the ledger seq is unique and contiguous from 1, and
+  that the tenant boundary holds over the generated shapes (L2): the seed org and a long-tail org each
+  see their own rows and none of the others'.
+- **`scripts/scale-seed.mjs`** drives it at a chosen scale: `--factor=N`, or `--target` for the §1
+  designated shape (2,000 engagements, 1,000,000 population rows, 100,000 evidence rows, 5,000,000
+  ledger entries; structural factor 313 → 5,008 entities / 1,252 universes), or `--clean`.
+- **L5 forced the cleanup design.** The generator writes `ledger_entries`, which is append-only for
+  **every** role, so a fixture DELETE is impossible — the only sanctioned clear is `TRUNCATE`, which
+  does not fire the row-level append-only triggers. `scale_cleanup()` therefore calls the seed's own
+  `reset_data()` (the `truncate orgs cascade` path). This is the same reason the determinism proof is a
+  formula check rather than a rebuild.
+
+_Verified: `bash scripts/local-sql-harness.sh` → "migrations applied twice / all SQL tests passed twice";
+`node scripts/scale-seed.mjs --factor=3` twice → identical counts and fingerprint._
 
 ### Reconciliation with the latest prompts (`0f3a095`, `968e30d`)
 
