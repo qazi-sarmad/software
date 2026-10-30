@@ -24,8 +24,8 @@ export { parseDocumentStructure, hasSignature, FIELD_PARSERS, type StructuredExt
 export { needsOcr, runOcr, runOcrWithLanguages, type OcrEngine, type OcrText, type OcrOutcome, type ExtractionHint } from './extract/ocr';
 export {
   OCR_LANGUAGES, OCR_ENGINE_CHOICES, DEFAULT_OCR_LANGUAGE,
-  buildOcrEngineConfig, defaultOcrEngineConfig, ocrLanguage, packTraineddata,
-  type OcrLanguage, type OcrScript, type OcrDirection, type OcrEngineConfig, type OcrEngineChoice,
+  buildOcrEngineConfig, defaultOcrEngineConfig, ocrLanguage, packFontTables,
+  type OcrLanguage, type OcrScript, type OcrDirection, type OcrFontTable, type OcrEngineConfig, type OcrEngineChoice,
 } from './extract/ocrLanguages';
 export { documentRules, contractSignature, approvalDate, dateAfterReport, absentFollowThrough } from './rules/documents';
 export { patternRules, hardcodedCredentials, selectStar, externalCallNoErrorHandling, unboundedLoop, disabledCheck, hardcodedEnvironment } from './rules/patterns';

@@ -36,12 +36,12 @@ export function needsOcr(hint: ExtractionHint): boolean {
 
 /** A local OCR engine. It is a pure function of bytes; it must not declare a remote endpoint. */
 export interface OcrEngine {
-  /** Name for the record, e.g. `tesseract-wasm`. */
+  /** Name for the record, e.g. `bundled-bitmap`. */
   name: string;
   /** True when the engine sends anything off the machine. A remote engine is refused (L2). */
   remote: boolean;
   /**
-   * The languages the engine was configured to read, as a tesseract `lang` string (`eng+urd`). A
+   * The languages the engine was configured to read, as a `lang` string (`eng+urd`). A
    * caller sets this from `buildOcrEngineConfig`; when absent the engine's own default is used.
    */
   lang?: string;
