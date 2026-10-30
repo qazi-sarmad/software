@@ -1,0 +1,76 @@
+# Stream TRUNK — the integrator (`feature/systeligon-builder-continuous`)
+
+The integrator works on the trunk itself (OWNERSHIP.md §1). It owns the mount points (§4), the shared
+ledgers (`FEATURE-REGISTER.md`, `SCALE-TASKS.md`, `SYSTELIGON-GAP-REPORT.md`), `src/App.tsx`,
+`src/context/AppContext.tsx`, the nav/routing registry, the existing guards, `package.json` and the
+merge. It edits no stream's files.
+
+## Baseline (locked at `968e30d`, 2026-10-30)
+
+Read from the tree, not from a document:
+
+| Measure | Value |
+|---|---|
+| Migrations | 128 (highest `0128_rule_pack_release.sql`) |
+| SQL tests | 133 |
+| vitest files | 281 |
+| vitest tests | 3216 |
+| Playwright specs | 31 |
+| Guard files (`src/guards/*.test.ts`) | 28 |
+| Register gate | `PASS: 145 features: 94 Wired, 27 Inert, 24 Absent` |
+
+All gates green at baseline: `npm run build`, `tsc --noEmit`, `vitest run`, the SQL harness twice
+(`migrations applied twice` / `all SQL tests passed twice`), and
+`check-feature-register` / `check-wiring` / `check-dead-code` / `check-ui-contract` /
+`check-two-sources` / `check-tokens` / `check-shrink` / `check-config-effect` / `check-rpc-parity`.
+
+## Environment notes (this sandbox)
+
+- `node_modules` was absent — `npm ci` first.
+- The docker SQL harness (`scripts/local-sql-harness-docker.sh`) does not work here: no docker socket
+  for the invoking user. Installed **PostgreSQL 17** via apt and started the cluster
+  (`sudo pg_ctlcluster 17 main start`); the **non-docker** `scripts/local-sql-harness.sh` is the
+  working path in this sandbox and reports green twice.
+
+## Queue
+
+1. Baseline + tree whole. **DONE** (above).
+2. Create the mount points (OWNERSHIP.md §4). **DONE** (below).
+3. Watch the merge: one stream at a time, full gate set after each, fold the stream doc into the
+   ledgers (register, SCALE-TASKS, gap report).
+
+## The mount points (§4) — what was created, and the decisions taken
+
+Created at `968e30d`:
+
+| Artifact | Path | Purpose |
+|---|---|---|
+| Screen registry | `src/nav/registry.ts` | a stable slot per screen; `screenId` → component path + owner stream + status |
+| Data barrel | `src/data/index.ts` | one namespace re-export per stream's data module (typed stubs for the not-yet-exist ones) |
+| Capability registry | `src/lib/capabilities/registry.ts` | each capability family, its owner stream and its module path |
+| Mount-point guard | `src/guards/mountPoints.test.ts` | the integrator's own guard: the three registries are internally consistent and exported |
+
+**Decisions (recorded, per the build prompt, as the integrator's own map rulings):**
+
+1. **The registries are declarative manifests of strings — no React, no Supabase.** `src/nav/registry.ts`
+   stores a component *path* per slot (§4.1: "pointing at a component path"), never a component value,
+   so it is a pure data module that neither imports the client (M8) nor reads a clock.
+2. **A stream does not edit the registry.** It creates the component file at the agreed `path`. The
+   integrator flips the slot's `status` from `planned` to `mounted` and wires the render at merge time
+   (§7.3 merges one stream at a time). This is the only reading that satisfies both "the registry
+   already lists every planned screen" and "a stream does not edit the registry".
+3. **No new ownership grant is needed.** Every planned slot's `path` falls inside a directory §2
+   already assigns to that stream (`src/components/assurance/**` → S2; `src/components/universe/**`,
+   `src/components/sira/**` → S3; `src/components/superadmin/**` → S4; `src/components/documents/**` →
+   S7). A stream that needs a *new* screen directory the map does not grant requests it from the
+   integrator; the integrator edits this map, never the stream.
+4. **The data barrel re-exports namespaces** (`export * as ns from '...'`) so two modules with a
+   colliding export name cannot break the build, and so the barrel adds no `check-wiring` value export.
+5. **Empty typed stubs** are created for the data modules a stream owns but has not written yet, so
+   the barrel is complete up front and the owning stream fills only its own stub.
+
+## Status
+
+| Row (Fnn / Dnn) | Was | Now | Call site | Test that proves it | Migration | Commit |
+|---|---|---|---|---|---|---|
+| — mount points (§4) | Absent | Wired | `src/nav/registry.ts`, `src/data/index.ts`, `src/lib/capabilities/registry.ts` | `src/guards/mountPoints.test.ts` | — | _this commit_ |
