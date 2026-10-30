@@ -31,6 +31,8 @@ const entity = (id: string, department: string): AuditEntity => ({
   controlsCount: 4,
   lastAuditDate: '2026-01-01',
   status: 'active',
+  approvalStatus: 'approved',
+  rejectionReason: null,
 });
 
 const engagement = (id: string, status: AuditEngagement['status']): AuditEngagement => ({

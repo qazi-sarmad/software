@@ -6,6 +6,7 @@
  *   - every variable is escaped, so a payload value can never inject markup;
  *   - a value that looks like a secret is never rendered, even if it slipped into a payload.
  */
+import { PRODUCT_NAME } from './product';
 
 export type BlockType = 'heading' | 'paragraph' | 'link' | 'divider';
 
@@ -81,7 +82,7 @@ export function renderTemplate(
   }
 
   return {
-    subject: subject || 'Provio notification',
+    subject: subject || `${PRODUCT_NAME} notification`,
     bodyHtml: html.join(''),
     bodyText: text.join('\n').trim(),
   };
@@ -93,7 +94,7 @@ export function renderFallback(
 ): RenderedMessage {
   const what = typeof payload.summary === 'string' ? payload.summary : eventKey;
   return {
-    subject: `Provio: ${eventKey.replace(/\./g, ' ')}`,
+    subject: `${PRODUCT_NAME}: ${eventKey.replace(/\./g, ' ')}`,
     bodyHtml: `<p>${escapeHtml(what)}</p>`,
     bodyText: what,
   };

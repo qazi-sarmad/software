@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import {
   listEvidenceFiles,
   searchDocuments,
-  requestExtraction,
+  extractDocument,
   isDocumentStage,
   type DocumentHit,
   type DocumentStage,
@@ -26,8 +26,9 @@ const STAGE_BADGE: Record<DocumentStage, string> = {
 /**
  * Document viewer (5G, spec §17.2). A non-blocking right-side panel with a toggleable left list, a
  * stage-aware tab filter and full-text search over extracted text. The search and the stage filter
- * live in the database (0035, `search_documents`); the extraction request is a stub (NOT-DONE).
- * There is no backdrop and no dialog attribute: the panel never blocks the page behind it.
+ * live in the database (0035, `search_documents`); extraction runs the real `doc-extract` function
+ * through `extractDocument` (S7). There is no backdrop and no dialog attribute: the panel never blocks
+ * the page behind it.
  */
 export const DocumentViewerPanel: React.FC<{ engagementId: string }> = ({ engagementId }) => {
   const [stage, setStage] = useState<DocumentStage>('planning');
@@ -61,13 +62,21 @@ export const DocumentViewerPanel: React.FC<{ engagementId: string }> = ({ engage
     void load();
   }, [load]);
 
+  // Tier 1 wiring (S7/F43): run the real extraction through doc-extract, not the 0035 stub. The
+  // function re-checks the caller's right and org, reads the file itself and returns the outcome; the
+  // panel never sees the bytes. The database is the authority on whether the caller may extract.
   const queueExtraction = async (fileId: string) => {
     setBusy(true);
     setError(null);
-    const res = await requestExtraction(fileId);
-    if (!res.ok) setError(res.reason);
-    else await load();
-    setBusy(false);
+    try {
+      const outcome = await extractDocument(fileId);
+      if (outcome.status === 'failed') setError(outcome.reason ?? 'Extraction failed.');
+      await load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not extract the document.');
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (

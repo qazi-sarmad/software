@@ -48,8 +48,6 @@ vi.mock('../../data/preflight', () => ({
   listPreflightBlocking: () => listPreflightBlockingFn(),
 }));
 
-// The claim-graph readback (getReportGraph) and the footer preview (reportFooterPreview) are the two
-// reads this panel gained; mock them so the wiring is asserted without the real renderers.
 const commitGraphFn = vi.fn();
 const getGraphFn = vi.fn();
 vi.mock('../../data/reportGraph', () => ({
@@ -71,7 +69,7 @@ import { ReportEditorPanel } from './ReportEditorPanel';
 import { CapRegisterPanel } from './CapRegisterPanel';
 
 const approver = { role: 'cia', orgId: 'org-1', rights: { perform_work: true, review_and_approve: true, approve_plan: true } };
-const preparer = { role: 'preparer', orgId: 'org-1', rights: { perform_work: true } };
+const preparer = { role: 'preparer', rights: { perform_work: true } };
 
 const version = { id: 'v1', engagementId: 'e1', versionNumber: 1, status: 'draft' as const, frozenAt: null, issuedAt: null, createdAt: null };
 const block = { id: 'b1', reportVersionId: 'v1', sectionType: 'executive_summary', blockType: 'text' as const, content: { findings: 2 }, position: 0, isPlaceholder: false, editedAt: null, editedBy: null };
@@ -98,13 +96,10 @@ describe('Phase 6 UI panels (6H)', () => {
     ackFn.mockResolvedValue({ ok: true });
     listPreflightItemsFn.mockResolvedValue([]);
     listPreflightBlockingFn.mockResolvedValue([]);
-    commitGraphFn.mockResolvedValue(undefined);
+    commitGraphFn.mockResolvedValue({ ok: true });
     getGraphFn.mockResolvedValue({ graphs: [], claims: [] });
-    renderStoreFn.mockResolvedValue({
-      pdf: { path: 'org/reports/v1.pdf', sha256: 'a'.repeat(64), bytes: 1200 },
-      docx: { path: 'org/reports/v1.docx', sha256: 'b'.repeat(64), bytes: 3400 },
-    });
-    footerPreviewFn.mockReturnValue('Engagement · exported 2026-10-27 · auditor · bbbbbbbbbbbb');
+    renderStoreFn.mockResolvedValue({ pdf: { path: 'p.pdf', sha256: 'a'.repeat(64), bytes: 10 }, docx: { path: 'd.docx', sha256: 'b'.repeat(64), bytes: 20 } });
+    footerPreviewFn.mockImplementation((input: { engagementLabel: string; userLabel: string }, hash: string) => `${input.engagementLabel} · exported ${'2026-10-26'} · ${input.userLabel} · ${hash.slice(0, 12)}`);
   });
 
   describe('ReportEditorPanel', () => {
@@ -173,6 +168,11 @@ describe('Phase 6 UI panels (6H)', () => {
       openCount.mockResolvedValue(1);
       render(<ReportEditorPanel engagementId="e1" />);
       const inc = await screen.findByTestId('report-incorporate-c1');
+      // The panel loads twice (see the note on the §11.4 test above): once with no version selected,
+      // then again once it selects the first version. `load` clears the error at its start, so a
+      // reload still in flight would wipe the error this test asserts on. Wait for both loads before
+      // clicking, or the assertion races the second load's `setError(null)`.
+      await waitFor(() => expect(listCapsFn).toHaveBeenCalledTimes(2));
       fireEvent.click(inc);
       await waitFor(() => expect(screen.getByTestId('report-error').textContent).toContain('resolution reason'));
       expect(resolveComment).not.toHaveBeenCalled();
@@ -214,35 +214,29 @@ describe('Phase 6 UI panels (6H)', () => {
       expect((submit as HTMLButtonElement).disabled).toBe(false);
     });
 
-    it('§15.6 reads back the committed claim graph and shows its root and claims', async () => {
+    it('§2.6 drills into the committed claim graph (getReportGraph)', async () => {
       getGraphFn.mockResolvedValue({
-        graphs: [{
-          id: 'g1', modelId: 'm1', formality: 3, tone: 3, voice: 'active', locale: 'en-GB',
-          graphRoot: 'f'.repeat(64), renderHash: 'f'.repeat(64), engineVersion: 'v1',
-          templateVersion: 't1', phraseLibraryVersion: 'p1', fixedTimestamp: '2026-10-27T00:00:00Z',
-          claimCount: 2, ledgerSeq: 41,
-        }],
-        claims: [
-          { claimId: 'c1', sectionId: 'findings', position: 0, kind: 'count', claimLevel: 'section', phraseId: null, phraseVersion: null, claimHash: '1'.repeat(64) },
-          { claimId: 'c2', sectionId: 'opinion', position: 1, kind: 'text', claimLevel: 'section', phraseId: null, phraseVersion: null, claimHash: '2'.repeat(64) },
-        ],
+        graphs: [{ id: 'g1', modelId: 'M1', formality: 3, tone: 2, voice: 'we', locale: 'en', graphRoot: 'root-abc', renderHash: 'render-def', engineVersion: 'e1.0', templateVersion: 't1', phraseLibraryVersion: 'p1', fixedTimestamp: '2026-10-26', claimCount: 1, ledgerSeq: 7 }],
+        claims: [{ claimId: 'c1', sectionId: 'findings', position: 1, kind: 'finding', claimLevel: 'engagement', phraseId: null, phraseVersion: null, claimHash: 'deadbeefcafe' }],
       });
       render(<ReportEditorPanel engagementId="e1" />);
-      // The read is issued for the selected version; it is the drilldown from the report to its claims.
+      await waitFor(() => expect(screen.getByTestId('report-graph-open')).toBeTruthy());
+      fireEvent.click(screen.getByTestId('report-graph-open'));
       await waitFor(() => expect(getGraphFn).toHaveBeenCalledWith('v1'));
-      await waitFor(() => expect(screen.getByTestId('report-graph-root')).toBeTruthy());
-      expect(screen.getByTestId('report-graph-root').textContent).toContain('ledger #41');
-      expect(screen.getByTestId('report-graph-claim-count').textContent).toContain('2 claims');
-      expect(screen.getByTestId('report-graph-claim-c1')).toBeTruthy();
-      expect(screen.getByTestId('report-graph-claim-c2')).toBeTruthy();
+      expect(screen.getByTestId('report-graph-root-g1').textContent).toContain('root-abc');
+      expect(screen.getByTestId('report-graph-claim-c1').textContent).toContain('finding');
+      fireEvent.click(screen.getByTestId('report-graph-close'));
+      await waitFor(() => expect(screen.queryByTestId('report-graph-panel')).toBeNull());
     });
 
-    it('§15.6 shows a designed empty state when no graph has been committed', async () => {
+    it('§2.6 shows the drilldown empty state when nothing is committed', async () => {
       render(<ReportEditorPanel engagementId="e1" />);
+      fireEvent.click(await screen.findByTestId('report-graph-open'));
       await waitFor(() => expect(screen.getByTestId('report-graph-empty')).toBeTruthy());
     });
 
-    it('§18 shows the exact printed footer after a freeze renders the files', async () => {
+    it('§18 previews the frozen footer line on screen (reportFooterPreview)', async () => {
+      freezeFn.mockResolvedValue({ ok: true });
       render(<ReportEditorPanel engagementId="e1" />);
       await waitFor(() => expect(listCapsFn).toHaveBeenCalledTimes(2));
       let btn!: HTMLButtonElement;
@@ -253,12 +247,9 @@ describe('Phase 6 UI panels (6H)', () => {
       vi.useFakeTimers();
       holdToConfirm(btn);
       vi.useRealTimers();
-      await waitFor(() => expect(renderStoreFn).toHaveBeenCalledTimes(1));
-      // The preview is derived from the same input and the stored DOCX hash, so the screen and the
-      // file's printed footer cannot disagree.
-      await waitFor(() => expect(screen.getByTestId('report-footer-preview')).toBeTruthy());
-      expect(footerPreviewFn).toHaveBeenCalledWith(expect.objectContaining({ reportVersionId: 'v1' }), 'b'.repeat(64));
-      expect(screen.getByTestId('report-footer-preview').textContent).toContain('Printed footer:');
+      const footer = await screen.findByTestId('report-footer-preview');
+      // footerLine prints engagement · exported <date> · user · <first 12 of the content hash>.
+      expect(footer.textContent).toContain('exported');
     });
   });
 

@@ -22,6 +22,7 @@ import { PopulationPanel } from '../audit/PopulationPanel';
 import { SamplingPanel } from '../audit/SamplingPanel';
 import { RowTestingPanel } from '../audit/RowTestingPanel';
 import { AnalystEnginePanel } from '../audit/AnalystEnginePanel';
+import { WorkpaperCreatePanel } from '../audit/WorkpaperCreatePanel';
 import { FindingsPanel } from '../audit/FindingsPanel';
 import { ConclusionPanel } from '../audit/ConclusionPanel';
 import { DocumentViewerPanel } from '../audit/DocumentViewerPanel';
@@ -46,8 +47,12 @@ export const AuditFileModal: React.FC = () => {
   const [tab, setTab] = useState<AuditFileTab>(() => getInitialAuditFileTab(inspector.data));
   const [phaseView, setPhaseView] = useState<'overview' | 'workspace' | 'findings' | 'conclusion' | 'documents' | 'report' | 'builder' | 'caps' | 'certificate' | 'export' | 'as_of'>('overview');
   const [signOffError, setSignOffError] = useState<string | null>(null);
+  const [stageError, setStageError] = useState<string | null>(null);
 
   // Neutral state: does not reveal whether an out-of-scope engagement exists.
+  // Every hook above runs before this return: the tenant snapshot arrives asynchronously, so the
+  // first render is often the not-yet-loaded one. A hook after the return would change the hook
+  // count between renders (React invalid-hook-order error) and blank the whole record page.
   if (!engagement) {
     return (
       <div className="p-6 text-center text-secondary" data-testid="audit-file-unavailable">
@@ -62,8 +67,6 @@ export const AuditFileModal: React.FC = () => {
   const gate = getGateSummary(workpapers);
   const blockers = getSignOffBlockers(workpapers, scopedObservations, scopedComments);
   const signOff = getSignOffState(currentUser, engagement, gate, blockers);
-
-  const [stageError, setStageError] = useState<string | null>(null);
 
   // Phase 2.1: the stage advance is a database write. The next stage is the one after the current.
   const nextStage = engagement
@@ -173,12 +176,12 @@ export const AuditFileModal: React.FC = () => {
           <PlanningPanel engagementId={engagement.id} />
           <PopulationPanel engagementId={engagement.id} />
           <AnalystEnginePanel engagementId={engagement.id} />
-          {workpapers[0] && (
-            <>
-              <SamplingPanel workpaperId={workpapers[0].id} />
-              <RowTestingPanel workpaperId={workpapers[0].id} />
-            </>
-          )}
+          <WorkpaperCreatePanel
+            engagementId={engagement.id}
+            controlId={workpapers[0]?.controlId ?? null}
+          />
+          <SamplingPanel workpaperId={workpapers[0]?.id ?? null} />
+          <RowTestingPanel workpaperId={workpapers[0]?.id ?? null} />
         </div>
       ) : phaseView === 'findings' ? (
         <div className="space-y-6" data-testid="audit-file-findings">

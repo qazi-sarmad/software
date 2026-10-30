@@ -9,6 +9,7 @@
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
 import { fillTemplate, mmToPt, pageDimensions, type BrandingSpec } from './branding';
+import { PRODUCT_NAME } from '../product';
 
 export interface PdfTextBlock {
   kind: 'heading' | 'paragraph';
@@ -110,24 +111,27 @@ function toRgb(value: string) {
 /**
  * Embed a caller-supplied font (a self-hosted WOFF2, or an org-uploaded licensed face).
  *
- * pdf-lib's subsetter only understands raw TrueType; a WOFF2 container throws inside fontkit. So we
- * try the subset first (smallest bytes, the right choice for an uploaded TTF/OTF) and fall back to a
- * full embed, which fontkit handles for WOFF2. Either way the face is embedded, so the printed page
- * uses the font the canvas showed. If both fail, fall back to the standard font rather than fail the
- * render: a report must always be producible.
+ * pdf-lib's subsetter only understands raw TrueType; a WOFF2 container's subset path throws inside
+ * fontkit — and it throws *lazily*, during `pdf.save()`, not at embed time, so a try/catch around the
+ * embed call does not see it. The failure depends on the glyphs drawn (a heading with a digit crashes
+ * where plain prose does not), so it would surface as a failed freeze on a real report. We therefore
+ * decide by the container signature: a WOFF2 face is embedded whole (`subset: false`, which fontkit
+ * handles), and a raw TTF/OTF is subset. If a full embed still fails, fall back to the standard font
+ * rather than fail the render: a report must always be producible.
  */
 async function embedCustomFont(
   pdf: PDFDocument, bytes: Uint8Array, fallback: StandardFonts,
 ): Promise<PDFFont> {
-  try {
-    return await pdf.embedFont(bytes, { subset: true });
-  } catch {
+  const isWoff2 = bytes.length >= 4 && bytes[0] === 0x77 && bytes[1] === 0x4f && bytes[2] === 0x46 && bytes[3] === 0x32; // 'wOF2'
+  const attempts = isWoff2 ? [{ subset: false }] : [{ subset: true }, { subset: false }];
+  for (const opts of attempts) {
     try {
-      return await pdf.embedFont(bytes, { subset: false });
+      return await pdf.embedFont(bytes, opts);
     } catch {
-      return pdf.embedFont(fallback);
+      // try the next option
     }
   }
+  return pdf.embedFont(fallback);
 }
 
 /** Wrap a string to a width in points, using the font's own metrics. Deterministic. */
@@ -157,8 +161,8 @@ export async function renderPdf(spec: BrandingSpec, model: PdfDocumentModel): Pr
   const stamp = new Date(model.timestamp ?? FIXED_PDF_EPOCH);
   pdf.setCreationDate(stamp);
   pdf.setModificationDate(stamp);
-  pdf.setProducer('Provio');
-  pdf.setCreator('Provio');
+  pdf.setProducer(PRODUCT_NAME);
+  pdf.setCreator(PRODUCT_NAME);
 
   let heading: PDFFont;
   let body: PDFFont;

@@ -22,6 +22,7 @@ export const SIGNATURE_KINDS = [
   'board_pack_data_hash',
   'engagement_certificate',
   'ledger_daily_root',
+  'rule_pack',
 ] as const;
 export type SignatureKind = (typeof SIGNATURE_KINDS)[number];
 
@@ -80,6 +81,8 @@ export interface CryptoLike {
     verify(
       algorithm: { name: string } | null, key: unknown, signature: Uint8Array, data: Uint8Array
     ): Promise<boolean>;
+    /** Export a key: 'raw' for a public key, 'jwk' for a private key. Used by `generateSigningKey`. */
+    exportKey(format: 'raw' | 'jwk', key: unknown): Promise<ArrayBuffer | JsonWebKey>;
     /** SHA-256 of a buffer. Optional here: this module never hashes, but the attestation package
      *  (src/lib/attestation.ts) reuses the injected crypto and needs it. */
     digest?(algorithm: string, data: Uint8Array): Promise<ArrayBuffer>;
@@ -260,4 +263,31 @@ export function fromHex(hex: string): Uint8Array {
   const out = new Uint8Array(clean.length / 2);
   for (let i = 0; i < out.length; i++) out[i] = parseInt(clean.slice(i * 2, i * 2 + 2), 16);
   return out;
+}
+
+// ---------------------------------------------------------------------------
+// Key generation (browser side)
+// ---------------------------------------------------------------------------
+
+/** A generated Ed25519 keypair: the public key as hex, the private key as a JWK for signing. */
+export interface GeneratedSigningKey {
+  /** Lowercase hex of the raw 32-byte public key, what `signing_key_register` stores. */
+  publicKeyHex: string;
+  /** The private key, kept only in the caller's memory and passed to `signSubject`. */
+  privateKey: JsonWebKey;
+}
+
+/**
+ * Generate an Ed25519 signing keypair in the browser. The private key never leaves the caller; only
+ * `publicKeyHex` is registered with the server. This is the one place in the codebase that generates
+ * randomness, and it is the platform crypto primitive, not a bespoke RNG (L1: the engine itself stays
+ * deterministic; a key is a key).
+ */
+export async function generateSigningKey(crypto: CryptoLike): Promise<GeneratedSigningKey> {
+  const pair = (await (crypto.subtle as unknown as {
+    generateKey(algorithm: { name: string }, extractable: boolean, usages: string[]): Promise<CryptoKeyPair>;
+  }).generateKey({ name: 'Ed25519' }, true, ['sign', 'verify']));
+  const raw = await crypto.subtle.exportKey('raw', pair.publicKey) as ArrayBuffer;
+  const jwk = await crypto.subtle.exportKey('jwk', pair.privateKey) as JsonWebKey;
+  return { publicKeyHex: toHex(new Uint8Array(raw)), privateKey: jwk };
 }

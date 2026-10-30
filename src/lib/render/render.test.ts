@@ -13,6 +13,7 @@ import {
   brandingFromRow, DEFAULT_BRANDING, fillTemplate, mmToPt, pageDimensions, resolveHexColour, toCssColour,
 } from './branding';
 import { renderPdf, wrapText } from './pdf';
+import { toPdfModel } from './document';
 import { REPORT_FONT_FAMILIES, fontFileStem, resolveWeight } from './fonts';
 import { renderPptx, extractPptxTheme } from './pptx';
 import { renderQrDataUrl, renderQrModules, verificationUrl } from './qr';
@@ -246,5 +247,20 @@ describe('self-hosted font embedding (WP-F)', () => {
       const second = await renderPdf(spec, opts);
       expect(Buffer.compare(Buffer.from(first), Buffer.from(second)), `${f.family} is not byte-identical across two renders`).toBe(0);
     }
+  });
+});
+
+describe('WP-F: the freeze path threads the format font bytes to the PDF', () => {
+  it('carries heading and body font bytes from toPdfModel into the PDF model', () => {
+    const heading = new Uint8Array([1, 2, 3]);
+    const body = new Uint8Array([4, 5, 6]);
+    const pdf = toPdfModel(
+      { title: 'R', sections: [{ heading: 'A', blocks: [] }] },
+      undefined,
+      { headingPt: 15, bodyPt: 11, headingWeight: 600, bodyWeight: 400, lineHeight: 1.4 },
+      { headingFontBytes: heading, bodyFontBytes: body },
+    );
+    expect(pdf.headingFontBytes).toBe(heading);
+    expect(pdf.bodyFontBytes).toBe(body);
   });
 });

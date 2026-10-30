@@ -1,0 +1,46 @@
+{
+  "_readme": "Allow-list for scripts/check-dead-code.mjs (gate G2). An entry means the function has no production caller in the final schema, src/data, supabase/functions, the RPC catalogue or a migration statement, and is deliberately kept. Every entry must carry a real reason. Per docs/BRANCH-MAP.md a function that a SQL test calls is NOT dead code (it is a tested unit the UI has not reached yet) and must not be deleted to lower a count. Do not add an entry to silence a genuinely dead function; delete it or wire it.",
+
+  "_test-only": "Called by a named SQL test. docs/BRANCH-MAP.md: a test-only function is a tested unit, not dead code. The tests run twice in the Docker harness.",
+
+  "_platform-operational": "An operational or server-side RPC whose caller is outside this repository (pg_cron job, Supabase auth hook, hosting-migration runner, anchoring worker). It is reachable in production but not from any file the gate can read.",
+
+  "_unreferenced": "No caller in the schema, the app, an Edge Function, a migration statement or any SQL test. Recorded as a real finding rather than deleted, because docs/BRANCH-MAP.md forbids silently deleting another area's code. Each states the superseding code path.",
+
+  "admin_set_engagement_gate": { "category": "test-only", "test": "supabase/tests/29_deployment_gate.sql, supabase/tests/30_combined_approval.sql", "reason": "Platform writer for engagement_gate_settings; pinned by the deployment-gate tests." },
+  "admin_set_entity_approval": { "category": "test-only", "test": "supabase/tests/110_phase3_config_effects.sql", "reason": "Writes entity_approval_settings.required_fields, enforced by submit_entity (Phase 3.6); pinned by test 110 §2." },
+  "admin_set_org_setting": { "category": "test-only", "test": "supabase/tests/24_admin_rpcs.sql", "reason": "Generic org-setting writer; pinned by the admin-RPC tests." },
+  "admin_set_org_settings_extra": { "category": "test-only", "test": "supabase/tests/64_acp_control_plane.sql, supabase/tests/110_phase3_config_effects.sql", "reason": "Writes org_settings_extra (certificate_auto_issue, last_board_meeting_date), enforced by seal_engagement and board_pack_generate (Phase 3.6)." },
+  "anchoring_status": { "category": "test-only", "test": "supabase/tests/121_integrity_anchoring.sql", "reason": "Reads a subject's anchor/signature status; pinned by the integrity-anchoring tests." },
+  "approval_step_decide": { "category": "test-only", "test": "supabase/tests/102_phase2_lifecycle.sql", "reason": "Records one approval_chain step; consumed by approve_plan (Phase 2.4) and pinned by test 102." },
+  "assign_team_role": { "category": "test-only", "test": "supabase/tests/20_engagement_team.sql, supabase/tests/102_phase2_lifecycle.sql", "reason": "Assigns an engagement team role; pinned by the team-role tests." },
+  "check_readability": { "category": "test-only", "test": "supabase/tests/39_findings_observations.sql, supabase/tests/115_phase5_alert_actions.sql", "reason": "Deterministic observation completeness check; used by alert_raise_finding (C5) and pinned by tests 39 and 115." },
+  "connector_run_finish": { "category": "test-only", "test": "supabase/tests/97_connectors_monitoring.sql", "reason": "Closes a connector run; pinned by the connectors-monitoring tests." },
+  "connector_run_start": { "category": "test-only", "test": "supabase/tests/97_connectors_monitoring.sql", "reason": "Opens a connector run; pinned by the connectors-monitoring tests." },
+  "cycle_summary": { "category": "test-only", "test": "supabase/tests/27_sira_cycles.sql", "reason": "Inherent-risk environment per entity and universe; pinned by the SIRA-cycle tests." },
+  "deployment_request_status": { "category": "test-only", "test": "supabase/tests/30_combined_approval.sql", "reason": "Explains a combined-deployment request's readiness; pinned by test 30." },
+  "email_dispatch_set_token": { "category": "test-only", "test": "supabase/tests/73_email_dispatch.sql", "reason": "Stores the dispatcher token; the email-dispatch schedule reads it, and the tests pin it." },
+  "ledger_copy_mode_ok": { "category": "test-only", "test": "supabase/tests/78_hosting_fit_migration.sql", "reason": "Guard the ledger chain trigger consults; pinned by test 78." },
+  "phrase_create": { "category": "test-only", "test": "supabase/tests/96_phrase_library.sql", "reason": "Creates a draft phrase; pinned by the phrase-library tests. Only phrase_list is reached from the UI today." },
+  "population_archive_check": { "category": "test-only", "test": "supabase/tests/86_verified_archival.sql", "reason": "Verifies one archived page's hash; pinned by the verified-archival tests." },
+  "population_archive_page": { "category": "test-only", "test": "supabase/tests/86_verified_archival.sql", "reason": "Pages an archived population; pinned by the verified-archival tests." },
+  "population_archive_verify": { "category": "test-only", "test": "supabase/tests/86_verified_archival.sql", "reason": "Verifies an archived population's chain; pinned by the verified-archival tests." },
+  "remove_conclusion_exception": { "category": "test-only", "test": "supabase/tests/43_conclusion.sql", "reason": "Removes a conclusion exception with a reason; pinned by the conclusion tests." },
+  "scheduled_export_due": { "category": "test-only", "test": "supabase/tests/110_phase3_config_effects.sql", "reason": "Turns export_retention_settings.export_schedule into a decision (Phase 3.6); pinned by test 110 §4b." },
+  "select_sira_risk": { "category": "test-only", "test": "supabase/tests/26_sira_model.sql", "reason": "Records that a library risk applies to an entity; pinned by the SIRA-model tests." },
+  "signature_record": { "category": "test-only", "test": "supabase/tests/121_integrity_anchoring.sql", "reason": "Records a signature; pinned by the integrity-anchoring tests. The anchoring flow writes it server-side." },
+  "signatures_get": { "category": "test-only", "test": "supabase/tests/121_integrity_anchoring.sql", "reason": "Reads a subject's signatures; pinned by the integrity-anchoring tests." },
+  "staged_record_ingest": { "category": "test-only", "test": "supabase/tests/97_connectors_monitoring.sql, supabase/tests/112_phase5_monitor_runner.sql", "reason": "Idempotent staged-record insert; the monitor runner (C1) and the connector tests drive it." },
+  "timestamp_fail": { "category": "test-only", "test": "supabase/tests/121_integrity_anchoring.sql", "reason": "Records a failed timestamp attempt; pinned by the integrity-anchoring tests." },
+  "timestamp_queue": { "category": "test-only", "test": "supabase/tests/121_integrity_anchoring.sql", "reason": "Queues a timestamp request; pinned by the integrity-anchoring tests." },
+  "timestamp_record": { "category": "test-only", "test": "supabase/tests/121_integrity_anchoring.sql", "reason": "Records a timestamp receipt; pinned by the integrity-anchoring tests." },
+  "verify_monitor_chain": { "category": "test-only", "test": "supabase/tests/112_phase5_monitor_runner.sql, supabase/tests/113_phase5_alert_enrichment.sql", "reason": "Verifies an org's monitor-alert hash chain; pinned by the Phase 5 tests." },
+
+  "has_org": { "category": "unreferenced", "reason": "Identity helper (0007) superseded by an inline `jwt_org_id() is not null` check; no caller in schema, app, migrations or tests. Retained rather than deleted per BRANCH-MAP (not this area's code to remove); reported in docs/SCALE-TASKS.md." },
+  "org_id_from_header": { "category": "unreferenced", "reason": "Defensive helper (0009) that proves the org is read from the JWT and never a request header; deliberately never called. Retained as the documented anti-pattern; reported in docs/SCALE-TASKS.md." },
+  "seed_severity_levels": { "category": "unreferenced", "reason": "Superseded by the inline High/Medium/Low seed in 0030; no caller. Retained rather than deleted per BRANCH-MAP; reported in docs/SCALE-TASKS.md." },
+  "share_covers": { "category": "unreferenced", "reason": "Superseded by has_active_share (0095): the universes/entities/engagements select policies use has_active_share, not share_covers. Retained rather than deleted per BRANCH-MAP; reported in docs/SCALE-TASKS.md." },
+  "migration_job_advance": { "category": "platform-operational", "reason": "Hosting-migration step, granted to service_role only; the migration runner that advances a job is outside this repository." },
+  "migration_step_upsert": { "category": "platform-operational", "reason": "Hosting-migration step writer, granted to service_role only; the migration runner that records a step is outside this repository." },
+  "signing_keys_get": { "category": "unreferenced", "reason": "Reads the org's live signing keys (0096). No caller: the IntegrityAnchoringPanel lists authorities and anchors but not keys. Retained rather than deleted per BRANCH-MAP; reported in docs/SCALE-TASKS.md." }
+}

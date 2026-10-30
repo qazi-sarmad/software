@@ -8,8 +8,8 @@ import { describe, expect, it } from 'vitest';
 import { webcrypto } from 'node:crypto';
 import {
   AnchorError, STAMP_BACKOFF_MINUTES, STAMP_MAX_ATTEMPTS, assertRootHash, canonicalSigningInput,
-  checkTimestampToken, fromHex, signSubject, stampBackoffMinutes, stampStatus, timestampNonce,
-  timestampRequestParts, toHex, verifySubject,
+  checkTimestampToken, fromHex, generateSigningKey, signSubject, stampBackoffMinutes, stampStatus,
+  timestampNonce, timestampRequestParts, toHex, verifySubject,
   type CryptoLike, type SignatureSubject,
 } from './anchoring';
 
@@ -216,5 +216,17 @@ describe('hex helpers', () => {
 
   it('refuses an odd-length hex string', () => {
     expect(() => fromHex('abc')).toThrow(AnchorError);
+  });
+});
+
+describe('key generation', () => {
+  it('generates a usable Ed25519 keypair: the public key signs and verifies', async () => {
+    const generated = await generateSigningKey(crypto);
+    expect(generated.publicKeyHex).toMatch(/^[0-9a-f]{64}$/);
+    expect(generated.privateKey).toHaveProperty('kty');
+    const subj = subject({ keyId: 'generated-1' });
+    const sig = await signSubject(crypto, subj, generated.privateKey);
+    expect(sig).toMatch(/^[0-9a-f]{128}$/);
+    expect(await verifySubject(crypto, subj, sig, fromHex(generated.publicKeyHex))).toBe(true);
   });
 });

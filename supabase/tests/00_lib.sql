@@ -74,7 +74,9 @@ language sql immutable as $$
     'support_access_log',
     -- WRITE-1 (0088). The Evidence-Bound Claim Graph tables. Appended, same reason.
     'report_templates','report_template_versions','report_claims','report_claim_versions',
-    'report_terminology','figure_functions','figure_function_versions','report_graphs'
+    'report_terminology','figure_functions','figure_function_versions','report_graphs',
+    -- Phase 4 (0110). The methodology library and the persisted test-step tick.
+    'procedure_templates','test_step_templates','procedure_template_versions','workpaper_step_state'
   ]
 $$;
 

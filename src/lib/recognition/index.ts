@@ -15,6 +15,7 @@
  * members cannot be unpacked in-product, with the reason stated. Recognition is not the same as
  * unpacking, and the inventory says which one it did.
  */
+import { PRODUCT_NAME } from '../product';
 import { sniffKindDeep, kindFromExtension, recognise, type RecognisedKind, type Recognition } from './sniff';
 import { unpackArchive, DEFAULT_LIMITS, type ArchiveEntry, type UnpackLimits } from './archive';
 import { zipReader } from './zipReader';
@@ -123,8 +124,8 @@ export async function inspectFile(
       metadata: {},
       note:
         raw === 'rar'
-          ? 'Recognised as a RAR archive. RAR decompression is licence-restricted and no library is bundled, so its members cannot be listed in-product; extract it outside Provio and import the members.'
-          : `Recognised as a ${raw} archive. This build unpacks ZIP archives only; extract it outside Provio and import the members.`,
+          ? 'Recognised as a RAR archive. RAR decompression is licence-restricted and no library is bundled, so its members cannot be listed in-product; extract it outside ${PRODUCT_NAME} and import the members.'
+          : `Recognised as a ${raw} archive. This build unpacks ZIP archives only; extract it outside ${PRODUCT_NAME} and import the members.`,
     };
   }
 

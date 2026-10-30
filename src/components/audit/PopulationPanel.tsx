@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import {
+  listPopulationRecords,
   listPopulations,
   lockPopulation,
   registerPopulation,
@@ -8,6 +9,7 @@ import {
   sha256Hex,
   type PopulationRow,
 } from '../../data/population';
+import { populationProfile, type PopulationProfile } from '../../lib/capabilities';
 import { hasRight } from '../../lib/rights';
 import { rightReason, rightReasonFor } from '../../lib/rightLabels';
 import { parsePopulationPaste, toSampleItems } from '../../lib/populationPaste';
@@ -31,6 +33,8 @@ export const PopulationPanel: React.FC<{ engagementId: string }> = ({ engagement
   const [busy, setBusy] = useState(false);
   const [pasteText, setPasteText] = useState('');
   const [pasteTarget, setPasteTarget] = useState<string>('');
+  const [profiles, setProfiles] = useState<Record<string, PopulationProfile | null>>({});
+  const [profileBusy, setProfileBusy] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const canWrite = hasRight(currentUser, 'perform_work');
@@ -38,6 +42,21 @@ export const PopulationPanel: React.FC<{ engagementId: string }> = ({ engagement
   // The pasted block, parsed positionally (src/lib/populationPaste.ts). Columns map by index against
   // the header, so the auditor sees exactly which column lands where before anything is stored.
   const paste = parsePopulationPaste(pasteText);
+  // The population's own shape, computed by the pure `populationProfile` over the rows the database
+  // returns under RLS. Deterministic: the same rows always yield the same profile. Loaded on demand
+  // so the panel never reads a population's rows until the reader asks for its profile.
+  const loadProfile = useCallback(async (populationId: string) => {
+    setProfileBusy(populationId);
+    setError(null);
+    try {
+      const records = await listPopulationRecords(populationId);
+      setProfiles((prev) => ({ ...prev, [populationId]: populationProfile(records) }));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not load the population profile.');
+    } finally {
+      setProfileBusy(null);
+    }
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -269,34 +288,69 @@ export const PopulationPanel: React.FC<{ engagementId: string }> = ({ engagement
         ) : (
           <div className="divide-y divide-hairline border border-hairline rounded-xl overflow-hidden bg-surface">
             {rows.map((p) => (
-              <div key={p.id} className="p-4 flex items-center justify-between gap-3" data-testid={`population-row-${p.id}`}>
-                <div className="min-w-0 space-y-1">
-                  <div className="flex items-center gap-2">
-                    <Database className="w-3.5 h-3.5 text-secondary shrink-0" />
-                    <span className="text-apple-13 font-medium text-primary truncate">{p.filename ?? 'population'}</span>
-                    <span className="px-2 py-0.5 rounded text-apple-11 font-semibold bg-surface-sunken border border-hairline text-secondary capitalize" data-testid={`population-status-${p.id}`}>
-                      {p.status}
-                    </span>
+              <div key={p.id} className="p-4 space-y-3" data-testid={`population-row-${p.id}`}>
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0 space-y-1">
+                    <div className="flex items-center gap-2">
+                      <Database className="w-3.5 h-3.5 text-secondary shrink-0" />
+                      <span className="text-apple-13 font-medium text-primary truncate">{p.filename ?? 'population'}</span>
+                      <span className="px-2 py-0.5 rounded text-apple-11 font-semibold bg-surface-sunken border border-hairline text-secondary capitalize" data-testid={`population-status-${p.id}`}>
+                        {p.status}
+                      </span>
+                    </div>
+                    <div className="text-apple-11 text-tertiary font-mono truncate">{p.sha256}</div>
+                    <div className="text-apple-11 text-secondary tabular-nums">{p.rowCount ?? 0} rows</div>
                   </div>
-                  <div className="text-apple-11 text-tertiary font-mono truncate">{p.sha256}</div>
-                  <div className="text-apple-11 text-secondary tabular-nums">{p.rowCount ?? 0} rows</div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {p.status === 'verified' && (
+                      <HoldToConfirm
+                        label="Lock"
+                        testId={`population-lock-${p.id}`}
+                        durationMs={2000}
+                        onConfirm={() => lock(p.id)}
+                        disabled={busy || !canWrite}
+                        className="relative overflow-hidden shrink-0 px-3 py-1.5 rounded-lg bg-surface border border-hairline hover:bg-surface-hover text-apple-12 font-semibold text-primary disabled:opacity-50 transition-colors"
+                      >
+                        <Lock className="w-3.5 h-3.5" /> Lock
+                      </HoldToConfirm>
+                    )}
+                    {p.status === 'locked' && (
+                      <span className="text-apple-11 font-semibold text-verdigris flex items-center gap-1">
+                        <CheckCircle2 className="w-3.5 h-3.5" /> Locked
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      data-testid={`population-profile-${p.id}`}
+                      onClick={() => void loadProfile(p.id)}
+                      disabled={profileBusy === p.id}
+                      className="px-3 py-1.5 rounded-lg bg-surface border border-hairline hover:bg-surface-hover text-apple-12 font-semibold text-primary disabled:opacity-50"
+                    >
+                      {profileBusy === p.id ? 'Profiling…' : 'Profile'}
+                    </button>
+                  </div>
                 </div>
-                {p.status === 'verified' && (
-                  <HoldToConfirm
-                    label="Lock"
-                    testId={`population-lock-${p.id}`}
-                    durationMs={2000}
-                    onConfirm={() => lock(p.id)}
-                    disabled={busy || !canWrite}
-                    className="relative overflow-hidden shrink-0 px-3 py-1.5 rounded-lg bg-surface border border-hairline hover:bg-surface-hover text-apple-12 font-semibold text-primary disabled:opacity-50 transition-colors"
-                  >
-                    <Lock className="w-3.5 h-3.5" /> Lock
-                  </HoldToConfirm>
-                )}
-                {p.status === 'locked' && (
-                  <span className="shrink-0 text-apple-11 font-semibold text-verdigris flex items-center gap-1">
-                    <CheckCircle2 className="w-3.5 h-3.5" /> Locked
-                  </span>
+                {profiles[p.id] && (
+                  <div className="rounded-xl border border-hairline bg-surface-sunken p-3 space-y-1" data-testid={`population-profile-view-${p.id}`}>
+                    <div className="text-apple-11 font-semibold text-secondary uppercase tracking-wider">
+                      Population profile
+                    </div>
+                    <div className="text-apple-12 text-primary" data-testid={`population-profile-summary-${p.id}`}>
+                      {profiles[p.id]!.rowCount} rows · {profiles[p.id]!.withAmount} with a value ·{' '}
+                      {profiles[p.id]!.nullAmounts} missing a value · {profiles[p.id]!.duplicateRows} duplicate
+                      {profiles[p.id]!.period && ` · ${profiles[p.id]!.period![0]} → ${profiles[p.id]!.period![1]}`}
+                    </div>
+                    {profiles[p.id]!.flags.length > 0 && (
+                      <ul className="text-apple-11 text-secondary space-y-0.5" data-testid={`population-profile-flags-${p.id}`}>
+                        {profiles[p.id]!.flags.map((f) => (
+                          <li key={f} className="flex items-center gap-1.5">
+                            <span className="w-1 h-1 rounded-full bg-cinnabar shrink-0" />
+                            {f.replace(/_/g, ' ')}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
                 )}
               </div>
             ))}

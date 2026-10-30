@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest';
-import { checkPopulationCsv, parseAmountCents, parseCsv, isValidIsoDate, sha256Hex, isSupportedPopulationFile } from './population';
+import { checkPopulationCsv, detectHeader, parseAmountCents, parseCsv, isValidIsoDate, sha256Hex, isSupportedPopulationFile } from './population';
 
 const good = 'reference,date,amount\nINV-1,2026-01-05,100.00\nINV-2,2026-01-06,"1,250.50"\nINV-3,2026-02-01,-50\n';
 
@@ -52,6 +52,58 @@ describe('checkPopulationCsv', () => {
   it('rejects headerless/empty files', () => {
     expect(checkPopulationCsv('', 0).verified).toBe(false);
     expect(checkPopulationCsv('x,y\n1,2\n', 0).verified).toBe(false);
+  });
+});
+
+describe('detectHeader (S2)', () => {
+  it('is confident when row 1 alone labels the columns', () => {
+    const d = detectHeader(parseCsv('reference,date,amount\nA,2026-01-01,1\n'));
+    expect(d.index).toBe(0);
+    expect(d.confident).toBe(true);
+  });
+  it('detects a header below title/preamble rows and is not confident', () => {
+    const t = parseCsv('Population extract\nReference,Posting Date,Amount\nA,2026-01-01,1\nB,2026-01-02,2\n');
+    const d = detectHeader(t);
+    expect(d.index).toBe(1);
+    expect(d.confident).toBe(false); // header is not row 1 → the auditor must confirm
+    expect(d.candidates[0].labels).toEqual(['Reference', 'Posting Date', 'Amount']);
+  });
+  it('is not confident when two rows score equally', () => {
+    const t = parseCsv('reference,date,amount\nreference,date,amount\nA,2026-01-01,1\n');
+    expect(detectHeader(t).confident).toBe(false);
+  });
+  it('is not confident with no recognisable labels', () => {
+    const d = detectHeader(parseCsv('x,y\n1,2\n'));
+    expect(d.confident).toBe(false);
+    expect(d.candidates).toHaveLength(0);
+  });
+});
+
+describe('checkPopulationCsv with header confirmation (S2)', () => {
+  it('asks before counting when the header is not row 1', () => {
+    const r = checkPopulationCsv('Title line\nreference,date,amount\nA,2026-01-01,1\n', 1);
+    expect(r.verified).toBe(false);
+    expect(r.headerConfirmed).toBe(false);
+    expect(r.header.index).toBe(1);
+    expect(r.issues.some((i) => /confirm/i.test(i.message))).toBe(true);
+  });
+  it('counts correctly once the auditor confirms the detected header, ignoring rows above it', () => {
+    const text = 'Title line\nreference,date,amount\nA,2026-01-01,1\nB,2026-01-05,0.5\n';
+    const r = checkPopulationCsv(text, 1.5, { headerRow: 1 });
+    expect(r.verified).toBe(true);
+    expect(r.headerConfirmed).toBe(true);
+    expect(r.rowCount).toBe(2); // the "Title line" preamble is not data
+    expect(r.totalCents).toBe(150);
+  });
+  it('keeps issue line numbers true when the header is not row 1', () => {
+    const text = 'Title line\nreference,date,amount\nA,2026-01-01,\n';
+    const r = checkPopulationCsv(text, 0, { headerRow: 1 });
+    expect(r.issues.some((i) => i.line === 3 && /amount/i.test(i.message))).toBe(true);
+  });
+  it('does not double-report a confirmed header row as a bad data row', () => {
+    const r = checkPopulationCsv('Title line\nreference,date,amount\nA,2026-01-01,1\n', 1, { headerRow: 1 });
+    expect(r.verified).toBe(true);
+    expect(r.rowCount).toBe(1);
   });
 });
 describe('sha256Hex', () => {

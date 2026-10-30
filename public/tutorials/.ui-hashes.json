@@ -78,5 +78,6 @@
   "oa.governance": "44a35c7d72e314948f2f16b01aca9300",
   "oa.connectors": "44b829e06a8ea24f2aa3addc847c3d98",
   "oa.formats": "08024f3431c77564d843b086b74ad89a",
-  "oa.report-builder": "7743f88f22e6af8305722db7f469b1e7"
+  "oa.report-builder": "7743f88f22e6af8305722db7f469b1e7",
+  "sa.integrity-anchoring": "e605fa504bf6c9cc6eb756dd407236bc"
 }

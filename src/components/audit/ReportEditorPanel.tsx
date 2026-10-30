@@ -49,7 +49,6 @@ export const ReportEditorPanel: React.FC<{ engagementId: string }> = ({ engageme
   const orgId = currentUser.orgId ?? '';
   const engagementLabel = engagementId;
   const [reportHashes, setReportHashes] = useState<StoredReportFiles | null>(null);
-  const [graph, setGraph] = useState<ReportGraphView | null>(null);
   const [footerPreview, setFooterPreview] = useState<string | null>(null);
   const [versions, setVersions] = useState<ReportVersionRow[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -71,6 +70,11 @@ export const ReportEditorPanel: React.FC<{ engagementId: string }> = ({ engageme
   const [ackCheck, setAckCheck] = useState<string>(PREFLIGHT_CHECKS[0]);
   const [ackItem, setAckItem] = useState('');
   const [ackReason, setAckReason] = useState('');
+  // Phase 2.6 drilldown: the committed evidence-bound claim graph for the selected version, loaded
+  // on demand so the graph root on screen is the tenant data the database actually holds.
+  const [graph, setGraph] = useState<ReportGraphView | null>(null);
+  const [graphOpen, setGraphOpen] = useState(false);
+  const [graphBusy, setGraphBusy] = useState(false);
 
   const canApprove = hasRight(currentUser, 'approve_plan');
 
@@ -132,6 +136,29 @@ export const ReportEditorPanel: React.FC<{ engagementId: string }> = ({ engageme
   }, [blocks, section]);
   const sectionBlocks = blocks.filter((b) => b.sectionType === section);
   const placeholders = blocks.filter((b) => b.isPlaceholder);
+
+  // The graph belongs to one version; a version switch resets the drilldown so the panel never shows
+  // a root that does not match the version on screen.
+  useEffect(() => {
+    setGraph(null);
+    setGraphOpen(false);
+  }, [activeId]);
+
+  /** Phase 2.6 drilldown: load the committed graph root and its claims for the selected version.
+   *  Non-blocking — the panel opens beside the editor, the work underneath stays usable. */
+  const openGraph = async () => {
+    if (!activeId) return;
+    setGraphBusy(true);
+    setError(null);
+    try {
+      setGraph(await getReportGraph(activeId));
+      setGraphOpen(true);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'The report graph could not be loaded.');
+    } finally {
+      setGraphBusy(false);
+    }
+  };
 
   const compose = async () => {
     setBusy(true);
@@ -362,40 +389,6 @@ export const ReportEditorPanel: React.FC<{ engagementId: string }> = ({ engageme
               </div>
             )}
 
-            {/* §15.6: the committed claim graph for this version (E5/U1 drilldown). The root
-                `verify_report_root` proves is read back and shown, with the claims behind it, so a
-                reader can reach the exact claims that produced the report's root. */}
-            <div className="p-4 rounded-2xl bg-surface border border-hairline space-y-2" data-testid="report-graph-panel">
-              <div className="text-apple-13 font-semibold text-primary flex items-center gap-2">
-                <Layers className="w-3.5 h-3.5" /> Claim graph
-                {graph && graph.graphs.length > 0 && (
-                  <span className="px-2 py-0.5 rounded text-apple-11 font-semibold bg-surface-sunken text-secondary" data-testid="report-graph-claim-count">
-                    {graph.graphs[0].claimCount} claim{graph.graphs[0].claimCount === 1 ? '' : 's'}
-                  </span>
-                )}
-              </div>
-              {!graph || graph.graphs.length === 0 ? (
-                <div className="text-apple-12 text-secondary" data-testid="report-graph-empty">
-                  No claim graph has been committed for this version yet. It is written when the report is frozen.
-                </div>
-              ) : (
-                <>
-                  <div className="text-apple-11 text-secondary" data-testid="report-graph-root">
-                    Root: <span className="font-mono">{graph.graphs[0].graphRoot.slice(0, 16)}…</span>
-                    {graph.graphs[0].ledgerSeq !== null && ` · ledger #${graph.graphs[0].ledgerSeq}`}
-                  </div>
-                  <ul className="space-y-0.5" data-testid="report-graph-claims">
-                    {graph.claims.map((c) => (
-                      <li key={c.claimId} className="flex items-center justify-between gap-3 text-apple-11" data-testid={`report-graph-claim-${c.claimId}`}>
-                        <span className="text-primary truncate">{c.sectionId} · {c.kind}</span>
-                        <span className="text-secondary font-mono shrink-0">{c.claimHash.slice(0, 10)}…</span>
-                      </li>
-                    ))}
-                  </ul>
-                </>
-              )}
-            </div>
-
             {/* Management comments */}
             <div className="p-4 rounded-2xl bg-surface border border-hairline space-y-3" data-testid="report-comments">
               <div className="text-apple-13 font-semibold text-primary flex items-center gap-2">
@@ -575,13 +568,36 @@ export const ReportEditorPanel: React.FC<{ engagementId: string }> = ({ engageme
                   <div data-testid="report-file-docx">
                     Editable DOCX: {reportHashes.docx.sha256.slice(0, 16)}… ({reportHashes.docx.bytes} bytes)
                   </div>
-                  {footerPreview && (
-                    <div data-testid="report-footer-preview">
-                      Printed footer: {footerPreview}
-                    </div>
-                  )}
+                  {/* The on-screen footer line, so the screen and the frozen file agree (reportFooterPreview). */}
+                  <div className="pt-1 text-secondary/80" data-testid="report-footer-preview">
+                    {reportFooterPreview(
+                      {
+                        reportVersionId: activeId ?? '',
+                        orgId,
+                        title: engagementLabel || 'Audit report',
+                        blocks: blocks.map((b) => ({ sectionType: b.sectionType, blockType: b.blockType, content: b.content, position: b.position })),
+                        engagementLabel: engagementLabel || 'Engagement',
+                        userLabel: currentUser?.name ?? currentUser?.email ?? 'auditor',
+                        frozenAt: active?.frozenAt ?? null,
+                      },
+                      reportHashes.docx.sha256,
+                    )}
+                  </div>
                 </div>
               )}
+              {/* Phase 2.6 drilldown: the committed claim graph behind the report. Non-blocking. */}
+              <div className="pt-1">
+                <button
+                  type="button"
+                  data-testid="report-graph-open"
+                  onClick={openGraph}
+                  disabled={busy || graphBusy || !activeId}
+                  className="flex items-center gap-1 text-accent font-medium text-apple-11 hover:underline disabled:opacity-50"
+                >
+                  <Layers className="w-3.5 h-3.5 stroke-[1.5]" />
+                  {graphBusy ? 'Loading graph…' : 'View claim graph'}
+                </button>
+              </div>
             </div>
           </div>
 
@@ -616,6 +632,74 @@ export const ReportEditorPanel: React.FC<{ engagementId: string }> = ({ engageme
             )}
           </aside>
         </div>
+      )}
+
+      {/* Phase 2.6 drilldown: the committed evidence-bound claim graph for the selected version. The
+          root is the tenant data the database holds (report_graphs.graph_root); each claim links to
+          the records it cites. Non-blocking — it sits beside the editor, the work stays usable. */}
+      {graphOpen && graph && (
+        <section className="rounded-2xl bg-surface border border-hairline overflow-hidden" data-testid="report-graph-panel">
+          <div className="flex items-center justify-between px-4 py-2 border-b border-hairline">
+            <span className="text-apple-12 font-semibold text-primary flex items-center gap-1.5">
+              <Layers className="w-3.5 h-3.5 stroke-[1.5]" /> Committed claim graph
+            </span>
+            <button
+              type="button"
+              data-testid="report-graph-close"
+              onClick={() => setGraphOpen(false)}
+              className="text-apple-11 text-secondary hover:text-primary"
+            >
+              Close
+            </button>
+          </div>
+          {graph.graphs.length === 0 ? (
+            <p className="px-4 py-3 text-apple-12 text-secondary" data-testid="report-graph-empty">
+              No committed graph for this version. Freeze the report to commit it.
+            </p>
+          ) : (
+            <div className="divide-y divide-hairline">
+              {graph.graphs.map((g) => (
+                <div key={g.id} className="px-4 py-3 space-y-2">
+                  <div className="grid gap-1 sm:grid-cols-2 text-apple-11">
+                    <div data-testid={`report-graph-root-${g.id}`}>
+                      <span className="text-secondary">Graph root: </span>
+                      <span className="font-mono text-primary break-all">{g.graphRoot}</span>
+                    </div>
+                    <div data-testid={`report-graph-render-${g.id}`}>
+                      <span className="text-secondary">Render hash: </span>
+                      <span className="font-mono text-primary break-all">{g.renderHash}</span>
+                    </div>
+                    <div className="text-secondary">
+                      Model <span className="text-primary">{g.modelId}</span> · engine{' '}
+                      <span className="text-primary">{g.engineVersion}</span> · template{' '}
+                      <span className="text-primary">{g.templateVersion}</span>
+                    </div>
+                    <div className="text-secondary">
+                      {g.claimCount} claim{g.claimCount === 1 ? '' : 's'}
+                      {g.ledgerSeq != null && <> · ledger #{g.ledgerSeq}</>}
+                    </div>
+                  </div>
+                  <ul className="space-y-0.5" data-testid={`report-graph-claims-${g.id}`}>
+                    {graph.claims
+                      .slice(0, 50)
+                      .map((c) => (
+                        <li key={c.claimId} className="flex items-center justify-between gap-2 text-apple-11" data-testid={`report-graph-claim-${c.claimId}`}>
+                          <span className="text-primary">
+                            <span className="text-secondary">{c.position}. </span>
+                            {c.kind}
+                            <span className="text-secondary"> · {c.sectionId}</span>
+                          </span>
+                          <span className="font-mono text-secondary" title={c.claimHash}>
+                            {c.claimHash.slice(0, 12)}…
+                          </span>
+                        </li>
+                      ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
       )}
     </div>
   );

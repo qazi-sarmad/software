@@ -19,9 +19,11 @@ const recordFn = vi.fn();
 const signOffWp = vi.fn();
 const listResults = vi.fn();
 const raise = vi.fn();
+const listRecords = vi.fn();
 
 vi.mock('../../data/population', () => ({
   listPopulations: () => listPops(),
+  listPopulationRecords: (...a: unknown[]) => listRecords(...a),
   lockPopulation: (...a: unknown[]) => lockPop(...a),
   registerPopulation: () => Promise.resolve({ ok: true }),
   sha256Hex: () => Promise.resolve('deadbeef'),
@@ -52,12 +54,16 @@ vi.mock('../../data/analytics', () => ({
 vi.mock('../../data/db', () => ({ getClient: () => null }));
 
 const userRef = { current: { role: 'cia', rights: { perform_work: true, review_and_approve: true } } };
-vi.mock('../../context/AppContext', () => ({ useApp: () => ({ currentUser: userRef.current }) }));
+const createWp = vi.fn();
+vi.mock('../../context/AppContext', () => ({
+  useApp: () => ({ currentUser: userRef.current, createWorkpaper: (...a: unknown[]) => createWp(...a) }),
+}));
 
 import { PopulationPanel } from '../audit/PopulationPanel';
 import { SamplingPanel } from '../audit/SamplingPanel';
 import { RowTestingPanel } from '../audit/RowTestingPanel';
 import { AnalystEnginePanel } from '../audit/AnalystEnginePanel';
+import { WorkpaperCreatePanel } from '../audit/WorkpaperCreatePanel';
 
 const preparer = { role: 'cia', rights: { perform_work: true, review_and_approve: true } };
 
@@ -81,6 +87,8 @@ describe('Phase 4 UI panels (4I)', () => {
     signOffWp.mockResolvedValue({ ok: true });
     listResults.mockResolvedValue([]);
     raise.mockResolvedValue({ ok: true });
+    listRecords.mockResolvedValue([]);
+    createWp.mockResolvedValue({ ok: true, id: 'w-new' });
   });
 
   it('population: designed empty state and no population is sampled', async () => {
@@ -100,6 +108,28 @@ describe('Phase 4 UI panels (4I)', () => {
     holdToConfirm(screen.getByTestId('population-lock-p1'));
     vi.useRealTimers();
     await waitFor(() => expect(lockPop).toHaveBeenCalledWith('p1'));
+  });
+
+  it('population: profiles a locked population with the pure populationProfile rule', async () => {
+    listPops.mockResolvedValue([
+      { id: 'p1', engagementId: 'e1', workpaperId: null, filename: 'gl.csv', rowCount: 3, sha256: 'abc', status: 'locked', verifiedAt: null, verifiedBy: null },
+    ]);
+    listRecords.mockResolvedValue([
+      { rowRef: 1, amountCents: 100, date: '2026-01-01', category: 'sales' },
+      { rowRef: 2, amountCents: 100, date: '2026-01-01', category: 'sales' },
+      { rowRef: 3, amountCents: null, date: '2026-01-02', category: 'sales' },
+    ]);
+    render(<PopulationPanel engagementId="e1" />);
+    await waitFor(() => expect(screen.getByTestId('population-row-p1')).toBeTruthy());
+    fireEvent.click(screen.getByTestId('population-profile-p1'));
+    await waitFor(() => expect(listRecords).toHaveBeenCalledWith('p1'));
+    await waitFor(() => expect(screen.getByTestId('population-profile-view-p1')).toBeTruthy());
+    const summary = screen.getByTestId('population-profile-summary-p1').textContent ?? '';
+    expect(summary).toContain('3 rows');
+    expect(summary).toContain('2 with a value');
+    expect(summary).toContain('1 missing a value');
+    expect(summary).toContain('1 duplicate');
+    expect(screen.getByTestId('population-profile-flags-p1').textContent).toContain('duplicates');
   });
 
   it('sampling: shows a designed empty rule state and a seed preview', async () => {
@@ -180,6 +210,51 @@ describe('Phase 4 UI panels (4I)', () => {
   it('analyst: designed empty state', async () => {
     render(<AnalystEnginePanel engagementId="e1" />);
     await waitFor(() => expect(screen.getByTestId('analyst-empty')).toBeTruthy());
+  });
+
+  // Phase 6 (G1): before the workpaper-creation path existed, the sampling and row-testing panels
+  // were gated on workpapers[0] and simply vanished in production. They must render a designed empty
+  // state when the engagement has no workpaper, and never disappear.
+  it('sampling: renders a designed no-workpaper state instead of vanishing', async () => {
+    render(<SamplingPanel workpaperId={null} />);
+    await waitFor(() => expect(screen.getByTestId('sampling-panel')).toBeTruthy());
+    expect(screen.getByTestId('sampling-no-workpaper')).toBeTruthy();
+    expect(screen.queryByTestId('sampling-compute')).toBeNull();
+  });
+
+  it('row testing: renders a designed no-workpaper state instead of vanishing', async () => {
+    render(<RowTestingPanel workpaperId={null} />);
+    await waitFor(() => expect(screen.getByTestId('rowtesting-panel')).toBeTruthy());
+    expect(screen.getByTestId('rowtesting-no-workpaper')).toBeTruthy();
+  });
+
+  it('workpaper create: opens the form, requires a title and calls the write path', async () => {
+    render(<WorkpaperCreatePanel engagementId="e1" />);
+    fireEvent.click(screen.getByTestId('workpaper-create-open'));
+    const submit = screen.getByTestId('workpaper-create-submit') as HTMLButtonElement;
+    expect(submit.disabled).toBe(true);
+    fireEvent.change(screen.getByTestId('workpaper-title'), { target: { value: 'Cash count' } });
+    expect(submit.disabled).toBe(false);
+    fireEvent.click(submit);
+    await waitFor(() => expect(createWp).toHaveBeenCalledWith('e1', 'Cash count', null));
+  });
+
+  it('workpaper create: a refusal is shown inline, not swallowed', async () => {
+    createWp.mockResolvedValue({ ok: false, reason: 'testing_locked: planning must be signed off' });
+    render(<WorkpaperCreatePanel engagementId="e1" />);
+    fireEvent.click(screen.getByTestId('workpaper-create-open'));
+    fireEvent.change(screen.getByTestId('workpaper-title'), { target: { value: 'Cash count' } });
+    fireEvent.click(screen.getByTestId('workpaper-create-submit'));
+    await waitFor(() =>
+      expect(screen.getByTestId('workpaper-create-error').textContent).toMatch(/testing_locked/)
+    );
+  });
+
+  it('workpaper create: a caller without perform_work sees the reason, not the form', async () => {
+    userRef.current = { role: 'auditee', rights: { perform_work: false } } as never;
+    render(<WorkpaperCreatePanel engagementId="e1" />);
+    expect((screen.getByTestId('workpaper-create-open') as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.getByTestId('workpaper-create-reason')).toBeTruthy();
   });
 
   it('analyst: expands a check and raises a finding from a row', async () => {

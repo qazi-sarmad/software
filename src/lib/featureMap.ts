@@ -18,6 +18,8 @@ export const FEATURE_RPC_MAP: Record<string, string> = {
   certificate_revoke: 'certificates',
   certificate_supersede: 'certificates',
   certificate_config_save: 'certificates',
+  // Phase 3.6: the certificates-owned helper seal_engagement calls when certificate_auto_issue is on.
+  auto_issue_certificate_on_seal: 'certificates',
   verify_certificate: 'public_verification',
   verify_board_pack: 'public_verification',
   verify_report_root: 'public_verification',
@@ -68,6 +70,9 @@ export const FEATURE_RPC_MAP: Record<string, string> = {
   consultation_propose: 'consultation_full_admin',
   // Item A: integrity anchoring (0096).
   signature_record: 'integrity_anchoring',
+  // S10/S11: Systeligon rule packs (0117).
+  rule_pack_save: 'systeligon_rule_packs',
+  systeligon_finding_record: 'systeligon_findings',
 };
 
 /**

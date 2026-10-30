@@ -339,6 +339,24 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
   named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
 
+### `SA-18` — integrity anchoring (SCALE-1, Phase 3.5, §17)
+
+- **Purpose:** The platform integrity catalogue: the RFC 3161 timestamp authorities that stamp a sealed report's
+- **Route / location:** `/superadmin`, tab `Integrity anchoring` (`superadmin-tab-integrity`).
+- **Rights required:** platform admin (`is_platform_admin()`); every write is a platform-only RPC (`admin_save_timestamp_authority`, `admin_save_trust_anchor`, `admin_set_anchoring_min`), re-checked in the database.
+- **Data functions (`src/data/*.ts`):** `listTenants`, `listTimestampAuthorities`, `listTrustAnchors`, `saveTimestampAuthority`, `saveTrustAnchor`, `setAnchoringMin`
+- **Data modules:** `src/data/integrityAnchoring.ts`, `src/data/platform.ts`
+- **RPCs reachable via those modules:** `platform_create_tenant`, `platform_get_invite_caps`, `platform_job_health`, `platform_list_support_grants`, `platform_list_tenants`, `platform_list_trail`, `platform_provisioning_status`, `platform_whoami`, `support_access_log_list`, `support_grant_active`, `support_list_engagements`, `support_read_object`
+- **Tables reachable via those modules:** none
+- **Testids (25):** `sa-anchoring`, `sa-anchoring-loading`, `sa-anchoring-error`, `sa-anchoring-save-error`, `sa-anchoring-result`, `sa-anchoring-authorities`, `sa-anchoring-authority-list`, `sa-anchoring-authority-empty`, `sa-anchoring-authority-<id>`, `sa-anchoring-authority-name`, `sa-anchoring-authority-url`, `sa-anchoring-authority-order`, `sa-anchoring-authority-add`, `sa-anchoring-anchors`, `sa-anchoring-anchor-list`, `sa-anchoring-anchor-empty`, `sa-anchoring-anchor-<id>`, `sa-anchoring-anchor-name`, `sa-anchoring-anchor-cert`, `sa-anchoring-anchor-add`, `sa-anchoring-min`, `sa-anchoring-min-list`, `sa-anchoring-min-empty`, `sa-anchoring-min-<id>`, `sa-anchoring-min-<id>-<n>`
+- **Explain ids (0):** — (no explain affordance)
+- **IIA standards addressed (0):** —
+- **Drilldown targets (0):** — (no aggregate)
+- **States:** loading; error (with Retry); ready; empty authority list; empty anchor list; empty tenant list; an inline result or refusal after a write.
+- **Tutorial key:** `sa.integrity-anchoring`
+- **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
+  named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
+
 ### `SA-03` — tenant hub (S2)
 
 - **Purpose:** the platform's per-tenant register: every tenant with its status, feature flags, AI enablement and the invitation cap, plus the controls to change them.
@@ -755,6 +773,24 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
   named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
 
+### `OA-32` — team directory (spec §4.2, §5, §9)
+
+- **Purpose:** the resourcing view — every member with their working profile (picture, capacity, role), their workload, their home base and where they are on a date. Selecting a member opens their detail: the workload band, the engagements assigned to them, their upcoming trips, their travel preferences (home base, willingness, preferred regions, blackout dates), and a resourcing form that ranks who should take a given engagement and explains each verdict. A manager can also tag an engagement as requiring travel.
+- **Route / location:** Org Admin control plane, tab `Team directory` (`admin-tab-team`) on the People & Roles panel (`people-admin-panel`).
+- **Rights required:** `manage_team` or `manage_users` to see every member's travel and to write; a member sees and edits only their own travel and profile. The engagement travel tag needs `manage_engagements`.
+- **Data functions (`src/data/*.ts`):** `addTeamAssignment`, `addTeamTrip`, `availabilityOn`, `generatedAvatar`, `listDirectoryEngagements`, `listTeamDirectory`, `profileWorkload`, `recommendAssignee`, `removeTeamAssignment`, `removeTeamTrip`, `saveTeamProfile`, `saveTeamTravel`, `summariseTeam`, `tagEngagementTravel`
+- **Data modules:** `src/data/teamDirectory.ts`
+- **RPCs reachable via those modules:** `team_directory_get`
+- **Tables reachable via those modules:** `engagements`
+- **Testids (40):** `team`, `<prefix>-<element>`, `admin-tab-team`, `team-directory`, `team-grid`, `team-summary`, `team-resourcing`, `team-detail`, `team-detail-name`, `team-detail-close`, `team-profile-edit`, `team-avatar-url`, `team-capacity`, `team-travel-edit`, `team-home-base`, `team-regions`, `team-trips`, `team-trip-add`, `team-assignments`, `team-assignment-add`, `team-member-<userId>`, `team-avatar-<userId>`, `team-hover-<userId>`, `team-recommendations`, `team-rec-<userId>`, `team-req-engagement`, `team-req-travel`, `team-travel-tag`, `team-tag-engagement`, `team-tag-location`, `team-tag-save`, `team-empty`, `team-readonly`, `team-notice`, `team-loading`, `team-error`, `team-trip-<i>`, `team-trip-<i>-remove`, `team-assignment-<i>`, `team-assignment-<i>-remove`
+- **Explain ids (0):** — (no explain affordance)
+- **IIA standards addressed (0):** —
+- **Drilldown targets (0):** — (no aggregate)
+- **States:** loading, error, ready; an inline notice on a saved or refused write.
+- **Tutorial key:** — (no key)
+- **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
+  named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
+
 ### `OA-08` — templates hub (S2)
 
 - **Purpose:** the notification-template hub: every catalogue event, the tenant template that overrides the platform default, and the blocks each template is built from.
@@ -800,7 +836,7 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 - **Data modules:** `src/data/tutorials.ts`
 - **RPCs reachable via those modules:** `list_tutorials`
 - **Tables reachable via those modules:** none
-- **Testids (6):** `org-tutorials`, `superadmin-tutorials`, `superadmin-tutorials-loading`, `superadmin-tutorials-error`, `superadmin-tutorials-empty`, `tutorial-<key>`
+- **Testids (2):** `org-tutorials`, `tutorial-<key>`
 - **Explain ids (0):** — (no explain affordance)
 - **IIA standards addressed (0):** —
 - **Drilldown targets (0):** — (no aggregate)
@@ -840,7 +876,25 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 - **Explain ids (2):** `field.config.report_opinion_required`, `field.config.testing_grace_hours`
 - **IIA standards addressed (3):** `12.3`, `6.2`, `9.3`
 - **Drilldown targets (0):** — (no aggregate)
-- **States:** loading, error, empty, ready; an inline result line reports a saved change or the plain refusal (a value outside the platform range, an unknown role tag, an unsupported format).
+- **States:** loading / empty / error / ready / denied
+- **Tutorial key:** `oa.governance`
+- **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
+  named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
+
+### `OA-22` — report template (Phase 3.4, §15.2)
+
+- **Purpose:** the organisation's report template — which of the five report sections a composed report contains, and in what order. Saving writes a new versioned, logged template (0088's hash chain) and the next `compose_report` follows it; with nothing saved the default five-section order applies. The section ids are a closed set, so a template can never name a section the product cannot render.
+- **Route / location:** Org Admin control plane, tab `Report template` (`org-control-tab-templates`).
+- **Rights required:** `edit_config`.
+- **Data functions (`src/data/*.ts`):** `REPORT_SECTION_IDS`, `listReportTemplates`, `saveReportTemplate`
+- **Data modules:** `src/data/governance.ts`
+- **RPCs reachable via those modules:** none
+- **Tables reachable via those modules:** `bi_check_ranges`, `bi_parameters`, `finding_sections`, `fsli_mappings`, `methodology_scales`, `notification_rules`
+- **Testids (17):** `report-template-panel`, `report-template-loading`, `report-template-error`, `report-template-no-right`, `report-template-denied`, `report-template-version`, `report-template-result`, `report-template-save-error`, `report-template-sections`, `report-template-empty`, `report-template-section-<id>`, `report-template-up-<id>`, `report-template-down-<id>`, `report-template-remove-<id>`, `report-template-add-row`, `report-template-add-<id>`, `report-template-save`
+- **Explain ids (2):** `field.config.report_opinion_required`, `field.config.testing_grace_hours`
+- **IIA standards addressed (3):** `12.3`, `6.2`, `9.3`
+- **Drilldown targets (0):** — (no aggregate)
+- **States:** loading, error, empty (no sections chosen), ready; an inline result line reports the saved change or the plain refusal (an unknown section id, an empty template).
 - **Tutorial key:** `oa.governance`
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
   named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
@@ -852,8 +906,8 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 - **Rights required:** `edit_config` to save an instance, rule or triage; `view_insights` to read.
 - **Data functions (`src/data/*.ts`):** `connectorEgressAllowed`, `listAlerts`, `listConnectorInstances`, `listConnectorRuns`, `listMonitorRules`, `listStagedRecords`, `releaseMonitorRule`, `saveConnectorInstance`, `saveMonitorRule`, `triageAlert`
 - **Data modules:** `src/data/writing.ts`
-- **RPCs reachable via those modules:** `alert_list`, `connector_egress_allowed`, `format_audience_list`, `format_list`, `phrase_list`
-- **Tables reachable via those modules:** `connector_instances`, `connector_runs`, `monitor_rules`, `phrase_reviews`, `staged_records`
+- **RPCs reachable via those modules:** `alert_adhoc_suggestion`, `alert_list`, `connector_egress_allowed`, `format_audience_list`, `format_list`, `phrase_list`
+- **Tables reachable via those modules:** `connector_instances`, `connector_runs`, `engagements`, `evidence_requests`, `monitor_rules`, `phrase_reviews`, `staged_records`
 - **Testids (40):** `wk-connectors-loading`, `wk-connectors-error`, `wk-connectors-retry`, `wk-connectors-panel`, `wk-connectors-tab-<id>`, `wk-connectors-catalogue`, `wk-connectors-label`, `wk-connectors-credential`, `wk-connectors-save`, `wk-connectors-saved`, `wk-connectors-instances`, `wk-connectors-instance-<id>`, `wk-connectors-runs`, `wk-connectors-runs-empty`, `wk-connectors-run-<id>`, `wk-connectors-staged`, `wk-connectors-staged-empty`, `wk-connectors-staged-<id>`, `wk-connectors-rules`, `wk-connectors-rules-empty`, `wk-connectors-rule-id`, `wk-connectors-rule-description`, `wk-connectors-rule-save`, `wk-connectors-alerts`, `wk-connectors-alerts-empty`, `wk-connectors-alerts-list`, `wk-connectors-alert-detail`, `wk-connectors-alert-detail-reason`, `wk-connectors-alert-detail-lineage`, `wk-connectors-alert-triage-form`, `wk-connectors-alert-triage-reason`, `wk-connectors-alert-triage-snooze`, `wk-connectors-alert-triage-save`, `wk-connectors-egress`, `wk-connectors-egress-host`, `wk-connectors-egress-check`, `wk-connectors-egress-result`, `wk-connectors-new`, `wk-connectors-rule-new`, `wk-connectors-empty`
 - **Explain ids (0):** — (no explain affordance)
 - **IIA standards addressed (1):** `10.3`
@@ -870,14 +924,50 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 - **Rights required:** `edit_config` to save, publish or set audiences; `view_reports` to read.
 - **Data functions (`src/data/*.ts`):** `listFormatAudiences`, `listReportFormats`, `publishReportFormat`, `saveReportFormat`, `setFormatAudiences`
 - **Data modules:** `src/data/writing.ts`
-- **RPCs reachable via those modules:** `alert_list`, `connector_egress_allowed`, `format_audience_list`, `format_list`, `phrase_list`
-- **Tables reachable via those modules:** `connector_instances`, `connector_runs`, `monitor_rules`, `phrase_reviews`, `staged_records`
+- **RPCs reachable via those modules:** `alert_adhoc_suggestion`, `alert_list`, `connector_egress_allowed`, `format_audience_list`, `format_list`, `phrase_list`
+- **Tables reachable via those modules:** `connector_instances`, `connector_runs`, `engagements`, `evidence_requests`, `monitor_rules`, `phrase_reviews`, `staged_records`
 - **Testids (69):** `wk-format-loading`, `wk-format-error`, `wk-format-retry`, `wk-format-panel`, `wk-format-controls`, `wk-format-format-pick`, `wk-format-model-pick`, `wk-format-locale-pick`, `wk-format-label-input`, `wk-format-status`, `wk-format-version`, `wk-format-status-value`, `wk-format-issues`, `wk-format-published-note`, `wk-format-pane-tabs`, `wk-format-pane-<pane>`, `wk-format-blocks`, `wk-format-block-<key>`, `wk-format-block-<key>-key`, `wk-format-block-<key>-role`, `wk-format-block-<key>-register`, `wk-format-block-<key>-visible`, `wk-format-block-<key>-up`, `wk-format-block-<key>-down`, `wk-format-add-missing`, `wk-format-issue-list`, `wk-format-issue-<code>`, `wk-format-layout`, `wk-format-layout-page-size`, `wk-format-layout-marginTopMm`, `wk-format-layout-marginRightMm`, `wk-format-layout-marginBottomMm`, `wk-format-layout-marginLeftMm`, `wk-format-layout-font-heading`, `wk-format-layout-font-body`, `wk-format-layout-footer`, `wk-format-layout-tokens`, `wk-format-block-<key>-label`, `wk-format-contents`, `wk-format-contents-note`, `wk-format-contents-enabled`, `wk-format-contents-title`, `wk-format-contents-depth`, `wk-format-contents-title-scale`, `wk-format-contents-numbered`, `wk-format-contents-dot-leaders`, `wk-format-contents-indent`, `wk-format-audiences`, `wk-format-audiences-note`, `wk-format-audiences-empty`, `wk-format-audience-<slug>`, `wk-format-audience-<slug>-view`, `wk-format-audience-<slug>-edit`, `wk-format-audiences-save`, `wk-format-versions`, `wk-format-version-<n>`, `wk-format-version-<n>-load`, `wk-format-preview`, `wk-format-preview-summary`, `wk-format-preview-blocks`, `wk-format-preview-<key>`, `wk-format-preview-hidden`, `wk-format-preview-registers`, `wk-format-save`, `wk-format-publish`, `wk-format-result`, `wk-format-readonly`, `wk-format-create-default`, `wk-format-empty`
 - **Explain ids (0):** — (no explain affordance)
 - **IIA standards addressed (1):** `11.2`
 - **Drilldown targets (0):** — (no aggregate)
 - **States:** loading, error, empty, ready; an inline result line reports a saved change, a publish, or the plain refusal; the editor lists every validation issue precisely.
 - **Tutorial key:** `oa.formats`
+- **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
+  named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
+
+### `OA-25` — methodology library (Phase 4, §10.1, §11.3)
+
+- **Purpose:** The organisation's methodology library: every audit type's current procedure, its version, and its
+- **Route / location:** `/admin`, tab `Methodology` (`org-control-tab-methodology`).
+- **Rights required:** `edit_config`; a caller without it sees the plain refusal, never the panel.
+- **Data functions (`src/data/*.ts`):** `STEP_KINDS`, `STEP_KIND_LABELS`, `applyTemplateToWorkpaper`, `getProcedureTemplate`, `listProcedureTemplates`, `listWorkpaperSteps`, `publishProcedureTemplate`, `saveProcedureTemplate`
+- **Data modules:** `src/data/methodology.ts`
+- **RPCs reachable via those modules:** none
+- **Tables reachable via those modules:** `workpaper_step_state`
+- **Testids (25):** `methodology-panel`, `methodology-no-right`, `methodology-denied`, `methodology-loading`, `methodology-error`, `methodology-version`, `methodology-list`, `methodology-empty`, `methodology-template-<model>`, `methodology-save-error`, `methodology-result`, `methodology-title`, `methodology-description`, `methodology-steps`, `methodology-steps-empty`, `methodology-step-<key>`, `methodology-step-label-<key>`, `methodology-step-kind-<key>`, `methodology-step-evidence-<key>`, `methodology-step-up-<key>`, `methodology-step-down-<key>`, `methodology-step-remove-<key>`, `methodology-add-step`, `methodology-save`, `methodology-publish`
+- **Explain ids (0):** — (no explain affordance)
+- **IIA standards addressed (0):** —
+- **Drilldown targets (0):** — (no aggregate)
+- **States:** loading; error; a denied state; ready with the template list and the step editor; an inline result or refusal after a save or publish.
+- **Tutorial key:** — (no key)
+- **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
+  named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
+
+### `OA-33` — Systeligon rule packs (S10/S11, spec §4/§8)
+
+- **Purpose:** The configuration surface for the signed rule packs the forensic engine runs. List the packs this
+- **Route / location:** the Org Admin control panel, tab "Rule packs" (`org-control-tab-packs`).
+- **Rights required:** `edit_config` to generate a key, register it, save a pack and release one; any member of the org reads the pack list and the refusal log.
+- **Data functions (`src/data/*.ts`):** `AdhocRuleSpec`, `RulePack`, `SysteligonRule`, `definePack`, `generateSigningKey`, `justBelowThreshold`, `listRulePackRefusals`, `listRulePacks`, `registerSigningKey`, `releaseRulePack`, `runAdhocRule`, `saveSignedRulePackArtifact`
+- **Data modules:** `src/data/rulePacks.ts`
+- **RPCs reachable via those modules:** `rule_pack_list`, `rule_pack_refusals_list`, `rule_pack_released_rules`
+- **Tables reachable via those modules:** none
+- **Testids (30):** `rule-pack-panel`, `rule-pack-loading`, `rule-pack-load-error`, `rule-pack-error`, `rule-pack-notice`, `rule-pack-rights-note`, `rule-pack-key`, `rule-pack-key-id`, `rule-pack-key-generate`, `rule-pack-key-register`, `rule-pack-key-fingerprint`, `rule-pack-list-section`, `rule-pack-empty`, `rule-pack-row-<i>`, `rule-pack-draft-<i>`, `rule-pack-released-<i>`, `rule-pack-release-<i>`, `rule-pack-save`, `rule-pack-adhoc`, `rule-pack-adhoc-id`, `rule-pack-adhoc-source`, `rule-pack-adhoc-condition`, `rule-pack-adhoc-threshold`, `rule-pack-adhoc-severity`, `rule-pack-adhoc-preview`, `rule-pack-adhoc-result`, `rule-pack-refusals`, `rule-pack-refusals-empty`, `rule-pack-refusal-list`, `rule-pack-refusal-<id>`
+- **Explain ids (0):** — (no explain affordance)
+- **IIA standards addressed (0):** —
+- **Drilldown targets (0):** — (no aggregate)
+- **States:** loading; error; a denied state (no `edit_config`); ready with the pack list, the key controls and the refusal log; empty (`rule-pack-empty`); an inline result or refusal after a save or release.
+- **Tutorial key:** — (no key)
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
   named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
 
@@ -1042,6 +1132,24 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 - **Drilldown targets (0):** — (no aggregate)
 - **States:** loading ("Composing the report…"); an inline error with a retry; a denied state for a caller without the right; ready, with the five panes and the freeze panel. The coverage pane names each missing, duplicated and orphaned item; the freeze panel lists every blocker or states that the freeze is allowed with the graph root and render hash.
 - **Tutorial key:** `oa.report-builder`
+- **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
+  named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
+
+### `WK-09` — procedure steps on a workpaper (Phase 4, §11.3)
+
+- **Purpose:** The steps a workpaper follows, snapshotted from the organisation's methodology library. A preparer
+- **Route / location:** the workpaper window, sub-tab "Testing" (`wk-subtab-testing`).
+- **Rights required:** `perform_work`; the write is refused in the database without it.
+- **Data functions (`src/data/*.ts`):** `STEP_KIND_LABELS`, `applyTemplateToWorkpaper`, `listProcedureTemplates`, `listWorkpaperSteps`
+- **Data modules:** `src/data/methodology.ts`
+- **RPCs reachable via those modules:** none
+- **Tables reachable via those modules:** `workpaper_step_state`
+- **Testids (6):** `procedure-steps-panel`, `procedure-model`, `procedure-apply`, `procedure-steps-message`, `procedure-steps-empty`, `procedure-step-<key>`
+- **Explain ids (0):** — (no explain affordance)
+- **IIA standards addressed (0):** —
+- **Drilldown targets (0):** — (no aggregate)
+- **States:** loading; empty (no procedure applied); ready with the applied steps; an inline refusal after a failed apply or tick.
+- **Tutorial key:** `oa.timetravel`
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
   named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
 
@@ -1432,15 +1540,15 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 - **Purpose:** Register a population file, show its SHA-256 hash, and lock the population (hold-to-confirm); a locked population is immutable.
 - **Route / location:** Audit File window, view "Population" (`audit-file-view-population`).
 - **Rights required:** `perform_work`.
-- **Data functions (`src/data/*.ts`):** `PopulationRow`, `importPopulationRows`, `lockPopulation`, `parsePopulationPaste`, `registerPopulation`, `sha256Hex`, `toSampleItems`
+- **Data functions (`src/data/*.ts`):** `PopulationProfile`, `PopulationRecordRead`, `PopulationRow`, `importPopulationRows`, `listPopulationRecords`, `lockPopulation`, `parsePopulationPaste`, `populationProfile`, `registerPopulation`, `sha256Hex`, `toSampleItems`
 - **Data modules:** `src/data/population.ts`
 - **RPCs reachable via those modules:** `list_population_rows`
 - **Tables reachable via those modules:** `population_rows`, `populations`
-- **Testids (24):** `population-browse`, `population-dropzone`, `population-empty`, `population-error`, `population-file-input`, `population-hash`, `population-loading`, `population-panel`, `population-register`, `population-gate`, `population-status`, `control-total`, `population-errors`, `gate-message`, `finalize-test`, `population-paste`, `population-paste-input`, `population-paste-preview`, `population-paste-columns`, `population-paste-count`, `population-paste-errors`, `population-paste-warnings`, `population-paste-target`, `population-paste-import`
+- **Testids (30):** `population-browse`, `population-dropzone`, `population-empty`, `population-error`, `population-file-input`, `population-hash`, `population-loading`, `population-panel`, `population-register`, `population-gate`, `population-status`, `population-profile-<id>`, `population-profile-view-<id>`, `population-profile-summary-<id>`, `population-profile-flags-<id>`, `control-total`, `population-errors`, `gate-message`, `finalize-test`, `population-paste`, `population-paste-input`, `population-paste-preview`, `population-paste-columns`, `population-paste-count`, `population-paste-errors`, `population-paste-warnings`, `population-paste-target`, `population-paste-import`, `header-confirm`, `header-confirm-0`
 - **Explain ids (0):** — (no explain affordance)
 - **IIA standards addressed (1):** `14.1`
 - **Drilldown targets (0):** — (no aggregate)
-- **States:** loading; empty; hashed; locked; error inline; paste grid (header mapped by position, `population-paste-columns`; parsed count, `population-paste-count`; per-line rejections, `population-paste-errors`; long-line warnings, `population-paste-warnings`; store against a registered population, `population-paste-target`, `population-paste-import`).
+- **States:** loading; empty; hashed; locked; error inline; profile loading; profile ready (row count, value coverage, duplicate density, period, flags); paste grid (header mapped by position, `population-paste-columns`; parsed count, `population-paste-count`; per-line rejections, `population-paste-errors`; long-line warnings, `population-paste-warnings`; store against a registered population, `population-paste-target`, `population-paste-import`); header detected and awaiting confirmation (S2 — the engine proposes the header row, the auditor confirms it, rows above it are ignored and the header row is not counted).
 - **Tutorial key:** — (no key)
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
   named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
@@ -1454,11 +1562,29 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 - **Data modules:** `src/data/sampling.ts`
 - **RPCs reachable via those modules:** `get_sample_size`, `sample_precision`, `sample_tested_rows`, `value_coverage`
 - **Tables reachable via those modules:** `org_sampling_table`, `samples`
-- **Testids (21):** `sampling-calculation`, `sampling-compute`, `sampling-coverage`, `sampling-coverage-status`, `sampling-current`, `sampling-error`, `sampling-floor`, `sampling-loading`, `sampling-lock`, `sampling-locked`, `sampling-method`, `sampling-panel`, `sampling-paste`, `sampling-paste-count`, `sampling-paste-invalid`, `sampling-paste-floor`, `sampling-precision`, `sampling-rules-empty`, `sampling-seed-preview`, `sampling-tested-rows`, `sampling-waive-reason`
+- **Testids (22):** `sampling-calculation`, `sampling-compute`, `sampling-coverage`, `sampling-coverage-status`, `sampling-current`, `sampling-error`, `sampling-floor`, `sampling-loading`, `sampling-lock`, `sampling-locked`, `sampling-method`, `sampling-no-workpaper`, `sampling-panel`, `sampling-paste`, `sampling-paste-count`, `sampling-paste-floor`, `sampling-paste-invalid`, `sampling-precision`, `sampling-rules-empty`, `sampling-seed-preview`, `sampling-tested-rows`, `sampling-waive-reason`
 - **Explain ids (9):** `method.haphazard`, `method.high_value`, `method.low_value`, `method.mus`, `method.random`, `method.stratified`, `method.systematic`, `term.coverage`, `term.exception`
 - **IIA standards addressed (4):** `13.4`, `13.6`, `14.1`, `14.2`
 - **Drilldown targets (0):** — (no aggregate)
-- **States:** loading; no rules (`sampling-rules-empty`); computed (`sampling-method`, `sampling-calculation`); auditor paste (bare row references parsed into `{row_ref}` items; non-integer lines reported as `sampling-paste-invalid`; shortfall against the floor reported as `sampling-paste-floor`, never auto-padded); high-value coverage (`sampling-coverage`, `sampling-coverage-status`; a missing item can be waived with a reason, `sampling-waive-reason`); exact interval (`sampling-precision`); tested rows from the sample (`sampling-tested-rows`); locked (`sampling-locked`); error inline.
+- **States:** loading; no workpaper (`sampling-no-workpaper`); no rules (`sampling-rules-empty`); computed (`sampling-method`, `sampling-calculation`); auditor paste (bare row references parsed into `{row_ref}` items; non-integer lines reported as `sampling-paste-invalid`; shortfall against the floor reported as `sampling-paste-floor`, never auto-padded); high-value coverage (`sampling-coverage`, `sampling-coverage-status`; a missing item can be waived with a reason, `sampling-waive-reason`); exact interval (`sampling-precision`); tested rows from the sample (`sampling-tested-rows`); locked (`sampling-locked`); error inline.
+- **Tutorial key:** — (no key)
+- **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
+  named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
+
+### `AF-06` — Working-paper creation (S1)
+
+- **Purpose:** Create the working paper the testing workspace runs against. Before migration 0116 no path created one, so
+- **Route / location:** Audit File window, view "Testing workspace" (`audit-file-workspace`).
+- **Rights required:** `perform_work` to create.
+- **Data functions (`src/data/*.ts`):** `createWorkpaper`
+- **Data modules:** `src/data/mutations.ts`
+- **RPCs reachable via those modules:** `add_entity`, `create_universe`, `create_workpaper`
+- **Tables reachable via those modules:** none
+- **Testids (7):** `workpaper-create-cancel`, `workpaper-create-error`, `workpaper-create-open`, `workpaper-create-panel`, `workpaper-create-reason`, `workpaper-create-submit`, `workpaper-title`
+- **Explain ids (9):** `method.haphazard`, `method.high_value`, `method.low_value`, `method.mus`, `method.random`, `method.stratified`, `method.systematic`, `term.coverage`, `term.exception`
+- **IIA standards addressed (4):** `13.4`, `13.6`, `14.1`, `14.2`
+- **Drilldown targets (0):** — (no aggregate)
+- **States:** closed; open; busy; error inline; denied (`workpaper-create-reason`).
 - **Tutorial key:** — (no key)
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
   named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
@@ -1470,13 +1596,13 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 - **Rights required:** `perform_work` to record; `review_and_approve` to sign off; `can_reopen` to reopen.
 - **Data functions (`src/data/*.ts`):** `RowResult`, `WorkpaperRowRow`, `getWorkpaper`, `recordRow`, `reopenWorkpaper`, `signOffWorkpaper`
 - **Data modules:** `src/data/mutations.ts`, `src/data/rowTesting.ts`
-- **RPCs reachable via those modules:** `add_entity`, `create_universe`
+- **RPCs reachable via those modules:** `add_entity`, `create_universe`, `create_workpaper`
 - **Tables reachable via those modules:** `workpaper_rows`, `workpapers`
-- **Testids (10):** `rowtesting-empty`, `rowtesting-error`, `rowtesting-justification`, `rowtesting-loading`, `rowtesting-panel`, `rowtesting-preflight`, `rowtesting-reopen`, `rowtesting-signed-off`, `rowtesting-signoff`, `rowtesting-signoff-reason`
+- **Testids (11):** `rowtesting-empty`, `rowtesting-error`, `rowtesting-justification`, `rowtesting-loading`, `rowtesting-no-workpaper`, `rowtesting-panel`, `rowtesting-preflight`, `rowtesting-reopen`, `rowtesting-signed-off`, `rowtesting-signoff`, `rowtesting-signoff-reason`
 - **Explain ids (0):** — (no explain affordance)
 - **IIA standards addressed (4):** `11.4`, `13.6`, `14.2`, `4.2`
 - **Drilldown targets (0):** — (no aggregate)
-- **States:** loading; empty; signed-off; preflight note; error inline.
+- **States:** loading; no workpaper (`rowtesting-no-workpaper`); empty; signed-off; preflight note; error inline.
 - **Tutorial key:** — (no key)
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
   named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
@@ -1571,6 +1697,24 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
   named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
 
+### `AF-16` — Systeligon rule run (S1, S6, S13)
+
+- **Purpose:** Run the deterministic forensic rules over a locked population, read every finding with the rule id,
+- **Route / location:** the `workbench` inspector window, sub-tab "Rule Run".
+- **Rights required:** `perform_work` to run and to record; any member of the org reads.
+- **Data functions (`src/data/*.ts`):** `PopulationRecordRead`, `PopulationRow`, `RuleFinding`, `RuleInput`, `RuleRunResult`, `listPopulationRecords`, `listPopulations`, `recordSysteligonFindings`, `runRules`, `systeligonPopulationRules`
+- **Data modules:** `src/data/population.ts`, `src/data/systeligon.ts`
+- **RPCs reachable via those modules:** `list_population_rows`
+- **Tables reachable via those modules:** `population_rows`, `populations`
+- **Testids (15):** `rule-run`, `rule-run-empty`, `rule-run-error`, `rule-run-finding-<i>`, `rule-run-findings`, `rule-run-findings-empty`, `rule-run-loading`, `rule-run-pack-note`, `rule-run-population`, `rule-run-record`, `rule-run-recorded`, `rule-run-rights-note`, `rule-run-run`, `rule-run-skipped`, `rule-run-summary`
+- **Explain ids (0):** — (no explain affordance)
+- **IIA standards addressed (0):** —
+- **Drilldown targets (0):** — (no aggregate)
+- **States:** loading; no population (`rule-run-empty`); reading rows; running; findings; none flagged (`rule-run-findings-empty`); recorded; error inline.
+- **Tutorial key:** — (no key)
+- **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
+  named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
+
 ### `AF-12` — Deployment gate (S1)
 
 - **Purpose:** Run the deployment gate for an engagement: the ordered steps, each outcome, the required right, and the next action.
@@ -1609,14 +1753,14 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 
 ### `AF-14` — Report editor (S1)
 
-- **Purpose:** Compose the engagement report from its sections and blocks, comment on a block, incorporate or reject each comment, read the central pre-flight (comments, CAPs, acknowledgements), acknowledge a blocker with a reason, freeze the report and render the PDF/DOCX files.
+- **Purpose:** Compose the engagement report from its sections and blocks, comment on a block, incorporate or reject each comment, read the central pre-flight (comments, CAPs, acknowledgements), acknowledge a blocker with a reason, freeze the report and render the PDF/DOCX files, preview the frozen footer line, and drill into the committed evidence-bound claim graph.
 - **Route / location:** Audit File window, view "Report" (`audit-file-view-report`).
 - **Rights required:** `perform_work` to compose/comment; `approve_plan` to freeze.
-- **Data functions (`src/data/*.ts`):** `CapRow`, `ReportBlockRow`, `ReportCommentRow`, `ReportFileInput`, `ReportGraphView`, `ReportVersionRow`, `StoredReportFiles`, `acknowledgePreflight`, `addReportComment`, `checkCapReconciliation`, `freezeReport`, `getActiveReportLayout`, `getReportGraph`, `issueReport`, `listCaps`, `listPreflightAcknowledgements`, `listReportBlocks`, `listReportComments`, `listReportVersions`, `openReportCommentCount`, `renderAndStoreReportFiles`, `reportFooterPreview`, `resolveReportComment`
+- **Data functions (`src/data/*.ts`):** `CapRow`, `ReportBlockRow`, `ReportCommentRow`, `ReportFileInput`, `ReportGraphView`, `ReportVersionRow`, `StoredReportFiles`, `acknowledgePreflight`, `addReportComment`, `checkCapReconciliation`, `commitReportGraph`, `freezeReport`, `getActiveReportLayout`, `getReportGraph`, `issueReport`, `listCaps`, `listPreflightAcknowledgements`, `listPreflightBlocking`, `listPreflightItems`, `listReportBlocks`, `listReportComments`, `listReportVersions`, `openReportCommentCount`, `renderAndStoreReportFiles`, `reportFooterPreview`, `resolveReportComment`
 - **Data modules:** `src/data/caps.ts`, `src/data/preflight.ts`, `src/data/reportFiles.ts`, `src/data/reportGraph.ts`, `src/data/reports.ts`, `src/data/writing.ts`
-- **RPCs reachable via those modules:** `alert_list`, `check_cap_reconciliation`, `compute_report_summary`, `connector_egress_allowed`, `format_audience_list`, `format_list`, `open_report_comment_count`, `phrase_list`, `preflight_acks_get`, `preflight_blocking`, `preflight_items`, `report_graph_get`, `store_report_file`
-- **Tables reachable via those modules:** `caps`, `connector_instances`, `connector_runs`, `engagements`, `findings`, `monitor_rules`, `phrase_reviews`, `report_blocks`, `report_comments`, `report_versions`, `staged_records`, `workpaper_rows`, `workpapers`
-- **Testids (39):** `report-caps-note`, `report-comment-add`, `report-comment-input`, `report-comments`, `report-comments-empty`, `report-compose`, `report-editor`, `report-empty`, `report-error`, `report-file-docx`, `report-file-pdf`, `report-files`, `report-footer-preview`, `report-freeze`, `report-freeze-blocked`, `report-freeze-panel`, `report-graph-claim-count`, `report-graph-claims`, `report-graph-empty`, `report-graph-panel`, `report-graph-root`, `report-issue`, `report-loading`, `report-notice`, `report-open-comments`, `report-placeholder-count`, `report-preflight-ack-check`, `report-preflight-ack-form`, `report-preflight-ack-item`, `report-preflight-ack-reason`, `report-preflight-ack-submit`, `report-preflight-acks`, `report-preflight-blocking`, `report-preflight-caps`, `report-preflight-comments`, `report-preflight-item-list`, `report-rights-note`, `report-section-empty`, `report-versions`
+- **RPCs reachable via those modules:** `alert_adhoc_suggestion`, `alert_list`, `check_cap_reconciliation`, `compute_report_summary`, `connector_egress_allowed`, `format_audience_list`, `format_list`, `open_report_comment_count`, `phrase_list`, `preflight_acks_get`, `preflight_blocking`, `preflight_items`, `report_graph_get`, `store_report_file`
+- **Tables reachable via those modules:** `caps`, `connector_instances`, `connector_runs`, `engagements`, `evidence_requests`, `findings`, `ledger_entries`, `monitor_rules`, `phrase_reviews`, `report_blocks`, `report_comments`, `report_versions`, `staged_records`, `workpaper_rows`, `workpapers`
+- **Testids (38):** `report-caps-note`, `report-comment-add`, `report-comment-input`, `report-comments`, `report-comments-empty`, `report-compose`, `report-editor`, `report-empty`, `report-error`, `report-file-docx`, `report-file-pdf`, `report-files`, `report-footer-preview`, `report-freeze`, `report-freeze-blocked`, `report-freeze-panel`, `report-graph-close`, `report-graph-empty`, `report-graph-open`, `report-graph-panel`, `report-issue`, `report-loading`, `report-notice`, `report-open-comments`, `report-placeholder-count`, `report-preflight-ack-check`, `report-preflight-ack-form`, `report-preflight-ack-item`, `report-preflight-ack-reason`, `report-preflight-ack-submit`, `report-preflight-acks`, `report-preflight-blocking`, `report-preflight-caps`, `report-preflight-comments`, `report-preflight-item-list`, `report-rights-note`, `report-section-empty`, `report-versions`
 - **Explain ids (0):** — (no explain affordance)
 - **IIA standards addressed (1):** `15.1`
 - **Drilldown targets (0):** — (no aggregate)
@@ -1910,6 +2054,7 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 | `activity_spine_list` | `src/data/activity.ts` | `p_limit`, `p_since` | tenant |
 | `add_entity` | `src/data/mutations.ts` | `p_universe_id`, `p_name`, `p_kind` | tenant |
 | `admin_upload_branding_asset` | `src/data/branding.ts` | `p_org`, `p_kind`, `p_filename`, `p_mime`, `p_base64` | platform |
+| `alert_adhoc_suggestion` | `src/data/writing.ts` | `p_org`, `p_alert_id` | tenant |
 | `alert_list` | `src/data/writing.ts` | `p_org` | tenant |
 | `attestation_input_get` | `src/data/attestation.ts` | `p_kind`, `p_subject_id` | tenant |
 | `attestation_subjects_list` | `src/data/attestation.ts` | — | tenant |
@@ -1934,6 +2079,7 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 | `connector_egress_allowed` | `src/data/writing.ts` | `p_org`, `p_host` | tenant |
 | `consultation_active` | `src/data/consultation.ts` | `p_org` | tenant |
 | `create_universe` | `src/data/mutations.ts` | `p_name`, `p_domain` | tenant |
+| `create_workpaper` | `src/data/mutations.ts` | `p_engagement_id`, `p_control_id`, `p_title` | tenant |
 | `decide_change` | `src/data/changeControl.ts` | `p_request_id`, `p_approve`, `p_reason` | tenant |
 | `deploy_engagement` | `src/data/deployment.ts` | `p_universe`, `p_entity`, `p_plan`, `p_period`, `p_title` | tenant |
 | `email_sender_profiles_list` | `src/data/senderProfiles.ts` | `p_org` | tenant |
@@ -2018,6 +2164,9 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 | `request_change` | `src/data/changeControl.ts` | `p_engagement_id`, `p_change_class`, `p_title`, `p_payload`, `p_klass` | tenant |
 | `request_extraction` | `src/data/documents.ts` | `p_file_id` | tenant |
 | `revert_prior_year_item` | `src/data/imports.ts` | `p_import_id` | tenant |
+| `rule_pack_list` | `src/data/rulePacks.ts` | — | tenant |
+| `rule_pack_refusals_list` | `src/data/rulePacks.ts` | — | tenant |
+| `rule_pack_released_rules` | `src/data/rulePacks.ts` | — | tenant |
 | `sample_precision` | `src/data/sampling.ts` | `p_sample_id`, `p_conf` | tenant |
 | `sample_tested_rows` | `src/data/sampling.ts` | `p_sample_id` | tenant |
 | `search_documents` | `src/data/documents.ts` | `p_engagement_id`, `p_query`, `p_stage` | tenant |
@@ -2038,6 +2187,7 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 | `support_grant_active` | `src/data/platform.ts` | `p_org` | tenant |
 | `support_list_engagements` | `src/data/platform.ts` | `p_org` | tenant |
 | `support_read_object` | `src/data/platform.ts` | `p_kind`, `p_id`, `p_org` | tenant |
+| `team_directory_get` | `src/data/teamDirectory.ts` | — | tenant |
 | `testing_signed_off` | `src/data/conclusion.ts` | `p_engagement_id` | tenant |
 | `unconfirmed_prior_year_imports` | `src/data/imports.ts` | `p_engagement_id` | tenant |
 | `validate_import` | `src/data/imports.ts` | `p_job_id`, `p_mapped_rows` | tenant |
@@ -2050,10 +2200,10 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 
 ## Coverage cross-check
 
-- Screens documented: 101 (contract sections: 48 Appendix A + 44 Appendix B).
-- Tutorial keys: 80.
-- RPCs catalogued: 140.
-- Data modules: 63; exported data functions: 406.
-- Contract testids not found verbatim in `src/` (placeholder or dynamic): 194.
-  - audit-file-view-builder, audit-file-view-certificate, audit-file-view-conclusion, audit-file-view-documents, audit-file-view-ethics, audit-file-view-execution, audit-file-view-findings, audit-file-view-planning, audit-file-view-population, audit-file-view-report, audit-file-view-review, audit-file-view-rowtesting, audit-file-view-sampling, data-front-door-kind, hosting-test, invite-user, issues-view-patterns, oa-branding-colour-accent, oa-branding-colour-background, oa-branding-colour-primary, oa-branding-colour-text, oa-branding-margin-0, oa-branding-margin-3, oa-certificate-enabled-verification, oa-escalation-result, oa-escalation-saved, oa-governance-signoff-conclusion, oa-governance-signoff-planning, oa-governance-signoff-testing, org-control-tab-auditors, org-control-tab-automation, org-control-tab-branding, org-control-tab-connectors, org-control-tab-features, org-control-tab-formats, org-control-tab-governance, org-control-tab-hosting, org-control-tab-people, org-control-tab-setup, org-control-tab-tutorials …
+- Screens documented: 109 (contract sections: 48 Appendix A + 44 Appendix B).
+- Tutorial keys: 81.
+- RPCs catalogued: 146.
+- Data modules: 68; exported data functions: 445.
+- Contract testids not found verbatim in `src/` (placeholder or dynamic): 228.
+  - audit-file-view-builder, audit-file-view-certificate, audit-file-view-conclusion, audit-file-view-documents, audit-file-view-ethics, audit-file-view-execution, audit-file-view-findings, audit-file-view-planning, audit-file-view-population, audit-file-view-report, audit-file-view-review, audit-file-view-rowtesting, audit-file-view-sampling, data-front-door-kind, hosting-test, invite-user, issues-view-patterns, oa-branding-colour-accent, oa-branding-colour-background, oa-branding-colour-primary, oa-branding-colour-text, oa-branding-margin-0, oa-branding-margin-3, oa-certificate-enabled-verification, oa-escalation-result, oa-escalation-saved, oa-governance-signoff-conclusion, oa-governance-signoff-planning, oa-governance-signoff-testing, org-control-tab-auditors, org-control-tab-automation, org-control-tab-branding, org-control-tab-connectors, org-control-tab-features, org-control-tab-formats, org-control-tab-governance, org-control-tab-hosting, org-control-tab-methodology, org-control-tab-packs, org-control-tab-people …
 

@@ -13,6 +13,7 @@
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
 import { fillTemplate, mmToPt, pageDimensions, type BrandingSpec } from './branding';
+import { PRODUCT_NAME } from '../product';
 import { wrapText } from './pdf';
 import type { DocumentDesign, DocumentModel } from './document';
 import { buildContents } from './document';
@@ -48,15 +49,19 @@ function toRgb(value: string) {
 
 async function embedFont(pdf: PDFDocument, bytes: Uint8Array | undefined, fallback: StandardFonts): Promise<PDFFont> {
   if (!bytes) return pdf.embedFont(fallback);
-  try {
-    return await pdf.embedFont(bytes, { subset: true });
-  } catch {
+  // See renderPdf.embedCustomFont: a WOFF2 face must be embedded whole, because fontkit's subsetter
+  // throws lazily during save() for certain glyphs (a heading with a digit), which no try/catch here
+  // can see. A raw TTF/OTF is subset (smaller, the right choice for an uploaded face).
+  const isWoff2 = bytes.length >= 4 && bytes[0] === 0x77 && bytes[1] === 0x4f && bytes[2] === 0x46 && bytes[3] === 0x32; // 'wOF2'
+  const attempts = isWoff2 ? [{ subset: false }] : [{ subset: true }, { subset: false }];
+  for (const opts of attempts) {
     try {
-      return await pdf.embedFont(bytes, { subset: false });
+      return await pdf.embedFont(bytes, opts);
     } catch {
-      return pdf.embedFont(fallback);
+      // try the next option
     }
   }
+  return pdf.embedFont(fallback);
 }
 
 /** The block geometry the page model needs: a label and an estimated body-line count per section. */
@@ -93,7 +98,11 @@ function styleFor(design: DocumentDesign, key: string): TableStyle {
   });
 }
 
-export async function renderDesignedPdf(spec: BrandingSpec, model: DocumentModel): Promise<Uint8Array> {
+export async function renderDesignedPdf(
+  spec: BrandingSpec,
+  model: DocumentModel,
+  fonts?: { headingFontBytes?: Uint8Array; bodyFontBytes?: Uint8Array },
+): Promise<Uint8Array> {
   const design = model.design;
   if (!design) throw new Error('renderDesignedPdf needs a design');
   const pdf = await PDFDocument.create();
@@ -101,11 +110,13 @@ export async function renderDesignedPdf(spec: BrandingSpec, model: DocumentModel
   const stamp = new Date(FIXED_PDF_EPOCH);
   pdf.setCreationDate(stamp);
   pdf.setModificationDate(stamp);
-  pdf.setProducer('Provio');
-  pdf.setCreator('Provio');
+  pdf.setProducer(PRODUCT_NAME);
+  pdf.setCreator(PRODUCT_NAME);
 
-  const headingFont = await embedFont(pdf, model.fontBytes?.heading, StandardFonts.HelveticaBold);
-  const bodyFont = await embedFont(pdf, model.fontBytes?.body, StandardFonts.Helvetica);
+  // WP-F: embed the format's chosen self-hosted font when the caller supplied its bytes, so the
+  // designed page prints the face the canvas showed; otherwise fall back to the standard font.
+  const headingFont = await embedFont(pdf, fonts?.headingFontBytes, StandardFonts.HelveticaBold);
+  const bodyFont = await embedFont(pdf, fonts?.bodyFontBytes, StandardFonts.Helvetica);
 
   const typo = model.typography;
   const headingPt = typo?.headingPt ?? 15;

@@ -254,10 +254,32 @@ async function anyTargetPresent(page, def) {
   return false;
 }
 
+// CI runs this recorder immediately after step 7 has hammered the shared hosted project with the
+// whole SQL suite, so a session's first RPCs can wait on a cold schema cache. 15s tipped over there;
+// 30s is the budget for a slow first paint, and a genuine absence still fails (twice below).
+const NAV_TIMEOUT = 30000;
+
 /**
  * Open the key's real screen. A screen that does not appear fails the key.
+ *
+ * The waits here throw before recordKey's own retry guard can re-open the screen, so this wraps the
+ * single attempt with one retry of its own: a cold first navigation gets a second, settled chance,
+ * while an actually missing screen still fails on the second attempt.
  */
 async function navigateTo(page, plan, baseUrl, creds) {
+  try {
+    await navigateToOnce(page, plan, baseUrl, creds);
+  } catch (first) {
+    await page.waitForTimeout(1000);
+    try {
+      await navigateToOnce(page, plan, baseUrl, creds);
+    } catch {
+      throw first;
+    }
+  }
+}
+
+async function navigateToOnce(page, plan, baseUrl, creds) {
   if (plan.kind === 'public') {
     // The only anonymous surface (WK-06): no session, so no sign-in.
     await page.goto(`${baseUrl}${plan.path}`, { waitUntil: 'domcontentloaded' });
@@ -275,16 +297,16 @@ async function navigateTo(page, plan, baseUrl, creds) {
   if (plan.kind === 'superadmin') {
     await signIn(page, PRINCIPAL.superadmin, baseUrl, creds);
     await page.goto(`${baseUrl}/superadmin`, { waitUntil: 'domcontentloaded' });
-    await page.getByTestId('superadmin-portal').waitFor({ timeout: 15000 });
+    await page.getByTestId('superadmin-portal').waitFor({ timeout: NAV_TIMEOUT });
     await page.getByTestId(`superadmin-tab-${plan.tab}`).click();
     return;
   }
   if (plan.kind === 'audit-file') {
     await signIn(page, PRINCIPAL.dashboard, baseUrl, creds);
     await goToTab(page, 'Audit Files');
-    await page.getByTestId('tab-audit-file').waitFor({ timeout: 15000 });
+    await page.getByTestId('tab-audit-file').waitFor({ timeout: NAV_TIMEOUT });
     await page.locator('[data-testid^="audit-card-"]').first().click();
-    await page.getByTestId('audit-file').waitFor({ timeout: 15000 });
+    await page.getByTestId('audit-file').waitFor({ timeout: NAV_TIMEOUT });
     await page.getByTestId(`audit-file-view-${plan.view}`).click();
     return;
   }
@@ -292,7 +314,7 @@ async function navigateTo(page, plan, baseUrl, creds) {
     await signIn(page, PRINCIPAL.dashboard, baseUrl, creds);
     await goToTab(page, 'Issues & CAP Register');
     await page.getByTestId('issues-view-patterns').click();
-    await page.getByTestId('wk-patterns').waitFor({ timeout: 15000 });
+    await page.getByTestId('wk-patterns').waitFor({ timeout: NAV_TIMEOUT });
     if (plan.sub) await page.getByTestId(`wk-patterns-tab-${plan.sub}`).click();
     return;
   }
@@ -305,7 +327,7 @@ async function navigateTo(page, plan, baseUrl, creds) {
   if (plan.kind === 'dashboard') {
     await goToTab(page, 'Dashboard');
     if (plan.boardpackConfig) {
-      await page.getByTestId('wk-boardpack').waitFor({ timeout: 15000 });
+      await page.getByTestId('wk-boardpack').waitFor({ timeout: NAV_TIMEOUT });
       await page.getByTestId('wk-boardpack-tab-config').click();
     }
     return;
@@ -313,7 +335,7 @@ async function navigateTo(page, plan, baseUrl, creds) {
   await page.getByLabel('Open user profile menu').click();
   await page.getByTestId(plan.kind === 'people' ? 'menu-people-admin' : 'menu-org-control').click();
   if (plan.kind === 'org') {
-    await page.getByTestId('org-control-panel').waitFor({ timeout: 15000 });
+    await page.getByTestId('org-control-panel').waitFor({ timeout: NAV_TIMEOUT });
     await page.getByTestId(`org-control-tab-${plan.tab}`).click();
   }
 }
@@ -331,17 +353,25 @@ async function recordKey(page, def, baseUrl, creds) {
   const frames = [];
   const missing = [];
   const plan = captureFor(def);
-  await navigateTo(page, plan, baseUrl, creds);
-  await waitForSettled(page);
-  await waitForScreen(page, def);
-  // A screen that has rendered none of its own targets is usually a slow first paint: CI runs this
-  // recorder immediately after step 7 has hammered the shared project with the whole SQL suite, so
-  // the first RPCs of a session can wait on a cold schema cache and outlast waitForScreen. Re-open
-  // the screen once before declaring the key broken. A genuinely absent screen still fails twice.
-  if (!(await anyTargetPresent(page, def))) {
+  // A screen that has rendered none of its own targets, or whose navigation threw on an
+  // intermediate wait (the superadmin portal, the audit file, the issues register), is usually a
+  // slow first paint: CI runs this recorder immediately after step 7 has hammered the shared
+  // project with the whole SQL suite, so the first RPCs of a session can wait on a cold schema
+  // cache and outlast any fixed timeout. Re-open the screen once before declaring the key broken.
+  // A genuinely absent screen still fails twice.
+  const attempt = async () => {
     await navigateTo(page, plan, baseUrl, creds);
     await waitForSettled(page);
     await waitForScreen(page, def);
+  };
+  try {
+    await attempt();
+  } catch {
+    // Swallowed deliberately: the retry below is the second chance. If it also throws, the key
+    // fails and the error is reported, which is what an actually broken screen should do.
+  }
+  if (!(await anyTargetPresent(page, def))) {
+    await attempt();
   }
   await page.waitForTimeout(300);
   // The opening frame: the screen as reached, before any step is performed.

@@ -1,0 +1,48 @@
+{
+  "_readme": "Allow-list for scripts/check-wiring.mjs (gate G4). An entry means a src/data value export is unreachable from any screen and is deliberately kept. Every entry must carry a real reason. The gate also fails on a stale entry (one that has become reachable), so the list cannot silently accumulate. Per docs/BRANCH-MAP.md the inert set in src/data/** is Builder B's to resolve; this branch builds the gate, records the finding, and does not build in another builder's scope (rule 5).",
+  "_builder-b": "Builder B's per docs/BRANCH-MAP.md ('The export sits in src/data/** ... Builder B'). Recorded here so the gate can pass without this branch re-implementing B's resolution. The owner sees the list; it is not silent.",
+  "src/data/admin.ts::rightsOfRoleRow": {
+    "category": "builder-b",
+    "reason": "Maps a RoleRow to its rights map; the People admin reads role rights through a different path. Builder B's inert set per BRANCH-MAP."
+  },
+  "src/data/boardPack.ts::saveOrgSettingsExtra": {
+    "category": "builder-b",
+    "reason": "Board-pack helper that writes org_settings_extra.last_board_meeting_date; the field is enforced by board_pack_generate (Phase 3.6) but this convenience wrapper has no caller. Builder B's per BRANCH-MAP."
+  },
+  "src/data/observations.ts::linkFinding": {
+    "category": "builder-b",
+    "reason": "Links an observation to a finding; promote_to_finding (0030) does this server-side. Builder B's per BRANCH-MAP."
+  },
+  "src/data/planning.ts::listDecisions": {
+    "category": "builder-b",
+    "reason": "Reader for suggestion decisions; the planning screen does not show them yet. Builder B's per BRANCH-MAP."
+  },
+  "src/data/population.ts::listPopulationRows": {
+    "category": "builder-b",
+    "reason": "Bounded, org-scoped page of a population's rows via list_population_rows (0130). Added on feature/systeligon-build-v1 alongside importPopulationRows; the Population panel reads rows for the profile through listPopulationRecords instead, so this reader has no caller yet. Builder B's per BRANCH-MAP."
+  },
+  "src/data/population.ts::replaceLockedPopulation": {
+    "category": "builder-b",
+    "reason": "Replaces a locked population with a rationale; no screen offers it. Builder B's per BRANCH-MAP."
+  },
+  "src/data/secrets.ts::secretDisplay": {
+    "category": "builder-b",
+    "reason": "Reads a secret's masked display value; the secrets screen reveals through secret_reveal instead. Builder B's per BRANCH-MAP."
+  },
+  "src/data/writing.ts::listCellReviews": {
+    "category": "builder-b",
+    "reason": "Per-cell workbook review status (W2.9); the workbook UI does not surface it yet. Builder B's per BRANCH-MAP (WK-* screens)."
+  },
+  "src/data/writing.ts::listPhrases": {
+    "category": "builder-b",
+    "reason": "Phrase-library reader; ReportBuilderPanel references a phrase type but not this reader. Builder B's per BRANCH-MAP."
+  },
+  "src/data/writing.ts::releasePhrase": {
+    "category": "builder-b",
+    "reason": "Platform-only phrase release once every cell is reviewed (W2.9); no screen offers it. Builder B's per BRANCH-MAP."
+  },
+  "src/data/writing.ts::reviewCell": {
+    "category": "builder-b",
+    "reason": "Marks one workbook cell reviewed (W2.9); no screen offers it. Builder B's per BRANCH-MAP."
+  }
+}

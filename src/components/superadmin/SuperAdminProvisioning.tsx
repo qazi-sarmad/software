@@ -7,6 +7,7 @@ import {
 import { listFeatureCatalogue, setEntitlement, type FeatureRow } from '../../data/entitlements';
 import type { DataResult } from '../../data/db';
 import { InlineError } from '../common/InlineError';
+import { PRODUCT_NAME } from '../../lib/product';
 import { Check, Building, Send, Zap, Users, Shield } from '../common/Icons';
 
 type LoadState = 'loading' | 'ready' | 'error';
@@ -39,7 +40,7 @@ export const SuperAdminProvisioning: React.FC = () => {
   const [entitleReason, setEntitleReason] = useState('');
   const [capDraft, setCapDraft] = useState('20');
   const [capReason, setCapReason] = useState('');
-  const [senderName, setSenderName] = useState('Provio');
+  const [senderName, setSenderName] = useState(PRODUCT_NAME);
   const [senderFrom, setSenderFrom] = useState('');
   const [senderReply, setSenderReply] = useState('');
   const [senderReason, setSenderReason] = useState('');

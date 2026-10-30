@@ -7,11 +7,12 @@ import { SamplingTab } from './SamplingTab';
 import { EvidenceTab } from './EvidenceTab';
 import { AnalyticsTab } from './AnalyticsTab';
 import { DocumentReviewTab } from './DocumentReviewTab';
+import { RuleRunTab } from './RuleRunTab';
 import { FindingsTab } from './FindingsTab';
 import { getWorkpaperLock } from '../../lib/workpaperLock';
-import { ClipboardList, Sliders, FileCheck, Activity, FileText, AlertTriangle } from '../common/Icons';
+import { ClipboardList, Sliders, FileCheck, Activity, FileText, AlertTriangle, ShieldCheck } from '../common/Icons';
 
-type WorkbenchSubTab = 'testing' | 'sampling' | 'evidence' | 'analytics' | 'document_review' | 'findings';
+type WorkbenchSubTab = 'testing' | 'sampling' | 'evidence' | 'analytics' | 'document_review' | 'findings' | 'rules';
 
 export const PaperWorkbenchModal: React.FC = () => {
   const { inspector, closeInspector } = useApp();
@@ -39,6 +40,7 @@ export const PaperWorkbenchModal: React.FC = () => {
     { id: 'analytics', label: 'Analytics', icon: Activity },
     { id: 'document_review', label: 'Policy Review', icon: FileText },
     { id: 'findings', label: 'Exceptions & Findings', icon: AlertTriangle },
+    { id: 'rules', label: 'Rule Run', icon: ShieldCheck },
   ];
 
   return (
@@ -76,6 +78,7 @@ export const PaperWorkbenchModal: React.FC = () => {
         {activeSubTab === 'analytics' && <AnalyticsTab workpaper={workpaper} />}
         {activeSubTab === 'document_review' && <DocumentReviewTab workpaper={workpaper} />}
         {activeSubTab === 'findings' && <FindingsTab workpaper={workpaper} />}
+        {activeSubTab === 'rules' && <RuleRunTab workpaper={workpaper} />}
       </div>
     </div>
   );

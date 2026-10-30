@@ -15,6 +15,7 @@ import {
   CORE_EXTENSIONS, MIN_FREE_SPACE_BYTES, MIN_SERVER_VERSION_NUM,
   OPTIONAL_EXTENSIONS, REQUIRED_EXTENSIONS, REQUIRED_ROLES,
 } from './requiredHostingSpec.ts';
+import { PRODUCT_NAME } from './productName.ts';
 
 export interface Row { [key: string]: unknown; }
 
@@ -153,7 +154,7 @@ export function summarise(report: HostingTestReport): string[] {
   let problems = false;
   if (!report.version_supported) {
     problems = true;
-    out.push(`The server reports ${report.version ?? 'an unknown version'}. Provio needs PostgreSQL 14 or newer.`);
+    out.push(`The server reports ${report.version ?? 'an unknown version'}. ${PRODUCT_NAME} needs PostgreSQL 14 or newer.`);
   }
   if (report.extensions_missing.length > 0) {
     problems = true;
@@ -170,7 +171,7 @@ export function summarise(report: HostingTestReport): string[] {
     out.push(`Free space is about ${report.free_space_estimate}.`);
   }
   if (!problems) {
-    out.unshift('The database can host Provio. Every required extension and role is present.');
+    out.unshift(`The database can host ${PRODUCT_NAME}. Every required extension and role is present.`);
   }
   return out;
 }

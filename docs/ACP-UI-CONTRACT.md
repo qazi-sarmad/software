@@ -993,9 +993,9 @@ Register a population file, show its SHA-256 hash, and lock the population (hold
 
 - **Route:** Audit File window, view "Population" (`audit-file-view-population`).
 - **Rights:** `perform_work`.
-- **Data:** `PopulationRow`, `lockPopulation`, `registerPopulation`, `importPopulationRows`, `sha256Hex`, `parsePopulationPaste`, `toSampleItems` — through `src/data/*.ts`; components never import the database client (rule M8).
-- **Testids:** `population-browse`, `population-dropzone`, `population-empty`, `population-error`, `population-file-input`, `population-hash`, `population-loading`, `population-panel`, `population-register`, `population-gate`, `population-status`, `control-total`, `population-errors`, `gate-message`, `finalize-test`, `population-paste`, `population-paste-input`, `population-paste-preview`, `population-paste-columns`, `population-paste-count`, `population-paste-errors`, `population-paste-warnings`, `population-paste-target`, `population-paste-import`
-- **States:** loading; empty; hashed; locked; error inline; paste grid (header mapped by position, `population-paste-columns`; parsed count, `population-paste-count`; per-line rejections, `population-paste-errors`; long-line warnings, `population-paste-warnings`; store against a registered population, `population-paste-target`, `population-paste-import`).
+- **Data:** `PopulationProfile`, `PopulationRecordRead`, `PopulationRow`, `importPopulationRows`, `listPopulationRecords`, `lockPopulation`, `parsePopulationPaste`, `populationProfile`, `registerPopulation`, `sha256Hex`, `toSampleItems` — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `population-browse`, `population-dropzone`, `population-empty`, `population-error`, `population-file-input`, `population-hash`, `population-loading`, `population-panel`, `population-register`, `population-gate`, `population-status`, `population-profile-<id>`, `population-profile-view-<id>`, `population-profile-summary-<id>`, `population-profile-flags-<id>`, `control-total`, `population-errors`, `gate-message`, `finalize-test`, `population-paste`, `population-paste-input`, `population-paste-preview`, `population-paste-columns`, `population-paste-count`, `population-paste-errors`, `population-paste-warnings`, `population-paste-target`, `population-paste-import`, `header-confirm`, `header-confirm-0`
+- **States:** loading; empty; hashed; locked; error inline; profile loading; profile ready (row count, value coverage, duplicate density, period, flags); paste grid (header mapped by position, `population-paste-columns`; parsed count, `population-paste-count`; per-line rejections, `population-paste-errors`; long-line warnings, `population-paste-warnings`; store against a registered population, `population-paste-target`, `population-paste-import`); header detected and awaiting confirmation (S2 — the engine proposes the header row, the auditor confirms it, rows above it are ignored and the header row is not counted).
 - **Tutorial key:** —
 
 ## AF-06 — Sampling panel (S1)
@@ -1005,8 +1005,22 @@ Compute a deterministic sample (seed preview, mode, floor), paste an id list, an
 - **Route:** Audit File window, view "Sampling" (`audit-file-view-sampling`).
 - **Rights:** `perform_work`.
 - **Data:** `SampleMode`, `SampleRow`, `SamplingRuleRow`, `computeSample`, `getSample`, `getSampleSize`, `lockSample` — through `src/data/*.ts`; components never import the database client (rule M8).
-- **Testids:** `sampling-calculation`, `sampling-compute`, `sampling-coverage`, `sampling-coverage-status`, `sampling-current`, `sampling-error`, `sampling-floor`, `sampling-loading`, `sampling-lock`, `sampling-locked`, `sampling-method`, `sampling-panel`, `sampling-paste`, `sampling-paste-count`, `sampling-paste-invalid`, `sampling-paste-floor`, `sampling-precision`, `sampling-rules-empty`, `sampling-seed-preview`, `sampling-tested-rows`, `sampling-waive-reason`
-- **States:** loading; no rules (`sampling-rules-empty`); computed (`sampling-method`, `sampling-calculation`); auditor paste (bare row references parsed into `{row_ref}` items; non-integer lines reported as `sampling-paste-invalid`; shortfall against the floor reported as `sampling-paste-floor`, never auto-padded); high-value coverage (`sampling-coverage`, `sampling-coverage-status`; a missing item can be waived with a reason, `sampling-waive-reason`); exact interval (`sampling-precision`); tested rows from the sample (`sampling-tested-rows`); locked (`sampling-locked`); error inline.
+- **Testids:** `sampling-calculation`, `sampling-compute`, `sampling-coverage`, `sampling-coverage-status`, `sampling-current`, `sampling-error`, `sampling-floor`, `sampling-loading`, `sampling-lock`, `sampling-locked`, `sampling-method`, `sampling-no-workpaper`, `sampling-panel`, `sampling-paste`, `sampling-paste-count`, `sampling-paste-floor`, `sampling-paste-invalid`, `sampling-precision`, `sampling-rules-empty`, `sampling-seed-preview`, `sampling-tested-rows`, `sampling-waive-reason`
+- **States:** loading; no workpaper (`sampling-no-workpaper`); no rules (`sampling-rules-empty`); computed (`sampling-method`, `sampling-calculation`); auditor paste (bare row references parsed into `{row_ref}` items; non-integer lines reported as `sampling-paste-invalid`; shortfall against the floor reported as `sampling-paste-floor`, never auto-padded); high-value coverage (`sampling-coverage`, `sampling-coverage-status`; a missing item can be waived with a reason, `sampling-waive-reason`); exact interval (`sampling-precision`); tested rows from the sample (`sampling-tested-rows`); locked (`sampling-locked`); error inline.
+- **Tutorial key:** —
+
+## AF-06b — Working-paper creation (S1)
+
+Create the working paper the testing workspace runs against. Before migration 0116 no path created one, so
+the sampling and row-testing panels had nothing to bind to and rendered nothing in production. The form
+opens in place; the database's refusals (no `perform_work`, a sealed engagement, planning not signed off)
+are shown inline.
+
+- **Route:** Audit File window, view "Testing workspace" (`audit-file-workspace`).
+- **Rights:** `perform_work` to create.
+- **Data:** `createWorkpaper` — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `workpaper-create-cancel`, `workpaper-create-error`, `workpaper-create-open`, `workpaper-create-panel`, `workpaper-create-reason`, `workpaper-create-submit`, `workpaper-title`
+- **States:** closed; open; busy; error inline; denied (`workpaper-create-reason`).
 - **Tutorial key:** —
 
 ## AF-07 — Row testing panel (S1)
@@ -1016,8 +1030,8 @@ Record each sampled row's result and rationale, mark an exception, sign off the 
 - **Route:** Audit File window, view "Row testing" (`audit-file-view-rowtesting`).
 - **Rights:** `perform_work` to record; `review_and_approve` to sign off; `can_reopen` to reopen.
 - **Data:** `RowResult`, `WorkpaperRowRow`, `getWorkpaper`, `recordRow`, `reopenWorkpaper`, `signOffWorkpaper` — through `src/data/*.ts`; components never import the database client (rule M8).
-- **Testids:** `rowtesting-empty`, `rowtesting-error`, `rowtesting-justification`, `rowtesting-loading`, `rowtesting-panel`, `rowtesting-preflight`, `rowtesting-reopen`, `rowtesting-signed-off`, `rowtesting-signoff`, `rowtesting-signoff-reason`
-- **States:** loading; empty; signed-off; preflight note; error inline.
+- **Testids:** `rowtesting-empty`, `rowtesting-error`, `rowtesting-justification`, `rowtesting-loading`, `rowtesting-no-workpaper`, `rowtesting-panel`, `rowtesting-preflight`, `rowtesting-reopen`, `rowtesting-signed-off`, `rowtesting-signoff`, `rowtesting-signoff-reason`
+- **States:** loading; no workpaper (`rowtesting-no-workpaper`); empty; signed-off; preflight note; error inline.
 - **Tutorial key:** —
 
 ## AF-08 — Conclusion panel (S1)
@@ -1078,6 +1092,21 @@ claiming a hash-lock it cannot keep.
 - **States:** loading; session-only (no bucket); empty; stored; verifying; verified; mismatch.
 - **Tutorial key:** —
 
+## AF-16 — Systeligon rule run (S1, S6, S13)
+
+Run the deterministic forensic rules over a locked population, read every finding with the rule id,
+its version, its severity and the exact source rows it flagged, and record the run to the ledger so
+the findings sit inside the report's tamper-evident root. Nothing is generated and nothing is
+guessed: a missing amount is reported as missing, not as zero, and a draft rule is skipped until a
+qualified human releases it.
+
+- **Route:** the `workbench` inspector window, sub-tab "Rule Run".
+- **Rights:** `perform_work` to run and to record; any member of the org reads.
+- **Data:** `PopulationRow`, `PopulationRecordRead`, `RuleFinding`, `RuleInput`, `RuleRunResult`, `listPopulationRecords`, `listPopulations`, `recordSysteligonFindings`, `runRules`, `systeligonPopulationRules` — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `rule-run`, `rule-run-empty`, `rule-run-error`, `rule-run-finding-<i>`, `rule-run-findings`, `rule-run-findings-empty`, `rule-run-loading`, `rule-run-pack-note`, `rule-run-population`, `rule-run-record`, `rule-run-recorded`, `rule-run-rights-note`, `rule-run-run`, `rule-run-skipped`, `rule-run-summary`
+- **States:** loading; no population (`rule-run-empty`); reading rows; running; findings; none flagged (`rule-run-findings-empty`); recorded; error inline.
+- **Tutorial key:** —
+
 ## AF-12 — Deployment gate (S1)
 
 Run the deployment gate for an engagement: the ordered steps, each outcome, the required right, and the next action.
@@ -1102,12 +1131,12 @@ Run the deterministic analytics checks over the population and raise a finding f
 
 ## AF-14 — Report editor (S1)
 
-Compose the engagement report from its sections and blocks, comment on a block, incorporate or reject each comment, read the central pre-flight (comments, CAPs, acknowledgements), acknowledge a blocker with a reason, freeze the report and render the PDF/DOCX files.
+Compose the engagement report from its sections and blocks, comment on a block, incorporate or reject each comment, read the central pre-flight (comments, CAPs, acknowledgements), acknowledge a blocker with a reason, freeze the report and render the PDF/DOCX files, preview the frozen footer line, and drill into the committed evidence-bound claim graph.
 
 - **Route:** Audit File window, view "Report" (`audit-file-view-report`).
 - **Rights:** `perform_work` to compose/comment; `approve_plan` to freeze.
-- **Data:** `CapRow`, `ReportBlockRow`, `ReportCommentRow`, `ReportFileInput`, `ReportGraphView`, `ReportVersionRow`, `StoredReportFiles`, `acknowledgePreflight`, `addReportComment`, `checkCapReconciliation`, `freezeReport`, `getActiveReportLayout`, `getReportGraph`, `issueReport`, `listCaps`, `listPreflightAcknowledgements`, `listReportBlocks`, `listReportComments`, `listReportVersions`, `openReportCommentCount`, `renderAndStoreReportFiles`, `reportFooterPreview`, `resolveReportComment` — through `src/data/*.ts`; components never import the database client (rule M8).
-- **Testids:** `report-caps-note`, `report-comment-add`, `report-comment-input`, `report-comments`, `report-comments-empty`, `report-compose`, `report-editor`, `report-empty`, `report-error`, `report-file-docx`, `report-file-pdf`, `report-files`, `report-footer-preview`, `report-freeze`, `report-freeze-blocked`, `report-freeze-panel`, `report-graph-claim-count`, `report-graph-claims`, `report-graph-empty`, `report-graph-panel`, `report-graph-root`, `report-issue`, `report-loading`, `report-notice`, `report-open-comments`, `report-placeholder-count`, `report-preflight-ack-check`, `report-preflight-ack-form`, `report-preflight-ack-item`, `report-preflight-ack-reason`, `report-preflight-ack-submit`, `report-preflight-acks`, `report-preflight-blocking`, `report-preflight-caps`, `report-preflight-comments`, `report-preflight-item-list`, `report-rights-note`, `report-section-empty`, `report-versions`
+- **Data:** `CapRow`, `ReportBlockRow`, `ReportCommentRow`, `ReportFileInput`, `ReportGraphView`, `ReportVersionRow`, `StoredReportFiles`, `acknowledgePreflight`, `addReportComment`, `checkCapReconciliation`, `commitReportGraph`, `freezeReport`, `getActiveReportLayout`, `getReportGraph`, `issueReport`, `listCaps`, `listPreflightAcknowledgements`, `listPreflightBlocking`, `listPreflightItems`, `listReportBlocks`, `listReportComments`, `listReportVersions`, `openReportCommentCount`, `renderAndStoreReportFiles`, `reportFooterPreview`, `resolveReportComment` — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `report-caps-note`, `report-comment-add`, `report-comment-input`, `report-comments`, `report-comments-empty`, `report-compose`, `report-editor`, `report-empty`, `report-error`, `report-file-docx`, `report-file-pdf`, `report-files`, `report-footer-preview`, `report-freeze`, `report-freeze-blocked`, `report-freeze-panel`, `report-graph-close`, `report-graph-empty`, `report-graph-open`, `report-graph-panel`, `report-issue`, `report-loading`, `report-notice`, `report-open-comments`, `report-placeholder-count`, `report-preflight-ack-check`, `report-preflight-ack-form`, `report-preflight-ack-item`, `report-preflight-ack-reason`, `report-preflight-ack-submit`, `report-preflight-acks`, `report-preflight-blocking`, `report-preflight-caps`, `report-preflight-comments`, `report-preflight-item-list`, `report-rights-note`, `report-section-empty`, `report-versions`
 - **States:** loading; empty; comments; pre-flight; freeze blocked; frozen; error inline.
 - **Tutorial key:** —
 
@@ -1383,6 +1412,31 @@ The shell around every /superadmin tab: it proves the caller is a platform admin
 - **States:** checking; denied; ready.
 - **Tutorial key:** —
 
+## SA-18 — integrity anchoring (SCALE-1, Phase 3.5, §17)
+
+The platform integrity catalogue: the RFC 3161 timestamp authorities that stamp a sealed report's
+root hash, the trust anchors their certificates are verified against, and the per-organisation
+minimum number of independent authorities a stamp must carry before the seal counts as anchored.
+
+- **Route:** `/superadmin`, tab `Integrity anchoring` (`superadmin-tab-integrity`).
+- **Rights:** platform admin (`is_platform_admin()`); every write is a platform-only RPC
+  (`admin_save_timestamp_authority`, `admin_save_trust_anchor`, `admin_set_anchoring_min`), re-checked
+  in the database.
+- **Data:** `listTimestampAuthorities`, `listTrustAnchors`, `saveTimestampAuthority`,
+  `saveTrustAnchor`, `setAnchoringMin` (`src/data/integrityAnchoring.ts`), `listTenants`
+  (`src/data/platform.ts`).
+- **Testids:** `sa-anchoring`, `sa-anchoring-loading`, `sa-anchoring-error`, `sa-anchoring-save-error`,
+  `sa-anchoring-result`, `sa-anchoring-authorities`, `sa-anchoring-authority-list`,
+  `sa-anchoring-authority-empty`, `sa-anchoring-authority-<id>`, `sa-anchoring-authority-name`,
+  `sa-anchoring-authority-url`, `sa-anchoring-authority-order`, `sa-anchoring-authority-add`,
+  `sa-anchoring-anchors`, `sa-anchoring-anchor-list`, `sa-anchoring-anchor-empty`,
+  `sa-anchoring-anchor-<id>`, `sa-anchoring-anchor-name`, `sa-anchoring-anchor-cert`,
+  `sa-anchoring-anchor-add`, `sa-anchoring-min`, `sa-anchoring-min-list`, `sa-anchoring-min-empty`,
+  `sa-anchoring-min-<id>`, `sa-anchoring-min-<id>-<n>`
+- **States:** loading; error (with Retry); ready; empty authority list; empty anchor list; empty
+  tenant list; an inline result or refusal after a write.
+- **Tutorial key:** `sa.integrity-anchoring`
+
 
 ## Tutorials regenerated
 
@@ -1443,6 +1497,38 @@ above. `docs/ACP-TUTORIALS.md` lists every key and its steps.
   (`admin-roles-readonly`), ready; an inline error on a refused write (`admin-error`).
 - **Tutorial key:** `oa.roles`.
 
+## OA-32 — team directory (spec §4.2, §5, §9)
+
+- **Purpose:** the resourcing view — every member with their working profile (picture, capacity,
+  role), their workload, their home base and where they are on a date. Selecting a member opens their
+  detail: the workload band, the engagements assigned to them, their upcoming trips, their travel
+  preferences (home base, willingness, preferred regions, blackout dates), and a resourcing form that
+  ranks who should take a given engagement and explains each verdict. A manager can also tag an
+  engagement as requiring travel.
+- **Route:** Org Admin control plane, tab `Team directory` (`admin-tab-team`) on the People & Roles
+  panel (`people-admin-panel`).
+- **Rights:** `manage_team` or `manage_users` to see every member's travel and to write; a member sees
+  and edits only their own travel and profile. The engagement travel tag needs `manage_engagements`.
+- **Data:** `listTeamDirectory(rightsByUser)`, `listDirectoryEngagements()`,
+  `saveTeamProfile(userId, avatarUrl, capacityHours)`,
+  `saveTeamTravel(userId, homeBase, willingness, regions, blackouts)`,
+  `addTeamTrip(...)`/`removeTeamTrip(id)`, `addTeamAssignment(...)`/`removeTeamAssignment(id)`,
+  `tagEngagementTravel(id, requiresTravel, location, from, to)` (`src/data/teamDirectory.ts`); the
+  pure model `profileWorkload`, `recommendAssignee`, `summariseTeam`, `availabilityOn`,
+  `generatedAvatar` (`src/lib/teamDirectory.ts`).
+- **Testids:** the panel is prefix-parameterised (prefix default `team`), so each id is
+  `<prefix>-<element>`: `admin-tab-team`, `team-directory`, `team-grid`, `team-summary`,
+  `team-resourcing`, `team-detail`, `team-detail-name`, `team-detail-close`, `team-profile-edit`,
+  `team-avatar-url`, `team-capacity`, `team-travel-edit`, `team-home-base`, `team-regions`,
+  `team-trips`, `team-trip-add`, `team-assignments`, `team-assignment-add`, `team-member-<userId>`,
+  `team-avatar-<userId>`, `team-hover-<userId>`, `team-recommendations`, `team-rec-<userId>`,
+  `team-req-engagement`, `team-req-travel`, `team-travel-tag`, `team-tag-engagement`,
+  `team-tag-location`, `team-tag-save`, `team-empty`, `team-readonly`, `team-notice`, `team-loading`,
+  `team-error`. Per-row ids are `team-trip-<i>` / `team-trip-<i>-remove` and
+  `team-assignment-<i>` / `team-assignment-<i>-remove`.
+- **States:** loading, error, ready; an inline notice on a saved or refused write.
+- **Tutorial key:** — (no key; `oa.team` is not registered, so none is claimed here).
+
 ## OA-08 — templates hub (S2)
 
 - **Purpose:** the notification-template hub: every catalogue event, the tenant template that
@@ -1483,11 +1569,17 @@ above. `docs/ACP-TUTORIALS.md` lists every key and its steps.
 - **Route:** Org Admin control plane, tab `Tutorials` (`org-control-tab-tutorials`).
 - **Rights:** any signed-in org member; read-only.
 - **Data:** `listTutorials()` (`src/data/tutorials.ts`), `tutorialHealth(rows, liveHashes)`.
-- **Testids:** `org-tutorials`, `superadmin-tutorials`, `superadmin-tutorials-loading`,
-  `superadmin-tutorials-error`, `superadmin-tutorials-empty`, `tutorial-<key>`.
+- **Testids:** `org-tutorials`, `tutorial-<key>`.
 - **States:** loading, error, empty, ready.
 - **Tutorial key:** `oa.tutorials` (its step target is OA-18's own `org-tutorials`, not the
   super-admin library's `superadmin-tutorials`).
+
+OA-18 renders `SuperAdminTutorials audience="org_admin"`, so the `superadmin-tutorials*` testids
+*are* in the DOM here. They are deliberately **not** listed above: this list is what
+`scripts/gen-tutorial-steps.mjs` draws step targets from, and `src/guards/tutorialTargets.test.ts`
+(T1) forbids an org-admin key from driving a control that only the super-admin portal renders.
+Listing them made `oa.tutorials` target `superadmin-tutorials` on every regeneration, which failed
+that guard. SA-13 owns those testids in the contract; the tenant view owns `org-tutorials`.
 
 ## OA-19 — Go Live health check (S1)
 
@@ -1611,6 +1703,26 @@ above. `docs/ACP-TUTORIALS.md` lists every key and its steps.
   `oa-governance-population-retention`, `oa-governance-retention-save`., `oa-governance-grace-hours`
 - **States:** loading, error, empty, ready; an inline result line reports a saved change or the plain
   refusal (a value outside the platform range, an unknown role tag, an unsupported format).
+
+## OA-22b — report template (Phase 3.4, §15.2)
+
+- **Purpose:** the organisation's report template — which of the five report sections a composed
+  report contains, and in what order. Saving writes a new versioned, logged template (0088's
+  hash chain) and the next `compose_report` follows it; with nothing saved the default five-section
+  order applies. The section ids are a closed set, so a template can never name a section the
+  product cannot render.
+- **Route:** Org Admin control plane, tab `Report template` (`org-control-tab-templates`).
+- **Rights:** `edit_config`.
+- **Data:** `listReportTemplates()`, `saveReportTemplate(modelId, title, sections)`,
+  `REPORT_SECTION_IDS` (`src/data/governance.ts`).
+- **Testids:** `report-template-panel`, `report-template-loading`, `report-template-error`,
+  `report-template-no-right`, `report-template-denied`, `report-template-version`,
+  `report-template-result`, `report-template-save-error`, `report-template-sections`,
+  `report-template-empty`, `report-template-section-<id>`, `report-template-up-<id>`,
+  `report-template-down-<id>`, `report-template-remove-<id>`, `report-template-add-row`,
+  `report-template-add-<id>`, `report-template-save`.
+- **States:** loading, error, empty (no sections chosen), ready; an inline result line reports the
+  saved change or the plain refusal (an unknown section id, an empty template).
 - **Tutorial key:** `oa.governance`.
 
 ## OA-23 — connectors and continuous monitoring (WRITE-1, W11.6)
@@ -1743,3 +1855,78 @@ only the render hash moves (W1, W2.2, W4, W5, W6, W8, W12).
   each missing, duplicated and orphaned item; the freeze panel lists every blocker or states that the
   freeze is allowed with the graph root and render hash.
 - **Tutorial key:** `oa.report-builder`.
+
+## OA-25 — methodology library (Phase 4, §10.1, §11.3)
+
+The organisation's methodology library: every audit type's current procedure, its version, and its
+ordered test steps (a label, a kind, and whether evidence is required). Editing writes a new version;
+publishing makes a version current. An engagement snapshots the current procedure, so a later edit
+never rewrites a workpaper already in progress. The step kinds are a closed set the database enforces.
+
+- **Route:** `/admin`, tab `Methodology` (`org-control-tab-methodology`).
+- **Rights:** `edit_config`; a caller without it sees the plain refusal, never the panel.
+- **Data:** `listProcedureTemplates`, `getProcedureTemplate`, `saveProcedureTemplate`,
+  `publishProcedureTemplate`, `applyTemplateToWorkpaper`, `listWorkpaperSteps`, `STEP_KINDS`,
+  `STEP_KIND_LABELS` (`src/data/methodology.ts`).
+- **Testids:** `methodology-panel`, `methodology-no-right`, `methodology-denied`,
+  `methodology-loading`, `methodology-error`, `methodology-version`, `methodology-list`,
+  `methodology-empty`, `methodology-template-<model>`, `methodology-save-error`,
+  `methodology-result`, `methodology-title`, `methodology-description`, `methodology-steps`,
+  `methodology-steps-empty`, `methodology-step-<key>`, `methodology-step-label-<key>`,
+  `methodology-step-kind-<key>`, `methodology-step-evidence-<key>`, `methodology-step-up-<key>`,
+  `methodology-step-down-<key>`, `methodology-step-remove-<key>`, `methodology-add-step`,
+  `methodology-save`, `methodology-publish`.
+- **States:** loading; error; a denied state; ready with the template list and the step editor; an
+  inline result or refusal after a save or publish.
+- **Tutorial key:** `oa.governance`
+
+## WK-09 — procedure steps on a workpaper (Phase 4, §11.3)
+
+The steps a workpaper follows, snapshotted from the organisation's methodology library. A preparer
+chooses a procedure for the engagement's audit type and applies it; the steps appear with their kind
+and whether evidence is required. Ticking a step persists through `set_test_step_state`, and
+`finalize_testing` refuses to close fieldwork while an applied step is open. A workpaper with no
+applied procedure shows the legacy seed steps instead, so nothing that worked before regresses.
+
+- **Route:** the workpaper window, sub-tab "Testing" (`wk-subtab-testing`).
+- **Rights:** `perform_work`; the write is refused in the database without it.
+- **Data:** `listWorkpaperSteps`, `listProcedureTemplates`, `applyTemplateToWorkpaper`,
+  `STEP_KIND_LABELS` (`src/data/methodology.ts`).
+- **Testids:** `procedure-steps-panel`, `procedure-model`, `procedure-apply`,
+  `procedure-steps-message`, `procedure-steps-empty`, `procedure-step-<key>`.
+- **States:** loading; empty (no procedure applied); ready with the applied steps; an inline refusal
+  after a failed apply or tick.
+- **Tutorial key:** `wk.testing`
+
+## OA-33 — Systeligon rule packs (S10/S11, spec §4/§8)
+
+The configuration surface for the signed rule packs the forensic engine runs. List the packs this
+organisation can run, see a pack's version and content hash, save a signed pack, release a draft so
+the engine may run it, and read the refusal log — a save the server cannot verify is refused and
+logged, and the log is shown here so a rejection is never silent. The ad-hoc rule builder turns a
+source attribute, a condition and a threshold into a versioned rule, previewed over fixed sample rows
+before it is saved.
+
+The signature is the control (§8): whoever can push a pack can change what the engine concludes, so
+a pack is signed over its content hash with the organisation's signing key. The keypair is generated
+in the browser; only the public half is registered, and registering retires the previous live key.
+
+- **Route:** the Org Admin control panel, tab "Rule packs" (`org-control-tab-packs`).
+- **Rights:** `edit_config` to generate a key, register it, save a pack and release one; any member of
+  the org reads the pack list and the refusal log.
+- **Data:** `listRulePacks`, `listRulePackRefusals`, `saveSignedRulePackArtifact`, `releaseRulePack`,
+  `registerSigningKey`, `generateSigningKey` (`src/data/rulePacks.ts`); `definePack`, `runAdhocRule`,
+  `justBelowThreshold`, `AdhocRuleSpec`, `RulePack`, `SysteligonRule` (`src/lib/systeligon`).
+- **Testids:** `rule-pack-panel`, `rule-pack-loading`, `rule-pack-load-error`, `rule-pack-error`,
+  `rule-pack-notice`, `rule-pack-rights-note`, `rule-pack-key`, `rule-pack-key-id`,
+  `rule-pack-key-generate`, `rule-pack-key-register`, `rule-pack-key-fingerprint`,
+  `rule-pack-list-section`, `rule-pack-empty`, `rule-pack-row-<i>`, `rule-pack-draft-<i>`,
+  `rule-pack-released-<i>`, `rule-pack-release-<i>`, `rule-pack-save`, `rule-pack-adhoc`,
+  `rule-pack-adhoc-id`, `rule-pack-adhoc-source`, `rule-pack-adhoc-condition`,
+  `rule-pack-adhoc-threshold`, `rule-pack-adhoc-severity`, `rule-pack-adhoc-preview`,
+  `rule-pack-adhoc-result`, `rule-pack-refusals`, `rule-pack-refusals-empty`, `rule-pack-refusal-list`,
+  `rule-pack-refusal-<id>`.
+- **States:** loading; error; a denied state (no `edit_config`); ready with the pack list, the key
+  controls and the refusal log; empty (`rule-pack-empty`); an inline result or refusal after a save or
+  release.
+- **Tutorial key:** `oa.governance`

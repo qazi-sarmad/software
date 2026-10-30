@@ -14,6 +14,7 @@ import {
   type AttestationSubjectRow,
 } from '../../data/attestation';
 import { downloadExport } from '../../lib/exportSerialise';
+import { PRODUCT_NAME } from '../../lib/product';
 import { InlineError } from '../common/InlineError';
 import { ExplainPopout } from '../explain/ExplainPopout';
 import { AlertCircle, Check, Download, FileCheck, ShieldCheck, Upload } from '../common/Icons';
@@ -111,7 +112,7 @@ export const AttestationPanel: React.FC<AttestationPanelProps> = ({ screenId = '
       const text = await file.text();
       const parsed = parseAttestationPackage(text);
       if (!parsed) {
-        setActionError('That file is not a Provio attestation package.');
+        setActionError(`That file is not a ${PRODUCT_NAME} attestation package.`);
         return;
       }
       setPkg(parsed);

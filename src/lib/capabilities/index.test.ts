@@ -68,7 +68,7 @@ describe('the capability library catalogue and evaluator (D1-D4)', () => {
   });
 
   it('evaluates the risk families with real inputs', () => {
-    const entities = [{ id: 'e1', universeId: 'u1', name: 'Alpha', code: 'A', department: 'F', headOfDepartment: 'H', inherentRisk: 'medium' as const, residualRisk: 'high' as const, siraScore: 60, controlsCount: 1, lastAuditDate: '2026-01-01', status: 'active' as const }];
+    const entities = [{ id: 'e1', universeId: 'u1', name: 'Alpha', code: 'A', department: 'F', headOfDepartment: 'H', inherentRisk: 'medium' as const, residualRisk: 'high' as const, siraScore: 60, controlsCount: 1, lastAuditDate: '2026-01-01', status: 'active' as const, approvalStatus: 'approved' as const, rejectionReason: null }];
     const appetite = evaluateCapability('risk.appetite_breach', { asOf: AS_OF, entities });
     expect(appetite.status).toBe('ready');
     expect(appetite.headline).toContain('breach');

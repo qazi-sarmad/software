@@ -4,6 +4,7 @@ import {
   matchesHash, parseDroppedDocument, statusLabel, type VerifyResult,
 } from '../../lib/certificate';
 import { ShieldCheck, ShieldAlert, Upload, AlertTriangle } from '../common/Icons';
+import { PRODUCT_NAME } from '../../lib/product';
 
 type Phase = 'loading' | 'ready' | 'error';
 
@@ -77,7 +78,7 @@ export const PublicVerifyRoute: React.FC<{ kind: 'verify' | 'pack' | 'root'; idF
       <div className="w-full max-w-xl rounded-2xl border border-hairline bg-surface p-6 space-y-4">
         <div className="flex items-center gap-2">
           <ShieldCheck className="w-5 h-5 text-accent" />
-          <h1 className="text-apple-17 font-bold text-primary">Provio verification</h1>
+          <h1 className="text-apple-17 font-bold text-primary">{PRODUCT_NAME} verification</h1>
         </div>
 
         {phase === 'loading' && (

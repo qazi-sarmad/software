@@ -1,3 +1,4 @@
+import { PRODUCT_NAME } from '../product';
 import { describe, expect, it } from 'vitest';
 import { firstTagText, mergeMetadata, parseAppXml, parseCoreXml, parsePdfInfo } from './metadata';
 
@@ -23,10 +24,10 @@ describe('OOXML metadata (S17)', () => {
   });
 
   it('reads the application and company from app.xml', () => {
-    const xml = `<Properties><Application>Microsoft Office Word</Application><Company>Provio Ltd</Company></Properties>`;
+    const xml = `<Properties><Application>Microsoft Office Word</Application><Company>${PRODUCT_NAME} Ltd</Company></Properties>`;
     const m = parseAppXml(xml);
     expect(m.application).toBe('Microsoft Office Word');
-    expect(m.company).toBe('Provio Ltd');
+    expect(m.company).toBe(`${PRODUCT_NAME} Ltd`);
   });
 
   it('decodes the five predefined XML entities, and only those', () => {

@@ -87,6 +87,24 @@ export function reopenWorkpaper(workpaperId: string, justification: string): Pro
   return callRpc('reopen_workpaper', { p_workpaper_id: workpaperId, p_justification: justification });
 }
 
+/**
+ * Create a testing workpaper in an engagement (migration 0116). Returns the new id. This is the one
+ * write path: before it existed nothing could create a workpaper, so in production the testing
+ * workspace had nothing to sample or test against. The database refuses a caller without
+ * perform_work, a sealed engagement, and an engagement whose planning is not signed off.
+ */
+export async function createWorkpaper(
+  engagementId: string, controlId: string | null, title: string | null
+): Promise<{ ok: true; id: string } | { ok: false; reason: string }> {
+  const sb = getClient();
+  if (!sb) return { ok: false, reason: NOT_CONFIGURED_REASON };
+  const { data, error } = await sb.rpc('create_workpaper', {
+    p_engagement_id: engagementId, p_control_id: controlId, p_title: title,
+  });
+  if (error) return { ok: false, reason: error.message };
+  return { ok: true, id: String(data) };
+}
+
 /** Raise an observation against an engagement (migration 0030). */
 export function createObservation(
   engagementId: string, workpaperId: string | null, title: string,
@@ -95,11 +113,4 @@ export function createObservation(
   return callRpc('create_observation', {
     p_engagement_id: engagementId, p_workpaper_id: workpaperId, p_title: title, p_sections: sections,
   });
-}
-
-/** Append a hash-chained ledger entry through the database (migration 0073). */
-export function appendLedgerEntryDb(
-  orgId: string, action: string, payload: Record<string, unknown>
-): Promise<DataResult> {
-  return callRpc('append_ledger_entry', { p_org_id: orgId, p_action: action, p_payload: payload });
 }

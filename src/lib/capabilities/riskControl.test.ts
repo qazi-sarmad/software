@@ -15,7 +15,7 @@ function entity(over: Partial<AuditEntity>): AuditEntity {
   return {
     id: 'e1', universeId: 'u1', name: 'Entity One', code: 'E1', department: 'Finance',
     headOfDepartment: 'H', inherentRisk: 'medium', residualRisk: 'medium', siraScore: 50,
-    controlsCount: 0, lastAuditDate: '2026-01-01', status: 'active',
+    controlsCount: 0, lastAuditDate: '2026-01-01', status: 'active', approvalStatus: 'approved', rejectionReason: null,
     ...over,
   };
 }

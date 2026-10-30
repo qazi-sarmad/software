@@ -45,6 +45,17 @@ describe('renderDesignedPdf', () => {
     expect(doc.getPageCount()).toBeGreaterThanOrEqual(1);
   });
 
+  it('embeds the format font bytes when the freeze path supplies them (WP-F)', async () => {
+    const bytes = readFileSync('node_modules/@fontsource/source-serif-4/files/source-serif-4-latin-400-normal.woff2');
+    const spec = { orgId: 'o', ...DEFAULT_BRANDING };
+    const plain = await renderDesignedPdf(spec, model());
+    const withFont = await renderDesignedPdf(spec, model(), { headingFontBytes: new Uint8Array(bytes), bodyFontBytes: new Uint8Array(bytes) });
+    expect(Buffer.from(withFont.slice(0, 5)).toString('latin1')).toBe('%PDF-');
+    // A real embedded face adds a font program (kilobytes), not the standard-font stub.
+    expect(withFont.length).toBeGreaterThan(plain.length + 1000);
+    expect((await PDFDocument.load(withFont)).getPageCount()).toBeGreaterThanOrEqual(1);
+  });
+
   it('is deterministic: the same model yields byte-identical bytes', async () => {
     const spec = { orgId: 'o', ...DEFAULT_BRANDING };
     const a = await renderDesignedPdf(spec, model());
@@ -69,7 +80,7 @@ describe('renderDesignedPdf', () => {
     const layout: Partial<FormatLayout> = {
       columns: 2,
       shapes: [defaultShape('callout', 'c1', 1, 10, 10, 1)],
-      links: [{ id: 'l1', label: 'Provio', url: 'https://example.test', underline: true }],
+      links: [{ id: 'l1', label: 'Example', url: 'https://example.test', underline: true }],
       crossReferences: [{ id: 'r1', kind: 'heading', targetKey: 'sec-1', label: 'see' }],
       numberedHeadings: true,
       defaultTableStyle: 'zebra',
@@ -112,13 +123,13 @@ describe('renderDocx with a design', () => {
 
   it('appends the link list and the cross-reference list', async () => {
     const m = model({
-      links: [{ id: 'l1', label: 'Provio site', url: 'https://example.test', underline: true }],
+      links: [{ id: 'l1', label: 'Example site', url: 'https://example.test', underline: true }],
       crossReferences: [{ id: 'r1', kind: 'heading', targetKey: 'sec-1', label: 'see' }],
     });
     const bytes = await renderDocx(m);
     const text = await docxPlainText(bytes);
     expect(text).toContain('Links');
-    expect(text).toContain('Provio site');
+    expect(text).toContain('Example site');
     expect(text).toContain('References');
     expect(text).toContain('see Section 1');
   });

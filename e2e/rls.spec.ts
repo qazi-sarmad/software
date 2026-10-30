@@ -77,4 +77,34 @@ test.describe('RLS: tenants cannot read each other', () => {
       }
     }
   });
+
+  // Phase 6.2: isolation under concurrency. The sequential tests above prove a session reads only its
+  // own org when it runs alone; this proves the boundary holds while many sessions of two orgs are in
+  // flight at once. A leak that depended on shared per-request state (a pooled backend, a cached
+  // claim) would only appear here. Each of the two tokens is used to fire the whole table list
+  // simultaneously, then every response is checked for foreign rows.
+  test('[E2E] concurrent reads from two orgs never cross the tenant boundary', async ({ request }) => {
+    const tokens = await Promise.all(USERS.map(async (u) => ({ ...u, token: await signIn(request, u.email) })));
+
+    const calls: { email: string; org: string; table: string; column: string; p: Promise<Record<string, unknown>[] | number> }[] = [];
+    // Three rounds, so the reads from the two orgs interleave rather than arriving in one block.
+    for (let round = 0; round < 3; round += 1) {
+      for (const { email, org, token } of tokens) {
+        for (const [table, column] of TENANT_TABLES) {
+          calls.push({ email, org, table, column, p: readRows(request, token, table, column) });
+        }
+      }
+    }
+
+    const settled = await Promise.all(calls.map((c) => c.p));
+    settled.forEach((data, i) => {
+      const { email, org, table, column } = calls[i];
+      expect(typeof data, `${table} read as ${email} (concurrent)`).not.toBe('number');
+      const rows = data as Record<string, unknown>[];
+      expect(rows.length, `${table} has own-org rows for ${email} (concurrent)`).toBeGreaterThan(0);
+      for (const row of rows) {
+        expect(row[column], `${table}.${column} row leaked across orgs to ${email} (concurrent)`).toBe(org);
+      }
+    });
+  });
 });

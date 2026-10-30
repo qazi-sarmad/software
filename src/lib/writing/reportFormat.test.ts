@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   CONTENTS_LIMITS, DEFAULT_CONTENTS_STYLE, DEFAULT_FORMAT_LAYOUT, HEADING_LABEL_LIMITS, REPORT_PALETTE,
   TYPOGRAPHY_LIMITS, applyFormat, defaultFormat, formatBodyHash,
-  formatCanonicalKey, isValidColour, layoutFromRow, resolveTypography, resolvedRegisters, toContentsSpec, toPdfTypography,
+  formatCanonicalKey, isValidColour, layoutFromRow, mergeStoredLayout, resolveTypography, resolvedRegisters, toContentsSpec, toPdfTypography,
   validateFormat, validateHeadingLabel,
   type FormatLayout, type FormatModelScope, type ReportFormat,
 } from './reportFormat';
@@ -368,5 +368,28 @@ describe('WP-C4: the typography adapter carries the families to the renderers', 
     const t = toPdfTypography({ ...DEFAULT_FORMAT_LAYOUT, fontHeading: 'Georgia', fontBody: 'Inter' });
     expect(t.headingFamily).toBe('Georgia');
     expect(t.bodyFamily).toBe('Inter');
+  });
+});
+
+describe('mergeStoredLayout — a stored layout must not drop a nested template field', () => {
+  it('fills a partial chrome from the defaults rather than leaving a template undefined', () => {
+    const merged = mergeStoredLayout({ chrome: { headerEnabled: true } } as never);
+    expect(merged.chrome.headerEnabled).toBe(true);
+    expect(merged.chrome.headerLeft).toBe(DEFAULT_FORMAT_LAYOUT.chrome.headerLeft);
+    expect(merged.chrome.footerRight).toBe(DEFAULT_FORMAT_LAYOUT.chrome.footerRight);
+    expect(merged.chrome.pageNumber).toBe(DEFAULT_FORMAT_LAYOUT.chrome.pageNumber);
+  });
+
+  it('fills partial grid and contents, and keeps an explicit scalar override', () => {
+    const merged = mergeStoredLayout({ fontSizePt: 13, grid: { sizeMm: 8 } } as never);
+    expect(merged.fontSizePt).toBe(13);
+    expect(merged.grid.sizeMm).toBe(8);
+    expect(merged.grid.subdivisions).toBe(DEFAULT_FORMAT_LAYOUT.grid.subdivisions);
+    expect(merged.contents).toEqual(DEFAULT_FORMAT_LAYOUT.contents);
+  });
+
+  it('is total: null and undefined yield the defaults', () => {
+    expect(mergeStoredLayout(null)).toEqual(DEFAULT_FORMAT_LAYOUT);
+    expect(mergeStoredLayout(undefined)).toEqual(DEFAULT_FORMAT_LAYOUT);
   });
 });

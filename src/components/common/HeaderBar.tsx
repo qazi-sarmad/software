@@ -4,6 +4,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { useScopedData } from '../../hooks/useScopedData';
 import { hasRight } from '../../lib/rights';
+import { PRODUCT_NAME } from '../../lib/product';
 import { Select } from './Select';
 import { HeaderCalendarPanel } from '../calendar/HeaderCalendarPanel';
 import { NotificationBell } from './NotificationBell';
@@ -94,7 +95,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ onOpenCommandPalette }) =>
               P
             </div>
             <span className="font-serif-title text-apple-20 font-bold tracking-tight text-primary">
-              Provio
+              {PRODUCT_NAME}
             </span>
           </button>
 

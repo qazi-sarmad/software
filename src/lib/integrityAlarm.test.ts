@@ -122,7 +122,7 @@ describe('plain words (T7)', () => {
 describe('the app severity rule and the database rule are the same (T7)', () => {
   it('INCIDENT_KINDS is exactly the incident branch of public.integrity_alert_severity', () => {
     const sql = readFileSync(
-      resolve(process.cwd(), 'supabase/migrations/0112_integrity_alarm.sql'),
+      resolve(process.cwd(), 'supabase/migrations/0121_integrity_alarm.sql'),
       'utf8'
     );
     const fn = sql.slice(sql.indexOf('function public.integrity_alert_severity'));

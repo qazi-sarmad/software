@@ -12,6 +12,10 @@ import { TABLE_STYLE_NAMES, TABLE_STYLE_LABELS, type TableStyleName } from '../.
 import { hyperlinkError, type CrossReferenceSpec, type HyperlinkSpec, type ReferenceKind } from '../../lib/writing/links';
 import { DesignCanvas, ShapePicker } from './DesignCanvas';
 import { Select } from '../common/Select';
+import {
+  recommendDesign, summariseRecommendations, designQualityScore,
+  REPORT_PURPOSE_LABELS, type ReportPurpose,
+} from '../../lib/writing/designRecommendations';
 
 /**
  * The design pane of the report format editor (WP-D).
@@ -32,12 +36,16 @@ export interface DesignPaneProps {
   colours: { primary: string; accent: string; text: string; background: string };
   fonts: { heading: string; body: string };
   onReorder: (fromKey: string, toKey: string) => void;
+  /** What the report is for, so the design adviser reads the right conditions. */
+  purpose?: ReportPurpose;
+  onPurposeChange?: (p: ReportPurpose) => void;
 }
 
 const label = (s: string) => s.replace(/_/g, ' ').replace(/^\w/, (m) => m.toUpperCase());
 
 export const DesignPane: React.FC<DesignPaneProps> = ({
   draft, applied, prefix, onLayout, chromeVars, colours, fonts, onReorder,
+  purpose = 'audit_report', onPurposeChange = () => {},
 }) => {
   const layout = draft.layout;
   const p = `${prefix}-design`;
@@ -111,8 +119,75 @@ export const DesignPane: React.FC<DesignPaneProps> = ({
 
   const placedFree = layout.placed.filter((x) => x.xMm !== null || x.yMm !== null);
 
+  // The design adviser: a deterministic, explained suggestion list, ranked defect-first. It reads the
+  // live layout and the derived theme and returns patches the designer applies verbatim.
+  const recommendations = useMemo(
+    () => recommendDesign({
+      purpose,
+      theme,
+      layout: {
+        pageSize: layout.pageSize,
+        marginTopMm: layout.marginTopMm, marginRightMm: layout.marginRightMm,
+        marginBottomMm: layout.marginBottomMm, marginLeftMm: layout.marginLeftMm,
+        fontSizePt: layout.fontSizePt, lineHeightPct: layout.lineHeightPct,
+        headingScalePct: layout.headingScalePct,
+        columns: layout.columns, columnGapMm: layout.columnGapMm,
+        grid: { sizeMm: layout.grid.sizeMm },
+        chrome: layout.chrome,
+        numberedHeadings: layout.numberedHeadings,
+        shapes: layout.shapes.map((s) => ({ kind: s.kind })),
+      },
+    }),
+    [purpose, theme, layout],
+  );
+  const recSummary = summariseRecommendations(recommendations);
+  const quality = designQualityScore(recommendations);
+
   return (
     <div className="space-y-4" data-testid={`${p}-pane`}>
+      {/* The design adviser */}
+      <div className="p-3 rounded-xl bg-surface-sunken border border-hairline space-y-2" data-testid={`${p}-recommendations`}>
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="text-apple-12 text-primary font-medium">Design adviser</span>
+          <label className="text-apple-11 text-secondary">
+            Purpose
+            <Select ariaLabel="Report purpose" data-testid={`${p}-purpose`} value={purpose}
+              onChange={(v) => onPurposeChange(v as ReportPurpose)}
+              options={(Object.keys(REPORT_PURPOSE_LABELS) as ReportPurpose[]).map((k) => ({ value: k, label: REPORT_PURPOSE_LABELS[k] }))} />
+          </label>
+          <span className="text-apple-11 text-secondary" data-testid={`${p}-quality`}>Quality {quality}/100</span>
+          <span className="text-apple-11 text-secondary" data-testid={`${p}-rec-summary`}>
+            {recSummary.defects} defect(s) · {recSummary.warnings} warning(s) · {recSummary.advice} suggestion(s)
+          </span>
+          {recommendations.length > 0 && (
+            <button type="button" className="text-apple-11 text-primary" data-testid={`${p}-apply-all`}
+              onClick={() => recommendations.filter((r) => Object.keys(r.apply).length).forEach((r) => onLayout(r.apply as Partial<FormatLayout>))}>
+              Apply all
+            </button>
+          )}
+        </div>
+        {recommendations.length === 0 && (
+          <div className="text-apple-11 text-secondary" data-testid={`${p}-recommendations-empty`}>
+            This format satisfies every design rule. Nothing to suggest.
+          </div>
+        )}
+        {recommendations.map((r) => (
+          <div key={r.id} className="flex items-start gap-2 text-apple-11" data-testid={`${p}-rec-${r.id}`}>
+            <span className={
+              r.severity === 'defect' || r.severity === 'warning' ? 'text-cinnabar' : 'text-secondary'
+            }>{r.severity}</span>
+            <span className="flex-1">
+              <span className="text-primary">{r.title}</span>
+              <span className="text-secondary"> — {r.rationale}</span>
+            </span>
+            {Object.keys(r.apply).length > 0 && (
+              <button type="button" className="text-apple-11 text-primary" data-testid={`${p}-rec-${r.id}-apply`}
+                onClick={() => onLayout(r.apply as Partial<FormatLayout>)}>Apply</button>
+            )}
+          </div>
+        ))}
+      </div>
+
       {/* Page setup */}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4" data-testid={`${p}-page-setup`}>
         <label className="text-apple-11 text-secondary">

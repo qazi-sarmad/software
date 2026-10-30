@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { exchangeGraphCode } from '../../data/emailOauth';
 import { InlineError } from '../common/InlineError';
 import { CheckCircle, Shield } from '../common/Icons';
+import { PRODUCT_NAME } from '../../lib/product';
 
 type Phase = 'idle' | 'busy' | 'done' | 'error';
 
@@ -75,7 +76,7 @@ export const GraphOauthCallback: React.FC<GraphOauthCallbackProps> = ({ screenId
               <CheckCircle className="w-4 h-4 stroke-[1.5]" /> {message}
             </p>
             <a href="/" className="inline-block px-3 py-2 rounded-xl bg-accent-subtle text-primary text-apple-12" data-testid={`${screenId}-oauth-continue`}>
-              Return to Provio
+              Return to {PRODUCT_NAME}
             </a>
           </div>
         )}
@@ -84,7 +85,7 @@ export const GraphOauthCallback: React.FC<GraphOauthCallbackProps> = ({ screenId
           <div className="space-y-2">
             <InlineError message={message} testId={`${screenId}-oauth-error`} />
             <a href="/" className="inline-block text-apple-12 text-accent hover:underline" data-testid={`${screenId}-oauth-back`}>
-              Return to Provio
+              Return to {PRODUCT_NAME}
             </a>
           </div>
         )}

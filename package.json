@@ -16,6 +16,12 @@
     "check-tutorials": "node scripts/check-tutorials.mjs",
     "check-ui-contract": "node scripts/check-ui-contract.mjs",
     "check-feature-register": "node scripts/check-feature-register.mjs",
+    "check-config-effect": "node scripts/check-config-effect.mjs",
+    "check-wiring": "node scripts/check-wiring.mjs",
+    "check-dead-code": "node scripts/check-dead-code.mjs",
+    "check-rpc-parity": "node scripts/check-rpc-parity.mjs",
+    "check-two-sources": "node scripts/check-two-sources.mjs",
+    "gen:name": "node scripts/sync-product-name.mjs",
     "tutorials:placeholder": "node scripts/record-tutorials.mjs --placeholder",
     "screenshots": "node scripts/screenshot-all.mjs"
   },
@@ -50,6 +56,7 @@
     "zustand": "^5.0.3"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.13",
     "@playwright/test": "^1.51.0",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/react": "^16.2.0",

@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { hasRight } from '../../lib/rights';
+import { ENGINE_NAME } from '../../lib/product';
 import { listFeatureCatalogue, listTenantEntitlements, type FeatureRow } from '../../data/entitlements';
 import {
   acknowledgeConsultation, getActiveConsultation, requestConsultation, type ConsultationSession,
@@ -20,14 +21,17 @@ import { OrgEscalationPanel } from './OrgEscalationPanel';
 import { ExternalAuditorsPanel } from './ExternalAuditorsPanel';
 import { OrgHostingPanel } from './OrgHostingPanel';
 import { OrgGovernancePanel } from './OrgGovernancePanel';
+import { ReportTemplatePanel } from './ReportTemplatePanel';
+import { MethodologyPanel } from './MethodologyPanel';
 import { SharePanel } from './SharePanel';
 import { IntegrityAlarmPanel } from './IntegrityAlarmPanel';
 import { AttestationPanel } from './AttestationPanel';
 import { IncidentWizardPanel } from './IncidentWizardPanel';
+import { RulePackPanel } from './RulePackPanel';
 import { InlineError } from '../common/InlineError';
-import { Check, Lock, Zap, Sliders, Users, Shield, ShieldAlert, History, Database, FileCheck } from '../common/Icons';
+import { Check, Lock, Zap, Sliders, Users, Shield, ShieldAlert, ShieldCheck, History, Database, FileCheck } from '../common/Icons';
 
-type Tab = 'features' | 'branding' | 'email' | 'automation' | 'escalation' | 'setup' | 'consultation' | 'auditors' | 'hosting' | 'governance' | 'history' | 'changes' | 'tutorials' | 'connectors' | 'formats' | 'sharing' | 'integrity' | 'attestation' | 'incidents';
+type Tab = 'features' | 'branding' | 'email' | 'automation' | 'escalation' | 'setup' | 'consultation' | 'auditors' | 'hosting' | 'governance' | 'templates' | 'methodology' | 'history' | 'changes' | 'tutorials' | 'connectors' | 'formats' | 'sharing' | 'integrity' | 'attestation' | 'incidents' | 'packs';
 type LoadState = 'loading' | 'ready' | 'error';
 
 /** F18: every configuration tab carries its own "Show me how" tutorial key (Appendix A). */
@@ -42,6 +46,8 @@ const TAB_TUTORIAL: Record<Tab, { key: string; title: string }> = {
   auditors: { key: 'oa.auditors', title: 'OA-14 external auditors' },
   hosting: { key: 'oa.hosting', title: 'OA-15 hosting and database' },
   governance: { key: 'oa.governance', title: 'OA-22 governance settings' },
+  templates: { key: 'oa.governance', title: 'OA-22 report template' },
+  methodology: { key: 'oa.governance', title: 'OA-22 methodology library' },
   history: { key: 'oa.history', title: 'OA-17 configuration history' },
   changes: { key: 'oa.history', title: 'OA-17 change control' },
   tutorials: { key: 'oa.tutorials', title: 'OA-18 tutorial library' },
@@ -51,6 +57,7 @@ const TAB_TUTORIAL: Record<Tab, { key: string; title: string }> = {
   integrity: { key: 'oa.governance', title: 'OA-29 integrity alarm' },
   attestation: { key: 'oa.governance', title: 'OA-30 attestation' },
   incidents: { key: 'oa.governance', title: 'OA-31 incident wizard' },
+  packs: { key: 'oa.governance', title: `OA-33 ${ENGINE_NAME} rule packs` },
 };
 
 /**
@@ -148,6 +155,8 @@ export const OrgControlPanel: React.FC<{ initialTab?: Tab }> = ({ initialTab }) 
           { id: 'auditors', label: 'External auditors', icon: Shield },
           { id: 'hosting', label: 'Hosting', icon: Database },
           { id: 'governance', label: 'Governance', icon: Sliders },
+          { id: 'templates', label: 'Report template', icon: Sliders },
+          { id: 'methodology', label: 'Methodology', icon: History },
           { id: 'history', label: 'History', icon: History },
           { id: 'changes', label: 'Change control', icon: Shield },
           { id: 'tutorials', label: 'Tutorials', icon: History },
@@ -157,6 +166,7 @@ export const OrgControlPanel: React.FC<{ initialTab?: Tab }> = ({ initialTab }) 
           { id: 'integrity', label: 'Integrity', icon: ShieldAlert },
           { id: 'attestation', label: 'Attestation', icon: FileCheck },
           { id: 'incidents', label: 'Incidents', icon: ShieldAlert },
+          { id: 'packs', label: 'Rule packs', icon: ShieldCheck },
         ] as { id: Tab; label: string; icon: React.FC<{ className?: string }> }[]).map((t) => {
           const Icon = t.icon;
           return (
@@ -278,8 +288,11 @@ export const OrgControlPanel: React.FC<{ initialTab?: Tab }> = ({ initialTab }) 
       {tab === 'integrity' && <IntegrityAlarmPanel screenId="OA-29" />}
       {tab === 'attestation' && <AttestationPanel screenId="OA-30" />}
       {tab === 'incidents' && <IncidentWizardPanel screenId="OA-31" />}
+      {tab === 'packs' && <RulePackPanel screenId="OA-33" />}
       {tab === 'hosting' && <OrgHostingPanel />}
       {tab === 'governance' && <OrgGovernancePanel />}
+      {tab === 'templates' && <ReportTemplatePanel />}
+      {tab === 'methodology' && <MethodologyPanel />}
       {tab === 'history' && <OrgConfigHistory />}
       {tab === 'changes' && <ChangeControlPanel mode="settings" />}
       {tab === 'tutorials' && (

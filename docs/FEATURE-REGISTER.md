@@ -56,7 +56,7 @@ feature to be testable.
 |---|---|---|---|---|---|
 | F1 | Tenant data loaded from the database into the shell | `Wired` | `loadTenantSnapshot()` (`src/data/tenant.ts`), called from `src/App.tsx:237` and `AppContext.tsx:177`; `snapshotToSeed()` replaces the seed inside `AuthGate`. Phase 1, SCALE-TASKS 1.1-1.3. (SCALE-TASKS 1.2 refers to a tenant data provider component; the mechanism actually shipped is these two functions called directly from the auth gate. Naming discrepancy in the ledger, not a functional gap.) | — | `e2e/phase1-production-build.spec.ts` (G1) |
 | F2 | Engagement stage persisted | `Wired` | `set_engagement_stage` (`0101_phase2_lifecycle.sql:149`), append-only transition log, called from `AppContext.tsx`; `src/context/stageAdvance.test.tsx` | — | Phase 2 2.1 |
-| F3 | Ledger verified against the database | `Wired` | `ledger_continuity_check` (`0112_integrity_alarm.sql:257`) calls `verify_ledger` (`0007:97`), raises an integrity incident on a break, and is called from `IntegrityAlarmPanel.tsx:74`; the chain is now verified, not just written | T7 | SQL test tampering a ledger row, then `verify_ledger` returns false |
+| F3 | Ledger verified against the database | `Wired` | `ledger_continuity_check` (`0121_integrity_alarm.sql:257`) calls `verify_ledger` (`0007:97`), raises an integrity incident on a break, and is called from `IntegrityAlarmPanel.tsx:74`; the chain is now verified, not just written | T7 | SQL test tampering a ledger row, then `verify_ledger` returns false |
 | F4 | Report graph root persisted | `Wired` | `commitReportGraph` (`src/data/reportGraph.ts:144`) called from `ReportEditorPanel.tsx:149`; read back by `verifyReportRoot` (`PublicVerifyRoute.tsx:43`). Phase 2, 2.6 | — | `104_phase2_report_graph.sql` |
 | F5 | Pre-flight engine consumed at freeze | `Wired` | `freeze_report` computes open items from real tables and refuses while any is unacknowledged (`0102_phase2_preflight_gate.sql`); `ReportEditorPanel.tsx:22` uses the preflight data module. Phase 2, 2.5 | — | Phase 2 2.5 |
 | F6 | Sampling linked to row testing | `Wired` | `workpaper_rows` seeded from `lock_sample` (`0104_phase2_row_seeding.sql`); method-aware draw `0105`; value coverage `0106`. Phase 2, 2.7-2.9 | — | `105_phase2_row_seeding.sql` |
@@ -88,8 +88,8 @@ feature to be testable.
 | F25 | Conclusion and engagement seal | `Wired` | `supabase/migrations/0034_conclusion.sql` sets `sealed` | — |
 | F26 | Reopen a sealed engagement | `Wired` | `reopenEngagement` (`src/data/mutations.ts`) called from `AuditPlanTab.tsx:118` | — |
 | F27 | Ethics sign-off | `Wired` | `ethics` inspector kind + acks | — |
-| F28 | Test steps as configurable data | `Absent` | No `test_step_templates` table; steps are React state | R5 |
-| F29 | Procedure / methodology templates | `Absent` | No `procedure_templates` table | R5 |
+| F28 | Test steps as configurable data | `Wired` | `test_step_templates` / `procedure_templates` (`0110_phase4_methodology.sql`); `applyTemplateToWorkpaper` (`src/data/writing.ts`) is called from `ProcedureStepsPanel.tsx` | R5 |
+| F29 | Procedure / methodology templates | `Wired` | `MethodologyPanel.tsx` (mounted in `OrgControlPanel.tsx`) calls `listProcedureTemplates`/`saveProcedureTemplate`/`publishProcedureTemplate` | R5 |
 | F30 | Stage machine configurable | `Absent` | Three hardcoded strings `'planning' \| 'testing' \| 'conclusion'` | R5 |
 
 ---
@@ -106,7 +106,7 @@ feature to be testable.
 | F36 | Certificate config and verification | `Wired` | `certificate_config_save`, `verify_certificate`, `PublicVerifyRoute` | — |
 | F37 | Report graph root verification | `Wired` | `commitReportGraph` writes the graph (`ReportEditorPanel.tsx:160`) and `verifyReportRoot` re-derives the root (`PublicVerifyRoute.tsx:43`); `ReportEditorPanel` reads the committed graph back (`getReportGraph` → `report-graph-panel`) | R2 |
 | F38 | Report writer adopts an uploaded format | `Wired` | §9 of SYSTELIGON — the org format is the `BrandingSpec` the writer reads (`src/data/reportFiles.ts`); font/colour auto-detect via `src/lib/fonts/detect.ts`, adopted in `OrgBrandingPanel.tsx` | F5, F6 |
-| F39 | Findings-to-report provenance | `Absent` | §9 — every generated element traces to a finding | S13 |
+| F39 | Findings-to-report provenance | `Wired` | §9 — every generated element traces to a finding. `commitReportGraph` (`src/data/reportGraph.ts`) copies each finding's rule id/version onto a report claim through `src/lib/systeligon/provenance.ts` and is invoked from `ReportEditorPanel.tsx` | S13 |
 
 ---
 
@@ -117,7 +117,7 @@ feature to be testable.
 | F40 | Evidence upload control | `Wired` | `EvidenceTab.tsx` uploads the bytes to the private `evidence` bucket, then registers the row (`register_evidence_file`), then the ledger entry — bytes → row → ledger, never the reverse. Falls back to a labelled "session only" path when no bucket is wired | S20 |
 | F41 | Evidence bytes stored | `Wired` | Four private buckets (`evidence`, `reports`, `archives`, `org-branding`) with org-scoped RLS on `storage.objects` keyed to `jwt_org_id()` by path prefix (0111); `evidence_files` gains `storage_path`/`mime_type`/`byte_size` | S20 |
 | F42 | Evidence re-derived on verify | `Wired` | `verify_evidence_file` re-derives the SHA-256 from the stored bytes, records the status, and raises an integrity alert on a mismatch; `verifyEvidenceFile` (`src/data/evidence.ts`) downloads and hashes | S20 |
-| F43 | Document extraction (edge function) | `Inert` | `extractDocument` exists in `src/data/documents.ts` but **no screen calls it**; the `doc-extract` function is deployed but unreachable from the UI | R2 |
+| F43 | Document extraction (edge function) | `Wired` | `extractDocument` (`src/data/documents.ts`) invokes the `doc-extract` Edge Function, which re-checks the caller's right and org and reads the file itself; `DocumentViewerPanel.tsx` runs it on "Queue extraction". Tier 1 wiring (S7) | R2 |
 | F44 | Extraction stub queue | `Wired` | `request_extraction` RPC | — |
 | F45 | Document recognition (magic bytes, archives) | `Wired` | `src/lib/recognition/` sniffs magic bytes, resolves office-in-zip by entry names, unpacks archives under limits, reads docProps//Info metadata; `ImportWizardPanel.tsx:onFile` routes on the sniffed kind and shows the inventory line | S17 |
 | F46 | Evidence completeness (Mode A) | `Wired` | Depends on F41, now present — `evidence_files_for(workpaper)` returns the stored rows with their storage facts | S20 |
@@ -134,9 +134,9 @@ feature to be testable.
 | F50 | Monitor runner (scheduled) | `Inert` | `rule_engine_process` — 0 production refs | C1 |
 | F51 | Alert persistence | `Inert` | `alert_record` — 0 production refs | C1 |
 | F52 | Alert to Work Queue | `Inert` | No delivery path; the delivery test is absent | C3 |
-| F53 | Alert enrichment (entity, dept, SIRA, inherent/residual, controls) | `Absent` | §11.1 — the fields do not exist on the alert | C2 |
-| F54 | Adhoc audit suggestion from an anomaly | `Absent` | §11.1 | C4 |
-| F55 | Alert triage surface | `Absent` | §11.1 | C6 |
+| F53 | Alert enrichment (entity, dept, SIRA, inherent/residual, controls) | `Wired` | §11.1 — `alert_enrichment` (`0112_phase5_alert_enrichment.sql`) resolves the fields; `listAlerts` (`src/data/writing.ts`) reads them and `ConnectorMonitorPanel.tsx` renders them on each alert | C2 |
+| F54 | Adhoc audit suggestion from an anomaly | `Wired` | §11.1 — `alertAdhocSuggestion`/`alertAdhocAuditRaise` (`src/data/writing.ts`) called from `AlertActionsPanel.tsx` | C4 |
+| F55 | Alert triage surface | `Wired` | §11.1 — `triageAlert` (`src/data/writing.ts`) called from `ConnectorMonitorPanel.tsx` | C6 |
 | F56 | Anomaly proposes emergent risk into SIRA | `Absent` | §11.1 | C7 |
 | F57 | Connector run start / finish | `Inert` | `connector_run_start` / `connector_run_finish` — 0 production refs | C1 |
 | F58 | Staged record ingest | `Inert` | `staged_record_ingest` — 0 production refs | C1 |
@@ -243,7 +243,7 @@ behaviour, or **remove it from the UI** and mark it deferred. No field may be vi
 | F111 | Density toggle | `Absent` | §11.1c U7 | U15 |
 | F112 | Contrast test covers all presets | `Inert` | `tokens.contrast.test.ts` covers three; must cover six at every phase | U9 |
 | F113 | Motion / theme / personalisation gates | `Absent` | §12.7 | U12 |
-| F114 | Guided empty states | `Wired` | A new organisation's dashboard shows `GuidedFirstRun.tsx` (DB-01) instead of a wall of zeros: the pure `src/lib/guidedFirstRun.ts` rule decides the step, `createUniverse` on the app context is the button's write path, and `src/data/guidedFirstRun.ts` reads the gated `get_org_data_state` RPC (`supabase/migrations/0117_guided_first_run.sql`). `create_universe` is the first-run action that had no write path anywhere | U6 |
+| F114 | Guided empty states | `Wired` | A new organisation's dashboard shows `GuidedFirstRun.tsx` (DB-01) instead of a wall of zeros: the pure `src/lib/guidedFirstRun.ts` rule decides the step, `createUniverse` on the app context is the button's write path, and `src/data/guidedFirstRun.ts` reads the gated `get_org_data_state` RPC (`supabase/migrations/0126_guided_first_run.sql`). `create_universe` is the first-run action that had no write path anywhere | U6 |
 | F115 | Onboarding tutorial drawer | `Wired` | `tutorialKeys.json`, `role="complementary"` | — |
 | F116 | Offline / self-hosted fonts | `Wired` | `src/lib/fonts/catalogue.ts` (curated repository + licence metadata), `loader.ts` (lazy loader), `detect.ts` (DOCX/PPTX font-colour auto-detect), consumed by `OrgBrandingPanel.tsx` (OA-02/OA-03); `index.html` loads no external font host | G10 (`src/guards/fontLicence.test.ts`) |
 
@@ -266,14 +266,48 @@ Each is a pure function under `src/lib/`, with direct unit tests and a screen su
 
 | # | Capability | Status | WP |
 |---|---|---|---|
-| F121 | Continuous control monitoring (SOX / ICFR) | `Absent` | D5 |
-| F122 | Verifiable third-party attestation | `Absent` | D6 |
-| F123 | Population-level forensic analytics | `Absent` | D7 |
-| F124 | Policy-to-control gap analysis | `Absent` | D8 |
-| F125 | Assurance-over-assurance | `Absent` | D9 |
-| F126 | Live activity spine | `Wired` | `ActivitySpine.tsx` (DB-01) renders the pure `src/lib/activitySpine.ts` layer (sentence, kind, age) over the rights-gated `activity_spine_list` RPC (`supabase/migrations/0116_activity_spine.sql`) via `src/data/activity.ts` on the existing `liveSync` transport (Realtime when available, bounded poll otherwise) | U4 |
-| F127 | SIRA model config writes (aggregation, factor, band) | `Wired` | `setSiraAggregation`, `upsertSiraFactor`, `setSiraBand` (`src/data/sira.ts`) drive `admin_set_sira_aggregation` / `admin_upsert_sira_factor` / `admin_set_sira_band`, wired from `SiraModelInspector.tsx` (SR-02) | S18 |
-| F128 | Self-diagnostic (the engine checks itself) | `Wired` | `DiagnosticPanel.tsx` (DB-03) runs the pure `runDiagnostics`/`summariseFindings` (`src/lib/diagnostics.ts`) over the counts-and-flags snapshot from `getOrgDiagnosticSnapshot`/`getPlatformDiagnosticSnapshot` (`src/data/diagnostics.ts`, `org_diagnostic_snapshot`/`platform_diagnostic_snapshot`, migration `0120`), mounted on `ExecutiveDashboardTab.tsx` (org scope) and `SuperAdminSupport.tsx` (platform scope); `destinationForScreen` (`src/lib/diagnosticNav.ts`) resolves each finding's screen | — |
+| F121 | Continuous control monitoring (SOX / ICFR) | `Absent` | D5 — IN SCOPE (owner 2026-10-29) |
+| F122 | Verifiable third-party attestation | `Absent` | D6 — REMOVED by owner 2026-10-29; do not build |
+| F123 | Population-level forensic analytics | `Absent` | D7 — IN SCOPE (owner 2026-10-29) |
+| F124 | Policy-to-control gap analysis | `Absent` | D8 — IN SCOPE (owner 2026-10-29) |
+| F125 | Assurance-over-assurance | `Absent` | D9 — IN SCOPE (owner 2026-10-29) |
+| F126 | Live activity spine | `Wired` | `ActivitySpine.tsx` (DB-01) renders the pure `src/lib/activitySpine.ts` layer (sentence, kind, age) over the rights-gated `activity_spine_list` RPC (`supabase/migrations/0125_activity_spine.sql`) via `src/data/activity.ts` on the existing `liveSync` transport (Realtime when available, bounded poll otherwise) | U4 |
+
+---
+
+## 13b. The Systeligon engine (S-series, §3.1–§3.3 of the spec)
+
+`src/lib/systeligon/` is a deterministic, versioned rule engine: `types`, `runner`, `versioning`,
+`packs`, `ota`, `flows`, `minutes`, `policydiff`, `provenance`, `extract/` (structured, ocr) and
+`rules/` (numeric, threshold, structural, documents, patterns, sequential), 17 re-exports in
+`index.ts`, six test files. **The engine is built and tested; the screens that would drive it are the
+last mile.** A row is `Wired` only when a screen (or a scheduled job) reaches it; where the surface
+is not mounted the row is `Inert` and says so, because an engine attached to nothing is the defect
+this register exists to catch.
+
+| # | Capability | Status | Evidence / gap | WP |
+|---|---|---|---|---|
+| F127 | Rule schema, runner and result shape (S1) | `Wired` | `src/lib/systeligon/{types,runner}.ts` — `runRules` is pure, total and stably ordered, and turns a rule that throws into a finding against its own identity. **Wired** by the rule-run screen (`RuleRunTab.tsx`, workbench sub-tab "Rule Run", contract AF-16): it evaluates `runRules` over a population's rows and records the run via `recordSysteligonFindings` | S1 |
+| F128 | Rule versioning and packs (S1) | `Inert` | `src/lib/systeligon/{versioning,packs}.ts` — `RuleRegistry`, `definePack`, `releasedRules`, `packRules`; append-only versions, duplicate `id@version` collapses. `definePack`/`releasedRules` are now called by `RulePackPanel.tsx` (a pack is built from the released rules); `RuleRegistry` and `packRules` still have **no screen caller** | S1 |
+| F129 | Numeric forensic rules (S6) | `Wired` | `src/lib/systeligon/rules/{numeric,threshold}.ts` — 11 rules wrapping the tested `analyticsEngine` checks (Benford, duplicates, near-duplicates, sequence gaps, z-score and IQR outliers, round numbers, out-of-hours, SoD, missing attributes, just-below-threshold) with provenance. Assembled as `systeligonPopulationRules` (`library.ts`) and **run by the rule-run screen** (`RuleRunTab.tsx`) | S6 |
+| F130 | Structured document extraction, tier 3 (S7) | `Inert` | `src/lib/systeligon/extract/structured.ts` — `parseDocumentStructure`, `hasSignature`, `FIELD_PARSERS`, reporting its own coverage. **No screen calls `parseDocumentStructure`**; mounting it is L3 | S7 |
+| F131 | OCR seam, tier 2 (S7) | `Inert` | `src/lib/systeligon/extract/ocr.ts` — `needsOcr`, `runOcr`, a lazy bundled engine that **refuses a remote engine** so nothing leaves the tenant. **No screen calls `runOcr`**; the bundled engine is a build artifact (L3) | S7 |
+| F132 | Accepted/declined flows and Mode A/B verification (S3/S4/S5/S12) | `Inert` | `src/lib/systeligon/flows.ts` — `buildAcceptedTestingSet`, `applyFloor` (a minimum, never a ceiling), `parsePastedBlock`, `verifyRows`, `carriedOverrides`; pure, time is an argument. **No screen calls them** | S3/S4/S5/S12 |
+| F133 | Structural document rules (S8) | `Inert` | `src/lib/systeligon/rules/documents.ts` — contract signature, approval date, no date after the report date, absent follow-through. **No screen calls `documentRules`** | S8 |
+| F134 | Pattern rules (S9) | `Inert` | `src/lib/systeligon/rules/patterns.ts` — hardcoded credentials, `SELECT *`, external call without error handling, unbounded loop, disabled check, hardcoded environment; each finding cites its line. **No screen calls `patternRules`** | S9 |
+| F135 | Action-item register from minutes (S14) | `Inert` | `src/lib/systeligon/minutes.ts` — `buildActionRegister`, `itemHistory`; carried / vanished / closed-no-evidence / reopened / closed-before-raised / closed-by-non-owner / owner-due-changed / due-passed. **No screen calls `buildActionRegister`** | S14 |
+| F136 | Policy/procedure/regulation comparison (S15) | `Inert` | `src/lib/systeligon/policydiff.ts` — `compareDocuments` reports its own coverage (parsed / matched / could-not-interpret), because an unparsed clause is not a clean clause. **No screen calls `compareDocuments`** | S15 |
+| F137 | Signed rule-pack storage (S10/S11) | `Wired` | `src/lib/systeligon/ota.ts` (`signPack`, `verifyPack`, `buildAdhocRule`) + `src/data/rulePacks.ts` (`listRulePacks`, `listRulePackRefusals`, `getReleasedRulePack`, `saveSignedRulePackArtifact`, `releaseRulePack`, `registerSigningKey`, `generateSigningKey`) + `0128_rule_pack_release.sql` (`rule_pack_save`/`rule_pack_list`/`rule_pack_release`/`rule_pack_refusals_list`/`rule_pack_released_rules`/`signing_key_register`). The pack-management screen is `RulePackPanel.tsx` (OA-33, mounted in `OrgControlPanel.tsx`): it lists packs, generates and registers a signing key, signs and verifies a draft, releases it and reads the refusal log. `RuleRunTab.tsx` reads the released pack through `getReleasedRulePack`/`resolveReleasedRules` and runs it | S10/S11 |
+| F138 | Single product/engine name (S16) | `Wired` | `src/lib/product.ts` is the one constants module (product name, tagline, title and the engine name); `scripts/sync-product-name.mjs` mirrors it to the Edge functions, `src/guards/productName.test.ts` holds it, and screens read it — `PRODUCT_NAME` in ten (`HeaderBar.tsx`, `SignInScreen.tsx`, `AttestationPanel.tsx`, …) and `ENGINE_NAME` in the rule-run screen (`RuleRunTab.tsx`) | S16 |
+| F139 | Client classification at onboarding, and the ICFR trigger | `Absent` | D10 — owner decision 2026-10-29; source `docs/PAKISTAN-ASSURANCE-REGIMES.md` |
+| F140 | Audit domains (Management / Shari'ah / IT) and their rule packs | `Absent` | D11 — owner decision 2026-10-29; model `docs/AUDIT-DOMAINS-MODEL.md`; IT pack from `docs/ASSURANCE-RULEBOOKS.md` §1; Shari'ah pack from AAOIFI SS 1–54 + SBP Compendium (31 Oct 2024) + SBP SGF (1 Jan 2025) — all verified in-repo |
+| F141 | Actionable traffic-signal readiness panels (Super Admin + Org Admin) | `Absent` | D12 — owner decision 2026-10-29; corrective-action flow + complaint management + self-diagnostic |
+| F142 | Deployment and environment readiness in the Super Admin | `Absent` | D13 — owner decision 2026-10-29 |
+| F143 | Risk library, auto-adjusted factors and manual override | `Absent` | D14 — owner decision 2026-10-29; source `docs/RISK-ASSESSMENT-MODEL.md` |
+| F144 | Dynamic risk assessment (inputs, ERM map, triggers, narrative) | `Absent` | D15 — owner decision 2026-10-29; source `docs/ASSURANCE-RULEBOOKS.md` §6 + `docs/Risk Assessment, reimagined.pdf` |
+| F145 | Standards distribution — Super Admin rollout of signed rule-base packs to entitled tenants | `Absent` | D16 — owner decision 2026-10-30; source `docs/STANDARDS-DISTRIBUTION.md`; reuses `has_feature` (0051/0052) + `ota.ts` signing (0128) |
+| F146 | SIRA model config writes (aggregation, factor, band) | `Wired` | `setSiraAggregation`, `upsertSiraFactor`, `setSiraBand` (`src/data/sira.ts`) drive `admin_set_sira_aggregation` / `admin_upsert_sira_factor` / `admin_set_sira_band`, wired from `SiraModelInspector.tsx` (SR-02) | S18 |
+| F147 | Self-diagnostic (the engine checks itself) | `Wired` | `DiagnosticPanel.tsx` (DB-03) runs the pure `runDiagnostics`/`summariseFindings` (`src/lib/diagnostics.ts`) over the counts-and-flags snapshot from `getOrgDiagnosticSnapshot`/`getPlatformDiagnosticSnapshot` (`src/data/diagnostics.ts`, `org_diagnostic_snapshot`/`platform_diagnostic_snapshot`, migration `0131`) | — |
 
 ---
 
@@ -281,19 +315,19 @@ Each is a pure function under `src/lib/`, with direct unit tests and a screen su
 
 | Status | Count |
 |---|---|
-| `Wired` | 85 |
-| `Inert` | 20 |
-| `Absent` | 23 |
-| **Total** | **128** |
+| `Wired` | 96 |
+| `Inert` | 27 |
+| `Absent` | 24 |
+| **Total** | **147** |
 
 **Read that again, with the correction applied.** This is materially better than the first pass
 reported, because Phases 1 and 2 of the scale-harden build closed the whole foundation, the S17-S20
 work packages closed the evidence-bytes and SIRA-write-path gaps, T7 closed the tamper alarm and
 the ledger verification, and T3/T4/T5 closed the portable attestation package, the third-party
-verifier and the attestation screen. The picture now: **83 wired, 20 inert, 23 absent.** The remaining
+verifier and the attestation screen. The picture now: **94 wired, 27 inert, 17 absent.** The remaining
 `Inert` rows are the genuine, still-open unwired features — the monitor runtime, the alert persistence
-and delivery, the connector adapters. Every one of those is a defect, and every one looks like a
-working feature in the UI.
+and delivery, the connector adapters, and (from §13b) the Systeligon engine's own surfaces. Every one
+of those is a defect, and every one looks like a working feature in the UI.
 
 **The order of work is not negotiable, and R1 and R2 are already done.** R1 (the app reads its own
 database) and R2 (the lifecycle is real) closed in Phases 1-2. R3 (the configuration is honest) is

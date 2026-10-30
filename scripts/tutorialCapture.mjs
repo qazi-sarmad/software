@@ -38,7 +38,7 @@ const SA_TAB = {
   'sa.automation': 'automation', 'sa.templates': 'automation',
   'sa.hosting-fit': 'hosting', 'sa.hosting-rules': 'hosting', 'sa.migration': 'migration',
   'sa.tutorials': 'tutorials', 'sa.features': 'features', 'sa.plans': 'features',
-  'sa.trail': 'trail',
+  'sa.trail': 'trail', 'sa.integrity-anchoring': 'integrity',
 };
 
 /** Where a key's screen is, as a plan the recorder follows. */

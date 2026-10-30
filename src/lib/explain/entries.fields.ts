@@ -660,6 +660,6 @@ export const TERM_ENTRIES: ExplainEntry[] = [
     iiaStandards: ['14.6', '5.2'],
     minRight: 'review_and_approve',
     related: ['term.integrity_alert', 'term.ledger'],
-    source: 'SYSTELIGON.md §11.3a; 0114_incident_wizard.sql',
+    source: 'SYSTELIGON.md §11.3a; 0123_incident_wizard.sql',
   },
 ];

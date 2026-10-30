@@ -113,6 +113,27 @@ if [ -z "$FAILED" ]; then
 fi
 
 # ---------------------------------------------------------------------------
+# 8d. Anti-theatre gates G2/G4/G5/G6. Dead code and RPC parity replay the migrations into pglite
+#     (in-process), so they need no database; wiring and two-sources resolve the real import graph.
+# ---------------------------------------------------------------------------
+if [ -z "$FAILED" ]; then
+  step "8d. Dead code, config-effect, wiring, two-sources, RPC parity (G2/G3/G4/G5/G6)"
+  if node scripts/check-dead-code.mjs; then echo "PASS: 8d. Dead code (G2)"; else fail "8d. Dead code (G2)"; fi
+  if [ -z "$FAILED" ]; then
+    if node scripts/check-config-effect.mjs; then echo "PASS: 8d. Config effect (G3)"; else fail "8d. Config effect (G3)"; fi
+  fi
+  if [ -z "$FAILED" ]; then
+    if node scripts/check-wiring.mjs; then echo "PASS: 8d. Wiring (G4)"; else fail "8d. Wiring (G4)"; fi
+  fi
+  if [ -z "$FAILED" ]; then
+    if node scripts/check-two-sources.mjs; then echo "PASS: 8d. Two sources (G5)"; else fail "8d. Two sources (G5)"; fi
+  fi
+  if [ -z "$FAILED" ]; then
+    if node scripts/check-rpc-parity.mjs; then echo "PASS: 8d. RPC parity (G6)"; else fail "8d. RPC parity (G6)"; fi
+  fi
+fi
+
+# ---------------------------------------------------------------------------
 # 9. Migrations and SQL tests, locally. The workflow applies them to the hosted test project with
 #    psql and TEST_SUPABASE_DB_URL; that project is not reachable from here, so the local harness
 #    applies every migration TWICE and runs every SQL test TWICE against PostgreSQL 17 with the
