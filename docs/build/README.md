@@ -33,7 +33,7 @@ branch. Everything after that is parallel.
 | Branch | Stream |
 |---|---|
 | `feature/systeligon-builder-continuous` | TRUNK / integrator |
-| `feature/design-language-v1` | DESIGN |
+| `feature/systeligon-design-spec` | DESIGN |
 | `feature/build-core-engine` | S1 |
 | `feature/build-assurance-caps` | S2 |
 | `feature/build-risk-planning` | S3 |

@@ -1,4 +1,4 @@
-# Stream DESIGN — the design language (`feature/design-language-v1`)
+# Stream DESIGN — the design language (`feature/systeligon-design-spec`)
 
 Cut from the trunk after the integrator's mount points (OWNERSHIP.md §4). Owns `docs/design/**`,
 `src/styles/tokens.css`, `src/lib/theme/**`, `src/context/PersonalisationContext.tsx`, and the

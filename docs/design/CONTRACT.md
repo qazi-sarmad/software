@@ -16,7 +16,7 @@ Freeze hash: _(filled by the design branch)_
 
 ## 1. What the design branch is
 
-- **Branch:** `feature/design-language-v1`, cut from the build trunk
+- **Branch:** `feature/systeligon-design-spec`, cut from the build trunk
   `feature/systeligon-builder-continuous`.
 - **Owner:** the design agent, and only the design agent. No build branch commits here.
 - **Why separate:** the design rows (E8, U5, U7, U9–U13, A-U1; register `F105`–`F113`) were DEFERRED

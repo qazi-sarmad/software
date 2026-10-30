@@ -113,7 +113,7 @@ queue continuously. Commit messages are the report.
 
 | Branch | Stream | Scope |
 |---|---|---|
-| `feature/design-language-v1` | DESIGN | the design system + the frozen contract |
+| `feature/systeligon-design-spec` | DESIGN | the design system + the frozen contract |
 | `feature/build-core-engine` | S1 | the rule engine, scopes, rule packs, standards distribution (D16) |
 | `feature/build-assurance-caps` | S2 | D5 / D7 / D8 / D9 |
 | `feature/build-risk-planning` | S3 | D10 / D14 / D15 |
