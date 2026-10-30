@@ -1611,3 +1611,31 @@ the earlier claims true rather than decorative.
   introspection (used by the audit). It is not the gate; Docker Postgres is.
 - Playwright's `webServer` is `npm run dev` — this is the reason the suite never saw the production
   defect, and changing it is gate G1.
+
+## The concurrent build programme (2026-10-30)
+
+Owner instruction 2026-10-30: run the build as **several agents on separate branches at once**, each
+with a self-contained document, covering every flow (happy + bad), at scale **50,000 users / 5,000
+entities**, plus a dedicated design branch. The programme documents are `docs/build/BUILD-PROMPT.md`
+(one page every session starts from), `docs/build/OWNERSHIP.md` (the file/ migration-range/testid map
+that makes concurrency safe) and `docs/build/SCALE-PROGRAMME.md` (the scale target and the per-flow
+assignment). Each stream records its own progress in `docs/build/streams/<stream>.md`; the integrator
+folds those into this ledger at merge time.
+
+| # | Task | Status |
+|---|---|---|
+| CB.1 | Mount points on the trunk (`src/nav/registry.ts`, `src/data/index.ts`, `src/lib/capabilities/registry.ts`, `src/guards/mountPoints.test.ts`) | DONE (`7a11cf9`) |
+| CB.2 | Reconcile `OWNERSHIP.md` with the designer prompt (design branch rename; `src/lib/theme/**` to the trunk) | DONE (`d599cb5`) |
+| CB.3 | Close two §2 double-claims (`admin/RulePackPanel.tsx`; `systeligon/extract/**`) and complete the data barrel for S4 | DONE (`2006405`, `ceba781`) |
+| CB.4 | S17 deterministic scale generator (`supabase/tests/99_scale_seed.sql`, `scripts/scale-seed.mjs`) | DONE (`30f5734`) |
+| CB.5 | Zero cross-tenant leakage at ≥ 200 concurrent sessions (test 99 dblink block; 208 sessions proved) | DONE (`80374de`) |
+| CB.6 | Shape B users dimension (§1: 50,000 accounts) + Shape A's own account | DONE (`866b0db`, `ceba781`) |
+| CB.7 | §6 own-org read latency measured (`scale-seed.mjs --probe`: p50 56 ms / p95 60 ms at 200 own universes) | DONE (`ceba781`) |
+| CB.8 | Seven stream branches created from the trunk head | DONE (`50cbb47`) |
+| CB.9 | DESIGN branch `feature/systeligon-design-spec` sits on `bc7fd15`, before the mount points — the designer should re-cut/rebase onto the trunk | **BLOCKED (designer)** |
+| CB.10 | The build streams' D-capability rows (S1–S7) — owned by the streams, merged here as they land | TODO (streams) |
+
+The mount points are the one serial step; with CB.1–CB.8 done, the seven build streams are unblocked.
+The scale thresholds in `SCALE-PROGRAMME.md` §6 that the generator can prove are recorded in
+`docs/build/streams/integrator.md`; the per-flow thresholds that need a stream's code are that stream's
+to close.
