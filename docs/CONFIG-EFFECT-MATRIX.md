@@ -64,7 +64,7 @@ call site that proves it.
 | Table.field | Effect | Reader | Status | Proving test |
 |---|---|---|---|---|
 | `engagement_gate_settings.deploy_right` | The right a caller needs to deploy an engagement | `deploy_engagement`, `decide_combined_deployment` | ENFORCED | `29_deployment_gate.sql` |
-| `engagement_gate_settings.approve_right` | The right a caller needs to approve a deployment | `deploy_engagement` | ENFORCED | `29_deployment_gate.sql` |
+| `engagement_gate_settings.approve_right` | The right a caller needs to approve a deployment (and to approve an early deployment from the plan) | `deploy_engagement`, `engagement_deployment_decide` | ENFORCED | `29_deployment_gate.sql`, `144_engagement_owner_deployment.sql` §5–§6 |
 | `engagement_gate_settings.sla_hours` | The gate's SLA when the workflow SLA is unset | `request_combined_deployment` | ENFORCED | `30_combined_approval.sql` |
 | `engagement_gate_settings.escalate_right` | The right required to escalate a request | `deployment_requests_escalate_all` | ENFORCED | `30_combined_approval.sql` |
 | `plan_approval_settings.create_right` | The right needed to create a plan | `create_plan`, `add_plan_item` | ENFORCED | `28_audit_plan.sql` |

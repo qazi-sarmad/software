@@ -113,6 +113,9 @@ the designer's call, not the integrator's.
 | — `components/writing/**` unowned | Ungranted | Fixed | `docs/build/OWNERSHIP.md` §2 (S5 owns it; OA-23 lives there) | `src/guards/ownershipMap.test.ts` | — | `_this commit_` |
 | — stream briefs vs §2 drift | Stale | Reconciled | `docs/build/streams/{s1-core-engine,s5-monitor-runtime,s6-config-honesty,s7-extraction-docs}.md` | `src/guards/ownershipMap.test.ts` | — | `_this commit_` |
 | — ownership-map guard | Absent | Built | `src/guards/ownershipMap.test.ts` (reads §2; each stream screen granted to exactly one stream) | the guard itself, proved to fail on a re-introduced double-claim | — | `_this commit_` |
+| OA-40 scoped roles and access | Absent | Wired | `RoleScopePanel.tsx` (tab `scoped` in `PeopleAdminPanel.tsx`) | `roleAccess.test.ts` (15); `supabase/tests/143_role_scope_config.sql` | `0199_role_scope_config.sql` | `_part 1_` |
+| OA-41 deploy from the plan (file owner, early approval, suggestions) | Absent | Wired | `PlanDeploymentPanel.tsx` (`plan-open-deployment` in `AuditPlanTab.tsx`) | `PlanDeploymentPanel.test.tsx` (8); `supabase/tests/144_engagement_owner_deployment.sql` | `0200_engagement_owner_deployment.sql` | `_this commit_` |
+| OA-42 prior-year roll-forward & export check | Absent | Wired | `PriorYearRollforwardPanel.tsx` (`plan-open-rollforward` in `AuditPlanTab.tsx`) | `PlanDeploymentPanel.test.tsx` (8); `supabase/tests/145_prior_year_rollforward.sql` | `0201_prior_year_rollforward.sql` | `_this commit_` |
 
 ### S17 — the deterministic scale generator (`docs/build/SCALE-PROGRAMME.md` §4)
 

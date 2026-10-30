@@ -877,6 +877,62 @@ Bring last year's findings forward: confirm or revert each unconfirmed prior-yea
 - **States:** loading; empty; unconfirmed list; ready.
 - **Tutorial key:** —
 
+## AP-06 — Deploy from the plan (owner 2026-10-30)
+
+The file owner and the deployment of an engagement from a plan item. Deploy when the plan is due; an
+earlier deployment needs a reason and the approval of the organisation's configured role. The
+deterministic consequences for the audit calendar, the board pack and the plan are shown as
+suggestions — DATA to act on, never an automatic write to another surface.
+
+- **Route:** Audit Plan header button `Deploy from plan` (`plan-open-deployment`), the
+  `deployment_plan` inspector window.
+- **Rights:** `manage_engagements` to name a file owner or deploy; the org's configured
+  `engagement_gate_settings.approve_right` (default `approve_plan`) to approve an early deployment.
+- **Data:** `deployFromPlan`, `decideDeployment`, `setFileOwner`, `listFileOwners`, `listDeployments`,
+  `listDeploymentSuggestions` (`src/data/planDeployment.ts`). RPCs `engagement_deploy_from_plan`,
+  `engagement_deployment_decide`, `engagement_file_owner_set`, `engagement_file_owners_list`,
+  `engagement_deployments_list`, `deployment_suggestions_list` (migration 0200).
+- **Testids:** `plan-open-deployment`, `deployment-plan-panel`, `deployment-plan-error`,
+  `deployment-plan-notice`, `deployment-plan-owner-user`, `deployment-plan-owner-reason`,
+  `deployment-plan-owner-save`, `deployment-plan-item`, `deployment-plan-date`,
+  `deployment-plan-reason`, `deployment-plan-submit`, `deployment-plan-readonly`,
+  `deployment-plan-loading`, `deployment-plan-pending-empty`, `deployment-plan-pending-<id>`,
+  `deployment-plan-pending-reason-<id>`, `deployment-plan-decision-reason-<id>`,
+  `deployment-plan-approve-<id>`, `deployment-plan-refuse-<id>`, `deployment-plan-suggestions-empty`,
+  `deployment-plan-suggestions-<id>`, `deployment-plan-suggestion-<id>-<target>`,
+  `deployment-plan-owners-empty`, `deployment-plan-owner-<id>`.
+- **States:** loading; read-only without `manage_engagements` (`deployment-plan-readonly`); no pending
+  early deployment (`deployment-plan-pending-empty`); an early deployment refused for a short reason;
+  an early deployment held for approval; an inline error on a refused write (`deployment-plan-error`).
+- **Tutorial key:** none (no key is claimed until the media exists).
+
+## AP-07 — Prior-year roll-forward &amp; export check (owner 2026-10-30)
+
+Roll a prior engagement's workpapers forward and check that each has a recorded export. Only a person
+with prior-year access to the source engagement may build the roll-forward or run the check; the
+database refuses the request by name otherwise.
+
+- **Route:** Audit Plan header button `Prior-year roll-forward` (`plan-open-rollforward`), the
+  `prior_year_rollforward` inspector window.
+- **Rights:** `manage_engagements` to build; prior-year access (the scope predicate
+  `prior_year_access_ok`) to the source engagement.
+- **Data:** `buildRollForward`, `exportCheck`, `listRollForwards`, `priorYearAccessOk`, `logExport`
+  (`src/data/priorYearRollforward.ts`). RPCs `prior_year_rollforward_build`,
+  `prior_year_export_check`, `prior_year_rollforwards_list`, `prior_year_access_ok` (migration 0201).
+- **Testids:** `plan-open-rollforward`, `prior-year-rollforward-panel`,
+  `prior-year-rollforward-error`, `prior-year-rollforward-notice`,
+  `prior-year-rollforward-target`, `prior-year-rollforward-source`,
+  `prior-year-rollforward-build`, `prior-year-rollforward-access`,
+  `prior-year-rollforward-readonly`, `prior-year-rollforward-complete`,
+  `prior-year-rollforward-incomplete`, `prior-year-rollforward-counts`,
+  `prior-year-rollforward-missing-<id>`, `prior-year-rollforward-export-<id>`,
+  `prior-year-rollforward-loading`, `prior-year-rollforward-empty`,
+  `prior-year-rollforward-row-<id>`.
+- **States:** loading; read-only without `manage_engagements` (`prior-year-rollforward-readonly`);
+  no roll-forward yet (`prior-year-rollforward-empty`); access refused for the chosen source
+  (`prior-year-rollforward-access`); check complete/incomplete; an inline error on a refused write.
+- **Tutorial key:** none (no key is claimed until the media exists).
+
 ## SR-01 — SIRA (S1)
 
 The Strategic Internal Risk Assessment (spec §7): the risk table, the persisted model/cycles/plan snapshot, and the entry points to the model editor and cycle inspector.

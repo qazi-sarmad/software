@@ -199,6 +199,27 @@ export const AuditPlanTab: React.FC = () => {
           >
             Ethics
           </button>
+          <button
+            type="button"
+            data-testid="plan-open-deployment"
+            onClick={() => openInspector('deployment_plan', {
+              universeId: selectedUniverseId ?? undefined,
+              engagementId: selectedEngagement?.id,
+            })}
+            className="px-3 py-1.5 rounded-lg border border-hairline text-apple-12 text-primary hover:bg-surface-hover"
+          >
+            Deploy from plan
+          </button>
+          <button
+            type="button"
+            data-testid="plan-open-rollforward"
+            onClick={() => openInspector('prior_year_rollforward', {
+              engagements: filteredEngagements.map((e) => ({ id: e.id, label: e.title })),
+            })}
+            className="px-3 py-1.5 rounded-lg border border-hairline text-apple-12 text-primary hover:bg-surface-hover"
+          >
+            Prior-year roll-forward
+          </button>
         </div>
       </div>
 

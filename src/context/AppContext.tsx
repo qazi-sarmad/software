@@ -59,6 +59,8 @@ export type InspectorType =
   | 'assurance_caps'
   | 'classification'
   | 'risk_library'
+  | 'deployment_plan'
+  | 'prior_year_rollforward'
   | 'standards';
 
 export interface InspectorState {

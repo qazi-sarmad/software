@@ -34,3 +34,7 @@ export * as lifecycle from './lifecycle';
 
 // --- S7: extraction and document/minutes/policy surfaces --------------------------------------------
 export * as documentReview from './documentReview';
+
+// --- TRUNK: plan deployment and prior-year roll-forward (owner 2026-10-30) --------------------------
+export * as planDeployment from './planDeployment';
+export * as priorYearRollforward from './priorYearRollforward';

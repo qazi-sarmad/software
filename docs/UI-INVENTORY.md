@@ -1517,6 +1517,42 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
   named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
 
+### `AP-06` — Deploy from the plan (owner 2026-10-30)
+
+- **Purpose:** The file owner and the deployment of an engagement from a plan item. Deploy when the plan is due; an
+- **Route / location:** Audit Plan header button `Deploy from plan` (`plan-open-deployment`), the `deployment_plan` inspector window.
+- **Rights required:** `manage_engagements` to name a file owner or deploy; the org's configured `engagement_gate_settings.approve_right` (default `approve_plan`) to approve an early deployment.
+- **Data functions (`src/data/*.ts`):** `decideDeployment`, `deployFromPlan`, `deployment_suggestions_list`, `engagement_deploy_from_plan`, `engagement_deployment_decide`, `engagement_deployments_list`, `engagement_file_owner_set`, `engagement_file_owners_list`, `listDeploymentSuggestions`, `listDeployments`, `listFileOwners`, `setFileOwner`
+- **Data modules:** `src/data/planDeployment.ts`
+- **RPCs reachable via those modules:** `deployment_suggestions_list`, `engagement_deploy_from_plan`, `engagement_deployment_decide`, `engagement_deployments_list`, `engagement_file_owners_list`
+- **Tables reachable via those modules:** none
+- **Testids (24):** `plan-open-deployment`, `deployment-plan-panel`, `deployment-plan-error`, `deployment-plan-notice`, `deployment-plan-owner-user`, `deployment-plan-owner-reason`, `deployment-plan-owner-save`, `deployment-plan-item`, `deployment-plan-date`, `deployment-plan-reason`, `deployment-plan-submit`, `deployment-plan-readonly`, `deployment-plan-loading`, `deployment-plan-pending-empty`, `deployment-plan-pending-<id>`, `deployment-plan-pending-reason-<id>`, `deployment-plan-decision-reason-<id>`, `deployment-plan-approve-<id>`, `deployment-plan-refuse-<id>`, `deployment-plan-suggestions-empty`, `deployment-plan-suggestions-<id>`, `deployment-plan-suggestion-<id>-<target>`, `deployment-plan-owners-empty`, `deployment-plan-owner-<id>`
+- **Explain ids (0):** — (no explain affordance)
+- **IIA standards addressed (0):** —
+- **Drilldown targets (0):** — (no aggregate)
+- **States:** loading; read-only without `manage_engagements` (`deployment-plan-readonly`); no pending early deployment (`deployment-plan-pending-empty`); an early deployment refused for a short reason; an early deployment held for approval; an inline error on a refused write (`deployment-plan-error`).
+- **Tutorial key:** — (no key)
+- **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
+  named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
+
+### `AP-07` — Prior-year roll-forward &amp; export check (owner 2026-10-30)
+
+- **Purpose:** Roll a prior engagement's workpapers forward and check that each has a recorded export. Only a person
+- **Route / location:** Audit Plan header button `Prior-year roll-forward` (`plan-open-rollforward`), the `prior_year_rollforward` inspector window.
+- **Rights required:** `manage_engagements` to build; prior-year access (the scope predicate `prior_year_access_ok`) to the source engagement.
+- **Data functions (`src/data/*.ts`):** `buildRollForward`, `exportCheck`, `listRollForwards`, `logExport`, `priorYearAccessOk`, `prior_year_access_ok`, `prior_year_export_check`, `prior_year_rollforward_build`, `prior_year_rollforwards_list`
+- **Data modules:** `src/data/exports.ts`, `src/data/priorYearRollforward.ts`
+- **RPCs reachable via those modules:** `log_export`, `prior_year_access_ok`, `prior_year_export_check`, `prior_year_rollforward_build`, `prior_year_rollforwards_list`
+- **Tables reachable via those modules:** `exports_log`
+- **Testids (17):** `plan-open-rollforward`, `prior-year-rollforward-panel`, `prior-year-rollforward-error`, `prior-year-rollforward-notice`, `prior-year-rollforward-target`, `prior-year-rollforward-source`, `prior-year-rollforward-build`, `prior-year-rollforward-access`, `prior-year-rollforward-readonly`, `prior-year-rollforward-complete`, `prior-year-rollforward-incomplete`, `prior-year-rollforward-counts`, `prior-year-rollforward-missing-<id>`, `prior-year-rollforward-export-<id>`, `prior-year-rollforward-loading`, `prior-year-rollforward-empty`, `prior-year-rollforward-row-<id>`
+- **Explain ids (0):** — (no explain affordance)
+- **IIA standards addressed (0):** —
+- **Drilldown targets (0):** — (no aggregate)
+- **States:** loading; read-only without `manage_engagements` (`prior-year-rollforward-readonly`); no roll-forward yet (`prior-year-rollforward-empty`); access refused for the chosen source (`prior-year-rollforward-access`); check complete/incomplete; an inline error on a refused write.
+- **Tutorial key:** — (no key)
+- **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
+  named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
+
 ### `SR-01` — SIRA (S1)
 
 - **Purpose:** The Strategic Internal Risk Assessment (spec §7): the risk table, the persisted model/cycles/plan snapshot, and the entry points to the model editor and cycle inspector.
@@ -2208,10 +2244,15 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 | `create_workpaper` | `src/data/mutations.ts` | `p_engagement_id`, `p_control_id`, `p_title` | tenant |
 | `decide_change` | `src/data/changeControl.ts` | `p_request_id`, `p_approve`, `p_reason` | tenant |
 | `deploy_engagement` | `src/data/deployment.ts` | `p_universe`, `p_entity`, `p_plan`, `p_period`, `p_title` | tenant |
+| `deployment_suggestions_list` | `src/data/planDeployment.ts` | `p_deployment` | tenant |
 | `document_extraction_text` | `src/data/documentReview.ts` | `p_file_id` | tenant |
 | `email_sender_profiles_list` | `src/data/senderProfiles.ts` | `p_org` | tenant |
 | `engagement_as_of` | `src/data/timeTravel.ts` | `p_engagement_id`, `p_ts` | tenant |
 | `engagement_as_of_events` | `src/data/timeTravel.ts` | `p_engagement_id`, `p_ts` | tenant |
+| `engagement_deploy_from_plan` | `src/data/planDeployment.ts` | `p_plan_item`, `p_on`, `p_reason` | tenant |
+| `engagement_deployment_decide` | `src/data/planDeployment.ts` | `p_deployment`, `p_approve`, `p_reason` | tenant |
+| `engagement_deployments_list` | `src/data/planDeployment.ts` | — | tenant |
+| `engagement_file_owners_list` | `src/data/planDeployment.ts` | — | tenant |
 | `entity_approval_config` | `src/data/universe.ts` | `p_org` | tenant |
 | `entity_history` | `src/data/universe.ts` | `p_entity_id` | tenant |
 | `escalation_event_list` | `src/data/escalation.ts` | `p_org` | tenant |
@@ -2283,6 +2324,10 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 | `preflight_acks_get` | `src/data/preflight.ts` | `p_engagement_id` | tenant |
 | `preflight_blocking` | `src/data/preflight.ts` | `p_engagement_id` | tenant |
 | `preflight_items` | `src/data/preflight.ts` | `p_engagement_id` | tenant |
+| `prior_year_access_ok` | `src/data/priorYearRollforward.ts` | `p_engagement` | tenant |
+| `prior_year_export_check` | `src/data/priorYearRollforward.ts` | `p_engagement` | tenant |
+| `prior_year_rollforward_build` | `src/data/priorYearRollforward.ts` | `p_engagement`, `p_source` | tenant |
+| `prior_year_rollforwards_list` | `src/data/priorYearRollforward.ts` | — | tenant |
 | `propose_emergent_risks` | `src/data/sira.ts` | `p_cycle` | tenant |
 | `register_evidence_file` | `src/data/evidence.ts` | `p_engagement_id`, `p_workpaper_id`, `p_filename`, `p_storage_path`, `p_sha256`, `p_mime_type`, `p_byte_size`, `p_stage` | tenant |
 | `remind_sira_acceptance` | `src/data/sira.ts` | `p_org`, `p_as_of`, `p_days` | tenant |
@@ -2333,10 +2378,10 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 
 ## Coverage cross-check
 
-- Screens documented: 116 (contract sections: 48 Appendix A + 44 Appendix B).
+- Screens documented: 118 (contract sections: 48 Appendix A + 44 Appendix B).
 - Tutorial keys: 81.
-- RPCs catalogued: 153.
-- Data modules: 76; exported data functions: 501.
+- RPCs catalogued: 162.
+- Data modules: 78; exported data functions: 512.
 - Contract testids not found verbatim in `src/` (placeholder or dynamic): 238.
   - assurance-tab-d5, assurance-tab-d7, assurance-tab-d8, assurance-tab-d9, audit-file-view-builder, audit-file-view-certificate, audit-file-view-conclusion, audit-file-view-documents, audit-file-view-ethics, audit-file-view-execution, audit-file-view-findings, audit-file-view-planning, audit-file-view-population, audit-file-view-report, audit-file-view-review, audit-file-view-rowtesting, audit-file-view-sampling, data-front-door-kind, hosting-test, invite-user, issues-view-patterns, oa-branding-colour-accent, oa-branding-colour-background, oa-branding-colour-primary, oa-branding-colour-text, oa-branding-margin-0, oa-branding-margin-3, oa-certificate-enabled-verification, oa-escalation-result, oa-escalation-saved, oa-governance-signoff-conclusion, oa-governance-signoff-planning, oa-governance-signoff-testing, org-control-tab-auditors, org-control-tab-automation, org-control-tab-branding, org-control-tab-connectors, org-control-tab-features, org-control-tab-formats, org-control-tab-governance …
 

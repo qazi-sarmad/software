@@ -23,6 +23,8 @@ const CombinedApprovalPanel = lazy(() => import('../plan/CombinedApprovalPanel')
 const SiraModelEditor = lazy(() => import('../sira/SiraModelEditor').then((m) => ({ default: m.SiraModelEditor })));
 const SiraCyclesInspector = lazy(() => import('../sira/SiraCyclesInspector').then((m) => ({ default: m.SiraCyclesInspector })));
 const PlanItemsPanel = lazy(() => import('../plan/PlanItemsPanel').then((m) => ({ default: m.PlanItemsPanel })));
+const PlanDeploymentPanel = lazy(() => import('../plan/PlanDeploymentPanel').then((m) => ({ default: m.PlanDeploymentPanel })));
+const PriorYearRollforwardPanel = lazy(() => import('../plan/PriorYearRollforwardPanel').then((m) => ({ default: m.PriorYearRollforwardPanel })));
 const ImportWizardPanel = lazy(() => import('../admin/ImportWizardPanel').then((m) => ({ default: m.ImportWizardPanel })));
 const ActivityLogPanel = lazy(() => import('../admin/ActivityLogPanel').then((m) => ({ default: m.ActivityLogPanel })));
 const OrgControlPanel = lazy(() => import('../admin/OrgControlPanel').then((m) => ({ default: m.OrgControlPanel })));
@@ -54,6 +56,8 @@ export const INSPECTOR_TITLES: Record<InspectorType, string> = {
   sira_model: 'SIRA Model',
   sira_cycles: 'SIRA Cycles & Emergent Risks',
   plan_items: 'Audit Plan Items',
+  deployment_plan: 'Deploy from the plan',
+  prior_year_rollforward: 'Prior-year roll-forward',
   import_wizard: 'Import',
   activity_log: 'Activity Log',
   org_control: 'Assurance control plane',
@@ -130,6 +134,10 @@ export const RecordContent: React.FC<RecordContentProps> = ({ type, data, onClos
           return <SiraCyclesInspector universeId={data?.universeId} />;
         case 'plan_items':
           return <PlanItemsPanel items={data?.items ?? []} versions={data?.versions ?? []} />;
+        case 'deployment_plan':
+          return <PlanDeploymentPanel universeId={data?.universeId} engagementId={data?.engagementId} onDeployed={data?.onDeployed} />;
+        case 'prior_year_rollforward':
+          return <PriorYearRollforwardPanel engagements={data?.engagements ?? []} />;
         case 'import_wizard':
           return <ImportWizardPanel />;
         case 'activity_log':
