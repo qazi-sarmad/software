@@ -21,7 +21,7 @@ const runConnector = vi.fn();
 const browserTransport = vi.fn(() => ({}));
 vi.mock('../../data/connectors', () => ({
   runConnector: (...a: unknown[]) => runConnector(...a),
-  browserTransport: (...a: unknown[]) => browserTransport(...a),
+  browserTransport: () => browserTransport(),
 }));
 
 const connectorById = vi.fn();

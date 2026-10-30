@@ -19,7 +19,7 @@ beforeEach(() => {
 });
 
 import type { Connector, ConnectorInstance, Transport } from '../lib/writing/connectors';
-import { runConnector } from './connectors';
+import { browserTransport, runConnector } from './connectors';
 
 const INSTANCE: ConnectorInstance = {
   id: 'inst-1', orgId: 'org-a', connectorId: 'http-rest',
@@ -137,5 +137,37 @@ describe('connector runtime (S5)', () => {
     expect(rpcMock).toHaveBeenCalledWith('connector_run_finish', expect.objectContaining({
       p_run_id: 'run-1', p_status: 'failed', p_staged: 0,
     }));
+  });
+});
+
+describe('the browser transport is read-only and egress-checked', () => {
+  it('refuses a write method before any request leaves', async () => {
+    const t = browserTransport(['mock.local']);
+    await expect(t.request({ method: 'DELETE', url: 'https://mock.local/rows' } as never))
+      .rejects.toThrow('a connector transport is read-only: refused DELETE');
+  });
+
+  it('refuses a host that is not on the allow-list', async () => {
+    const t = browserTransport(['mock.local']);
+    await expect(t.request({ method: 'GET', url: 'https://evil.example/rows' }))
+      .rejects.toThrow('the host evil.example is not on the egress allow-list');
+  });
+
+  it('reads a listed host through fetch and returns its body', async () => {
+    const calls: string[] = [];
+    const original = globalThis.fetch;
+    globalThis.fetch = (async (url: string) => {
+      calls.push(url);
+      return { status: 200, headers: new Headers({ 'content-type': 'application/json' }), text: async () => '{"rows":[]}' };
+    }) as unknown as typeof fetch;
+    try {
+      const t = browserTransport(['mock.local']);
+      const res = await t.request({ method: 'GET', url: 'https://mock.local/rows' });
+      expect(res.status).toBe(200);
+      expect(res.body).toBe('{"rows":[]}');
+      expect(calls).toEqual(['https://mock.local/rows']);
+    } finally {
+      globalThis.fetch = original;
+    }
   });
 });

@@ -103,9 +103,48 @@ begin
     v_before + 1, 'the refused second start inserted no run');
   -- Once the run finishes, a new one is accepted.
   perform public.connector_run_finish(v_org, v_run, 'succeeded', 0, 0, 0, null, '');
-  perform provio_test.assert_true(
-    public.connector_run_start(v_org, v_inst) is not null,
-    'a new run starts once the previous one finished');
+  v_run := public.connector_run_start(v_org, v_inst);
+  perform provio_test.assert_true(v_run is not null, 'a new run starts once the previous one finished');
+  perform public.connector_run_finish(v_org, v_run, 'succeeded', 0, 0, 0, null, '');
+end $$;
+
+-- ===========================================================================
+-- 5. Scale (SCALE-PROGRAMME §5 flow 17): the run shape holds over a large batch. The batch size is
+--    read from the GUC `provio_test.scale_factor` (default 1), so the CI harness stays fast while a
+--    dedicated scale run reaches the target. The STRUCTURE is the same at any factor: one run, every
+--    record staged once, the counts exact.
+-- ===========================================================================
+do $$
+declare
+  v_org uuid := 'a0000000-0000-0000-0000-000000000001';
+  v_inst uuid := (select id from connector_instances where org_id = v_org and connector_id = 'http-rest');
+  v_run uuid;
+  v_batch int := 40 * coalesce(nullif(current_setting('provio_test.scale_factor', true), ''), '1')::int;
+  v_i int;
+  v_staged int;
+begin
+  v_run := public.connector_run_start(v_org, v_inst);
+  for v_i in 1..v_batch loop
+    perform public.staged_record_ingest(v_org, v_inst, v_run, 'http-rest',
+      'scale-' || v_i, encode(sha256(v_i::text::bytea), 'hex'), now(),
+      jsonb_build_object('amount', v_i), '[]'::jsonb);
+  end loop;
+  select count(*) into v_staged from staged_records
+    where org_id = v_org and instance_id = v_inst and source = 'http-rest' and source_id like 'scale-%';
+  perform public.connector_run_finish(v_org, v_run, 'succeeded', v_batch, v_batch, 0, null, 'scale run');
+  perform provio_test.assert_eq(v_staged, v_batch, format('every one of %s records staged once', v_batch));
+  perform provio_test.assert_eq(
+    (select rows_staged from connector_runs where id = v_run), v_batch,
+    'the run records the exact staged count');
+  -- Idempotence at scale: re-staging the same batch adds nothing.
+  for v_i in 1..v_batch loop
+    perform public.staged_record_ingest(v_org, v_inst, v_run, 'http-rest',
+      'scale-' || v_i, encode(sha256(v_i::text::bytea), 'hex'), now(),
+      jsonb_build_object('amount', v_i), '[]'::jsonb);
+  end loop;
+  perform provio_test.assert_eq(
+    (select count(*) from staged_records where org_id = v_org and source_id like 'scale-%'),
+    v_batch, 'a replayed batch stages nothing new');
 end $$;
 
 select provio_test.as_owner();
