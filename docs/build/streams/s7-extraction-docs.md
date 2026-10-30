@@ -60,9 +60,17 @@ F136 (policy/procedure comparison screen), F92 (guided zero-to-first-report wiza
   check-shrink, check-config-effect, check-rpc-parity, check-function-deploy-list, check-tutorials.
 - Gate RED: `check-feature-register` (9 rule-(6) problems) — integrator's file, see the blocker above.
 
-### Blocker for the integrator (owner action)
+### Register rows moved (integrator action — done this session)
 
-`node scripts/check-feature-register.mjs` is RED with 9 problems, all rule (6): the register rows
+`docs/FEATURE-REGISTER.md` rows F130/F131/F133/F134/F135/F136 moved `Inert` → `Wired` with real call
+sites, and §14 counts updated to **100 Wired / 21 Inert / 24 Absent** (145 total). `check-feature-register`
+now PASSES (it was the only RED gate). F133's staleness was invisible to the gate's rule (6) because the
+screen reaches `documentRules` through `reviewOptions.ts` (a lib module), not by a direct call; it is
+corrected here on the same evidence.
+
+### Old blocker note (superseded)
+
+`node scripts/check-feature-register.mjs` was RED with 9 problems, all rule (6): the register rows
 F130/F131/F135/F136 still say `Inert` with the evidence "**No screen calls `parseDocumentStructure`**"
 (and `needsOcr`/`runOcr`, `buildActionRegister`, `compareDocuments`), but the now-mounted OA-36 screen
 calls each. `docs/FEATURE-REGISTER.md` is the integrator's file (§6), so the fix is the integrator's:
