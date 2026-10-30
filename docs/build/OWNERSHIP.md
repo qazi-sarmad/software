@@ -35,7 +35,7 @@ it from the owner** and works around it meanwhile.
 | `docs/design/**`, `src/styles/tokens.css` (token **values**), `src/context/PersonalisationContext.tsx` | **DESIGN** |
 | `src/lib/theme/**` (the implementation the frozen tokens are read through) | **TRUNK / integrator** |
 | `src/lib/systeligon/types.ts`, `runner.ts`, `versioning.ts`, `packs.ts`, `ota.ts`, `rules/**`, `flows.ts`, `extract/**` | **S1** |
-| `src/components/audit/RuleRunTab.tsx`, `RulePackPanel.tsx` | **S1** |
+| `src/components/audit/RuleRunTab.tsx`, `src/components/admin/RulePackPanel.tsx` | **S1** (the file, even though it sits in S6's `admin/` directory — see the S6 row) |
 | `src/data/rulePacks.ts`, `src/data/population.ts` | **S1** |
 | `src/lib/assurance/**`, `src/data/assurance*.ts` | **S2** |
 | `src/components/assurance/**` | **S2** |
@@ -48,7 +48,7 @@ it from the owner** and works around it meanwhile.
 | `src/data/connectors*.ts`, `src/lib/systeligon/connectorCatalogue.ts` | **S5** |
 | `src/data/notifications.ts`, `src/data/email*.ts` | **S5** |
 | `src/lib/lifecycle/**`, `src/data/lifecycle*.ts` | **S6** |
-| `src/components/admin/**` (OrgControlPanel, settings screens) | **S6** |
+| `src/components/admin/**` (OrgControlPanel, settings screens) — **except** `RulePackPanel.tsx`, which is S1's | **S6** |
 | `src/lib/extract/**` → **moved to** `src/lib/systeligon/extract/**` by S7 | **S7** |
 | `src/components/documents/**` | **S7** |
 | `src/guards/<stream>.test.ts` | **each stream adds its OWN new guard file** |

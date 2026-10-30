@@ -21,6 +21,11 @@ export * as assurance from './assurance';
 // --- S3: risk, classification and planning D10 / D14 / D15 -----------------------------------------
 export * as risk from './risk';
 
+// --- S4: platform control D11 / D12 / D13 ----------------------------------------------------------
+export * as platform from './platform';
+export * as entitlements from './entitlements';
+export * as deployment from './deployment';
+
 // --- S5: connector runtime C1 / C3 -----------------------------------------------------------------
 export * as connectors from './connectors';
 
