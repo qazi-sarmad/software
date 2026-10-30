@@ -94,6 +94,15 @@ declare
 begin
   insert into orgs (id, name, is_demo) values (v_org, provio_test.scale_org_prefix() || 'A', false);
 
+  -- The large tenant's own account, so an authenticated read of its own rows is possible (and so the
+  -- tenant is complete). auth.users is not reached by reset_data()'s truncate, so clear it first.
+  delete from auth.users where email = 'scale-a-cia@example.test';
+  insert into roles (id, org_id, name, slug, is_seed, rights)
+  values (provio_test.det_uuid('5ca1ea06', 0), v_org, 'CIA', 'cia', true, provio_test.scale_cia_rights());
+  insert into auth.users (id, email) values (provio_test.det_uuid('5ca1ea07', 0), 'scale-a-cia@example.test');
+  insert into org_members (org_id, user_id, role_id, hierarchy_level)
+  values (v_org, provio_test.det_uuid('5ca1ea07', 0), provio_test.det_uuid('5ca1ea06', 0), 3);
+
   insert into universes (id, org_id, name)
   select provio_test.det_uuid('5ca1ea01', i), v_org, format('SCALE-A-U%s', i)
   from generate_series(1, v_univ) i;

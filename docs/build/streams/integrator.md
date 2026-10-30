@@ -77,7 +77,11 @@ Created at `968e30d`:
 | — map ⟷ latest prompts | Stale | Reconciled | `docs/build/OWNERSHIP.md` §1/§2/§4.1 | `src/guards/mountPoints.test.ts` | — | `_this commit_` |
 | — `tutorialTargets` flake | Flaky (7.3 s timeout) | Fixed | `src/guards/tutorialTargets.test.ts` | the same guard, now 0.8 s | — | `d599cb5` |
 | S17 scale generator | Absent | Built | `supabase/tests/99_scale_seed.sql`, `scripts/scale-seed.mjs` | the SQL harness runs 99 twice; `scale-seed.mjs --factor=3` twice gives an identical fingerprint | — | `30f5734` |
-| S17 ≥200-session isolation | Absent | Proved | `supabase/tests/99_scale_seed.sql` (dblink concurrency block) | test 99 at `scale_factor=13`, `scale_sessions=2` → **208 concurrent sessions**, each isolated | — | `_this commit_` |
+| S17 ≥200-session isolation | Absent | Proved | `supabase/tests/99_scale_seed.sql` (dblink concurrency block) | test 99 at `scale_factor=13`, `scale_sessions=2` → **208 concurrent sessions**, each isolated | — | `80374de` |
+| S17 own-org read latency (§6) | Unmeasured | Measured | `scripts/scale-seed.mjs --probe` | the probe at `factor=50` (200 own universes) → p50 56 ms / p95 60 ms, RLS on | — | `_this commit_` |
+| — OWNERSHIP `admin/**` double-claim | Collision | Fixed | `docs/build/OWNERSHIP.md` §2 (`RulePackPanel.tsx` is S1's) | `src/guards/mountPoints.test.ts` | — | `2006405` |
+| — OWNERSHIP `extract/**` double-claim | Collision | Fixed | `docs/build/OWNERSHIP.md` §2 (S7 owns the moved module) | `src/guards/mountPoints.test.ts` | — | `_this commit_` |
+| — data barrel missed S4 | Incomplete | Fixed | `src/data/index.ts` (platform / entitlements / deployment) | `src/guards/mountPoints.test.ts` | — | `2006405` |
 
 ### S17 — the deterministic scale generator (`docs/build/SCALE-PROGRAMME.md` §4)
 

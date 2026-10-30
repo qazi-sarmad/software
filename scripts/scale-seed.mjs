@@ -9,6 +9,7 @@
  * Usage:
  *   node scripts/scale-seed.mjs --factor=20
  *   node scripts/scale-seed.mjs --target           # the §1 designated shape
+ *   node scripts/scale-seed.mjs --target --probe   # build, then measure own-org read latency
  *   node scripts/scale-seed.mjs --clean            # remove the generator's fixtures and exit
  *   node scripts/scale-seed.mjs --target --clean   # clean, then build the target shape
  *
@@ -17,6 +18,7 @@
  *   --target     use the §1 designated counts (5,000 entities, 1,000,000 population rows,
  *                2,000 engagements, 100,000 evidence rows, 5,000,000 ledger entries)
  *   --db=NAME    the database (default: env SCALE_DB or provio_local)
+ *   --probe      after building, measure the §6 own-org read latency (p50/p95) and report it
  *   --clean      remove the generator's fixtures; skip building
  *
  * It assumes a migrated database (the SQL harness leaves one). It connects the same way the harness
@@ -103,3 +105,40 @@ select
 const out = psql(`${gucs.join('\n')}\n${body}`);
 process.stdout.write(out);
 process.stdout.write(`scale-seed: built at factor=${structFactor}${target ? ' (target shape)' : ''}\n`);
+
+if (opt('probe', false)) {
+  // §6 latency: the own-org read under the large-tenant shape. The query runs as an authenticated
+  // CIA member (RLS on) against the seed org's universes, 20 times; the probe reports p50/p95 and the
+  // zero-leakage read, and asserts nothing (a CI wall-clock assertion flakes).
+  const probe = `
+select provio_test.seed();
+select provio_test.as_owner();
+select provio_test.scale_seed_a(${structFactor});
+-- Read as a CIA member of the large tenant itself (the §6 "own-org read at the large-tenant shape").
+select provio_test.as_user('5ca1ea07-0000-4000-8000-000000000000', '5ca1ea00-0000-4000-8000-000000000000', 'cia');
+do $$
+declare
+  v_ms double precision;
+  v_all double precision[] := '{}';
+  v_p50 double precision;
+  v_p95 double precision;
+  v_own int;
+  n int;
+begin
+  for n in 1..20 loop
+    v_ms := extract(epoch from clock_timestamp()) * 1000;
+    select count(*) into v_own from universes where org_id = '5ca1ea00-0000-4000-8000-000000000000';
+    v_all := v_all || (extract(epoch from clock_timestamp()) * 1000 - v_ms);
+  end loop;
+  select percentile_cont(0.5) within group (order by x) into v_p50 from unnest(v_all) as t(x);
+  select percentile_cont(0.95) within group (order by x) into v_p95 from unnest(v_all) as t(x);
+  raise notice 'latency probe: own-org universe read p50=% ms p95=% ms over 20 runs (expected % rows)',
+    round(v_p50::numeric, 1), round(v_p95::numeric, 1), ${4 * structFactor};
+  raise notice 'latency probe: the reading session saw % own universes (RLS on)', v_own;
+end $$;
+select provio_test.as_owner();
+select provio_test.scale_cleanup();
+`;
+  process.stdout.write(psql(`${lib}\n${probe}`));
+  process.stdout.write('scale-seed: latency probe complete (see the notices above)\n');
+}
