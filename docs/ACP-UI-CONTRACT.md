@@ -1427,6 +1427,30 @@ minimum number of independent authorities a stamp must carry before the seal cou
 - **Tutorial key:** `sa.integrity-anchoring`
 
 
+## SA-21 — standards distribution (D16, docs/STANDARDS-DISTRIBUTION.md)
+
+The platform standards catalogue: every rule base the product ships as a signed, versioned **standards
+pack**, a publish action that signs the shipped rule library with the platform key, and a rollout to
+entitled tenants that shows the per-tenant outcome. A tenant that does not pay for a pack is skipped
+and recorded, never silently applied.
+
+- **Route:** `/superadmin`, tab `Standards` (`superadmin-tab-standards`).
+- **Rights:** platform admin (`is_platform_admin()`); every write is a platform-only RPC
+  (`platform_signing_key_register`, `standards_pack_publish`, `standards_rollout`), re-checked in the
+  database. `standards_pin` is a tenant action gated on `edit_config` or a Head.
+- **Data:** `listStandardsCatalogue`, `listStandardsSubscriptions`, `registerPlatformSigningKey`,
+  `publishStandardsPack`, `rolloutStandardsPack`, `buildSignedStandardsPack` (`src/data/standards.ts`),
+  `listTenants` (`src/data/platform.ts`), `STANDARDS_CATALOGUE`, `SHIPPED_RULES`.
+- **Testids:** `superadmin-standards`, `superadmin-standards-loading`, `superadmin-standards-error`,
+  `superadmin-standards-result`, `superadmin-standards-empty`, `superadmin-standards-catalogue`,
+  `standards-catalogue-<packId>`, `standards-publish-pack`, `standards-publish-version`,
+  `standards-publish`, `standards-shipped-rules`, `standards-rollout-tenants`,
+  `standards-rollout-<orgId>`, `standards-rollout`, `standards-subscriptions`,
+  `standards-subscriptions-empty`, `standards-subscription-<packId>`.
+- **States:** loading; error (with Retry); ready; empty tenant list; an inline result listing the
+  per-tenant outcome after a rollout, or the exact refusal after a publish.
+- **Tutorial key:** none recorded yet.
+
 ## Tutorials regenerated
 
 `npm run tutorials:record` regenerates every GIF (S12). The recorder binds only to the testids listed
@@ -1927,3 +1951,96 @@ in the browser; only the public half is registered, and registering retires the 
   controls and the refusal log; empty (`rule-pack-empty`); an inline result or refusal after a save or
   release.
 - **Tutorial key:** `oa.governance`
+
+## OA-36 — Documents, minutes and policy review (S7)
+
+The document-review surface: the auditor attaches the engagement's documents, declares what each one
+IS, and chooses which reviews to run. The engine runs every option selected over the whole set — the
+declared-type check, the structural document rules, the minutes action register, the policy/procedure
+comparison and the structural pattern rules — and reports each finding with its rule id, version and
+the clauses it cited. The engine asks; it does not assume.
+
+Two verdicts are shown before any finding, because everything else depends on them. The declared-type
+check compares the auditor's claim against the document's own declared shape (a fixed marker table,
+never a model): a document filed as minutes whose text reads as a regulation is flagged `discrepant`
+before its "missing quorum" is trusted, and a document the check cannot recognise is reported
+`unconfirmable`, never a fabricated disagreement. The coverage lines report what the structure parser
+and the comparison parsed and what they could not interpret, so an unparsed clause is never presented
+as a clean one. A scan (an extraction with no text layer) is reported as a scan and routed to the
+bundled OCR seam, which refuses a remote engine so nothing leaves the tenant.
+
+- **Route:** the engagement's document review (the documents work surface).
+- **Rights:** `perform_work` to run a review and to record the findings; any member of the org reads
+  the documents and their extraction.
+- **Data:** `listEvidenceFiles`, `loadExtractionText`, `recordDocumentReviewFindings`
+  (`src/data/documentReview.ts`); `runRules`, `parseDocumentStructure`, `buildActionRegister`,
+  `compareDocuments`, `assessDocType`, `REVIEW_OPTIONS`, `resolveReviewOptions`, `rulesForOptions`,
+  `ALL_REVIEW_OPTIONS`, `DOC_KINDS` (`src/lib/systeligon`).
+- **Testids:** `docreview-panel`, `docreview-rights-note`, `docreview-error`, `docreview-loading`,
+  `docreview-load-error`, `docreview-no-engagement`, `docreview-empty`, `docreview-options`,
+  `docreview-option-toggle-all`, `docreview-option-<id>`, `docreview-file-list`, `docreview-file-<i>`,
+  `docreview-file-include-<i>`, `docreview-declared-<i>`, `docreview-run`, `docreview-verdicts`,
+  `docreview-verdict-discrepant-note`, `docreview-verdict-<ref>`, `docreview-verdict-state-<ref>`,
+  `docreview-coverage`, `docreview-coverage-<ref>`, `docreview-results`, `docreview-summary`,
+  `docreview-skipped`, `docreview-findings`, `docreview-findings-empty`, `docreview-finding-<i>`,
+  `docreview-record`, `docreview-recorded`, `minutes-register`, `minutes-register-empty`,
+  `minutes-item-<i>`, `policydiff`, `policydiff-coverage`, `policydiff-findings`,
+  `policydiff-finding-<i>`, `policydiff-empty`.
+- **States:** loading; error; no engagement selected; empty (no documents); ready with the option
+  picker and the document list; a denied state (no `perform_work`); a run with the declared-type
+  verdicts, the coverage lines, the findings table, the action register and the comparison; an inline
+  result after recording.
+- **Tutorial key:** —
+
+## OA-39 — Global document search (S7)
+
+One box that full-text-searches the text of every extracted document in the organisation and returns
+only the documents the caller's rights let them see. Where the Document Viewer (OA-35) searches inside
+one engagement, this surface answers "where in this organisation does this phrase appear?" — always
+within the caller's scope.
+
+The search, the organisation filter and the scope filter are all the database's
+(`global_document_search`, migration `0190`): it reads `document_extractions.extracted_text` and applies
+the same access predicate the `engagements` RLS policy uses (`can_read_all_scopes()` or
+`has_scope(universe_id, entity_id, engagement_id)`). A document outside the caller's scope, or in
+another tenant, is simply absent — the screen cannot surface it and does not learn that it exists. A
+blank query is refused by name, so the screen shows the reason rather than an unbounded list. Every hit
+names the file, its stage, and the engagement, entity and universe it belongs to, so a result is never
+an unplaceable snippet.
+
+- **Route:** the "Search all documents" action in the command palette (`Cmd/Ctrl-K`), opening the
+  search surface.
+- **Rights:** any read right — `perform_work`, `review_and_approve`, `read_only` or `view_all_scopes`.
+  A configuration-only principal sees the reason it cannot search and no search box.
+- **Data:** `searchDocumentsGlobal` (`src/data/globalSearch.ts`) → `global_document_search` (0190).
+- **Testids:** `globalsearch-panel`, `globalsearch-rights-note`, `globalsearch-input`,
+  `globalsearch-loading`, `globalsearch-refusal`, `globalsearch-error`, `globalsearch-idle`,
+  `globalsearch-empty`, `globalsearch-count`, `globalsearch-results`, `globalsearch-hit-<fileId>`,
+  `globalsearch-snippet-<fileId>`, `globalsearch-place-<fileId>`.
+- **States:** denied (no read right); idle (no query yet); searching; a named refusal (a blank query);
+  a load error; empty (nothing within the caller's access matches); ready with the count and the
+  ranked hits, each naming its place.
+- **Tutorial key:** —
+
+## OA-38 — Ad-hoc review builder (S7)
+
+The auditor's own condition builder — a SEPARATE module from the document-review screen (OA-36). The
+system's review flow runs unprompted; this screen exists only when the auditor asks for it. They
+describe ONE condition of their own (a source attribute, an operator and a threshold), see a
+deterministic preview over a fixed sample, and release it as a normal versioned rule. The built rule
+runs through the same runner and its findings carry its id and version like any shipped rule. It is a
+declared condition over the data, not a model: nothing is inferred and nothing is generated.
+
+- **Route:** the "Build an ad-hoc rule" action in the command palette (`Cmd/Ctrl-K`).
+- **Rights:** `perform_work` to build and preview a rule; a principal without it sees the reason and
+  no builder.
+- **Data:** pure — `buildAdhocRule`, `runAdhocRule` (`src/lib/systeligon`). The preview runs over a
+  fixed sample, so it reads no tenant row and no clock (the run instant is captured at Run and passed
+  in).
+- **Testids:** `adhoc-review-panel`, `adhoc-review-rights-note`, `adhoc-review-form`,
+  `adhoc-review-title`, `adhoc-review-source`, `adhoc-review-condition`, `adhoc-review-threshold`,
+  `adhoc-review-threshold2`, `adhoc-review-severity`, `adhoc-review-result`, `adhoc-review-summary`,
+  `adhoc-review-preview`, `adhoc-review-findings`, `adhoc-review-finding-<i>`, `adhoc-review-empty`.
+- **States:** denied (no `perform_work`); ready (the builder form); an invalid spec (a named refusal,
+  nothing previewed); a preview with its findings, or an honest empty preview.
+- **Tutorial key:** —

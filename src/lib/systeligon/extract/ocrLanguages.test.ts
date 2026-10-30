@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   OCR_LANGUAGES, OCR_ENGINE_CHOICES, DEFAULT_OCR_LANGUAGE,
-  buildOcrEngineConfig, defaultOcrEngineConfig, ocrLanguage, packTraineddata,
+  buildOcrEngineConfig, defaultOcrEngineConfig, ocrLanguage, packFontTables,
 } from './ocrLanguages';
 
 describe('OCR language layer (S7 tier 2)', () => {
@@ -19,7 +19,7 @@ describe('OCR language layer (S7 tier 2)', () => {
   it('builds a combined lang string in the order requested, core before nothing invented', () => {
     const cfg = buildOcrEngineConfig(['eng', 'urd'], ['core', 'extended']);
     expect(cfg.lang).toBe('eng+urd');
-    expect(cfg.files).toEqual(['eng.traineddata', 'urd.traineddata']);
+    expect(cfg.tables).toEqual(['latin', 'arabic']);
     expect(cfg.rtl).toBe(true);
     expect(cfg.scripts).toEqual(['latin', 'arabic']);
     expect(cfg.missing).toEqual([]);
@@ -43,18 +43,17 @@ describe('OCR language layer (S7 tier 2)', () => {
     expect(buildOcrEngineConfig([]).lang).toBe('eng');
   });
 
-  it('packTraineddata lists exactly the files a pack must ship', () => {
-    expect(packTraineddata('core')).toContain('eng.traineddata');
-    expect(packTraineddata('core')).not.toContain('urd.traineddata');
-    expect(packTraineddata('extended')).toContain('urd.traineddata');
-    expect(packTraineddata('extended')).toContain('snd.traineddata');
+  it('packFontTables lists exactly the tables a pack must ship', () => {
+    expect(packFontTables('core')).toContain('latin');
+    expect(packFontTables('core')).not.toContain('arabic');
+    expect(packFontTables('extended')).toContain('arabic');
   });
 
   it('every engine choice is bundled and free (nothing leaves the tenant)', () => {
     for (const e of OCR_ENGINE_CHOICES) {
       expect(e.bundled).toBe(true);
       expect(e.arabicScript).toBe(true);
-      expect(['Apache-2.0', 'MIT']).toContain(e.licence);
+      expect(e.name).toBe('bundled-bitmap');
     }
   });
 });

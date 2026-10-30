@@ -124,6 +124,11 @@ begin
       -- rows in email_queue do not reach them by cascade alone on a reused database, so clear the
       -- per-run rows explicitly.
       delete from email_queue where metadata ->> 'kind' = 'user_invitation';
+      -- D16 (0191). standards_packs has no FK to orgs (it is the platform catalogue), so it is not
+      -- reached by `truncate orgs cascade`. TRUNCATE does not fire the append-only row trigger, so
+      -- the immutability guarantee is unaffected; the platform signing key likewise accumulates.
+      truncate standards_packs;
+      delete from signing_keys where scope = 'platform';
       perform pg_advisory_unlock(hashtext('provio_test.seed'));
       return;
     exception when deadlock_detected or lock_not_available then

@@ -69,6 +69,9 @@ export const MOUNTED_SCREENS: ScreenMount[] = [
   { screenId: 'OA-23', title: 'Connectors and continuous monitoring', owner: 's5', path: 'src/components/writing/ConnectorMonitorPanel.tsx', status: 'mounted' },
   { screenId: 'OA-29', title: 'Integrity alarm', owner: 'trunk', path: 'src/components/admin/IntegrityAlarmPanel.tsx', status: 'mounted' },
   { screenId: 'OA-30', title: 'Attestation', owner: 'trunk', path: 'src/components/admin/AttestationPanel.tsx', status: 'mounted' },
+  { screenId: 'OA-39', title: 'Global document search', owner: 's7', path: 'src/components/documents/GlobalSearchPanel.tsx', status: 'mounted' },
+  { screenId: 'OA-36', title: 'Documents, minutes and policy review', owner: 's7', path: 'src/components/documents/DocumentReviewPanel.tsx', status: 'mounted' },
+  { screenId: 'OA-38', title: 'Ad-hoc review builder', owner: 's7', path: 'src/components/documents/AdhocReviewPanel.tsx', status: 'mounted' },
 ];
 
 /**
@@ -87,7 +90,7 @@ export const PLANNED_SCREENS: ScreenMount[] = [
   { screenId: 'SA-20', title: 'Readiness signals, complaints and self-diagnostic (D12/D13)', owner: 's4', path: 'src/components/superadmin/SuperAdminReadiness.tsx', status: 'planned' },
   { screenId: 'SA-21', title: 'Standards distribution (D16)', owner: 's4', path: 'src/components/superadmin/SuperAdminStandards.tsx', status: 'planned' },
   // S7 — document, minutes and policy rule surfaces (S7/S8/S9/S14/S15).
-  { screenId: 'OA-36', title: 'Documents, minutes and policy review', owner: 's7', path: 'src/components/documents/DocumentReviewPanel.tsx', status: 'planned' },
+  // OA-36 (document review) is now mounted; its slot lives in MOUNTED_SCREENS.
 ];
 
 /** Every slot, mounted and planned, in a stable order. */

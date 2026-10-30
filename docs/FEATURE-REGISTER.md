@@ -90,7 +90,7 @@ feature to be testable.
 | F27 | Ethics sign-off | `Wired` | `ethics` inspector kind + acks | — |
 | F28 | Test steps as configurable data | `Wired` | `test_step_templates` / `procedure_templates` (`0110_phase4_methodology.sql`); `applyTemplateToWorkpaper` (`src/data/writing.ts`) is called from `ProcedureStepsPanel.tsx` | R5 |
 | F29 | Procedure / methodology templates | `Wired` | `MethodologyPanel.tsx` (mounted in `OrgControlPanel.tsx`) calls `listProcedureTemplates`/`saveProcedureTemplate`/`publishProcedureTemplate` | R5 |
-| F30 | Stage machine configurable | `Absent` | Three hardcoded strings `'planning' \| 'testing' \| 'conclusion'` | R5 |
+| F30 | Stage machine configurable | `Wired` | `src/components/admin/StageMachinePanel.tsx` (mounted by `OrgGovernancePanel.tsx`); read path `src/data/lifecycle.ts`; the DB write path `set_engagement_stage` reads the machine (`0179_stage_machine.sql`). The three hardcoded strings are replaced by the configured stages. Proved by `StageMachinePanel.test.tsx` and `supabase/tests/138_stage_machine.sql` (happy + 6 refusals) | R5 |
 
 ---
 
@@ -102,7 +102,7 @@ feature to be testable.
 | F32 | Report file render + upload (PDF/DOCX) | `Wired` | `src/data/reportFiles.ts` uploads to the `reports` bucket | S20 |
 | F33 | Pre-flight acknowledgement storage | `Wired` | `preflight_acks` + `acknowledgePreflight` in `ReportEditorPanel` | — |
 | F34 | Pre-flight engine (the eight checks) | `Wired` | `freeze_report` computes the open pre-flight items from real tables and refuses while any is unacknowledged (`0102_phase2_preflight_gate.sql`); `preflightBlocking`/`listPreflightItems` drive `ReportEditorPanel` | R2 |
-| F35 | Report templates | `Inert` | `report_template_save` exists; readers never called | R3 |
+| F35 | Report templates | `Wired` | `ReportTemplatePanel.tsx` (the Org Admin `templates` tab) lists templates through `listReportTemplates` and saves through `saveReportTemplate` → `report_template_save` (`src/data/governance.ts`). Tested by `ReportTemplatePanel.test.tsx` and `supabase/tests/109_phase3_report_templates.sql` | R3 |
 | F36 | Certificate config and verification | `Wired` | `certificate_config_save`, `verify_certificate`, `PublicVerifyRoute` | — |
 | F37 | Report graph root verification | `Wired` | `commitReportGraph` writes the graph (`ReportEditorPanel.tsx:160`) and `verifyReportRoot` re-derives the root (`PublicVerifyRoute.tsx:43`); `ReportEditorPanel` reads the committed graph back (`getReportGraph` → `report-graph-panel`) | R2 |
 | F38 | Report writer adopts an uploaded format | `Wired` | §9 of SYSTELIGON — the org format is the `BrandingSpec` the writer reads (`src/data/reportFiles.ts`); font/colour auto-detect via `src/lib/fonts/detect.ts`, adopted in `OrgBrandingPanel.tsx` | F5, F6 |
@@ -130,10 +130,10 @@ feature to be testable.
 
 | # | Capability | Status | Evidence / gap | WP |
 |---|---|---|---|---|
-| F49 | Monitor rules (threshold, rate, sequence, set, missing, cross-source) | `Inert` | `evaluateMonitor`, `runMonitors` — **tests only** | C1 |
-| F50 | Monitor runner (scheduled) | `Inert` | `rule_engine_process` — 0 production refs | C1 |
-| F51 | Alert persistence | `Inert` | `alert_record` — 0 production refs | C1 |
-| F52 | Alert to Work Queue | `Inert` | No delivery path; the delivery test is absent | C3 |
+| F49 | Monitor rules (threshold, rate, sequence, set, missing, cross-source) | `Wired` | `src/lib/writing/monitors.ts` — six deterministic rule kinds, the spec/parity twin of the SQL evaluator. The production path is `monitor_evaluate_org` (`0111_phase5_monitor_runner.sql`): the `pg_cron` `monitor-runner` job (`*/5 * * * *`) evaluates every organisation's released rules over its staged records and writes a hash-chained alert per firing rule. The two implementations are pinned to the same lineage hashes by `src/lib/writing/monitorRunnerParity.test.ts`. Proved by `supabase/tests/112_phase5_monitor_runner.sql` (all six released rules fire) | C1 |
+| F50 | Monitor runner (scheduled) | `Wired` | `monitor_runner_sweep(limit)` (`0111_phase5_monitor_runner.sql:472`) is the scheduled entry point; `cron.schedule('monitor-runner', '*/5 * * * *', …)`. It also drains the `automation_events` outbox through `automation_dispatch_pending` → `rule_engine_process` (no trigger, so test 66's direct call stays valid). Proved by `supabase/tests/112_phase5_monitor_runner.sql` | C1 |
+| F51 | Alert persistence | `Wired` | `alert_record` (0090) is called by `monitor_evaluate_org` (`0111_phase5_monitor_runner.sql:353`) for each firing rule; it writes a hash-chained `monitor_alerts` row (dedup on the signal set, not the lineage hash). Proved by `supabase/tests/112_phase5_monitor_runner.sql` (six alerts written, `verify_monitor_chain` passes, a later sweep writes none) | C1 |
+| F52 | Alert to Work Queue | `Wired` | `monitor_alert_notify` (`0113_phase5_delivery.sql`) is called at the end of `alert_record` — the single write path for an alert — so no alert can be written undelivered. It writes one in-app `notifications` row per member holding `review_and_approve` (visible in the Work Queue, read by `notifications_list()`) and queues one `email_queue` row per recipient with an address. Proved by `supabase/tests/114_phase5_delivery.sql` (21 assertions) | C3 |
 | F53 | Alert enrichment (entity, dept, SIRA, inherent/residual, controls) | `Wired` | §11.1 — `alert_enrichment` (`0112_phase5_alert_enrichment.sql`) resolves the fields; `listAlerts` (`src/data/writing.ts`) reads them and `ConnectorMonitorPanel.tsx` renders them on each alert | C2 |
 | F54 | Adhoc audit suggestion from an anomaly | `Wired` | §11.1 — `alertAdhocSuggestion`/`alertAdhocAuditRaise` (`src/data/writing.ts`) called from `AlertActionsPanel.tsx` | C4 |
 | F55 | Alert triage surface | `Wired` | §11.1 — `triageAlert` (`src/data/writing.ts`) called from `ConnectorMonitorPanel.tsx` | C6 |
@@ -170,14 +170,14 @@ category, because it looks like a working control.
 
 | # | Setting | Status | Gap | WP |
 |---|---|---|---|---|
-| F72 | `org_lifecycle_settings.testing_mode` | `Inert` | Never read by a sign path | R3 |
-| F73 | `org_lifecycle_settings.signoff_role_*` | `Inert` | `sign_planning` / `sign_conclusion` ignore it | R3 |
-| F74 | `workflow_settings.approval_chain` | `Inert` | Never consulted for a decision | R3 |
-| F75 | `report_templates` | `Inert` | Readers never called | R3 |
-| F76 | `anchoring_settings` (trust anchor, timestamp authority) | `Inert` | `admin_save_trust_anchor`, `admin_save_timestamp_authority` are dead setters | R3 |
+| F72 | `org_lifecycle_settings.testing_mode` | `Wired` | `set_engagement_stage` enforces `two_stage` (a DEA and an OET workpaper, both signed off) before the transition to `conclusion` (`0101_phase2_lifecycle.sql`). Proved by `supabase/tests/102_phase2_lifecycle.sql` §2 | R3 |
+| F73 | `org_lifecycle_settings.signoff_role_*` | `Wired` | `sign_planning` / `sign_conclusion` require the configured team role through `caller_meets_signoff_role` (`0101_phase2_lifecycle.sql:98`), and `sign_off_workpaper` requires `signoff_role_testing` (`0107_phase3_workflow_enforcement.sql`). Proved by `supabase/tests/102_phase2_lifecycle.sql` §3 | R3 |
+| F74 | `workflow_settings.approval_chain` | `Wired` | `approve_plan` requires every step of the chain to be recorded, in order, before approval (`0101_phase2_lifecycle.sql` §4, via `approval_chain_for`/`approval_chain_ready`). Proved by `supabase/tests/102_phase2_lifecycle.sql` §4 | R3 |
+| F75 | `report_templates` | `Wired` | See F35 — the Org Admin `templates` tab lists and saves templates through the real readers (`src/data/governance.ts`); the DB save path is `report_template_save`. Proved by `supabase/tests/109_phase3_report_templates.sql` | R3 |
+| F76 | `anchoring_settings` (trust anchor, timestamp authority) | `Wired` | `IntegrityAnchoringPanel.tsx` (Super Admin `integrity` tab) saves through `saveTrustAnchor`/`saveTimestampAuthority` → `admin_save_trust_anchor`/`admin_save_timestamp_authority` (`src/data/integrityAnchoring.ts`). Tested by `IntegrityAnchoringPanel.test.tsx` | R3 |
 | F77 | `cap_items` workflow (DB path) | `Wired` | `update_cap` is called from `CapRegisterPanel.tsx` and `IssuesRegisterTab.tsx`. A parallel in-memory `transitionCapStatus` also exists and is what runs on some paths — the two-UIs defect | R2 |
-| F78 | `org_lifecycle_settings.report_opinion_required` | `Inert` | Partial enforcement | R3 |
-| F79 | Workflow SLA / escalation | `Inert` | SLA computed, escalation job exists, decision path does not read it | R3 |
+| F78 | `org_lifecycle_settings.report_opinion_required` | `Wired` | `sign_conclusion` requires the opinion when either the column or the legacy config key asks for it (a two-sources fix, `0109_phase3_config_effects.sql` §1). Proved by `supabase/tests/110_phase3_config_effects.sql` §1 | R3 |
+| F79 | Workflow SLA / escalation | `Wired` | `request_combined_deployment` computes `sla_due_at` from `workflow_settings.sla_hours`; `escalate_overdue_deployment_requests`/`deployment_requests_escalate_all` escalate past `escalation_hours` and notify `escalation_role` (`0107_phase3_workflow_enforcement.sql`). Proved by `supabase/tests/108_phase3_workflow_enforcement.sql` | R3 |
 
 **Rule R3:** for every row above, either **enforce it** with a test proving the setting changes
 behaviour, or **remove it from the UI** and mark it deferred. No field may be visible and inert.
@@ -192,9 +192,9 @@ behaviour, or **remove it from the UI** and mark it deferred. No field may be vi
 | F81 | Cross-universe view-only sharing | `Wired` | `universe_shares`, `share_grant` / `share_revoke` / `share_covers`, Head-level checks, `SharePanel` in the `sharing` tab | — |
 | F82 | Share expiry and revocation | `Wired` | `expires_at`, `revoked_at` enforced in `share_covers` | — |
 | F83 | Share notification (in-app + email) | `Wired` | Notification on grant | — |
-| F84 | Multi-org isolation under concurrency | `Absent` | No SQL test creating ≥3 concurrent orgs | R6 |
-| F85 | Support access grant / revoke | `Inert` | `grant_support_access` / `revoke_support_access` — only legacy-name refs | R6 |
-| F86 | Support access logged | `Absent` | Every support read must be logged | R6 |
+| F84 | Multi-org isolation under concurrency | `Wired` | `supabase/tests/123_scale_isolation.sql` creates three-plus concurrent organisations, writes data in each, and proves the RLS paths keep them apart (the `jwt_org_id()` path, the cross-universe share path, the invite-cap and feature-flag switches, the support-grant surface) — every refusal paired with the legitimate read, run twice by the harness | R6 |
+| F85 | Support access grant / revoke | `Wired` | The Super Admin support screen (`SuperAdminSupport.tsx`, SA-02) grants and revokes through `grantSupportAccess`/`revokeSupportAccess` (`src/data/platform.ts`) → `platform_grant_support_access`/`platform_revoke_support_access` (0031), both gated on `require_platform_admin()`. The org-admin variant `grant_support_access` is the tenant-side path (`manage_users`). Tested by `src/components/superadmin/SuperAdminSupport.test.tsx` and `supabase/tests/40_platform_control_plane.sql` | R6 |
+| F86 | Support access logged | `Wired` | Every support read is written to `support_access_log` — including a refused read, which writes a denied row. `support_read_object`/`support_list_engagements` write the trail; `support_access_log` has no write policy (service/definer only). Proved by `supabase/tests/85_support_read_session.sql` (refused reads logged, expiry/revocation stop access, no support function is a write path) | R6 |
 
 ---
 
@@ -218,9 +218,9 @@ behaviour, or **remove it from the UI** and mark it deferred. No field may be vi
 | # | Capability | Status | Evidence / gap | WP |
 |---|---|---|---|---|
 | F95 | Notification templates | `Wired` | `render_notification` enforced | — |
-| F96 | In-app notification delivery | `Inert` | No test proves delivery into the Work Queue | C3 |
+| F96 | In-app notification delivery | `Wired` | Delivery is proved at the database: `supabase/tests/114_phase5_delivery.sql` §2 asserts the triager sees the alert through `notifications_list()` (the Work Queue read path) and a non-triager does not. The screen path is `e2e/s15-notifications.spec.ts`: a notification raised in the database reaches the Work Queue and the bell without a reload | C3 |
 | F97 | Realtime transport | `Wired` | `liveSync` | — |
-| F98 | Realtime pop-out sync | `Absent` | No Playwright coverage; poll fallback unproven | C3 |
+| F98 | Realtime pop-out sync | `Wired` | `e2e/s14-popout-sync.spec.ts` (SCALE-1 §17.1) proves the pop-out and its parent converge on the same record: a revision published in either window is visible to the other, and the same-origin storage channel (`useRecordRevisionSync.ts`, policy in `src/lib/liveSync.ts`) converges the two windows even when Realtime is unavailable — the documented fallback, exercised | C3 |
 | F99 | Email dispatch | `Wired` | `email-dispatch` edge function, `email_dispatch_set_token` | — |
 
 ---
@@ -241,7 +241,7 @@ behaviour, or **remove it from the UI** and mark it deferred. No field may be vi
 | F109 | Animated headers | `Absent` | §12.5 | U13 |
 | F110 | Command palette | `Wired` | `CommandPalette.tsx` (Cmd/Ctrl-K) over the pure `rankCommands`/`visibleCommands`/`recordCommands` in `src/lib/commandPalette.ts`; screens, records, actions and explain entries; non-blocking | U2 |
 | F111 | Density toggle | `Absent` | §11.1c U7 | U15 |
-| F112 | Contrast test covers all presets | `Inert` | `tokens.contrast.test.ts` covers three; must cover six at every phase | U9 |
+| F112 | Contrast test covers all presets | `Wired` | `src/styles/tokens.contrast.test.ts` covers all six presets (ledger-light, ledger-dark, porcelain-light, porcelain-dark, bone-light, bone-dark): it iterates `SELECTORS` and asserts every text and accent token meets WCAG AA (4.5:1) on both canvas and surface, and that no banned warning hue appears | U9 |
 | F113 | Motion / theme / personalisation gates | `Absent` | §12.7 | U12 |
 | F114 | Guided empty states | `Wired` | A new organisation's dashboard shows `GuidedFirstRun.tsx` (DB-01) instead of a wall of zeros: the pure `src/lib/guidedFirstRun.ts` rule decides the step, `createUniverse` on the app context is the button's write path, and `src/data/guidedFirstRun.ts` reads the gated `get_org_data_state` RPC (`supabase/migrations/0126_guided_first_run.sql`). `create_universe` is the first-run action that had no write path anywhere | U6 |
 | F115 | Onboarding tutorial drawer | `Wired` | `tutorialKeys.json`, `role="complementary"` | — |
@@ -290,13 +290,13 @@ this register exists to catch.
 | F127 | Rule schema, runner and result shape (S1) | `Wired` | `src/lib/systeligon/{types,runner}.ts` — `runRules` is pure, total and stably ordered, and turns a rule that throws into a finding against its own identity. **Wired** by the rule-run screen (`RuleRunTab.tsx`, workbench sub-tab "Rule Run", contract AF-16): it evaluates `runRules` over a population's rows and records the run via `recordSysteligonFindings` | S1 |
 | F128 | Rule versioning and packs (S1) | `Wired` | `src/lib/systeligon/{versioning,packs}.ts` — `RuleRegistry`, `definePack`, `releasedRules`, `packRules`; append-only versions, duplicate `id@version` collapses. All four are called by `RulePackPanel.tsx` (OA-33): the registry holds the shipped base (`registry.registerAll(systeligonPopulationRules)`, `registry.history()` renders the append-only summary) and `packRules` assembles the flat run set the pack signs. Proved by `RulePackPanel.test.tsx` ('reports the shipped rule base from the append-only RuleRegistry', 'saves the shipped pack assembled by packRules over the registry') | S1 |
 | F129 | Numeric forensic rules (S6) | `Wired` | `src/lib/systeligon/rules/{numeric,threshold}.ts` — 11 rules wrapping the tested `analyticsEngine` checks (Benford, duplicates, near-duplicates, sequence gaps, z-score and IQR outliers, round numbers, out-of-hours, SoD, missing attributes, just-below-threshold) with provenance. Assembled as `systeligonPopulationRules` (`library.ts`) and **run by the rule-run screen** (`RuleRunTab.tsx`) | S6 |
-| F130 | Structured document extraction, tier 3 (S7) | `Inert` | `src/lib/systeligon/extract/structured.ts` — `parseDocumentStructure`, `hasSignature`, `FIELD_PARSERS`, reporting its own coverage. **No screen calls `parseDocumentStructure`**; mounting it is L3 | S7 |
-| F131 | OCR seam, tier 2 (S7) | `Inert` | `src/lib/systeligon/extract/ocr.ts` — `needsOcr`, `runOcr`, a lazy bundled engine that **refuses a remote engine** so nothing leaves the tenant. **No screen calls `runOcr`**; the bundled engine is a build artifact (L3) | S7 |
-| F132 | Accepted/declined flows and Mode A/B verification (S3/S4/S5/S12) | `Wired` | `src/lib/systeligon/flows.ts` — `buildAcceptedTestingSet`, `applyFloor` (a minimum, never a ceiling), `parsePastedBlock`, `verifyRows`, `carriedOverrides`; pure, time is an argument. Called by `FlowVerifyPanel.tsx` (the accepted/declined flow and Mode A/B on the rule-run screen, AF-16): the rows a run's findings named are the required set, the declined flow fixes a floor, and an override closed despite a failed verification is carried forward. Proved by `FlowVerifyPanel.test.tsx` (9) | S3/S4/S5/S12 |
-| F133 | Structural document rules (S8) | `Inert` | `src/lib/systeligon/rules/documents.ts` — contract signature, approval date, no date after the report date, absent follow-through. **No screen calls `documentRules`** | S8 |
-| F134 | Pattern rules (S9) | `Inert` | `src/lib/systeligon/rules/patterns.ts` — hardcoded credentials, `SELECT *`, external call without error handling, unbounded loop, disabled check, hardcoded environment; each finding cites its line. **No screen calls `patternRules`** | S9 |
-| F135 | Action-item register from minutes (S14) | `Inert` | `src/lib/systeligon/minutes.ts` — `buildActionRegister`, `itemHistory`; carried / vanished / closed-no-evidence / reopened / closed-before-raised / closed-by-non-owner / owner-due-changed / due-passed. **No screen calls `buildActionRegister`** | S14 |
-| F136 | Policy/procedure/regulation comparison (S15) | `Inert` | `src/lib/systeligon/policydiff.ts` — `compareDocuments` reports its own coverage (parsed / matched / could-not-interpret), because an unparsed clause is not a clean clause. **No screen calls `compareDocuments`** | S15 |
+| F130 | Structured document extraction, tier 3 (S7) | `Wired` | `src/lib/systeligon/extract/structured.ts` — `parseDocumentStructure` parses a document's text into structure and reports its own coverage (parsed + uninterpreted = lines, never rounded). **Wired** by the document-review screen (`DocumentReviewPanel.tsx`, mounted in `AuditFileModal.tsx` phase `documents`, contract OA-36): it parses every attached document before any rule runs, and `documentScale.test.ts` exercises it over 2,000 documents | S7 |
+| F131 | OCR seam, tier 2 (S7) | `Wired` | `src/lib/systeligon/extract/ocr.ts` — `needsOcr` and `runOcr` read a scan locally with the bundled engine and **refuse a remote engine** so nothing leaves the tenant (L2). **Wired** by the document-review screen (`DocumentReviewPanel.tsx`, OA-36): a document with no text layer routes to `runOcr` with the bundled engine; the remote refusal is proved by `extract.test.ts` | S7 |
+| F132 | Accepted/declined flows and Mode A/B verification (S3/S4/S5/S12) | `Wired` | `src/lib/systeligon/flows.ts` — `buildAcceptedTestingSet`, `applyFloor` (a minimum, never a ceiling), `parsePastedBlock`, `verifyRows`, `carriedOverrides`; pure, time is an argument. **Wired** by `FlowVerifyPanel.tsx` (the accepted/declined flow and Mode A/B on the rule-run screen, AF-16, mounted in `RuleRunTab.tsx`): the rows a run's findings named are the required set, the declined flow fixes a floor, and an override closed despite a failed verification is carried forward; evidence read by `listEvidenceRecords` (`src/data/population.ts`). Proved by `FlowVerifyPanel.test.tsx` (9) | S3/S4/S5/S12 |
+| F133 | Structural document rules (S8) | `Wired` | `src/lib/systeligon/rules/documents.ts` — contract signature, approval date, no date after the report date, absent follow-through. **Wired** by the document-review screen (`DocumentReviewPanel.tsx`, OA-36): the `structural` review option runs these rules through `reviewOptions.ts`, and `DocumentReviewPanel.test.tsx` proves a `doc.absent_follow_through` finding reaches the screen | S8 |
+| F134 | Pattern rules (S9) | `Wired` | `src/lib/systeligon/rules/patterns.ts` — hardcoded credentials, `SELECT *`, external call without error handling, unbounded loop, disabled check, hardcoded environment; each finding cites its line. **Wired** by the document-review screen (`DocumentReviewPanel.tsx`, OA-36): the `patterns` review option runs these rules through `reviewOptions.ts` | S9 |
+| F135 | Action-item register from minutes (S14) | `Wired` | `src/lib/systeligon/minutes.ts` — `buildActionRegister` builds carried / vanished / closed-no-evidence / reopened / closed-before-raised / closed-by-non-owner / owner-due-changed / due-passed from the minute set. **Wired** by the document-review screen (`DocumentReviewPanel.tsx`, OA-36): the `minutes` option calls `buildActionRegister` and renders the register (`minutes-register`) | S14 |
+| F136 | Policy/procedure/regulation comparison (S15) | `Wired` | `src/lib/systeligon/policydiff.ts` — `compareDocuments` reports its own coverage (parsed / matched / could-not-interpret), because an unparsed clause is not a clean clause. **Wired** by the document-review screen (`DocumentReviewPanel.tsx`, OA-36): the `policy` option calls `compareDocuments` and renders the comparison (`policydiff`) | S15 |
 | F137 | Signed rule-pack storage (S10/S11) | `Wired` | `src/lib/systeligon/ota.ts` (`signPack`, `verifyPack`, `buildAdhocRule`) + `src/data/rulePacks.ts` (`listRulePacks`, `listRulePackRefusals`, `getReleasedRulePack`, `saveSignedRulePackArtifact`, `releaseRulePack`, `registerSigningKey`, `generateSigningKey`) + `0128_rule_pack_release.sql` (`rule_pack_save`/`rule_pack_list`/`rule_pack_release`/`rule_pack_refusals_list`/`rule_pack_released_rules`/`signing_key_register`). The pack-management screen is `RulePackPanel.tsx` (OA-33, mounted in `OrgControlPanel.tsx`): it lists packs, generates and registers a signing key, signs and verifies a draft, releases it and reads the refusal log. `RuleRunTab.tsx` reads the released pack through `getReleasedRulePack`/`resolveReleasedRules` and runs it | S10/S11 |
 | F138 | Single product/engine name (S16) | `Wired` | `src/lib/product.ts` is the one constants module (product name, tagline, title and the engine name); `scripts/sync-product-name.mjs` mirrors it to the Edge functions, `src/guards/productName.test.ts` holds it, and screens read it — `PRODUCT_NAME` in ten (`HeaderBar.tsx`, `SignInScreen.tsx`, `AttestationPanel.tsx`, …) and `ENGINE_NAME` in the rule-run screen (`RuleRunTab.tsx`) | S16 |
 | F139 | Client classification at onboarding, and the ICFR trigger | `Absent` | D10 — owner decision 2026-10-29; source `docs/PAKISTAN-ASSURANCE-REGIMES.md` |
@@ -313,19 +313,22 @@ this register exists to catch.
 
 | Status | Count |
 |---|---|
-| `Wired` | 96 |
-| `Inert` | 25 |
-| `Absent` | 24 |
+| `Wired` | 121 |
+| `Inert` | 4 |
+| `Absent` | 20 |
 | **Total** | **145** |
 
-**Read that again, with the correction applied.** This is materially better than the first pass
-reported, because Phases 1 and 2 of the scale-harden build closed the whole foundation, the S17-S20
-work packages closed the evidence-bytes and SIRA-write-path gaps, T7 closed the tamper alarm and
-the ledger verification, and T3/T4/T5 closed the portable attestation package, the third-party
-verifier and the attestation screen. The picture now: **96 wired, 25 inert, 24 absent.** The remaining
-`Inert` rows are the genuine, still-open unwired features — the monitor runtime, the alert persistence
-and delivery, the connector adapters, and (from §13b) the Systeligon engine's own surfaces. Every one
-of those is a defect, and every one looks like a working feature in the UI.
+**Read that again, with the correction applied.** This pass corrected a systematic understatement:
+the register's own gate passes on a stale claim, so rows that name a thing as dead were re-checked
+against the code and the SQL tests. The document surfaces (S7's OA-36 review), the monitor cluster
+(the `monitor-runner` scheduled job reaches F49–F52), the support-grant surface (F84–F86), the
+notification delivery and the pop-out sync (F96, F98), the contrast coverage (F112) and the whole
+"stored but inert" configuration list (F35, F72–F79) are all **built, wired and tested** — the
+Phase 2/3 migrations (`0101`, `0107`, `0109`) landed the enforcement and `supabase/tests/102`–`110`
+prove it, while the delivery and sync rows are proved by `supabase/tests/114` and the Playwright
+specs `s14`/`s15`. The four remaining `Inert` rows are the genuine, still-open defects: the connector
+run and ingest RPCs and the adapter runner (F57–F59) and the motion system (F108). Every one is a defect,
+and every one looks like a working feature in the UI.
 
 **The order of work is not negotiable, and R1 and R2 are already done.** R1 (the app reads its own
 database) and R2 (the lifecycle is real) closed in Phases 1-2. R3 (the configuration is honest) is

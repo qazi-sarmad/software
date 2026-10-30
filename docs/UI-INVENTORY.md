@@ -357,6 +357,24 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
   named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
 
+### `SA-21` — standards distribution (D16, docs/STANDARDS-DISTRIBUTION.md)
+
+- **Purpose:** The platform standards catalogue: every rule base the product ships as a signed, versioned **standards
+- **Route / location:** `/superadmin`, tab `Standards` (`superadmin-tab-standards`).
+- **Rights required:** platform admin (`is_platform_admin()`); every write is a platform-only RPC (`platform_signing_key_register`, `standards_pack_publish`, `standards_rollout`), re-checked in the database. `standards_pin` is a tenant action gated on `edit_config` or a Head.
+- **Data functions (`src/data/*.ts`):** `SHIPPED_RULES`, `STANDARDS_CATALOGUE`, `buildSignedStandardsPack`, `listStandardsCatalogue`, `listStandardsSubscriptions`, `listTenants`, `publishStandardsPack`, `registerPlatformSigningKey`, `rolloutStandardsPack`
+- **Data modules:** `src/data/platform.ts`, `src/data/standards.ts`
+- **RPCs reachable via those modules:** `platform_create_tenant`, `platform_get_invite_caps`, `platform_job_health`, `platform_list_support_grants`, `platform_list_tenants`, `platform_list_trail`, `platform_provisioning_status`, `platform_whoami`, `standards_catalogue_list`, `standards_subscriptions_get`, `support_access_log_list`, `support_grant_active`, `support_list_engagements`, `support_read_object`
+- **Tables reachable via those modules:** none
+- **Testids (17):** `superadmin-standards`, `superadmin-standards-loading`, `superadmin-standards-error`, `superadmin-standards-result`, `superadmin-standards-empty`, `superadmin-standards-catalogue`, `standards-catalogue-<packId>`, `standards-publish-pack`, `standards-publish-version`, `standards-publish`, `standards-shipped-rules`, `standards-rollout-tenants`, `standards-rollout-<orgId>`, `standards-rollout`, `standards-subscriptions`, `standards-subscriptions-empty`, `standards-subscription-<packId>`
+- **Explain ids (0):** — (no explain affordance)
+- **IIA standards addressed (0):** —
+- **Drilldown targets (0):** — (no aggregate)
+- **States:** loading; error (with Retry); ready; empty tenant list; an inline result listing the per-tenant outcome after a rollout, or the exact refusal after a publish.
+- **Tutorial key:** — (no key)
+- **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
+  named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
+
 ### `SA-03` — tenant hub (S2)
 
 - **Purpose:** the platform's per-tenant register: every tenant with its status, feature flags, AI enablement and the invitation cap, plus the controls to change them.
@@ -967,6 +985,60 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 - **IIA standards addressed (0):** —
 - **Drilldown targets (0):** — (no aggregate)
 - **States:** loading; error; a denied state (no `edit_config`); ready with the pack list, the key controls and the refusal log; empty (`rule-pack-empty`); an inline result or refusal after a save or release.
+- **Tutorial key:** — (no key)
+- **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
+  named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
+
+### `OA-36` — Documents, minutes and policy review (S7)
+
+- **Purpose:** The document-review surface: the auditor attaches the engagement's documents, declares what each one
+- **Route / location:** the engagement's document review (the documents work surface).
+- **Rights required:** `perform_work` to run a review and to record the findings; any member of the org reads the documents and their extraction.
+- **Data functions (`src/data/*.ts`):** `ALL_REVIEW_OPTIONS`, `DOC_KINDS`, `REVIEW_OPTIONS`, `assessDocType`, `buildActionRegister`, `compareDocuments`, `listEvidenceFiles`, `loadExtractionText`, `parseDocumentStructure`, `recordDocumentReviewFindings`, `resolveReviewOptions`, `rulesForOptions`, `runRules`
+- **Data modules:** `src/data/documentReview.ts`, `src/data/documents.ts`
+- **RPCs reachable via those modules:** `document_extraction_text`, `evidence_storage_path`, `request_extraction`, `search_documents`
+- **Tables reachable via those modules:** `evidence_files`
+- **Testids (37):** `docreview-panel`, `docreview-rights-note`, `docreview-error`, `docreview-loading`, `docreview-load-error`, `docreview-no-engagement`, `docreview-empty`, `docreview-options`, `docreview-option-toggle-all`, `docreview-option-<id>`, `docreview-file-list`, `docreview-file-<i>`, `docreview-file-include-<i>`, `docreview-declared-<i>`, `docreview-run`, `docreview-verdicts`, `docreview-verdict-discrepant-note`, `docreview-verdict-<ref>`, `docreview-verdict-state-<ref>`, `docreview-coverage`, `docreview-coverage-<ref>`, `docreview-results`, `docreview-summary`, `docreview-skipped`, `docreview-findings`, `docreview-findings-empty`, `docreview-finding-<i>`, `docreview-record`, `docreview-recorded`, `minutes-register`, `minutes-register-empty`, `minutes-item-<i>`, `policydiff`, `policydiff-coverage`, `policydiff-findings`, `policydiff-finding-<i>`, `policydiff-empty`
+- **Explain ids (0):** — (no explain affordance)
+- **IIA standards addressed (0):** —
+- **Drilldown targets (0):** — (no aggregate)
+- **States:** loading; error; no engagement selected; empty (no documents); ready with the option picker and the document list; a denied state (no `perform_work`); a run with the declared-type verdicts, the coverage lines, the findings table, the action register and the comparison; an inline result after recording.
+- **Tutorial key:** — (no key)
+- **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
+  named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
+
+### `OA-39` — Global document search (S7)
+
+- **Purpose:** One box that full-text-searches the text of every extracted document in the organisation and returns
+- **Route / location:** the "Search all documents" action in the command palette (`Cmd/Ctrl-K`), opening the search surface.
+- **Rights required:** any read right — `perform_work`, `review_and_approve`, `read_only` or `view_all_scopes`. A configuration-only principal sees the reason it cannot search and no search box.
+- **Data functions (`src/data/*.ts`):** `global_document_search`, `searchDocumentsGlobal`
+- **Data modules:** `src/data/globalSearch.ts`
+- **RPCs reachable via those modules:** `global_document_search`
+- **Tables reachable via those modules:** none
+- **Testids (13):** `globalsearch-panel`, `globalsearch-rights-note`, `globalsearch-input`, `globalsearch-loading`, `globalsearch-refusal`, `globalsearch-error`, `globalsearch-idle`, `globalsearch-empty`, `globalsearch-count`, `globalsearch-results`, `globalsearch-hit-<fileId>`, `globalsearch-snippet-<fileId>`, `globalsearch-place-<fileId>`
+- **Explain ids (0):** — (no explain affordance)
+- **IIA standards addressed (0):** —
+- **Drilldown targets (0):** — (no aggregate)
+- **States:** denied (no read right); idle (no query yet); searching; a named refusal (a blank query); a load error; empty (nothing within the caller's access matches); ready with the count and the ranked hits, each naming its place.
+- **Tutorial key:** — (no key)
+- **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
+  named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
+
+### `OA-38` — Ad-hoc review builder (S7)
+
+- **Purpose:** The auditor's own condition builder — a SEPARATE module from the document-review screen (OA-36). The
+- **Route / location:** the "Build an ad-hoc rule" action in the command palette (`Cmd/Ctrl-K`).
+- **Rights required:** `perform_work` to build and preview a rule; a principal without it sees the reason and no builder.
+- **Data functions (`src/data/*.ts`):** `buildAdhocRule`, `runAdhocRule`
+- **Data modules:** none (pure/UI only)
+- **RPCs reachable via those modules:** none
+- **Tables reachable via those modules:** none
+- **Testids (15):** `adhoc-review-panel`, `adhoc-review-rights-note`, `adhoc-review-form`, `adhoc-review-title`, `adhoc-review-source`, `adhoc-review-condition`, `adhoc-review-threshold`, `adhoc-review-threshold2`, `adhoc-review-severity`, `adhoc-review-result`, `adhoc-review-summary`, `adhoc-review-preview`, `adhoc-review-findings`, `adhoc-review-finding-<i>`, `adhoc-review-empty`
+- **Explain ids (0):** — (no explain affordance)
+- **IIA standards addressed (0):** —
+- **Drilldown targets (0):** — (no aggregate)
+- **States:** denied (no `perform_work`); ready (the builder form); an invalid spec (a named refusal, nothing previewed); a preview with its findings, or an honest empty preview.
 - **Tutorial key:** — (no key)
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
   named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
@@ -2064,6 +2136,7 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 | `create_workpaper` | `src/data/mutations.ts` | `p_engagement_id`, `p_control_id`, `p_title` | tenant |
 | `decide_change` | `src/data/changeControl.ts` | `p_request_id`, `p_approve`, `p_reason` | tenant |
 | `deploy_engagement` | `src/data/deployment.ts` | `p_universe`, `p_entity`, `p_plan`, `p_period`, `p_title` | tenant |
+| `document_extraction_text` | `src/data/documentReview.ts` | `p_file_id` | tenant |
 | `email_sender_profiles_list` | `src/data/senderProfiles.ts` | `p_org` | tenant |
 | `engagement_as_of` | `src/data/timeTravel.ts` | `p_engagement_id`, `p_ts` | tenant |
 | `engagement_as_of_events` | `src/data/timeTravel.ts` | `p_engagement_id`, `p_ts` | tenant |
@@ -2072,6 +2145,7 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 | `escalation_event_list` | `src/data/escalation.ts` | `p_org` | tenant |
 | `ethics_status` | `src/data/deployment.ts` | `p_engagement` | tenant |
 | `evidence_files_for` | `src/data/evidence.ts` | `p_workpaper_id` | tenant |
+| `evidence_storage_path` | `src/data/documentReview.ts` | `p_file_id` | tenant |
 | `evidence_storage_ready` | `src/data/evidence.ts` | — | tenant |
 | `ext_engagement_summary` | `src/data/externalAuditors.ts` | `p_engagement_id` | tenant |
 | `ext_latest_board_pack` | `src/data/externalAuditors.ts` | `p_engagement_id` | tenant |
@@ -2087,6 +2161,7 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 | `get_org_data_state` | `src/data/guidedFirstRun.ts` | — | tenant |
 | `get_sample_size` | `src/data/sampling.ts` | `p_org_id`, `p_control_type`, `p_frequency`, `p_pop_band`, `p_pop_count` | tenant |
 | `get_user_preference` | `src/data/preferences.ts` | `p_key` | tenant |
+| `global_document_search` | `src/data/globalSearch.ts` | `p_query`, `p_limit` | tenant |
 | `hosting_connection_list` | `src/data/hostingFit.ts` | `p_org` | tenant |
 | `hosting_connection_save` | `src/data/hostingFit.ts` | `p_org`, `p_label`, `p_kind`, `p_host`, `p_port`, `p_database`, `p_username`, `p_ssl_mode` | tenant |
 | `hosting_connection_set_secret` | `src/data/hostingFit.ts` | `p_connection_id`, `p_secret_id`, `p_masked` | tenant |
@@ -2160,6 +2235,8 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 | `sira_carry_forward_pack` | `src/data/sira.ts` | `p_cycle` | tenant |
 | `sira_model_snapshot` | `src/data/sira.ts` | `p_org` | tenant |
 | `sira_publish_block` | `src/data/sira.ts` | `p_cycle` | tenant |
+| `standards_catalogue_list` | `src/data/standards.ts` | — | tenant |
+| `standards_subscriptions_get` | `src/data/standards.ts` | — | tenant |
 | `start_import` | `src/data/imports.ts` | `p_import_type`, `p_source_filename` | tenant |
 | `store_report_file` | `src/data/reportFiles.ts` | `p_report_version_id`, `p_kind`, `p_storage_path`, `p_sha256`, `p_byte_size` | tenant |
 | `support_access_log_list` | `src/data/platform.ts` | `p_org`, `p_limit` | tenant |
@@ -2179,10 +2256,10 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 
 ## Coverage cross-check
 
-- Screens documented: 108 (contract sections: 48 Appendix A + 44 Appendix B).
+- Screens documented: 112 (contract sections: 48 Appendix A + 44 Appendix B).
 - Tutorial keys: 81.
-- RPCs catalogued: 143.
-- Data modules: 72; exported data functions: 446.
-- Contract testids not found verbatim in `src/` (placeholder or dynamic): 228.
+- RPCs catalogued: 148.
+- Data modules: 75; exported data functions: 457.
+- Contract testids not found verbatim in `src/` (placeholder or dynamic): 229.
   - audit-file-view-builder, audit-file-view-certificate, audit-file-view-conclusion, audit-file-view-documents, audit-file-view-ethics, audit-file-view-execution, audit-file-view-findings, audit-file-view-planning, audit-file-view-population, audit-file-view-report, audit-file-view-review, audit-file-view-rowtesting, audit-file-view-sampling, data-front-door-kind, hosting-test, invite-user, issues-view-patterns, oa-branding-colour-accent, oa-branding-colour-background, oa-branding-colour-primary, oa-branding-colour-text, oa-branding-margin-0, oa-branding-margin-3, oa-certificate-enabled-verification, oa-escalation-result, oa-escalation-saved, oa-governance-signoff-conclusion, oa-governance-signoff-planning, oa-governance-signoff-testing, org-control-tab-auditors, org-control-tab-automation, org-control-tab-branding, org-control-tab-connectors, org-control-tab-features, org-control-tab-formats, org-control-tab-governance, org-control-tab-hosting, org-control-tab-methodology, org-control-tab-packs, org-control-tab-people …
 
