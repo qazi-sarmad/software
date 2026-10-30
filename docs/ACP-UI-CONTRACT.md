@@ -1409,6 +1409,30 @@ minimum number of independent authorities a stamp must carry before the seal cou
 - **Tutorial key:** `sa.integrity-anchoring`
 
 
+## SA-21 — standards distribution (D16, docs/STANDARDS-DISTRIBUTION.md)
+
+The platform standards catalogue: every rule base the product ships as a signed, versioned **standards
+pack**, a publish action that signs the shipped rule library with the platform key, and a rollout to
+entitled tenants that shows the per-tenant outcome. A tenant that does not pay for a pack is skipped
+and recorded, never silently applied.
+
+- **Route:** `/superadmin`, tab `Standards` (`superadmin-tab-standards`).
+- **Rights:** platform admin (`is_platform_admin()`); every write is a platform-only RPC
+  (`platform_signing_key_register`, `standards_pack_publish`, `standards_rollout`), re-checked in the
+  database. `standards_pin` is a tenant action gated on `edit_config` or a Head.
+- **Data:** `listStandardsCatalogue`, `listStandardsSubscriptions`, `registerPlatformSigningKey`,
+  `publishStandardsPack`, `rolloutStandardsPack`, `buildSignedStandardsPack` (`src/data/standards.ts`),
+  `listTenants` (`src/data/platform.ts`), `STANDARDS_CATALOGUE`, `SHIPPED_RULES`.
+- **Testids:** `superadmin-standards`, `superadmin-standards-loading`, `superadmin-standards-error`,
+  `superadmin-standards-result`, `superadmin-standards-empty`, `superadmin-standards-catalogue`,
+  `standards-catalogue-<packId>`, `standards-publish-pack`, `standards-publish-version`,
+  `standards-publish`, `standards-shipped-rules`, `standards-rollout-tenants`,
+  `standards-rollout-<orgId>`, `standards-rollout`, `standards-subscriptions`,
+  `standards-subscriptions-empty`, `standards-subscription-<packId>`.
+- **States:** loading; error (with Retry); ready; empty tenant list; an inline result listing the
+  per-tenant outcome after a rollout, or the exact refusal after a publish.
+- **Tutorial key:** none recorded yet.
+
 ## Tutorials regenerated
 
 `npm run tutorials:record` regenerates every GIF (S12). The recorder binds only to the testids listed

@@ -49,16 +49,51 @@ F136 (policy/procedure comparison screen), F92 (guided zero-to-first-report wiza
 | F133 structural document rules (S8) | Inert | Wired | `DocumentReviewPanel.tsx` runs the `structural` review option, whose `documentRules` reach the engine via `src/lib/systeligon/extract/reviewOptions.ts` (mounted OA-36) | `DocumentReviewPanel.test.tsx` ('runs the structural document rules when that option is selected') | — | _this commit_ |
 | F92 guided zero-to-first-report wizard | Absent | Absent (out of S7 scope) | — the mount points give it no slot; it is SA-01's (S4) surface | — | — | — |
 
+## D16 standards distribution — Super Admin rollout to paying tenants
+
+Owner instruction 2026-10-30: *"for all the standards now incorporated, make it so that such updates
+can be rolled out through the super admin (for all those that pay)."* Spec: `docs/STANDARDS-DISTRIBUTION.md`.
+Every rule base the product ships becomes a signed, versioned, distributable **pack**; the platform
+rolls a pack version out to entitled tenants; a tenant that does not pay is skipped and recorded.
+
+| Row | Was | Now | Call site | Test that proves it | Migration | Commit |
+|---|---|---|---|---|---|---|
+| D16 standards pack build/sign/verify (pure) | Absent | Built | `src/lib/systeligon/standards.ts` (`buildStandardsPack`, `standardsPackContentHash`, `signStandardsPack`, `verifyStandardsPack`, `STANDARDS_CATALOGUE`) | `src/lib/systeligon/standards.test.ts` (14) | — | _this commit_ |
+| D16 publish + rollout + pin (data) | Absent | Built | `src/data/standards.ts` (`publishStandardsPack`, `rolloutStandardsPack`, `pinStandardsVersion`, `buildSignedStandardsPack`) | `supabase/tests/137_standards_distribution.sql` (37), `src/lib/systeligon/standards.test.ts` | `0191_standards_distribution.sql` | _this commit_ |
+| SA-21 Super Admin standards surface | Absent | Wired | `src/components/superadmin/SuperAdminStandards.tsx`, tab `standards` in `SuperAdminPortal.tsx` | `src/components/superadmin/SuperAdminStandards.test.tsx` (10) | — | _this commit_ |
+
+### What the surface does (SA-21, contract §SA-21)
+
+- The catalogue lists every pack the spec names with its discipline, sources and published version;
+  a pack with no released rules reads `not published` (the forensic core is the only shipped one).
+- **Publish** signs the shipped rule library with a fresh platform key (`generateSigningKey` →
+  `registerPlatformSigningKey` → `buildSignedStandardsPack` → local `verifyStandardsPack` →
+  `publishStandardsPack`). A pack that does not verify locally, or has no released rules, is refused
+  with its reason and never published.
+- **Roll out** sends the chosen pack version to the chosen tenants and shows the per-tenant outcome
+  (`applied` / `skipped-not-entitled` / `skipped-pinned`), never a green tick that is not true.
+
+### The paying gate (spec §3.2)
+
+`standards_rollout` asks `feature_enabled_internal(org, pack_id)` per tenant: a published pack is a
+`feature_catalogue` row (`price_class = 'add_on'`, seeded by the publish RPC), and a tenant without the
+entitlement is `skipped-not-entitled` with a `standards_rollout_log` row and **no** subscription row
+(no partial write). The internal entitlement function is used because this is a platform RPC asking
+about another org; `has_feature` is the request-scoped wrapper around exactly that function
+(0084 §3 / 0094 precedent). That also keeps the `featureMapCompleteness` guard total, since the pack
+key is a tenant-chosen catalogue key and cannot be a static map entry.
+
 ## Branch counts (locked, this session)
 
-- vitest: **289 files / 3,329 tests green** (`npx vitest run`).
+- vitest: **291 files / 3,359 tests green** (`npx vitest run`).
 - SQL harness (`bash scripts/local-sql-harness-docker.sh`): green — "migrations applied twice /
-  all SQL tests passed twice"; **130 migrations / 136 SQL test files**.
-- Guards: **30** (`src/guards/*.test.ts`).
+  all SQL tests passed twice"; **131 migrations / 137 SQL test files**.
+- Guards: **30** (`src/guards/*.test.ts`), 1,002 tests.
 - `tsc --noEmit` clean.
 - Gates PASS: check-wiring, check-dead-code, check-ui-contract, check-two-sources, check-tokens,
-  check-shrink, check-config-effect, check-rpc-parity, check-function-deploy-list, check-tutorials.
-- Gate RED: `check-feature-register` (9 rule-(6) problems) — integrator's file, see the blocker above.
+  check-shrink, check-config-effect, check-rpc-parity, check-function-deploy-list, check-tutorials,
+  check-feature-register (145 features: 118 Wired / 6 Inert / 21 Absent).
+- `docs/UI-INVENTORY.md` regenerated: **112 screens / 148 RPCs**.
 
 ### Register rows moved (integrator action — done this session)
 

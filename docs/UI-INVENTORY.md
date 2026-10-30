@@ -357,6 +357,24 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
   named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
 
+### `SA-21` — standards distribution (D16, docs/STANDARDS-DISTRIBUTION.md)
+
+- **Purpose:** The platform standards catalogue: every rule base the product ships as a signed, versioned **standards
+- **Route / location:** `/superadmin`, tab `Standards` (`superadmin-tab-standards`).
+- **Rights required:** platform admin (`is_platform_admin()`); every write is a platform-only RPC (`platform_signing_key_register`, `standards_pack_publish`, `standards_rollout`), re-checked in the database. `standards_pin` is a tenant action gated on `edit_config` or a Head.
+- **Data functions (`src/data/*.ts`):** `SHIPPED_RULES`, `STANDARDS_CATALOGUE`, `buildSignedStandardsPack`, `listStandardsCatalogue`, `listStandardsSubscriptions`, `listTenants`, `publishStandardsPack`, `registerPlatformSigningKey`, `rolloutStandardsPack`
+- **Data modules:** `src/data/platform.ts`, `src/data/standards.ts`
+- **RPCs reachable via those modules:** `platform_create_tenant`, `platform_get_invite_caps`, `platform_job_health`, `platform_list_support_grants`, `platform_list_tenants`, `platform_list_trail`, `platform_provisioning_status`, `platform_whoami`, `standards_catalogue_list`, `standards_subscriptions_get`, `support_access_log_list`, `support_grant_active`, `support_list_engagements`, `support_read_object`
+- **Tables reachable via those modules:** none
+- **Testids (17):** `superadmin-standards`, `superadmin-standards-loading`, `superadmin-standards-error`, `superadmin-standards-result`, `superadmin-standards-empty`, `superadmin-standards-catalogue`, `standards-catalogue-<packId>`, `standards-publish-pack`, `standards-publish-version`, `standards-publish`, `standards-shipped-rules`, `standards-rollout-tenants`, `standards-rollout-<orgId>`, `standards-rollout`, `standards-subscriptions`, `standards-subscriptions-empty`, `standards-subscription-<packId>`
+- **Explain ids (0):** — (no explain affordance)
+- **IIA standards addressed (0):** —
+- **Drilldown targets (0):** — (no aggregate)
+- **States:** loading; error (with Retry); ready; empty tenant list; an inline result listing the per-tenant outcome after a rollout, or the exact refusal after a publish.
+- **Tutorial key:** — (no key)
+- **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
+  named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
+
 ### `SA-03` — tenant hub (S2)
 
 - **Purpose:** the platform's per-tenant register: every tenant with its status, feature flags, AI enablement and the invitation cap, plus the controls to change them.
@@ -2217,6 +2235,8 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 | `sira_carry_forward_pack` | `src/data/sira.ts` | `p_cycle` | tenant |
 | `sira_model_snapshot` | `src/data/sira.ts` | `p_org` | tenant |
 | `sira_publish_block` | `src/data/sira.ts` | `p_cycle` | tenant |
+| `standards_catalogue_list` | `src/data/standards.ts` | — | tenant |
+| `standards_subscriptions_get` | `src/data/standards.ts` | — | tenant |
 | `start_import` | `src/data/imports.ts` | `p_import_type`, `p_source_filename` | tenant |
 | `store_report_file` | `src/data/reportFiles.ts` | `p_report_version_id`, `p_kind`, `p_storage_path`, `p_sha256`, `p_byte_size` | tenant |
 | `support_access_log_list` | `src/data/platform.ts` | `p_org`, `p_limit` | tenant |
@@ -2236,10 +2256,10 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 
 ## Coverage cross-check
 
-- Screens documented: 111 (contract sections: 48 Appendix A + 44 Appendix B).
+- Screens documented: 112 (contract sections: 48 Appendix A + 44 Appendix B).
 - Tutorial keys: 81.
-- RPCs catalogued: 146.
-- Data modules: 74; exported data functions: 443.
-- Contract testids not found verbatim in `src/` (placeholder or dynamic): 228.
+- RPCs catalogued: 148.
+- Data modules: 75; exported data functions: 450.
+- Contract testids not found verbatim in `src/` (placeholder or dynamic): 229.
   - audit-file-view-builder, audit-file-view-certificate, audit-file-view-conclusion, audit-file-view-documents, audit-file-view-ethics, audit-file-view-execution, audit-file-view-findings, audit-file-view-planning, audit-file-view-population, audit-file-view-report, audit-file-view-review, audit-file-view-rowtesting, audit-file-view-sampling, data-front-door-kind, hosting-test, invite-user, issues-view-patterns, oa-branding-colour-accent, oa-branding-colour-background, oa-branding-colour-primary, oa-branding-colour-text, oa-branding-margin-0, oa-branding-margin-3, oa-certificate-enabled-verification, oa-escalation-result, oa-escalation-saved, oa-governance-signoff-conclusion, oa-governance-signoff-planning, oa-governance-signoff-testing, org-control-tab-auditors, org-control-tab-automation, org-control-tab-branding, org-control-tab-connectors, org-control-tab-features, org-control-tab-formats, org-control-tab-governance, org-control-tab-hosting, org-control-tab-methodology, org-control-tab-packs, org-control-tab-people …
 

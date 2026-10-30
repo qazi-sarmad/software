@@ -15,6 +15,7 @@ import { SuperAdminEmail } from './SuperAdminEmail';
 import { SuperAdminAutomation } from './SuperAdminAutomation';
 import { SuperAdminHosting } from './SuperAdminHosting';
 import { SuperAdminMigration, DeploymentKitPanel } from './SuperAdminMigration';
+import { SuperAdminStandards } from './SuperAdminStandards';
 import { IntegrityAnchoringPanel } from './IntegrityAnchoringPanel';
 import { TutorialButton } from '../common/TutorialButton';
 
@@ -26,11 +27,12 @@ import { TutorialButton } from '../common/TutorialButton';
  * database. This is the sole surface that may know about the platform role (D-PLATFORM-RIGHTS);
  * no org-product code imports it. It renders no blocking modal (spec §27.5).
  */
-type Tab = 'tenants' | 'provisioning' | 'support' | 'consultation' | 'features' | 'recipients' | 'email' | 'automation' | 'tutorials' | 'setup' | 'trail' | 'hosting' | 'migration' | 'integrity';
+type Tab = 'tenants' | 'provisioning' | 'support' | 'consultation' | 'features' | 'recipients' | 'email' | 'automation' | 'tutorials' | 'setup' | 'trail' | 'hosting' | 'migration' | 'integrity' | 'standards';
 type Gate = 'checking' | 'allowed' | 'denied';
 
-/** F18: every platform tab carries its own "Show me how" tutorial key (Appendix A). */
-const TAB_TUTORIAL: Record<Tab, { key: string; title: string }> = {
+/** F18: every platform tab carries its own "Show me how" tutorial key (Appendix A). A tab with no
+ *  recorded key carries no button rather than a wrong one (the key must be real). */
+const TAB_TUTORIAL: Partial<Record<Tab, { key: string; title: string }>> = {
   tenants: { key: 'sa.tenant-hub', title: 'SA-03 tenant hub' },
   provisioning: { key: 'sa.setup-wizard', title: 'SA-16 guided provisioning' },
   support: { key: 'sa.health', title: 'SA-02 platform health' },
@@ -118,6 +120,7 @@ export const SuperAdminPortal: React.FC = () => {
     { id: 'hosting', label: 'Hosting fit', icon: Database },
     { id: 'migration', label: 'Migration jobs', icon: RefreshCw },
     { id: 'integrity', label: 'Integrity anchoring', icon: ShieldCheck },
+    { id: 'standards', label: 'Standards', icon: ShieldCheck },
     { id: 'trail', label: 'Platform trail', icon: History },
   ];
 
@@ -164,11 +167,13 @@ export const SuperAdminPortal: React.FC = () => {
             );
           })}
         </nav>
-        <TutorialButton
-          tutorialKey={TAB_TUTORIAL[tab].key}
-          title={TAB_TUTORIAL[tab].title}
-          screenId={`sa-${tab}`}
-        />
+        {TAB_TUTORIAL[tab] && (
+          <TutorialButton
+            tutorialKey={TAB_TUTORIAL[tab]!.key}
+            title={TAB_TUTORIAL[tab]!.title}
+            screenId={`sa-${tab}`}
+          />
+        )}
         </div>
 
         {tab === 'tenants' && <SuperAdminTenants />}
@@ -190,6 +195,7 @@ export const SuperAdminPortal: React.FC = () => {
         )}
         {tab === 'trail' && <SuperAdminTrail />}
         {tab === 'integrity' && <IntegrityAnchoringPanel />}
+        {tab === 'standards' && <SuperAdminStandards />}
       </div>
     </div>
   );
