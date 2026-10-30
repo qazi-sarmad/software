@@ -96,9 +96,10 @@ three defaults plus org-defined domains, each mapped to a rule pack and a contro
 ### Shari'ah audit (container only — D11 builds it)
 - Rule base: the AAOIFI SS 1–54 **structural** rules (riba, gharar, maysir, ownership sequence,
   profit-distribution integrity, zakah, Shari'ah governance) — see `docs/ASSURANCE-RULEBOOKS.md` §5.
-- Control set: the **AAOIFI Shari'ah Standards** (verified), the **SBP Compendium** (verified, 31 Oct
-  2024) and the **SBP Shari'ah Governance Framework** (verified, effective 1 Jan 2025) — all in this
-  repo. A Pakistan-specific rule cites the Compendium or the SGF, not the wider AAOIFI set.
+- Control set: the **AAOIFI Shari'ah Standards** (verified, the full text), the **SBP Compendium**
+  (verified, 31 Oct 2024 — the Pakistan **amendment overlay** on the adopted standards, not a shorter
+  list) and the **SBP Shari'ah Governance Framework** (verified, effective 1 Jan 2025) — all in this
+  repo. A Pakistan-specific rule = the AAOIFI standard as amended by the SBP, citing the circular.
 - Reports: a Shari'ah review report and the SSB reporting pack.
 - **The honesty rule stands**: a Shari'ah rule is asserted only against a verified standard, and the
   substantive Shari'ah judgment is always the SSB's, never the product's.

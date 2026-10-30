@@ -41,7 +41,7 @@ catalogue the product ships:
 | `standards.icfr.sox` | SOX/ICFR control monitoring | PCAOB AS 2201, COSO ICIF-2013 | management |
 | `standards.it.baseline` | IT controls | COBIT 2019, ISO 27001:2022 Annex A, NIST 800-53 | it |
 | `standards.shariah.aaoifi` | the 54 AAOIFI Shari'ah Standards structural rules | AAOIFI SS 1–54 | shariah |
-| `standards.shariah.sbp-compendium` | the SBP-adopted AAOIFI subset + SBP's own Sharikat ul Milk / Diminishing Musharakah standard | `COMPENDIUM OF SHARIAH STANDARDS ADOPTED BY STATE BANK OF PAKISTAN.pdf` (updated 31 Oct 2024) | shariah |
+| `standards.shariah.sbp-compendium` | the SBP Pakistan amendment overlay on the adopted AAOIFI standards + SBP's own Sharikat ul Milk / Diminishing Musharakah standard | `COMPENDIUM OF SHARIAH STANDARDS ADOPTED BY STATE BANK OF PAKISTAN.pdf` (updated 31 Oct 2024) | shariah |
 | `standards.shariah.sgf` | the SGF governance rules (SB, RSBM, SCD, PD, ISA, ESA, FAPC, SB report) | `SHARIAH GOVERNANCE FRAMEWORK.pdf` (effective 1 Jan 2025) | shariah |
 | `standards.risk.pwc-taxonomy` | the risk input taxonomy and ERM-theme map defaults | `Risk Assessment, reimagined.pdf` (PwC 2026) | cross |
 

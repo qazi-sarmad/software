@@ -211,20 +211,28 @@ financial institution are marked **[audit]**:
    transactions follow the fatwas. The **Shari'ah review** is performed by the institution's own
    Shari'ah-compliance function and reported to the SSB.
 
-> **Verification status (updated 2026-10-30).** All three sources are now verified and in this repo:
-> `docs/Shariah Standards-AAOIFI.pdf` (the 54 AAOIFI Shari'ah Standards, 2015 English ed.);
-> `docs/COMPENDIUM OF SHARIAH STANDARDS ADOPTED BY STATE BANK OF PAKISTAN.pdf` (the SBP-adopted
-> AAOIFI subset + SBP's own Sharikat ul Milk / Diminishing Musharakah standard, **updated 31 Oct
-> 2024**); and `docs/SHARIAH GOVERNANCE FRAMEWORK.pdf` (the SBP SGF for Islamic Banking Institutions,
-> **effective 1 Jan 2025**). The Shari'ah pack is therefore fully buildable for the Pakistan context.
+> **Verification status (updated 2026-10-30, corrected).** All three sources are verified and in this
+> repo, and they work **together**, not as competing lists:
+> `docs/Shariah Standards-AAOIFI.pdf` is the **whole standard set** — the complete text and depth of the
+> 54 AAOIFI Shari'ah Standards (2015 English ed.). This is the primary source and the one that carries
+> the substance.
+> `docs/COMPENDIUM OF SHARIAH STANDARDS ADOPTED BY STATE BANK OF PAKISTAN.pdf` is the **Pakistan
+> adoption layer** — for each standard the SBP has adopted, it records the **specific amendments and
+> clarifications the SBP has notified** (footnote additions, clause substitutions, "the clause may be
+> read as follows"), each against its adoption circular and date (IBD/IFPD circulars since 2010), plus
+> the SBP's own Shari'ah standard on *Sharikat ul Milk and Diminishing Musharakah (based on Sharikat ul
+> Milk)*. Its own preface is explicit: *"The compendium contains all amendments / clarifications made
+> and notified by the SBP from time to time in adopted AAOIFI Shariah standards... The complete text of
+> AAOIFI Shariah standards is available at AAOIFI's website and is also published by AAOIFI in book
+> form."* Updated 31 Oct 2024.
+> `docs/SHARIAH GOVERNANCE FRAMEWORK.pdf` is the governance spine (effective 1 Jan 2025).
 >
-> **The Compendium is a SUBSET, not all 54.** SBP has adopted 38 items. Standards in the AAOIFI set
-> but NOT in the SBP Compendium include SS 1 (Trading in Currencies), 6 (Conversion of a Conventional
-> Bank), 20 (Sale of Commodities in Organized Markets), 21 (Financial Paper), 26 (Islamic Insurance),
-> 27 (Indices), 29 (Fatwa Ethics), 30 (Tawarruq), 31 (Gharar), 33 (Waqf), 35 (Zakah), 40 (Mudarabah
-> Profit Distribution), 41 (Islamic Reinsurance), 43 (Insolvency), 44 (Liquidity), 47 (Profit
-> Calculation). Encode the AAOIFI layer from SS 1–54 and the **SBP layer from the Compendium's own
-> list**; a Pakistan-specific rule cites the Compendium, not the wider AAOIFI set.
+> **How to encode it (the correction).** Build the pack from **the AAOIFI full text** — the standards in
+> their depth, SS 1–54. Then, for each standard the SBP has adopted, **apply the Compendium's specific
+> amendments** as a Pakistan overlay, citing the circular. So a Pakistan Shari'ah rule is *the AAOIFI
+> standard as amended by the SBP* — not a reduced list. Do not treat the Compendium as a separate,
+> shorter rule set, and do not read a standard's absence from the Compendium as its non-adoption: the
+> Compendium is an amendment record, not a catalogue of what applies.
 >
 > **The SGF is the governance spine of the Pakistan Shari'ah audit** (its §7 Internal Shariah Audit,
 > §8 External Shariah Audit, the Shariah Board and its Annexure-B report, the RSBM, the SCD, PD, the

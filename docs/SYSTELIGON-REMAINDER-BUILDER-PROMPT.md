@@ -150,9 +150,11 @@ READ FIRST, IN THIS ORDER
    The verified source for the Shari'ah pack (D11). Cite SS (n) + title on every rule.
 13. docs/Risk Assessment, reimagined.pdf — PwC 2026 survey. Shapes the model/defaults for D15, not a
    finding rule. The deterministic input taxonomy is in docs/ASSURANCE-RULEBOOKS.md §6.
-14. docs/COMPENDIUM OF SHARIAH STANDARDS ADOPTED BY STATE BANK OF PAKISTAN.pdf — the SBP-adopted
-   AAOIFI subset + SBP's own Sharikat ul Milk / Diminishing Musharakah standard (updated 31 Oct 2024).
-   The Pakistan Shari'ah overlay for D11. Cite the standard number + the SBP circular.
+14. docs/COMPENDIUM OF SHARIAH STANDARDS ADOPTED BY STATE BANK OF PAKISTAN.pdf — the Pakistan
+   ADOPTION LAYER (updated 31 Oct 2024). For each AAOIFI standard the SBP has adopted it records the
+   specific amendments/clarifications SBP notified, each against its IBD/IFPD circular and date, plus
+   SBP's own Sharikat ul Milk / Diminishing Musharakah standard. It is an amendment record, NOT a
+   shorter rule set — the full standards are in file 12. Apply it as an overlay on the AAOIFI text.
 15. docs/SHARIAH GOVERNANCE FRAMEWORK.pdf — the SBP SGF for IBIs (effective 1 Jan 2025). The
    governance spine of the Pakistan Shari'ah audit (D11): SB, RSBM, SCD, PD, ISA, ESA, FAPC, the SB
    report and the external-audit-report format.
@@ -330,18 +332,24 @@ D11 — The audit-domain axis: three universes, three rule bases. NEW; owner ins
       and monitoring. Named, versioned rules, each citing its control id.
     - **Shari'ah audit pack** — FULLY VERIFIED NOW. Three verified sources are in this repo:
       `docs/Shariah Standards-AAOIFI.pdf` (the 54 AAOIFI Shari'ah Standards, 2015 English ed.),
-      `docs/COMPENDIUM OF SHARIAH STANDARDS ADOPTED BY STATE BANK OF PAKISTAN.pdf` (the SBP-adopted
-      AAOIFI subset + SBP's own Sharikat ul Milk / Diminishing Musharakah standard, updated 31 Oct
-      2024), and `docs/SHARIAH GOVERNANCE FRAMEWORK.pdf` (the SBP SGF for IBIs, effective 1 Jan 2025).
+      `docs/COMPENDIUM OF SHARIAH STANDARDS ADOPTED BY STATE BANK OF PAKISTAN.pdf` (the Pakistan
+      amendment overlay on the adopted AAOIFI standards + SBP's own Sharikat ul Milk / Diminishing
+      Musharakah standard, updated 31 Oct 2024), and `docs/SHARIAH GOVERNANCE FRAMEWORK.pdf` (the SBP
+      SGF for IBIs, effective 1 Jan 2025).
       See docs/ASSURANCE-RULEBOOKS.md §5. Build the pack in TWO layers:
-        (a) the AAOIFI structural rules from SS 1–54 — riba (SS 1/3/19), gharar (SS 31), ownership
-            sequence (SS 8/18), profit-distribution integrity (SS 12/13/40), zakah (SS 35);
-        (b) the SBP overlay — the adopted-standard subset in the Compendium (note SBP has NOT adopted
-            every AAOIFI standard: the Compendium carries 38 items, e.g. it does NOT include SS 1, 6,
-            20, 21, 26, 27, 29, 30, 31, 33, 35, 40, 41, 43, 44, 47) and the SGF governance rules (SB
+        (a) the AAOIFI structural rules from SS 1–54 — the FULL text and depth of each standard
+            (riba, gharar, ownership sequence, profit-distribution integrity, zakah, and every other
+            standard's own rules). `docs/Shariah Standards-AAOIFI.pdf` is the whole standard set;
+        (b) the SBP overlay — for each standard the SBP has adopted, apply the SPECIFIC amendments and
+            clarifications the Compendium records (footnote additions, clause substitutions, "the
+            clause may be read as follows"), each citing its IBD/IFPD circular and date, plus the SBP's
+            own Sharikat ul Milk / Diminishing Musharakah standard and the SGF governance rules (SB
             role and report, RSBM, SCD, PD, ISA — including the mandatory quarterly post-disbursement
             profit-and-loss-distribution audit, ESA, FAPC, and the Annexure-B Shariah Board report /
             Annexure-C external audit report formats).
+        So a Pakistan Shari'ah rule = the AAOIFI standard AS AMENDED BY THE SBP. The Compendium is an
+        amendment record, not a shorter rule set; do not read a standard's absence from it as
+        non-adoption.
       Cite the exact standard number and title (and the SBP circular where the Compendium gives one)
       on every rule. The substantive Shari'ah judgment is always the SSB's, never the product's.
     - Surface: the universe settings screen sets the discipline; the rule-run screen loads the matching
