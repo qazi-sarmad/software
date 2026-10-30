@@ -59,6 +59,14 @@ gate was already red before this session's commits (proved: `git stash -u` → P
 S7 panel → FAIL), so the red is the S7 stream's own unmounted work, now mounted, awaiting the register
 row move.
 
+## Scale
+- `src/lib/systeligon/extract/documentScale.test.ts` — the document-scope run at volume (SCALE-PROGRAMME
+  §5 flow 7): 2,000 documents from a fixed-seed LCG, both paths. Proves (a) determinism — two runs are
+  byte-identical; (b) coverage is reported, never rounded (`parsed + uninterpreted == lines` for every
+  document); (c) the declared-type check catches every filed-as-minutes-reads-as-regulation document;
+  (d) the bad path — a scan (no text) is `unconfirmable`, never a clean document; (e) a budget ceiling
+  with the measured value logged. Green: 5 tests.
+
 ## Decisions
 - **OA-36/OA-38/OA-39 mount path.** The seven-tab NavStrip is fixed by SPEC-v10 §5 and the trunk owns
   it, so the S7 screens are mounted without adding a tab: OA-36 joins the engagement's `documents`
