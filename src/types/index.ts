@@ -353,6 +353,8 @@ export type AnalysisResultRow = {
   flagReason?: string;
   ruleId: AnalyticsRule;
   originalRowRef: number;
+  period?: string;
+  periodLabel?: string;
 };
 
 export type ActionType =
