@@ -37,10 +37,6 @@
     "category": "builder-b",
     "reason": "Platform-only phrase release once every cell is reviewed (W2.9); no screen offers it. Builder B's per BRANCH-MAP."
   },
-  "src/data/standards.ts::pinStandardsVersion": {
-    "category": "d16-tenant-side",
-    "reason": "D16 (docs/STANDARDS-DISTRIBUTION.md §3.3): the tenant pins the standards version it runs, with a reason. The action belongs on the tenant run surface (RuleRunTab), which S1 owns; S7 owns the data module and the platform rollout surface. The RPC standards_pin is pinned by supabase/tests/137_standards_distribution.sql, so it is a tested unit the tenant screen has not reached yet, not dead code."
-  },
   "src/data/writing.ts::reviewCell": {
     "category": "builder-b",
     "reason": "Marks one workbook cell reviewed (W2.9); no screen offers it. Builder B's per BRANCH-MAP."

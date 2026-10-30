@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   listStandardsCatalogue, listStandardsSubscriptions, registerPlatformSigningKey,
-  publishStandardsPack, rolloutStandardsPack, buildSignedStandardsPack, generateSigningKey,
-  SHIPPED_RULES, type CatalogueRow, type RolloutOutcome,
+  publishStandardsPack, rolloutStandardsPack, pinStandardsVersion, buildSignedStandardsPack,
+  generateSigningKey, SHIPPED_RULES, type CatalogueRow, type RolloutOutcome,
 } from '../../data/standards';
 import { STANDARDS_CATALOGUE, type StandardsSubscription } from '../../lib/systeligon/standards';
 import type { CryptoLike } from '../../lib/anchoring';
@@ -29,8 +29,11 @@ export const SuperAdminStandards: React.FC = () => {
   const [packId, setPackId] = useState(STANDARDS_CATALOGUE[0].packId);
   const [version, setVersion] = useState('1');
   const [chosen, setChosen] = useState<Record<string, boolean>>({});
-  const [busy, setBusy] = useState<'publish' | 'rollout' | null>(null);
+  const [busy, setBusy] = useState<'publish' | 'rollout' | 'pin' | null>(null);
   const [result, setResult] = useState<{ ok: boolean; reason?: string; lines?: string[] } | null>(null);
+  const [pinPack, setPinPack] = useState(STANDARDS_CATALOGUE[0].packId);
+  const [pinVersion, setPinVersion] = useState('1');
+  const [pinReason, setPinReason] = useState('');
 
   const load = useCallback(async () => {
     setState('loading');
@@ -105,6 +108,26 @@ export const SuperAdminStandards: React.FC = () => {
         ...r.data.results.map((o: RolloutOutcome) => `${name(o.orgId)}: ${o.outcome}`),
       ],
     });
+    await load();
+  };
+
+  const pin = async () => {
+    const v = Number(pinVersion);
+    if (!Number.isInteger(v) || v < 1) {
+      setResult({ ok: false, reason: 'Enter a version of 1 or more.' });
+      return;
+    }
+    if (pinReason.trim() === '') {
+      setResult({ ok: false, reason: 'A pin needs a reason.' });
+      return;
+    }
+    setBusy('pin');
+    setResult(null);
+    const r = await pinStandardsVersion(pinPack, v, pinReason.trim());
+    setBusy(null);
+    if (!r.ok) { setResult({ ok: false, reason: r.reason }); return; }
+    setResult({ ok: true, lines: [`Pinned ${pinPack} to v${v}.`] });
+    setPinReason('');
     await load();
   };
 
@@ -244,6 +267,54 @@ export const SuperAdminStandards: React.FC = () => {
             </button>
           </>
         )}
+      </div>
+
+      <div className="rounded-2xl border border-hairline bg-surface p-4 space-y-3">
+        <h3 className="text-apple-14 font-semibold text-primary flex items-center gap-2"><Lock className="w-4 h-4" /> Pin a version</h3>
+        <p className="text-apple-12 text-secondary">
+          Freeze this tenant on the version it currently runs. A pinned tenant is not moved forward by a
+          later rollout. A pin needs a reason.
+        </p>
+        <div className="flex flex-wrap items-end gap-3">
+          <label className="text-apple-12 text-secondary space-y-1">
+            <span>Pack</span>
+            <select
+              aria-label="Pack to pin"
+              data-testid="standards-pin-pack"
+              value={pinPack}
+              onChange={(e) => setPinPack(e.target.value)}
+              className="block px-2 py-1 rounded-lg border border-hairline bg-canvas text-primary"
+            >
+              {STANDARDS_CATALOGUE.map((d) => <option key={d.packId} value={d.packId}>{d.title}</option>)}
+            </select>
+          </label>
+          <label className="text-apple-12 text-secondary space-y-1">
+            <span>Version</span>
+            <input
+              type="number" min={1} value={pinVersion} aria-label="Version to pin"
+              data-testid="standards-pin-version"
+              onChange={(e) => setPinVersion(e.target.value)}
+              className="block w-24 px-2 py-1 rounded-lg border border-hairline bg-canvas text-primary"
+            />
+          </label>
+          <label className="text-apple-12 text-secondary space-y-1 flex-1 min-w-[12rem]">
+            <span>Reason</span>
+            <input
+              type="text" value={pinReason} aria-label="Reason to pin"
+              data-testid="standards-pin-reason"
+              placeholder="e.g. regulatory review in progress"
+              onChange={(e) => setPinReason(e.target.value)}
+              className="block w-full px-2 py-1 rounded-lg border border-hairline bg-canvas text-primary"
+            />
+          </label>
+          <button
+            type="button" disabled={busy !== null} onClick={() => void pin()}
+            data-testid="standards-pin"
+            className="px-3 py-1.5 rounded-lg border border-hairline text-apple-12 text-secondary hover:text-primary disabled:opacity-50"
+          >
+            {busy === 'pin' ? 'Pinning…' : 'Pin version'}
+          </button>
+        </div>
       </div>
 
       <div className="rounded-2xl border border-hairline bg-surface p-4 space-y-2">

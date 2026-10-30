@@ -7,6 +7,7 @@ const listStandardsSubscriptions = vi.fn();
 const registerPlatformSigningKey = vi.fn();
 const publishStandardsPack = vi.fn();
 const rolloutStandardsPack = vi.fn();
+const pinStandardsVersion = vi.fn();
 const buildSignedStandardsPack = vi.fn();
 const generateSigningKey = vi.fn();
 const listTenantsFn = vi.fn();
@@ -17,6 +18,7 @@ vi.mock('../../data/standards', () => ({
   registerPlatformSigningKey: (...a: unknown[]) => registerPlatformSigningKey(...a),
   publishStandardsPack: (...a: unknown[]) => publishStandardsPack(...a),
   rolloutStandardsPack: (...a: unknown[]) => rolloutStandardsPack(...a),
+  pinStandardsVersion: (...a: unknown[]) => pinStandardsVersion(...a),
   buildSignedStandardsPack: (...a: unknown[]) => buildSignedStandardsPack(...a),
   generateSigningKey: (...a: unknown[]) => generateSigningKey(...a),
   SHIPPED_RULES: [{ id: 'a' }, { id: 'b' }],
@@ -50,6 +52,7 @@ describe('SA-21 standards distribution (D16)', () => {
     rolloutStandardsPack.mockResolvedValue({
       ok: true, data: { applied: 1, results: [{ orgId: 'org-a', outcome: 'applied' }, { orgId: 'org-b', outcome: 'skipped-not-entitled' }] },
     });
+    pinStandardsVersion.mockResolvedValue({ ok: true });
   });
 
   it('shows the catalogue, the subscribed version and the tenants', async () => {
@@ -141,5 +144,42 @@ describe('SA-21 standards distribution (D16)', () => {
     listStandardsSubscriptions.mockResolvedValue([]);
     render(<SuperAdminStandards />);
     await waitFor(() => expect(screen.getByTestId('standards-subscriptions-empty')).toBeTruthy());
+  });
+
+  it('pins a version with a reason and calls standards_pin', async () => {
+    render(<SuperAdminStandards />);
+    await waitFor(() => expect(screen.getByTestId('standards-pin')).toBeTruthy());
+    fireEvent.change(screen.getByTestId('standards-pin-version'), { target: { value: '3' } });
+    fireEvent.change(screen.getByTestId('standards-pin-reason'), { target: { value: 'regulatory review' } });
+    fireEvent.click(screen.getByTestId('standards-pin'));
+    await waitFor(() => expect(pinStandardsVersion).toHaveBeenCalledWith('standards.forensic.core', 3, 'regulatory review'));
+    await waitFor(() => expect(screen.getByTestId('superadmin-standards-result').textContent).toContain('Pinned'));
+  });
+
+  it('refuses a pin with no reason and sends nothing', async () => {
+    render(<SuperAdminStandards />);
+    await waitFor(() => expect(screen.getByTestId('standards-pin')).toBeTruthy());
+    fireEvent.click(screen.getByTestId('standards-pin'));
+    await waitFor(() => expect(screen.getByTestId('superadmin-standards-result').textContent).toContain('needs a reason'));
+    expect(pinStandardsVersion).not.toHaveBeenCalled();
+  });
+
+  it('refuses a pin version below 1 and sends nothing', async () => {
+    render(<SuperAdminStandards />);
+    await waitFor(() => expect(screen.getByTestId('standards-pin-version')).toBeTruthy());
+    fireEvent.change(screen.getByTestId('standards-pin-version'), { target: { value: '0' } });
+    fireEvent.change(screen.getByTestId('standards-pin-reason'), { target: { value: 'x' } });
+    fireEvent.click(screen.getByTestId('standards-pin'));
+    await waitFor(() => expect(screen.getByTestId('superadmin-standards-result').textContent).toContain('1 or more'));
+    expect(pinStandardsVersion).not.toHaveBeenCalled();
+  });
+
+  it('shows the exact refusal when the server refuses a pin', async () => {
+    pinStandardsVersion.mockResolvedValue({ ok: false, reason: 'not_published' });
+    render(<SuperAdminStandards />);
+    await waitFor(() => expect(screen.getByTestId('standards-pin')).toBeTruthy());
+    fireEvent.change(screen.getByTestId('standards-pin-reason'), { target: { value: 'x' } });
+    fireEvent.click(screen.getByTestId('standards-pin'));
+    await waitFor(() => expect(screen.getByTestId('superadmin-standards-result').textContent).toContain('not_published'));
   });
 });

@@ -305,7 +305,7 @@ this register exists to catch.
 | F142 | Deployment and environment readiness in the Super Admin | `Absent` | D13 — owner decision 2026-10-29 |
 | F143 | Risk library, auto-adjusted factors and manual override | `Absent` | D14 — owner decision 2026-10-29; source `docs/RISK-ASSESSMENT-MODEL.md` |
 | F144 | Dynamic risk assessment (inputs, ERM map, triggers, narrative) | `Absent` | D15 — owner decision 2026-10-29; source `docs/ASSURANCE-RULEBOOKS.md` §6 + `docs/Risk Assessment, reimagined.pdf` |
-| F145 | Standards distribution — Super Admin rollout of signed rule-base packs to entitled tenants | `Absent` | D16 — owner decision 2026-10-30; source `docs/STANDARDS-DISTRIBUTION.md`; reuses `has_feature` (0051/0052) + `ota.ts` signing (0128) |
+| F145 | Standards distribution — Super Admin rollout of signed rule-base packs to entitled tenants | `Wired` | `src/data/standards.ts` (`publishStandardsPack`, `rolloutStandardsPack`, `pinStandardsVersion`, `buildSignedStandardsPack`) + `0191_standards_distribution.sql`. **Wired** by the Super Admin standards surface (`SuperAdminStandards.tsx`, SA-21, mounted as the `standards` tab in `SuperAdminPortal.tsx`): it publishes a signed pack, rolls it out to entitled tenants (an unentitled tenant is `skipped-not-entitled` with a log row and no subscription row), and pins a version with a reason. Proved by `SuperAdminStandards.test.tsx` (14) and `supabase/tests/137_standards_distribution.sql` (37) | D16 |
 
 ---
 
@@ -313,9 +313,9 @@ this register exists to catch.
 
 | Status | Count |
 |---|---|
-| `Wired` | 121 |
+| `Wired` | 122 |
 | `Inert` | 4 |
-| `Absent` | 20 |
+| `Absent` | 19 |
 | **Total** | **145** |
 
 **Read that again, with the correction applied.** This pass corrected a systematic understatement:
