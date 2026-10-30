@@ -52,6 +52,10 @@ notification delivery).
   run), so the ingest guard is the run's existence and ownership, not its status.
 - The register total is now 125 Wired / 1 Inert / 19 Absent (the one remaining Inert is F128,
   `RuleRegistry`/`packRules`). The integrator folds this table into the shared ledger.
+- Scale (SCALE-PROGRAMME §5 flow 16): `140_monitor_scale.sql` runs one released threshold rule over a
+  batch sized by `provio_test.scale_factor` (default 1), proving the rule fires exactly once over the
+  whole batch, the reason names the batch maximum, the chain verifies, and a later sweep over the
+  unchanged batch writes nothing. F49/F50 stay `Wired` — this is the scale evidence, not a new row.
 - Scale (SCALE-PROGRAMME §5 flow 17): `139_connector_run_guards.sql` §5 runs a batch whose size is the
   GUC `provio_test.scale_factor` (default 1; a dedicated run raises it), proves every record stages
   once, the run count is exact, and a replayed batch stages nothing new. The structure is the same at
