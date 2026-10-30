@@ -78,6 +78,7 @@ describe('RiskLibraryPanel (SR-04): D14 / D15', () => {
     fireEvent.click(screen.getByTestId('risk-autocompute-run'));
     await waitFor(() => expect(writeRiskFactors).toHaveBeenCalled());
     await waitFor(() => expect(screen.getByTestId('risk-notice').textContent).toContain('normalised to 100'));
+    await waitFor(() => expect(screen.getByTestId('risk-weights').textContent).toContain('/100'));
   });
 
   it('surfaces a factor-write refusal and writes nothing', async () => {

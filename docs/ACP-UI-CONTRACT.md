@@ -2166,7 +2166,7 @@ the factor weights normalise to exactly 100. Nothing is inferred and nothing is 
 - **Testids:** `risk-panel`, `risk-loading`, `risk-error`, `risk-notice`, `risk-denied`, `risk-tabs`,
   `risk-tab-library`, `risk-tab-autocompute`, `risk-tab-erm`, `risk-tab-planning`, `risk-library`,
   `risk-library-row-<id>`, `risk-library-derived-count`, `risk-autocompute`, `risk-pick`, `risk-cycle`,
-  `risk-autocompute-run`, `risk-factor-values`, `risk-factor-<key>`, `risk-override-factor`,
+  `risk-autocompute-run`, `risk-factor-values`, `risk-factor-<key>`, `risk-weights`, `risk-override-factor`,
   `risk-override-value`, `risk-override-reason`, `risk-override-save`, `risk-override-revert`,
   `risk-erm`, `risk-erm-<theme>`, `risk-erm-gaps`, `risk-erm-empty`, `risk-kri-<id>`, `risk-kri-empty`,
   `risk-kri-add`, `risk-planning`, `risk-trigger-kind`, `risk-trigger-entity`, `risk-propose`,

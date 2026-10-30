@@ -25,7 +25,7 @@ import {
   type RiskLibraryRow,
 } from '../../data/risk';
 import { deriveFactors, type EntityRiskFacts } from '../../lib/risk/derivation';
-import { defaultSiraModel, siraBandFor } from '../../lib/siraEngine';
+import { defaultSiraModel, normalizeWeights, siraBandFor } from '../../lib/siraEngine';
 import {
   RISK_TAXONOMY_THEMES,
   ermMap,
@@ -56,6 +56,10 @@ const input = 'w-full rounded-xl border border-hairline bg-surface px-3 py-2 tex
 const tabCls = (on: boolean) => `px-3 py-1.5 rounded-lg text-apple-12 font-medium ${on ? 'bg-accent text-white' : 'text-secondary hover:bg-surface-elevated'}`;
 
 const bandOf = (v: number) => siraBandFor(v, defaultSiraModel().bands);
+const MODEL = defaultSiraModel();
+const NORMALISED_WEIGHT_TOTAL = Object.values(
+  normalizeWeights(Object.fromEntries(MODEL.factors.map((f) => [f.key, f.weight]))),
+).reduce((a, b) => a + b, 0);
 
 /** A deterministic demonstration fact set derived from the risk library row (no clock, no client). */
 function factsFor(risk: RiskLibraryRow, classification: string | null, severe: boolean): EntityRiskFacts {
@@ -112,14 +116,14 @@ export const RiskLibraryPanel: React.FC<{ screenId?: string }> = ({ screenId = '
       ]);
       setLibrary(lib); setDerived(der); setCycles(cyc); setThemes(th); setKris(kr); setProposals(pr);
       setStandardsKeys(std.map((s) => s.key));
-      if (!pickRisk && lib.length) setPickRisk(lib[0].id);
-      if (!pickCycle && cyc.length) setPickCycle(cyc[0].id);
+      setPickRisk((cur) => cur || lib[0]?.id || '');
+      setPickCycle((cur) => cur || cyc[0]?.id || '');
       setState(lib.length ? 'ready' : 'empty');
     } catch (e) {
       setLoadError(e instanceof Error ? e.message : 'The risk library could not be read.');
       setState('error');
     }
-  }, [orgId, pickRisk, pickCycle]);
+  }, [orgId]);
 
   useEffect(() => { void load(); }, [load]);
 
@@ -257,11 +261,16 @@ export const RiskLibraryPanel: React.FC<{ screenId?: string }> = ({ screenId = '
             <RefreshCw className="h-4 w-4" /> Auto-compute factors
           </button>
           {Object.keys(factorValues).length > 0 && (
-            <ul className="mt-2 space-y-1" data-testid="risk-factor-values">
-              {Object.entries(factorValues).map(([k, v]) => (
-                <li key={k} className="text-apple-12" data-testid={`risk-factor-${k}`}>{k}: {v} ({bandOf(v)})</li>
-              ))}
-            </ul>
+            <>
+              <ul className="mt-2 space-y-1" data-testid="risk-factor-values">
+                {Object.entries(factorValues).map(([k, v]) => (
+                  <li key={k} className="text-apple-12" data-testid={`risk-factor-${k}`}>{k}: {v} ({bandOf(v)})</li>
+                ))}
+              </ul>
+              <p className="mt-2 text-apple-11 text-secondary" data-testid="risk-weights">
+                Weights normalised to {NORMALISED_WEIGHT_TOTAL}/100
+              </p>
+            </>
           )}
 
           <div className="mt-4 border-t border-hairline pt-3">
