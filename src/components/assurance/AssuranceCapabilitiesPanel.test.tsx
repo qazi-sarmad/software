@@ -103,6 +103,50 @@ describe('AssuranceCapabilitiesPanel (OA-34): D5 / D7 / D8 / D9', () => {
     expect(screen.getByTestId('assurance-d8-gap-O-1').textContent).toContain('CL-9');
   });
 
+  it('bad path: D5 with no control configured says so, never a silent green', async () => {
+    runIcfrMonitoring.mockResolvedValue({
+      result: { rows: [], noEvidence: [], unmonitored: [], breaches: [], complete: false },
+      recorded: { ok: true },
+    });
+    render(<AssuranceCapabilitiesPanel />);
+    await waitFor(() => expect(screen.getByTestId('assurance-d5-run')).toBeTruthy());
+    fireEvent.click(screen.getByTestId('assurance-d5-run'));
+    await waitFor(() => expect(screen.getByTestId('assurance-d5-empty')).toBeTruthy());
+    expect(screen.getByTestId('assurance-d5-empty').textContent).toContain('No controls are configured');
+    // No breach row is fabricated, and the banner is still not a pass.
+    expect(screen.queryByTestId('assurance-d5-breach-C-01')).toBeNull();
+    expect(screen.getByTestId('assurance-d5-complete').textContent).toContain('NOT a pass');
+  });
+
+  it('bad path: D7 over an empty population says no rule ran, never "clean"', async () => {
+    runForensicAnalytics.mockResolvedValue({ results: [], recorded: { ok: true } });
+    render(<AssuranceCapabilitiesPanel />);
+    await waitFor(() => expect(screen.getByTestId('assurance-tab-d7')).toBeTruthy());
+    fireEvent.click(screen.getByTestId('assurance-tab-d7'));
+    fireEvent.change(screen.getByTestId('assurance-d7-population'), { target: { value: 'pop-1' } });
+    fireEvent.click(screen.getByTestId('assurance-d7-run'));
+    await waitFor(() => expect(screen.getByTestId('assurance-d7-empty')).toBeTruthy());
+    expect(screen.queryByTestId('assurance-d7-findings')).toBeNull();
+  });
+
+  it('bad path: D8 reports a clause it could not interpret, never as compliant', async () => {
+    runGapAnalysis.mockResolvedValue({
+      result: {
+        rows: [], gaps: [], coveragePercent: 0,
+        notInterpreted: [{ obligationId: 'O-9', sourceClause: 'CL-77', subject: 's', status: 'not_interpreted', coveredBy: [], missingControls: [], reason: 'CL-77 could not be interpreted' }],
+      },
+      recorded: { ok: true },
+    });
+    render(<AssuranceCapabilitiesPanel />);
+    await waitFor(() => expect(screen.getByTestId('assurance-tab-d8')).toBeTruthy());
+    fireEvent.click(screen.getByTestId('assurance-tab-d8'));
+    fireEvent.click(screen.getByTestId('assurance-d8-run'));
+    await waitFor(() => expect(screen.getByTestId('assurance-d8-unknown')).toBeTruthy());
+    expect(screen.getByTestId('assurance-d8-unknown').textContent).toContain('CL-77');
+    // It is reported as could-not-interpret, never folded into a gap or a covered clause.
+    expect(screen.queryByTestId('assurance-d8-gap-O-9')).toBeNull();
+  });
+
   it('D9 shows an unknown metric as unknown, never 0', async () => {
     render(<AssuranceCapabilitiesPanel />);
     await waitFor(() => expect(screen.getByTestId('assurance-tab-d9')).toBeTruthy());
