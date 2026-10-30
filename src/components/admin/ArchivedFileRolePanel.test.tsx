@@ -35,6 +35,13 @@ describe('ArchivedFileRolePanel (OA-41)', () => {
     setRoleFn.mockResolvedValue(1);
   });
 
+  it('shows a loading state while the configuration is read', () => {
+    getRoleFn.mockReturnValue(new Promise(() => {}));
+    listCustodiansFn.mockReturnValue(new Promise(() => {}));
+    render(<ArchivedFileRolePanel />);
+    expect(screen.getByTestId('archived-role-loading')).toBeTruthy();
+  });
+
   it('shows the custodian role in force and the platform default', async () => {
     render(<ArchivedFileRolePanel />);
     await waitFor(() => expect(screen.getByTestId('archived-role-value').textContent).toBe('CIA'));

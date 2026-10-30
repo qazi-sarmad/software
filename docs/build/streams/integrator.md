@@ -114,8 +114,59 @@ the designer's call, not the integrator's.
 | — stream briefs vs §2 drift | Stale | Reconciled | `docs/build/streams/{s1-core-engine,s5-monitor-runtime,s6-config-honesty,s7-extraction-docs}.md` | `src/guards/ownershipMap.test.ts` | — | `_this commit_` |
 | — ownership-map guard | Absent | Built | `src/guards/ownershipMap.test.ts` (reads §2; each stream screen granted to exactly one stream) | the guard itself, proved to fail on a re-introduced double-claim | — | `_this commit_` |
 | OA-40 scoped roles and access | Absent | Wired | `RoleScopePanel.tsx` (tab `scoped` in `PeopleAdminPanel.tsx`) | `roleAccess.test.ts` (15); `supabase/tests/143_role_scope_config.sql` | `0199_role_scope_config.sql` | `_part 1_` |
-| OA-41 deploy from the plan (file owner, early approval, suggestions) | Absent | Wired | `PlanDeploymentPanel.tsx` (`plan-open-deployment` in `AuditPlanTab.tsx`) | `PlanDeploymentPanel.test.tsx` (8); `supabase/tests/144_engagement_owner_deployment.sql` | `0200_engagement_owner_deployment.sql` | `_this commit_` |
-| OA-42 prior-year roll-forward & export check | Absent | Wired | `PriorYearRollforwardPanel.tsx` (`plan-open-rollforward` in `AuditPlanTab.tsx`) | `PlanDeploymentPanel.test.tsx` (8); `supabase/tests/145_prior_year_rollforward.sql` | `0201_prior_year_rollforward.sql` | `_this commit_` |
+| AP-06 deploy from the plan (file owner, early approval, suggestions) | Absent | Wired | `PlanDeploymentPanel.tsx` (`plan-open-deployment` in `AuditPlanTab.tsx`) | `PlanDeploymentPanel.test.tsx` (8); `supabase/tests/144_engagement_owner_deployment.sql` | `0200_engagement_owner_deployment.sql` | `_this commit_` |
+| AP-07 prior-year roll-forward & export check | Absent | Wired | `PriorYearRollforwardPanel.tsx` (`plan-open-rollforward` in `AuditPlanTab.tsx`) | `PlanDeploymentPanel.test.tsx` (8); `supabase/tests/145_prior_year_rollforward.sql` | `0201_prior_year_rollforward.sql` | `_this commit_` |
+| — no audit file without a file owner (L5) | Absent | Wired | trigger `engagements_file_owner_required` (0202); `PlanDeploymentPanel.tsx` owner-audit section | `supabase/tests/146_file_owner_invariant.sql`; `supabase/tests/144_engagement_owner_deployment.sql` (O1/O9) | `0202_file_owner_invariant.sql` | `ce80362` |
+| OA-41 archived-file custodian role | Absent | Wired | `ArchivedFileRolePanel.tsx` (tab `archived-role` in `OrgControlPanel.tsx`); `src/data/fileOwnership.ts` | `ArchivedFileRolePanel.test.tsx` (9); `supabase/tests/147_archived_file_role.sql` | `0203_archived_file_role.sql` | `_this commit_` |
+| — UI/UX standard (trunk) | Absent | Built | `docs/UI-UX-STANDARD.md` | the standard's §1 rules cite the guards that enforce each; the two surfaces above prove their five states | — | `_this commit_` |
+
+### The file-owner workstream (owner 2026-10-30)
+
+Two owner instructions, one invariant each, both now structural rather than a screen's promise:
+
+> *"no audit file can ever be in existence or archival without a file owner."*
+> *"for archived files add a permanently configurable role."*
+
+**`0202_file_owner_invariant.sql`** makes file ownership a property of an existing audit file, not a
+step someone remembers. An `AFTER INSERT` trigger on `engagements` names the accountable person (the
+preparer by default; the caller may name another), the existing rows are backfilled with a marker that
+distinguishes a defaulted assignment from a human one, and a guard refuses to delete or clear the owner
+of an existing file. `seal_engagement` refuses with `no_file_owner` when the file is unowned, and the
+archive path requires an owner too. `deploy_engagement` (0022) lost its stale 5-arg overload and gained
+the owner argument; `engagement_deploy_from_plan` and `engagement_deployment_decide` (0200) gained the
+same argument with the preparer as the default — the original bodies are preserved exactly.
+`engagement_file_owners_list()` reports unowned files (a defect) and default-assigned owners (to
+confirm). Proved by `146_file_owner_invariant.sql` and the strengthened isolation case in
+`144_engagement_owner_deployment.sql`.
+
+**`0203_archived_file_role.sql`** gives an archived file a custodian **role**, because an archive
+outlives the person who owned it. `archived_file_role` holds the organisation's choice, versioned; the
+platform default is `cia`, so a tenant that never opens the screen still has a custodian.
+`archived_file_role_set` requires `manage_roles` and a reason, bumps the version and appends the change
+to the ledger; it never replaces the row. The configuration is never deleted — the privilege layer and a
+guard trigger both refuse a `DELETE` and a blank slug. `archive_population` stamps every archive with
+the custodian role in force, and `archived_file_custodians()` reports each archived file, its custodian
+role and its owner. Proved by `147_archived_file_role.sql`.
+
+**Surfaces.** `ArchivedFileRolePanel.tsx` (contract `OA-41`, the "Archived files" tab of the org
+control panel) chooses the custodian and shows every archived file with its role and owner;
+`PlanDeploymentPanel.tsx` (contract `AP-06`) gains "Every audit file has an owner", the reader that
+surfaces an unowned file and a defaulted assignment. Both are held to `docs/UI-UX-STANDARD.md`.
+
+**A defect found and fixed in passing.** Test 111 (`111_phase4_methodology.sql`) called
+`platform_create_tenant` without seeding the platform admin into `auth.users` first, so it failed on an
+`invite_cap_events_invited_by_fkey` violation — and a red at file 111 masked every SQL test after it.
+Fixed by seeding the admin (uuid `…f0`) exactly as test 123 does — commit `5200f4b`, which landed ahead of this workstream.
+
+### The design document (owner 2026-10-30)
+
+The design language lives in `docs/design/CONTRACT.md`, owned and frozen by the **design branch**; the
+trunk does not edit it (`OWNERSHIP.md` §2, the design contract §6). The trunk therefore contributes
+**`docs/UI-UX-STANDARD.md`**, the behaviour bar every surface is held to — the five states, the
+no-silent-refusal rule, rights-gated controls, keyboard-first, tokens-only — with the guard that
+enforces each rule named. The two requests the standard makes of the frozen design contract (a
+`state-` prefix for cross-cutting states; a named tabular-figure token) are recorded in that file §5
+and **not** edited into the design contract.
 
 ### Flagged for the integrator (not edited — shared ledger)
 
