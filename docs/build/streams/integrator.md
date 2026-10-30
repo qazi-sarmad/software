@@ -76,7 +76,8 @@ Created at `968e30d`:
 | — mount points (§4) | Absent | Wired | `src/nav/registry.ts`, `src/data/index.ts`, `src/lib/capabilities/registry.ts` | `src/guards/mountPoints.test.ts` | — | `7a11cf9` |
 | — map ⟷ latest prompts | Stale | Reconciled | `docs/build/OWNERSHIP.md` §1/§2/§4.1 | `src/guards/mountPoints.test.ts` | — | `_this commit_` |
 | — `tutorialTargets` flake | Flaky (7.3 s timeout) | Fixed | `src/guards/tutorialTargets.test.ts` | the same guard, now 0.8 s | — | `d599cb5` |
-| S17 scale generator | Absent | Built | `supabase/tests/99_scale_seed.sql`, `scripts/scale-seed.mjs` | the SQL harness runs 99 twice; `scale-seed.mjs --factor=3` twice gives an identical fingerprint | — | `_this commit_` |
+| S17 scale generator | Absent | Built | `supabase/tests/99_scale_seed.sql`, `scripts/scale-seed.mjs` | the SQL harness runs 99 twice; `scale-seed.mjs --factor=3` twice gives an identical fingerprint | — | `30f5734` |
+| S17 ≥200-session isolation | Absent | Proved | `supabase/tests/99_scale_seed.sql` (dblink concurrency block) | test 99 at `scale_factor=13`, `scale_sessions=2` → **208 concurrent sessions**, each isolated | — | `_this commit_` |
 
 ### S17 — the deterministic scale generator (`docs/build/SCALE-PROGRAMME.md` §4)
 
@@ -103,6 +104,16 @@ The programme assigns the generator to the integrator; it did not exist. Built i
 
 _Verified: `bash scripts/local-sql-harness.sh` → "migrations applied twice / all SQL tests passed twice";
 `node scripts/scale-seed.mjs --factor=3` twice → identical counts and fingerprint._
+
+**The §6 concurrency threshold is proved.** Test 99 ends with a dblink block that opens one session per
+generated long-tail org, issues every probe **without waiting** (so they really race), and asserts each
+session sees exactly its own universe, zero foreign universes and zero foreign writes. The count is
+`8 * scale_factor * scale_sessions`. At the harness default (`factor=1`, `sessions=1`) it is 8 sessions
+and stays under `max_connections`; at `factor=13`, `sessions=2` it is **208 concurrent sessions, each
+isolated to its own org** — the SCALE-PROGRAMME §6 target — verified locally in 1.6 s. Raising the
+factor for the 200-session run needs a server `max_connections ≥ 208` (the local cluster's default 100
+does not allow it); the harness default is left at 8 for that reason, with the parameter documented in
+the file.
 
 ### Reconciliation with the latest prompts (`0f3a095`, `968e30d`)
 

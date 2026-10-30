@@ -26,6 +26,15 @@
 \i supabase/tests/00_lib.sql
 select provio_test.seed();
 
+-- dblink conninfo for the concurrency check at the end. psql variables are not substituted inside a
+-- dollar-quoted body, so pass the URL through a GUC (the mechanism tests 15 and 118 use).
+\getenv db_url TEST_SUPABASE_DB_URL
+\if :{?db_url}
+\else
+  \set db_url postgresql:///provio_local
+\endif
+select set_config('provio_test.db_url', :'db_url', false);
+
 -- A deterministic uuid: p_tag (8 hex chars) + a fixed tail + the 12-digit index. No randomness.
 create or replace function provio_test.det_uuid(p_tag text, p_n bigint) returns uuid
 language sql immutable as $$
@@ -332,6 +341,98 @@ begin
     'scale RLS: a long-tail org sees only itself in orgs');
 end $$;
 select provio_test.as_owner();
+
+-- ---------------------------------------------------------------------------
+-- The tenant boundary under real concurrency (L2, SCALE-PROGRAMME §6: zero cross-tenant leakage under
+-- concurrent sessions). Shape B already holds 8 * factor orgs, each with a CIA role and its own
+-- universe. This opens one dblink session per org and, WITHOUT waiting, has every session read its own
+-- universes, try to read every other org's, and try to write a foreign org's universe. The statements
+-- are all issued before any result is collected, so they really race.
+--
+-- The concurrency is (orgs x sessions). The default (1 session per org) keeps the connection count
+-- under the server's max_connections; raise `provio_test.scale_sessions` (with a larger
+-- `provio_test.scale_factor`, and a server configured for it) to reach the §6 target of >= 200
+-- concurrent sessions. The assertion is per-session and exact at any count.
+-- ---------------------------------------------------------------------------
+-- One read/write probe, self-contained so it is safe to run on many connections at once. It assumes
+-- a CIA identity for p_org, reads its own and every foreign universe, attempts a write to p_target's
+-- universe, then restores the session. Returns (own, foreign_rows, foreign_writes).
+create or replace function provio_test.scale_isolation_probe(p_sub text, p_org text, p_target text)
+returns table (own int, foreign_rows int, foreign_writes int)
+language plpgsql as $$
+declare
+  v_own int;
+  v_foreign int;
+  v_writes int;
+begin
+  execute 'set role authenticated';
+  perform set_config('request.jwt.claims',
+    jsonb_build_object('sub', p_sub, 'org_id', p_org, 'user_role', 'cia', 'aal', 'aal1')::text, false);
+
+  select count(*)::int into v_own from universes where org_id = p_org::uuid;
+  select count(*)::int into v_foreign from universes where org_id <> p_org::uuid;
+  update universes set name = name where org_id = p_target::uuid;
+  get diagnostics v_writes = row_count;
+
+  return query select v_own, v_foreign, v_writes;
+
+  execute 'reset role';
+  perform set_config('request.jwt.claims', '', false);
+end $$;
+
+select provio_test.as_owner();
+do $$
+declare
+  v_orgs int := 8 * coalesce(nullif(current_setting('provio_test.scale_factor', true), '')::int, 1);
+  v_sessions int := coalesce(nullif(current_setting('provio_test.scale_sessions', true), '')::int, 1);
+  v_conns int := v_orgs * v_sessions;
+  v_cname text;
+  j int;
+  i int;
+  v_org text;
+  r_own int;
+  r_foreign int;
+  r_writes int;
+begin
+  begin
+    create extension if not exists dblink;
+  exception when others then
+    raise exception 'scale concurrency cannot run: the dblink extension is unavailable';
+  end;
+
+  -- A pooled backend may be reused and dblink names survive DISCARD ALL; clear stale names first.
+  for j in 1..v_conns loop
+    begin perform dblink_disconnect('scale_conc_' || j); exception when others then null; end;
+  end loop;
+  for j in 1..v_conns loop
+    perform dblink_connect('scale_conc_' || j, current_setting('provio_test.db_url'));
+  end loop;
+
+  -- Send every probe WITHOUT waiting, so all v_conns statements are in flight together.
+  for j in 1..v_conns loop
+    i := ((j - 1) / v_sessions) + 1;
+    v_org := provio_test.det_uuid('5ca1eb00', i)::text;
+    perform dblink_send_query('scale_conc_' || j, format(
+      $f$select own, foreign_rows, foreign_writes from provio_test.scale_isolation_probe(%L, %L, %L)$f$,
+      v_org, v_org, provio_test.det_uuid('5ca1eb00', (i % v_orgs) + 1)::text));
+  end loop;
+
+  -- Collect and assert: every session sees exactly its own universe, no foreign rows, no foreign write.
+  for j in 1..v_conns loop
+    v_cname := 'scale_conc_' || j;
+    select t.own, t.foreign_rows, t.foreign_writes into r_own, r_foreign, r_writes
+      from dblink_get_result(v_cname) as t(own int, foreign_rows int, foreign_writes int);
+    perform provio_test.assert_eq(r_own, 1, format('scale concurrency: session %s sees its own universe', j));
+    perform provio_test.assert_eq(r_foreign, 0, format('scale concurrency: session %s sees zero foreign universes', j));
+    perform provio_test.assert_eq(r_writes, 0, format('scale concurrency: session %s writes zero foreign rows', j));
+    perform dblink_disconnect(v_cname);
+  end loop;
+
+  raise notice 'ok: % concurrent sessions over the generated shapes, each isolated to its own org', v_conns;
+end $$;
+
+select provio_test.as_owner();
+drop extension if exists dblink;
 
 -- The generator leaves its shapes in place; the next file's `select provio_test.seed()` clears them
 -- with the same TRUNCATE reset (L5 — append-only rows cannot be DELETEd).
