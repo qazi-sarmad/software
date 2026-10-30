@@ -31,3 +31,6 @@ export * as connectors from './connectors';
 
 // --- S6: lifecycle configuration (R3) --------------------------------------------------------------
 export * as lifecycle from './lifecycle';
+
+// --- S7: extraction and document/minutes/policy surfaces --------------------------------------------
+export * as documentReview from './documentReview';

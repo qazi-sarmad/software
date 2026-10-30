@@ -194,6 +194,14 @@ export const ACTION_COMMANDS: CommandItem[] = [
   },
   {
     kind: 'action',
+    id: 'action.global_search',
+    label: 'Search all documents',
+    hint: 'Full-text search every document you may read',
+    keywords: ['search documents', 'document search', 'full text', 'find in documents', 'global search'],
+    target: { inspector: 'global_search' },
+  },
+  {
+    kind: 'action',
     id: 'action.account_settings',
     label: 'Account settings',
     hint: 'Your profile and preferences',

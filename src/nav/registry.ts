@@ -69,6 +69,7 @@ export const MOUNTED_SCREENS: ScreenMount[] = [
   { screenId: 'OA-23', title: 'Connectors and continuous monitoring', owner: 's5', path: 'src/components/writing/ConnectorMonitorPanel.tsx', status: 'mounted' },
   { screenId: 'OA-29', title: 'Integrity alarm', owner: 'trunk', path: 'src/components/admin/IntegrityAlarmPanel.tsx', status: 'mounted' },
   { screenId: 'OA-30', title: 'Attestation', owner: 'trunk', path: 'src/components/admin/AttestationPanel.tsx', status: 'mounted' },
+  { screenId: 'OA-39', title: 'Global document search', owner: 's7', path: 'src/components/documents/GlobalSearchPanel.tsx', status: 'mounted' },
 ];
 
 /**

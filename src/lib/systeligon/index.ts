@@ -22,6 +22,7 @@ export {
 export { justBelowThreshold } from './rules/threshold';
 export { parseDocumentStructure, hasSignature, FIELD_PARSERS, type StructuredExtraction } from './extract/structured';
 export { needsOcr, runOcr, runOcrWithLanguages, type OcrEngine, type OcrText, type OcrOutcome, type ExtractionHint } from './extract/ocr';
+export { bundledOcrEngine, type BundledOcrOptions } from './extract/ocrEngine';
 export {
   OCR_LANGUAGES, OCR_ENGINE_CHOICES, DEFAULT_OCR_LANGUAGE,
   buildOcrEngineConfig, defaultOcrEngineConfig, ocrLanguage, packFontTables,
@@ -48,3 +49,11 @@ export {
 export {
   resolveReleasedRules, type ReleasedPack, type ReleasedPackRule,
 } from './released';
+export {
+  assessDocType, docTypeMismatch, docTypeRules, DOC_KINDS, DOC_TYPE_MARKERS, ASSESSABLE_DOC_KINDS,
+  type DocKind, type DocTypeVerdict, type DocTypeAssessment, type DocTypeSignal,
+} from './extract/docType';
+export {
+  REVIEW_OPTIONS, REVIEW_OPTION_IDS, ALL_REVIEW_OPTIONS, reviewOption, resolveReviewOptions,
+  rulesForOptions, type ReviewOption, type ReviewOptionId, type ReviewAnalysis,
+} from './extract/reviewOptions';

@@ -54,6 +54,7 @@ export type InspectorType =
   | 'org_control'
   | 'shared_with_me'
   | 'finding'
+  | 'global_search'
   | 'standards';
 
 export interface InspectorState {

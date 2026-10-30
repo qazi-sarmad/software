@@ -39,3 +39,4 @@ F136 (policy/procedure comparison screen), F92 (guided zero-to-first-report wiza
 ## Status
 | Row | Was | Now | Call site | Test | Migration | Commit |
 |---|---|---|---|---|---|---|
+| OA-39 global document search | Absent | Wired | `src/components/documents/GlobalSearchPanel.tsx` mounted via `RecordContent.tsx` inspector `global_search`, reached from the palette action `action.global_search` (`src/lib/commandPalette.ts`) | `src/components/documents/GlobalSearchPanel.test.tsx` (8), `supabase/tests/136_global_document_search.sql` | `0190_global_document_search.sql` | _this commit_ |
