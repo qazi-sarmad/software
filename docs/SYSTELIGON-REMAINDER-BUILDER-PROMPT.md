@@ -137,6 +137,9 @@ READ FIRST, IN THIS ORDER
 7. docs/iia-standards-reference.md — VERIFIED IIA 2024 numbering. Use these; never guess.
 8. docs/ASSURANCE-RULEBOOKS.md     — VERIFIED control sets, forensic standards and quality standards
    for D5/D7/D8/D9. The rule citations come from here. Never invent a standard number or a count.
+9. docs/PAKISTAN-ASSURANCE-REGIMES.md — VERIFIED client classification matrix (C1–C8) for D10, and the
+   management / IT / Shari'ah audit-type axis for D11. The regulator and obligation citations come from
+   here. Never invent a section number, a stage count or a framework name.
 IGNORE ALL of docs/archive/ — 63 pre-audit docs, each stamped stale.
 
 ===============================================================
@@ -269,6 +272,98 @@ D9 — Assurance-over-assurance. F125 Absent -> Wired.
     D6 (verifiable third-party attestation) is REMOVED from scope by owner instruction. If you find
     F122 referenced, mark it honestly as removed, not Absent, and note the owner decision.
 
+D10 — Client classification at onboarding, and the ICFR trigger. NEW; owner instruction 2026-10-29.
+    Read docs/PAKISTAN-ASSURANCE-REGIMES.md FIRST — it is the verified classification matrix and it is
+    where the regulator, law, framework and mandatory-obligation citations come from. Never invent a
+    section number, a stage count or a framework name.
+    - `orgs` (0002) carries only name/is_demo/created_at. Add the classification as versioned,
+      reason-stamped org data: classification (C1–C8 from the reference), principal regulator,
+      jurisdiction, and an `is_islamic` / shari'ah-obligation flag. Config-as-ledger: a change is
+      versioned and reason-stamped.
+    - Add it to the Super Admin onboarding (the provisioning wizard, SA-16) AND the Org Admin
+      onboarding: a classification picker with the regulator and the obligations it triggers shown
+      inline. The picker is data, not a hard-coded if/else — a table of classifications → obligations.
+    - **The ICFR trigger.** The classification decides whether ICFR is mandatory and at what rigour:
+      C6 (banks/DFIs) → the SBP ICFR Roadmap form (BSD Circular 7 of 2004 + Circular 5 of 2009, eight
+      stages, annual management assessment, board endorsement, Long Form Report); C7 (SOEs) → COSO ERM
+      + ISO 31000 + COBIT under the SOE Regulations 2024; C1 → the Companies Act 2017 s.227 directors'
+      statement with COSO ICIF; C2 → board comment in the directors' report; C3–C5 → basic or exempt.
+      When ICFR is mandatory the tenant is offered the D5 control set and the required reporting
+      artifact is enabled. When it is exempt, the product says so and does not invent an obligation.
+    - Surface: the classification appears on the org settings screen and drives the obligation set.
+    - Acceptance: a tenant created as "Banking company / DFI" is offered the SBP ICFR control set and
+      the LFR artifact; a tenant created as "SMC" is told it is exempt; the choice is versioned and
+      reason-stamped; no obligation is asserted without a citation.
+
+D11 — The audit-type axis: management / IT / Shari'ah rule packs. NEW; owner instruction 2026-10-29.
+    The product names three audit types (docs/SPEC-v10.md; `universes.domain`). Management audit is
+    the product and is built. IT audit and Shari'ah audit are containers with no rule base — the same
+    "built container, no reachable rule" defect. Close it.
+    - Make `universes.domain` (or a new `audit_type`) a first-class, screen-set property of a universe
+      (today no screen reads or sets it), and key rule packs to it: a universe of type IT Audit loads
+      the IT pack; Shari'ah Audit loads the Shari'ah pack; Management Audit loads the default.
+    - **IT audit pack** — a real rule base over the COBIT 2019 objectives / ISO 27001:2022 Annex A /
+      NIST 800-53 families in docs/ASSURANCE-RULEBOOKS.md: change management, access control and
+      privileged access, backup and DR, SDLC, patch management, logging and monitoring. Named, versioned
+      rules, each citing its control id.
+    - **Shari'ah audit pack** — VERIFY FIRST, THEN ENCODE. In Pakistan a Shari'ah audit is grounded in
+      the SBP Shari'ah Governance Framework for Islamic banking, the institution's Shari'ah Supervisory
+      Board, and AAOIFI Shari'ah standards (GSIFI). The SGF was NOT verifiable in this environment
+      (SBP is 403 to curl). Verify the current SBP SGF and the applicable AAOIFI standards against the
+      primary source before encoding a single rule, cite the exact standard, and if it cannot be
+      verified, STOP and report it rather than inventing a Shari'ah rule. A guessed Shari'ah rule is a
+      religious-compliance claim the product has no right to make.
+    - Surface: the universe creation / settings screen sets the audit type; the rule-run screen loads
+      the matching pack. Each pack needs a contract section, testids and a regenerated UI-INVENTORY.md.
+    - Acceptance: a universe of type IT Audit runs the IT pack; a Shari'ah universe runs the verified
+      Shari'ah pack (or is honestly blocked pending verification); every rule names its control id.
+
+D12 — Traffic-signal readiness panels (Super Admin + Org Admin). NEW; owner instruction 2026-10-29.
+    The owner wants the control panels, especially at deployment and onboarding, to read as LIVID
+    TRAFFIC SIGNALS: one glance tells a non-technical administrator what is ready, what is degraded and
+    what is broken. This is functional honesty made visual, not decoration.
+    - Extend `platform_provisioning_status` (0097) — already counts + booleans — into a full readiness
+      signal set, and add the equivalent for the Org Admin. Each signal is a deterministic verdict:
+      red / amber / green, with the reason in words. Reuse the existing `evaluateFit` verdict vocabulary
+      (`SuperAdminHosting.tsx` already renders green/amber/red from `lib/hostingFit`).
+    - Cover at least: schema/migrations applied; storage buckets present (0120 evidence storage);
+      Edge Functions deployed (doc-extract, invite-user, email-dispatch, graph-oauth, archive-upload,
+      secrets-put, hosting-test); the platform sender configured; a signing key registered; the
+      classification set (D10); the first admin invited and accepted; the first engagement creatable;
+      backups/DR configured; and — for a real deployment — the app build's environment variables present.
+    - **The honest rule**: a signal is never a wall of green. If a check cannot be evaluated (a bucket
+      not wired, a function not deployed), the signal is amber with "not evaluated" named — never green
+      by default. This is A-U2 (functional states) and the R3 config-honesty rule applied to readiness.
+    - Surface: a readiness banner/section on SuperAdminProvisioning and OrgControlPanel. Non-blocking,
+      no modal (spec §27.5). Counts and booleans only cross to the platform role (L2).
+    - Acceptance: every signal names its check and its reason; an un-evaluated check is amber, never
+      green; the panel shows the same verdict the underlying RPC computes.
+
+D13 — Deployment and environment readiness in the Super Admin. NEW; owner instruction 2026-10-29.
+    The owner asked whether deployment should be part of the Super Admin. The answer, and the work:
+    - **The app is a static SPA; the environment is three separate deployments**, and only one of them
+      is the app: (1) the SPA to a static host (Vercel/Netlify/Cloudflare Pages/S3) with a catch-all
+      rewrite to /index.html (`vercel.json` is committed on the starting branch); (2) the **Supabase
+      side** — migrations, storage buckets (0120) and the Edge Functions — which a static host does NOT
+      deploy; (3) the environment variables (`VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`) at
+      build time, without which the production shell renders empty.
+    - So yes: the Super Admin SHOULD own and display the **readiness** of all three — that is D12's
+      signal set — but it does not perform the deploy. The deploy is a pipeline (CI/CD + the host's
+      dashboard + `supabase db push` / function deploy); the Super Admin's job is to say, after the
+      fact, whether the environment is actually ready, and to name what is missing. Reuse the existing
+      `hosting_connections` / `hosting_connection_test_result` machinery (0069) and the migration-job
+      surface (`SuperAdminMigration`) — do NOT build a second deployment system.
+    - Build a "Deployment readiness" section on the Super Admin that reads the three layers' status
+      (app build/env present, migrations applied, buckets present, functions deployed) and renders each
+      as a D12 traffic signal with the reason. Where a status is not readable from the database (the
+      static host, the build env), the panel says "verify at the host" and links to the runbook — it
+      never claims green on something it cannot see.
+    - Deliverable: the readiness section + a short `docs/DEPLOYMENT-RUNBOOK.md` (the three layers, the
+      exact commands, the required variables, and the order).
+    - Acceptance: the Super Admin shows the three-layer readiness with honest per-layer verdicts; a
+      missing bucket or an un-deployed function shows amber/red with the name; the runbook reproduces a
+      clean deploy end to end.
+
 Register honesty — the six stale rows (F28, F29, F39, F53, F54, F55) are ALREADY corrected on the
     starting branch (94 Wired / 27 Inert / 17 Absent). Keep the rule for any further stale row you find:
     correct it in the same commit as the work that proves it.
@@ -301,6 +396,15 @@ E8, U5, U7, U9-U13, A-U1 — the design-language rows. The owner has not settled
   obligation and clause, and the result re-derives identically.
 - D9: the audit function's conformance to the IIA 2024 standards is computed from its own records,
   each measure cites its standard number, and the evidence pack re-derives identically.
+- D10: a tenant's classification is set at onboarding, versioned and reason-stamped, and drives its
+  obligations; a "Banking company / DFI" is offered the SBP ICFR control set and the LFR artifact; an
+  "SMC" is told it is exempt; no obligation is asserted without a citation.
+- D11: a universe of type IT Audit runs the IT pack; a Shari'ah universe runs the verified Shari'ah
+  pack (or is honestly blocked pending verification); every rule names its control id.
+- D12: every readiness signal names its check and its reason; an un-evaluated check is amber, never
+  green by default.
+- D13: the Super Admin shows the three-layer deployment readiness with honest per-layer verdicts, and
+  `docs/DEPLOYMENT-RUNBOOK.md` reproduces a clean deploy end to end.
 - No D-capability rule calls anything external; the no-AI guard still passes. (L1.)
 
 ===============================================================
@@ -330,6 +434,6 @@ OWNER ACTIONS (do not attempt these; restate them in your close-out)
   the DEFERRED visual rows (E8, U5, U7, U9-U13, A-U1) can be built once, not twice.
 
 BEGIN: lock your baseline and prove the tree whole, then work continuously through L2b, L3, L4, L5, L6,
-L7, the R3 remainder, D5/D7/D8/D9, and any remaining register-honesty rows — and close on the
-specification's section 14 acceptance list.
+L7, the R3 remainder, D5/D7/D8/D9, D10/D11/D12/D13, and any remaining register-honesty rows — and
+close on the specification's section 14 acceptance list.
 ```

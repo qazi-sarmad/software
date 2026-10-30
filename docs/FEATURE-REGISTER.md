@@ -299,6 +299,10 @@ this register exists to catch.
 | F136 | Policy/procedure/regulation comparison (S15) | `Inert` | `src/lib/systeligon/policydiff.ts` — `compareDocuments` reports its own coverage (parsed / matched / could-not-interpret), because an unparsed clause is not a clean clause. **No screen calls `compareDocuments`** | S15 |
 | F137 | Signed rule-pack storage (S10/S11) | `Wired` | `src/lib/systeligon/ota.ts` (`signPack`, `verifyPack`, `buildAdhocRule`) + `src/data/rulePacks.ts` (`listRulePacks`, `listRulePackRefusals`, `getReleasedRulePack`, `saveSignedRulePackArtifact`, `releaseRulePack`, `registerSigningKey`, `generateSigningKey`) + `0128_rule_pack_release.sql` (`rule_pack_save`/`rule_pack_list`/`rule_pack_release`/`rule_pack_refusals_list`/`rule_pack_released_rules`/`signing_key_register`). The pack-management screen is `RulePackPanel.tsx` (OA-33, mounted in `OrgControlPanel.tsx`): it lists packs, generates and registers a signing key, signs and verifies a draft, releases it and reads the refusal log. `RuleRunTab.tsx` reads the released pack through `getReleasedRulePack`/`resolveReleasedRules` and runs it | S10/S11 |
 | F138 | Single product/engine name (S16) | `Wired` | `src/lib/product.ts` is the one constants module (product name, tagline, title and the engine name); `scripts/sync-product-name.mjs` mirrors it to the Edge functions, `src/guards/productName.test.ts` holds it, and screens read it — `PRODUCT_NAME` in ten (`HeaderBar.tsx`, `SignInScreen.tsx`, `AttestationPanel.tsx`, …) and `ENGINE_NAME` in the rule-run screen (`RuleRunTab.tsx`) | S16 |
+| F139 | Client classification at onboarding, and the ICFR trigger | `Absent` | D10 — owner decision 2026-10-29; source `docs/PAKISTAN-ASSURANCE-REGIMES.md` |
+| F140 | Audit-type axis (management / IT / Shari'ah) and its rule packs | `Absent` | D11 — owner decision 2026-10-29; IT pack from `docs/ASSURANCE-RULEBOOKS.md`; Shari'ah pack blocked on SGF verification |
+| F141 | Traffic-signal readiness panels (Super Admin + Org Admin) | `Absent` | D12 — owner decision 2026-10-29 |
+| F142 | Deployment and environment readiness in the Super Admin | `Absent` | D13 — owner decision 2026-10-29 |
 
 ---
 
@@ -308,8 +312,8 @@ this register exists to catch.
 |---|---|
 | `Wired` | 94 |
 | `Inert` | 27 |
-| `Absent` | 17 |
-| **Total** | **138** |
+| `Absent` | 21 |
+| **Total** | **142** |
 
 **Read that again, with the correction applied.** This is materially better than the first pass
 reported, because Phases 1 and 2 of the scale-harden build closed the whole foundation, the S17-S20

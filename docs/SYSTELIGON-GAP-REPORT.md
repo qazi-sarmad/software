@@ -590,6 +590,7 @@ authoritative work list; the builder prompt delegates all of it except the desig
 |---|---|---|
 | D5, D7, D8, D9 | Continuous control monitoring (SOX/ICFR), population-level forensic analytics, policy-to-control gap analysis, assurance-over-assurance (`F121`, `F123`–`F125`) | **IN SCOPE** — owner decision 2026-10-29; `Absent` in the register; full-depth packages in `docs/SYSTELIGON-REMAINDER-BUILDER-PROMPT.md`, grounded in `docs/ASSURANCE-RULEBOOKS.md` |
 | D6 | Verifiable third-party attestation (`F122`) | **REMOVED** — owner decision 2026-10-29 |
+| D10–D13 | Client classification + ICFR trigger, the audit-type axis (management/IT/Shari'ah), traffic-signal readiness panels, deployment readiness (`F139`–`F142`) | **IN SCOPE** — owner decision 2026-10-29; `Absent`; grounded in `docs/PAKISTAN-ASSURANCE-REGIMES.md` |
 
 ### The remainder the build must still close
 
