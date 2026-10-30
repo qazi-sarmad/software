@@ -19,6 +19,9 @@ Read from the tree, not from a document:
 | Guard files (`src/guards/*.test.ts`) | 28 |
 | Register gate | `PASS: 145 features: 94 Wired, 27 Inert, 24 Absent` |
 
+At the head `c88e267` (after the concurrent-build work): 129 migrations, 134 SQL tests,
+**282 vitest files / 3240 tests**, **29 guards** (the integrator's `mountPoints.test.ts` added).
+
 All gates green at baseline: `npm run build`, `tsc --noEmit`, `vitest run`, the SQL harness twice
 (`migrations applied twice` / `all SQL tests passed twice`), and
 `check-feature-register` / `check-wiring` / `check-dead-code` / `check-ui-contract` /
