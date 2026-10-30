@@ -211,6 +211,15 @@ export const ACTION_COMMANDS: CommandItem[] = [
   },
   {
     kind: 'action',
+    id: 'action.assurance_caps',
+    label: 'Assurance capabilities',
+    hint: 'ICFR monitoring, forensic analytics, gap analysis, assurance over assurance',
+    keywords: ['assurance', 'icfr', 'sox', 'forensic', 'gap analysis', 'quality assessment', 'iia'],
+    minRight: 'view_insights',
+    target: { inspector: 'assurance_caps' },
+  },
+  {
+    kind: 'action',
     id: 'action.account_settings',
     label: 'Account settings',
     hint: 'Your profile and preferences',

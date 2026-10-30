@@ -1957,6 +1957,55 @@ in the browser; only the public half is registered, and registering retires the 
   release.
 - **Tutorial key:** `oa.governance`
 
+## OA-34 — assurance capabilities (S2: D5 / D7 / D8 / D9)
+
+The screen surface for the four owner-approved assurance capabilities of docs/ASSURANCE-RULEBOOKS.md.
+Each capability has a pure engine under `src/lib/assurance/**`; this screen loads its inputs through
+`src/data/assurance.ts`, hands them to the engine, shows the result, and records the findings through
+the capability's writer. Nothing is generated text and nothing calls out.
+
+- **D5 — ICFR continuous control monitoring.** Monitors a configured internal-control system over COSO
+  ICIF-2013 and classifies a failing control by the PCAOB AS 2201 ladder (deficiency / significant
+  deficiency / material weakness). A control with no rule is shown unmonitored and a control with no
+  evidence is shown as no evidence — neither is ever a pass. A compensating control caps the severity
+  at a deficiency, and every breach names its control id, the rule id and version, and the basis.
+- **D7 — population-level forensic analytics.** Runs the named forensic rules (Benford first and second
+  digit, the AS 2401 journal-entry family, ISA 530) over a whole locked population; each finding names
+  its rule, version and source. An empty population is not clean.
+- **D8 — policy-to-control gap analysis.** Maps a regulation's obligations to the controls that satisfy
+  them and reports every gap by its clause. A clause that cannot be interpreted is reported as such,
+  never as compliant.
+- **D9 — assurance over assurance.** Measures the audit function against the IIA Global Internal Audit
+  Standards (2024); a metric whose input is missing is "unknown", never 0.
+
+- **Route:** the assurance capabilities work surface (inspector `assurance_caps`; also reachable from
+  the command palette action "Assurance capabilities").
+- **Rights:** `perform_work` or `review_and_approve` to run a capability and record its findings;
+  `view_insights` to read.
+- **Data:** `listIcfrConfig`, `runIcfrMonitoring`, `runForensicAnalytics`, `runGapAnalysis`,
+  `runAssuranceOverAssurance` (`src/data/assurance.ts`); the pure engines
+  `monitorControls`, `classifySeverity`, `SEVERITY_LADDER`, `TAXONOMIES` (`src/lib/assurance/controlMonitoring.ts`),
+  `FORENSIC_RULES` (`src/lib/assurance/forensicAnalytics.ts`).
+- **Testids:** `assurance-panel`, `assurance-loading`, `assurance-error`, `assurance-error-message`,
+  `assurance-retry`, `assurance-tab-d5`, `assurance-tab-d7`, `assurance-tab-d8`, `assurance-tab-d9`,
+  `assurance-notice`, `assurance-run-error`, `assurance-d5`, `assurance-d5-run`,
+  `assurance-d5-needs-right`, `assurance-d5-result`, `assurance-d5-complete`, `assurance-d5-breaches`,
+  `assurance-d5-breach-<id>`, `assurance-d5-no-evidence`, `assurance-d5-unmonitored`,
+  `assurance-d5-empty`, `assurance-d5-ladder`, `assurance-d7`, `assurance-d7-population`,
+  `assurance-d7-run`, `assurance-d7-result`, `assurance-d7-empty`, `assurance-d7-findings`,
+  `assurance-d7-finding-<id>`, `assurance-d8`, `assurance-d8-run`, `assurance-d8-result`,
+  `assurance-d8-coverage`, `assurance-d8-gaps`, `assurance-d8-gap-<id>`, `assurance-d8-unknown`,
+  `assurance-d9`, `assurance-d9-run`, `assurance-d9-result`, `assurance-d9-summary`,
+  `assurance-d9-metric-<id>`, `assurance-d5-config`, `assurance-d5-control-id`,
+  `assurance-d5-component`, `assurance-d5-assertion`, `assurance-d5-owner`, `assurance-d5-procedure`,
+  `assurance-d5-save-control`, `assurance-d5-tolerance`, `assurance-d5-save-rule`,
+  `assurance-d5-population`, `assurance-d5-deviations`, `assurance-d5-save-evidence`,
+  `assurance-d9-config`, `assurance-d9-metric-id`, `assurance-d9-standard`, `assurance-d9-label`,
+  `assurance-d9-value`, `assurance-d9-save-metric`.
+- **States:** loading; error with retry; ready with the four tabs; a denied state (no work right shows
+  `assurance-d5-needs-right`); empty (`assurance-d5-empty` when no control is configured); an inline
+  result or the plain refusal after a run.
+
 ## OA-36 — Documents, minutes and policy review (S7)
 
 The document-review surface: the auditor attaches the engagement's documents, declares what each one

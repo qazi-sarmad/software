@@ -73,6 +73,10 @@ export const FEATURE_RPC_MAP: Record<string, string> = {
   // S10/S11: Systeligon rule packs (0117).
   rule_pack_save: 'systeligon_rule_packs',
   systeligon_finding_record: 'systeligon_findings',
+  // S2: assurance capabilities (0139) — D5/D7/D8.
+  icfr_finding_record: 'icfr_monitoring',
+  forensic_finding_record: 'forensic_analytics',
+  gap_finding_record: 'policy_gap_analysis',
 };
 
 /**

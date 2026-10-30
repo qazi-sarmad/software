@@ -72,6 +72,7 @@ export const MOUNTED_SCREENS: ScreenMount[] = [
   { screenId: 'OA-39', title: 'Global document search', owner: 's7', path: 'src/components/documents/GlobalSearchPanel.tsx', status: 'mounted' },
   { screenId: 'OA-36', title: 'Documents, minutes and policy review', owner: 's7', path: 'src/components/documents/DocumentReviewPanel.tsx', status: 'mounted' },
   { screenId: 'OA-38', title: 'Ad-hoc review builder', owner: 's7', path: 'src/components/documents/AdhocReviewPanel.tsx', status: 'mounted' },
+  { screenId: 'OA-34', title: 'Assurance capabilities (D5/D7/D8/D9)', owner: 's2', path: 'src/components/assurance/AssuranceCapabilitiesPanel.tsx', status: 'mounted' },
 ];
 
 /**
@@ -81,7 +82,7 @@ export const MOUNTED_SCREENS: ScreenMount[] = [
  */
 export const PLANNED_SCREENS: ScreenMount[] = [
   // S2 — assurance capabilities D5/D7/D8/D9.
-  { screenId: 'OA-34', title: 'Assurance capabilities (D5/D7/D8/D9)', owner: 's2', path: 'src/components/assurance/AssuranceCapabilitiesPanel.tsx', status: 'planned' },
+  // OA-34 (assurance capabilities) is now mounted; its slot lives in MOUNTED_SCREENS.
   // S3 — client classification D10; risk library and dynamic assessment D14/D15.
   { screenId: 'OA-37', title: 'Client classification (D10)', owner: 's3', path: 'src/components/universe/ClientClassificationPanel.tsx', status: 'planned' },
   { screenId: 'SR-04', title: 'Risk library and dynamic risk assessment (D14/D15)', owner: 's3', path: 'src/components/sira/RiskLibraryPanel.tsx', status: 'planned' },

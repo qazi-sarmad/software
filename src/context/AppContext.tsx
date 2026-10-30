@@ -56,6 +56,7 @@ export type InspectorType =
   | 'finding'
   | 'global_search'
   | 'adhoc_review'
+  | 'assurance_caps'
   | 'standards';
 
 export interface InspectorState {

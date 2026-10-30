@@ -989,6 +989,24 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
   named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
 
+### `OA-34` — assurance capabilities (S2: D5 / D7 / D8 / D9)
+
+- **Purpose:** The screen surface for the four owner-approved assurance capabilities of docs/ASSURANCE-RULEBOOKS.md.
+- **Route / location:** the assurance capabilities work surface (inspector `assurance_caps`; also reachable from the command palette action "Assurance capabilities").
+- **Rights required:** `perform_work` or `review_and_approve` to run a capability and record its findings; `view_insights` to read.
+- **Data functions (`src/data/*.ts`):** `FORENSIC_RULES`, `SEVERITY_LADDER`, `TAXONOMIES`, `classifySeverity`, `listIcfrConfig`, `monitorControls`, `runAssuranceOverAssurance`, `runForensicAnalytics`, `runGapAnalysis`, `runIcfrMonitoring`
+- **Data modules:** `src/data/assurance.ts`
+- **RPCs reachable via those modules:** none
+- **Tables reachable via those modules:** `assurance_metrics`, `icfr_control_evidence`, `icfr_controls`, `icfr_monitor_rules`, `icfr_thresholds`, `policy_controls`, `policy_obligations`, `population_rows`
+- **Testids (59):** `assurance-panel`, `assurance-loading`, `assurance-error`, `assurance-error-message`, `assurance-retry`, `assurance-tab-d5`, `assurance-tab-d7`, `assurance-tab-d8`, `assurance-tab-d9`, `assurance-notice`, `assurance-run-error`, `assurance-d5`, `assurance-d5-run`, `assurance-d5-needs-right`, `assurance-d5-result`, `assurance-d5-complete`, `assurance-d5-breaches`, `assurance-d5-breach-<id>`, `assurance-d5-no-evidence`, `assurance-d5-unmonitored`, `assurance-d5-empty`, `assurance-d5-ladder`, `assurance-d7`, `assurance-d7-population`, `assurance-d7-run`, `assurance-d7-result`, `assurance-d7-empty`, `assurance-d7-findings`, `assurance-d7-finding-<id>`, `assurance-d8`, `assurance-d8-run`, `assurance-d8-result`, `assurance-d8-coverage`, `assurance-d8-gaps`, `assurance-d8-gap-<id>`, `assurance-d8-unknown`, `assurance-d9`, `assurance-d9-run`, `assurance-d9-result`, `assurance-d9-summary`, `assurance-d9-metric-<id>`, `assurance-d5-config`, `assurance-d5-control-id`, `assurance-d5-component`, `assurance-d5-assertion`, `assurance-d5-owner`, `assurance-d5-procedure`, `assurance-d5-save-control`, `assurance-d5-tolerance`, `assurance-d5-save-rule`, `assurance-d5-population`, `assurance-d5-deviations`, `assurance-d5-save-evidence`, `assurance-d9-config`, `assurance-d9-metric-id`, `assurance-d9-standard`, `assurance-d9-label`, `assurance-d9-value`, `assurance-d9-save-metric`
+- **Explain ids (0):** — (no explain affordance)
+- **IIA standards addressed (0):** —
+- **Drilldown targets (0):** — (no aggregate)
+- **States:** loading / empty / error / ready / denied
+- **Tutorial key:** — (no key)
+- **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
+  named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
+
 ### `OA-36` — Documents, minutes and policy review (S7)
 
 - **Purpose:** The document-review surface: the auditor attaches the engagement's documents, declares what each one
@@ -2256,10 +2274,10 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 
 ## Coverage cross-check
 
-- Screens documented: 112 (contract sections: 48 Appendix A + 44 Appendix B).
+- Screens documented: 113 (contract sections: 48 Appendix A + 44 Appendix B).
 - Tutorial keys: 81.
 - RPCs catalogued: 148.
-- Data modules: 75; exported data functions: 462.
-- Contract testids not found verbatim in `src/` (placeholder or dynamic): 230.
-  - audit-file-view-builder, audit-file-view-certificate, audit-file-view-conclusion, audit-file-view-documents, audit-file-view-ethics, audit-file-view-execution, audit-file-view-findings, audit-file-view-planning, audit-file-view-population, audit-file-view-report, audit-file-view-review, audit-file-view-rowtesting, audit-file-view-sampling, data-front-door-kind, hosting-test, invite-user, issues-view-patterns, oa-branding-colour-accent, oa-branding-colour-background, oa-branding-colour-primary, oa-branding-colour-text, oa-branding-margin-0, oa-branding-margin-3, oa-certificate-enabled-verification, oa-escalation-result, oa-escalation-saved, oa-governance-signoff-conclusion, oa-governance-signoff-planning, oa-governance-signoff-testing, org-control-tab-auditors, org-control-tab-automation, org-control-tab-branding, org-control-tab-connectors, org-control-tab-features, org-control-tab-formats, org-control-tab-governance, org-control-tab-hosting, org-control-tab-methodology, org-control-tab-packs, org-control-tab-people …
+- Data modules: 75; exported data functions: 474.
+- Contract testids not found verbatim in `src/` (placeholder or dynamic): 234.
+  - assurance-tab-d5, assurance-tab-d7, assurance-tab-d8, assurance-tab-d9, audit-file-view-builder, audit-file-view-certificate, audit-file-view-conclusion, audit-file-view-documents, audit-file-view-ethics, audit-file-view-execution, audit-file-view-findings, audit-file-view-planning, audit-file-view-population, audit-file-view-report, audit-file-view-review, audit-file-view-rowtesting, audit-file-view-sampling, data-front-door-kind, hosting-test, invite-user, issues-view-patterns, oa-branding-colour-accent, oa-branding-colour-background, oa-branding-colour-primary, oa-branding-colour-text, oa-branding-margin-0, oa-branding-margin-3, oa-certificate-enabled-verification, oa-escalation-result, oa-escalation-saved, oa-governance-signoff-conclusion, oa-governance-signoff-planning, oa-governance-signoff-testing, org-control-tab-auditors, org-control-tab-automation, org-control-tab-branding, org-control-tab-connectors, org-control-tab-features, org-control-tab-formats, org-control-tab-governance …
 

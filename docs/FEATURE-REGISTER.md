@@ -266,11 +266,11 @@ Each is a pure function under `src/lib/`, with direct unit tests and a screen su
 
 | # | Capability | Status | WP |
 |---|---|---|---|
-| F121 | Continuous control monitoring (SOX / ICFR) | `Absent` | D5 — IN SCOPE (owner 2026-10-29) |
+| F121 | Continuous control monitoring (SOX / ICFR) | `Wired` | D5 — the engine at `src/lib/assurance/controlMonitoring.ts` classifies a control by the PCAOB AS 2201 ladder over COSO ICIF-2013; surfaced by `AssuranceCapabilitiesPanel.tsx` (OA-34), which calls `runIcfrMonitoring` (`src/data/assurance.ts:83`) | S2 |
 | F122 | Verifiable third-party attestation | `Absent` | D6 — REMOVED by owner 2026-10-29; do not build |
-| F123 | Population-level forensic analytics | `Absent` | D7 — IN SCOPE (owner 2026-10-29) |
-| F124 | Policy-to-control gap analysis | `Absent` | D8 — IN SCOPE (owner 2026-10-29) |
-| F125 | Assurance-over-assurance | `Absent` | D9 — IN SCOPE (owner 2026-10-29) |
+| F123 | Population-level forensic analytics | `Wired` | D7 — the named versioned rules in `src/lib/assurance/forensicAnalytics.ts` run over a whole population; surfaced by `AssuranceCapabilitiesPanel.tsx` (OA-34), which calls `runForensicAnalytics` (`src/data/assurance.ts:171`) | S2 |
+| F124 | Policy-to-control gap analysis | `Wired` | D8 — the engine at `src/lib/assurance/gapAnalysis.ts` maps each obligation to its controls and reports every gap by clause; surfaced by `AssuranceCapabilitiesPanel.tsx` (OA-34), which calls `runGapAnalysis` (`src/data/assurance.ts:214`) | S2 |
+| F125 | Assurance-over-assurance | `Wired` | D9 — the engine at `src/lib/assurance/assuranceOverAssurance.ts` measures the function against the IIA Global Internal Audit Standards (2024), a missing input being `unknown`; surfaced by `AssuranceCapabilitiesPanel.tsx` (OA-34), which calls `runAssuranceOverAssurance` (`src/data/assurance.ts:243`) | S2 |
 | F126 | Live activity spine | `Wired` | `ActivitySpine.tsx` (DB-01) renders the pure `src/lib/activitySpine.ts` layer (sentence, kind, age) over the rights-gated `activity_spine_list` RPC (`supabase/migrations/0125_activity_spine.sql`) via `src/data/activity.ts` on the existing `liveSync` transport (Realtime when available, bounded poll otherwise) | U4 |
 
 ---
@@ -313,9 +313,9 @@ this register exists to catch.
 
 | Status | Count |
 |---|---|
-| `Wired` | 125 |
+| `Wired` | 129 |
 | `Inert` | 1 |
-| `Absent` | 19 |
+| `Absent` | 15 |
 | **Total** | **145** |
 
 **Read that again, with the correction applied.** This pass corrected a systematic understatement:
