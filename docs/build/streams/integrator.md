@@ -23,6 +23,13 @@ At the head after the concurrent-build work: 129 migrations, 134 SQL tests,
 **283 vitest files / 3242 tests**, **30 guards** (the integrator's `mountPoints.test.ts` and
 `ownershipMap.test.ts` added).
 
+At the head after the D12/D13 merge (2026-10-30): **145 migrations** (highest `0203`), **149 SQL
+tests**, **314 vitest files / 3621 tests**, 30 guards. The register reads **135 Wired / 1 Inert /
+9 Absent** (F141/F142 D12/D13 `Absent` → `Wired`; the D10/D11 rows F139/F140 were already `Wired`).
+This head already carries the other streams' merged work, so the migration and test counts are the
+trunk's, not this stream's alone; D12/D13 contributed `0160_readiness_signals.sql`,
+`0161_complaints.sql` and `supabase/tests/149_readiness_complaints.sql`.
+
 All gates green at baseline: `npm run build`, `tsc --noEmit`, `vitest run`, the SQL harness twice
 (`migrations applied twice` / `all SQL tests passed twice`), and
 `check-feature-register` / `check-wiring` / `check-dead-code` / `check-ui-contract` /

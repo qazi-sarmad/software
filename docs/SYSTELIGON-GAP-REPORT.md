@@ -179,8 +179,8 @@ Three mechanisms produced this:
 1. **A status vocabulary that permitted ambiguity.** `Partial` absorbed every state between "does
    not exist" and "works", so a document could claim progress indefinitely without ever being wrong.
    `Partial` is not a status; it is a place to hide. The current `FEATURE-REGISTER.md` uses exactly
-   three values — `Wired`, `Inert`, `Absent` — and **verified this session** contains **94 `Wired`,
-   27 `Inert`, 17 `Absent`** and **no `Partial`**.
+   three values — `Wired`, `Inert`, `Absent` — and **verified this session** contains **135 `Wired`,
+   1 `Inert`, 9 `Absent`** and **no `Partial`**.
 2. **Tests cited as proof of function.** The suite was green and "structurally incapable of catching
    the integration gaps, because the integration is exactly what it stubs out." Green tests were used
    as a proxy for a working product. They are not that.
@@ -592,7 +592,7 @@ authoritative work list; the builder prompt delegates all of it except the desig
 | D6 | Verifiable third-party attestation (`F122`) | **REMOVED** — owner decision 2026-10-29 |
 | D10–D13 | Client classification + ICFR trigger, the audit-domain axis (Management/Shari'ah/IT), actionable traffic-signal readiness, deployment readiness (`F139`–`F142`) | **BUILT** — owner decision 2026-10-29; `F139`–`F142` now `Wired` in the register (D10 `0158`/D11 `0159`/D12 `0160`+`0161`/D13 runbook); grounded in `docs/PAKISTAN-ASSURANCE-REGIMES.md` and `docs/AUDIT-DOMAINS-MODEL.md` |
 | D14–D15 | Risk library + auto-adjusted factors + manual override; dynamic risk assessment (PwC model) (`F143`–`F144`) | **IN SCOPE** — owner decision 2026-10-29; `Absent`; grounded in `docs/RISK-ASSESSMENT-MODEL.md` and `docs/ASSURANCE-RULEBOOKS.md` §6 |
-| All 27 `Inert` + 21 `Absent` register rows | **HANDED TO THE BUILDER** — owner decision 2026-10-29, continuous-build cadence (≤15s between rows); only the DEFERRED design rows are held back |
+| All `Inert` + `Absent` register rows | **HANDED TO THE BUILDER** — owner decision 2026-10-29, continuous-build cadence (≤15s between rows); only the DEFERRED design rows are held back |
 
 ### The remainder the build must still close
 
@@ -656,13 +656,17 @@ this report failed to catch. Each is recorded here against its real call site:
 | F53 | `Absent` | **Built** — the enrichment fields (entity, department, SIRA risk, controls) are computed in `0112_phase5_alert_enrichment.sql` |
 | F54 | `Absent` | **Built & wired** — `alertAdhocSuggestion`/`alertAdhocAuditRaise` (`src/data/writing.ts`) are called from `AlertActionsPanel.tsx` |
 | F55 | `Absent` | **Built & wired** — `triageAlert` (`src/data/writing.ts`) is called from `ConnectorMonitorPanel.tsx` |
+| F141 | `Absent` | **Built & wired** — D12. `platformReadiness`/`createComplaint`/`runDiagnostic` etc. (`src/data/readiness.ts`, `0160`/`0161`) are called from the mounted `SuperAdminReadiness.tsx` (SA-20) and `OrgReadinessPanel.tsx` (OA-42) |
+| F142 | `Absent` | **Built & wired** — D13. The three-layer readiness section in `SuperAdminReadiness.tsx` (SA-20) + `docs/DEPLOYMENT-RUNBOOK.md` |
 
 **F30 is genuinely `Absent`** — the stage machine is still three hardcoded strings
-(`src/types/index.ts:74`). The register is right about that one and wrong about the six above.
-**The six rows are now corrected** (this session, `docs/FEATURE-REGISTER.md`): F28/F29/F39/F53/F54/F55
-are `Wired`, and the count block reads **94/27/17**. `check-feature-register` passes with no
-understating rows left. The correction is a build task that is now done, not a task still to do — which
-is the only honest way to record it.
+(`src/types/index.ts:74`). The register is right about that one and wrong about the six above, and the
+D12/D13 rows (F141/F142) were `Absent` while the work existed only as a spec, now `Wired`.
+**The six rows were corrected** (earlier session, `docs/FEATURE-REGISTER.md`): F28/F29/F39/F53/F54/F55
+are `Wired`. **D12/D13 (F141/F142) are corrected this session**: `Wired`, against the mounted SA-20 /
+OA-42 screens and migrations `0160`/`0161`. The count block now reads **135 Wired / 1 Inert / 9 Absent**.
+`check-feature-register` passes with no understating rows left. The correction is a build task that is
+now done, not a task still to do — which is the only honest way to record it.
 
 ---
 
