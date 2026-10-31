@@ -566,3 +566,27 @@ by path, then a content check for each hit.
 
 **Verdict:** the mergeable branch carries every product feature from every branch. The three un-ported
 items are two test harnesses and one token-hardening nicety — recorded here, not silently dropped.
+
+## Un-ported harness #2 ported and proven — `scripts/load-test.mjs` (2026-10-30)
+
+Ported `scripts/load-test.mjs` from `feature/security-harden-v1` (it needed no new dependency) and
+**ran it against the current trunk**. Prerequisites all exist on trunk: `provio_test.seed()`,
+`provio_test.as_owner()`, `provio_test.as_user(p_sub,p_org,p_role,p_aal)`, and the `orgs`/`universes`/
+`user_scopes` tables.
+
+| Run | Result |
+|---|---|
+| `node scripts/load-test.mjs` (8 orgs × 4 = 32 sessions) | **PASS** — 32 own-org reads, 0 unexpected; p50 644 ms / p95 700 ms |
+| `ORGS=50 SESSIONS=4 node scripts/load-test.mjs` (200 sessions, §6 target) | **PASS** — 200 own-org reads, **0 cross-tenant leakage**; p50 3417 ms / p95 4851 ms |
+
+**Two honest caveats recorded, not hidden:**
+1. The isolation property (§6 "0 rows under ≥200 concurrent sessions") is **proven**. The latency
+   figure is **not** the §6 target: each session is a separate `sudo psql` process, so the number
+   measures process-spawn contention, not query latency. The §6 latency target (p50 ≤ 750 ms at the
+   large-tenant shape) is measured by `scripts/scale-seed.mjs --probe`, which reads inside the DB.
+2. It needs `max_connections ≥ ORGS`; the sandbox cluster defaults to 100, so the 200-session run set
+   `max_connections=400`. CI must set the same (or use a pooler).
+
+**Still un-ported: the axe-core a11y gate.** It cannot be added here honestly — the trunk has no
+`axe-core` dependency (a `package.json` change) and the spec needs a real signed-in backend, which this
+sandbox lacks. It is the first item of the builder prompt below, with the exact spec and dependency.
