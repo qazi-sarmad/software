@@ -1,4 +1,4 @@
--- Test 123: SCALE-1 WP4. Multi-tenant scale and isolation.
+-- Test 103: SCALE-1 WP4. Multi-tenant scale and isolation.
 --
 -- Three concurrent organisations, data written in each, and the RLS paths that must keep them
 -- apart: the normal jwt_org_id() path, the cross-universe share path, the invitation-cap and
@@ -70,10 +70,6 @@ begin
   insert into org_members (org_id, user_id, role_id, hierarchy_level)
   select 'c0000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-0000000000d1', r.id, 1
     from roles r where r.org_id = 'c0000000-0000-0000-0000-000000000002' and r.slug = 'cia';
-  -- Granting a share requires Head authority. scoped_a (the org A grantor) is made a Level-1 Head.
-  update org_members set head_level = 1
-   where org_id = 'a0000000-0000-0000-0000-000000000001'
-     and user_id = '10000000-0000-0000-0000-0000000000a1';
 end $$;
 
 -- A user in each of A, B and C. Each sees exactly its own org's universe, entity and engagement.
@@ -109,71 +105,59 @@ begin
 end $$;
 
 -- ===========================================================================
--- 2. The cross-universe share path never crosses a tenant.
+-- 2. The joint-audit share path never crosses a tenant boundary except for the one shared
+--    engagement, and only between associated (group) companies.
 -- ===========================================================================
--- A share of an Org A universe to an Org A user is intra-org. It must never make an Org A universe
--- visible to Org B, and it must never make an Org B universe visible to an Org A grantee.
+-- Org A and Org B are associated by the platform; Org A shares ONE engagement with Org B.
+select provio_test.as_user('10000000-0000-0000-0000-0000000000f0', '', 'platform_admin');
+do $$
+declare v_group uuid;
+begin
+  select public.platform_create_group('Scale Group') into v_group;
+  perform public.platform_link_org(v_group, 'a0000000-0000-0000-0000-000000000001', true);
+  perform public.platform_link_org(v_group, 'b0000000-0000-0000-0000-000000000001', false);
+end $$;
+
 select provio_test.as_user('10000000-0000-0000-0000-0000000000a1', 'a0000000-0000-0000-0000-000000000001', 'cia');
 do $$
 begin
-  perform public.share_grant('30000000-0000-0000-0000-0000000000a2', '10000000-0000-0000-0000-0000000000a2', null);
+  perform public.joint_share_grant('50000000-0000-0000-0000-0000000000a1', 'b0000000-0000-0000-0000-000000000001', null);
 end $$;
 
--- The grantee (scoped_a, who normally sees only u_a1) now sees u_a2 through the share.
-select provio_test.as_user('10000000-0000-0000-0000-0000000000a2', 'a0000000-0000-0000-0000-000000000001', 'preparer');
-do $$
-declare
-  v_rows int;
-begin
-  perform provio_test.assert_eq((select count(*) from universes where id = '30000000-0000-0000-0000-0000000000a2'), 1,
-    'scale: the grantee sees the shared universe');
-  -- The share is view-only: RLS filters the write, so it changes no row and raises nothing.
-  update universes set name = 'renamed' where id = '30000000-0000-0000-0000-0000000000a2';
-  get diagnostics v_rows = row_count;
-  perform provio_test.assert_eq(v_rows, 0,
-    'scale: a shared universe is read-only for the grantee (no row is written)');
-end $$;
-
-select provio_test.as_owner();
-do $$
-begin
-  perform provio_test.assert_eq(
-    (select name from universes where id = '30000000-0000-0000-0000-0000000000a2'), 'A-U2',
-    'scale: the shared universe name is unchanged after the grantee''s write attempt');
-end $$;
-select provio_test.as_user('10000000-0000-0000-0000-0000000000a2', 'a0000000-0000-0000-0000-000000000001', 'preparer');
-
--- A share in Org A is invisible to Org B, and the Org B user cannot reach an Org A universe at all.
+-- Org B now reads the shared engagement and its working papers, but nothing else of Org A.
 select provio_test.as_user('10000000-0000-0000-0000-0000000000b1', 'b0000000-0000-0000-0000-000000000001', 'cia');
 do $$
 begin
-  perform provio_test.assert_eq((select count(*) from universe_shares), 0,
-    'scale: org B sees no share rows from org A');
-  perform provio_test.assert_eq((select count(*) from universes where id = '30000000-0000-0000-0000-0000000000a2'), 0,
-    'scale: a share never makes an org A universe visible to org B');
-  perform provio_test.assert_true(not public.has_active_share('30000000-0000-0000-0000-0000000000a2'),
-    'scale: has_active_share is false for a user of another org');
+  perform provio_test.assert_eq((select count(*) from engagements where id = '50000000-0000-0000-0000-0000000000a1'), 1,
+    'scale: org B reads the one shared engagement');
+  perform provio_test.assert_eq((select count(*) from engagements where org_id = 'a0000000-0000-0000-0000-000000000001'), 1,
+    'scale: org B reads no other org A engagement');
+  perform provio_test.assert_eq((select count(*) from universes where org_id = 'a0000000-0000-0000-0000-000000000001'), 0,
+    'scale: a joint share never exposes an org A universe');
+  perform provio_test.assert_eq((select count(*) from entities where org_id = 'a0000000-0000-0000-0000-000000000001'), 1,
+    'scale: org B reads only the entity behind the shared engagement');
+  perform provio_test.assert_eq((select count(*) from org_members where org_id = 'a0000000-0000-0000-0000-000000000001'), 0,
+    'scale: org B reads no org A members');
 end $$;
 
--- Revoking the share removes the grantee's view immediately.
+-- Revoking removes the reach immediately.
 select provio_test.as_user('10000000-0000-0000-0000-0000000000a1', 'a0000000-0000-0000-0000-000000000001', 'cia');
 do $$
-declare
-  v_share uuid;
+declare v_share uuid;
 begin
-  select id into v_share from universe_shares
-   where universe_id = '30000000-0000-0000-0000-0000000000a2'
-     and grantee_user_id = '10000000-0000-0000-0000-0000000000a2';
-  perform public.share_revoke(v_share, 'scale test cleanup');
+  select id into v_share from engagement_joint_shares
+   where engagement_id = '50000000-0000-0000-0000-0000000000a1'
+     and owner_org_id = 'a0000000-0000-0000-0000-000000000001';
+  perform public.joint_share_revoke(v_share, 'scale test cleanup');
 end $$;
 
-select provio_test.as_user('10000000-0000-0000-0000-0000000000a2', 'a0000000-0000-0000-0000-000000000001', 'preparer');
+select provio_test.as_user('10000000-0000-0000-0000-0000000000b1', 'b0000000-0000-0000-0000-000000000001', 'cia');
 do $$
 begin
-  perform provio_test.assert_eq((select count(*) from universes where id = '30000000-0000-0000-0000-0000000000a2'), 0,
-    'scale: a revoked share is invisible to the grantee');
-  perform provio_test.assert_true(not public.has_active_share('30000000-0000-0000-0000-0000000000a2'),
-    'scale: has_active_share is false after revocation');
+  perform provio_test.assert_eq((select count(*) from engagements where id = '50000000-0000-0000-0000-0000000000a1'), 0,
+    'scale: a revoked joint share is invisible to the counterparty');
+  perform provio_test.assert_true(not public.joint_share_active('50000000-0000-0000-0000-0000000000a1'),
+    'scale: joint_share_active is false after revocation');
 end $$;
 
 -- ===========================================================================

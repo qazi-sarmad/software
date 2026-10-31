@@ -546,17 +546,17 @@ moves the chrome, never the call.
 - **Flows that touch this screen:** `oa.hosting`, `oa.migration`, `oa.deployment-kit`, `oa.retire-old`
 - **Connection candidates (same route):** — (route is unique to this screen)
 
-### `OA-25` — Cross-universe view-only sharing (SCALE-1, §2)
+### `OA-25` — Group sharing and joint audits (SCALE-1, §2)
 
-- **Purpose:** Grant, view and revoke an intra-organisation, view-only share of a universe to a same-tenant member, and (in grantee mode) read the universes shared with me.
+- **Purpose:** Start a joint audit between associated group companies, view and revoke the joint-audit shares, distribute and adopt a group configuration snapshot, and (in grantee mode) read the joint audits shared with me. A joint audit carries edit rights to both parties and exposes only the shared engagement and its working papers.
 - **Route / location:** The Assurance control plane (`org_control` inspector), tab `sharing`; the grantee view is the `shared_with_me` inspector from `menu-shared-with-me`.
-- **Rights required:** `edit_config` (or a Level-1/Level-2 Head) to grant; any member to read what is shared with them.
+- **Rights required:** `manage_engagements` to share or distribute; any member to read what is shared with them. A grant additionally requires a platform-recorded group association.
 - **Data functions (0):** —
-- **Data modules (3):** `src/data/admin.ts`, `src/data/shares.ts`, `src/data/universe.ts`
-- **RPCs reachable (8):** `entity_approval_config`, `entity_history`, `invite_status`, `invite_user_capped`, `share_grant`, `shared_universe_view`, `shares_get`, `shares_with_me`
-- **Tables reachable (5):** `entities`, `org_members`, `roles`, `universes`, `user_scopes`
-- **Testids (18):** `share-grant-expiry`, `share-grant-grantee`, `share-grant-submit`, `share-grant-universe`, `share-granted-empty`, `share-panel`, `share-panel-error`, `share-panel-grant`, `share-panel-granted`, `share-panel-loading`, `share-panel-result`, `share-panel-retry`, `share-panel-view`, `share-panel-with-me`, `share-view-engagements`, `share-view-entities`, `share-view-not-live`, `share-with-me-empty`
-- **States:** loading; empty (`share-granted-empty`, `share-with-me-empty`); ready; result; not-live (`share-view-not-live`); error with retry.
+- **Data modules (1):** `src/data/shares.ts`
+- **RPCs reachable (7):** `group_adopt_config`, `group_config_distributions`, `group_distribute_config`, `joint_share_grant`, `joint_shares_get`, `joint_shares_with_me`, `my_associated_orgs`
+- **Tables reachable (1):** `engagements`
+- **Testids (25):** `share-config-adopt-<id>`, `share-config-distribute`, `share-config-empty`, `share-config-member`, `share-config-row-<id>`, `share-grant-counterparty`, `share-grant-engagement`, `share-grant-expiry`, `share-grant-submit`, `share-granted-empty`, `share-no-counterparties`, `share-panel`, `share-panel-config`, `share-panel-error`, `share-panel-grant`, `share-panel-granted`, `share-panel-loading`, `share-panel-result`, `share-panel-retry`, `share-panel-with-me`, `share-revoke-<id>`, `share-revoke-reason-<id>`, `share-row-<id>`, `share-with-me-<id>`, `share-with-me-empty`
+- **States:** loading; empty (`share-granted-empty`, `share-with-me-empty`, `share-config-empty`, `share-no-counterparties`); ready; result; error with retry.
 - **Flows that touch this screen:** — (no flow)
 - **Connection candidates (same route):** — (route is unique to this screen)
 

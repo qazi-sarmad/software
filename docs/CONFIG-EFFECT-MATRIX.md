@@ -139,6 +139,7 @@ product makes, and the proving test exercises it.
 |---|---|---|
 | `usage_quota` keys other than `users` | The column is a free-form `jsonb`; Phase 3.6 enforced the `users` key (a user-seat quota). Other keys are not defined by the spec and are not read | none — no UI writes them |
 | `report_templates.default_register` / `allowed_registers` / `default_locale` | These columns are written only by the 0088 seed default and read by no function; the register a format renders at comes from `report_formats` (0091), which is where the editor and the composer both read it | none — no UI writes them on a template |
+| `org_settings_extra.data_residency_region` | Set by `platform_set_residency` (0204 WP15) against the `data_residency_regions` allow-list, but read by no decision and surfaced by no screen: the region is recorded, not yet acted on. Recorded here honestly rather than given a fabricated reader. The setter itself is pinned by `151_sso_erasure.sql` (a supported region is recorded; an unsupported region is refused) | none — no UI writes it |
 
 There are no other unenforced configuration columns. The fields marked **FIXED 3.6** were the inert
 set Phase 3.6 closed; `tenant_settings.status` (marked **FIXED G3**) was a further inert field the

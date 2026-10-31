@@ -683,20 +683,20 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
   named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
 
-### `OA-25` — Cross-universe view-only sharing (SCALE-1, §2)
+### `OA-25` — Group sharing and joint audits (SCALE-1, §2)
 
-- **Purpose:** Grant, view and revoke an intra-organisation, view-only share of a universe to a same-tenant member, and (in grantee mode) read the universes shared with me.
+- **Purpose:** Start a joint audit between associated group companies, view and revoke the joint-audit shares, distribute and adopt a group configuration snapshot, and (in grantee mode) read the joint audits shared with me. A joint audit carries edit rights to both parties and exposes only the shared engagement and its working papers.
 - **Route / location:** The Assurance control plane (`org_control` inspector), tab `sharing`; the grantee view is the `shared_with_me` inspector from `menu-shared-with-me`.
-- **Rights required:** `edit_config` (or a Level-1/Level-2 Head) to grant; any member to read what is shared with them.
-- **Data functions (`src/data/*.ts`):** `MemberRow`, `ShareRow`, `ShareWithMeRow`, `SharedUniverseView`, `UniverseRow`, `grantShare`, `listMembers`, `listShares`, `listSharesWithMe`, `listUniverses`, `revokeShare`, `setHeadLevel`, `viewSharedUniverse`
-- **Data modules:** `src/data/admin.ts`, `src/data/shares.ts`, `src/data/universe.ts`
-- **RPCs reachable via those modules:** `entity_approval_config`, `entity_history`, `invite_status`, `invite_user_capped`, `share_grant`, `shared_universe_view`, `shares_get`, `shares_with_me`
-- **Tables reachable via those modules:** `entities`, `org_members`, `roles`, `universes`, `user_scopes`
-- **Testids (18):** `share-grant-expiry`, `share-grant-grantee`, `share-grant-submit`, `share-grant-universe`, `share-granted-empty`, `share-panel`, `share-panel-error`, `share-panel-grant`, `share-panel-granted`, `share-panel-loading`, `share-panel-result`, `share-panel-retry`, `share-panel-view`, `share-panel-with-me`, `share-view-engagements`, `share-view-entities`, `share-view-not-live`, `share-with-me-empty`
+- **Rights required:** `manage_engagements` to share or distribute; any member to read what is shared with them. A grant additionally requires a platform-recorded group association.
+- **Data functions (`src/data/*.ts`):** `AssociatedOrg`, `ConfigDistributionRow`, `JointShareRow`, `JointShareWithMeRow`, `adoptConfig`, `distributeConfig`, `grantJointShare`, `listAssociatedOrgs`, `listConfigDistributions`, `listJointShares`, `listJointSharesWithMe`, `listShareableEngagements`, `revokeJointShare`
+- **Data modules:** `src/data/shares.ts`
+- **RPCs reachable via those modules:** `group_adopt_config`, `group_config_distributions`, `group_distribute_config`, `joint_share_grant`, `joint_shares_get`, `joint_shares_with_me`, `my_associated_orgs`
+- **Tables reachable via those modules:** `engagements`
+- **Testids (25):** `share-config-adopt-<id>`, `share-config-distribute`, `share-config-empty`, `share-config-member`, `share-config-row-<id>`, `share-grant-counterparty`, `share-grant-engagement`, `share-grant-expiry`, `share-grant-submit`, `share-granted-empty`, `share-no-counterparties`, `share-panel`, `share-panel-config`, `share-panel-error`, `share-panel-grant`, `share-panel-granted`, `share-panel-loading`, `share-panel-result`, `share-panel-retry`, `share-panel-with-me`, `share-revoke-<id>`, `share-revoke-reason-<id>`, `share-row-<id>`, `share-with-me-<id>`, `share-with-me-empty`
 - **Explain ids (0):** — (no explain affordance)
 - **IIA standards addressed (0):** —
 - **Drilldown targets (0):** — (no aggregate)
-- **States:** loading; empty (`share-granted-empty`, `share-with-me-empty`); ready; result; not-live (`share-view-not-live`); error with retry.
+- **States:** loading; empty (`share-granted-empty`, `share-with-me-empty`, `share-config-empty`, `share-no-counterparties`); ready; result; error with retry.
 - **Tutorial key:** — (no key)
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
   named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
@@ -2480,6 +2480,9 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 | `get_sample_size` | `src/data/sampling.ts` | `p_org_id`, `p_control_type`, `p_frequency`, `p_pop_band`, `p_pop_count` | tenant |
 | `get_user_preference` | `src/data/preferences.ts` | `p_key` | tenant |
 | `global_document_search` | `src/data/globalSearch.ts` | `p_query`, `p_limit` | tenant |
+| `group_adopt_config` | `src/data/shares.ts` | `p_distribution_id` | tenant |
+| `group_config_distributions` | `src/data/shares.ts` | — | tenant |
+| `group_distribute_config` | `src/data/shares.ts` | `p_member_org_id`, `p_keys` | tenant |
 | `hosting_connection_list` | `src/data/hostingFit.ts` | `p_org` | tenant |
 | `hosting_connection_save` | `src/data/hostingFit.ts` | `p_org`, `p_label`, `p_kind`, `p_host`, `p_port`, `p_database`, `p_username`, `p_ssl_mode` | tenant |
 | `hosting_connection_set_secret` | `src/data/hostingFit.ts` | `p_connection_id`, `p_secret_id`, `p_masked` | tenant |
@@ -2493,6 +2496,9 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 | `integrity_incidents_list` | `src/data/incidents.ts` | — | tenant |
 | `invite_status` | `src/data/admin.ts` | `p_invite_id` | tenant |
 | `invite_user_capped` | `src/data/admin.ts` | `p_email`, `p_role_slug` | tenant |
+| `joint_share_grant` | `src/data/shares.ts` | `p_engagement_id`, `p_counterparty_org_id`, `p_expires_at` | tenant |
+| `joint_shares_get` | `src/data/shares.ts` | — | tenant |
+| `joint_shares_with_me` | `src/data/shares.ts` | — | tenant |
 | `ledger_continuity_check` | `src/data/archival.ts` | — | tenant |
 | `list_changes` | `src/data/changeControl.ts` | `p_engagement_id` | tenant |
 | `list_feature_catalogue` | `src/data/entitlements.ts` | — | tenant |
@@ -2503,6 +2509,7 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 | `migration_job_create` | `src/data/hostingFit.ts` | `p_org`, `p_connection_id`, `p_retention_days` | tenant |
 | `migration_job_list` | `src/data/hostingFit.ts` | `p_org` | tenant |
 | `missing_readability_sections` | `src/data/observations.ts` | `p_observation_id` | tenant |
+| `my_associated_orgs` | `src/data/shares.ts` | — | tenant |
 | `notification_template_list` | `src/data/automation.ts` | `p_org` | tenant |
 | `notifications_list` | `src/data/notifications.ts` | — | tenant |
 | `open_report_comment_count` | `src/data/reports.ts` | `p_report_version_id` | tenant |
@@ -2562,10 +2569,6 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 | `secret_display` | `src/data/secrets.ts` | `p_id` | tenant |
 | `seed_sira_next_cycle` | `src/data/sira.ts` | `p_cycle` | tenant |
 | `setup_list` | `src/data/setup.ts` | `p_scope` | tenant |
-| `share_grant` | `src/data/shares.ts` | `p_universe_id`, `p_grantee_user_id`, `p_expires_at` | tenant |
-| `shared_universe_view` | `src/data/shares.ts` | `p_share_id` | tenant |
-| `shares_get` | `src/data/shares.ts` | — | tenant |
-| `shares_with_me` | `src/data/shares.ts` | — | tenant |
 | `sira_acceptance_state` | `src/data/sira.ts` | `p_cycle` | tenant |
 | `sira_carry_forward_pack` | `src/data/sira.ts` | `p_cycle` | tenant |
 | `sira_model_snapshot` | `src/data/sira.ts` | `p_org` | tenant |
@@ -2596,8 +2599,8 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 
 - Screens documented: 129 (contract sections: 48 Appendix A + 44 Appendix B).
 - Tutorial keys: 81.
-- RPCs catalogued: 178.
-- Data modules: 85; exported data functions: 566.
+- RPCs catalogued: 181.
+- Data modules: 85; exported data functions: 569.
 - Contract testids not found verbatim in `src/` (placeholder or dynamic): 247.
   - assurance-tab-d5, assurance-tab-d7, assurance-tab-d8, assurance-tab-d9, audit-file-view-builder, audit-file-view-certificate, audit-file-view-conclusion, audit-file-view-documents, audit-file-view-ethics, audit-file-view-execution, audit-file-view-findings, audit-file-view-planning, audit-file-view-population, audit-file-view-report, audit-file-view-review, audit-file-view-rowtesting, audit-file-view-sampling, data-front-door-kind, hosting-test, invite-user, issues-view-patterns, oa-branding-colour-accent, oa-branding-colour-background, oa-branding-colour-primary, oa-branding-colour-text, oa-branding-margin-0, oa-branding-margin-3, oa-certificate-enabled-verification, oa-escalation-result, oa-escalation-saved, oa-governance-signoff-conclusion, oa-governance-signoff-planning, oa-governance-signoff-testing, org-control-tab-archived-role, org-control-tab-auditors, org-control-tab-automation, org-control-tab-branding, org-control-tab-connectors, org-control-tab-data, org-control-tab-features …
 

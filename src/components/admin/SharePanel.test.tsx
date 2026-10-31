@@ -2,34 +2,37 @@ import React from 'react';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 
-const listShares = vi.fn();
-const listSharesWithMe = vi.fn();
-const grantShare = vi.fn();
-const revokeShare = vi.fn();
-const viewSharedUniverse = vi.fn();
-const setHeadLevel = vi.fn();
-const listMembers = vi.fn();
-const listUniverses = vi.fn();
+const listJointShares = vi.fn();
+const listJointSharesWithMe = vi.fn();
+const grantJointShare = vi.fn();
+const revokeJointShare = vi.fn();
+const listAssociatedOrgs = vi.fn();
+const listConfigDistributions = vi.fn();
+const distributeConfig = vi.fn();
+const adoptConfig = vi.fn();
+const listShareableEngagements = vi.fn();
 
 vi.mock('../../data/shares', () => ({
-  listShares: (...a: unknown[]) => listShares(...a),
-  listSharesWithMe: (...a: unknown[]) => listSharesWithMe(...a),
-  grantShare: (...a: unknown[]) => grantShare(...a),
-  revokeShare: (...a: unknown[]) => revokeShare(...a),
-  viewSharedUniverse: (...a: unknown[]) => viewSharedUniverse(...a),
-  setHeadLevel: (...a: unknown[]) => setHeadLevel(...a),
+  listJointShares: (...a: unknown[]) => listJointShares(...a),
+  listJointSharesWithMe: (...a: unknown[]) => listJointSharesWithMe(...a),
+  grantJointShare: (...a: unknown[]) => grantJointShare(...a),
+  revokeJointShare: (...a: unknown[]) => revokeJointShare(...a),
+  listAssociatedOrgs: (...a: unknown[]) => listAssociatedOrgs(...a),
+  listConfigDistributions: (...a: unknown[]) => listConfigDistributions(...a),
+  distributeConfig: (...a: unknown[]) => distributeConfig(...a),
+  adoptConfig: (...a: unknown[]) => adoptConfig(...a),
+  listShareableEngagements: (...a: unknown[]) => listShareableEngagements(...a),
 }));
-vi.mock('../../data/admin', () => ({ listMembers: (...a: unknown[]) => listMembers(...a) }));
-vi.mock('../../data/universe', () => ({ listUniverses: (...a: unknown[]) => listUniverses(...a) }));
 
 import { SharePanel } from './SharePanel';
 
 beforeEach(() => {
   vi.clearAllMocks();
-  listShares.mockResolvedValue([]);
-  listSharesWithMe.mockResolvedValue([]);
-  listMembers.mockResolvedValue([{ userId: 'u1', displayName: 'Ayesha', roleSlug: 'cia', roleName: 'CIA', hierarchyLevel: null, managerId: null }]);
-  listUniverses.mockResolvedValue([{ id: 'uni-1', name: 'Operations Audit', domain: 'Operations' }]);
+  listJointShares.mockResolvedValue([]);
+  listJointSharesWithMe.mockResolvedValue([]);
+  listAssociatedOrgs.mockResolvedValue([{ id: 'org-b', name: 'Beta Ltd' }]);
+  listConfigDistributions.mockResolvedValue([]);
+  listShareableEngagements.mockResolvedValue([{ id: 'eng-1', title: 'Payroll audit' }]);
 });
 
 describe('SharePanel', () => {
@@ -38,59 +41,81 @@ describe('SharePanel', () => {
     await waitFor(() => expect(screen.getByTestId('share-panel')).toBeTruthy());
     expect(screen.getByTestId('share-granted-empty')).toBeTruthy();
     expect(screen.getByTestId('share-with-me-empty')).toBeTruthy();
+    expect(screen.getByTestId('share-config-empty')).toBeTruthy();
   });
 
-  it('grants a share through the data module and reloads', async () => {
-    grantShare.mockResolvedValue({ ok: true, id: 'share-1' });
+  it('grants a joint-audit share to an associated counterparty and reloads', async () => {
+    grantJointShare.mockResolvedValue({ ok: true, id: 'share-1' });
     render(<SharePanel />);
-    await waitFor(() => expect(screen.getByTestId('share-grant-universe')).toBeTruthy());
-    fireEvent.change(screen.getByTestId('share-grant-universe'), { target: { value: 'uni-1' } });
-    fireEvent.change(screen.getByTestId('share-grant-grantee'), { target: { value: 'u1' } });
+    await waitFor(() => expect(screen.getByTestId('share-grant-engagement')).toBeTruthy());
+    fireEvent.change(screen.getByTestId('share-grant-engagement'), { target: { value: 'eng-1' } });
+    fireEvent.change(screen.getByTestId('share-grant-counterparty'), { target: { value: 'org-b' } });
     fireEvent.click(screen.getByTestId('share-grant-submit'));
-    await waitFor(() => expect(grantShare).toHaveBeenCalledWith('uni-1', 'u1', null));
-    await waitFor(() => expect(listShares).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(grantJointShare).toHaveBeenCalledWith('eng-1', 'org-b', null));
+    await waitFor(() => expect(listJointShares).toHaveBeenCalledTimes(2));
     expect(screen.getByTestId('share-panel-result')).toBeTruthy();
   });
 
   it('renders the database refusal inline, never a blocking modal', async () => {
-    grantShare.mockResolvedValue({ ok: false, reason: 'not allowed: a share is granted by a Level-1 or Level-2 Head' });
+    grantJointShare.mockResolvedValue({ ok: false, reason: 'not allowed: the two organisations are not associated (group companies)' });
     render(<SharePanel />);
-    await waitFor(() => expect(screen.getByTestId('share-grant-universe')).toBeTruthy());
-    fireEvent.change(screen.getByTestId('share-grant-universe'), { target: { value: 'uni-1' } });
-    fireEvent.change(screen.getByTestId('share-grant-grantee'), { target: { value: 'u1' } });
+    await waitFor(() => expect(screen.getByTestId('share-grant-engagement')).toBeTruthy());
+    fireEvent.change(screen.getByTestId('share-grant-engagement'), { target: { value: 'eng-1' } });
+    fireEvent.change(screen.getByTestId('share-grant-counterparty'), { target: { value: 'org-b' } });
     fireEvent.click(screen.getByTestId('share-grant-submit'));
-    await waitFor(() => expect(screen.getByTestId('share-panel-result').textContent).toMatch(/Level-1 or Level-2 Head/));
+    await waitFor(() => expect(screen.getByTestId('share-panel-result').textContent).toMatch(/not associated/));
     expect(document.querySelector('[aria-modal="true"]')).toBeNull();
   });
 
-  it('revokes a live share with a reason', async () => {
-    listShares.mockResolvedValue([{
-      id: 'share-1', universeId: 'uni-1', universeName: 'Operations Audit', granteeUserId: 'u1',
-      grantedBy: 'me', grantedAt: '2026-10-25T00:00:00Z', expiresAt: null, revokedAt: null, revokeReason: null,
-    }]);
-    revokeShare.mockResolvedValue({ ok: true });
+  it('explains when there is no associated group company yet', async () => {
+    listAssociatedOrgs.mockResolvedValue([]);
     render(<SharePanel />);
-    await waitFor(() => expect(screen.getByTestId('share-revoke-share-1')).toBeTruthy());
-    fireEvent.change(screen.getByTestId('share-revoke-reason-share-1'), { target: { value: 'no longer needed' } });
-    fireEvent.click(screen.getByTestId('share-revoke-share-1'));
-    await waitFor(() => expect(revokeShare).toHaveBeenCalledWith('share-1', 'no longer needed'));
+    await waitFor(() => expect(screen.getByTestId('share-no-counterparties')).toBeTruthy());
+    expect(screen.queryByTestId('share-grant-submit')).toBeNull();
   });
 
-  it('opens the read-only projection of a live share and blocks a dead one', async () => {
-    listSharesWithMe.mockResolvedValue([
-      { id: 'share-live', universeId: 'uni-1', universeName: 'Operations Audit', grantedBy: 'h', grantedAt: '2026-10-25T00:00:00Z', expiresAt: null, live: true },
-      { id: 'share-dead', universeId: 'uni-2', universeName: 'Payroll', grantedBy: 'h', grantedAt: '2026-10-25T00:00:00Z', expiresAt: null, live: false },
-    ]);
-    viewSharedUniverse.mockResolvedValue({ universeId: 'uni-1', live: true, entities: [{ id: 'e1', name: 'Lahore Plant', status: 'approved' }], engagements: [] });
+  it('revokes a live share with a reason', async () => {
+    listJointShares.mockResolvedValue([{
+      id: 'share-1', engagementId: 'eng-1', engagementTitle: 'Payroll audit', ownerOrgId: 'org-a',
+      counterpartyOrgId: 'org-b', counterpartyName: 'Beta Ltd', rights: 'edit',
+      grantedAt: '2026-10-25T00:00:00Z', expiresAt: null, revokedAt: null, revokeReason: null, live: true,
+    }]);
+    revokeJointShare.mockResolvedValue({ ok: true });
     render(<SharePanel />);
-    await waitFor(() => expect(screen.getByTestId('share-view-share-live')).toBeTruthy());
-    expect((screen.getByTestId('share-view-share-dead') as HTMLButtonElement).disabled).toBe(true);
-    fireEvent.click(screen.getByTestId('share-view-share-live'));
-    await waitFor(() => expect(screen.getByTestId('share-view-entities').textContent).toMatch(/Lahore Plant/));
+    await waitFor(() => expect(screen.getByTestId('share-revoke-share-1')).toBeTruthy());
+    fireEvent.change(screen.getByTestId('share-revoke-reason-share-1'), { target: { value: 'audit concluded' } });
+    fireEvent.click(screen.getByTestId('share-revoke-share-1'));
+    await waitFor(() => expect(revokeJointShare).toHaveBeenCalledWith('share-1', 'audit concluded'));
+  });
+
+  it('lists the joint audits shared with this organisation', async () => {
+    listJointSharesWithMe.mockResolvedValue([{
+      id: 'share-x', engagementId: 'eng-9', engagementTitle: 'Group treasury review', ownerOrgId: 'org-a',
+      ownerName: 'Alpha Ltd', rights: 'edit', grantedAt: '2026-10-25T00:00:00Z', expiresAt: null, live: true,
+    }]);
+    render(<SharePanel />);
+    await waitFor(() => expect(screen.getByTestId('share-with-me-share-x').textContent).toMatch(/Group treasury review/));
+  });
+
+  it('distributes configuration to a member and adopts a distribution', async () => {
+    distributeConfig.mockResolvedValue({ ok: true, id: 'd1' });
+    adoptConfig.mockResolvedValue({ ok: true, keys: 2 });
+    listConfigDistributions.mockResolvedValue([{
+      id: 'd1', parentOrgId: 'org-a', parentName: 'Alpha Ltd', memberOrgId: 'org-b', memberName: 'Beta Ltd',
+      keys: ['sampling'], distributedAt: '2026-10-25T00:00:00Z', revokedAt: null,
+    }]);
+    render(<SharePanel />);
+    await waitFor(() => expect(screen.getByTestId('share-config-member')).toBeTruthy());
+    fireEvent.change(screen.getByTestId('share-config-member'), { target: { value: 'org-b' } });
+    fireEvent.click(screen.getByTestId('share-config-distribute'));
+    await waitFor(() => expect(distributeConfig).toHaveBeenCalledWith('org-b', null));
+    await waitFor(() => expect(screen.getByTestId('share-config-adopt-d1')).toBeTruthy());
+    fireEvent.click(screen.getByTestId('share-config-adopt-d1'));
+    await waitFor(() => expect(adoptConfig).toHaveBeenCalledWith('d1'));
   });
 
   it('surfaces a load failure with a retry, not a blank screen', async () => {
-    listShares.mockRejectedValue(new Error('network down'));
+    listJointShares.mockRejectedValue(new Error('network down'));
     render(<SharePanel />);
     await waitFor(() => expect(screen.getByTestId('share-panel-error')).toBeTruthy());
     expect(screen.getByTestId('share-panel-retry')).toBeTruthy();

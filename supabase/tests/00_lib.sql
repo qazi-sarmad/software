@@ -76,7 +76,10 @@ language sql immutable as $$
     'report_templates','report_template_versions','report_claims','report_claim_versions',
     'report_terminology','figure_functions','figure_function_versions','report_graphs',
     -- Phase 4 (0110). The methodology library and the persisted test-step tick.
-    'procedure_templates','test_step_templates','procedure_template_versions','workpaper_step_state'
+    'procedure_templates','test_step_templates','procedure_template_versions','workpaper_step_state',
+    -- SCALE-1 (0206). The group association row carries org_id and is tenant-readable, so it is
+    -- held to the same isolation, anon-refusal and platform-blind proofs as every other tenant table.
+    'org_associations'
   ]
 $$;
 
@@ -127,6 +130,9 @@ begin
       -- rows in email_queue do not reach them by cascade alone on a reused database, so clear the
       -- per-run rows explicitly.
       delete from email_queue where metadata ->> 'kind' = 'user_invitation';
+      -- SCALE-1 (0206). org_groups has no FK to orgs (it is referenced BY org_associations), so
+      -- `truncate orgs cascade` does not reach it. The association and joint-share rows do cascade.
+      truncate org_groups cascade;
       -- D16 (0191). standards_packs has no FK to orgs (it is the platform catalogue), so it is not
       -- reached by `truncate orgs cascade`. TRUNCATE does not fire the append-only row trigger, so
       -- the immutability guarantee is unaffected; the platform signing key likewise accumulates.
