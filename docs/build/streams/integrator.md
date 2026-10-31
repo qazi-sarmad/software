@@ -529,3 +529,40 @@ PASS; `check-tutorials` PASS (54 current / 27 stale GIFs).
 items are all worked (3/4/5/8/10/11 verified correct; 1/2/6/9 wired earlier; 7 fixed here). The only
 remaining product work is the design-row family, which is gated on the design branch freezing its
 contract (an owner/design-branch action, not the integrator's).
+
+## Branch forensics — every branch accounted for, 2026-10-30
+
+Owner ask: *reverify that all built things in all branches are part of the mergeable branch.* Method:
+`git merge-base --is-ancestor <b> HEAD` for each of the 39 remote branches, then a file-level
+`git diff --diff-filter=A --name-only HEAD...<b>` for every non-ancestor to find content the trunk lacks
+by path, then a content check for each hit.
+
+**22 branches are ancestors of the trunk head** — merged, nothing to port.
+
+**17 are not.** Each was classified; none carries un-merged *product* work:
+
+| Branch | Unique content | Verdict |
+|---|---|---|
+| `feature/security-harden-v1` | MFA/SSO/erasure/residency, group joint-audit sharing, owner console (0100–0103) | **Port#1** — content-identical to trunk `0204`/`0205`/`0206`/`0207`; `mfa.ts`/`claims.ts`/`liveRegion.ts`/`platformPath.ts`/guards identical; tests → `150/151/152` + `153_group_joint_audit.sql` |
+| `feature/systeligon-build-v1` | self-diagnostic, population-rows, org_id indexes (0129–0131) | **Port#1** — trunk `0208`/`0209`/`0210` (0131 vs 0210: 199 lines each, identical); `diagnostics.ts`/`populationPaste.ts`/`diagnosticNav.ts` present |
+| `feature/writing-engine` | `compose.ts`, `matrix.test.ts` (W2.8) | **Port#1** — `git diff HEAD origin/feature/writing-engine -- …/compose.ts` empty; matrix test 260 lines in both |
+| `feature/systeligon-design-spec`, `docs/systelligence-and-fonts` | design spec generator, `SYSTELIGON.md`, `FONT-REPOSITORY.md` | **Port#1** — all files present in trunk |
+| `fix/tutorial-recorder-fixtures` | real tutorial GIFs | **Superseded** — trunk GIFs are real (262 KB vs branch 246 KB) and newer |
+| `feature/cap-due-date-change` | CAP due-date history (2026-10-05 prototype) | **Superseded** — `cap-status-workflow` (ancestor) + Phase 4 methodology (0104) built the CAP lifecycle on trunk |
+| `merge/coderabbit-pilot`, `coderabbit/application-qa-audit/56ea96a0` | a **separate bounded procurement prototype** (`organizations`/`memberships`/`audit_cases` schema, `src/components/procurement/**`) | **Superseded** — trunk implements the same lifecycle (population→evidence→report→attestation) on the unified `orgs`/`universes`/`engagements` schema with `platform_*` RPCs; trunk `scripts/verify-attestation.mjs` + `verify-report-bundle.mjs` cover its verifier |
+| `docs/builder-prompt-2026-10-29`, `docs/continuous-monitoring-in-scope`, `audit/full-codebase-2026-10-27` | planning/audit docs only | **Docs-only** — no source files |
+| `feature/radial-hover-fix` | none | **Empty** (0 unique commits) |
+
+**Genuine un-ported items (verification harnesses, not product features):**
+1. `e2e/a11y.spec.ts` (axe-core a11y gate) — trunk has **no** `axe-core` dependency and no automated
+   a11y gate; `docs/DESIGN-SPEC.md` states the accessibility spec, but nothing enforces it in CI.
+2. `scripts/load-test.mjs` (deterministic ORGS×SESSIONS concurrent-RLS proof) — trunk proves isolation
+   in `supabase/tests/99_scale_seed.sql` + `123_scale_isolation.sql` (and `scripts/scale-seed.mjs`
+   `--probe`), but has no standalone runner; its acceptance is an env-gated manual step.
+3. `src/styles/tokens.css` `--on-accent` (light `#F6F5F2` / dark `#141518`) — **not** a defect: the
+   trunk reads it with a `var(--on-accent, var(--canvas))` fallback and every cinnabar/verdigris pair
+   already meets WCAG AA (measured: cinnabar `#C2410C` on canvas `4.75:1`, on surface `5.18:1`;
+   verdigris fallback `5.42:1` light / `5.93:1` dark). Adding it is hardening only.
+
+**Verdict:** the mergeable branch carries every product feature from every branch. The three un-ported
+items are two test harnesses and one token-hardening nicety — recorded here, not silently dropped.
