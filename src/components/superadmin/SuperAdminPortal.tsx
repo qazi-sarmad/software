@@ -16,6 +16,7 @@ import { SuperAdminAutomation } from './SuperAdminAutomation';
 import { SuperAdminHosting } from './SuperAdminHosting';
 import { SuperAdminMigration, DeploymentKitPanel } from './SuperAdminMigration';
 import { SuperAdminStandards } from './SuperAdminStandards';
+import { SuperAdminDomains } from './SuperAdminDomains';
 import { IntegrityAnchoringPanel } from './IntegrityAnchoringPanel';
 import { TutorialButton } from '../common/TutorialButton';
 
@@ -27,7 +28,7 @@ import { TutorialButton } from '../common/TutorialButton';
  * database. This is the sole surface that may know about the platform role (D-PLATFORM-RIGHTS);
  * no org-product code imports it. It renders no blocking modal (spec §27.5).
  */
-type Tab = 'tenants' | 'provisioning' | 'support' | 'consultation' | 'features' | 'recipients' | 'email' | 'automation' | 'tutorials' | 'setup' | 'trail' | 'hosting' | 'migration' | 'integrity' | 'standards';
+type Tab = 'tenants' | 'provisioning' | 'support' | 'consultation' | 'features' | 'recipients' | 'email' | 'automation' | 'tutorials' | 'setup' | 'trail' | 'hosting' | 'migration' | 'integrity' | 'standards' | 'domains';
 type Gate = 'checking' | 'allowed' | 'denied';
 
 /** F18: every platform tab carries its own "Show me how" tutorial key (Appendix A). A tab with no
@@ -120,6 +121,7 @@ export const SuperAdminPortal: React.FC = () => {
     { id: 'hosting', label: 'Hosting fit', icon: Database },
     { id: 'migration', label: 'Migration jobs', icon: RefreshCw },
     { id: 'integrity', label: 'Integrity anchoring', icon: ShieldCheck },
+    { id: 'domains', label: 'Audit domains', icon: ShieldCheck },
     { id: 'standards', label: 'Standards', icon: ShieldCheck },
     { id: 'trail', label: 'Platform trail', icon: History },
   ];
@@ -195,6 +197,7 @@ export const SuperAdminPortal: React.FC = () => {
         )}
         {tab === 'trail' && <SuperAdminTrail />}
         {tab === 'integrity' && <IntegrityAnchoringPanel />}
+        {tab === 'domains' && <SuperAdminDomains />}
         {tab === 'standards' && <SuperAdminStandards />}
       </div>
     </div>

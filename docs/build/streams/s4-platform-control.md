@@ -41,3 +41,21 @@ F140 (D11), F141 (D12), F142 (D13).
 ## Status
 | Row | Was | Now | Call site | Test | Migration | Commit |
 |---|---|---|---|---|---|---|
+| F140 (D11) | Absent | Wired | `SuperAdminDomains.tsx` (SA-19, `SuperAdminPortal.tsx:200`); `seedDefaultUniverses`/`setUniverseDomain`/`universeDiscipline` (`src/data/platformDomains.ts`); `disciplineRuleBase` (`src/lib/systeligon/disciplinePacks.ts`) | `SuperAdminDomains.test.tsx` (7), `rules/disciplines.test.ts` (9), `supabase/tests/148_audit_domains.sql` | `0159_audit_domains.sql` | (this commit) |
+
+### D11 — what was built
+
+`universes.domain` existed (0003) but no screen read or set it and no rule pack was keyed to a
+discipline (docs/AUDIT-DOMAINS-MODEL.md §2). D11 is the wiring:
+
+- **`0159_audit_domains.sql`** — `seed_default_universes(p_org)` (three defaults, idempotent by
+  discipline), `set_universe_domain(id, domain, reason)` (validated slug, reason-stamped, ledgered;
+  refuses blank/malformed/unknown), `universe_discipline(id)` (org-scoped read). No table CHECK: the
+  set is closed-but-extensible, so an org-defined fourth discipline is accepted.
+- **`src/lib/systeligon/rules/disciplines.ts`** (pre-authored this session) — the IT control rules
+  (COBIT 2019 / ISO 27001 / NIST SP 800-53) and the Shari'ah structural rules (AAOIFI SS 1–54 + SBP
+  Compendium + SGF); every rule cites its source.
+- **`src/lib/systeligon/disciplinePacks.ts`** — the one place a discipline becomes a rule base.
+- **`SuperAdminDomains.tsx`** (SA-19) — seeds, sets a discipline with a reason, shows each
+  discipline's rule base read from the engine, and flags a legacy/unknown domain rather than guessing.
+

@@ -1488,6 +1488,33 @@ minimum number of independent authorities a stamp must carry before the seal cou
 - **Tutorial key:** `sa.integrity-anchoring`
 
 
+## SA-19 — audit domains and rule packs (D11, docs/AUDIT-DOMAINS-MODEL.md)
+
+The platform view of the three audit universes: each organisation's universes with the discipline each
+one runs, the seed that creates the three defaults, a reasoned change of a universe's discipline, and
+the rule base each discipline resolves to. The discipline set is closed but extensible — a fourth
+discipline is a data change, never a code change — so an unknown or legacy domain is shown as unset
+and never silently mapped onto a default.
+
+- **Route:** `/superadmin`, tab `Audit domains` (`superadmin-tab-domains`).
+- **Rights:** platform admin (`require_platform_admin()`); every write is a platform-only RPC
+  (`seed_default_universes`, `set_universe_domain`), re-checked in the database.
+- **Data:** `listUniversesWithDiscipline`, `seedDefaultUniverses`, `setUniverseDomain`,
+  `universeDiscipline` (`src/data/platformDomains.ts`), `listTenants` (`src/data/platform.ts`),
+  `DISCIPLINE_PROFILES`/`selectableDisciplines` (`src/lib/risk/domains.ts`), `disciplineRuleBase`
+  (`src/lib/systeligon/disciplinePacks.ts`).
+- **Testids:** `sa-domains`, `sa-domains-loading`, `sa-domains-retry`, `sa-domains-target`,
+  `sa-domains-org-select`, `sa-domains-seed`, `sa-domains-empty`, `sa-domains-list`,
+  `sa-domains-row-<id>`, `sa-domains-unset-<id>`, `sa-domains-readback-<id>`, `sa-domains-base-<id>`,
+  `sa-domains-edit-<id>`, `sa-domains-editor`, `sa-domains-domain-input`, `sa-domains-reason`,
+  `sa-domains-save`, `sa-domains-cancel`, `sa-domains-notice`, `sa-domains-bases`,
+  `sa-domains-basecard-<discipline>`, `sa-domains-basecount-<discipline>`,
+  `sa-domains-basestandards-<discipline>`.
+- **States:** loading; error (with Retry); no organisation chosen; an empty universe list; ready; an
+  inline notice after a seed or a set, and the exact refusal (an empty reason is refused before
+  anything is sent) otherwise.
+- **Tutorial key:** none recorded yet.
+
 ## SA-21 — standards distribution (D16, docs/STANDARDS-DISTRIBUTION.md)
 
 The platform standards catalogue: every rule base the product ships as a signed, versioned **standards

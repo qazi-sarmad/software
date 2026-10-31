@@ -357,6 +357,24 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
   named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
 
+### `SA-19` — audit domains and rule packs (D11, docs/AUDIT-DOMAINS-MODEL.md)
+
+- **Purpose:** The platform view of the three audit universes: each organisation's universes with the discipline each
+- **Route / location:** `/superadmin`, tab `Audit domains` (`superadmin-tab-domains`).
+- **Rights required:** platform admin (`require_platform_admin()`); every write is a platform-only RPC (`seed_default_universes`, `set_universe_domain`), re-checked in the database.
+- **Data functions (`src/data/*.ts`):** `DISCIPLINE_PROFILES`, `disciplineRuleBase`, `listTenants`, `listUniversesWithDiscipline`, `seedDefaultUniverses`, `selectableDisciplines`, `setUniverseDomain`, `universeDiscipline`
+- **Data modules:** `src/data/platform.ts`, `src/data/platformDomains.ts`
+- **RPCs reachable via those modules:** `platform_create_tenant`, `platform_get_invite_caps`, `platform_job_health`, `platform_list_support_grants`, `platform_list_tenants`, `platform_list_trail`, `platform_provisioning_status`, `platform_whoami`, `support_access_log_list`, `support_grant_active`, `support_list_engagements`, `support_read_object`, `universe_discipline`
+- **Tables reachable via those modules:** `universes`
+- **Testids (23):** `sa-domains`, `sa-domains-loading`, `sa-domains-retry`, `sa-domains-target`, `sa-domains-org-select`, `sa-domains-seed`, `sa-domains-empty`, `sa-domains-list`, `sa-domains-row-<id>`, `sa-domains-unset-<id>`, `sa-domains-readback-<id>`, `sa-domains-base-<id>`, `sa-domains-edit-<id>`, `sa-domains-editor`, `sa-domains-domain-input`, `sa-domains-reason`, `sa-domains-save`, `sa-domains-cancel`, `sa-domains-notice`, `sa-domains-bases`, `sa-domains-basecard-<discipline>`, `sa-domains-basecount-<discipline>`, `sa-domains-basestandards-<discipline>`
+- **Explain ids (0):** — (no explain affordance)
+- **IIA standards addressed (0):** —
+- **Drilldown targets (0):** — (no aggregate)
+- **States:** loading; error (with Retry); no organisation chosen; an empty universe list; ready; an inline notice after a seed or a set, and the exact refusal (an empty reason is refused before anything is sent) otherwise.
+- **Tutorial key:** — (no key)
+- **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
+  named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
+
 ### `SA-21` — standards distribution (D16, docs/STANDARDS-DISTRIBUTION.md)
 
 - **Purpose:** The platform standards catalogue: every rule base the product ships as a signed, versioned **standards
@@ -2390,6 +2408,7 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 | `team_directory_get` | `src/data/teamDirectory.ts` | — | tenant |
 | `testing_signed_off` | `src/data/conclusion.ts` | `p_engagement_id` | tenant |
 | `unconfirmed_prior_year_imports` | `src/data/imports.ts` | `p_engagement_id` | tenant |
+| `universe_discipline` | `src/data/platformDomains.ts` | `p_universe_id` | tenant |
 | `validate_import` | `src/data/imports.ts` | `p_job_id`, `p_mapped_rows` | tenant |
 | `value_coverage` | `src/data/sampling.ts` | `p_sample_id` | tenant |
 | `verify_board_pack` | `src/data/certificate.ts` | `p_id` | tenant |
@@ -2400,10 +2419,10 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 
 ## Coverage cross-check
 
-- Screens documented: 119 (contract sections: 48 Appendix A + 44 Appendix B).
+- Screens documented: 120 (contract sections: 48 Appendix A + 44 Appendix B).
 - Tutorial keys: 81.
-- RPCs catalogued: 166.
-- Data modules: 79; exported data functions: 517.
-- Contract testids not found verbatim in `src/` (placeholder or dynamic): 239.
+- RPCs catalogued: 167.
+- Data modules: 80; exported data functions: 522.
+- Contract testids not found verbatim in `src/` (placeholder or dynamic): 240.
   - assurance-tab-d5, assurance-tab-d7, assurance-tab-d8, assurance-tab-d9, audit-file-view-builder, audit-file-view-certificate, audit-file-view-conclusion, audit-file-view-documents, audit-file-view-ethics, audit-file-view-execution, audit-file-view-findings, audit-file-view-planning, audit-file-view-population, audit-file-view-report, audit-file-view-review, audit-file-view-rowtesting, audit-file-view-sampling, data-front-door-kind, hosting-test, invite-user, issues-view-patterns, oa-branding-colour-accent, oa-branding-colour-background, oa-branding-colour-primary, oa-branding-colour-text, oa-branding-margin-0, oa-branding-margin-3, oa-certificate-enabled-verification, oa-escalation-result, oa-escalation-saved, oa-governance-signoff-conclusion, oa-governance-signoff-planning, oa-governance-signoff-testing, org-control-tab-archived-role, org-control-tab-auditors, org-control-tab-automation, org-control-tab-branding, org-control-tab-connectors, org-control-tab-features, org-control-tab-formats …
 

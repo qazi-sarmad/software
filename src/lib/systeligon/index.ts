@@ -57,3 +57,10 @@ export {
   REVIEW_OPTIONS, REVIEW_OPTION_IDS, ALL_REVIEW_OPTIONS, reviewOption, resolveReviewOptions,
   rulesForOptions, type ReviewOption, type ReviewOptionId, type ReviewAnalysis,
 } from './extract/reviewOptions';
+export {
+  itRules, shariahRules, disciplineRules, DISCIPLINE_RULES,
+  type DisciplineRule,
+} from './rules/disciplines';
+export {
+  rulesForDiscipline, disciplineRuleBase, type DisciplineRuleBaseSummary,
+} from './disciplinePacks';
