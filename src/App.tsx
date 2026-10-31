@@ -214,13 +214,17 @@ const AppContent: React.FC = () => {
 
         <main className="flex-1 pb-16">
           <Suspense fallback={<LoadingFallback />}>
-            {activeTab === 'executive' && <ExecutiveDashboardTab />}
-            {activeTab === 'pending' && <PendingTasksTab />}
-            {activeTab === 'universe' && <AuditUniverseTab />}
-            {activeTab === 'plan' && <AuditPlanTab />}
-            {activeTab === 'sira' && <SiraTab />}
-            {activeTab === 'audit_file' && <AuditFileTab />}
-            {activeTab === 'issues' && <IssuesRegisterTab />}
+            {/* The tab root carries its own `data-testid` (`tab-<id>`) from ONE place, so every tab
+                screen is addressable without each component repeating the wrapper. */}
+            <div data-testid={`tab-${activeTab}`}>
+              {activeTab === 'executive' && <ExecutiveDashboardTab />}
+              {activeTab === 'pending' && <PendingTasksTab />}
+              {activeTab === 'universe' && <AuditUniverseTab />}
+              {activeTab === 'plan' && <AuditPlanTab />}
+              {activeTab === 'sira' && <SiraTab />}
+              {activeTab === 'audit_file' && <AuditFileTab />}
+              {activeTab === 'issues' && <IssuesRegisterTab />}
+            </div>
           </Suspense>
         </main>
 

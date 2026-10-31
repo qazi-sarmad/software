@@ -144,7 +144,7 @@ export const AuditPlanTab: React.FC = () => {
   };
 
   return (
-    <div data-testid="tab-plan" className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+    <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-hairline pb-4">
         <div>

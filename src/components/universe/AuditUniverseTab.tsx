@@ -40,7 +40,7 @@ export const AuditUniverseTab: React.FC = () => {
   };
 
   return (
-    <div data-testid="tab-universe" className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+    <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
       {/* Editorial Header */}
       <div className="border-b border-hairline pb-6">
         <span className="text-apple-12 font-medium tracking-wide uppercase text-accent">

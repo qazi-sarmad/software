@@ -1115,7 +1115,7 @@ moves the chrome, never the call.
 - **Data modules (1):** `src/data/plan.ts`
 - **RPCs reachable (2):** `plan_approval_config`, `plan_history`
 - **Tables reachable (2):** `plan_items`, `plans`
-- **Testids (12):** `gantt-approve-shift`, `gantt-shift-error`, `DB-01-cap-hub-drilldown`, `DB-01-tile-entities`, `DB-01-tile-engagements`, `DB-01-tile-issues`, `DB-01-tile-workpapers`, `DB-01-activity-spine`, `DB-01-activity-spine-transport`, `DB-01-activity-spine-empty`, `DB-01-activity-spine-list`, `tab-executive`
+- **Testids (11):** `gantt-approve-shift`, `gantt-shift-error`, `DB-01-cap-hub-drilldown`, `DB-01-tile-entities`, `DB-01-tile-engagements`, `DB-01-tile-issues`, `DB-01-tile-workpapers`, `DB-01-activity-spine`, `DB-01-activity-spine-transport`, `DB-01-activity-spine-empty`, `DB-01-activity-spine-list`
 - **States:** loading (skeleton tiles); empty (no engagements in scope); ready; the Board Pack block carries its own loading/empty/error states. The activity spine carries its own quiet empty state ("Nothing has happened yet").
 - **Flows that touch this screen:** — (no flow)
 - **Connection candidates (same route):** — (route is unique to this screen)
@@ -1171,7 +1171,7 @@ moves the chrome, never the call.
 - **Data modules (0):** —
 - **RPCs reachable (0):** —
 - **Tables reachable (0):** —
-- **Testids (4):** `add-entity-form`, `add-entity-open`, `db-entities`, `tab-universe`
+- **Testids (3):** `add-entity-form`, `add-entity-open`, `db-entities`
 - **States:** loading; empty (no universes/entities); ready; denied on the add form without `edit_config`.
 - **Flows that touch this screen:** — (no flow)
 - **Connection candidates (same route):** — (route is unique to this screen)
@@ -1199,7 +1199,7 @@ moves the chrome, never the call.
 - **Data modules (2):** `src/data/deployment.ts`, `src/data/plan.ts`
 - **RPCs reachable (4):** `deploy_engagement`, `ethics_status`, `plan_approval_config`, `plan_history`
 - **Tables reachable (4):** `activity_log`, `deployment_requests`, `plan_items`, `plans`
-- **Testids (12):** `engagement-signoff`, `plan-action-error`, `plan-open-combined`, `plan-open-ethics`, `plan-open-gate`, `plan-open-items`, `plan-records`, `plan-records-error`, `plan-records-gates`, `plan-records-items`, `plan-records-versions`, `tab-plan`
+- **Testids (11):** `engagement-signoff`, `plan-action-error`, `plan-open-combined`, `plan-open-ethics`, `plan-open-gate`, `plan-open-items`, `plan-records`, `plan-records-error`, `plan-records-gates`, `plan-records-items`, `plan-records-versions`
 - **States:** loading; empty; ready.
 - **Flows that touch this screen:** — (no flow)
 - **Connection candidates (same route):** — (route is unique to this screen)
@@ -1577,7 +1577,7 @@ moves the chrome, never the call.
 - **Data modules (0):** —
 - **RPCs reachable (0):** —
 - **Tables reachable (0):** —
-- **Testids (4):** `cap-engagement-picker`, `cap-no-engagement`, `issues-cap-register-section`, `tab-issues`
+- **Testids (3):** `cap-engagement-picker`, `cap-no-engagement`, `issues-cap-register-section`
 - **States:** loading; empty; ready; per-view states.
 - **Flows that touch this screen:** — (no flow)
 - **Connection candidates (same route):** — (route is unique to this screen)
@@ -1661,7 +1661,7 @@ moves the chrome, never the call.
 - **Data modules (0):** —
 - **RPCs reachable (0):** —
 - **Tables reachable (0):** —
-- **Testids (3):** `nav-draggable-pill`, `nav-strip-track`, `nav-tab-<id>`
+- **Testids (4):** `nav-draggable-pill`, `nav-strip-track`, `nav-tab-<id>`, `tab-<id>`
 - **States:** ready; tabs filtered by rights.
 - **Flows that touch this screen:** — (no flow)
 - **Connection candidates (same route):** — (route is unique to this screen)

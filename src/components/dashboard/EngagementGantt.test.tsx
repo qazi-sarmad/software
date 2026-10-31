@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { holdToConfirm } from '../../test/holdToConfirm';
 import { EngagementGantt } from './EngagementGantt';
 import { AppProvider } from '../../context/AppContext';
@@ -36,6 +36,26 @@ const wrap = (role: Role, onRescheduled?: () => void) =>
     <ThemeProvider>
       <AppProvider user={testUser(role)} seed={testSeed}>
         <EngagementGantt engagements={[engagement]} onRescheduled={onRescheduled} />
+      </AppProvider>
+    </ThemeProvider>
+  );
+
+// A 9-day engagement lands under the 120px label threshold at the fixed density (~4.77 px/day),
+// so its bar is at the 36px minimum: too narrow for a title.
+const narrowEngagement: AuditEngagement = {
+  ...engagement,
+  id: '50000000-0000-0000-0000-0000000000a2',
+  title: 'B-Short',
+  periodStart: '2026-03-01',
+  periodEnd: '2026-03-10',
+  dueDate: '2026-03-10',
+};
+
+const wrapNarrow = () =>
+  render(
+    <ThemeProvider>
+      <AppProvider user={testUser('cia')} seed={testSeed}>
+        <EngagementGantt engagements={[narrowEngagement]} />
       </AppProvider>
     </ThemeProvider>
   );
@@ -107,5 +127,16 @@ describe('EngagementGantt reschedule persistence (D9)', () => {
     pointer(bar, 'pointermove', 160);
     pointer(bar, 'pointerup', 160);
     expect(screen.queryByText(/Pending milestone change/)).toBeNull();
+  });
+
+  it('hides the title on a bar too narrow to hold it, keeping the name on the bar itself', () => {
+    wrapNarrow();
+    const bar = screen.getByTestId(`gantt-bar-${narrowEngagement.id}`);
+    // The title text is gone from the bar (it would clip), but the name is not lost: it is the
+    // bar's own label. (The hover preview still names it — that is the point.)
+    expect(within(bar).queryByText('B-Short')).toBeNull();
+    expect(bar.getAttribute('aria-label')).toMatch(/B-Short/);
+    // The completion figure still shows, so the narrow bar is not blank.
+    expect(bar.textContent).toMatch(/40%/);
   });
 });
