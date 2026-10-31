@@ -1722,11 +1722,14 @@ reason. Below, this organisation's own complaints with their reasoned resolution
   `org-readiness-signals`, `org-readiness-summary`, `org-readiness-all-clear`, `org-readiness-refresh`,
   `org-readiness-signal-<signalId>`, `org-readiness-verdict-<signalId>`, `org-readiness-reason-<signalId>`,
   `org-readiness-diag-<signalId>`, `org-readiness-recheck-<signalId>`, `org-readiness-contact-<signalId>`,
-  `org-readiness-notice`, `org-readiness-action-error`, `org-complaints`, `org-complaints-empty`,
-  `org-complaint-<code>`, `org-complaint-resolve-reason-<code>`, `org-complaint-resolve-<code>`.
+  `org-readiness-contact-readonly-<signalId>`, `org-readiness-notice`, `org-readiness-action-error`,
+  `org-complaints`, `org-complaints-empty`, `org-complaint-<code>`, `org-complaint-resolve-reason-<code>`,
+  `org-complaint-resolve-<code>`, `org-complaint-resolve-readonly-<code>`.
 - **States:** loading; error (with Retry); ready with a summary; an all-clear note when every
-  organisation check is ready; an empty complaint list; an inline notice after a raise or a resolve,
-  and the exact refusal (an empty resolution reason is refused before anything is sent) otherwise.
+  organisation check is ready; an empty complaint list; a read-only state when the caller lacks
+  `edit_config` (the raise and resolve controls are disabled with the missing right named); an inline
+  notice after a raise or a resolve, and the exact refusal (an empty resolution reason is refused
+  before anything is sent) otherwise.
 - **Tutorial key:** none recorded yet.
 
 ## OA-32 — team directory (spec §4.2, §5, §9)

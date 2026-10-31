@@ -5,6 +5,8 @@ import {
 } from '../../data/readiness';
 import { InlineError } from '../common/InlineError';
 import { Check, AlertTriangle, AlertCircle, RefreshCw, Shield } from '../common/Icons';
+import { useApp } from '../../context/AppContext';
+import { hasRight } from '../../lib/rights';
 
 type LoadState = 'loading' | 'ready' | 'error';
 
@@ -28,6 +30,8 @@ const VERDICT_WORD: Record<ReadinessSignal['verdict'], string> = {
  * which the database re-checks; the panel surfaces the refusal with its exact reason.
  */
 export const OrgReadinessPanel: React.FC = () => {
+  const { currentUser } = useApp();
+  const canRaise = hasRight(currentUser, 'edit_config');
   const [state, setState] = useState<LoadState>('loading');
   const [loadError, setLoadError] = useState('');
   const [report, setReport] = useState<ReadinessReport | null>(null);
@@ -175,12 +179,17 @@ export const OrgReadinessPanel: React.FC = () => {
                     Re-check
                   </button>
                   <button
-                    type="button" disabled={busy !== null} onClick={() => void contact(s)}
+                    type="button" disabled={busy !== null || !canRaise} onClick={() => void contact(s)}
                     data-testid={`org-readiness-contact-${s.signalId}`}
-                    className="text-apple-11 text-cinnabar hover:underline"
+                    className="text-apple-11 text-cinnabar hover:underline disabled:opacity-40"
                   >
                     Contact Super Admin
                   </button>
+                  {!canRaise && (
+                    <span className="text-apple-11 text-tertiary" data-testid={`org-readiness-contact-readonly-${s.signalId}`}>
+                      Raising a complaint needs the edit_config right.
+                    </span>
+                  )}
                 </div>
               )}
             </li>
@@ -218,12 +227,17 @@ export const OrgReadinessPanel: React.FC = () => {
                       className="flex-1 min-w-48 rounded-xl border border-hairline bg-surface px-3 py-1.5 text-apple-12"
                     />
                     <button
-                      type="button" disabled={busy !== null} onClick={() => void resolve(c)}
+                      type="button" disabled={busy !== null || !canRaise} onClick={() => void resolve(c)}
                       data-testid={`org-complaint-resolve-${c.code}`}
                       className="px-3 py-1.5 rounded-xl bg-accent text-white text-apple-12 font-medium hover:opacity-90 disabled:opacity-40"
                     >
                       Resolve
                     </button>
+                    {!canRaise && (
+                      <span className="text-apple-11 text-tertiary" data-testid={`org-complaint-resolve-readonly-${c.code}`}>
+                        Resolving needs the edit_config right.
+                      </span>
+                    )}
                   </div>
                 )}
               </li>

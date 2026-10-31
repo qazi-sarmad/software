@@ -872,11 +872,11 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 - **Data modules:** `src/data/readiness.ts`
 - **RPCs reachable via those modules:** `platform_list_admins`
 - **Tables reachable via those modules:** none
-- **Testids (21):** `org-readiness`, `org-readiness-loading`, `org-readiness-error`, `org-readiness-retry`, `org-readiness-signals`, `org-readiness-summary`, `org-readiness-all-clear`, `org-readiness-refresh`, `org-readiness-signal-<signalId>`, `org-readiness-verdict-<signalId>`, `org-readiness-reason-<signalId>`, `org-readiness-diag-<signalId>`, `org-readiness-recheck-<signalId>`, `org-readiness-contact-<signalId>`, `org-readiness-notice`, `org-readiness-action-error`, `org-complaints`, `org-complaints-empty`, `org-complaint-<code>`, `org-complaint-resolve-reason-<code>`, `org-complaint-resolve-<code>`
+- **Testids (23):** `org-readiness`, `org-readiness-loading`, `org-readiness-error`, `org-readiness-retry`, `org-readiness-signals`, `org-readiness-summary`, `org-readiness-all-clear`, `org-readiness-refresh`, `org-readiness-signal-<signalId>`, `org-readiness-verdict-<signalId>`, `org-readiness-reason-<signalId>`, `org-readiness-diag-<signalId>`, `org-readiness-recheck-<signalId>`, `org-readiness-contact-<signalId>`, `org-readiness-contact-readonly-<signalId>`, `org-readiness-notice`, `org-readiness-action-error`, `org-complaints`, `org-complaints-empty`, `org-complaint-<code>`, `org-complaint-resolve-reason-<code>`, `org-complaint-resolve-<code>`, `org-complaint-resolve-readonly-<code>`
 - **Explain ids (0):** — (no explain affordance)
 - **IIA standards addressed (0):** —
 - **Drilldown targets (0):** — (no aggregate)
-- **States:** loading; error (with Retry); ready with a summary; an all-clear note when every organisation check is ready; an empty complaint list; an inline notice after a raise or a resolve, and the exact refusal (an empty resolution reason is refused before anything is sent) otherwise.
+- **States:** loading; error (with Retry); ready with a summary; an all-clear note when every organisation check is ready; an empty complaint list; a read-only state when the caller lacks `edit_config` (the raise and resolve controls are disabled with the missing right named); an inline notice after a raise or a resolve, and the exact refusal (an empty resolution reason is refused before anything is sent) otherwise.
 - **Tutorial key:** — (no key)
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
   named in the purpose. The chrome that carries every hop is listed under *Common chrome*.

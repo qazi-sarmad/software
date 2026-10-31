@@ -16,6 +16,9 @@ vi.mock('../../data/readiness', () => ({
   resolveComplaint: (...a: unknown[]) => resolveComplaint(...a),
 }));
 
+const userRef = { current: { role: 'org_admin', rights: { edit_config: true }, orgId: 'org-a' } as never };
+vi.mock('../../context/AppContext', () => ({ useApp: () => ({ currentUser: userRef.current }) }));
+
 import { OrgReadinessPanel } from './OrgReadinessPanel';
 
 const REPORT = {
@@ -34,6 +37,7 @@ const COMPLAINTS = [
 
 describe('org readiness and complaints (D12)', () => {
   beforeEach(() => {
+    userRef.current = { role: 'org_admin', rights: { edit_config: true }, orgId: 'org-a' } as never;
     orgReadiness.mockResolvedValue(REPORT);
     listOrgComplaints.mockResolvedValue(COMPLAINTS);
     runOrgDiagnostic.mockResolvedValue({
@@ -108,5 +112,15 @@ describe('org readiness and complaints (D12)', () => {
     render(<OrgReadinessPanel />);
     await waitFor(() => expect(screen.getByTestId('org-readiness-error')).toBeTruthy());
     expect(screen.getByTestId('org-readiness-retry')).toBeTruthy();
+  });
+
+  it('gates the raise and resolve controls on edit_config, naming the missing right', async () => {
+    userRef.current = { role: 'observer', rights: { read_only: true }, orgId: 'org-a' } as never;
+    render(<OrgReadinessPanel />);
+    await waitFor(() => expect(screen.getByTestId('org-readiness')).toBeTruthy());
+    expect(screen.getByTestId('org-readiness-contact-readonly-classification').textContent).toContain('edit_config');
+    expect(screen.getByTestId('org-complaint-resolve-readonly-PRV-AAAAAA-0001').textContent).toContain('edit_config');
+    expect((screen.getByTestId('org-readiness-contact-classification') as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByTestId('org-complaint-resolve-PRV-AAAAAA-0001') as HTMLButtonElement).disabled).toBe(true);
   });
 });
