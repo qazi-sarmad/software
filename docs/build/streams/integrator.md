@@ -244,3 +244,32 @@ file index once (`srcIndex()`), match every step against the cache. 7.3 s → 0.
 assertions are unchanged.
 
 _Full run after the fix: 282 files / 3240 tests green; `tsc --noEmit` clean; all gates PASS._
+
+## Designer catalogue folded onto the trunk — 2026-10-30
+
+Owner ask: *"which branch has the final and updated UI/UX screens, flows, journeys, connectors, tool
+calls, functions and paths for the designer?"* Answer: the trunk, and now it really does.
+
+- **The designer's spec tooling was stranded on `feature/systeligon-design-spec`** (1 commit, cut at
+  the old base `ceb85fd`). Its `docs/DESIGN-SPEC.md` described **105 screens**; the trunk has **122**.
+  The trunk had the *sources* (`docs/UI-INVENTORY.md`, `docs/ACP-UI-CONTRACT.md`,
+  `src/lib/tutorialKeys.json`, `src/styles/tokens.css`) but not the generator, the brief or the guard.
+- **Brought the tooling onto the trunk** (the content, not a branch merge — a merge would have dragged
+  the old base in): `scripts/gen-design-spec.mjs`, `docs/DESIGN-BRIEF.md`, `docs/DESIGN-SPEC.md`,
+  `src/guards/designSpec.test.ts`, and the `gen:design` npm script. Regenerated against the trunk:
+  **2944 lines, 122 screens, 81 flows, 25 tokens.**
+- **Added the calls to the spec.** The designer's single document now names, per screen, the **data
+  functions, data modules, RPCs and tables** (the "tool calls / functions"), alongside the route
+  ("path"), rights, testids, states and the flows ("journeys"). `OA-23` (connectors) is the worked
+  example: 6 RPCs, 7 tables, 42 testids. The `designSpec` guard gained a case requiring a
+  data-functions and an RPCs line for every screen, so the spec cannot silently lose the calls.
+- **Recorded the branch topology** in `docs/BRANCH-MAP.md` §Current topology: the trunk is the only
+  branch that merges to `main`; the seven build streams are already folded in; every other long-lived
+  branch is hundreds of files behind and carries only a small unique delta (build-v1's `DiagnosticPanel`,
+  security-harden-v1's MFA/SSO screens, cap-due-date's `docs/reference/v1/**`) — none merges wholesale.
+- **No old branch was merged.** Verified: each would *delete* screens the trunk now has
+  (`systeligon-build-v1` deletes 126 trunk files, `security-harden-v1` deletes 442, `cap-due-date-change`
+  deletes 1301). The register already builds the diagnostic on the trunk (`runDiagnostic`, SA-20/OA-42);
+  the older branches are superseded.
+
+_Full suite after this batch: 315 files / 3623 tests green; tsc clean; all gates PASS._
