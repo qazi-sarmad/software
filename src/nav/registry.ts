@@ -78,6 +78,7 @@ export const MOUNTED_SCREENS: ScreenMount[] = [
   { screenId: 'OA-41', title: 'Archived-file custodian role', owner: 'trunk', path: 'src/components/admin/ArchivedFileRolePanel.tsx', status: 'mounted' },
   { screenId: 'SA-19', title: 'Audit domains and rule packs (D11)', owner: 's4', path: 'src/components/superadmin/SuperAdminDomains.tsx', status: 'mounted' },
   { screenId: 'SA-21', title: 'Standards distribution (D16)', owner: 's4', path: 'src/components/superadmin/SuperAdminStandards.tsx', status: 'mounted' },
+  { screenId: 'SA-20', title: 'Readiness signals, complaints and self-diagnostic (D12/D13)', owner: 's4', path: 'src/components/superadmin/SuperAdminReadiness.tsx', status: 'mounted' },
 ];
 
 /**
@@ -90,9 +91,8 @@ export const PLANNED_SCREENS: ScreenMount[] = [
   // OA-34 (assurance capabilities) is now mounted; its slot lives in MOUNTED_SCREENS.
   // S3 — client classification D10; risk library and dynamic assessment D14/D15.
   // S4 — audit domains D11; readiness/complaints/diagnostics D12/D13; standards distribution D16.
-  // SA-19 (audit domains) and SA-21 (standards distribution) are now mounted; their slots live in
-  // MOUNTED_SCREENS.
-  { screenId: 'SA-20', title: 'Readiness signals, complaints and self-diagnostic (D12/D13)', owner: 's4', path: 'src/components/superadmin/SuperAdminReadiness.tsx', status: 'planned' },
+  // SA-19 (audit domains), SA-20 (readiness/complaints) and SA-21 (standards distribution) are now
+  // mounted; their slots live in MOUNTED_SCREENS.
   // S7 — document, minutes and policy rule surfaces (S7/S8/S9/S14/S15).
   // OA-36 (document review) is now mounted; its slot lives in MOUNTED_SCREENS.
 ];

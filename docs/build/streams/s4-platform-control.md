@@ -59,3 +59,40 @@ discipline (docs/AUDIT-DOMAINS-MODEL.md §2). D11 is the wiring:
 - **`SuperAdminDomains.tsx`** (SA-19) — seeds, sets a discipline with a reason, shows each
   discipline's rule base read from the engine, and flags a legacy/unknown domain rather than guessing.
 
+
+| F141 (D12) | Absent | Wired | `SuperAdminReadiness.tsx` (SA-20, `SuperAdminPortal.tsx:203`, tab `readiness`) + `OrgReadinessPanel.tsx` (OA-42, `OrgControlPanel.tsx:298`, tab `readiness`); `platformReadiness`/`runDiagnostic`/`createComplaint`/`listComplaints`/`listComplaintEvents`/`assignComplaint`/`commentComplaint`/`resolveComplaint`/`listPlatformAdmins` + `orgReadiness`/`runOrgDiagnostic`/`createOrgComplaint`/`listOrgComplaints` (`src/data/readiness.ts`) | `SuperAdminReadiness.test.tsx` (12), `OrgReadinessPanel.test.tsx` (7), `supabase/tests/149_readiness_complaints.sql` §1–10 | `0160_readiness_signals.sql`, `0161_complaints.sql` | (this commit) |
+| F142 (D13) | Absent | Wired | three-layer readiness section (`sa-readiness-layers`) in `SuperAdminReadiness.tsx` (SA-20) + `docs/DEPLOYMENT-RUNBOOK.md` | `SuperAdminReadiness.test.tsx` ("shows the three deployment layers with an honest per-layer verdict") | `0160_readiness_signals.sql` | (this commit) |
+
+### D12/D13 — what was built
+
+`platform_provisioning_status` (0097) counted + returned booleans but no screen read it and no signal
+carried its fix. D12/D13 are the wiring:
+
+- **`0160_readiness_signals.sql`** — the `readiness_signals` catalogue (seeded: `platform_sender`,
+  `signing_key`, `classification`, `roles_seeded`, `storage_buckets`, `edge_functions`), each with a
+  layer, a severity, a remediation and a fix target; `readiness_verdict(check, reason)` (green/amber/
+  red with the reason in words); `platform_readiness_signals(p_org)` (all layers) and
+  `org_readiness_signals()` (organisation layer only — the environment layer never crosses to a tenant,
+  L2); `run_readiness_diagnostic(p_org, p_signal)` / `org_run_readiness_diagnostic(p_signal)` — one
+  signal in isolation, recorded on the ledger, mutating no inspected state. An unevaluated check is
+  amber ("not evaluated: …"), never green by default.
+- **`0161_complaints.sql`** — `complaints` (org_id, code, severity, source_signal, title, body, status,
+  created_by, assigned_to, created_at, resolved_at, resolution_reason) with an org-scoped human-readable
+  code minted per-org (`PRV-<suffix>-NNNN`, an atomic per-org counter so a global sequence never leaks
+  the platform's total volume, L2); an append-only `complaint_events` trail; `complaint_create`
+  (auto-generates the bundle: the failed check, its reason, the layer, the readiness output and the
+  state), `org_complaint_create` (the tenant path, gated on `edit_config`), `complaint_list` /
+  `org_complaint_list`, `complaint_events_list`, `complaint_assign`, `complaint_comment`,
+  `complaint_resolve` (reason required, config-as-ledger), `platform_list_admins` (the assignment
+  picker, platform-only). The email to the platform administrators reuses the existing email-dispatch
+  machinery and the platform-sender configuration; a failed send never loses the complaint.
+- **`src/data/readiness.ts`** — the data module (RPC-only; no component reaches the client).
+- **`SuperAdminReadiness.tsx`** (SA-20) — the livid traffic-signal surface: every signal with its
+  verdict and reason, the three deployment layers with honest per-layer verdicts, and Fix this /
+  Re-check / Contact Super Admin on every non-green signal; the complaint register with filter, trail,
+  assignment, comments and a reasoned resolution.
+- **`OrgReadinessPanel.tsx`** (OA-42) — the tenant half: the same verdicts for the organisation's own
+  checks, the self-diagnostic per signal, and this organisation's complaints. The environment layer is
+  never shown here (L2).
+- **`docs/DEPLOYMENT-RUNBOOK.md`** (D13) — the three layers, the exact commands, the required variables
+  and the order; the panel points at it for the two layers the database cannot read.

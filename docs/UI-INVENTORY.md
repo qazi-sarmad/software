@@ -375,6 +375,24 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
   named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
 
+### `SA-20` — readiness signals, complaints and self-diagnostic (D12/D13, docs/SYSTELIGON-REMAINDER-BUILDER-PROMPT.md)
+
+- **Purpose:** The livid traffic-signal surface. Every readiness check is a deterministic verdict with a reason in
+- **Route / location:** `/superadmin`, tab `Readiness` (`superadmin-tab-readiness`).
+- **Rights required:** platform admin (`require_platform_admin()`); the complaint writes are platform-only RPCs, re-checked in the database. `platform_list_admins` (the assignment picker) is platform-only.
+- **Data functions (`src/data/*.ts`):** `complaint_assign`, `complaint_comment`, `complaint_create`, `complaint_events_list`, `complaint_list`, `complaint_resolve`, `createComplaint`, `listComplaintEvents`, `listComplaints`, `listPlatformAdmins`, `listTenants`, `platformReadiness`, `platform_list_admins`, `platform_readiness_signals`, `resolveComplaint`, `runDiagnostic`, `run_readiness_diagnostic`
+- **Data modules:** `src/data/platform.ts`, `src/data/readiness.ts`
+- **RPCs reachable via those modules:** `platform_create_tenant`, `platform_get_invite_caps`, `platform_job_health`, `platform_list_admins`, `platform_list_support_grants`, `platform_list_tenants`, `platform_list_trail`, `platform_provisioning_status`, `platform_whoami`, `support_access_log_list`, `support_grant_active`, `support_list_engagements`, `support_read_object`
+- **Tables reachable via those modules:** none
+- **Testids (37):** `sa-readiness`, `sa-readiness-loading`, `sa-readiness-error`, `sa-readiness-retry`, `sa-readiness-target`, `sa-readiness-org-select`, `sa-readiness-refresh`, `sa-readiness-empty`, `sa-readiness-signals`, `sa-readiness-summary`, `sa-readiness-signal-<signalId>`, `sa-readiness-verdict-<signalId>`, `sa-readiness-reason-<signalId>`, `sa-readiness-diag-<signalId>`, `sa-readiness-fix-<signalId>`, `sa-readiness-recheck-<signalId>`, `sa-readiness-contact-<signalId>`, `sa-readiness-layers`, `sa-readiness-layer-<layer>`, `sa-readiness-layer-verdict-<layer>`, `sa-readiness-runbook-note`, `sa-readiness-notice`, `sa-readiness-action-error`, `complaints`, `complaints-filter`, `complaints-empty`, `complaints-admin-count`, `complaint-<code>`, `complaint-code-<code>`, `complaint-trail-<code>`, `complaint-events-<code>`, `complaint-assign-<code>`, `complaint-comment-<code>`, `complaint-comment-send-<code>`, `complaint-assign-save-<code>`, `complaint-resolve-reason-<code>`, `complaint-resolve-<code>`
+- **Explain ids (0):** — (no explain affordance)
+- **IIA standards addressed (0):** —
+- **Drilldown targets (0):** — (no aggregate)
+- **States:** loading; error (with Retry); no organisation chosen; an empty signal set; ready; the three deployment layers (platform / environment / organisation) with a per-layer verdict; an empty complaint filter; an inline notice after a raise or a resolve, and the exact refusal (an empty resolution reason is refused before anything is sent) otherwise.
+- **Tutorial key:** — (no key)
+- **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
+  named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
+
 ### `SA-21` — standards distribution (D16, docs/STANDARDS-DISTRIBUTION.md)
 
 - **Purpose:** The platform standards catalogue: every rule base the product ships as a signed, versioned **standards
@@ -841,6 +859,24 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 - **IIA standards addressed (0):** —
 - **Drilldown targets (0):** — (no aggregate)
 - **States:** loading; load error (`archived-role-load-error`); read-only without `manage_roles` (`archived-role-readonly`); the platform default before the org chooses; an inline error on a refused write (`archived-role-error`); no archived file yet (`archived-role-archives-empty`).
+- **Tutorial key:** — (no key)
+- **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
+  named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
+
+### `OA-42` — readiness and complaints (D12, docs/SYSTELIGON-REMAINDER-BUILDER-PROMPT.md)
+
+- **Purpose:** The tenant half of the D12 traffic-signal work. The same deterministic verdicts for the organisation's
+- **Route / location:** the Org Admin control panel, tab `Readiness` (`org-control-tab-readiness`).
+- **Rights required:** `edit_config` to raise a complaint; any member reads the signals. The right is re-checked in the database (`org_complaint_create`), never only in the browser.
+- **Data functions (`src/data/*.ts`):** `complaint_resolve`, `createOrgComplaint`, `listOrgComplaints`, `orgReadiness`, `org_complaint_create`, `org_complaint_list`, `org_readiness_signals`, `org_run_readiness_diagnostic`, `resolveComplaint`, `runOrgDiagnostic`
+- **Data modules:** `src/data/readiness.ts`
+- **RPCs reachable via those modules:** `platform_list_admins`
+- **Tables reachable via those modules:** none
+- **Testids (21):** `org-readiness`, `org-readiness-loading`, `org-readiness-error`, `org-readiness-retry`, `org-readiness-signals`, `org-readiness-summary`, `org-readiness-all-clear`, `org-readiness-refresh`, `org-readiness-signal-<signalId>`, `org-readiness-verdict-<signalId>`, `org-readiness-reason-<signalId>`, `org-readiness-diag-<signalId>`, `org-readiness-recheck-<signalId>`, `org-readiness-contact-<signalId>`, `org-readiness-notice`, `org-readiness-action-error`, `org-complaints`, `org-complaints-empty`, `org-complaint-<code>`, `org-complaint-resolve-reason-<code>`, `org-complaint-resolve-<code>`
+- **Explain ids (0):** — (no explain affordance)
+- **IIA standards addressed (0):** —
+- **Drilldown targets (0):** — (no aggregate)
+- **States:** loading; error (with Retry); ready with a summary; an all-clear note when every organisation check is ready; an empty complaint list; an inline notice after a raise or a resolve, and the exact refusal (an empty resolution reason is refused before anything is sent) otherwise.
 - **Tutorial key:** — (no key)
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
   named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
@@ -2353,6 +2389,7 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 | `platform_create_tenant` | `src/data/platform.ts` | `p_name`, `p_initial_admin_email`, `p_reason` | platform |
 | `platform_get_invite_caps` | `src/data/platform.ts` | — | platform |
 | `platform_job_health` | `src/data/platform.ts` | — | platform |
+| `platform_list_admins` | `src/data/readiness.ts` | — | platform |
 | `platform_list_recipients` | `src/data/platformSettings.ts` | — | platform |
 | `platform_list_support_grants` | `src/data/platform.ts` | — | platform |
 | `platform_list_tenants` | `src/data/platform.ts` | — | platform |
@@ -2419,10 +2456,10 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 
 ## Coverage cross-check
 
-- Screens documented: 120 (contract sections: 48 Appendix A + 44 Appendix B).
+- Screens documented: 122 (contract sections: 48 Appendix A + 44 Appendix B).
 - Tutorial keys: 81.
-- RPCs catalogued: 167.
-- Data modules: 80; exported data functions: 522.
-- Contract testids not found verbatim in `src/` (placeholder or dynamic): 240.
+- RPCs catalogued: 168.
+- Data modules: 81; exported data functions: 537.
+- Contract testids not found verbatim in `src/` (placeholder or dynamic): 242.
   - assurance-tab-d5, assurance-tab-d7, assurance-tab-d8, assurance-tab-d9, audit-file-view-builder, audit-file-view-certificate, audit-file-view-conclusion, audit-file-view-documents, audit-file-view-ethics, audit-file-view-execution, audit-file-view-findings, audit-file-view-planning, audit-file-view-population, audit-file-view-report, audit-file-view-review, audit-file-view-rowtesting, audit-file-view-sampling, data-front-door-kind, hosting-test, invite-user, issues-view-patterns, oa-branding-colour-accent, oa-branding-colour-background, oa-branding-colour-primary, oa-branding-colour-text, oa-branding-margin-0, oa-branding-margin-3, oa-certificate-enabled-verification, oa-escalation-result, oa-escalation-saved, oa-governance-signoff-conclusion, oa-governance-signoff-planning, oa-governance-signoff-testing, org-control-tab-archived-role, org-control-tab-auditors, org-control-tab-automation, org-control-tab-branding, org-control-tab-connectors, org-control-tab-features, org-control-tab-formats …
 

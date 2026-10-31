@@ -1515,6 +1515,41 @@ and never silently mapped onto a default.
   anything is sent) otherwise.
 - **Tutorial key:** none recorded yet.
 
+## SA-20 — readiness signals, complaints and self-diagnostic (D12/D13, docs/SYSTELIGON-REMAINDER-BUILDER-PROMPT.md)
+
+The livid traffic-signal surface. Every readiness check is a deterministic verdict with a reason in
+words, computed in the database, never in the browser: a check that cannot be evaluated is amber and
+says so, and is never green by default. Every signal that is not green carries its fix — a "Fix this"
+deep-link to the exact screen, a "Contact Super Admin" action that raises a coded complaint with the
+whole issue attached, and a "Re-check" that re-runs that one signal in isolation and records the
+result without changing any inspected state. Below the signals, the complaint register lists the coded
+issues with their assignment, comment trail and reasoned resolution.
+
+- **Route:** `/superadmin`, tab `Readiness` (`superadmin-tab-readiness`).
+- **Rights:** platform admin (`require_platform_admin()`); the complaint writes are platform-only RPCs,
+  re-checked in the database. `platform_list_admins` (the assignment picker) is platform-only.
+- **Data:** `platformReadiness`, `listComplaints`, `listPlatformAdmins`, `runDiagnostic`,
+  `createComplaint`, `listComplaintEvents`, `resolveComplaint` (`src/data/readiness.ts`), `listTenants`
+  (`src/data/platform.ts`). RPCs `platform_readiness_signals`, `run_readiness_diagnostic`,
+  `complaint_create`, `complaint_list`, `complaint_events_list`, `complaint_assign`, `complaint_comment`,
+  `complaint_resolve`, `platform_list_admins` (migrations 0160/0161).
+- **Testids:** `sa-readiness`, `sa-readiness-loading`, `sa-readiness-error`, `sa-readiness-retry`,
+  `sa-readiness-target`, `sa-readiness-org-select`, `sa-readiness-refresh`, `sa-readiness-empty`,
+  `sa-readiness-signals`, `sa-readiness-summary`, `sa-readiness-signal-<signalId>`,
+  `sa-readiness-verdict-<signalId>`, `sa-readiness-reason-<signalId>`, `sa-readiness-diag-<signalId>`,
+  `sa-readiness-fix-<signalId>`, `sa-readiness-recheck-<signalId>`, `sa-readiness-contact-<signalId>`,
+  `sa-readiness-layers`, `sa-readiness-layer-<layer>`, `sa-readiness-layer-verdict-<layer>`,
+  `sa-readiness-runbook-note`, `sa-readiness-notice`, `sa-readiness-action-error`, `complaints`,
+  `complaints-filter`, `complaints-empty`, `complaints-admin-count`, `complaint-<code>`,
+  `complaint-code-<code>`, `complaint-trail-<code>`, `complaint-events-<code>`,
+  `complaint-assign-<code>`, `complaint-comment-<code>`, `complaint-comment-send-<code>`,
+  `complaint-assign-save-<code>`, `complaint-resolve-reason-<code>`, `complaint-resolve-<code>`.
+- **States:** loading; error (with Retry); no organisation chosen; an empty signal set; ready; the
+  three deployment layers (platform / environment / organisation) with a per-layer verdict; an empty
+  complaint filter; an inline notice after a raise or a resolve, and the exact refusal (an empty
+  resolution reason is refused before anything is sent) otherwise.
+- **Tutorial key:** none recorded yet.
+
 ## SA-21 — standards distribution (D16, docs/STANDARDS-DISTRIBUTION.md)
 
 The platform standards catalogue: every rule base the product ships as a signed, versioned **standards
@@ -1665,6 +1700,34 @@ custodian role and the person who owned it, so the setting is visibly in force.
   (`archived-role-readonly`); the platform default before the org chooses; an inline error on a refused
   write (`archived-role-error`); no archived file yet (`archived-role-archives-empty`).
 - **Tutorial key:** none (no key is claimed until the media exists — `tutorialRegistryCoverage.test.ts`).
+
+## OA-42 — readiness and complaints (D12, docs/SYSTELIGON-REMAINDER-BUILDER-PROMPT.md)
+
+The tenant half of the D12 traffic-signal work. The same deterministic verdicts for the organisation's
+own checks — what is ready, what is not evaluated and what is broken — each with its reason in words.
+The environment signals are the platform's and never cross to a tenant (L2); this panel reads only the
+organisation view. A signal that is not green carries its fix and a "Contact Super Admin" action, which
+raises a coded complaint about this organisation and emails the platform administrators. Raising a
+complaint needs `edit_config`, which the database re-checks; the refusal is surfaced with its exact
+reason. Below, this organisation's own complaints with their reasoned resolution.
+
+- **Route:** the Org Admin control panel, tab `Readiness` (`org-control-tab-readiness`).
+- **Rights:** `edit_config` to raise a complaint; any member reads the signals. The right is re-checked
+  in the database (`org_complaint_create`), never only in the browser.
+- **Data:** `orgReadiness`, `listOrgComplaints`, `runOrgDiagnostic`, `createOrgComplaint`,
+  `resolveComplaint` (`src/data/readiness.ts`). RPCs `org_readiness_signals`,
+  `org_run_readiness_diagnostic`, `org_complaint_create`, `org_complaint_list`, `complaint_resolve`
+  (migrations 0160/0161).
+- **Testids:** `org-readiness`, `org-readiness-loading`, `org-readiness-error`, `org-readiness-retry`,
+  `org-readiness-signals`, `org-readiness-summary`, `org-readiness-all-clear`, `org-readiness-refresh`,
+  `org-readiness-signal-<signalId>`, `org-readiness-verdict-<signalId>`, `org-readiness-reason-<signalId>`,
+  `org-readiness-diag-<signalId>`, `org-readiness-recheck-<signalId>`, `org-readiness-contact-<signalId>`,
+  `org-readiness-notice`, `org-readiness-action-error`, `org-complaints`, `org-complaints-empty`,
+  `org-complaint-<code>`, `org-complaint-resolve-reason-<code>`, `org-complaint-resolve-<code>`.
+- **States:** loading; error (with Retry); ready with a summary; an all-clear note when every
+  organisation check is ready; an empty complaint list; an inline notice after a raise or a resolve,
+  and the exact refusal (an empty resolution reason is refused before anything is sent) otherwise.
+- **Tutorial key:** none recorded yet.
 
 ## OA-32 — team directory (spec §4.2, §5, §9)
 

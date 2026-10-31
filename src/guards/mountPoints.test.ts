@@ -83,10 +83,13 @@ describe('the mount points exist on the trunk (OWNERSHIP.md §4)', () => {
   it('the lookup helpers agree with the lists', () => {
     expect(screenMount('AF-16')?.owner).toBe('s1');
     expect(isMounted('AF-16')).toBe(true);
-    // A stream's own new screen starts planned and becomes mounted when the stream lands it.
+    // A stream's own new screen starts planned and becomes mounted when the stream lands it. When no
+    // planned slot remains (every stream has landed), there is nothing to check here.
     const planned = PLANNED_SCREENS[0];
-    expect(screenMount(planned.screenId)).toEqual({ ...planned });
-    expect(isMounted(planned.screenId)).toBe(false);
+    if (planned) {
+      expect(screenMount(planned.screenId)).toEqual({ ...planned });
+      expect(isMounted(planned.screenId)).toBe(false);
+    }
     // A screen a stream has landed is reported mounted.
     expect(screenMount('OA-34')?.owner).toBe('s2');
     expect(isMounted('OA-34')).toBe(true);

@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { platformWhoami } from '../../data/platform';
 import { InlineError } from '../common/InlineError';
-import { Building, Shield, ShieldCheck, Users, Zap, Eye, History, Send, Database, RefreshCw } from '../common/Icons';
+import { Building, Shield, ShieldCheck, ShieldAlert, Users, Zap, Eye, History, Send, Database, RefreshCw } from '../common/Icons';
 import { SuperAdminTenants } from './SuperAdminTenants';
 import { SuperAdminSupport } from './SuperAdminSupport';
 import { SuperAdminTrail } from './SuperAdminTrail';
@@ -17,6 +17,7 @@ import { SuperAdminHosting } from './SuperAdminHosting';
 import { SuperAdminMigration, DeploymentKitPanel } from './SuperAdminMigration';
 import { SuperAdminStandards } from './SuperAdminStandards';
 import { SuperAdminDomains } from './SuperAdminDomains';
+import { SuperAdminReadiness } from './SuperAdminReadiness';
 import { IntegrityAnchoringPanel } from './IntegrityAnchoringPanel';
 import { TutorialButton } from '../common/TutorialButton';
 
@@ -28,7 +29,7 @@ import { TutorialButton } from '../common/TutorialButton';
  * database. This is the sole surface that may know about the platform role (D-PLATFORM-RIGHTS);
  * no org-product code imports it. It renders no blocking modal (spec §27.5).
  */
-type Tab = 'tenants' | 'provisioning' | 'support' | 'consultation' | 'features' | 'recipients' | 'email' | 'automation' | 'tutorials' | 'setup' | 'trail' | 'hosting' | 'migration' | 'integrity' | 'standards' | 'domains';
+type Tab = 'tenants' | 'provisioning' | 'support' | 'consultation' | 'features' | 'recipients' | 'email' | 'automation' | 'tutorials' | 'setup' | 'trail' | 'hosting' | 'migration' | 'integrity' | 'standards' | 'domains' | 'readiness';
 type Gate = 'checking' | 'allowed' | 'denied';
 
 /** F18: every platform tab carries its own "Show me how" tutorial key (Appendix A). A tab with no
@@ -122,6 +123,7 @@ export const SuperAdminPortal: React.FC = () => {
     { id: 'migration', label: 'Migration jobs', icon: RefreshCw },
     { id: 'integrity', label: 'Integrity anchoring', icon: ShieldCheck },
     { id: 'domains', label: 'Audit domains', icon: ShieldCheck },
+    { id: 'readiness', label: 'Readiness', icon: ShieldAlert },
     { id: 'standards', label: 'Standards', icon: ShieldCheck },
     { id: 'trail', label: 'Platform trail', icon: History },
   ];
@@ -198,6 +200,7 @@ export const SuperAdminPortal: React.FC = () => {
         {tab === 'trail' && <SuperAdminTrail />}
         {tab === 'integrity' && <IntegrityAnchoringPanel />}
         {tab === 'domains' && <SuperAdminDomains />}
+        {tab === 'readiness' && <SuperAdminReadiness onNavigate={(t) => setTab(t as Tab)} />}
         {tab === 'standards' && <SuperAdminStandards />}
       </div>
     </div>
