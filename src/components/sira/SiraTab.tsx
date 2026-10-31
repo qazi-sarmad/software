@@ -93,7 +93,7 @@ export const SiraTab: React.FC = () => {
           <button
             type="button"
             data-testid="sira-open-model"
-            onClick={() => openInspector('sira_model', { model: null })}
+            onClick={() => openInspector('sira_model')}
             className="px-3 py-1.5 rounded-lg border border-hairline text-apple-12 text-primary hover:bg-surface-hover"
           >
             SIRA model

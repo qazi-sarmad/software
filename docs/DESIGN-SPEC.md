@@ -1290,15 +1290,15 @@ moves the chrome, never the call.
 
 ### `SR-02` — SIRA model editor (S1)
 
-- **Purpose:** Edit the SIRA model: aggregation, factors and bands; a locked model is read-only.
+- **Purpose:** Edit the SIRA model: aggregation, factors and bands; a locked model is read-only. Every control is a
 - **Route / location:** The `sira_model` inspector window.
 - **Rights required:** `edit_config`.
 - **Data functions (0):** —
-- **Data modules (0):** —
-- **RPCs reachable (0):** —
-- **Tables reachable (0):** —
-- **Testids (7):** `sira-aggregation`, `sira-bands`, `sira-factors`, `sira-model`, `sira-model-empty`, `sira-model-locked`, `sira-model-version`
-- **States:** loading; empty (`sira-model-empty`); locked (`sira-model-locked`); ready.
+- **Data modules (1):** `src/data/sira.ts`
+- **RPCs reachable (7):** `propose_emergent_risks`, `remind_sira_acceptance`, `seed_sira_next_cycle`, `sira_acceptance_state`, `sira_carry_forward_pack`, `sira_model_snapshot`, `sira_publish_block`
+- **Tables reachable (5):** `risks_library`, `sira_carry_forward`, `sira_cycles`, `sira_emergent_risks`, `sira_scores`
+- **Testids (23):** `sira-aggregation`, `sira-bands`, `sira-factors`, `sira-model`, `sira-model-aggregation`, `sira-model-empty`, `sira-model-error`, `sira-model-locked`, `sira-model-version`, `sira-factor-form`, `sira-factor-key`, `sira-factor-label`, `sira-factor-ordinal`, `sira-factor-save`, `sira-factor-weight`, `sira-factor-edit-<key>`, `sira-band-form`, `sira-band-name`, `sira-band-min`, `sira-band-max`, `sira-band-ordinal`, `sira-band-save`, `sira-band-edit-<name>`
+- **States:** loading; empty (`sira-model-empty`); locked (`sira-model-locked`); ready; error (`sira-model-error`).
 - **Flows that touch this screen:** — (no flow)
 - **Connection candidates (same route):** — (route is unique to this screen)
 

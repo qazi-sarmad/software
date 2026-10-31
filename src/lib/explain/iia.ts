@@ -61,7 +61,7 @@ export const IIA_STANDARDS: IiaStandard[] = [
   S('13.2', 'V', 'Engagement Risk Assessment',
     'Each engagement assesses the risks relevant to it using the organisation’s risk framework.',
     'The engagement reads the entity’s risk ratings, controls and SIRA index, so the work is aimed at the real risks.',
-    ['SR-01', 'AP-04', 'AF-02'], ['risks', 'controls', 'entities'],
+    ['SR-01', 'SR-02', 'AP-04', 'AF-02'], ['risks', 'controls', 'entities'],
     ['The engagement risk assessment', 'The SIRA index and its factors'],
     ['term.inherent_risk', 'term.residual_risk', 'field.engagement.stage']),
   S('13.3', 'V', 'Engagement Objectives and Scope',

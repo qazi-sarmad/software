@@ -306,6 +306,7 @@ this register exists to catch.
 | F143 | Risk library, auto-adjusted factors and manual override | `Wired` | D14. `deriveRisks` (`src/data/risk.ts:143`, RPC `risk_library_derive`) is called from `ClientClassificationPanel.tsx:103` and `RiskLibraryPanel.tsx`; `writeRiskFactors` (`:203`, RPC `risk_factor_write`) is called from `RiskLibraryPanel.tsx:143`; the manual override `setRiskOverride` (`:217`) / `revertRiskOverride` (`:227`) are called from `RiskLibraryPanel.tsx:156`/`:165`. The screen derives its proposals with `deriveFactors` (`src/lib/risk/derivation.ts`, called from `RiskLibraryPanel.tsx:142`) and normalises the weights with `normalizeWeights` (`src/lib/risk/normalizeWeights.ts`); the override itself is applied by the RPC, and the pure spec twin of that override maths is proved only by `derivation.test.ts`. Proved by `src/lib/risk/derivation.test.ts` (12), `src/lib/risk/normalizeWeights.test.ts` (7) and `supabase/tests/142_classification_risk.sql` §5–8 | D14 |
 | F144 | Dynamic risk assessment (inputs, ERM map, triggers, narrative) | `Wired` | D15. `RiskLibraryPanel.tsx` (SR-04, mounted `RecordContent.tsx:160`) reads `listErmThemes`/`listKris`/`listPlanChanges` (`src/data/risk.ts`) and calls `setErmTheme`/`setKriValue`/`proposePlanChange` (`:311`/`:317`/`:325`, RPCs `erm_theme_set`/`kri_value_set`/`plan_change_propose`); the pure model is `ermMap`/`kriState`/`planChangeFor` (`src/lib/risk/dynamicAssessment.ts`, called from the panel). Proved by `src/components/sira/RiskLibraryPanel.test.tsx` (9) and `supabase/tests/142_classification_risk.sql` §11 | D15 |
 | F145 | Standards distribution — Super Admin rollout of signed rule-base packs to entitled tenants | `Wired` | `src/data/standards.ts` (`publishStandardsPack`, `rolloutStandardsPack`, `pinStandardsVersion`, `buildSignedStandardsPack`) + `0191_standards_distribution.sql`. **Wired** by the Super Admin standards surface (`SuperAdminStandards.tsx`, SA-21, mounted as the `standards` tab in `SuperAdminPortal.tsx`): it publishes a signed pack, rolls it out to entitled tenants (an unentitled tenant is `skipped-not-entitled` with a log row and no subscription row), and pins a version with a reason. Proved by `SuperAdminStandards.test.tsx` (14) and `supabase/tests/137_standards_distribution.sql` (37) | D16 |
+| F146 | SIRA model config writes (aggregation, factor, band) | `Wired` | `setSiraAggregation` / `upsertSiraFactor` / `setSiraBand` (`src/data/sira.ts`) drive `admin_set_sira_aggregation` / `admin_upsert_sira_factor` / `admin_set_sira_band`, wired from `SiraModelInspector.tsx` (SR-02, mounted at `RecordContent.tsx:131`); the inspector re-reads `siraModelSnapshot` after each write so the version bump is visible. Proved by `src/components/sira/SiraPanels.test.tsx` (write path) | S18 |
 
 ---
 
@@ -313,10 +314,10 @@ this register exists to catch.
 
 | Status | Count |
 |---|---|
-| `Wired` | 135 |
+| `Wired` | 136 |
 | `Inert` | 1 |
 | `Absent` | 9 |
-| **Total** | **145** |
+| **Total** | **146** |
 
 **Read that again, with the correction applied.** This pass corrected a systematic understatement:
 the register's own gate passes on a stale claim, so rows that name a thing as dead were re-checked

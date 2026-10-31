@@ -20,7 +20,7 @@ const EntityApprovalPanel = lazy(() => import('../universe/EntityApprovalPanel')
 const DeploymentGatePanel = lazy(() => import('../audit/DeploymentGatePanel').then((m) => ({ default: m.DeploymentGatePanel })));
 const EthicsPanel = lazy(() => import('../audit/EthicsPanel').then((m) => ({ default: m.EthicsPanel })));
 const CombinedApprovalPanel = lazy(() => import('../plan/CombinedApprovalPanel').then((m) => ({ default: m.CombinedApprovalPanel })));
-const SiraModelEditor = lazy(() => import('../sira/SiraModelEditor').then((m) => ({ default: m.SiraModelEditor })));
+const SiraModelInspector = lazy(() => import('../sira/SiraModelInspector').then((m) => ({ default: m.SiraModelInspector })));
 const SiraCyclesInspector = lazy(() => import('../sira/SiraCyclesInspector').then((m) => ({ default: m.SiraCyclesInspector })));
 const PlanItemsPanel = lazy(() => import('../plan/PlanItemsPanel').then((m) => ({ default: m.PlanItemsPanel })));
 const PlanDeploymentPanel = lazy(() => import('../plan/PlanDeploymentPanel').then((m) => ({ default: m.PlanDeploymentPanel })));
@@ -129,7 +129,7 @@ export const RecordContent: React.FC<RecordContentProps> = ({ type, data, onClos
         case 'combined_approval':
           return <CombinedApprovalPanel request={data?.request ?? null} universeId={data?.universeId} entityId={data?.entityId} onRequested={onClose} />;
         case 'sira_model':
-          return <SiraModelEditor model={data?.model ?? null} />;
+          return <SiraModelInspector />;
         case 'sira_cycles':
           return <SiraCyclesInspector universeId={data?.universeId} />;
         case 'plan_items':
