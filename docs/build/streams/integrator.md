@@ -432,3 +432,21 @@ the documented token law. Recorded here so the designer can overrule.
 `animate-fade-in` honours `prefers-reduced-motion: reduce` (the contract requires no animation then).
 Evidence: same guard, now 4 tests / 17 utilities + 4 type steps; every class verified present in
 `dist/assets/index-*.css`; `tsc` clean; 10 gates PASS; vitest 339 files / 3807 tests.
+
+## Design-system vocabulary — third defect: opacity modifiers were dropped — 2026-10-30
+
+`bg-surface/95` (2 uses), `bg-surface-elevated/20·30·40·70·80` (6), `bg-cinnabar-subtle/20` (1) and
+`text-secondary/80` (1) all compiled to **nothing**. Tailwind v4 emits `<class>/<n>` only for a colour
+declared in its own `--color-*` theme namespace; a class defined by `@utility` loses the modifier.
+
+Fix: the four stems that are used with a slash (`surface`, `surface-elevated`, `cinnabar-subtle`,
+`secondary`) are registered in `@theme inline` as `--color-*` (value stays `var(--token)`, so the
+preset/theme blocks in `tokens.css` still drive them). Their `@utility` copies are removed so there is
+no duplication; `bg-cinnabar-subtle/20` is the one place `bg-cinnabar-subtle` is used with a slash, and
+`text-secondary` is used bare 1455 times — both keep working, verified in the bundle.
+
+Evidence: `src/guards/utilityVocabulary.test.ts` now has 5 tests; the new one (D) fails on any
+`/n` usage whose stem is not a `--color-*` token. Bundle check: `bg-surface/95`,
+`bg-surface-elevated/20`, `/30`, `/40`, `/70`, `/80`, `bg-cinnabar-subtle/20`, `text-secondary/80` and
+their `hover:` forms are all present in `dist/assets/index-*.css`. `tsc` clean; 10 gates PASS; vitest
+339 files / 3808 tests.

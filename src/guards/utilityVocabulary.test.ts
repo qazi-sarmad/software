@@ -6,24 +6,28 @@ import { join, relative, resolve } from 'node:path';
  * Design-system utility-vocabulary guard (integrator).
  *
  * The components read the design tokens through a semantic class vocabulary (`bg-surface`,
- * `text-primary`, `ring-accent`, …). Two defects are possible, and both shipped at once:
+ * `text-primary`, `ring-accent`, …). Three defects are possible, and all three shipped at once:
  *
- *   1. A class the components use is defined nowhere, so the element renders unstyled. `bg-primary`
- *      was used by 12 screens and declared in no stylesheet; `text-canvas` by 18; `divide-hairline`
+ *   1. A class a component uses is declared nowhere, so the element renders unstyled. `bg-primary`
+ *      was used by 12 screens and declared in no stylesheet; `text-apple-14` by 76; `divide-hairline`
  *      by 53.
- *   2. A class is defined as *plain CSS* in `tokens.css`, so Tailwind v4 cannot compose a variant
+ *   2. A class is declared as *plain CSS* in `tokens.css`, so Tailwind v4 cannot compose a variant
  *      onto it and every `hover:bg-surface-hover` (166 uses), `hover:text-primary` (116),
  *      `focus:border-accent` (29) compiled to nothing — the hover and focus states were dead.
+ *   3. A class is used with an opacity modifier (`bg-surface/95`, `bg-surface-elevated/20..80`), which
+ *      Tailwind only emits for a colour declared in its `--color-*` theme namespace. With an
+ *      `@utility` the modifier is dropped and the element is transparent.
  *
- * `STEMS` is the semantic vocabulary contract: the set of design-system names, independent of which
+ * `STEMS` is the semantic vocabulary contract: the design-system names, independent of which
  * stylesheet declares them. Deriving it from the stylesheets alone would miss defect 1 entirely (a
  * class declared nowhere is in neither stylesheet, so nothing would look for it). The guard asserts:
  *
- *   A. every `(property)-(stem)` a component uses is declared — as a plain rule in
- *      `src/styles/tokens.css` or as a `@utility` in `src/index.css` (the builder's layer);
- *   B. every class a component uses *with a variant* (`hover:`, `focus:`, `group-hover:`,
- *      `placeholder:`, …) is a `@utility`, because only that form is variant-composable;
- *   C. every `@utility` in `index.css` is a name from this contract — the list cannot silently rot.
+ *   A. every `(property)-(stem)` a component uses is declared — a plain rule in
+ *      `src/styles/tokens.css`, a `@utility` in `src/index.css`, or a `--color-*` theme token;
+ *   B. every class a component uses *with a variant* is declared as a `@utility` or a `--color-*`
+ *      theme token, because only those are variant-composable;
+ *   C. every `@utility` in index.css is a name from this contract — the list cannot silently rot;
+ *   D. every class used with an opacity modifier has a `--color-*` theme token.
  */
 
 const ROOT = resolve(process.cwd());
@@ -45,6 +49,7 @@ const STEMS = [
   'btn-primary-bg', 'btn-primary-text', 'soft', 'fade-in',
 ];
 const CLASSES = PROPS.flatMap((p) => STEMS.map((s) => `${p}-${s}`));
+const PROP_RE = /^(?:bg|text|border|ring|fill|stroke|divide|shadow|animate)-/;
 
 function walk(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {
@@ -65,16 +70,28 @@ const indexCss = readFileSync(resolve(ROOT, 'src/index.css'), 'utf-8');
 const plainDeclared = new Set([...tokensCss.matchAll(/^\.([a-z0-9-]+)/gm)].map((m) => m[1]));
 /** Classes declared as a Tailwind v4 utility in index.css — the variant-composable form. */
 const utilityDeclared = new Set([...indexCss.matchAll(/@utility\s+([a-z0-9-]+)/g)].map((m) => m[1]));
+/** Colour names in the Tailwind theme namespace — the form that supports variants AND opacity. */
+const themeColors = new Set([...indexCss.matchAll(/--color-([a-z0-9-]+):/g)].map((m) => m[1]));
 
-const declared = (name: string) => plainDeclared.has(name) || utilityDeclared.has(name);
+const declared = (name: string) => {
+  if (plainDeclared.has(name) || utilityDeclared.has(name)) return true;
+  const stem = name.replace(PROP_RE, '');
+  return themeColors.has(stem);
+};
+const variantComposable = (name: string) => utilityDeclared.has(name) || themeColors.has(name.replace(PROP_RE, ''));
 
-interface Use { file: string; cls: string; variant: string; }
+interface Use { file: string; cls: string; variant: string; opacity: string; }
 const uses: Use[] = [];
 for (const f of componentFiles) {
   const text = readFileSync(f, 'utf-8');
   for (const cls of CLASSES) {
-    const re = new RegExp(String.raw`(?:^|[\s"'` + '`' + String.raw`])((?:[a-z-]+:)*)${cls}(?![\w-])`, 'g');
-    for (const m of text.matchAll(re)) uses.push({ file: relative(ROOT, f), cls, variant: m[1] });
+    const re = new RegExp(
+      String.raw`(?:^|[\s"'` + '`' + String.raw`])((?:[a-z-]+:)*)${cls}(?:\/(\d+))?(?![\w-])`,
+      'g',
+    );
+    for (const m of text.matchAll(re)) {
+      uses.push({ file: relative(ROOT, f), cls, variant: m[1], opacity: m[2] ?? '' });
+    }
   }
 }
 
@@ -85,15 +102,23 @@ describe('the design-system utility vocabulary resolves', () => {
     expect(utilityDeclared.size).toBeGreaterThan(0);
   });
 
-  it('every vocabulary class a component uses is declared (tokens.css rule or index.css @utility)', () => {
+  it('every vocabulary class a component uses is declared', () => {
     const missing = new Map<string, string>();
     for (const u of uses) if (!declared(u.cls)) missing.set(u.cls, u.file);
     expect([...missing.entries()].map(([c, f]) => `${c} (used in ${f})`)).toEqual([]);
   });
 
-  it('every class used with a variant is declared as a @utility, so no variant is dead', () => {
+  it('every class used with a variant is variant-composable, so no variant is dead', () => {
     const offenders = new Map<string, string>();
-    for (const u of uses) if (u.variant && !utilityDeclared.has(u.cls)) offenders.set(`${u.variant}${u.cls}`, u.file);
+    for (const u of uses) if (u.variant && !variantComposable(u.cls)) offenders.set(`${u.variant}${u.cls}`, u.file);
+    expect([...offenders.entries()].map(([c, f]) => `${c} (used in ${f})`)).toEqual([]);
+  });
+
+  it('every class used with an opacity modifier has a --color-* theme token', () => {
+    const offenders = new Map<string, string>();
+    for (const u of uses) {
+      if (u.opacity && !themeColors.has(u.cls.replace(PROP_RE, ''))) offenders.set(`${u.cls}/${u.opacity}`, u.file);
+    }
     expect([...offenders.entries()].map(([c, f]) => `${c} (used in ${f})`)).toEqual([]);
   });
 

@@ -27,6 +27,18 @@
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
+/* Colour tokens in the Tailwind theme namespace, so the opacity modifier works: `bg-surface/95`
+   (2 uses) and `bg-surface-elevated/20..80` (6 uses) are dead with an `@utility`, because Tailwind
+   only emits `<class>/<n>` for a colour it knows as `--color-<name>`. `inline` keeps the value a
+   `var()` so it still follows the preset/theme blocks in tokens.css. Only the stems used with a
+   slash are registered here; the rest stay `@utility` below. */
+@theme inline {
+  --color-surface: var(--surface);
+  --color-surface-elevated: var(--surface-elevated);
+  --color-cinnabar-subtle: var(--accent-cinnabar-subtle);
+  --color-secondary: var(--text-secondary);
+}
+
 /* ── The design-system utility vocabulary the components read ──────────────────────────────────
    These are the semantic utility classes the product's components use (bg-primary, text-canvas,
    ring-accent, divide-hairline, …). They are defined as Tailwind v4 `@utility` so that every variant
@@ -78,11 +90,8 @@
    form starts working. (Consolidating `tokens.css`'s plain copies into this one layer is a DESIGN
    hand-off — recorded in docs/build/streams/integrator.md — not done here, because `tokens.css` is
    the designer's file.) */
-@utility bg-surface { background-color: var(--surface); }
-@utility bg-surface-elevated { background-color: var(--surface-elevated); }
 @utility bg-canvas { background-color: var(--canvas); }
 @utility bg-accent-subtle { background-color: var(--accent-primary-subtle); }
-@utility bg-cinnabar-subtle { background-color: var(--accent-cinnabar-subtle); }
 @utility bg-verdant { background-color: var(--accent-verdigris); }
 /* Bare use already means "on hover" (tokens.css writes `.bg-surface-hover:hover`), so keep that. */
 @utility bg-surface-hover {
