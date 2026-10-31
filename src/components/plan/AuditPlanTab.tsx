@@ -278,12 +278,8 @@ export const AuditPlanTab: React.FC = () => {
                 subtitle: `Progress: ${eng.completionPercent}% • Due: ${eng.dueDate}`,
                 status: isLocked ? 'Sealed ✓' : eng.status.replace('_', ' ').toUpperCase(),
                 statusType: isLocked ? ('verdigris' as const) : ('neutral' as const),
-                owner: eng.leadAuditorId,
                 dueDate: eng.dueDate,
-                metrics: [
-                  { label: 'Start Date', value: eng.periodStart },
-                  { label: 'Reviewer', value: eng.reviewerId },
-                ],
+                metrics: [{ label: 'Start Date', value: eng.periodStart }],
                 hint: 'Click to select and view testing controls',
               };
 

@@ -484,7 +484,7 @@ export const EngagementGantt: React.FC<EngagementGanttProps> = ({
               const previewData = {
                 title: eng.title,
                 category: `Fieldwork Stage: ${eng.stage.toUpperCase()}`,
-                subtitle: `${eng.completionPercent}% execution completed • Lead: ${eng.leadAuditorId}`,
+                subtitle: `${eng.completionPercent}% execution completed`,
                 status: state.label,
                 statusType:
                   state.type === 'concluded'
