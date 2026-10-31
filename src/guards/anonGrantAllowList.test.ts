@@ -3,11 +3,14 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
 /**
- * F11: the anonymous surface is EXACTLY two functions. verify_certificate(p_id) and
+ * F11: the anonymous surface is exactly three functions. verify_certificate(p_id) and
  * verify_board_pack(p_id) are security definer and return only status, issued_at, the hash and
- * counts. This guard replays every `grant execute ... to anon` and `revoke execute ... from anon`
- * across the migrations in order and fails on any function other than those two, so the anonymous
- * surface cannot be widened by accident.
+ * counts. verify_report_root(p_root) (W10.3, migration 0094) is the ONE deliberate addition the
+ * brief permits for the writing engine's public report check: it returns only existence, the
+ * issuance timestamp and the engine, template and phrase-library versions, and never tenant content.
+ * This guard replays every `grant execute ... to anon` and `revoke execute ... from anon` across the
+ * migrations in order and fails on any function other than those three, so the anonymous surface
+ * cannot be widened by accident.
  *
  * Migration 0062 ends with a sweep that revokes EXECUTE from anon on every function in `public`
  * (named in a `format()`), then re-grants the two verification functions. That sweep clears the
@@ -15,9 +18,12 @@ import { join, resolve } from 'node:path';
  * guard is order-aware rather than a plain union.
  *
  * Widening this allow-list is a deliberate act and must be recorded in docs/ACP-DECISIONS.md with
- * the reason and how to reverse it.
+ * the reason and how to reverse it. The three entries are recorded in docs/WRITE-DECISIONS.md
+ * (D-W-PUBLIC-ROOT).
  */
-const ANON_CALLABLE = new Set<string>(['verify_certificate', 'verify_board_pack']);
+const ANON_CALLABLE = new Set<string>([
+  'verify_certificate', 'verify_board_pack', 'verify_report_root',
+]);
 
 const MIGRATIONS = resolve(process.cwd(), 'supabase/migrations');
 
@@ -69,7 +75,7 @@ function netAnonGrants(files: { file: string; text: string }[]): Set<string> {
   return granted;
 }
 
-describe('anonymous surface is exactly two functions (F11)', () => {
+describe('anonymous surface is exactly three functions (F11, D-W-PUBLIC-ROOT)', () => {
   const files = readdirSync(MIGRATIONS)
     .filter((f) => f.endsWith('.sql'))
     .sort()
@@ -84,13 +90,14 @@ describe('anonymous surface is exactly two functions (F11)', () => {
     expect(net.filter((n) => !ANON_CALLABLE.has(n))).toEqual([]);
   });
 
-  it('anon can execute both allow-listed functions', () => {
+  it('anon can execute all three allow-listed functions', () => {
     const net = netAnonGrants(files);
     for (const name of ANON_CALLABLE) expect(net.has(name), `${name} is not granted to anon`).toBe(true);
   });
 
-  it('has an allow-list of exactly the two verification functions', () => {
-    expect([...ANON_CALLABLE].sort()).toEqual(['verify_board_pack', 'verify_certificate']);
+  it('has an allow-list of exactly the three verification functions', () => {
+    expect([...ANON_CALLABLE].sort()).toEqual(
+      ['verify_board_pack', 'verify_certificate', 'verify_report_root']);
   });
 
   it('the parser detects a multi-function grant, ignores a non-anon grant and a comment', () => {

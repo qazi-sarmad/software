@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useScopedData } from '../../hooks/useScopedData';
 import { useFilterStore } from '../../context/FilterStore';
 import { useApp } from '../../context/AppContext';
@@ -6,7 +6,24 @@ import { CapRadialTracker } from './CapRadialTracker';
 import { CapTable } from './CapTable';
 import { EngagementGantt } from './EngagementGantt';
 import { BoardPackPanel } from '../pending/BoardPackPanel';
+import { CapabilityLibraryPanel } from './CapabilityLibraryPanel';
+import { DiagnosticPanel } from '../admin/DiagnosticPanel';
 import { HoverPreview } from '../common/HoverPreview';
+import { DrilldownPanel } from '../explain/DrilldownPanel';
+import { StandardsAffordance } from '../explain/StandardsAffordance';
+import { IntegrityAlarmBanner } from './IntegrityAlarmBanner';
+import { ActivitySpine } from './ActivitySpine';
+import { GuidedFirstRun } from './GuidedFirstRun';
+import { useOrgDataState } from '../../hooks/useOrgDataState';
+import { useDrilldown } from '../../hooks/useDrilldown';
+import {
+  engagementsInProgress,
+  openCaps,
+  openIssues,
+  sealedWorkpapers,
+  type DrillSource,
+  type DrillTarget,
+} from '../../lib/drilldown';
 import {
   Folder,
   ShieldCheck,
@@ -22,10 +39,82 @@ export const ExecutiveDashboardTab: React.FC = () => {
     stats,
     filteredEngagements,
     scopedEntities,
+    scopedIssues,
+    scopedWorkpapers,
+    scopedObservations,
     filteredCapItems,
+    scopedComments,
   } = useScopedData();
   const filter = useFilterStore();
-  const { setActiveTab, setSelectedEngagementId, applyPlanItemDates } = useApp();
+  const { setActiveTab, setSelectedEngagementId, openInspector, applyPlanItemDates } = useApp();
+  const drill = useDrilldown();
+  const { isNew: orgIsNew } = useOrgDataState();
+
+  // Every dashboard number is counted from these already-scoped, already-filtered rows, and the
+  // drilldown reads the SAME rows, so a number and its drilldown can never disagree (E5/U1).
+  const drillSource: DrillSource = useMemo(
+    () => ({
+      entities: scopedEntities,
+      engagements: filteredEngagements,
+      issues: scopedIssues,
+      workpapers: scopedWorkpapers,
+      caps: filteredCapItems,
+      observations: scopedObservations,
+      comments: scopedComments,
+    }),
+    [scopedEntities, filteredEngagements, scopedIssues, scopedWorkpapers, filteredCapItems, scopedObservations, scopedComments]
+  );
+
+  // Open a drilldown row in the existing record drilldown (RecordView / FloatingWindowManager).
+  const openDrillRecord = (kind: DrillTarget['kind'], id: string) => {
+    switch (kind) {
+      case 'engagements':
+        setSelectedEngagementId(id);
+        openInspector('audit_file', { engagement: { id } });
+        break;
+      case 'workpapers':
+        openInspector('workbench', { workpaperId: id });
+        break;
+      case 'caps': {
+        const cap = filteredCapItems.find((c) => c.id === id);
+        if (cap) openInspector('cap_inspector', { cap, department: cap.department });
+        break;
+      }
+      case 'observations': {
+        const obs = scopedObservations.find((o) => o.id === id);
+        if (obs) openInspector('observation', obs);
+        break;
+      }
+      case 'issues':
+        setActiveTab('issues');
+        break;
+      case 'entities':
+        setActiveTab('universe');
+        break;
+    }
+  };
+
+  // U6: a brand-new organisation sees one guided action, never a wall of zeros. The decision is the
+  // pure rule over the org's data state (migration 0117 counts), not a guess from scoped rows.
+  if (orgIsNew) {
+    return (
+      <div className="max-w-7xl mx-auto px-6 py-8 space-y-8 animate-fade-in">
+        <div className="border-b border-hairline pb-6">
+          <span className="text-apple-12 font-medium tracking-wide uppercase text-accent">
+            Audit Platform
+          </span>
+          <h1 className="text-apple-28 font-bold text-primary tracking-tight mt-1">
+            Executive Assurance Cockpit
+          </h1>
+          <p className="text-apple-15 text-secondary mt-1">Welcome, {currentUser.name}.</p>
+        </div>
+        <GuidedFirstRun
+          screenId="DB-01"
+          onOpenSetup={() => openInspector('org_control', { tab: 'setup' })}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-8 space-y-8 animate-fade-in">
@@ -42,6 +131,7 @@ export const ExecutiveDashboardTab: React.FC = () => {
             Welcome back, {currentUser.name}.{' '}
             <span className="text-primary font-medium">{stats.greetingSubtitle}</span>
           </p>
+          <StandardsAffordance kind="screen" target="DB-01" screenId="DB-01" element="standards" className="mt-3" />
         </div>
 
         {/* Global Filter Status & Reset */}
@@ -65,6 +155,10 @@ export const ExecutiveDashboardTab: React.FC = () => {
         )}
       </div>
 
+      {/* T7: the tamper alarm, where a human already looks. Non-blocking, one line, links to the
+          integrity surface. It renders nothing when every recorded root still verifies. */}
+      <IntegrityAlarmBanner onOpen={() => openInspector('org_control', { tab: 'integrity' })} />
+
       {/* Metric Cards Row with Apple-tier Serif Numerals */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {/* Scoped Entities */}
@@ -75,16 +169,22 @@ export const ExecutiveDashboardTab: React.FC = () => {
             subtitle: `${stats.highRiskEntities} Rated High Inherent Risk`,
             status: 'Scoped view',
             statusType: 'neutral',
-            hint: 'Click to open Universe & SIRA',
+            hint: 'Click to list the scoped entities, or open Universe & SIRA',
           }}
-          onClick={() => setActiveTab('universe')}
+          onClick={() =>
+            drill.open({
+              kind: 'entities',
+              label: 'Scoped Audit Entities',
+              filterSummary: 'Entities within your scope and the active universe.',
+            })
+          }
         >
           <div className="p-5 rounded-2xl bg-surface border border-hairline shadow-apple hover:bg-surface-hover transition-colors cursor-pointer space-y-1">
             <div className="flex items-center justify-between text-secondary text-apple-12 font-medium">
               <span>Scoped Entities</span>
               <Folder className="w-4 h-4 stroke-[1.5] text-accent" />
             </div>
-            <div className="font-serif-numeral text-apple-40 font-bold text-primary tabular-nums">
+            <div data-testid="DB-01-tile-entities" data-drill-kind="entities" className="font-serif-numeral text-apple-40 font-bold text-primary tabular-nums">
               {stats.totalEntities}
             </div>
             <div className="text-apple-11 text-secondary">
@@ -101,16 +201,22 @@ export const ExecutiveDashboardTab: React.FC = () => {
             subtitle: `${stats.completedEngagements} Completed and sealed`,
             status: 'Fieldwork Stage',
             statusType: 'neutral',
-            hint: 'Click to open Audit Plan',
+            hint: 'Click to list the engagements in fieldwork',
           }}
-          onClick={() => setActiveTab('plan')}
+          onClick={() =>
+            drill.open({
+              kind: 'engagements',
+              label: 'Engagements in Fieldwork',
+              filterSummary: 'Status is in progress, within your scope and the active filters.',
+            })
+          }
         >
           <div className="p-5 rounded-2xl bg-surface border border-hairline shadow-apple hover:bg-surface-hover transition-colors cursor-pointer space-y-1">
             <div className="flex items-center justify-between text-secondary text-apple-12 font-medium">
               <span>In Fieldwork</span>
               <span className="w-2 h-2 rounded-full bg-accent" />
             </div>
-            <div className="font-serif-numeral text-apple-40 font-bold text-primary tabular-nums">
+            <div data-testid="DB-01-tile-engagements" data-drill-kind="engagements" className="font-serif-numeral text-apple-40 font-bold text-primary tabular-nums">
               {stats.inProgressEngagements}
             </div>
             <div className="text-apple-11 text-secondary">
@@ -127,16 +233,22 @@ export const ExecutiveDashboardTab: React.FC = () => {
             subtitle: `${stats.criticalIssues} High/Critical Severity Escalations`,
             status: stats.criticalIssues > 0 ? 'Action Required' : 'On Track',
             statusType: stats.criticalIssues > 0 ? 'cinnabar' : 'verdigris',
-            hint: 'Click to open Issues & CAP Register',
+            hint: 'Click to list the open issues',
           }}
-          onClick={() => setActiveTab('issues')}
+          onClick={() =>
+            drill.open({
+              kind: 'issues',
+              label: 'Open Audit Issues',
+              filterSummary: 'Status is not closed or remediated, within your scope.',
+            })
+          }
         >
           <div className="p-5 rounded-2xl bg-surface border border-hairline shadow-apple hover:bg-surface-hover transition-colors cursor-pointer space-y-1">
             <div className="flex items-center justify-between text-secondary text-apple-12 font-medium">
               <span>Open Issues</span>
               <AlertTriangle className="w-4 h-4 stroke-[1.5] text-cinnabar" />
             </div>
-            <div className="font-serif-numeral text-apple-40 font-bold text-primary tabular-nums">
+            <div data-testid="DB-01-tile-issues" data-drill-kind="issues" className="font-serif-numeral text-apple-40 font-bold text-primary tabular-nums">
               {stats.openIssues}
             </div>
             <div className="text-apple-11 text-secondary">
@@ -154,16 +266,22 @@ export const ExecutiveDashboardTab: React.FC = () => {
             subtitle: 'Verified by a second reviewer',
             status: 'Verified',
             statusType: 'verdigris',
-            hint: 'Click to open Workbench',
+            hint: 'Click to list the sealed working papers',
           }}
-          onClick={() => setActiveTab('plan')}
+          onClick={() =>
+            drill.open({
+              kind: 'workpapers',
+              label: 'Sealed Working Papers',
+              filterSummary: 'Working papers sealed within your scope.',
+            })
+          }
         >
           <div className="p-5 rounded-2xl bg-surface border border-hairline shadow-apple hover:bg-surface-hover transition-colors cursor-pointer space-y-1">
             <div className="flex items-center justify-between text-secondary text-apple-12 font-medium">
               <span>Sealed Papers</span>
               <FileCheck className="w-4 h-4 stroke-[1.5] text-verdigris" />
             </div>
-            <div className="font-serif-numeral text-apple-40 font-bold text-primary tabular-nums">
+            <div data-testid="DB-01-tile-workpapers" data-drill-kind="workpapers" className="font-serif-numeral text-apple-40 font-bold text-primary tabular-nums">
               {stats.sealedWorkpapers}
             </div>
             <div className="text-apple-11 text-verdigris font-medium flex items-center gap-1">
@@ -173,6 +291,18 @@ export const ExecutiveDashboardTab: React.FC = () => {
           </div>
         </HoverPreview>
       </div>
+
+      {/* The exact records behind the number just clicked (E5/U1). Non-blocking: a complementary
+          panel, never a modal. The hash deep-links the state (`#drill=engagements`). */}
+      {drill.target && (
+        <DrilldownPanel
+          target={drill.target}
+          source={drillSource}
+          screenId="DB-01"
+          onOpenRecord={openDrillRecord}
+          onClose={drill.close}
+        />
+      )}
 
       {/* Engagement Gantt & Horizon Warp (§ 3.4: inertial pan, today marker, depth falloff, bar states) */}
       <EngagementGantt
@@ -198,6 +328,24 @@ export const ExecutiveDashboardTab: React.FC = () => {
 
       {/* Board Pack panel (F10): pack history, Generate, Open and the drillable web view. */}
       <BoardPackPanel />
+
+      {/* Deterministic capability library (D1-D4): the twenty capabilities over the data in scope. */}
+      <CapabilityLibraryPanel />
+
+      {/* The self-diagnostic (spec §11.1): the engine reads a snapshot of counts and flags and
+          reports what is wrong, the numbers behind it and where to act. Every finding names its rule. */}
+      <DiagnosticPanel
+        scope="org"
+        screenId="DB-03"
+        onOpen={(dest) => {
+          if (dest.kind === 'tab') setActiveTab(dest.tab);
+          else openInspector(dest.inspector as Parameters<typeof openInspector>[0], dest.data);
+        }}
+      />
+
+      {/* The live activity spine (U4): a quiet stream of what is happening, on the existing
+          liveSync transport (Realtime when available, a bounded poll otherwise). */}
+      <ActivitySpine />
     </div>
   );
 };

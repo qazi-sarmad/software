@@ -21,6 +21,7 @@ import {
   type RpcResult,
   type ServiceClientLike,
 } from '../../supabase/functions/_shared/hostingTestHandler';
+import { PRODUCT_NAME } from '../../supabase/functions/_shared/productName';
 
 const ORG_A = 'a0000000-0000-0000-0000-000000000001';
 const ORG_B = 'b0000000-0000-0000-0000-000000000001';
@@ -284,14 +285,14 @@ describe('addressIsForbidden', () => {
 });
 
 describe('summarise', () => {
-  it('says the database can host Provio when nothing is missing', () => {
+  it(`says the database can host ${PRODUCT_NAME} when nothing is missing`, () => {
     const messages = summarise({
       reachable: true, version: '150002', version_supported: true,
       extensions_present: ['pgcrypto', 'pg_cron', 'pg_net'], extensions_missing: [],
       extensions_optional_missing: [], roles_present: ['platform_admin'], roles_missing: [],
       free_space_estimate: '8.0 GB', latency_ms: 12, messages: [],
     });
-    expect(messages.join(' ')).toContain('can host Provio');
+    expect(messages.join(' ')).toContain(`can host ${PRODUCT_NAME}`);
   });
 
   it('gives a plain-language line for each failure', () => {

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   describeBlock, escapeHtml, moveBlock, renderFallback, renderTemplate, summarisePayload,
 } from './notifications';
+import { PRODUCT_NAME } from './product';
 
 describe('notification templating (F7, F5)', () => {
   it('escapes every variable so a payload cannot inject markup', () => {
@@ -42,7 +43,7 @@ describe('notification templating (F7, F5)', () => {
   });
 
   it('falls back to a default subject when none is given', () => {
-    expect(renderTemplate('', [], {}).subject).toBe('Provio notification');
+    expect(renderTemplate('', [], {}).subject).toBe(`${PRODUCT_NAME} notification`);
   });
 
   it('the fallback message uses the event summary when present', () => {

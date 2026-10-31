@@ -165,6 +165,7 @@ export const NavStrip: React.FC = () => {
               <button
                 key={tab.id}
                 type="button"
+                data-testid={`nav-tab-${tab.id}`}
                 onClick={(e) => {
                   e.stopPropagation();
                   setActiveTab(tab.id);
@@ -175,6 +176,10 @@ export const NavStrip: React.FC = () => {
                     : 'text-secondary hover:text-primary'
                 }`}
                 title={tab.label}
+                /* Below `sm` the label span is hidden, so the button would have no accessible name
+                   from its content: the aria-label keeps the tab nameable at every width. */
+                aria-label={tab.label}
+                aria-current={isActive ? 'page' : undefined}
               >
                 <Icon className="w-4 h-4 stroke-[1.5] shrink-0" />
                 {/* No horizontal scroll on narrow widths: collapse labels to icons (§ 3.2 requirement) */}

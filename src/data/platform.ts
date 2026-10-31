@@ -87,6 +87,76 @@ export function setInviteCap(orgId: string, perUserDaily: number): Promise<DataR
   return callRpc('platform_set_invite_cap', { p_org: orgId, p_per_user_daily: perUserDaily }, NOT_CONFIGURED);
 }
 
+/** Create a tenant (WP3). Returns the new org id on success, or a DataResult with the refusal. */
+export async function createTenant(
+  name: string, initialAdminEmail: string, reason: string
+): Promise<{ ok: true; orgId: string } | { ok: false; error: string }> {
+  const sb = getClient();
+  if (!sb) return { ok: false, error: NOT_CONFIGURED };
+  const { data, error } = await sb.rpc('platform_create_tenant', {
+    p_name: name, p_initial_admin_email: initialAdminEmail, p_reason: reason,
+  });
+  if (error) return { ok: false, error: error.message };
+  return { ok: true, orgId: data as string };
+}
+
+export function seedOrgRoles(orgId: string): Promise<DataResult> {
+  return callRpc('platform_seed_org_roles', { p_org: orgId }, NOT_CONFIGURED);
+}
+
+export function configurePlatformEmailSender(
+  displayName: string, fromAddress: string, replyTo: string | null, provider: string, reason: string
+): Promise<DataResult> {
+  return callRpc(
+    'platform_configure_email_sender',
+    {
+      p_display_name: displayName, p_from_address: fromAddress, p_reply_to: replyTo,
+      p_provider: provider, p_reason: reason,
+    },
+    NOT_CONFIGURED
+  );
+}
+
+/** The structured readiness report for one tenant (WP3). Counts and booleans only. */
+export interface ProvisioningStatus {
+  orgId: string;
+  rolesSeeded: number;
+  rolesReady: boolean;
+  status: string;
+  active: boolean;
+  entitlementsEnabled: number;
+  inviteCap: number;
+  invitesSent: number;
+  hasInitialInvite: boolean;
+  platformSenderReady: boolean;
+  engagementCount: number;
+  canCreateEngagement: boolean;
+  ready: boolean;
+}
+
+export async function provisioningStatus(orgId: string): Promise<ProvisioningStatus | null> {
+  const sb = getClient();
+  if (!sb) return null;
+  const { data, error } = await sb.rpc('platform_provisioning_status', { p_org: orgId });
+  if (error) throw new Error(error.message);
+  const r = (data ?? {}) as Record<string, unknown>;
+  return {
+    orgId: (r.org_id as string) ?? orgId,
+    rolesSeeded: Number(r.roles_seeded ?? 0),
+    rolesReady: Boolean(r.roles_ready),
+    status: (r.status as string) ?? 'active',
+    active: Boolean(r.active),
+    entitlementsEnabled: Number(r.entitlements_enabled ?? 0),
+    inviteCap: Number(r.invite_cap ?? 0),
+    invitesSent: Number(r.invites_sent ?? 0),
+    hasInitialInvite: Boolean(r.has_initial_invite),
+    platformSenderReady: Boolean(r.platform_sender_ready),
+    engagementCount: Number(r.engagement_count ?? 0),
+    canCreateEngagement: Boolean(r.can_create_engagement),
+    ready: Boolean(r.ready),
+  };
+}
+
 export function grantSupportAccess(
   orgId: string, scope: Record<string, unknown>, durationHours: number
 ): Promise<DataResult> {
@@ -106,16 +176,35 @@ export function revokeSupportAccess(grantId: string, reason: string): Promise<Da
 }
 
 /** The signed-in session's platform identity, read from the JWT by the database. */
-export async function platformWhoami(): Promise<{ userId: string | null; isPlatformAdmin: boolean }> {
+export interface PlatformIdentity {
+  userId: string | null;
+  isPlatformAdmin: boolean;
+  /** True only for the single owner row. A platform admin who is not the owner is refused by every RPC. */
+  isPlatformOwner: boolean;
+  /** True when ownership has been claimed at all. False on a fresh install, which opens the bootstrap. */
+  ownerExists: boolean;
+}
+
+export async function platformWhoami(): Promise<PlatformIdentity> {
   const sb = getClient();
-  if (!sb) return { userId: null, isPlatformAdmin: false };
+  if (!sb) return { userId: null, isPlatformAdmin: false, isPlatformOwner: false, ownerExists: false };
   const { data, error } = await sb.rpc('platform_whoami');
   if (error) throw new Error(error.message);
   const row = (data ?? [])[0] as Record<string, unknown> | undefined;
   return {
     userId: (row?.user_id as string | null) ?? null,
     isPlatformAdmin: Boolean(row?.is_platform_admin),
+    isPlatformOwner: Boolean(row?.is_platform_owner),
+    ownerExists: Boolean(row?.owner_exists),
   };
+}
+
+/** Claim platform ownership. Succeeds once, before any owner exists; refused permanently after. */
+export async function claimPlatformOwnership(reason: string): Promise<DataResult> {
+  const sb = getClient();
+  if (!sb) return { ok: false, reason: 'The platform console is not configured.' };
+  const { error } = await sb.rpc('platform_owner_claim', { p_reason: reason });
+  return error ? { ok: false, reason: error.message } : { ok: true };
 }
 
 export async function listInviteCaps(): Promise<InviteCapRow[]> {
@@ -277,4 +366,162 @@ export async function supportAccessLog(orgId: string, limit = 100): Promise<Supp
     outcome: (l.outcome as 'ok' | 'denied') ?? 'denied',
     createdAt: (l.created_at as string) ?? '',
   }));
+}
+
+// ---------------------------------------------------------------------------
+// Security & enterprise posture (WP9, WP14, WP15, WP16). All platform-scope: every RPC checks the
+// platform role and the second factor (require_platform_admin) in the database.
+// ---------------------------------------------------------------------------
+
+export interface SecurityStatus {
+  requirePlatformMfa: boolean;
+  adminPath: string;
+  sessionMaxAgeMinutes: number;
+  aal: string;
+  mfaSatisfied: boolean;
+}
+
+/** The platform security posture. Readable at any AAL so the console can tell an admin to enrol. */
+export async function getSecurityStatus(): Promise<SecurityStatus | null> {
+  const sb = getClient();
+  if (!sb) return null;
+  const { data, error } = await sb.rpc('platform_security_status');
+  if (error) throw new Error(error.message);
+  const row = (data ?? [])[0] as Record<string, unknown> | undefined;
+  if (!row) return null;
+  return {
+    requirePlatformMfa: Boolean(row.require_platform_mfa),
+    adminPath: (row.admin_path as string) ?? '/superadmin',
+    sessionMaxAgeMinutes: Number(row.session_max_age_minutes ?? 60),
+    aal: (row.aal as string) ?? 'aal1',
+    mfaSatisfied: Boolean(row.mfa_satisfied),
+  };
+}
+
+/** Change one platform security setting. The database requires AAL2 and a reason. */
+export function setSecuritySetting(
+  key: 'require_platform_mfa' | 'admin_path' | 'session_max_age_minutes',
+  value: unknown,
+  reason: string
+): Promise<DataResult> {
+  return callRpc('platform_set_security_setting', { p_key: key, p_value: value, p_reason: reason }, NOT_CONFIGURED);
+}
+
+export interface DrSettings {
+  pitrEnabled: boolean;
+  backupFrequency: string;
+  retentionDays: number;
+  recoveryTestIntervalDays: number;
+  lastRecoveryTestAt: string | null;
+  nextRecoveryTestDue: string | null;
+  rpoMinutes: number;
+  rtoMinutes: number;
+  notes: string | null;
+}
+
+export async function getDrSettings(): Promise<DrSettings | null> {
+  const sb = getClient();
+  if (!sb) return null;
+  const { data, error } = await sb.rpc('platform_get_dr_settings');
+  if (error) throw new Error(error.message);
+  const r = (data ?? [])[0] as Record<string, unknown> | undefined;
+  if (!r) return null;
+  return {
+    pitrEnabled: Boolean(r.pitr_enabled),
+    backupFrequency: (r.backup_frequency as string) ?? 'daily',
+    retentionDays: Number(r.retention_days ?? 7),
+    recoveryTestIntervalDays: Number(r.restore_test_interval_days ?? 90),
+    lastRecoveryTestAt: (r.last_restore_test_at as string | null) ?? null,
+    nextRecoveryTestDue: (r.next_restore_test_due as string | null) ?? null,
+    rpoMinutes: Number(r.rpo_minutes ?? 1440),
+    rtoMinutes: Number(r.rto_minutes ?? 240),
+    notes: (r.notes as string | null) ?? null,
+  };
+}
+
+export function setDrSetting(key: string, value: unknown, reason: string): Promise<DataResult> {
+  return callRpc('platform_set_dr_setting', { p_key: key, p_value: value, p_reason: reason }, NOT_CONFIGURED);
+}
+
+export function logRecoveryTest(note: string, at: string): Promise<DataResult> {
+  return callRpc('platform_record_restore_test', { p_note: note, p_at: at }, NOT_CONFIGURED);
+}
+
+export interface ResidencyRegion {
+  code: string;
+  label: string;
+  enabled: boolean;
+}
+
+export async function listResidencyRegions(): Promise<ResidencyRegion[]> {
+  const sb = getClient();
+  if (!sb) return [];
+  const { data, error } = await sb.rpc('platform_list_residency_regions');
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((r: Record<string, unknown>) => ({
+    code: r.code as string,
+    label: (r.label as string) ?? '',
+    enabled: Boolean(r.enabled),
+  }));
+}
+
+export function setResidency(orgId: string, region: string | null, reason: string): Promise<DataResult> {
+  return callRpc('platform_set_residency', { p_org: orgId, p_region: region, p_reason: reason }, NOT_CONFIGURED);
+}
+
+export interface SigningAlgorithm {
+  code: string;
+  label: string;
+  status: 'active' | 'deprecated' | 'planned';
+  rotationDays: number;
+  isDefault: boolean;
+}
+
+export async function listSigningAlgorithms(): Promise<SigningAlgorithm[]> {
+  const sb = getClient();
+  if (!sb) return [];
+  const { data, error } = await sb.rpc('platform_list_signing_algorithms');
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((a: Record<string, unknown>) => ({
+    code: a.code as string,
+    label: (a.label as string) ?? '',
+    status: (a.status as SigningAlgorithm['status']) ?? 'planned',
+    rotationDays: Number(a.rotation_days ?? 365),
+    isDefault: Boolean(a.is_default),
+  }));
+}
+
+export interface DueKey {
+  keyId: string;
+  scope: string;
+  orgId: string | null;
+  algorithm: string;
+  keyVersion: number;
+  rotateAfter: string;
+}
+
+/** The keys whose rotation is due at `at`. Time is an argument, never the clock. */
+export async function signingKeysDue(at: string): Promise<DueKey[]> {
+  const sb = getClient();
+  if (!sb) return [];
+  const { data, error } = await sb.rpc('platform_signing_keys_due', { p_now: at });
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((k: Record<string, unknown>) => ({
+    keyId: k.key_id as string,
+    scope: (k.scope as string) ?? 'org',
+    orgId: (k.org_id as string | null) ?? null,
+    algorithm: (k.algorithm as string) ?? 'Ed25519',
+    keyVersion: Number(k.key_version ?? 1),
+    rotateAfter: (k.rotate_after as string) ?? '',
+  }));
+}
+
+export function rotateSigningKey(
+  keyId: string, newKeyId: string, newPublicKey: string, algorithm: string, reason: string, at: string
+): Promise<DataResult> {
+  return callRpc(
+    'platform_rotate_signing_key',
+    { p_key_id: keyId, p_new_key_id: newKeyId, p_new_public_key: newPublicKey, p_algorithm: algorithm, p_reason: reason, p_now: at },
+    NOT_CONFIGURED
+  );
 }

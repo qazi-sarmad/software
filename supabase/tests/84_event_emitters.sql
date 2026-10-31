@@ -43,7 +43,10 @@ declare
     'consultation.ended',           'emit_consultation_event',
     'consultation.proposal',        'emit_consultation_event',
     'escalation.triggered',         'deployment_requests_escalate_all',
-    'finding.sealed',               'emit_engagement_sealed'
+    'finding.sealed',               'emit_engagement_sealed',
+    -- W11.4 (F12 is now built): a monitor alert has a real emitter, so watcher.signal is no longer
+    -- allow-listed as a key with no source.
+    'watcher.signal',               'emit_monitor_alert'
   );
 begin
   for v_key in select c.event_key from automation_events_catalogue c order by c.event_key loop
@@ -73,8 +76,11 @@ begin
     (select count(*) from event_emitter_allowlist),
     'every allow-list row carries a reason');
   perform provio_test.assert_true(
-    (select count(*) from event_emitter_allowlist) <= 2,
-    'the allow-list stays small (only anomaly.raised and watcher.signal are justified)');
+    (select count(*) from event_emitter_allowlist) <= 1,
+    'the allow-list stays small (only anomaly.raised is justified now that watcher.signal has an emitter)');
+  perform provio_test.assert_true(
+    not exists (select 1 from event_emitter_allowlist a where a.event_key = 'watcher.signal'),
+    'watcher.signal has an emitter, so it is no longer allow-listed');
 end $$;
 
 -- ---------------------------------------------------------------------------

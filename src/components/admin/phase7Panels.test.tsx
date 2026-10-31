@@ -45,11 +45,19 @@ vi.mock('../../data/imports', () => ({
 const listActivityFn = vi.fn();
 const listArchiveFn = vi.fn();
 const archiveFn = vi.fn();
+const listPopulationDueFn = vi.fn();
+const listPopulationArchivesFn = vi.fn();
+const archivePopulationFn = vi.fn();
+const uploadArchiveJobFn = vi.fn();
 
 vi.mock('../../data/archival', () => ({
   listActivityLog: (...a: unknown[]) => listActivityFn(...a),
   listArchiveJobs: () => listArchiveFn(),
   archiveActivityPeriod: (...a: unknown[]) => archiveFn(...a),
+  listPopulationArchiveDue: (...a: unknown[]) => listPopulationDueFn(...a),
+  listPopulationArchives: () => listPopulationArchivesFn(),
+  archivePopulation: (...a: unknown[]) => archivePopulationFn(...a),
+  uploadArchiveJob: (...a: unknown[]) => uploadArchiveJobFn(...a),
 }));
 
 const userRef = { current: { role: 'cia', rights: { perform_work: true, manage_engagements: true }, orgId: 'org-1' } };
@@ -77,6 +85,10 @@ describe('Phase 7 UI panels (7G)', () => {
     listActivityFn.mockResolvedValue([]);
     listArchiveFn.mockResolvedValue([]);
     listPriorYearFn.mockResolvedValue([]);
+    listPopulationDueFn.mockResolvedValue([]);
+    listPopulationArchivesFn.mockResolvedValue([]);
+    archivePopulationFn.mockResolvedValue({ ok: true });
+    uploadArchiveJobFn.mockResolvedValue({ ok: true });
   });
 
   describe('ExportPanel', () => {
@@ -135,6 +147,16 @@ describe('Phase 7 UI panels (7G)', () => {
       expect(screen.getByTestId('import-valid-count').textContent).toContain('2');
       expect(screen.getByTestId('import-invalid-count').textContent).toContain('1');
       expect(screen.getByTestId('import-errors').textContent).toContain('risk_id');
+    });
+
+    it('recognises a mislabelled file by its bytes and refuses to import it as a table', async () => {
+      render(<ImportWizardPanel />);
+      // A PDF renamed to .csv: the bytes say PDF, so the wizard names it rather than parsing garbage.
+      const file = fakeFile('population.csv', '%PDF-1.7\nnot a table');
+      fireEvent.change(screen.getByTestId('import-file-input'), { target: { files: [file] } });
+      await waitFor(() => expect(screen.getByTestId('import-error')).toBeTruthy());
+      expect(screen.getByTestId('import-error').textContent).toMatch(/PDF file, not a table/);
+      expect(screen.queryByTestId('import-mapping')).toBeNull();
     });
 
     it('commits and shows the imported count', async () => {
@@ -219,6 +241,27 @@ describe('Phase 7 UI panels (7G)', () => {
       await waitFor(() => expect(screen.getByTestId('archive-jobs-empty')).toBeTruthy());
       fireEvent.click(screen.getByTestId('activity-archive'));
       await waitFor(() => expect(screen.getByTestId('activity-archived-notice')).toBeTruthy());
+    });
+
+    it('archives a population past its retention window (§25.4)', async () => {
+      listPopulationDueFn.mockResolvedValue([
+        { populationId: 'pop-1', engagementId: 'eng-1', finalisedAt: '2020-01-01', dueAt: '2026-01-01' },
+      ]);
+      render(<ActivityLogPanel />);
+      await waitFor(() => expect(screen.getByTestId('population-due-pop-1')).toBeTruthy());
+      fireEvent.click(screen.getByTestId('population-archive-pop-1'));
+      await waitFor(() => expect(archivePopulationFn).toHaveBeenCalledWith('pop-1'));
+      await waitFor(() => expect(screen.getByTestId('population-archived-notice')).toBeTruthy());
+    });
+
+    it('offers an upload for a pending activity archive job', async () => {
+      listArchiveFn.mockResolvedValue([
+        { id: 'j2', periodStart: '2025-11-01', periodEnd: '2025-11-30', archivedRowCount: 3, storagePath: 's', contentHash: 'deadbeefcafe', status: 'pending', createdAt: '2026-01-01T00:00:00Z' },
+      ]);
+      render(<ActivityLogPanel />);
+      await waitFor(() => expect(screen.getByTestId('archive-upload-j2')).toBeTruthy());
+      fireEvent.click(screen.getByTestId('archive-upload-j2'));
+      await waitFor(() => expect(uploadArchiveJobFn).toHaveBeenCalledWith('j2'));
     });
   });
 });

@@ -5,6 +5,7 @@ import {
   type JobHealthRow, type SupportAccessLogRow, type SupportEngagement, type SupportGrantRow,
 } from '../../data/platform';
 import type { DataResult } from '../../data/db';
+import { DiagnosticPanel } from '../admin/DiagnosticPanel';
 import { InlineError } from '../common/InlineError';
 import { Shield, Clock } from '../common/Icons';
 
@@ -292,6 +293,10 @@ export const SuperAdminSupport: React.FC = () => {
           </ul>
         )}
       </div>
+
+      {/* The platform self-diagnostic (spec §11.1): the pure engine over the platform's counts and
+          flags. It reads no tenant content (Law L2) and names the rule behind every finding. */}
+      <DiagnosticPanel scope="platform" screenId="SA-02" />
 
       {grants.length === 0 ? (
         <div className="text-secondary text-apple-13 py-12 text-center" data-testid="superadmin-support-empty">

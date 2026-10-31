@@ -5,6 +5,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 const getBrandingFn = vi.fn();
 const saveBrandingFn = vi.fn();
 const savePptxThemeFn = vi.fn();
+const listBrandingAssetsFn = vi.fn();
 
 vi.mock('../../data/branding', async () => {
   const actual = await vi.importActual<typeof import('../../data/branding')>('../../data/branding');
@@ -12,6 +13,7 @@ vi.mock('../../data/branding', async () => {
     getBranding: (...a: unknown[]) => getBrandingFn(...a),
     saveBranding: (...a: unknown[]) => saveBrandingFn(...a),
     savePptxTheme: (...a: unknown[]) => savePptxThemeFn(...a),
+    listBrandingAssets: (...a: unknown[]) => listBrandingAssetsFn(...a),
     uploadBrandingAsset: () => Promise.resolve({ ok: true, id: 'asset-1' }),
   };
 });
@@ -32,6 +34,7 @@ describe('OA-03 branding (F9)', () => {
     getBrandingFn.mockResolvedValue(baseSpec);
     saveBrandingFn.mockResolvedValue({ ok: true });
     savePptxThemeFn.mockResolvedValue({ ok: true });
+    listBrandingAssetsFn.mockResolvedValue([]);
   });
 
   it('loads the saved branding and renders the live preview', async () => {
@@ -76,5 +79,23 @@ describe('OA-03 branding (F9)', () => {
     await waitFor(() =>
       expect(screen.getByTestId('oa-branding-error').textContent).toContain('not included in your plan'),
     );
+  });
+
+  it('lists the stored branding assets so an upload can be confirmed (F4)', async () => {
+    listBrandingAssetsFn.mockResolvedValue([
+      { id: 'a1', kind: 'font', filename: 'house.woff2', mimeType: 'font/woff2', byteSize: 40960 },
+      { id: 'a2', kind: 'logo_light', filename: 'logo.svg', mimeType: 'image/svg+xml', byteSize: 2048 },
+    ]);
+    render(<OrgBrandingPanel />);
+    await waitFor(() => expect(screen.getByTestId('oa-branding-assets-list')).toBeTruthy());
+    expect(screen.getByTestId('oa-branding-asset-a1').textContent).toContain('house.woff2');
+    expect(screen.getByTestId('oa-branding-asset-a1').textContent).toContain('40.0 KB');
+    expect(screen.getByTestId('oa-branding-asset-a2').textContent).toContain('logo.svg');
+  });
+
+  it('shows an empty state when the org has stored no assets', async () => {
+    listBrandingAssetsFn.mockResolvedValue([]);
+    render(<OrgBrandingPanel />);
+    await waitFor(() => expect(screen.getByTestId('oa-branding-assets-empty')).toBeTruthy());
   });
 });

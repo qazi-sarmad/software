@@ -21,10 +21,13 @@ import {
   type ScopeRow,
 } from '../../data/admin';
 import { Select } from '../common/Select';
-import { Check, Minus, Plus, User, Users, XCircle } from '../common/Icons';
+import { Check, Minus, Plus, Shield, User, Users, XCircle } from '../common/Icons';
 import { HoldToConfirm } from '../common/HoldToConfirm';
+import { ExplainPopout } from '../explain/ExplainPopout';
+import { TeamDirectoryPanel } from './TeamDirectoryPanel';
+import { RoleScopePanel } from './RoleScopePanel';
 
-type Tab = 'people' | 'roles';
+type Tab = 'people' | 'roles' | 'scoped' | 'team';
 type LoadState = 'loading' | 'ready' | 'error';
 
 const RIGHT_LABELS: Record<Right, string> = {
@@ -191,7 +194,30 @@ export const PeopleAdminPanel: React.FC = () => {
           <User className="w-3.5 h-3.5 inline mr-1.5 stroke-[1.5]" />
           Roles &amp; rights
         </button>
+        <button
+          role="tab"
+          aria-selected={tab === 'scoped'}
+          data-testid="admin-tab-scoped"
+          onClick={() => setTab('scoped')}
+          className={`px-3 py-1.5 rounded-lg text-apple-12 font-semibold ${tab === 'scoped' ? 'bg-surface text-primary shadow-xs' : 'text-secondary'}`}
+        >
+          <Shield className="w-3.5 h-3.5 inline mr-1.5 stroke-[1.5]" />
+          Scoped access
+        </button>
+        <button
+          role="tab"
+          aria-selected={tab === 'team'}
+          data-testid="admin-tab-team"
+          onClick={() => setTab('team')}
+          className={`px-3 py-1.5 rounded-lg text-apple-12 font-semibold ${tab === 'team' ? 'bg-surface text-primary shadow-xs' : 'text-secondary'}`}
+        >
+          <Users className="w-3.5 h-3.5 inline mr-1.5 stroke-[1.5]" />
+          Team directory
+        </button>
       </div>
+
+      {tab === 'team' && <TeamDirectoryPanel />}
+      {tab === 'scoped' && <RoleScopePanel />}
 
       {tab === 'people' && canManageUsers && (
         <section data-testid="admin-people" className="space-y-5">
@@ -243,7 +269,11 @@ export const PeopleAdminPanel: React.FC = () => {
           </div>
 
           <div className="rounded-xl border border-hairline p-4 space-y-3">
-            <h4 className="text-apple-13 font-semibold text-primary">Invite a colleague</h4>
+            <h4 className="text-apple-13 font-semibold text-primary">
+              <ExplainPopout explainId="term.invite" screenId="OA-12" element="explain-invite">
+                Invite a colleague
+              </ExplainPopout>
+            </h4>
             <p className="text-apple-11 text-secondary">
               Enter the email address and the role to grant. The invitation is queued and the invitee
               sets their own password from the link. It is not an account until they accept.

@@ -1,0 +1,3 @@
+{
+  "_readme": "Allow-list for scripts/check-two-sources.mjs (gate G5). An entry means a component deliberately reads one tenant table from BOTH the seed and the database, and the reason must be real. The key is `<relative path>::<table>[,<table>...]`. The gate also fails on a stale entry (one that is no longer a violation), so the list cannot silently accumulate. There are currently no entries: the one violation the audit named (src/components/universe/AuditUniverseTab.tsx reading entities from both useScopedData and listEntities) was fixed by making the screen single-source."
+}

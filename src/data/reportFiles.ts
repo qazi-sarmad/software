@@ -11,9 +11,13 @@
  */
 import { getClient } from './db';
 import { renderPdf } from '../lib/render/pdf';
+import { renderDesignedPdf } from '../lib/render/designedPdf';
 import { renderDocx } from '../lib/render/docx';
 import { documentFromReportBlocks, toPdfModel, footerLine, type DocumentModel, type ReportBlockInput } from '../lib/render/document';
-import { DEFAULT_BRANDING, type BrandingSpec } from '../lib/render/branding';
+import { DEFAULT_BRANDING, resolveHexColour, type BrandingSpec } from '../lib/render/branding';
+import { DEFAULT_FORMAT_LAYOUT, toContentsSpec, toPdfTypography, resolveTypography, type FormatLayout } from '../lib/writing/reportFormat';
+import { designFromFormat, hasDesign } from '../lib/writing/renderDesign';
+import { loadReportFonts } from './fontBytes';
 import { sha256Hex } from '../lib/population';
 
 export const REPORT_BUCKET = 'reports';
@@ -28,6 +32,11 @@ export interface ReportFileInput {
   userLabel: string;
   frozenAt?: string | null;
   branding?: BrandingSpec;
+  /** The report format's print layout (WP-C3). Its resolved typography decides the PDF's printed
+   *  sizes and line height, so the frozen PDF matches the live canvas. Absent means the defaults. */
+  layout?: FormatLayout;
+  /** The classification the chrome prints (`Internal`, `Confidential`). Absent means `Internal`. */
+  classification?: string;
 }
 
 export interface StoredReportFiles {
@@ -38,12 +47,29 @@ export interface StoredReportFiles {
 /** Build the one model the PDF and the DOCX both render. The footer carries engagement, time, user
  *  and hash (spec §18); for the frozen PDF the freeze date is added (spec §15.5). */
 export function buildReportModel(input: ReportFileInput, contentHashForFooter: string, frozenLabel: string): DocumentModel {
-  return documentFromReportBlocks(input.title, input.blocks, {
-    engagement: input.engagementLabel,
-    exportedAt: frozenLabel,
-    user: input.userLabel,
-    contentHash: contentHashForFooter,
-  });
+  const layout = input.layout ?? DEFAULT_FORMAT_LAYOUT;
+  return {
+    ...documentFromReportBlocks(input.title, input.blocks, {
+      engagement: input.engagementLabel,
+      exportedAt: frozenLabel,
+      user: input.userLabel,
+      contentHash: contentHashForFooter,
+    }),
+    // WP-C3/C4/T: both the PDF and the DOCX print the format's typography, and the contents page
+    // the format asks for. One model, so the two files cannot disagree.
+    typography: toPdfTypography(layout),
+    contents: toContentsSpec(layout),
+    // WP-D: the page design (chrome, columns, shapes, placement, links, table shades). Both the PDF
+    // and the DOCX print it. Only a format that asks for a design carries one, so an old format
+    // renders exactly as before.
+    design: hasDesign(layout) ? designFromFormat(layout, resolveHexColour, {
+      org: input.engagementLabel,
+      engagement: input.engagementLabel,
+      classification: input.classification ?? 'Internal',
+      date: frozenLabel,
+      user: input.userLabel,
+    }) : undefined,
+  };
 }
 
 async function hashOf(bytes: Uint8Array): Promise<string> {
@@ -69,7 +95,20 @@ export async function renderAndStoreReportFiles(input: ReportFileInput): Promise
   const docxHash = await hashOf(docxBytes);
 
   const pdfModel = buildReportModel(input, docxHash, frozenLabel);
-  const pdfBytes = await renderPdf(spec, toPdfModel(pdfModel));
+  // WP-F: embed the format's chosen self-hosted font, so the frozen PDF prints the face the canvas
+  // showed rather than the renderer's standard font. The loader returns undefined when a font's
+  // bytes are unavailable (offline), and the renderer then falls back to its standard font.
+  const layout = input.layout ?? DEFAULT_FORMAT_LAYOUT;
+  const typo = resolveTypography(layout);
+  const fonts = await loadReportFonts(
+    { family: layout.fontHeading, weight: typo.headingWeight },
+    { family: layout.fontBody, weight: typo.bodyWeight },
+  );
+  // WP-D: a format that asks for a designed page prints through the designed renderer; every other
+  // format keeps the plain flow, so an old format renders exactly as before.
+  const pdfBytes = pdfModel.design && hasDesign(layout)
+    ? await renderDesignedPdf(spec, pdfModel, fonts)
+    : await renderPdf(spec, toPdfModel(pdfModel, undefined, toPdfTypography(layout), fonts));
   const pdfHash = await hashOf(pdfBytes);
 
   const base = `${input.orgId}/reports/${input.reportVersionId}`;

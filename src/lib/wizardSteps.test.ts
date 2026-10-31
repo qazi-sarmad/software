@@ -8,10 +8,18 @@ describe('wizard step registry (F17)', () => {
     expect(ORG_WIZARD_STEPS[7].key).toBe('org.golive');
   });
 
-  it('has the eight Super Admin steps in order', () => {
-    expect(SA_WIZARD_STEPS).toHaveLength(8);
+  it('has the Super Admin steps in order, covering the guided provisioning path', () => {
+    // WP3 extended the registry: create the org, set entitlements, set the invite cap, configure the
+    // platform sender, invite the first Org Admin, confirm a first engagement, and optional support.
+    const keys = SA_WIZARD_STEPS.map((s) => s.key);
     expect(SA_WIZARD_STEPS[0].key).toBe('sa.readiness');
-    expect(SA_WIZARD_STEPS[7].key).toBe('sa.golive');
+    expect(SA_WIZARD_STEPS[SA_WIZARD_STEPS.length - 1].key).toBe('sa.golive');
+    for (const required of [
+      'sa.create-org', 'sa.features', 'sa.email', 'sa.invite-cap',
+      'sa.first-admin', 'sa.first-engagement', 'sa.support',
+    ]) {
+      expect(keys).toContain(required);
+    }
   });
 
   it('every step has a tutorial key and plain-language what/why/skip text', () => {

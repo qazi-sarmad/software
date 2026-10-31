@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { InlineError } from '../common/InlineError';
+import { PRODUCT_NAME } from '../../lib/product';
 
 /** Shown whenever there is no authenticated session. It renders no application data. */
 export const SignInScreen: React.FC = () => {
@@ -23,7 +24,7 @@ export const SignInScreen: React.FC = () => {
     <div className="min-h-screen bg-canvas text-primary flex items-center justify-center px-6" data-testid="signin-screen">
       <div className="w-full max-w-sm space-y-6 p-8 rounded-2xl bg-surface border border-hairline">
         <div>
-          <h1 className="text-apple-28 font-bold tracking-tight">Provio</h1>
+          <h1 className="text-apple-28 font-bold tracking-tight">{PRODUCT_NAME}</h1>
           <p className="text-apple-13 text-secondary mt-1">Sign in to your organisation workspace.</p>
         </div>
         <form onSubmit={submit} className="space-y-4" data-testid="signin-form">

@@ -843,7 +843,7 @@
       },
       {
         "text": "Read Features result in SA-14.",
-        "testid": "superadmin-features"
+        "testid": "superadmin-features-result"
       },
       {
         "text": "Check the values shown on SA-14 and confirm they are correct.",
@@ -1294,12 +1294,12 @@
         "testid": "admin-roles"
       },
       {
-        "text": "Read Admin panel in OA-05.",
-        "testid": "people-admin-panel"
+        "text": "Click Provision in OA-05.",
+        "testid": "admin-provision"
       },
       {
-        "text": "Check the values shown on OA-05 and confirm they are correct.",
-        "testid": null
+        "text": "Read Admin panel in OA-05.",
+        "testid": "people-admin-panel"
       }
     ]
   },
@@ -2002,12 +2002,12 @@
         "testid": "wk-boardpack-<id>"
       },
       {
-        "text": "Open the Board Pack config tab in WK-01.",
-        "testid": "wk-boardpack-tab-config"
+        "text": "Click Board Pack heatmap in WK-01.",
+        "testid": "wk-boardpack-heatmap"
       },
       {
-        "text": "Open the Board Pack view tab in WK-01.",
-        "testid": "wk-boardpack-tab-view"
+        "text": "Click Board Pack gantt legend in WK-01.",
+        "testid": "wk-boardpack-gantt-legend"
       }
     ]
   },
@@ -2110,12 +2110,12 @@
         "testid": "wk-boardpack-<id>"
       },
       {
-        "text": "Open the Board Pack config tab in WK-04.",
-        "testid": "wk-boardpack-tab-config"
+        "text": "Click Board Pack heatmap in WK-04.",
+        "testid": "wk-boardpack-heatmap"
       },
       {
-        "text": "Open the Board Pack view tab in WK-04.",
-        "testid": "wk-boardpack-tab-view"
+        "text": "Click Board Pack gantt legend in WK-04.",
+        "testid": "wk-boardpack-gantt-legend"
       }
     ]
   },
@@ -2238,12 +2238,16 @@
         "testid": "wk-timetravel"
       },
       {
-        "text": "Click Timetravel next in WK-09.",
-        "testid": "wk-timetravel-next"
+        "text": "Click Procedure apply in WK-09.",
+        "testid": "procedure-apply"
       },
       {
         "text": "Find the first Timetravel diff in WK-09.",
         "testid": "wk-timetravel-diff-<id>"
+      },
+      {
+        "text": "Click Timetravel next in WK-09.",
+        "testid": "wk-timetravel-next"
       },
       {
         "text": "Read Timetravel banner in WK-09.",
@@ -2252,10 +2256,6 @@
       {
         "text": "Read Timetravel track in WK-09.",
         "testid": "wk-timetravel-track"
-      },
-      {
-        "text": "Read Timetravel handle in WK-09.",
-        "testid": "wk-timetravel-handle"
       }
     ]
   },
@@ -2431,19 +2431,175 @@
     "steps": [
       {
         "text": "Open OA-22 (Governance settings).",
-        "testid": "org-control-tab-governance"
+        "testid": null
       },
       {
-        "text": "Read the lifecycle settings.",
-        "testid": "oa-governance-lifecycle"
+        "text": "Read Governance in OA-22.",
+        "testid": "oa-governance"
       },
       {
-        "text": "Choose the testing stages.",
-        "testid": "oa-governance-testing-mode"
-      },
-      {
-        "text": "Click Save lifecycle settings.",
+        "text": "Click Governance lifecycle save in OA-22.",
         "testid": "oa-governance-lifecycle-save"
+      },
+      {
+        "text": "Find the first Governance scale in OA-22.",
+        "testid": "oa-governance-scale-<key>"
+      },
+      {
+        "text": "Click Governance section add in OA-22.",
+        "testid": "oa-governance-section-add"
+      },
+      {
+        "text": "Click Governance scale add in OA-22.",
+        "testid": "oa-governance-scale-add"
+      },
+      {
+        "text": "Click Governance FSLI add in OA-22.",
+        "testid": "oa-governance-fsli-add"
+      }
+    ]
+  },
+  {
+    "key": "oa.connectors",
+    "audience": "org_admin",
+    "screenId": "OA-23",
+    "title": "Connectors and monitoring",
+    "steps": [
+      {
+        "text": "Open OA-23 (Connectors and monitoring).",
+        "testid": null
+      },
+      {
+        "text": "Read Connectors panel in OA-23.",
+        "testid": "wk-connectors-panel"
+      },
+      {
+        "text": "Click Connectors save in OA-23.",
+        "testid": "wk-connectors-save"
+      },
+      {
+        "text": "Find the first Connectors tab in OA-23.",
+        "testid": "wk-connectors-tab-<id>"
+      },
+      {
+        "text": "Click Connectors retry in OA-23.",
+        "testid": "wk-connectors-retry"
+      },
+      {
+        "text": "Click Connectors rule save in OA-23.",
+        "testid": "wk-connectors-rule-save"
+      },
+      {
+        "text": "Click Connectors alert triage save in OA-23.",
+        "testid": "wk-connectors-alert-triage-save"
+      }
+    ]
+  },
+  {
+    "key": "oa.formats",
+    "audience": "org_admin",
+    "screenId": "OA-24",
+    "title": "Report format editor",
+    "steps": [
+      {
+        "text": "Open OA-24 (Report format editor).",
+        "testid": null
+      },
+      {
+        "text": "Read Format panel in OA-24.",
+        "testid": "wk-format-panel"
+      },
+      {
+        "text": "Click Format audiences save in OA-24.",
+        "testid": "wk-format-audiences-save"
+      },
+      {
+        "text": "Click Format retry in OA-24.",
+        "testid": "wk-format-retry"
+      },
+      {
+        "text": "Click Format preview in OA-24.",
+        "testid": "wk-format-preview"
+      },
+      {
+        "text": "Click Format save in OA-24.",
+        "testid": "wk-format-save"
+      },
+      {
+        "text": "Click Format publish in OA-24.",
+        "testid": "wk-format-publish"
+      }
+    ]
+  },
+  {
+    "key": "oa.report-builder",
+    "audience": "org_admin",
+    "screenId": "WK-11",
+    "title": "Report builder",
+    "steps": [
+      {
+        "text": "Open WK-11 (Report builder).",
+        "testid": null
+      },
+      {
+        "text": "Read Report builder panel in WK-11.",
+        "testid": "wk-report-builder-panel"
+      },
+      {
+        "text": "Click Report builder freeze run in WK-11.",
+        "testid": "wk-report-builder-freeze-run"
+      },
+      {
+        "text": "Find the first Report builder claim in WK-11.",
+        "testid": "wk-report-builder-claim-<id>"
+      },
+      {
+        "text": "Click Report builder retry in WK-11.",
+        "testid": "wk-report-builder-retry"
+      },
+      {
+        "text": "Click Report builder figure preview in WK-11.",
+        "testid": "wk-report-builder-figure-preview"
+      },
+      {
+        "text": "Click Report builder figure add in WK-11.",
+        "testid": "wk-report-builder-figure-add"
+      }
+    ]
+  },
+  {
+    "key": "sa.integrity-anchoring",
+    "audience": "super_admin",
+    "screenId": "SA-18",
+    "title": "Integrity anchoring",
+    "steps": [
+      {
+        "text": "Open SA-18 (Integrity anchoring).",
+        "testid": null
+      },
+      {
+        "text": "Read Anchoring in SA-18.",
+        "testid": "sa-anchoring"
+      },
+      {
+        "text": "Click Anchoring authority add in SA-18.",
+        "testid": "sa-anchoring-authority-add"
+      },
+      {
+        "text": "Find the first Anchoring authority in SA-18.",
+        "testid": "sa-anchoring-authority-<id>"
+      },
+      {
+        "text": "Click Anchoring anchor add in SA-18.",
+        "testid": "sa-anchoring-anchor-add"
+      },
+      {
+        "text": "Read Anchoring result in SA-18.",
+        "testid": "sa-anchoring-result"
+      },
+      {
+        "text": "Read Anchoring authority list in SA-18.",
+        "testid": "sa-anchoring-authority-list"
       }
     ]
   }

@@ -109,6 +109,36 @@ export function siraBandFor(score: number, bands: SiraBand[]): string | null {
   return matches.length ? matches[0].name : null;
 }
 
+/**
+ * Normalise factor weights so they sum to exactly 100 (docs/RISK-ASSESSMENT-MODEL.md §5 — "the
+ * total factors and the mathematical formula stay at 100"). Deterministic: the largest-remainder
+ * method, ties broken by factor key, so the same weights always give the same integers and the sum
+ * is exactly 100, never 99.99. A non-positive weight is dropped; all-non-positive gives all zeros.
+ *
+ * Mirrors public.sira_normalize_weights exactly (parity test).
+ */
+export function normalizeWeights(weights: Record<string, number>): Record<string, number> {
+  const entries = Object.entries(weights)
+    .filter(([, w]) => Number.isFinite(w) && w > 0)
+    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
+  const total = entries.reduce((s, [, w]) => s + w, 0);
+  const out: Record<string, number> = {};
+  for (const [k] of Object.entries(weights)) out[k] = 0;
+  if (total <= 0) return out;
+
+  const exact = entries.map(([k, w]) => ({ k, exact: (w / total) * 100 }));
+  const floors = exact.map((e) => ({ k: e.k, floor: Math.floor(e.exact), rem: e.exact - Math.floor(e.exact) }));
+  let deficit = 100 - floors.reduce((s, f) => s + f.floor, 0);
+  const byRemainder = [...floors].sort((a, b) => (b.rem - a.rem) || (a.k < b.k ? -1 : a.k > b.k ? 1 : 0));
+  for (const f of byRemainder) {
+    if (deficit <= 0) break;
+    f.floor += 1;
+    deficit -= 1;
+  }
+  for (const f of floors) out[f.k] = f.floor;
+  return out;
+}
+
 /** The QSCorp default model (§8.2): six factors, 1-5 scale, four bands, weighted_sum. */
 export function defaultSiraModel(): SiraModel {
   return {

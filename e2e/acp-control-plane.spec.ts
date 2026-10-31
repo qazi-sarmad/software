@@ -1,5 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import { passwordFor } from './password';
+import { BASE_URL } from './baseUrl';
 
 /**
  * ACP control plane E2E (S1.c). Everything is configured in a portal, never in SQL:
@@ -17,7 +18,6 @@ import { passwordFor } from './password';
 const ORG_ADMIN_EMAIL = 'ayesha.khan@provio-test.invalid';
 const PREPARER_EMAIL = 'bilal.ahmed@provio-test.invalid';
 const PLATFORM_EMAIL = 'platform.admin@provio-test.invalid';
-const BASE_URL = 'http://localhost:3000';
 const ORG_A_NAME = /Synthetic Org A/;
 
 // F18: the tutorial drawer autoplays on a screen's first visit. The config seeds the off switch for

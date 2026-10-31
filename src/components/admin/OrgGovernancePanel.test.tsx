@@ -48,12 +48,25 @@ vi.mock('../../data/governance', () => ({
 }));
 
 import { OrgGovernancePanel } from './OrgGovernancePanel';
+import { AppProvider } from '../../context/AppContext';
+import { ThemeProvider } from '../../context/ThemeContext';
+import { testSeed, testUser } from '../../test/testUsers';
+
+/** The panel now carries explain affordances, which read the live session; wrap it as the app does. */
+const renderPanel = () =>
+  render(
+    <ThemeProvider>
+      <AppProvider user={testUser('org_admin')} seed={testSeed}>
+        <OrgGovernancePanel />
+      </AppProvider>
+    </ThemeProvider>
+  );
 
 describe('OA-22 governance settings (C3.2-B)', () => {
   beforeEach(() => {
     getLifecycleSettings.mockResolvedValue({
       testingMode: 'two_stage', signoffRolePlanning: 'reviewer', signoffRoleTesting: 'reviewer',
-      signoffRoleConclusion: 'reviewer', reportOpinionRequired: false,
+      signoffRoleConclusion: 'reviewer', reportOpinionRequired: false, testingGraceHours: 0,
     });
     getWorkflowSettings.mockResolvedValue({ approvalChain: [], slaHours: 48, escalationRole: 'cia', escalationHours: 72 });
     getExportRetention.mockResolvedValue({ exportSchedule: 'manual', activityRetentionDays: 365, populationRetentionMonths: 6 });
@@ -82,7 +95,7 @@ describe('OA-22 governance settings (C3.2-B)', () => {
   });
 
   it('renders every governance section with its real data', async () => {
-    render(<OrgGovernancePanel />);
+    renderPanel();
     await waitFor(() => expect(screen.getByTestId('oa-governance')).toBeTruthy());
     for (const id of ['oa-governance-lifecycle', 'oa-governance-findings', 'oa-governance-methodology',
       'oa-governance-workflow', 'oa-governance-notifications', 'oa-governance-bi', 'oa-governance-uploads',
@@ -95,18 +108,20 @@ describe('OA-22 governance settings (C3.2-B)', () => {
   });
 
   it('saves the lifecycle settings through the RPC and confirms', async () => {
-    render(<OrgGovernancePanel />);
+    renderPanel();
     await waitFor(() => expect(screen.getByTestId('oa-governance-lifecycle-save')).toBeTruthy());
     fireEvent.change(screen.getByTestId('oa-governance-testing-mode'), { target: { value: 'one_stage' } });
+    fireEvent.change(screen.getByTestId('oa-governance-grace-hours'), { target: { value: '24' } });
     fireEvent.click(screen.getByTestId('oa-governance-lifecycle-save'));
     await waitFor(() => expect(saveLifecycleSettings).toHaveBeenCalled());
     expect(saveLifecycleSettings.mock.calls[0][0].testingMode).toBe('one_stage');
+    expect(saveLifecycleSettings.mock.calls[0][0].testingGraceHours).toBe(24);
     await waitFor(() => expect(screen.getByTestId('oa-governance-result').textContent).toContain('Saved'));
   });
 
   it('sets a BI parameter and reports a refusal from the platform range', async () => {
     setBiParameter.mockResolvedValueOnce({ ok: false, reason: 'the value for outlier_z_threshold must be between 1.5 and 5' });
-    render(<OrgGovernancePanel />);
+    renderPanel();
     await waitFor(() => expect(screen.getByTestId('oa-governance-bi-save-outlier_z_threshold')).toBeTruthy());
     fireEvent.change(screen.getByTestId('oa-governance-bi-value-outlier_z_threshold'), { target: { value: '0.5' } });
     fireEvent.click(screen.getByTestId('oa-governance-bi-save-outlier_z_threshold'));
@@ -114,7 +129,7 @@ describe('OA-22 governance settings (C3.2-B)', () => {
   });
 
   it('adds a finding section with a role tag', async () => {
-    render(<OrgGovernancePanel />);
+    renderPanel();
     await waitFor(() => expect(screen.getByTestId('oa-governance-section-label')).toBeTruthy());
     fireEvent.change(screen.getByTestId('oa-governance-section-label'), { target: { value: 'Effect' } });
     fireEvent.click(screen.getByTestId('oa-governance-section-add'));

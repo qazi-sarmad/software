@@ -9,21 +9,44 @@
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
 import { fillTemplate, mmToPt, pageDimensions, type BrandingSpec } from './branding';
+import { PRODUCT_NAME } from '../product';
 
 export interface PdfTextBlock {
   kind: 'heading' | 'paragraph';
   text: string;
 }
 
+/** WP-G: a figure the PDF renderer draws as an embedded PNG. The PNG is produced by the same pure
+ *  chart renderer the SVG and the DOCX use, so the printed figure is the figure the canvas showed. */
+export interface PdfFigureBlock {
+  kind: 'figure';
+  title: string;
+  caption: string;
+  /** PNG bytes for the figure, ready to embed. */
+  png: Uint8Array;
+  widthPt: number;
+  heightPt: number;
+}
+
+export type PdfBlock = PdfTextBlock | PdfFigureBlock;
+
 export interface PdfLink {
   label: string;
   url: string;
 }
 
+/** A native table in the PDF (F10): the heatmap grid and the Gantt rows print as real tables, so a
+ *  figure's value sits in a cell the reader can scan, not in a sentence. */
+export interface PdfTable {
+  header: string[];
+  rows: string[][];
+}
+
 export interface PdfSection {
   heading: string;
-  blocks: PdfTextBlock[];
+  blocks: PdfBlock[];
   links?: PdfLink[];
+  table?: PdfTable;
 }
 
 export interface PdfDocumentModel {
@@ -38,7 +61,31 @@ export interface PdfDocumentModel {
   /** Embedded font bytes, when the org uploaded a licensed font (branding_custom_fonts). */
   headingFontBytes?: Uint8Array;
   bodyFontBytes?: Uint8Array;
+  /**
+   * The resolved report-format typography (WP-C3). When present the PDF prints the same heading and
+   * body sizes, weights and line height the live canvas shows; when absent the renderer keeps its
+   * original fixed sizes, so an old model renders exactly as before.
+   */
+  typography?: {
+    headingPt: number;
+    bodyPt: number;
+    headingWeight: number;
+    bodyWeight: number;
+    lineHeight: number;
+  };
+  /**
+   * The fixed timestamp for the PDF's own metadata, passed in as an argument.
+   *
+   * pdf-lib's constructor calls `updateInfoDict()`, which writes `new Date()` into CreationDate and
+   * ModDate. Two renders of the same document therefore differ whenever they straddle a second
+   * boundary — the identical class of defect C2.7 fixed for DOCX. Pinning both dates (and the
+   * producer) to an argument makes the bytes reproducible; the engine reads no clock.
+   */
+  timestamp?: string;
 }
+
+/** The fallback stamp when a caller passes none, so the bytes are still reproducible. */
+const FIXED_PDF_EPOCH = '2000-01-01T00:00:00Z';
 
 /** Parse a CSS-ish colour value into rgb() components; falls back to black. Only for rendering. */
 function parseColour(value: string): { r: number; g: number; b: number } {
@@ -59,6 +106,32 @@ function parseColour(value: string): { r: number; g: number; b: number } {
 function toRgb(value: string) {
   const { r, g, b } = parseColour(value);
   return rgb(r, g, b);
+}
+
+/**
+ * Embed a caller-supplied font (a self-hosted WOFF2, or an org-uploaded licensed face).
+ *
+ * pdf-lib's subsetter only understands raw TrueType; a WOFF2 container's subset path throws inside
+ * fontkit — and it throws *lazily*, during `pdf.save()`, not at embed time, so a try/catch around the
+ * embed call does not see it. The failure depends on the glyphs drawn (a heading with a digit crashes
+ * where plain prose does not), so it would surface as a failed freeze on a real report. We therefore
+ * decide by the container signature: a WOFF2 face is embedded whole (`subset: false`, which fontkit
+ * handles), and a raw TTF/OTF is subset. If a full embed still fails, fall back to the standard font
+ * rather than fail the render: a report must always be producible.
+ */
+async function embedCustomFont(
+  pdf: PDFDocument, bytes: Uint8Array, fallback: StandardFonts,
+): Promise<PDFFont> {
+  const isWoff2 = bytes.length >= 4 && bytes[0] === 0x77 && bytes[1] === 0x4f && bytes[2] === 0x46 && bytes[3] === 0x32; // 'wOF2'
+  const attempts = isWoff2 ? [{ subset: false }] : [{ subset: true }, { subset: false }];
+  for (const opts of attempts) {
+    try {
+      return await pdf.embedFont(bytes, opts);
+    } catch {
+      // try the next option
+    }
+  }
+  return pdf.embedFont(fallback);
 }
 
 /** Wrap a string to a width in points, using the font's own metrics. Deterministic. */
@@ -83,18 +156,36 @@ export async function renderPdf(spec: BrandingSpec, model: PdfDocumentModel): Pr
   const pdf = await PDFDocument.create();
   pdf.registerFontkit(fontkit);
 
+  // Pin the metadata that pdf-lib would otherwise take from the clock, so the same model always
+  // produces the same bytes (W7.1). The timestamp is an argument; no clock is read here.
+  const stamp = new Date(model.timestamp ?? FIXED_PDF_EPOCH);
+  pdf.setCreationDate(stamp);
+  pdf.setModificationDate(stamp);
+  pdf.setProducer(PRODUCT_NAME);
+  pdf.setCreator(PRODUCT_NAME);
+
   let heading: PDFFont;
   let body: PDFFont;
   if (model.headingFontBytes) {
-    heading = await pdf.embedFont(model.headingFontBytes, { subset: true });
+    heading = await embedCustomFont(pdf, model.headingFontBytes, StandardFonts.HelveticaBold);
   } else {
     heading = await pdf.embedFont(StandardFonts.HelveticaBold);
   }
   if (model.bodyFontBytes) {
-    body = await pdf.embedFont(model.bodyFontBytes, { subset: true });
+    body = await embedCustomFont(pdf, model.bodyFontBytes, StandardFonts.Helvetica);
   } else {
     body = await pdf.embedFont(StandardFonts.Helvetica);
   }
+
+  // WP-C3: the report-format typography, when the caller supplies it, decides the printed sizes and
+  // line height, so the frozen PDF matches the live canvas. Without it the renderer keeps the sizes
+  // it has always used, so a model built before this change still renders identically.
+  const typo = model.typography;
+  const sectionHeadingPt = typo ? typo.headingPt : 15;
+  const blockHeadingPt = typo ? typo.headingPt : 12;
+  const bodyPt = typo ? typo.bodyPt : 10.5;
+  /** The baseline-to-baseline distance for a run at `size`. */
+  const leadingFor = (size: number) => (typo ? size * typo.lineHeight : size + 5);
 
   const dims = pageDimensions(spec.pageSize);
   const marginTop = mmToPt(spec.marginTopMm);
@@ -157,22 +248,80 @@ export async function renderPdf(spec: BrandingSpec, model: PdfDocumentModel): Pr
   for (const section of model.sections) {
     ensureSpace(40);
     cursorY -= 8;
-    for (const line of wrapText(section.heading, heading, 15, contentWidth)) {
-      ensureSpace(20);
-      page.drawText(line, { x: marginLeft, y: cursorY - 15, size: 15, font: heading, color: toRgb('#000000') });
-      cursorY -= 20;
+    for (const line of wrapText(section.heading, heading, sectionHeadingPt, contentWidth)) {
+      ensureSpace(sectionHeadingPt);
+      page.drawText(line, { x: marginLeft, y: cursorY - sectionHeadingPt, size: sectionHeadingPt, font: heading, color: toRgb('#000000') });
+      cursorY -= leadingFor(sectionHeadingPt);
     }
     cursorY -= 4;
     for (const block of section.blocks) {
-      const size = block.kind === 'heading' ? 12 : 10.5;
+      if (block.kind === 'figure') {
+        // WP-G: draw the figure's own PNG, then its caption, exactly as the canvas showed it.
+        const img = await pdf.embedPng(block.png);
+        ensureSpace(block.heightPt + 26);
+        cursorY -= 4;
+        for (const line of wrapText(block.title, heading, blockHeadingPt - 1, contentWidth)) {
+          ensureSpace(blockHeadingPt);
+          page.drawText(line, { x: marginLeft, y: cursorY - blockHeadingPt, size: blockHeadingPt - 1, font: heading, color: toRgb('#000000') });
+          cursorY -= leadingFor(blockHeadingPt - 1);
+        }
+        page.drawImage(img, { x: marginLeft, y: cursorY - block.heightPt, width: block.widthPt, height: block.heightPt });
+        cursorY -= block.heightPt + 4;
+        if (block.caption) {
+          for (const line of wrapText(block.caption, body, 9, contentWidth)) {
+            ensureSpace(12);
+            page.drawText(line, { x: marginLeft, y: cursorY - 9, size: 9, font: body, color: toRgb('#444444') });
+            cursorY -= 12;
+          }
+        }
+        cursorY -= 4;
+        continue;
+      }
+      const size = block.kind === 'heading' ? blockHeadingPt : bodyPt;
       const font = block.kind === 'heading' ? heading : body;
-      const lineHeight = size + 5;
+      const lineHeight = leadingFor(size);
       for (const line of wrapText(block.text, font, size, contentWidth)) {
         ensureSpace(lineHeight);
         page.drawText(line, { x: marginLeft, y: cursorY - size, size, font, color: toRgb('#222222') });
         cursorY -= lineHeight;
       }
       cursorY -= 2;
+    }
+    if (section.table && section.table.rows.length > 0) {
+      // A native table: a header row, then the rows. Columns are equal width and text is clipped to
+      // its column with an ellipsis, so a long title never overruns the next column.
+      const header = section.table.header;
+      const cols = Math.max(1, header.length);
+      const colWidth = contentWidth / cols;
+      const rowHeight = 14;
+      const cellText = (text: string) => {
+        const maxW = colWidth - 6;
+        if (body.widthOfTextAtSize(text, 9) <= maxW) return text;
+        let t = text;
+        while (t.length > 1 && body.widthOfTextAtSize(`${t}…`, 9) > maxW) t = t.slice(0, -1);
+        return `${t}…`;
+      };
+      ensureSpace(rowHeight + 4);
+      for (let c = 0; c < cols; c++) {
+        page.drawText(cellText(header[c] ?? ''), {
+          x: marginLeft + c * colWidth, y: cursorY - 10, size: 9, font: heading, color: toRgb('#000000'),
+        });
+      }
+      cursorY -= rowHeight;
+      page.drawLine({
+        start: { x: marginLeft, y: cursorY }, end: { x: marginLeft + contentWidth, y: cursorY },
+        thickness: 0.5, color: toRgb('#cccccc'),
+      });
+      for (const row of section.table.rows) {
+        ensureSpace(rowHeight);
+        for (let c = 0; c < cols; c++) {
+          page.drawText(cellText(row[c] ?? ''), {
+            x: marginLeft + c * colWidth, y: cursorY - 10, size: 9, font: body, color: toRgb('#222222'),
+          });
+        }
+        cursorY -= rowHeight;
+      }
+      cursorY -= 4;
     }
     if (section.links?.length) {
       for (const link of section.links) {

@@ -71,7 +71,15 @@ language sql immutable as $$
     'evidence_files','document_extractions',
     'report_versions','report_blocks','report_comments','caps','email_queue','exports_log','import_jobs','archive_jobs','prior_year_imports',
     -- C2.9. Appended (never inserted) so the positional consumers of this list are unaffected.
-    'support_access_log'
+    'support_access_log',
+    -- WRITE-1 (0088). The Evidence-Bound Claim Graph tables. Appended, same reason.
+    'report_templates','report_template_versions','report_claims','report_claim_versions',
+    'report_terminology','figure_functions','figure_function_versions','report_graphs',
+    -- Phase 4 (0110). The methodology library and the persisted test-step tick.
+    'procedure_templates','test_step_templates','procedure_template_versions','workpaper_step_state',
+    -- SCALE-1 (0206). The group association row carries org_id and is tenant-readable, so it is
+    -- held to the same isolation, anon-refusal and platform-blind proofs as every other tenant table.
+    'org_associations'
   ]
 $$;
 
@@ -94,6 +102,9 @@ begin
       truncate reopen_grants;
       truncate platform_trail;
       truncate platform_admins;
+      -- SCALE-2 (0207). platform_owners has no FK to orgs either, so it is cleared explicitly and
+      -- re-seeded below; without this a second pass would keep the owner row from the first.
+      truncate platform_owners;
       truncate entity_decision_grants;
       -- ACP platform-level tables that accumulate rows and have no FK to orgs (S1).
       truncate platform_notification_recipients;
@@ -119,6 +130,26 @@ begin
       -- rows in email_queue do not reach them by cascade alone on a reused database, so clear the
       -- per-run rows explicitly.
       delete from email_queue where metadata ->> 'kind' = 'user_invitation';
+      -- SCALE-1 (0206). org_groups has no FK to orgs (it is referenced BY org_associations), so
+      -- `truncate orgs cascade` does not reach it. The association and joint-share rows do cascade.
+      truncate org_groups cascade;
+      -- D16 (0191). standards_packs has no FK to orgs (it is the platform catalogue), so it is not
+      -- reached by `truncate orgs cascade`. TRUNCATE does not fire the append-only row trigger, so
+      -- the immutability guarantee is unaffected; the platform signing key likewise accumulates.
+      truncate standards_packs;
+      delete from signing_keys where scope = 'platform';
+      -- S3 (0149). standards_library / standards_library_versions / risk_derivations are platform
+      -- catalogues with no FK to orgs (the standards_packs precedent), so `truncate orgs cascade`
+      -- does not reach their org-scoped rows. Clear the org rows; keep the platform rows (org_id null)
+      -- the migration seeds, so every run starts from the same state (M5).
+      delete from standards_library where org_id is not null;
+      delete from standards_library_versions where org_id is not null;
+      delete from risk_derivations where org_id is not null;
+      -- S3 (0151). The D15 dynamic-assessment tables carry org_id and are reached by the orgs cascade
+      -- only when they have an FK to orgs; clear them explicitly so a reused database starts clean.
+      delete from erm_theme_map where org_id is not null;
+      delete from erm_kri where org_id is not null;
+      delete from plan_change_proposals where org_id is not null;
       perform pg_advisory_unlock(hashtext('provio_test.seed'));
       return;
     exception when deadlock_detected or lock_not_available then
@@ -159,6 +190,10 @@ begin
     ('20000000-0000-0000-0000-0000000000b7', 'b0000000-0000-0000-0000-000000000001', 'Auditee', 'auditee', true, '{"manage_users":false,"manage_roles":false,"edit_config":false,"manage_engagements":false,"approve_plan":false,"review_and_approve":false,"perform_work":false,"can_reopen":false,"view_all_scopes":false,"read_only":true,"manage_team":false,"view_board_pack":false,"generate_board_pack":false,"view_insights":false}');
 
   insert into platform_admins (user_id) values ('10000000-0000-0000-0000-0000000000f0');
+  -- SCALE-2 (0207). The seeded platform admin is also the platform OWNER, so every existing platform
+  -- test (which acts as f0) still reaches the control plane. Tests that need a non-owner platform
+  -- admin insert a second platform_admins row without an owners row.
+  insert into platform_owners (user_id, note) values ('10000000-0000-0000-0000-0000000000f0', 'test seed');
 
   insert into org_members (org_id, user_id, role_id, hierarchy_level) values
     ('a0000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-0000000000a1', '20000000-0000-0000-0000-0000000000a1', 1),

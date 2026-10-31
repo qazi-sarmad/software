@@ -6,9 +6,13 @@ select provio_test.seed();
 
 -- The seed helper clears the registry (M5). Re-apply the registry seed and the step migration, which
 -- also proves both are safe to apply again (M2): 0071 does nothing on a key it has already written,
--- and 0081 only rewrites a row the recorder has not generated.
+-- and 0081 only rewrites a row the recorder has not generated. 0092 adds the two keys that were added
+-- to the JSON after 0071 but never seeded; 0093 adds the report builder (WK-11). Both are re-applied
+-- here for the same M2 proof.
 \i supabase/migrations/0071_tutorial_registry_seed.sql
 \i supabase/migrations/0081_tutorial_steps.sql
+\i supabase/migrations/0092_tutorial_registry_gap.sql
+\i supabase/migrations/0093_tutorial_registry_report_builder.sql
 
 do $$
 declare
@@ -40,4 +44,26 @@ begin
     (select count(*) from tutorials t
       where not exists (select 1 from jsonb_array_elements(t.steps) s where s ->> 'testid' is not null)),
     0, 'C4: every key names at least one control to drive');
+
+  -- 6. The registry holds every key in the frozen JSON list. 0071 seeded 77 rows, 0092 adds the two
+  --    keys added to src/lib/tutorialKeys.json after 0071 was written (oa.connectors, oa.formats) and
+  --    0093 adds the report builder (oa.report-builder). Without 0092/0093 a fresh database is short
+  --    of the app's key list.
+  select count(*) into v_keys
+    from (values
+      ('oa.connectors'), ('oa.formats'), ('oa.report-builder')
+    ) as expected(key)
+   where not exists (select 1 from tutorials t where t.key = expected.key);
+  perform provio_test.assert_eq(v_keys, 0, 'W12: the post-0071 keys have registry rows');
+
+  -- 7. The added rows carry their real ordered steps, not the S12 filler or an empty array.
+  perform provio_test.assert_true(
+    (select jsonb_array_length(steps) >= 4 from tutorials where key = 'oa.connectors'),
+    'W12: oa.connectors carries its real steps');
+  perform provio_test.assert_true(
+    (select jsonb_array_length(steps) >= 4 from tutorials where key = 'oa.formats'),
+    'W12: oa.formats carries its real steps');
+  perform provio_test.assert_true(
+    (select jsonb_array_length(steps) >= 4 from tutorials where key = 'oa.report-builder'),
+    'W12: oa.report-builder carries its real steps');
 end $$;

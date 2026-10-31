@@ -15,11 +15,17 @@ import {
   type ReportCommentRow,
 } from '../../data/reports';
 import { checkCapReconciliation, type CapRow, listCaps } from '../../data/caps';
-import { renderAndStoreReportFiles, type StoredReportFiles } from '../../data/reportFiles';
+import { commitReportGraph, getReportGraph, type ReportGraphView } from '../../data/reportGraph';
+import { renderAndStoreReportFiles, reportFooterPreview, type ReportFileInput, type StoredReportFiles } from '../../data/reportFiles';
+import { getActiveReportLayout } from '../../data/writing';
+import type { FormatLayout } from '../../lib/writing/reportFormat';
+import { acknowledgePreflight, listPreflightAcknowledgements, listPreflightBlocking, listPreflightItems, type PreflightItemRow } from '../../data/preflight';
+import { PREFLIGHT_CHECKS, type PreflightAcknowledgement } from '../../lib/preflight';
 import { hasRight } from '../../lib/rights';
 import { rightReason, rightReasonFor } from '../../lib/rightLabels';
 import { formatFieldPairs } from '../../lib/readable';
 import { InlineError } from '../common/InlineError';
+import { StandardsAffordance } from '../explain/StandardsAffordance';
 import { HoldToConfirm } from '../common/HoldToConfirm';
 import { AlertTriangle, CheckCircle2, FileText, Layers, Send } from '../common/Icons';
 
@@ -43,6 +49,7 @@ export const ReportEditorPanel: React.FC<{ engagementId: string }> = ({ engageme
   const orgId = currentUser.orgId ?? '';
   const engagementLabel = engagementId;
   const [reportHashes, setReportHashes] = useState<StoredReportFiles | null>(null);
+  const [footerPreview, setFooterPreview] = useState<string | null>(null);
   const [versions, setVersions] = useState<ReportVersionRow[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [blocks, setBlocks] = useState<ReportBlockRow[]>([]);
@@ -57,6 +64,17 @@ export const ReportEditorPanel: React.FC<{ engagementId: string }> = ({ engageme
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [preflightAcks, setPreflightAcks] = useState<PreflightAcknowledgement[]>([]);
+  const [preflightItems, setPreflightItems] = useState<PreflightItemRow[]>([]);
+  const [preflightBlocking, setPreflightBlocking] = useState<PreflightItemRow[]>([]);
+  const [ackCheck, setAckCheck] = useState<string>(PREFLIGHT_CHECKS[0]);
+  const [ackItem, setAckItem] = useState('');
+  const [ackReason, setAckReason] = useState('');
+  // Phase 2.6 drilldown: the committed evidence-bound claim graph for the selected version, loaded
+  // on demand so the graph root on screen is the tenant data the database actually holds.
+  const [graph, setGraph] = useState<ReportGraphView | null>(null);
+  const [graphOpen, setGraphOpen] = useState(false);
+  const [graphBusy, setGraphBusy] = useState(false);
 
   const canApprove = hasRight(currentUser, 'approve_plan');
 
@@ -78,13 +96,28 @@ export const ReportEditorPanel: React.FC<{ engagementId: string }> = ({ engageme
         setComments(cs);
         setOpenComments(oc);
         setCapOk(await checkCapReconciliation(current));
+        // §15.6: the committed claim graph for this version. It was written on freeze and, until now,
+        // never read back — the root `verify_report_root` proves had no screen to show it on.
+        try {
+          setGraph(await getReportGraph(current));
+        } catch {
+          setGraph(null);
+        }
       } else {
         setBlocks([]);
         setComments([]);
         setOpenComments(0);
         setCapOk(null);
+        setGraph(null);
       }
       setCaps(await listCaps(engagementId));
+      setPreflightAcks(await listPreflightAcknowledgements(engagementId));
+      const [items, blocking] = await Promise.all([
+        listPreflightItems(engagementId),
+        listPreflightBlocking(engagementId),
+      ]);
+      setPreflightItems(items);
+      setPreflightBlocking(blocking);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not load the report.');
     } finally {
@@ -103,6 +136,29 @@ export const ReportEditorPanel: React.FC<{ engagementId: string }> = ({ engageme
   }, [blocks, section]);
   const sectionBlocks = blocks.filter((b) => b.sectionType === section);
   const placeholders = blocks.filter((b) => b.isPlaceholder);
+
+  // The graph belongs to one version; a version switch resets the drilldown so the panel never shows
+  // a root that does not match the version on screen.
+  useEffect(() => {
+    setGraph(null);
+    setGraphOpen(false);
+  }, [activeId]);
+
+  /** Phase 2.6 drilldown: load the committed graph root and its claims for the selected version.
+   *  Non-blocking — the panel opens beside the editor, the work underneath stays usable. */
+  const openGraph = async () => {
+    if (!activeId) return;
+    setGraphBusy(true);
+    setError(null);
+    try {
+      setGraph(await getReportGraph(activeId));
+      setGraphOpen(true);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'The report graph could not be loaded.');
+    } finally {
+      setGraphBusy(false);
+    }
+  };
 
   const compose = async () => {
     setBusy(true);
@@ -125,6 +181,13 @@ export const ReportEditorPanel: React.FC<{ engagementId: string }> = ({ engageme
     const res = await freezeReport(activeId);
     if (!res.ok) setError(res.reason);
     else {
+      // §15.6: commit the evidence-bound claim graph, so the frozen report's root is real tenant
+      // data that verify_report_root can prove. A failure is reported but the freeze already stands.
+      try {
+        await commitReportGraph({ reportVersionId: activeId, engagementId });
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'The report graph could not be committed.');
+      }
       // §18: the frozen report is a real PDF and a real DOCX from the one block model. Store them and
       // record both hashes; a failure here is reported but the freeze itself already stands.
       try {
@@ -138,10 +201,33 @@ export const ReportEditorPanel: React.FC<{ engagementId: string }> = ({ engageme
     setBusy(false);
   };
 
-  /** Render, upload and record the frozen report's files from the current blocks. */
+  /** §11.4: record an acknowledgement of one pre-flight item, with the reason. Append-only. */
+  const acknowledge = async () => {
+    setBusy(true);
+    setError(null);
+    setNotice(null);
+    const res = await acknowledgePreflight(engagementId, ackCheck, ackItem.trim(), ackReason.trim());
+    if (!res.ok) setError(res.reason);
+    else {
+      setNotice('Acknowledgement recorded.');
+      setAckItem('');
+      setAckReason('');
+      await load();
+    }
+    setBusy(false);
+  };
+
+  /** Render, upload and record the frozen report's files from the current blocks. The org's active
+   *  report format supplies the printed typography (WP-C3), so the frozen PDF matches the canvas. */
   const storeReportFiles = async (reportVersionId: string) => {
     if (!orgId) throw new Error('no organisation in the session');
-    const stored = await renderAndStoreReportFiles({
+    let layout: FormatLayout | undefined;
+    try {
+      layout = await getActiveReportLayout(orgId);
+    } catch {
+      layout = undefined;
+    }
+    const input: ReportFileInput = {
       reportVersionId,
       orgId,
       title: engagementLabel || 'Audit report',
@@ -151,8 +237,13 @@ export const ReportEditorPanel: React.FC<{ engagementId: string }> = ({ engageme
       engagementLabel: engagementLabel || 'Engagement',
       userLabel: currentUser?.name ?? currentUser?.email ?? 'auditor',
       frozenAt: new Date().toISOString(),
-    });
+      layout,
+    };
+    const stored = await renderAndStoreReportFiles(input);
     setReportHashes(stored);
+    // §18: show the exact footer the printed DOCX carries, so the on-screen preview and the file
+    // agree. The same `footerLine` the renderer prints is used, keyed on the stored DOCX hash.
+    setFooterPreview(reportFooterPreview(input, stored.docx.sha256));
     return stored;
   };
 
@@ -213,7 +304,7 @@ export const ReportEditorPanel: React.FC<{ engagementId: string }> = ({ engageme
   }
 
   const frozen = active?.status === 'frozen' || active?.status === 'issued_v1';
-  const canFreeze = openComments === 0 && capOk === true;
+  const canFreeze = openComments === 0 && capOk === true && preflightBlocking.length === 0;
 
   return (
     <div className="space-y-5" data-testid="report-editor">
@@ -246,7 +337,7 @@ export const ReportEditorPanel: React.FC<{ engagementId: string }> = ({ engageme
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_220px] gap-4">
           <div className="space-y-4 min-w-0">
-            {/* Section tabs */}
+            {/* Section tabs. Each carries the IIA standards it satisfies (E6 §5.4 item 5). */}
             <div role="tablist" aria-label="Report sections" className="flex flex-wrap items-center gap-1 border-b border-hairline pb-2">
               {sections.map((s) => (
                 <button
@@ -264,6 +355,7 @@ export const ReportEditorPanel: React.FC<{ engagementId: string }> = ({ engageme
                 </button>
               ))}
             </div>
+            <StandardsAffordance kind="section" target={section} screenId="WK-11" element="standards-section" label="This section satisfies" />
 
             {sectionBlocks.length === 0 ? (
               <div className="p-5 text-center text-apple-12 text-secondary bg-surface-elevated rounded-xl" data-testid="report-section-empty">
@@ -364,11 +456,80 @@ export const ReportEditorPanel: React.FC<{ engagementId: string }> = ({ engageme
                 <li className={capOk ? 'text-verdigris' : 'text-cinnabar'} data-testid="report-preflight-caps">
                   {capOk ? '✓' : '✗'} CAP reconciliation {capOk === null ? 'unknown' : capOk ? 'complete' : 'incomplete'}
                 </li>
+                <li className={preflightAcks.length === 0 ? 'text-secondary' : 'text-verdigris'} data-testid="report-preflight-acks">
+                  {preflightAcks.length} acknowledged pre-flight item{preflightAcks.length === 1 ? '' : 's'}
+                </li>
+                <li className={preflightBlocking.length === 0 ? 'text-verdigris' : 'text-cinnabar'} data-testid="report-preflight-blocking">
+                  {preflightBlocking.length === 0 ? '✓' : '✗'} {preflightItems.length} open pre-flight item{preflightItems.length === 1 ? '' : 's'}
+                  {preflightBlocking.length > 0 ? `, ${preflightBlocking.length} unacknowledged` : ''}
+                </li>
               </ul>
+              {/* §11.4: the live open items, computed by the database (migration 0102). Clicking one
+                  fills the waive form so an acknowledgement names the exact item. */}
+              {preflightItems.length > 0 && (
+                <ul className="space-y-1" data-testid="report-preflight-item-list">
+                  {preflightItems.map((it) => {
+                    const acked = !preflightBlocking.some((b) => b.check === it.check && b.itemId === it.itemId);
+                    return (
+                      <li key={`${it.check}:${it.itemId}`} className="flex items-start gap-2 text-apple-11">
+                        <span className={acked ? 'text-verdigris' : 'text-cinnabar'}>{acked ? '✓' : '✗'}</span>
+                        <button
+                          type="button"
+                          data-testid={`report-preflight-item-${it.check}-${it.itemId}`}
+                          onClick={() => { setAckCheck(it.check); setAckItem(it.itemId); }}
+                          className="text-left text-primary hover:underline"
+                        >
+                          <span className="font-semibold">{it.check}</span>
+                          <span className="text-secondary"> — {it.detail} ({it.itemId.slice(0, 8)})</span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+              {/* §11.4: an open item may be waived with a logged reason instead of blocking. */}
+              <div className="space-y-2 rounded-xl border border-hairline p-3" data-testid="report-preflight-ack-form">
+                <div className="text-apple-11 text-secondary">
+                  Waive a pre-flight item with a reason (recorded, append-only).
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <select
+                    data-testid="report-preflight-ack-check"
+                    value={ackCheck}
+                    onChange={(e) => setAckCheck(e.target.value)}
+                    className="px-2 py-1.5 rounded-lg bg-surface-sunken border border-hairline text-apple-12 text-primary"
+                  >
+                    {PREFLIGHT_CHECKS.map((c) => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                  <input
+                    data-testid="report-preflight-ack-item"
+                    value={ackItem}
+                    onChange={(e) => setAckItem(e.target.value)}
+                    placeholder="Item id"
+                    className="px-2 py-1.5 rounded-lg bg-surface-sunken border border-hairline text-apple-12 text-primary"
+                  />
+                  <input
+                    data-testid="report-preflight-ack-reason"
+                    value={ackReason}
+                    onChange={(e) => setAckReason(e.target.value)}
+                    placeholder="Reason (min 10 characters)"
+                    className="flex-1 px-2 py-1.5 rounded-lg bg-surface-sunken border border-hairline text-apple-12 text-primary"
+                  />
+                  <button
+                    type="button"
+                    data-testid="report-preflight-ack-submit"
+                    onClick={acknowledge}
+                    disabled={busy || ackItem.trim().length === 0 || ackReason.trim().length < 10}
+                    className="px-3 py-1.5 rounded-lg bg-surface border border-hairline hover:bg-surface-hover text-apple-12 font-semibold text-primary disabled:opacity-50"
+                  >
+                    Record acknowledgement
+                  </button>
+                </div>
+              </div>
               {!canFreeze && (
                 <div className="px-3 py-2 rounded-xl text-apple-12 text-cinnabar bg-cinnabar-subtle border border-cinnabar flex items-start gap-2" data-testid="report-freeze-blocked">
                   <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
-                  <span>Freeze is blocked until there are no open comments and CAP reconciliation passes.</span>
+                  <span>Freeze is blocked until there are no open comments, CAP reconciliation passes and every pre-flight item is acknowledged.</span>
                 </div>
               )}
               {caps.length === 0 && (
@@ -407,8 +568,36 @@ export const ReportEditorPanel: React.FC<{ engagementId: string }> = ({ engageme
                   <div data-testid="report-file-docx">
                     Editable DOCX: {reportHashes.docx.sha256.slice(0, 16)}… ({reportHashes.docx.bytes} bytes)
                   </div>
+                  {/* The on-screen footer line, so the screen and the frozen file agree (reportFooterPreview). */}
+                  <div className="pt-1 text-secondary/80" data-testid="report-footer-preview">
+                    {reportFooterPreview(
+                      {
+                        reportVersionId: activeId ?? '',
+                        orgId,
+                        title: engagementLabel || 'Audit report',
+                        blocks: blocks.map((b) => ({ sectionType: b.sectionType, blockType: b.blockType, content: b.content, position: b.position })),
+                        engagementLabel: engagementLabel || 'Engagement',
+                        userLabel: currentUser?.name ?? currentUser?.email ?? 'auditor',
+                        frozenAt: active?.frozenAt ?? null,
+                      },
+                      reportHashes.docx.sha256,
+                    )}
+                  </div>
                 </div>
               )}
+              {/* Phase 2.6 drilldown: the committed claim graph behind the report. Non-blocking. */}
+              <div className="pt-1">
+                <button
+                  type="button"
+                  data-testid="report-graph-open"
+                  onClick={openGraph}
+                  disabled={busy || graphBusy || !activeId}
+                  className="flex items-center gap-1 text-accent font-medium text-apple-11 hover:underline disabled:opacity-50"
+                >
+                  <Layers className="w-3.5 h-3.5 stroke-[1.5]" />
+                  {graphBusy ? 'Loading graph…' : 'View claim graph'}
+                </button>
+              </div>
             </div>
           </div>
 
@@ -443,6 +632,74 @@ export const ReportEditorPanel: React.FC<{ engagementId: string }> = ({ engageme
             )}
           </aside>
         </div>
+      )}
+
+      {/* Phase 2.6 drilldown: the committed evidence-bound claim graph for the selected version. The
+          root is the tenant data the database holds (report_graphs.graph_root); each claim links to
+          the records it cites. Non-blocking — it sits beside the editor, the work stays usable. */}
+      {graphOpen && graph && (
+        <section className="rounded-2xl bg-surface border border-hairline overflow-hidden" data-testid="report-graph-panel">
+          <div className="flex items-center justify-between px-4 py-2 border-b border-hairline">
+            <span className="text-apple-12 font-semibold text-primary flex items-center gap-1.5">
+              <Layers className="w-3.5 h-3.5 stroke-[1.5]" /> Committed claim graph
+            </span>
+            <button
+              type="button"
+              data-testid="report-graph-close"
+              onClick={() => setGraphOpen(false)}
+              className="text-apple-11 text-secondary hover:text-primary"
+            >
+              Close
+            </button>
+          </div>
+          {graph.graphs.length === 0 ? (
+            <p className="px-4 py-3 text-apple-12 text-secondary" data-testid="report-graph-empty">
+              No committed graph for this version. Freeze the report to commit it.
+            </p>
+          ) : (
+            <div className="divide-y divide-hairline">
+              {graph.graphs.map((g) => (
+                <div key={g.id} className="px-4 py-3 space-y-2">
+                  <div className="grid gap-1 sm:grid-cols-2 text-apple-11">
+                    <div data-testid={`report-graph-root-${g.id}`}>
+                      <span className="text-secondary">Graph root: </span>
+                      <span className="font-mono text-primary break-all">{g.graphRoot}</span>
+                    </div>
+                    <div data-testid={`report-graph-render-${g.id}`}>
+                      <span className="text-secondary">Render hash: </span>
+                      <span className="font-mono text-primary break-all">{g.renderHash}</span>
+                    </div>
+                    <div className="text-secondary">
+                      Model <span className="text-primary">{g.modelId}</span> · engine{' '}
+                      <span className="text-primary">{g.engineVersion}</span> · template{' '}
+                      <span className="text-primary">{g.templateVersion}</span>
+                    </div>
+                    <div className="text-secondary">
+                      {g.claimCount} claim{g.claimCount === 1 ? '' : 's'}
+                      {g.ledgerSeq != null && <> · ledger #{g.ledgerSeq}</>}
+                    </div>
+                  </div>
+                  <ul className="space-y-0.5" data-testid={`report-graph-claims-${g.id}`}>
+                    {graph.claims
+                      .slice(0, 50)
+                      .map((c) => (
+                        <li key={c.claimId} className="flex items-center justify-between gap-2 text-apple-11" data-testid={`report-graph-claim-${c.claimId}`}>
+                          <span className="text-primary">
+                            <span className="text-secondary">{c.position}. </span>
+                            {c.kind}
+                            <span className="text-secondary"> · {c.sectionId}</span>
+                          </span>
+                          <span className="font-mono text-secondary" title={c.claimHash}>
+                            {c.claimHash.slice(0, 12)}…
+                          </span>
+                        </li>
+                      ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
       )}
     </div>
   );

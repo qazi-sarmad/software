@@ -53,7 +53,6 @@
     "src/components/universe/AuditUniverseTab.tsx": 119,
     "src/components/universe/EntitySiraRcmModal.tsx": 107,
     "src/components/reviews/CommentHistoryPanel.tsx": 324,
-    "src/components/reviews/ReviewCommentsDock.tsx": 79,
     "src/components/reviews/ReviewCommentsGlobalDock.tsx": 397,
     "src/components/reviews/ReviewCommentsGlobalDock.test.tsx": 30,
     "src/components/glassbox/GlassBoxPublicRoute.tsx": 283,
@@ -61,6 +60,7 @@
   },
   "moved": {},
   "removed": {
-    "src/components/common/InspectorPanel.tsx": "deleted in H3c: the blocking inspector panel is replaced by the two-mode record view (FloatingWindow / RecordView). Recorded as D-H3."
+    "src/components/common/InspectorPanel.tsx": "deleted in H3c: the blocking inspector panel is replaced by the two-mode record view (FloatingWindow / RecordView). Recorded as D-H3.",
+    "src/components/reviews/ReviewCommentsDock.tsx": "deleted in U14/S21: mounted nowhere (verified by scripts/audit-wiring.mjs); the live review-comment surface is CommentHistoryPanel via ReviewCommentsGlobalDock."
   }
 }

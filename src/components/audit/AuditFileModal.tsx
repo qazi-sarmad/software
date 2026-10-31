@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useScopedData } from '../../hooks/useScopedData';
+import { ExplainPopout } from '../explain/ExplainPopout';
+import { StandardsAffordance } from '../explain/StandardsAffordance';
 import { ShieldCheck } from '../common/Icons';
 import {
   AUDIT_FILE_TABS,
@@ -20,14 +22,17 @@ import { PopulationPanel } from '../audit/PopulationPanel';
 import { SamplingPanel } from '../audit/SamplingPanel';
 import { RowTestingPanel } from '../audit/RowTestingPanel';
 import { AnalystEnginePanel } from '../audit/AnalystEnginePanel';
+import { WorkpaperCreatePanel } from '../audit/WorkpaperCreatePanel';
 import { FindingsPanel } from '../audit/FindingsPanel';
 import { ConclusionPanel } from '../audit/ConclusionPanel';
 import { DocumentViewerPanel } from '../audit/DocumentViewerPanel';
+import { DocumentReviewPanel } from '../documents/DocumentReviewPanel';
 import { ReportEditorPanel } from '../audit/ReportEditorPanel';
 import { CapRegisterPanel } from '../audit/CapRegisterPanel';
 import { AsOfTimeline } from '../audit/AsOfTimeline';
 import { ExportPanel } from '../admin/ExportPanel';
 import { CertificatePanel } from '../pending/CertificatePanel';
+import { ReportBuilderPanel } from '../writing/ReportBuilderPanel';
 
 /**
  * Audit File: one permanent workspace per engagement.
@@ -35,16 +40,20 @@ import { CertificatePanel } from '../pending/CertificatePanel';
  * The engagement is always re-read through useScopedData(), so scope applies and status is never stale.
  */
 export const AuditFileModal: React.FC = () => {
-  const { inspector, openInspector, signOffEngagement, currentUser } = useApp();
+  const { inspector, openInspector, signOffEngagement, advanceEngagementStage, currentUser } = useApp();
   const { scopedEngagements, scopedWorkpapers, scopedControls, scopedEntities, scopedObservations, scopedComments } = useScopedData();
 
   const requestedId: string | undefined = inspector.data?.engagement?.id;
   const engagement = requestedId ? scopedEngagements.find((e) => e.id === requestedId) : undefined;
   const [tab, setTab] = useState<AuditFileTab>(() => getInitialAuditFileTab(inspector.data));
-  const [phaseView, setPhaseView] = useState<'overview' | 'workspace' | 'findings' | 'conclusion' | 'documents' | 'report' | 'caps' | 'certificate' | 'export' | 'as_of'>('overview');
+  const [phaseView, setPhaseView] = useState<'overview' | 'workspace' | 'findings' | 'conclusion' | 'documents' | 'report' | 'builder' | 'caps' | 'certificate' | 'export' | 'as_of'>('overview');
   const [signOffError, setSignOffError] = useState<string | null>(null);
+  const [stageError, setStageError] = useState<string | null>(null);
 
   // Neutral state: does not reveal whether an out-of-scope engagement exists.
+  // Every hook above runs before this return: the tenant snapshot arrives asynchronously, so the
+  // first render is often the not-yet-loaded one. A hook after the return would change the hook
+  // count between renders (React invalid-hook-order error) and blank the whole record page.
   if (!engagement) {
     return (
       <div className="p-6 text-center text-secondary" data-testid="audit-file-unavailable">
@@ -59,6 +68,20 @@ export const AuditFileModal: React.FC = () => {
   const gate = getGateSummary(workpapers);
   const blockers = getSignOffBlockers(workpapers, scopedObservations, scopedComments);
   const signOff = getSignOffState(currentUser, engagement, gate, blockers);
+
+  // Phase 2.1: the stage advance is a database write. The next stage is the one after the current.
+  const nextStage = engagement
+    ? (['planning', 'testing', 'conclusion'] as const)[
+        (['planning', 'testing', 'conclusion'] as const).indexOf(engagement.stage as 'planning') + 1
+      ]
+    : undefined;
+
+  const handleAdvanceStage = async () => {
+    if (!engagement || !nextStage) return;
+    setStageError(null);
+    const res = await advanceEngagementStage(engagement.id, nextStage);
+    if (!res.ok) setStageError(res.reason);
+  };
 
   const onTabKey = (e: React.KeyboardEvent) => {
     const i = AUDIT_FILE_TABS.findIndex((t) => t.id === tab);
@@ -75,9 +98,21 @@ export const AuditFileModal: React.FC = () => {
             <span className="font-mono text-apple-11 px-2 py-0.5 rounded bg-surface border border-hairline text-secondary">
               {engagement.id}
             </span>
-            <span className="text-apple-11 font-semibold text-secondary uppercase" data-testid="audit-file-stage">
-              {engagement.stage}
-            </span>
+            <ExplainPopout explainId="field.engagement.stage" screenId="AF-01" element="explain-stage">
+              <span className="text-apple-11 font-semibold text-secondary uppercase" data-testid="audit-file-stage">
+                {engagement.stage}
+              </span>
+            </ExplainPopout>
+            {nextStage && engagement.status !== 'signed_off' && (
+              <button
+                type="button"
+                data-testid="audit-file-advance-stage"
+                onClick={handleAdvanceStage}
+                className="ml-1 px-2 py-0.5 rounded-full text-apple-11 font-semibold border border-hairline text-secondary hover:border-accent hover:text-accent focus:outline-none focus:ring-2 focus:ring-accent"
+              >
+                Move to {nextStage}
+              </button>
+            )}
           </div>
           {engagement.status === 'signed_off' && (
             <span className="px-2 py-0.5 rounded-full text-apple-11 font-semibold bg-verdigris-subtle text-verdigris border border-verdigris flex items-center gap-1">
@@ -87,12 +122,22 @@ export const AuditFileModal: React.FC = () => {
         </div>
         <h2 className="text-apple-17 font-bold text-primary">{engagement.title}</h2>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-apple-11 text-secondary">
-          <span className="capitalize">Status: {engagement.status.replace(/_/g, ' ')}</span>
+          <span className="capitalize">
+            Status:{' '}
+            <ExplainPopout explainId={`status.engagement.${engagement.status}`} screenId="AF-01" element={`explain-eng-status-${engagement.status}`}>
+              <span>{engagement.status.replace(/_/g, ' ')}</span>
+            </ExplainPopout>
+          </span>
           <span>•</span>
           <span>Due: {engagement.dueDate}</span>
           <span>•</span>
           <span>{workpapers.length} working papers</span>
         </div>
+        {stageError && (
+          <p data-testid="audit-file-stage-error" className="text-apple-12 text-cinnabar">{stageError}</p>
+        )}
+        {/* E6 §5.4 item 2: each lifecycle step shows the IIA standards it satisfies. */}
+        <StandardsAffordance kind="step" target={engagement.stage} screenId="AF-01" element="standards-step" label="This stage satisfies" className="pt-1" />
       </div>
 
       {/* View switch: the seed-backed Overview, or the database-backed phase workspaces (4I, 5G). */}
@@ -104,6 +149,7 @@ export const AuditFileModal: React.FC = () => {
           ['conclusion', 'Conclusion'],
           ['documents', 'Documents'],
           ['report', 'Report'],
+          ['builder', 'Report builder'],
           ['caps', 'CAP register'],
           ['certificate', 'Certificate'],
           ['export', 'Export'],
@@ -131,12 +177,12 @@ export const AuditFileModal: React.FC = () => {
           <PlanningPanel engagementId={engagement.id} />
           <PopulationPanel engagementId={engagement.id} />
           <AnalystEnginePanel engagementId={engagement.id} />
-          {workpapers[0] && (
-            <>
-              <SamplingPanel workpaperId={workpapers[0].id} />
-              <RowTestingPanel workpaperId={workpapers[0].id} />
-            </>
-          )}
+          <WorkpaperCreatePanel
+            engagementId={engagement.id}
+            controlId={workpapers[0]?.controlId ?? null}
+          />
+          <SamplingPanel workpaperId={workpapers[0]?.id ?? null} />
+          <RowTestingPanel workpaperId={workpapers[0]?.id ?? null} />
         </div>
       ) : phaseView === 'findings' ? (
         <div className="space-y-6" data-testid="audit-file-findings">
@@ -149,10 +195,16 @@ export const AuditFileModal: React.FC = () => {
       ) : phaseView === 'documents' ? (
         <div className="space-y-6" data-testid="audit-file-documents">
           <DocumentViewerPanel engagementId={engagement.id} />
+          {/* S7: the document/minutes/policy review runs over this engagement's documents. */}
+          <DocumentReviewPanel engagementId={engagement.id} />
         </div>
       ) : phaseView === 'report' ? (
         <div className="space-y-6" data-testid="audit-file-report">
           <ReportEditorPanel engagementId={engagement.id} />
+        </div>
+      ) : phaseView === 'builder' ? (
+        <div className="space-y-6" data-testid="audit-file-builder">
+          <ReportBuilderPanel />
         </div>
       ) : phaseView === 'caps' ? (
         <div className="space-y-6" data-testid="audit-file-caps">

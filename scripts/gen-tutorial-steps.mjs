@@ -114,10 +114,28 @@ const sentence = (kind, label, screen) => {
   }
 };
 
+/**
+ * A target that belongs to the other portal. A key's steps drive its own screen, so it must not
+ * drive a control only the other portal renders. The contract's testid prefixes name the portal:
+ * `superadmin-*` is the platform portal; `org-*` / `org_admin-*` / `oa-*` are the tenant one. A
+ * screen may list a neighbour's testid — OA-18 embeds the platform tutorial table with
+ * `audience="org_admin"`, so its section carries `superadmin-tutorials` too — so the pool must be
+ * filtered, never trusted. This mirrors src/guards/tutorialTargets.test.ts, which fails on exactly
+ * this, and the note on the OA-18 section: its step target is `org-tutorials`, not
+ * `superadmin-tutorials`.
+ */
+function foreignPortal(key, t) {
+  if (key.startsWith('oa.')) return t.startsWith('superadmin-');
+  if (key.startsWith('sa.')) return t.startsWith('org-') || t.startsWith('org_admin-') || t.startsWith('oa-');
+  return false;
+}
+
 /** The controls a person actually operates on a screen, in contract order. */
 function interactive(def) {
   const own = [...new Set((byScreen[def.screenId] ?? []).filter(usable))];
-  return own.filter((t) => !STATE.test(t) && !NEGATIVE.test(t.replace(SCOPE_PREFIX, '')));
+  return own.filter(
+    (t) => !foreignPortal(def.key, t) && !STATE.test(t) && !NEGATIVE.test(t.replace(SCOPE_PREFIX, '')),
+  );
 }
 
 /**

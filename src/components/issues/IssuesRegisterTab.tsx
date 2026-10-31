@@ -3,7 +3,10 @@ import { useScopedData } from '../../hooks/useScopedData';
 import { useFilterStore } from '../../context/FilterStore';
 import { useApp } from '../../context/AppContext';
 import { HoverPreview } from '../common/HoverPreview';
+import { StandardsAffordance } from '../explain/StandardsAffordance';
 import { CapRegisterPanel } from '../audit/CapRegisterPanel';
+import { IssueHeatMatrix } from './IssueHeatMatrix';
+import { getOrgLocalToday } from '../../lib/orgDate';
 import { PatternsPanel } from './PatternsPanel';
 import { AuditIssue, Severity } from '../../types';
 import {
@@ -71,6 +74,7 @@ export const IssuesRegisterTab: React.FC = () => {
           <p className="text-apple-15 text-secondary mt-1">
             Tracking concluded findings, remedial commitments and management action plans
           </p>
+          <StandardsAffordance kind="screen" target="IR-01" screenId="IR-01" element="standards" className="mt-2" />
         </div>
 
         {/* Action Gate: only non-auditees can raise observations */}
@@ -146,6 +150,13 @@ export const IssuesRegisterTab: React.FC = () => {
           })}
         </div>
       </div>
+
+      {/* WP-V slice 1: a severity × aging heat matrix beside the register table. */}
+      <IssueHeatMatrix
+        issues={filteredIssues}
+        asOf={getOrgLocalToday()}
+        onPickSeverity={(sev) => filter.setSeverity(sev)}
+      />
 
       {/* Issues Table */}
       <div className="bg-surface border border-hairline rounded-2xl shadow-apple overflow-hidden">

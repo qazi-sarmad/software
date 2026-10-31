@@ -24,8 +24,12 @@ additional_redirect_urls = ["http://localhost:3000"]
 jwt_expiry = 3600
 enable_signup = false
 
+[auth.hook.custom_access_token]
+enabled = true
+uri = "pg-functions://postgres/public/custom_access_token_hook"
+
 [auth.email]
-enable_signup = false
+enable_signup = true
 enable_confirmations = false
 
 [storage]

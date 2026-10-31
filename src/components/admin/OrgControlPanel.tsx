@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { hasRight } from '../../lib/rights';
+import { ENGINE_NAME } from '../../lib/product';
 import { listFeatureCatalogue, listTenantEntitlements, type FeatureRow } from '../../data/entitlements';
 import {
   acknowledgeConsultation, getActiveConsultation, requestConsultation, type ConsultationSession,
@@ -11,6 +12,8 @@ import { TutorialButton } from '../common/TutorialButton';
 import { OrgConfigHistory } from './OrgConfigHistory';
 import { SuperAdminTutorials } from '../superadmin/SuperAdminTutorials';
 import { ChangeControlPanel } from './ChangeControlPanel';
+import { ConnectorMonitorPanel } from '../writing/ConnectorMonitorPanel';
+import { ReportFormatPanel } from '../writing/ReportFormatPanel';
 import { OrgEmailPanel } from './OrgEmailPanel';
 import { OrgAutomationPanel } from './OrgAutomationPanel';
 import { OrgBrandingPanel } from './OrgBrandingPanel';
@@ -18,10 +21,22 @@ import { OrgEscalationPanel } from './OrgEscalationPanel';
 import { ExternalAuditorsPanel } from './ExternalAuditorsPanel';
 import { OrgHostingPanel } from './OrgHostingPanel';
 import { OrgGovernancePanel } from './OrgGovernancePanel';
+import { ReportTemplatePanel } from './ReportTemplatePanel';
+import { MethodologyPanel } from './MethodologyPanel';
+import { SharePanel } from './SharePanel';
+import { SsoPanel } from './SsoPanel';
+import { MfaPanel } from './MfaPanel';
+import { DataLifecyclePanel } from './DataLifecyclePanel';
+import { IntegrityAlarmPanel } from './IntegrityAlarmPanel';
+import { AttestationPanel } from './AttestationPanel';
+import { IncidentWizardPanel } from './IncidentWizardPanel';
+import { RulePackPanel } from './RulePackPanel';
+import { ArchivedFileRolePanel } from './ArchivedFileRolePanel';
+import { OrgReadinessPanel } from '../readiness/OrgReadinessPanel';
 import { InlineError } from '../common/InlineError';
-import { Check, Lock, Zap, Sliders, Users, Shield, History, Database } from '../common/Icons';
+import { Check, Lock, Zap, Sliders, Users, Shield, ShieldAlert, ShieldCheck, History, Database, FileCheck, Archive } from '../common/Icons';
 
-type Tab = 'features' | 'branding' | 'email' | 'automation' | 'escalation' | 'setup' | 'consultation' | 'auditors' | 'hosting' | 'governance' | 'history' | 'changes' | 'tutorials';
+type Tab = 'features' | 'branding' | 'email' | 'automation' | 'escalation' | 'setup' | 'consultation' | 'auditors' | 'hosting' | 'governance' | 'templates' | 'methodology' | 'history' | 'changes' | 'tutorials' | 'connectors' | 'formats' | 'sharing' | 'sso' | 'mfa' | 'data' | 'integrity' | 'attestation' | 'incidents' | 'packs' | 'archived-role' | 'readiness';
 type LoadState = 'loading' | 'ready' | 'error';
 
 /** F18: every configuration tab carries its own "Show me how" tutorial key (Appendix A). */
@@ -36,9 +51,23 @@ const TAB_TUTORIAL: Record<Tab, { key: string; title: string }> = {
   auditors: { key: 'oa.auditors', title: 'OA-14 external auditors' },
   hosting: { key: 'oa.hosting', title: 'OA-15 hosting and database' },
   governance: { key: 'oa.governance', title: 'OA-22 governance settings' },
+  templates: { key: 'oa.governance', title: 'OA-22 report template' },
+  methodology: { key: 'oa.governance', title: 'OA-22 methodology library' },
   history: { key: 'oa.history', title: 'OA-17 configuration history' },
   changes: { key: 'oa.history', title: 'OA-17 change control' },
   tutorials: { key: 'oa.tutorials', title: 'OA-18 tutorial library' },
+  connectors: { key: 'oa.connectors', title: 'OA-23 connectors and monitoring' },
+  formats: { key: 'oa.formats', title: 'OA-24 report format editor' },
+  sharing: { key: 'oa.governance', title: 'OA-22 governance settings' },
+  sso: { key: 'oa.governance', title: 'OA-22 governance settings' },
+  mfa: { key: 'oa.governance', title: 'OA-22 governance settings' },
+  data: { key: 'oa.governance', title: 'OA-22 governance settings' },
+  integrity: { key: 'oa.governance', title: 'OA-29 integrity alarm' },
+  attestation: { key: 'oa.governance', title: 'OA-30 attestation' },
+  incidents: { key: 'oa.governance', title: 'OA-31 incident wizard' },
+  packs: { key: 'oa.governance', title: `OA-33 ${ENGINE_NAME} rule packs` },
+  'archived-role': { key: 'oa.governance', title: 'OA-41 archived-file custodian role' },
+  readiness: { key: 'oa.governance', title: 'Readiness signals and complaints' },
 };
 
 /**
@@ -49,10 +78,10 @@ const TAB_TUTORIAL: Record<Tab, { key: string; title: string }> = {
  * wizard persists its state through src/data/setup.ts. The Dual Session tab shows the GL-01 banner
  * and lets the Org Admin end a session.
  */
-export const OrgControlPanel: React.FC = () => {
+export const OrgControlPanel: React.FC<{ initialTab?: Tab }> = ({ initialTab }) => {
   const { currentUser } = useApp();
   const canEdit = hasRight(currentUser, 'edit_config');
-  const [tab, setTab] = useState<Tab>('features');
+  const [tab, setTab] = useState<Tab>(initialTab ?? 'features');
   const [state, setState] = useState<LoadState>('loading');
   const [loadError, setLoadError] = useState('');
   const [catalogue, setCatalogue] = useState<FeatureRow[]>([]);
@@ -136,9 +165,23 @@ export const OrgControlPanel: React.FC = () => {
           { id: 'auditors', label: 'External auditors', icon: Shield },
           { id: 'hosting', label: 'Hosting', icon: Database },
           { id: 'governance', label: 'Governance', icon: Sliders },
+          { id: 'templates', label: 'Report template', icon: Sliders },
+          { id: 'methodology', label: 'Methodology', icon: History },
           { id: 'history', label: 'History', icon: History },
           { id: 'changes', label: 'Change control', icon: Shield },
           { id: 'tutorials', label: 'Tutorials', icon: History },
+          { id: 'connectors', label: 'Connectors', icon: Database },
+          { id: 'formats', label: 'Report formats', icon: Sliders },
+          { id: 'sharing', label: 'Sharing', icon: Users },
+          { id: 'sso', label: 'Single sign-on', icon: Shield },
+          { id: 'mfa', label: 'Multi-factor', icon: Shield },
+          { id: 'data', label: 'Data erasure', icon: Database },
+          { id: 'integrity', label: 'Integrity', icon: ShieldAlert },
+          { id: 'attestation', label: 'Attestation', icon: FileCheck },
+          { id: 'incidents', label: 'Incidents', icon: ShieldAlert },
+          { id: 'packs', label: 'Rule packs', icon: ShieldCheck },
+          { id: 'archived-role', label: 'Archived files', icon: Archive },
+          { id: 'readiness', label: 'Readiness', icon: ShieldAlert },
         ] as { id: Tab; label: string; icon: React.FC<{ className?: string }> }[]).map((t) => {
           const Icon = t.icon;
           return (
@@ -254,8 +297,22 @@ export const OrgControlPanel: React.FC = () => {
         </div>
       )}
 
+      {tab === 'connectors' && <ConnectorMonitorPanel />}
+      {tab === 'formats' && <ReportFormatPanel />}
+      {tab === 'sharing' && <SharePanel />}
+      {tab === 'sso' && <SsoPanel />}
+      {tab === 'mfa' && <MfaPanel />}
+      {tab === 'data' && <DataLifecyclePanel />}
+      {tab === 'integrity' && <IntegrityAlarmPanel screenId="OA-29" />}
+      {tab === 'attestation' && <AttestationPanel screenId="OA-30" />}
+      {tab === 'incidents' && <IncidentWizardPanel screenId="OA-31" />}
+      {tab === 'packs' && <RulePackPanel screenId="OA-33" />}
+      {tab === 'archived-role' && <ArchivedFileRolePanel screenId="OA-41" />}
+      {tab === 'readiness' && <OrgReadinessPanel />}
       {tab === 'hosting' && <OrgHostingPanel />}
       {tab === 'governance' && <OrgGovernancePanel />}
+      {tab === 'templates' && <ReportTemplatePanel />}
+      {tab === 'methodology' && <MethodologyPanel />}
       {tab === 'history' && <OrgConfigHistory />}
       {tab === 'changes' && <ChangeControlPanel mode="settings" />}
       {tab === 'tutorials' && (

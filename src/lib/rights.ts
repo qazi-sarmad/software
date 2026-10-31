@@ -106,3 +106,32 @@ export function hasAnyAuditRight(user: User | null | undefined): boolean {
 export function isReadOnly(user: User | null | undefined): boolean {
   return hasRight(user, 'read_only') && !hasRight(user, 'perform_work') && !hasRight(user, 'review_and_approve');
 }
+
+/**
+ * The human-readable name of a role slug. The slug is a machine identifier (`org_admin`); showing it
+ * raw puts an uppercase snake-case token in front of a person. The names are the ones the database
+ * seeds in `roles.name` (migration 0097 `seed_role_matrix`), so the label matches what the People
+ * screen shows. An unknown slug (a tenant's own role, which the header never sees) falls back to a
+ * title-cased form rather than leaking the raw slug.
+ */
+const ROLE_LABEL: Record<Role, string> = {
+  cia: 'CIA',
+  org_admin: 'Org Admin',
+  audit_manager: 'Audit Manager',
+  reviewer: 'Reviewer',
+  preparer: 'Preparer',
+  observer: 'Observer',
+  auditee: 'Auditee',
+};
+
+export function roleLabel(role: Role | string | null | undefined): string {
+  if (!role) return '';
+  return (
+    ROLE_LABEL[role as Role] ??
+    String(role)
+      .split(/[_\s]+/)
+      .filter(Boolean)
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(' ')
+  );
+}

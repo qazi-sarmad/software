@@ -4,7 +4,7 @@
 -- the `certificates` entitlement and a sealed engagement; the cert_hash is computed in the database;
 -- a ledger entry (certificate_issued) is written; revoking needs can_reopen and a reason and writes
 -- certificate_revoked; reopening an engagement supersedes its certificate; the anonymous surface is
--- exactly two functions that return only status / issued_at / hash / counts; the organisation name and
+-- exactly three functions (the third is verify_report_root, W10.3) that return only status / issued_at / hash / counts; the organisation name and
 -- title appear only when public_verify_show_title is on; cross-org isolation and RLS.
 \i supabase/tests/00_lib.sql
 select provio_test.seed();
@@ -167,7 +167,8 @@ begin
 end $$;
 
 -- ---------------------------------------------------------------------------
--- 7. The anonymous surface. Exactly two functions, and they return only the permitted fields.
+-- 7. The anonymous surface. Exactly three functions (W10.3 adds verify_report_root), and they
+--    return only the permitted fields.
 --
 --    Extension members (dblink and the like) are excluded. The hosted platform grants EXECUTE to anon
 --    on them through its own default privileges, and the migration role does not own them, so no
@@ -190,10 +191,10 @@ begin
      and d.objid is null;
   perform provio_test.assert_eq(
     (select count(*) from unnest(coalesce(v_anon, '{}'::text[])) s
-      where s not in ('verify_certificate','verify_board_pack')), 0,
-    'no function other than the two verification functions is granted to anon: ' ||
+      where s not in ('verify_certificate','verify_board_pack','verify_report_root')), 0,
+    'no function other than the three verification functions is granted to anon: ' ||
       coalesce((select string_agg(s, ', ' order by s) from unnest(coalesce(v_anon, '{}'::text[])) s
-                 where s not in ('verify_certificate','verify_board_pack')), 'none'));
+                 where s not in ('verify_certificate','verify_board_pack','verify_report_root')), 'none'));
 
   select array_agg(distinct p.proname) into v_ext
     from pg_proc p join pg_namespace n on n.oid = p.pronamespace
@@ -207,7 +208,7 @@ begin
   end if;
 end $$;
 
--- The anon role can execute exactly the two functions and selects nothing: for every tenant table it
+-- The anon role can execute exactly the three functions and selects nothing: for every tenant table it
 -- either holds no privilege (a permission error) or holds the 0008 blanket SELECT but the
 -- authenticated-only RLS policy yields zero rows. Either way anon sees nothing.
 select provio_test.as_anon();

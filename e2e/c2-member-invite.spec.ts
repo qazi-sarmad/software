@@ -53,6 +53,12 @@ function serviceClient(): SupabaseClient {
 
 test.describe('C2.4: colleague invitation end to end', () => {
   test('[E2E] invite, accept the link, and the membership carries the invited role', async ({ page }) => {
+    // This is the longest end-to-end spec: three sign-ins, two sign-outs, the invitee's account
+    // creation and around ten service-role reads and writes, all against the shared hosted project.
+    // It passes at ~21s on a quiet project, but the shared project is hammered by the SQL suite in
+    // step 7 immediately before Playwright runs, so the 30s default tipped over. The assertions are
+    // unchanged; only the budget is raised, so a genuine failure still fails.
+    test.setTimeout(90_000);
     const sb = serviceClient();
 
     // Start clean: remove any residue from an earlier run of this spec.

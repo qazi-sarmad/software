@@ -20,13 +20,22 @@ const EntityApprovalPanel = lazy(() => import('../universe/EntityApprovalPanel')
 const DeploymentGatePanel = lazy(() => import('../audit/DeploymentGatePanel').then((m) => ({ default: m.DeploymentGatePanel })));
 const EthicsPanel = lazy(() => import('../audit/EthicsPanel').then((m) => ({ default: m.EthicsPanel })));
 const CombinedApprovalPanel = lazy(() => import('../plan/CombinedApprovalPanel').then((m) => ({ default: m.CombinedApprovalPanel })));
-const SiraModelEditor = lazy(() => import('../sira/SiraModelEditor').then((m) => ({ default: m.SiraModelEditor })));
-const SiraCyclePanel = lazy(() => import('../sira/SiraCyclePanel').then((m) => ({ default: m.SiraCyclePanel })));
+const SiraModelInspector = lazy(() => import('../sira/SiraModelInspector').then((m) => ({ default: m.SiraModelInspector })));
+const SiraCyclesInspector = lazy(() => import('../sira/SiraCyclesInspector').then((m) => ({ default: m.SiraCyclesInspector })));
 const PlanItemsPanel = lazy(() => import('../plan/PlanItemsPanel').then((m) => ({ default: m.PlanItemsPanel })));
+const PlanDeploymentPanel = lazy(() => import('../plan/PlanDeploymentPanel').then((m) => ({ default: m.PlanDeploymentPanel })));
+const PriorYearRollforwardPanel = lazy(() => import('../plan/PriorYearRollforwardPanel').then((m) => ({ default: m.PriorYearRollforwardPanel })));
 const ImportWizardPanel = lazy(() => import('../admin/ImportWizardPanel').then((m) => ({ default: m.ImportWizardPanel })));
 const ActivityLogPanel = lazy(() => import('../admin/ActivityLogPanel').then((m) => ({ default: m.ActivityLogPanel })));
 const OrgControlPanel = lazy(() => import('../admin/OrgControlPanel').then((m) => ({ default: m.OrgControlPanel })));
+const SharedWithMePanel = lazy(() => import('../admin/SharePanel').then((m) => ({ default: m.SharePanel })));
 const FindingDrilldown = lazy(() => import('../issues/FindingDrilldown').then((m) => ({ default: m.FindingDrilldown })));
+const GlobalSearchPanel = lazy(() => import('../documents/GlobalSearchPanel').then((m) => ({ default: m.GlobalSearchPanel })));
+const AdhocReviewPanel = lazy(() => import('../documents/AdhocReviewPanel').then((m) => ({ default: m.AdhocReviewPanel })));
+const StandardsView = lazy(() => import('../explain/StandardsView').then((m) => ({ default: m.StandardsView })));
+const AssuranceCapabilitiesPanel = lazy(() => import('../assurance/AssuranceCapabilitiesPanel').then((m) => ({ default: m.AssuranceCapabilitiesPanel })));
+const ClientClassificationPanel = lazy(() => import('../universe/ClientClassificationPanel').then((m) => ({ default: m.ClientClassificationPanel })));
+const RiskLibraryPanel = lazy(() => import('../sira/RiskLibraryPanel').then((m) => ({ default: m.RiskLibraryPanel })));
 
 export const INSPECTOR_TITLES: Record<InspectorType, string> = {
   observation: 'Audit Observation & 5C Analysis',
@@ -47,10 +56,19 @@ export const INSPECTOR_TITLES: Record<InspectorType, string> = {
   sira_model: 'SIRA Model',
   sira_cycles: 'SIRA Cycles & Emergent Risks',
   plan_items: 'Audit Plan Items',
+  deployment_plan: 'Deploy from the plan',
+  prior_year_rollforward: 'Prior-year roll-forward',
   import_wizard: 'Import',
   activity_log: 'Activity Log',
   org_control: 'Assurance control plane',
+  shared_with_me: 'Shared with you',
   finding: 'Audit Finding',
+  global_search: 'Search all documents',
+  adhoc_review: 'Build an ad-hoc rule',
+  assurance_caps: 'Assurance capabilities',
+  classification: 'Client classification',
+  risk_library: 'Risk library & dynamic assessment',
+  standards: 'IIA Standards',
 };
 
 /** Record type in a URL (/view/:recordType/:id) to the inspector content it shows. */
@@ -111,19 +129,37 @@ export const RecordContent: React.FC<RecordContentProps> = ({ type, data, onClos
         case 'combined_approval':
           return <CombinedApprovalPanel request={data?.request ?? null} universeId={data?.universeId} entityId={data?.entityId} onRequested={onClose} />;
         case 'sira_model':
-          return <SiraModelEditor model={data?.model ?? null} />;
+          return <SiraModelInspector />;
         case 'sira_cycles':
-          return <SiraCyclePanel cycles={data?.cycles ?? []} emergent={data?.emergent ?? []} />;
+          return <SiraCyclesInspector universeId={data?.universeId} />;
         case 'plan_items':
           return <PlanItemsPanel items={data?.items ?? []} versions={data?.versions ?? []} />;
+        case 'deployment_plan':
+          return <PlanDeploymentPanel universeId={data?.universeId} engagementId={data?.engagementId} onDeployed={data?.onDeployed} />;
+        case 'prior_year_rollforward':
+          return <PriorYearRollforwardPanel engagements={data?.engagements ?? []} />;
         case 'import_wizard':
           return <ImportWizardPanel />;
         case 'activity_log':
           return <ActivityLogPanel />;
         case 'org_control':
-          return <OrgControlPanel />;
+          return <OrgControlPanel initialTab={data?.tab} />;
+        case 'shared_with_me':
+          return <SharedWithMePanel mode="grantee" />;
         case 'finding':
           return <FindingDrilldown findingId={data?.findingId} />;
+        case 'global_search':
+          return <GlobalSearchPanel />;
+        case 'adhoc_review':
+          return <AdhocReviewPanel />;
+        case 'assurance_caps':
+          return <AssuranceCapabilitiesPanel />;
+        case 'classification':
+          return <ClientClassificationPanel />;
+        case 'risk_library':
+          return <RiskLibraryPanel />;
+        case 'standards':
+          return <StandardsView screenId="OA-19" />;
         default:
           return null;
       }

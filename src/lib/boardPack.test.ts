@@ -93,7 +93,66 @@ describe('figuresWithoutRefs', () => {
   });
 });
 
+describe('collectFigures — the depth fields (migration 0099)', () => {
+  it('collects a heatmap cell as a figure with a stable path', () => {
+    const rows = collectFigures({
+      sira: {
+        bands: [],
+        heatmap: {
+          entities: ['Payroll'], bands: ['High'],
+          cells: [{ entity: 'Payroll', band: 'High', value: 2, refs: [ref('sira_score', 's1')] }],
+        },
+      },
+    });
+    const cell = rows.find((r) => r.path === 'sira.heatmap.cells[0]');
+    expect(cell).toBeDefined();
+    expect(cell!.value).toBe(2);
+    expect(cell!.label).toContain('Payroll');
+    expect(cell!.label).toContain('High');
+  });
+
+  it('collects each Gantt bar as a figure labelled with its title, not twice', () => {
+    const rows = collectFigures({
+      plan: {
+        value: 1, refs: [ref('plan_item', 'p1')],
+        gantt: [{ value: 1, refs: [ref('plan_item', 'p1')], title: 'Payroll audit', start: '2026-03-01', end: '2026-03-11' }],
+      },
+    });
+    const ganttRows = rows.filter((r) => r.path.startsWith('plan.gantt'));
+    expect(ganttRows).toHaveLength(1);
+    expect(ganttRows[0].label).toBe('Plan window: Payroll audit');
+  });
+
+  it('flags a non-zero heatmap cell that has no refs (the coverage hole guard)', () => {
+    const bad = figuresWithoutRefs({
+      sira: { heatmap: { entities: ['A'], bands: ['Low'], cells: [{ entity: 'A', band: 'Low', value: 3, refs: [] }] } },
+    });
+    expect(bad).toEqual(['sira.heatmap.cells[0]']);
+  });
+
+  it('flags a non-zero Gantt bar that has no refs', () => {
+    const bad = figuresWithoutRefs({
+      plan: { value: 1, refs: [ref('plan_item', 'p1')], gantt: [{ value: 1, refs: [], title: 'x', start: '2026-01-01', end: '2026-01-02' }] },
+    });
+    expect(bad).toEqual(['plan.gantt[0]']);
+  });
+
+  it('leaves a zero-value heatmap cell alone, as the database does', () => {
+    const bad = figuresWithoutRefs({
+      sira: { heatmap: { entities: ['A'], bands: ['Low'], cells: [{ entity: 'A', band: 'Low', value: 0, refs: [] }] } },
+    });
+    expect(bad).toEqual([]);
+  });
+});
+
 describe('deltaAgainst', () => {
+  it('reports a changed heatmap cell value', () => {
+    const before = { sira: { heatmap: { entities: ['A'], bands: ['Low'], cells: [{ entity: 'A', band: 'Low', value: 1, refs: [ref('sira_score', 's1')] }] } } };
+    const after = { sira: { heatmap: { entities: ['A'], bands: ['Low'], cells: [{ entity: 'A', band: 'Low', value: 4, refs: [ref('sira_score', 's1')] }] } } };
+    const delta = deltaAgainst(before, after);
+    expect(delta.changed).toEqual([{ path: 'sira.heatmap.cells[0]', label: 'SIRA heatmap: A × Low', from: 1, to: 4 }]);
+  });
+
   it('reports added, changed and removed figures', () => {
     const before: BoardPackSnapshot = { cap: { '0-30': { value: 1, refs: [ref('cap', 'a')] } } };
     const after: BoardPackSnapshot = {

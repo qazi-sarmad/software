@@ -23,7 +23,7 @@ const ORG_TAB = {
   'oa.hosting': 'hosting', 'oa.migration': 'hosting', 'oa.deployment-kit': 'hosting',
   'oa.retire-old': 'hosting', 'oa.history': 'history', 'oa.tutorials': 'tutorials',
   'oa.invite': 'tutorials', 'oa.patterns-config': 'features', 'oa.dual-session': 'consultation',
-  'oa.governance': 'governance',
+  'oa.governance': 'governance', 'oa.connectors': 'connectors', 'oa.formats': 'formats',
 };
 
 /** The platform console tab each SA key lives on. */
@@ -38,7 +38,7 @@ const SA_TAB = {
   'sa.automation': 'automation', 'sa.templates': 'automation',
   'sa.hosting-fit': 'hosting', 'sa.hosting-rules': 'hosting', 'sa.migration': 'migration',
   'sa.tutorials': 'tutorials', 'sa.features': 'features', 'sa.plans': 'features',
-  'sa.trail': 'trail',
+  'sa.trail': 'trail', 'sa.integrity-anchoring': 'integrity',
 };
 
 /** Where a key's screen is, as a plan the recorder follows. */
@@ -62,6 +62,8 @@ export function captureFor(def) {
     // WK-05 and WK-09 are Audit File window views, not Dashboard blocks.
     if (key === 'oa.certificate') return { kind: 'audit-file', view: 'certificate' };
     if (key === 'oa.timetravel') return { kind: 'audit-file', view: 'as_of' };
+    // WK-11 is the Report builder view of the Audit File window (WRITE-1).
+    if (key === 'oa.report-builder') return { kind: 'audit-file', view: 'builder' };
     // WK-10 is the Patterns view of the Issues & CAP Register.
     if (key === 'oa.patterns') return { kind: 'issues', view: 'patterns' };
     // WK-08 renders in the Work Queue tab.

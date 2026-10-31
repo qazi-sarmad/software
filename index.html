@@ -9,9 +9,18 @@
     <meta property="og:description" content="Cryptographically sealed enterprise internal-audit platform with deterministic testing math, verifiable populations, and immutable hash-chained ledger." />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+    <!-- Security headers (WP10). The full policy — including Content-Security-Policy — is set as a
+         response header in public/_headers (static hosts) and vite.config.ts (preview). It is NOT a
+         meta tag here: a meta CSP would also apply to the Vite dev server, whose inline React-refresh
+         preamble a strict `script-src 'self'` blocks, and the browser would never mount the app.
+         Fonts are self-hosted (@fontsource, see src/index.css), so the policy allows no external
+         origin at all; the only external connection is the Supabase project. -->
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="color-scheme" content="light dark" />
+    <!-- Fonts are self-hosted (F1, docs/FONT-REPOSITORY.md). There is deliberately NO request to
+         Google's font CDN: such a link would leak every client's IP to a third
+         party and break offline. The families ship in the bundle via @fontsource (src/index.css). -->
   </head>
   <body>
     <div id="root"></div>

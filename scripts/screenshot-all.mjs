@@ -131,6 +131,7 @@ const CAPTURES = [
   { id: 'WK-08', who: CIA, ready: 'wk-escalation', open: async (p) => { await tab(p, 'Work Queue'); }, note: 'escalation cards and proposals' },
   { id: 'WK-09', who: CIA, ready: 'wk-timetravel', open: async (p) => { await openEngagement(p); await p.getByTestId('audit-file-view-as_of').click(); }, note: 'Time-Travel (offered only with view_insights)' },
   { id: 'WK-10', who: CIA, ready: 'oa-patterns-config', open: async (p) => { await tab(p, 'Issues & CAP Register'); await p.getByTestId('issues-view-patterns').click(); }, note: 'cross-engagement patterns' },
+  { id: 'WK-11', who: CIA, ready: 'wk-report-builder-panel', open: async (p) => { await openEngagement(p); await p.getByTestId('audit-file-view-builder').click(); }, note: 'report builder (WRITE-1, W12)' },
 
   // ---- External auditor portal (EX-01..EX-04) --------------------------------------------------
   { id: 'EX-01', who: EXTERNAL, ready: 'ex-portal', open: async (p) => { await goto(p, '/external'); }, note: 'external auditor portal' },

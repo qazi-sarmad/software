@@ -8,6 +8,12 @@
  * (L1): no randomness, no AI.
  */
 
+/** The SIRA heatmap and the plan Gantt shapes live with their own pure module; re-exported types
+ *  keep the snapshot interface in one place. */
+import type { GanttRow, SiraHeatmap } from './boardPackVisuals';
+
+export type { GanttRow, SiraHeatmap };
+
 /** A pointer to the sealed or ledgered record a figure came from. */
 export interface FigureRef {
   type: string;
@@ -26,8 +32,10 @@ export interface BoardPackSnapshot {
   org_id?: string;
   from_ts?: string;
   to_ts?: string;
-  sira?: { bands?: Figure[] };
-  plan?: Figure & { by_status?: Figure[] };
+  /** `heatmap` is the entity × band grid (migration 0099); older packs carry only `bands`. */
+  sira?: { bands?: Figure[]; heatmap?: SiraHeatmap };
+  /** `gantt` is one row per dated plan item (migration 0099); older packs carry only the counts. */
+  plan?: Figure & { by_status?: Figure[]; gantt?: GanttRow[] };
   cap?: Record<string, Figure>;
   sealed_work?: Figure & { sealed_engagements?: Figure; root_hashes?: unknown[] };
   management_responses?: Figure;
@@ -122,6 +130,8 @@ export function collectFigures(snapshot: BoardPackSnapshot | null | undefined): 
     push(path, label, node);
     for (const [key, child] of Object.entries(node)) {
       if (key === 'value' || key === 'refs') continue;
+      // `gantt` is pushed by the caller with a title-bearing label, so the generic walk skips it.
+      if (key === 'gantt') continue;
       if (Array.isArray(child)) {
         child.forEach((c, i) => {
           if (isFigure(c)) push(`${path}.${key}[${i}]`, label, c);
@@ -138,7 +148,15 @@ export function collectFigures(snapshot: BoardPackSnapshot | null | undefined): 
       push(`sira.bands[${i}]`, `SIRA residual risk: ${band}`, b);
     });
   }
+  // The heatmap cells are figures too, so a cell with a value and no refs fails loudly (F10).
+  (snapshot.sira?.heatmap?.cells ?? []).forEach((c, i) => {
+    push(`sira.heatmap.cells[${i}]`, `SIRA heatmap: ${c.entity} × ${c.band}`, c as unknown as Figure);
+  });
   if (snapshot.plan) walk('plan', 'Audit plan items', snapshot.plan);
+  // Each Gantt bar carries value 1 and its own ref, so it is a figure like any other.
+  (snapshot.plan?.gantt ?? []).forEach((g, i) => {
+    push(`plan.gantt[${i}]`, `Plan window: ${g.title ?? `item ${i + 1}`}`, g as unknown as Figure);
+  });
   if (snapshot.cap) {
     for (const [band, fig] of Object.entries(snapshot.cap)) {
       if (isFigure(fig)) push(`cap.${band}`, `CAP aging: ${capBandLabel(band)}`, fig);

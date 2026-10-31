@@ -34,13 +34,13 @@ vi.mock('../../data/conclusion', () => ({
 
 const searchDocs = vi.fn();
 const listFiles = vi.fn();
-const requestExtract = vi.fn();
+const extractDoc = vi.fn();
 
 vi.mock('../../data/documents', () => ({
   isDocumentStage: (v: unknown) => v === 'planning' || v === 'testing' || v === 'conclusion',
   searchDocuments: (...a: unknown[]) => searchDocs(...a),
   listEvidenceFiles: () => listFiles(),
-  requestExtraction: (...a: unknown[]) => requestExtract(...a),
+  extractDocument: (...a: unknown[]) => extractDoc(...a),
 }));
 
 const userRef = { current: { role: 'cia', rights: { perform_work: true, review_and_approve: true } } };
@@ -75,7 +75,7 @@ describe('Phase 5 UI panels (5G)', () => {
     testingOk.mockResolvedValue(true);
     searchDocs.mockResolvedValue([]);
     listFiles.mockResolvedValue([]);
-    requestExtract.mockResolvedValue({ ok: true });
+    extractDoc.mockResolvedValue({ status: 'done', extractor: 'mammoth', pageCount: null, characters: 10, reason: null });
   });
 
   describe('FindingsPanel', () => {
@@ -196,7 +196,7 @@ describe('Phase 5 UI panels (5G)', () => {
       render(<DocumentViewerPanel engagementId="e1" />);
       const btn = await screen.findByTestId('document-extract-f2');
       fireEvent.click(btn);
-      await waitFor(() => expect(requestExtract).toHaveBeenCalledWith('f2'));
+      await waitFor(() => expect(extractDoc).toHaveBeenCalledWith('f2'));
     });
   });
 });

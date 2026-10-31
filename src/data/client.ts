@@ -1,5 +1,6 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type { Role, User } from '../types';
+import { decodeJwtPayload } from '../lib/claims';
 
 export type SignInOutcome = { ok: true } | { ok: false; reason: string };
 
@@ -20,6 +21,12 @@ function config(): { url: string; key: string } | null {
   const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
   if (!url || !key) return null;
   return { url, key };
+}
+
+/** True when a Supabase project is configured for this build. The shell uses it to choose the
+ * database loader over the dev-only demo tenant. */
+export function hasSupabaseConfig(): boolean {
+  return config() !== null;
 }
 
 let client: SupabaseClient | null = null;
@@ -79,6 +86,14 @@ export async function refreshAuthToken(): Promise<boolean> {
   if (!sb) return false;
   const { data, error } = await sb.auth.refreshSession();
   return !error && data.session !== null;
+}
+
+/** The decoded claims of the current session's access token, or null when there is no session. */
+export async function sessionClaims(): Promise<Record<string, unknown> | null> {
+  const sb = getClient();
+  if (!sb) return null;
+  const { data } = await sb.auth.getSession();
+  return decodeJwtPayload(data.session?.access_token ?? null);
 }
 
 export async function loadCurrentUser(): Promise<User | null> {

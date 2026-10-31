@@ -29,6 +29,8 @@ export interface LifecycleSettings {
   signoffRoleTesting: string;
   signoffRoleConclusion: string;
   reportOpinionRequired: boolean;
+  /** §10.1 hours of overlap before the Testing hard lock applies, 0..336. */
+  testingGraceHours: number;
 }
 
 export interface WorkflowSettings {
@@ -104,6 +106,7 @@ export async function getLifecycleSettings(): Promise<LifecycleSettings> {
     signoffRoleTesting: (r?.signoff_role_testing as string) ?? 'reviewer',
     signoffRoleConclusion: (r?.signoff_role_conclusion as string) ?? 'reviewer',
     reportOpinionRequired: Boolean(r?.report_opinion_required),
+    testingGraceHours: Number(r?.testing_grace_hours ?? 0),
   };
 }
 
@@ -114,6 +117,7 @@ export function saveLifecycleSettings(s: LifecycleSettings): Promise<DataResult>
     p_signoff_role_testing: s.signoffRoleTesting,
     p_signoff_role_conclusion: s.signoffRoleConclusion,
     p_report_opinion_required: s.reportOpinionRequired,
+    p_testing_grace_hours: s.testingGraceHours,
   }, NOT_CONFIGURED);
 }
 
@@ -285,4 +289,49 @@ export async function listBiParameters(): Promise<BiParameterRow[]> {
 
 export function setBiParameter(checkKey: string, value: number): Promise<DataResult> {
   return callRpc('admin_set_bi_parameter', { p_check_key: checkKey, p_value: value }, NOT_CONFIGURED);
+}
+
+/** The report section ids the report editor can render (§15.2). A template may only name these. */
+export const REPORT_SECTION_IDS = ['executive_summary', 'scope', 'findings', 'opinion', 'appendices'] as const;
+export type ReportSectionId = (typeof REPORT_SECTION_IDS)[number];
+
+export interface ReportTemplateSection {
+  id: ReportSectionId;
+  order: number;
+}
+
+export interface ReportTemplateRow {
+  id: string;
+  modelId: string;
+  version: number;
+  title: string;
+  sections: ReportTemplateSection[];
+  updatedAt: string | null;
+}
+
+/** The organisation's current report template per model (§15.2). */
+export async function listReportTemplates(): Promise<ReportTemplateRow[]> {
+  const r = await rpcJson('report_template_list', {});
+  if (!Array.isArray(r)) return [];
+  return (r as Record<string, unknown>[]).map((t) => ({
+    id: t.id as string,
+    modelId: (t.model_id as string) ?? '',
+    version: Number(t.version ?? 1),
+    title: (t.title as string) ?? '',
+    sections: ((t.sections as { id: string; order: number }[]) ?? []).map((s) => ({
+      id: s.id as ReportSectionId, order: Number(s.order ?? 0),
+    })),
+    updatedAt: (t.updated_at as string) ?? null,
+  }));
+}
+
+/** Save a new version of the organisation's report template for a model (§15.2, §23). */
+export function saveReportTemplate(
+  modelId: string, title: string, sections: ReportSectionId[]
+): Promise<DataResult> {
+  return callRpc('report_template_save', {
+    p_model_id: modelId,
+    p_title: title,
+    p_sections: sections.map((id) => ({ id })),
+  }, NOT_CONFIGURED);
 }

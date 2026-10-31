@@ -1,0 +1,116 @@
+/**
+ * Write-path data module (Phase 1, task 1.4).
+ *
+ * Every shell mutation that used to change only the in-memory seed gets a real write here. The shell
+ * calls these when a Supabase project is configured; with no project (a bare dev checkout) it keeps
+ * the in-memory demo behaviour. The one rule: a mutation that matters is an RPC, never a local
+ * `setState`. Components never import this module directly — the shell does, through AppContext.
+ */
+import { callRpc, getClient, NOT_CONFIGURED_REASON, type DataResult } from './db';
+
+/** Seal an engagement from the Audit File review surface (migration 0100). */
+export function sealEngagement(engagementId: string): Promise<DataResult> {
+  return callRpc('seal_engagement', { p_engagement_id: engagementId });
+}
+
+/**
+ * Move an engagement forward one stage (migration 0101). p_expected_stage is optimistic
+ * concurrency: the stage the caller saw. The database refuses a stale value, a backward move and a
+ * move whose pre-conditions (planning sign-off, testing_mode) are not met.
+ */
+export function setEngagementStage(
+  engagementId: string, toStage: string, expectedStage: string | null
+): Promise<DataResult> {
+  return callRpc('set_engagement_stage', {
+    p_engagement_id: engagementId, p_to_stage: toStage, p_expected_stage: expectedStage,
+  });
+}
+
+/** Reopen a sealed engagement with a justification (migration 0007). */
+export function reopenEngagement(engagementId: string, justification: string): Promise<DataResult> {
+  return callRpc('reopen_engagement', { p_engagement_id: engagementId, p_justification: justification });
+}
+
+/** Create a universe in the caller's organisation (U6, migration 0117). Returns the new id. */
+export async function createUniverse(
+  name: string, domain: string | null
+): Promise<{ ok: true; id: string } | { ok: false; reason: string }> {
+  const sb = getClient();
+  if (!sb) return { ok: false, reason: NOT_CONFIGURED_REASON };
+  const { data, error } = await sb.rpc('create_universe', { p_name: name, p_domain: domain });
+  if (error) return { ok: false, reason: error.message };
+  return { ok: true, id: String(data) };
+}
+
+/** Create a draft auditable entity in a universe (migration 0100). Returns the new id. */
+export async function addEntity(
+  universeId: string, name: string, kind: string | null
+): Promise<{ ok: true; id: string } | { ok: false; reason: string }> {
+  const sb = getClient();
+  if (!sb) return { ok: false, reason: NOT_CONFIGURED_REASON };
+  const { data, error } = await sb.rpc('add_entity', {
+    p_universe_id: universeId, p_name: name, p_kind: kind,
+  });
+  if (error) return { ok: false, reason: error.message };
+  return { ok: true, id: String(data) };
+}
+
+/** Tick or untick a test step, persisted (migration 0100). */
+export function setTestStepState(workpaperId: string, stepId: string, completed: boolean): Promise<DataResult> {
+  return callRpc('set_test_step_state', {
+    p_workpaper_id: workpaperId, p_step_id: stepId, p_completed: completed,
+  });
+}
+
+/** Record a verified population against a workpaper (migration 0100). */
+export function submitPopulation(
+  workpaperId: string, sha256: string, fileName: string, rowCount: number, totalCents: number
+): Promise<DataResult> {
+  return callRpc('submit_population', {
+    p_workpaper_id: workpaperId, p_sha256: sha256, p_file_name: fileName,
+    p_row_count: rowCount, p_total_cents: totalCents,
+  });
+}
+
+/** Conclude testing on a workpaper (migration 0100). */
+export function finalizeTesting(workpaperId: string): Promise<DataResult> {
+  return callRpc('finalize_testing', { p_workpaper_id: workpaperId });
+}
+
+/** Sign off a workpaper, sealing it (migration 0028). */
+export function signOffWorkpaper(workpaperId: string): Promise<DataResult> {
+  return callRpc('sign_off_workpaper', { p_workpaper_id: workpaperId });
+}
+
+/** Reopen a signed-off workpaper with a justification (migration 0028). */
+export function reopenWorkpaper(workpaperId: string, justification: string): Promise<DataResult> {
+  return callRpc('reopen_workpaper', { p_workpaper_id: workpaperId, p_justification: justification });
+}
+
+/**
+ * Create a testing workpaper in an engagement (migration 0116). Returns the new id. This is the one
+ * write path: before it existed nothing could create a workpaper, so in production the testing
+ * workspace had nothing to sample or test against. The database refuses a caller without
+ * perform_work, a sealed engagement, and an engagement whose planning is not signed off.
+ */
+export async function createWorkpaper(
+  engagementId: string, controlId: string | null, title: string | null
+): Promise<{ ok: true; id: string } | { ok: false; reason: string }> {
+  const sb = getClient();
+  if (!sb) return { ok: false, reason: NOT_CONFIGURED_REASON };
+  const { data, error } = await sb.rpc('create_workpaper', {
+    p_engagement_id: engagementId, p_control_id: controlId, p_title: title,
+  });
+  if (error) return { ok: false, reason: error.message };
+  return { ok: true, id: String(data) };
+}
+
+/** Raise an observation against an engagement (migration 0030). */
+export function createObservation(
+  engagementId: string, workpaperId: string | null, title: string,
+  sections: Record<string, string>
+): Promise<DataResult> {
+  return callRpc('create_observation', {
+    p_engagement_id: engagementId, p_workpaper_id: workpaperId, p_title: title, p_sections: sections,
+  });
+}

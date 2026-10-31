@@ -476,11 +476,15 @@ export const EngagementGantt: React.FC<EngagementGanttProps> = ({
               const { leftX, barWidth } = getBarBounds(eng);
               const state = getBarState(eng);
               const dynamicStyle = getDynamicStyle(leftX, barWidth);
+              // A short engagement gets the minimum 36px bar, too narrow for a title. Below this
+              // width the label is hidden and the bar carries the name on hover/focus instead, so a
+              // narrow bar never clips its title into an unreadable fragment.
+              const barLabelHidden = barWidth < 120;
 
               const previewData = {
                 title: eng.title,
                 category: `Fieldwork Stage: ${eng.stage.toUpperCase()}`,
-                subtitle: `${eng.completionPercent}% execution completed • Lead: ${eng.leadAuditorId}`,
+                subtitle: `${eng.completionPercent}% execution completed`,
                 status: state.label,
                 statusType:
                   state.type === 'concluded'
@@ -517,10 +521,11 @@ export const EngagementGantt: React.FC<EngagementGanttProps> = ({
                       onPointerMove={(e) => handleBarPointerMove(e, eng)}
                       onPointerUp={handleBarPointerUp}
                       data-testid={`gantt-bar-${eng.id}`}
+                      aria-label={`${eng.title}, ${state.label}, ${eng.completionPercent}% complete`}
                       className={`gantt-bar-element h-8 px-3 rounded-lg flex items-center justify-between text-apple-12 font-medium cursor-pointer transition-all hover:brightness-105 active:scale-95 shadow-xs overflow-hidden z-10 ${state.colorClass}`}
                     >
-                      <span className="truncate pr-2">{eng.title}</span>
-                      <span className="text-apple-11 font-semibold tabular-nums shrink-0 opacity-90">
+                      {!barLabelHidden && <span className="truncate pr-2">{eng.title}</span>}
+                      <span className="text-apple-11 font-semibold tabular-nums shrink-0 opacity-90 ml-auto">
                         {eng.completionPercent}%
                       </span>
                     </div>

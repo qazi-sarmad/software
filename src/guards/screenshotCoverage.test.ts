@@ -19,6 +19,7 @@ const APPENDIX_A = [
   ...Array.from({ length: 10 }, (_, i) => `WK-${String(i + 1).padStart(2, '0')}`),
   ...Array.from({ length: 4 }, (_, i) => `EX-${String(i + 1).padStart(2, '0')}`),
   'OA-22',
+  'WK-11',
 ].filter((id) => !RETIRED.has(id));
 
 describe('screenshot sweep coverage (C5.4)', () => {

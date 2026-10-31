@@ -3,19 +3,28 @@ import { motion } from 'motion/react';
 import { AppProvider, useApp } from './context/AppContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { SignInScreen } from './components/auth/SignInScreen';
+import { MfaChallenge } from './components/auth/MfaChallenge';
+import { isPlatformAdminPath } from './lib/platformPath';
 import { NoTenantScreen } from './components/auth/NoTenantScreen';
+import { WithheldScreen } from './components/auth/WithheldScreen';
 import { InlineError } from './components/common/InlineError';
+import { LiveAnnouncerProvider } from './components/common/LiveAnnouncer';
 import type { User } from './types';
 import type { TenantSeed } from './types/seed';
 import { EMPTY_SEED } from './data/emptySeed';
+import { hasSupabaseConfig } from './data/client';
+import { loadTenantSnapshot, snapshotToSeed } from './data/tenant';
 import { ThemeProvider } from './context/ThemeContext';
 import { HeaderBar } from './components/common/HeaderBar';
 import { NavStrip } from './components/common/NavStrip';
 import { CommandPalette } from './components/common/CommandPalette';
+import { ShortcutSheet } from './components/common/ShortcutSheet';
+import { matchShortcut, matchSequence, isMacPlatform, type Shortcut } from './lib/keyboardShortcuts';
 import { FloatingWindowManager, type OpenWindow } from './components/common/FloatingWindowManager';
 import { RecordContent, INSPECTOR_TITLES, RECORD_TYPE_TO_INSPECTOR } from './components/common/RecordContent';
 import { ReviewCommentsGlobalDock } from './components/reviews/ReviewCommentsGlobalDock';
 import { ConsultationBanner } from './components/common/ConsultationBanner';
+import { useRecordRevisionSync } from './hooks/useRecordRevisionSync';
 
 // React.lazy + Suspense code-splitting of tabs per Requirement 5(b)
 const ExecutiveDashboardTab = lazy(() =>
@@ -108,8 +117,61 @@ const LoadingFallback: React.FC = () => (
 );
 
 const AppContent: React.FC = () => {
-  const { activeTab, inspector, closeInspector, ledgerError, currentUser } = useApp();
+  const { activeTab, setActiveTab, inspector, closeInspector, ledgerError, currentUser, openInspector } = useApp();
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [isShortcutSheetOpen, setIsShortcutSheetOpen] = useState(false);
+
+  // The global keyboard layer (U8). `Cmd/Ctrl-K` opens the palette from anywhere; `?` opens the
+  // shortcut sheet; a `g`-prefixed sequence navigates without the mouse. The decisions (which
+  // shortcut a keydown is, and whether a bare letter must be suppressed inside a text field) live
+  // in the pure `src/lib/keyboardShortcuts.ts`; this effect only performs the resulting action.
+  useEffect(() => {
+    let pendingLeader: Shortcut | null = null;
+    let leaderTimer: number | undefined;
+    const clearLeader = () => {
+      pendingLeader = null;
+      if (leaderTimer) window.clearTimeout(leaderTimer);
+      leaderTimer = undefined;
+    };
+    const target = (e: KeyboardEvent) => e.target as HTMLElement | null;
+    const inEditable = (el: HTMLElement | null): boolean => {
+      if (!el) return false;
+      const tag = el.tagName;
+      return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || el.isContentEditable;
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      const editable = inEditable(target(e));
+      if (pendingLeader) {
+        const resolved = matchSequence(pendingLeader, e.key);
+        clearLeader();
+        if (resolved?.target.tab) {
+          e.preventDefault();
+          setActiveTab(resolved.target.tab);
+        }
+        return;
+      }
+      const hit = matchShortcut({ key: e.key, metaKey: e.metaKey, ctrlKey: e.ctrlKey, altKey: e.altKey, shiftKey: e.shiftKey, inEditable: editable }, isMacPlatform());
+      if (!hit) return;
+      if (hit.sequenceKey) {
+        e.preventDefault();
+        pendingLeader = hit;
+        leaderTimer = window.setTimeout(clearLeader, 1200);
+        return;
+      }
+      if (hit.target.commandPalette) {
+        e.preventDefault();
+        setIsCommandPaletteOpen((open) => !open);
+      } else if (hit.target.shortcutSheet) {
+        e.preventDefault();
+        setIsShortcutSheetOpen((open) => !open);
+      } else if (hit.target.inspector) {
+        e.preventDefault();
+        openInspector(hit.target.inspector as Parameters<typeof openInspector>[0]);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [setActiveTab, openInspector]);
 
   // One floating window for the current inspector record. The window id is derived from the record
   // so a re-opened record reuses the same window (and the dock restores it, not duplicates it).
@@ -152,13 +214,17 @@ const AppContent: React.FC = () => {
 
         <main className="flex-1 pb-16">
           <Suspense fallback={<LoadingFallback />}>
-            {activeTab === 'executive' && <ExecutiveDashboardTab />}
-            {activeTab === 'pending' && <PendingTasksTab />}
-            {activeTab === 'universe' && <AuditUniverseTab />}
-            {activeTab === 'plan' && <AuditPlanTab />}
-            {activeTab === 'sira' && <SiraTab />}
-            {activeTab === 'audit_file' && <AuditFileTab />}
-            {activeTab === 'issues' && <IssuesRegisterTab />}
+            {/* The tab root carries its own `data-testid` (`tab-<id>`) from ONE place, so every tab
+                screen is addressable without each component repeating the wrapper. */}
+            <div data-testid={`tab-${activeTab}`}>
+              {activeTab === 'executive' && <ExecutiveDashboardTab />}
+              {activeTab === 'pending' && <PendingTasksTab />}
+              {activeTab === 'universe' && <AuditUniverseTab />}
+              {activeTab === 'plan' && <AuditPlanTab />}
+              {activeTab === 'sira' && <SiraTab />}
+              {activeTab === 'audit_file' && <AuditFileTab />}
+              {activeTab === 'issues' && <IssuesRegisterTab />}
+            </div>
           </Suspense>
         </main>
 
@@ -179,6 +245,12 @@ const AppContent: React.FC = () => {
         isOpen={isCommandPaletteOpen}
         onClose={() => setIsCommandPaletteOpen(false)}
       />
+
+      {/* Keyboard shortcut sheet (U8). `?` opens it anywhere; non-blocking, never a modal. */}
+      <ShortcutSheet
+        isOpen={isShortcutSheetOpen}
+        onClose={() => setIsShortcutSheetOpen(false)}
+      />
     </div>
   );
 };
@@ -198,9 +270,15 @@ const EXTERNAL_TOKEN_HOLDER: User = {
 };
 
 /** Everything behind this gate needs an authenticated session. With none, the sign-in screen shows and no data is mounted. */
-// Tenant data is not part of the application bundle. The only source today is the flagged demo tenant, loaded by a
-// development-only dynamic import: in a production build this is null and the module is not emitted.
-const loadDemoSeed = import.meta.env.DEV ? () => import('./data/demoSeed').then((m) => m.demoSeed) : null;
+// Tenant data is not part of the application bundle. There are two sources:
+//   - a configured Supabase project: the shell hydrates from the database (src/data/tenant.ts), which
+//     is the production path. The row-level security policies decide what the session may read.
+//   - no Supabase project at all (a bare dev checkout): the flagged demo tenant, loaded by a
+//     development-only dynamic import. In a production build this is null and the module is not emitted.
+const loadDemoSeed = !hasSupabaseConfig() && import.meta.env.DEV
+  ? () => import('./data/demoSeed').then((m) => m.demoSeed)
+  : null;
+const useDatabase = hasSupabaseConfig();
 
 export interface ViewRecordTarget {
   recordType: string;
@@ -209,13 +287,34 @@ export interface ViewRecordTarget {
 
 const AuthGate: React.FC<{ viewRecord?: ViewRecordTarget; externalPortal?: boolean }> = ({ viewRecord, externalPortal }) => {
   const { user, status } = useAuth();
-  // In a production build there is no demo tenant to load, so the shell renders from the empty seed
-  // and every screen shows its designed empty state. In development the flagged demo tenant loads.
+  // With a configured project the seed starts empty and is filled by the database loader below; with
+  // no project the demo tenant (development) or the empty seed (production) is used.
   const [seed, setSeed] = useState<TenantSeed | null>(loadDemoSeed ? null : EMPTY_SEED);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     let live = true;
-    if (user && loadDemoSeed) {
+    setLoadError(null);
+    if (!user) {
+      setSeed(loadDemoSeed ? null : EMPTY_SEED);
+      return () => { live = false; };
+    }
+    if (useDatabase) {
+      // The database is the source of truth: hydrate the shell from RLS-scoped reads. A failed read is
+      // reported and the shell falls back to the empty seed rather than hanging on a spinner.
+      setSeed(null);
+      loadTenantSnapshot()
+        .then((snapshot) => {
+          if (live) setSeed(snapshotToSeed(snapshot, user));
+        })
+        .catch((err) => {
+          if (!live) return;
+          setLoadError(err instanceof Error ? err.message : 'Tenant data could not be loaded.');
+          setSeed(EMPTY_SEED);
+        });
+      return () => { live = false; };
+    }
+    if (loadDemoSeed) {
       loadDemoSeed().then((s) => {
         if (live) setSeed(s);
       });
@@ -237,6 +336,9 @@ const AuthGate: React.FC<{ viewRecord?: ViewRecordTarget; externalPortal?: boole
     );
   }
   if (status === 'no_tenant') return <NoTenantScreen />;
+  // The organisation's security policy withheld the tenant claims (0204 SSO, 0207 second factor).
+  // RLS already shows this member nothing; the screen offers the challenge or the SSO guidance.
+  if (status === 'withheld') return <WithheldScreen />;
   if (status === 'signed_out' || status === 'platform' || !user) return <SignInScreen />;
   // The external portal is only for that principal: a signed-in tenant member who opens /external is
   // told plainly, never shown the tenant shell.
@@ -253,6 +355,14 @@ const AuthGate: React.FC<{ viewRecord?: ViewRecordTarget; externalPortal?: boole
   if (!seed) return <LoadingFallback />;
   return (
     <AppProvider key={user.id} user={user} seed={seed}>
+      {loadError && (
+        <div className="max-w-7xl mx-auto w-full px-6 pt-4">
+          <InlineError
+            message={`Some tenant data could not be loaded from the database. ${loadError}`}
+            testId="tenant-load-error"
+          />
+        </div>
+      )}
       {viewRecord ? <RecordPage target={viewRecord} /> : <AppContent />}
     </AppProvider>
   );
@@ -265,6 +375,9 @@ const AuthGate: React.FC<{ viewRecord?: ViewRecordTarget; externalPortal?: boole
 const RecordPage: React.FC<{ target: ViewRecordTarget }> = ({ target }) => {
   const { openInspector, closeInspector } = useApp();
   const type = RECORD_TYPE_TO_INSPECTOR[target.recordType];
+  // §17.1 pop-out live sync: this page and the window that opened it share localStorage; a write in
+  // either window re-reads the record here. The revision is shown so the sync is observable.
+  const { revision, bump } = useRecordRevisionSync(target.recordType, target.recordId);
 
   useEffect(() => {
     if (!type) return;
@@ -276,7 +389,7 @@ const RecordPage: React.FC<{ target: ViewRecordTarget }> = ({ target }) => {
         : { id: target.recordId };
     openInspector(type, data);
     return () => closeInspector();
-  }, [type, target.recordId]);
+  }, [type, target.recordId, revision]);
 
   return (
     <div className="min-h-screen bg-canvas text-primary">
@@ -294,6 +407,18 @@ const RecordPage: React.FC<{ target: ViewRecordTarget }> = ({ target }) => {
           </button>
           <span aria-hidden>/</span>
           <span className="text-primary">{INSPECTOR_TITLES[type] ?? 'Record'}</span>
+          <span className="flex-1" />
+          <span className="text-apple-11 text-tertiary tabular-nums" data-testid="record-page-revision">
+            Revision {revision}
+          </span>
+          <button
+            type="button"
+            onClick={bump}
+            data-testid="record-page-refresh"
+            className="px-2 py-0.5 rounded-lg text-apple-12 text-accent border border-hairline hover:bg-surface"
+          >
+            Refresh
+          </button>
         </nav>
         {type ? (
           <div className="rounded-2xl border border-hairline bg-surface p-6" data-testid="record-page">
@@ -323,10 +448,15 @@ const SuperAdminPortal = lazy(() =>
 
 /** Shows the sign-in screen for an unauthenticated visitor, else the portal (which re-checks the role). */
 const PlatformGate: React.FC = () => {
-  const { user, isPlatform } = useAuth();
+  const { user, isPlatform, platformNeedsMfa, refreshPlatformMfa, withheld } = useAuth();
   // An org member (user) is signed in but not platform staff: render the portal, which denies it in
   // the database. Platform staff have no org identity, so `user` is null and `isPlatform` is true.
+  if (withheld) return <WithheldScreen />;
   if (!user && !isPlatform) return <SignInScreen />;
+  // WP9: when the platform requires a second factor and the session has not completed one, show the
+  // MFA challenge instead of the portal. The database refuses every platform RPC until AAL2, so this
+  // is the honest UI for a state the database already enforces.
+  if (platformNeedsMfa) return <MfaChallenge onSatisfied={() => void refreshPlatformMfa()} />;
   return <SuperAdminPortal />;
 };
 
@@ -343,11 +473,14 @@ const AppRoutes: React.FC = () => {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
-  // Public route /verify/:id (certificate) and /pack/:id (Board Pack). The ONLY anonymous surface
-  // (F11). Needs no session and touches no tenant table as anon.
-  if (currentPath.startsWith('/verify/') || currentPath.startsWith('/pack/')) {
-    const kind = currentPath.startsWith('/verify/') ? 'verify' : 'pack';
-    const id = currentPath.replace(kind === 'verify' ? '/verify/' : '/pack/', '').split('/')[0];
+  // Public route /verify/:id (certificate), /pack/:id (Board Pack) and /root/:hash (report graph
+  // root, W10.3). The ONLY anonymous surface (F11). Needs no session and touches no tenant table as
+  // anon.
+  if (currentPath.startsWith('/verify/') || currentPath.startsWith('/pack/') || currentPath.startsWith('/root/')) {
+    const kind = currentPath.startsWith('/verify/') ? 'verify'
+      : currentPath.startsWith('/pack/') ? 'pack' : 'root';
+    const prefix = kind === 'verify' ? '/verify/' : kind === 'pack' ? '/pack/' : '/root/';
+    const id = currentPath.replace(prefix, '').split('/')[0];
     return (
       <Suspense fallback={<LoadingFallback />}>
         <AppProvider user={EXTERNAL_TOKEN_HOLDER} seed={EMPTY_SEED}>
@@ -419,10 +552,12 @@ const AppRoutes: React.FC = () => {
     );
   }
 
-  // Super Admin portal (/superadmin, spec §24). A separate console for QSCorp platform staff. It
-  // renders the portal for an authenticated session and the sign-in screen otherwise; the portal
-  // itself re-checks the platform role in the database and shows a denial screen without it.
-  if (currentPath === '/superadmin') {
+  // Super Admin portal (spec §24). A separate console for QSCorp platform staff, reached only on the
+  // unlisted path in VITE_PLATFORM_ADMIN_PATH (WP9; default /superadmin). It renders the portal for
+  // an authenticated session and the sign-in screen otherwise; the portal itself re-checks the
+  // platform role in the database and shows a denial screen without it. No navigation link points
+  // here, and the path is not a constant in the bundle, so an attacker must know it already.
+  if (isPlatformAdminPath(currentPath)) {
     return (
       <Suspense fallback={<LoadingFallback />}>
         <PlatformGate />
@@ -443,9 +578,11 @@ const AppRoutes: React.FC = () => {
 export default function App() {
   return (
     <ThemeProvider>
-      <AuthProvider>
-        <AppRoutes />
-      </AuthProvider>
+      <LiveAnnouncerProvider>
+        <AuthProvider>
+          <AppRoutes />
+        </AuthProvider>
+      </LiveAnnouncerProvider>
     </ThemeProvider>
   );
 }

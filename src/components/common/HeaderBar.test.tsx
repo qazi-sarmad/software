@@ -41,12 +41,13 @@ describe('HeaderBar responsive entry points (D15)', () => {
 
   it('reflows the universe switcher into the profile menu on narrow screens', () => {
     renderHeader();
-    // The inline switcher is hidden below `md`.
-    const inline = screen.getByLabelText('Select audit universe');
+    // The inline switcher is hidden below `md`. The accessible name now carries the selection
+    // (WCAG 2.5.3), so match the prefix.
+    const inline = screen.getByLabelText(/^Select audit universe/);
     expect(inline.closest('.hidden')).not.toBeNull();
     // Opening the profile menu reveals a `md:hidden` copy of the same switcher.
-    fireEvent.click(screen.getByLabelText('Open user profile menu'));
-    const switchers = screen.getAllByLabelText('Select audit universe');
+    fireEvent.click(screen.getByLabelText(/^Open user profile menu/));
+    const switchers = screen.getAllByLabelText(/^Select audit universe/);
     expect(switchers.length).toBe(2);
     expect(screen.getByTestId('mobile-universe-switcher').className).toContain('md:hidden');
   });

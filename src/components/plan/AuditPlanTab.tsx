@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useScopedData } from '../../hooks/useScopedData';
 import { useApp } from '../../context/AppContext';
 import { HoverPreview } from '../common/HoverPreview';
+import { StandardsAffordance } from '../explain/StandardsAffordance';
 import { InlineError } from '../common/InlineError';
 import { HoldToConfirm } from '../common/HoldToConfirm';
 import { listDeploymentRequests, listGateOutcomes, type DeploymentRequestRow, type GateOutcomeRow } from '../../data/deployment';
@@ -151,6 +152,7 @@ export const AuditPlanTab: React.FC = () => {
           <p className="text-apple-15 text-secondary mt-1">
             Scoped audit portfolio, testing roadmaps, and reviewer attestation sign-offs
           </p>
+          <StandardsAffordance kind="screen" target="AP-01" screenId="AP-01" element="standards" className="mt-2" />
         </div>
         <div className="flex flex-wrap gap-2">
           <button
@@ -196,6 +198,27 @@ export const AuditPlanTab: React.FC = () => {
             className="px-3 py-1.5 rounded-lg border border-hairline text-apple-12 text-primary hover:bg-surface-hover"
           >
             Ethics
+          </button>
+          <button
+            type="button"
+            data-testid="plan-open-deployment"
+            onClick={() => openInspector('deployment_plan', {
+              universeId: selectedUniverseId ?? undefined,
+              engagementId: selectedEngagement?.id,
+            })}
+            className="px-3 py-1.5 rounded-lg border border-hairline text-apple-12 text-primary hover:bg-surface-hover"
+          >
+            Deploy from plan
+          </button>
+          <button
+            type="button"
+            data-testid="plan-open-rollforward"
+            onClick={() => openInspector('prior_year_rollforward', {
+              engagements: filteredEngagements.map((e) => ({ id: e.id, label: e.title })),
+            })}
+            className="px-3 py-1.5 rounded-lg border border-hairline text-apple-12 text-primary hover:bg-surface-hover"
+          >
+            Prior-year roll-forward
           </button>
         </div>
       </div>
@@ -255,12 +278,8 @@ export const AuditPlanTab: React.FC = () => {
                 subtitle: `Progress: ${eng.completionPercent}% • Due: ${eng.dueDate}`,
                 status: isLocked ? 'Sealed ✓' : eng.status.replace('_', ' ').toUpperCase(),
                 statusType: isLocked ? ('verdigris' as const) : ('neutral' as const),
-                owner: eng.leadAuditorId,
                 dueDate: eng.dueDate,
-                metrics: [
-                  { label: 'Start Date', value: eng.periodStart },
-                  { label: 'Reviewer', value: eng.reviewerId },
-                ],
+                metrics: [{ label: 'Start Date', value: eng.periodStart }],
                 hint: 'Click to select and view testing controls',
               };
 

@@ -47,7 +47,7 @@ describe('Organisation settings panel (C5)', () => {
     getEmail.mockResolvedValue(null);
     render(<OrgSettingsPanel />);
     await waitFor(() => expect(screen.getByTestId('org-settings-sampling')).toBeTruthy());
-    expect(screen.getByLabelText('Method for small')).toBeTruthy();
+    expect(screen.getByLabelText(/Method for small/)).toBeTruthy();
   });
 
   it('shows designed empty states', async () => {

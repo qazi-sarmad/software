@@ -50,6 +50,8 @@ export type AuditUniverse = {
 export type RiskRating = 'low' | 'medium' | 'high' | 'critical';
 export type ControlEffectiveness = 'effective' | 'needs_improvement' | 'ineffective' | 'not_tested';
 
+export type EntityApprovalStatus = 'draft' | 'pending' | 'approved' | 'rejected';
+
 export type AuditEntity = {
   id: string;
   universeId: string;
@@ -62,7 +64,11 @@ export type AuditEntity = {
   siraScore: number; // 0 - 100
   controlsCount: number;
   lastAuditDate: string;
+  /** Derived display state for the heatmap. Not the approval state. */
   status: 'active' | 'in_review' | 'dormant';
+  /** The database approval status (entities.status). Carried so a screen reads entities from one source. */
+  approvalStatus: EntityApprovalStatus;
+  rejectionReason: string | null;
 };
 
 export type EngagementStage = 'planning' | 'testing' | 'conclusion';
@@ -304,7 +310,7 @@ export type LedgerEntry = {
   eventType: LedgerEventType;
   entityId: string;
   recordId: string;
-  recordType: 'engagement' | 'workpaper' | 'plan' | 'control' | 'observation' | 'evidence' | 'cap_item' | 'entity' | 'population';
+  recordType: 'engagement' | 'workpaper' | 'plan' | 'control' | 'observation' | 'evidence' | 'cap_item' | 'entity' | 'population' | 'universe';
   payloadSummary: string;
   payloadHash: string;
   justification?: string;
@@ -347,6 +353,8 @@ export type AnalysisResultRow = {
   flagReason?: string;
   ruleId: AnalyticsRule;
   originalRowRef: number;
+  period?: string;
+  periodLabel?: string;
 };
 
 export type ActionType =

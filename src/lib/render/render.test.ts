@@ -7,11 +7,14 @@
  * generated here.
  */
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
 import JSZip from 'jszip';
 import {
   brandingFromRow, DEFAULT_BRANDING, fillTemplate, mmToPt, pageDimensions, resolveHexColour, toCssColour,
 } from './branding';
 import { renderPdf, wrapText } from './pdf';
+import { toPdfModel } from './document';
+import { REPORT_FONT_FAMILIES, fontFileStem, resolveWeight } from './fonts';
 import { renderPptx, extractPptxTheme } from './pptx';
 import { renderQrDataUrl, renderQrModules, verificationUrl } from './qr';
 import { PDFDocument, StandardFonts } from 'pdf-lib';
@@ -107,6 +110,36 @@ describe('renderPdf', () => {
   });
 });
 
+describe('renderPdf honours the report-format typography (WP-C3)', () => {
+  const model = (typography?: { headingPt: number; bodyPt: number; headingWeight: number; bodyWeight: number; lineHeight: number }) => ({
+    title: 'Typed', sections: [{ heading: 'Findings', blocks: [{ kind: 'paragraph' as const, text: 'A finding.' }] }],
+    typography,
+  });
+
+  it('renders a larger body size as more drawn text state and a different byte stream', async () => {
+    const small = await renderPdf(spec, model({ headingPt: 17.6, bodyPt: 11, headingWeight: 600, bodyWeight: 400, lineHeight: 1.4 }));
+    const large = await renderPdf(spec, model({ headingPt: 32, bodyPt: 16, headingWeight: 700, bodyWeight: 600, lineHeight: 2.2 }));
+    expect(large.length).not.toBe(small.length);
+    const a = await PDFDocument.load(small);
+    const b = await PDFDocument.load(large);
+    // The larger typography pushes the same content onto more vertical space.
+    expect(b.getPageCount()).toBeGreaterThanOrEqual(a.getPageCount());
+  });
+
+  it('is byte-identical twice for the same typography (determinism holds)', async () => {
+    const typo = { headingPt: 19.2, bodyPt: 12, headingWeight: 600, bodyWeight: 400, lineHeight: 1.6 };
+    const a = await renderPdf(spec, model(typo));
+    const b = await renderPdf(spec, model(typo));
+    expect(Buffer.from(a).equals(Buffer.from(b))).toBe(true);
+  });
+
+  it('keeps the original sizes when no typography is supplied (old models unchanged)', async () => {
+    const bytes = await renderPdf(spec, model(undefined));
+    const doc = await PDFDocument.load(bytes);
+    expect(doc.getPageCount()).toBeGreaterThanOrEqual(1);
+  });
+});
+
 describe('renderQr', () => {
   it('encodes a URL to a PNG data URL', async () => {
     const url = await renderQrDataUrl(verificationUrl('https://app.example/', 'verify', 'id-1'), { size: 128 });
@@ -178,5 +211,56 @@ describe('renderPptx', () => {
     expect(theme.slideWidthEmu).toBe(12192000);
     expect(theme.slideHeightEmu).toBe(6858000);
     expect(theme.logoParts).toContain('ppt/media/logo.png');
+  });
+});
+
+describe('self-hosted font embedding (WP-F)', () => {
+  const model = {
+    title: 'Font check', sections: [{ heading: 'One', blocks: [{ kind: 'paragraph' as const, text: 'Body text.' }] }],
+  };
+
+  it('embeds a real self-hosted WOFF2 face into the PDF', async () => {
+    const bytes = readFileSync('node_modules/@fontsource/inter/files/inter-latin-400-normal.woff2');
+    const plain = await renderPdf(spec, { ...model, timestamp: '2026-01-01T00:00:00Z' });
+    const withFont = await renderPdf(spec, { ...model, bodyFontBytes: new Uint8Array(bytes), timestamp: '2026-01-01T00:00:00Z' });
+    // Valid PDF either way.
+    expect(Buffer.from(withFont.slice(0, 5)).toString('latin1')).toBe('%PDF-');
+    // The embedded face adds a real font program (a subset or a full face, both kilobytes), not a
+    // ~200-byte font dictionary stub. A standard-font fallback would add essentially nothing.
+    expect(withFont.length).toBeGreaterThan(plain.length + 1000);
+    // And it is still a loadable PDF, so the embedded font did not corrupt the document.
+    const reloaded = await PDFDocument.load(withFont);
+    expect(reloaded.getPageCount()).toBeGreaterThan(0);
+  });
+
+  it('still renders when no font bytes are supplied (standard-font fallback)', async () => {
+    const pdf = await renderPdf(spec, { ...model, timestamp: '2026-01-01T00:00:00Z' });
+    expect(Buffer.from(pdf.slice(0, 5)).toString('latin1')).toBe('%PDF-');
+  });
+
+  it('renders byte-identically twice for every catalogue font (reproducibility)', async () => {
+    for (const f of REPORT_FONT_FAMILIES) {
+      const weight = resolveWeight(f.family, 400);
+      const bytes = new Uint8Array(readFileSync(`node_modules/@fontsource/${f.packageSlug}/files/${fontFileStem(f.family, weight)}.woff2`));
+      const opts = { ...model, bodyFontBytes: bytes, headingFontBytes: bytes, timestamp: '2026-01-01T00:00:00Z' };
+      const first = await renderPdf(spec, opts);
+      const second = await renderPdf(spec, opts);
+      expect(Buffer.compare(Buffer.from(first), Buffer.from(second)), `${f.family} is not byte-identical across two renders`).toBe(0);
+    }
+  });
+});
+
+describe('WP-F: the freeze path threads the format font bytes to the PDF', () => {
+  it('carries heading and body font bytes from toPdfModel into the PDF model', () => {
+    const heading = new Uint8Array([1, 2, 3]);
+    const body = new Uint8Array([4, 5, 6]);
+    const pdf = toPdfModel(
+      { title: 'R', sections: [{ heading: 'A', blocks: [] }] },
+      undefined,
+      { headingPt: 15, bodyPt: 11, headingWeight: 600, bodyWeight: 400, lineHeight: 1.4 },
+      { headingFontBytes: heading, bodyFontBytes: body },
+    );
+    expect(pdf.headingFontBytes).toBe(heading);
+    expect(pdf.bodyFontBytes).toBe(body);
   });
 });

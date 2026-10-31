@@ -1,3 +1,18 @@
+> ## ⚠️ STALE — ARCHIVED, DO NOT TRUST
+>
+> This document predates the code-verified audit of 2026-10-27/28 and is kept for history only.
+> Its status claims are **not** reliable: the audit found the app was not database-backed in
+> production, the engagement lifecycle was never persisted, several documented-as-Present features
+> were dead code, and many "all Present" claims were false.
+>
+> **Current sources of truth:**
+> - `docs/SPEC-v10.md` — the specification (unchanged, still authoritative)
+> - `docs/FUNCTIONALITY-AUDIT.md` — what is actually built (code-verified)
+> - `docs/REMEDIATION-PLAN.md` — the plan being executed
+> - `docs/SCALE-TASKS.md` — live task ledger
+>
+> Do not cite this file as evidence that anything works.
+
 # Provio Parity Report (against docs/SPEC-v10.md)
 
 > **Phase 3 (branch `phase-3-universe-plan`).** The parity rows below were written at the end of Phase 0 and Phase 1 and were **not** re-scored for Phase 2 or Phase 3. Read them together with the Phase 2 and Phase 3 close-out sections at the foot of this file, which list what each phase changed and the real counts for its branch. Where a row below still says "Missing" for a section a later phase touched (notably 4.1 Roles, 4.2 Audit Teams, 4.3 Visibility and enforcement, 6 Universes and Entities, 7 Deployment Gate, 7.1 Combined approval, 8 SIRA, 9 Audit Plan, 23 Administration, 25 Data/Security/Infrastructure, 26 Logging, 29 Build and Verification), the close-out sections are authoritative.

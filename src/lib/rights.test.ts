@@ -6,6 +6,7 @@ import {
   isReadOnly,
   rightsForRole,
   rightsOf,
+  roleLabel,
 } from './rights';
 import type { Role, User } from '../types';
 
@@ -94,5 +95,27 @@ describe('rights model (2F-2b)', () => {
     }
     expect(hasRight(user('cia'), 'approve_plan')).toBe(true);
     expect(hasRight(user('cia'), 'can_reopen')).toBe(true);
+  });
+
+  it('names every seeded role for display, never the raw slug', () => {
+    // The labels are the `roles.name` values the database seeds (migration 0097 seed_role_matrix).
+    expect(roleLabel('cia')).toBe('CIA');
+    expect(roleLabel('org_admin')).toBe('Org Admin');
+    expect(roleLabel('audit_manager')).toBe('Audit Manager');
+    expect(roleLabel('reviewer')).toBe('Reviewer');
+    expect(roleLabel('preparer')).toBe('Preparer');
+    expect(roleLabel('observer')).toBe('Observer');
+    expect(roleLabel('auditee')).toBe('Auditee');
+    // No label equals its own slug: a raw `ORG_ADMIN` never reaches a person.
+    for (const r of ['cia', 'org_admin', 'audit_manager', 'reviewer', 'preparer', 'observer', 'auditee'] as Role[]) {
+      expect(roleLabel(r)).not.toBe(r);
+    }
+  });
+
+  it('falls back to a title-cased form for a tenant role and blanks for an absent one', () => {
+    expect(roleLabel('quality_lead')).toBe('Quality Lead');
+    expect(roleLabel('')).toBe('');
+    expect(roleLabel(null)).toBe('');
+    expect(roleLabel(undefined)).toBe('');
   });
 });

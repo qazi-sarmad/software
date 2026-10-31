@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import type { TenantSeed } from '../types/seed';
 import { canPerformAction, canAccessEntity } from '../lib/access';
 import { hasRight } from '../lib/rights';
@@ -7,6 +7,11 @@ import { getSignOffBlockers } from '../lib/auditFile';
 import { appendLedgerEntry, computePayloadHash, HashUnavailableError } from '../lib/ledger';
 import { transitionCapStatus, CapStatusAction, TransitionCapResult } from '../lib/cap';
 import { buildDefaultOrgRoleConfig } from '../lib/orgCapabilities';
+import { hasSupabaseConfig } from '../data/client';
+import { loadTenantSnapshot } from '../data/tenant';
+import * as writes from '../data/mutations';
+import { closeCap, updateCap } from '../data/caps';
+import type { DataResult } from '../data/db';
 
 import {
   AuditCapItem,
@@ -17,6 +22,7 @@ import {
   AuditObservation,
   AuditUniverse,
   CapStatus,
+  EngagementStage,
   GlassBoxToken,
   LedgerEntry,
   ReviewComment,
@@ -46,7 +52,16 @@ export type InspectorType =
   | 'import_wizard'
   | 'activity_log'
   | 'org_control'
-  | 'finding';
+  | 'shared_with_me'
+  | 'finding'
+  | 'global_search'
+  | 'adhoc_review'
+  | 'assurance_caps'
+  | 'classification'
+  | 'risk_library'
+  | 'deployment_plan'
+  | 'prior_year_rollforward'
+  | 'standards';
 
 export interface InspectorState {
   type: InspectorType | null;
@@ -63,6 +78,12 @@ export type NewEntityInput = {
   department: string;
   headOfDepartment: string;
   inherentRisk: 'low' | 'medium' | 'high' | 'critical';
+};
+
+/** U6: the first-run action. `domain` is an optional label; the name is required. */
+export type NewUniverseInput = {
+  name: string;
+  domain?: string;
 };
 
 interface AppContextType {
@@ -115,7 +136,12 @@ interface AppContextType {
   appendLedger: (params: Parameters<typeof appendLedgerEntry>[1]) => Promise<LedgerEntry>;
   signOffEngagement: (engagementId: string) => Promise<GateResult>;
   reopenEngagement: (engagementId: string, justification: string) => Promise<GateResult>;
+  advanceEngagementStage: (engagementId: string, toStage: EngagementStage) => Promise<GateResult>;
   addEntity: (input: NewEntityInput) => Promise<{ ok: true; id: string } | { ok: false; reason: string }>;
+  createWorkpaper: (
+    engagementId: string, title: string, controlId?: string | null
+  ) => Promise<{ ok: true; id: string } | { ok: false; reason: string }>;
+  createUniverse: (input: NewUniverseInput) => Promise<{ ok: true; id: string } | { ok: false; reason: string }>;
   finalizeTest: (workpaperId: string) => Promise<GateResult>;
   registerPopulation: (workpaperId: string, summary: PopulationSummary) => Promise<GateResult>;
   setTestStepCompleted: (workpaperId: string, stepId: string, completed: boolean) => GateResult;
@@ -158,6 +184,26 @@ export function AppProvider({ user, seed, children }: { user: User; seed: Tenant
   const [rawCapItems, setRawCapItems] = useState<AuditCapItem[]>(seed.capItems);
   const [ledger, setLedger] = useState<LedgerEntry[]>([]);
   const [glassBoxTokens, setGlassBoxTokens] = useState<GlassBoxToken[]>(seed.glassBoxTokens);
+
+  // Phase 1.4: when a Supabase project is configured the database is the source of truth. A mutation
+  // is an RPC followed by a re-read, so what the screen shows is what the database holds — never a
+  // local setState that a reload would forget. With no project (a bare dev checkout) the in-memory
+  // demo path below is kept, which is also what the unit tests exercise.
+  const useDatabase = hasSupabaseConfig();
+  const reload = useCallback(async () => {
+    if (!useDatabase) return;
+    const snapshot = await loadTenantSnapshot();
+    setRawUniverses(snapshot.universes);
+    setRawEntities(snapshot.entities);
+    setRawEngagements(snapshot.engagements);
+    setRawControls(snapshot.controls);
+    setRawWorkpapers(snapshot.workpapers);
+    setRawObservations(snapshot.observations);
+    setRawIssues(snapshot.issues);
+    setRawComments(snapshot.comments);
+    setRawCapItems(snapshot.capItems);
+    setLedger(snapshot.ledger);
+  }, [useDatabase]);
 
   useEffect(() => {
     let isMounted = true;
@@ -242,6 +288,15 @@ export function AppProvider({ user, seed, children }: { user: User; seed: Tenant
       return { ok: false, code: 'SIGN_OFF_BLOCKED', reason: 'Cannot sign off yet:\n' + blockers.join('\n') };
     }
 
+    // Phase 1.4: the seal is a database write, not a local edit. The RPC re-checks the same
+    // pre-conditions and writes the ledger entry; the reload then shows what the database holds.
+    if (useDatabase) {
+      const res = await writes.sealEngagement(engagementId);
+      if (!res.ok) return { ok: false, code: 'SIGN_OFF_FAILED', reason: res.reason };
+      await reload();
+      return { ok: true };
+    }
+
     const payloadHash = await computePayloadHash({ engagementId, stage: 'signed_off', timestamp: new Date().toISOString() });
     await appendLedger({
       actorId: currentUser.id,
@@ -274,6 +329,44 @@ export function AppProvider({ user, seed, children }: { user: User; seed: Tenant
     return { ok: true };
   });
 
+  const createUniverse = async (input: NewUniverseInput): Promise<{ ok: true; id: string } | { ok: false; reason: string }> => {
+    if (!hasRight(currentUser, 'edit_config')) {
+      return { ok: false, reason: rightReason('edit_config') };
+    }
+    const name = input.name.trim();
+    if (!name) return { ok: false, reason: 'A universe needs a name.' };
+    const domain = input.domain?.trim() || null;
+    if (useDatabase) {
+      const res = await writes.createUniverse(name, domain);
+      if (!res.ok) return { ok: false, reason: res.reason };
+      await reload();
+      return { ok: true, id: res.id };
+    }
+    // The demo path (no configured client): a local row plus a ledger entry, exactly as addEntity.
+    const id = `un-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+    const universe: AuditUniverse = {
+      id, name, code: name.toUpperCase().slice(0, 6), description: '',
+      totalEntities: 0, highRiskCount: 0, lastReviewDate: 'Never',
+    };
+    try {
+      const payloadHash = await computePayloadHash({ id, name, domain, timestamp: new Date().toISOString() });
+      await appendLedger({
+        actorId: currentUser.id, actorName: currentUser.name, actorRole: currentUser.role,
+        eventType: 'config_changed', entityId: id, recordId: id, recordType: 'universe',
+        payloadSummary: `Audit universe "${name}" created by ${currentUser.name}`,
+        payloadHash,
+      });
+    } catch (err) {
+      if (err instanceof HashUnavailableError) {
+        setLedgerError(err.message);
+        return { ok: false, reason: err.message };
+      }
+      throw err;
+    }
+    setRawUniverses((prev) => [...prev, universe]);
+    return { ok: true, id };
+  };
+
   const addEntity = async (input: NewEntityInput): Promise<{ ok: true; id: string } | { ok: false; reason: string }> => {
     if (!hasRight(currentUser, 'edit_config')) {
       return { ok: false, reason: rightReason('edit_config') };
@@ -283,12 +376,19 @@ export function AppProvider({ user, seed, children }: { user: User; seed: Tenant
     if (!name || !code || !input.department.trim()) return { ok: false, reason: 'Name, code and department are required.' };
     if (!rawUniverses.some((u) => u.id === input.universeId)) return { ok: false, reason: 'Choose a valid universe.' };
     if (rawEntities.some((e) => e.code.toUpperCase() === code)) return { ok: false, reason: `Code ${code} is already used.` };
+    if (useDatabase) {
+      const res = await writes.addEntity(input.universeId, name, input.department.trim() || null);
+      if (!res.ok) return { ok: false, reason: res.reason };
+      await reload();
+      return { ok: true, id: res.id };
+    }
     const id = `ent-${code.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
     const entity: AuditEntity = {
       id, universeId: input.universeId, name, code,
       department: input.department.trim(), headOfDepartment: input.headOfDepartment.trim() || 'Unassigned',
       inherentRisk: input.inherentRisk, residualRisk: input.inherentRisk,
       siraScore: 0, controlsCount: 0, lastAuditDate: 'Never', status: 'active',
+      approvalStatus: 'draft', rejectionReason: null,
     };
     try {
       const payloadHash = await computePayloadHash({ id, universeId: input.universeId, name, code, timestamp: new Date().toISOString() });
@@ -309,6 +409,40 @@ export function AppProvider({ user, seed, children }: { user: User; seed: Tenant
     return { ok: true, id };
   };
 
+  // Phase 6 (G1). The workpaper-creation path the product was missing: before 0116 nothing could
+  // create a workpaper, so in production the testing workspace's sampling and row-testing panels
+  // (gated on workpapers[0]) never rendered. Requires perform_work; the database refuses a sealed
+  // engagement and one whose planning is not signed off.
+  const createWorkpaper = async (
+    engagementId: string, title: string, controlId: string | null = null
+  ): Promise<{ ok: true; id: string } | { ok: false; reason: string }> => {
+    if (!hasRight(currentUser, 'perform_work')) {
+      return { ok: false, reason: rightReason('perform_work') };
+    }
+    const trimmed = title.trim();
+    if (!trimmed) return { ok: false, reason: 'A working paper needs a title.' };
+    if (!rawEngagements.some((e) => e.id === engagementId)) return { ok: false, reason: 'Choose a valid engagement.' };
+    if (useDatabase) {
+      const res = await writes.createWorkpaper(engagementId, controlId, trimmed);
+      if (!res.ok) return { ok: false, reason: res.reason };
+      await reload();
+      return { ok: true, id: res.id };
+    }
+    const id = `wp-${Date.now().toString(36)}`;
+    const eng = rawEngagements.find((e) => e.id === engagementId);
+    const workpaper: WorkingPaper = {
+      id, engagementId, controlId: controlId ?? '',
+      entityId: eng?.entityId ?? '', universeId: eng?.universeId,
+      refCode: id.slice(0, 8).toUpperCase(), title: trimmed,
+      status: 'not_started', preparerId: currentUser.id, reviewerId: '',
+      testSteps: [], procedureSteps: [],
+      populationCount: 0, sampleCount: 0, exceptionsIdentified: 0,
+      conclusion: '', evidenceItems: [],
+    };
+    setRawWorkpapers((prev) => [...prev, workpaper]);
+    return { ok: true, id };
+  };
+
   const reopenEngagement = (engagementId: string, justification: string): Promise<GateResult> => withSealGuard(async () => {
     const eng = rawEngagements.find((e) => e.id === engagementId);
     if (!eng) return { ok: false, code: 'NOT_AVAILABLE', reason: 'Engagement not available.' };
@@ -318,6 +452,13 @@ export function AppProvider({ user, seed, children }: { user: User; seed: Tenant
     });
     if (!gate.allowed) {
       return { ok: false, code: 'FORBIDDEN', reason: gate.reason || 'Action not permitted' };
+    }
+
+    if (useDatabase) {
+      const res = await writes.reopenEngagement(engagementId, justification);
+      if (!res.ok) return { ok: false, code: 'REOPEN_FAILED', reason: res.reason };
+      await reload();
+      return { ok: true };
     }
 
     const payloadHash = await computePayloadHash({ engagementId, justification, timestamp: new Date().toISOString() });
@@ -350,6 +491,27 @@ export function AppProvider({ user, seed, children }: { user: User; seed: Tenant
     return { ok: true };
   });
 
+  /**
+   * Move an engagement forward one stage (Phase 2.1). The database is the authority: it re-checks
+   * manage_engagements, the forward-only rule, the planning lock and the testing mode, and logs the
+   * transition. With no project configured the in-memory seed moves, matching the demo behaviour.
+   */
+  const advanceEngagementStage = (engagementId: string, toStage: EngagementStage): Promise<GateResult> => withSealGuard(async () => {
+    const eng = rawEngagements.find((e) => e.id === engagementId);
+    if (!eng) return { ok: false, code: 'NOT_AVAILABLE', reason: 'Engagement not available.' };
+    if (!hasRight(currentUser, 'manage_engagements')) {
+      return { ok: false, code: 'FORBIDDEN', reason: rightReason('manage_engagements') };
+    }
+    if (useDatabase) {
+      const res = await writes.setEngagementStage(engagementId, toStage, eng.stage);
+      if (!res.ok) return { ok: false, code: 'STAGE_FAILED', reason: res.reason };
+      await reload();
+      return { ok: true };
+    }
+    setRawEngagements((prev) => prev.map((item) => (item.id === engagementId ? { ...item, stage: toStage } : item)));
+    return { ok: true };
+  });
+
   /** One shared pre-check for every command that changes a paper: scope, history, seal, capability. */
   const paperGuard = (
     wp: WorkingPaper | undefined,
@@ -373,6 +535,18 @@ export function AppProvider({ user, seed, children }: { user: User; seed: Tenant
     if (!wp!.populationSha256) {
       return { ok: false, code: 'POPULATION_NOT_VERIFIED', reason: 'Verify the population before recording test steps.' };
     }
+    if (useDatabase) {
+      // The command is asynchronous in database mode; the caller's optimistic UI already handles a
+      // pending state. Keep the synchronous signature by firing the write and reload in the background.
+      void writes.setTestStepState(workpaperId, stepId, completed).then((res) => {
+        if (res.ok) return reload();
+        return undefined;
+      });
+      setRawWorkpapers((prev) =>
+        prev.map((w) => (w.id === workpaperId ? { ...w, testSteps: w.testSteps.map((t) => (t.id === stepId ? { ...t, completed } : t)) } : w))
+      );
+      return { ok: true };
+    }
     setRawWorkpapers((prev) =>
       prev.map((w) => (w.id === workpaperId ? { ...w, testSteps: w.testSteps.map((t) => (t.id === stepId ? { ...t, completed } : t)) } : w))
     );
@@ -385,6 +559,14 @@ export function AppProvider({ user, seed, children }: { user: User; seed: Tenant
     if (!g.ok) return g;
     if (!/^[0-9a-f]{64}$/.test(summary.sha256) || summary.rowCount < 1) {
       return { ok: false, code: 'INVALID_POPULATION', reason: 'A verified population needs a SHA-256 and at least one row.' };
+    }
+    if (useDatabase) {
+      const res = await writes.submitPopulation(
+        workpaperId, summary.sha256, summary.fileName, summary.rowCount, summary.totalCents
+      );
+      if (!res.ok) return { ok: false, code: 'POPULATION_FAILED', reason: res.reason };
+      await reload();
+      return { ok: true };
     }
     const payloadHash = await computePayloadHash({ workpaperId, ...summary });
     await appendLedger({
@@ -424,6 +606,13 @@ export function AppProvider({ user, seed, children }: { user: User; seed: Tenant
       return { ok: false, code: 'STEPS_INCOMPLETE', reason: `${open} test step${open === 1 ? '' : 's'} still not completed.` };
     }
 
+    if (useDatabase) {
+      const res = await writes.finalizeTesting(workpaperId);
+      if (!res.ok) return { ok: false, code: 'FINALIZE_FAILED', reason: res.reason };
+      await reload();
+      return { ok: true };
+    }
+
     const payloadHash = await computePayloadHash(wp);
     await appendLedger({
       actorId: currentUser.id,
@@ -457,6 +646,13 @@ export function AppProvider({ user, seed, children }: { user: User; seed: Tenant
     });
     if (!gate.allowed) {
       return { ok: false, code: 'FORBIDDEN', reason: gate.reason || 'Action not permitted' };
+    }
+
+    if (useDatabase) {
+      const res = await writes.signOffWorkpaper(workpaperId);
+      if (!res.ok) return { ok: false, code: 'SIGN_OFF_FAILED', reason: res.reason };
+      await reload();
+      return { ok: true };
     }
 
     const payloadHash = await computePayloadHash(wp);
@@ -499,6 +695,13 @@ export function AppProvider({ user, seed, children }: { user: User; seed: Tenant
       return { ok: false, code: 'FORBIDDEN', reason: gate.reason || 'Action not permitted' };
     }
 
+    if (useDatabase) {
+      const res = await writes.reopenWorkpaper(workpaperId, justification);
+      if (!res.ok) return { ok: false, code: 'REOPEN_FAILED', reason: res.reason };
+      await reload();
+      return { ok: true };
+    }
+
     const payloadHash = await computePayloadHash({ workpaperId, justification, timestamp: new Date().toISOString() });
     await appendLedger({
       actorId: currentUser.id,
@@ -534,6 +737,28 @@ export function AppProvider({ user, seed, children }: { user: User; seed: Tenant
     const gate = canPerformAction(currentUser, 'raise_observation');
     if (!gate.allowed) {
       throw new Error(gate.reason || 'Not allowed to raise observation');
+    }
+
+    if (useDatabase) {
+      const targetWp = rawWorkpapers.find((w) => w.id === obs.workpaperId);
+      if (!targetWp) throw new Error('The working paper could not be found.');
+      const res = await writes.createObservation(
+        targetWp.engagementId,
+        obs.workpaperId,
+        obs.title,
+        {
+          condition: obs.condition, criteria: obs.criteria, cause: obs.cause,
+          effect: obs.consequence, recommendation: obs.recommendation, severity: obs.severity,
+        }
+      );
+      if (!res.ok) throw new Error(res.reason);
+      await reload();
+      return {
+        ...obs,
+        id: 'pending-reload',
+        createdAt: new Date().toISOString(),
+        raisedBy: currentUser.id,
+      } as AuditObservation;
     }
 
     const newObs: AuditObservation = {
@@ -657,6 +882,20 @@ export function AppProvider({ user, seed, children }: { user: User; seed: Tenant
       rejectTo: payload?.rejectTo,
     });
     if (!result.ok) return result;
+    if (useDatabase) {
+      // Phase 1.4: persist the CAP transition through the register's RPCs, then re-read. The pure
+      // transitionCapStatus() above still decides whether the move is allowed, so the client and the
+      // database agree on the rule; the RPC is the write.
+      const evidence = payload?.evidenceRefs?.length ? payload.evidenceRefs.join('; ') : null;
+      const run: Promise<DataResult> = action === 'verify_close'
+        ? closeCap(capId, true, false)
+        : action === 'reject'
+          ? closeCap(capId, false, false)
+          : updateCap(capId, cap.action ?? '', evidence ?? '');
+      void run.then((res) => (res.ok ? reload() : undefined));
+      setRawCapItems((prev) => prev.map((c) => (c.id === capId ? result.cap : c)));
+      return result;
+    }
     setRawCapItems((prev) => prev.map((c) => (c.id === capId ? result.cap : c)));
     return result;
   };
@@ -698,7 +937,10 @@ export function AppProvider({ user, seed, children }: { user: User; seed: Tenant
         appendLedger,
         signOffEngagement,
         reopenEngagement,
+        advanceEngagementStage,
         addEntity,
+        createWorkpaper,
+        createUniverse,
         registerPopulation,
         setTestStepCompleted,
         finalizeTest,

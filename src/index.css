@@ -1,6 +1,150 @@
 @import "tailwindcss";
 @import "./styles/tokens.css";
 
+/* Self-hosted fonts (WP-F). The files ship in the bundle via @fontsource, so there is no request to
+   any external font host, no API key and no per-render fee: the app works offline and inside the
+   tenant boundary. Latin subset only, exactly the weights the UI uses. */
+@import "@fontsource/inter/latin-400.css";
+@import "@fontsource/inter/latin-500.css";
+@import "@fontsource/inter/latin-600.css";
+@import "@fontsource/inter/latin-700.css";
+@import "@fontsource/source-serif-4/latin-400.css";
+@import "@fontsource/source-serif-4/latin-600.css";
+@import "@fontsource/lora/latin-400.css";
+@import "@fontsource/lora/latin-600.css";
+@import "@fontsource/merriweather/latin-400.css";
+@import "@fontsource/merriweather/latin-700.css";
+@import "@fontsource/libre-baskerville/latin-400.css";
+@import "@fontsource/ibm-plex-sans/latin-400.css";
+@import "@fontsource/ibm-plex-sans/latin-600.css";
+@import "@fontsource/jetbrains-mono/latin-400.css";
+@import "@fontsource/jetbrains-mono/latin-500.css";
+@import "@fontsource/jetbrains-mono/latin-600.css";
+
+/* Self-hosted mono for the `font-mono` utility (Tailwind v4 theme token), so hashes, ref codes and
+   figures use JetBrains Mono without any external request. */
+@theme {
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+/* Colour tokens in the Tailwind theme namespace, so the opacity modifier works: `bg-surface/95`
+   (2 uses) and `bg-surface-elevated/20..80` (6 uses) are dead with an `@utility`, because Tailwind
+   only emits `<class>/<n>` for a colour it knows as `--color-<name>`. `inline` keeps the value a
+   `var()` so it still follows the preset/theme blocks in tokens.css. Only the stems used with a
+   slash are registered here; the rest stay `@utility` below. */
+@theme inline {
+  --color-surface: var(--surface);
+  --color-surface-elevated: var(--surface-elevated);
+  --color-cinnabar-subtle: var(--accent-cinnabar-subtle);
+  --color-secondary: var(--text-secondary);
+}
+
+/* ── The design-system utility vocabulary the components read ──────────────────────────────────
+   These are the semantic utility classes the product's components use (bg-primary, text-canvas,
+   ring-accent, divide-hairline, …). They are defined as Tailwind v4 `@utility` so that every variant
+   the components write (`hover:bg-accent-hover`, `focus:ring-accent`, `focus-visible:ring-accent`)
+   resolves too — a plain `.ring-accent` rule would leave the focus states unstyled. Every class reads
+   an existing token from `src/styles/tokens.css`; no new colour is introduced and no value is
+   hard-coded (the token law: verdigris = calm, cinnabar = exception, brass = money only).
+
+   They live here, not in `tokens.css`, because `tokens.css` is the designer's (values only); the
+   consuming utility layer is the builder's. `--on-accent` is read with a fallback to the canvas so a
+   filled accent surface stays legible before the designer defines the token. */
+@utility bg-primary { background-color: var(--accent-primary); }
+@utility bg-accent-hover { background-color: var(--accent-primary); }
+@utility bg-tertiary { background-color: var(--text-tertiary); }
+@utility bg-surface-active { background-color: var(--surface-active); }
+@utility bg-hairline { background-color: var(--border-hairline); }
+
+@utility text-canvas { color: var(--on-accent, var(--canvas)); }
+@utility text-accent-foreground { color: var(--on-accent, var(--canvas)); }
+@utility text-verdigris-text { color: var(--accent-verdigris); }
+@utility text-hairline { color: var(--border-hairline); }
+
+@utility border-primary { border-color: var(--accent-primary); }
+@utility border-secondary { border-color: var(--border-strong); }
+@utility border-canvas { border-color: var(--canvas); }
+@utility border-brass { border-color: var(--accent-brass); }
+@utility border-accent-subtle { border-color: var(--accent-primary-subtle); }
+
+@utility ring-accent { --tw-ring-color: var(--accent-primary); }
+@utility ring-accent-subtle { --tw-ring-color: var(--accent-primary-subtle); }
+
+@utility fill-primary { fill: var(--text-primary); }
+@utility fill-secondary { fill: var(--text-secondary); }
+@utility fill-accent { fill: var(--accent-primary); }
+
+@utility divide-hairline {
+  & > :not(:last-child) {
+    border-color: var(--border-hairline);
+  }
+}
+
+/* ── Variant-composable design-system utilities ────────────────────────────────────────────────
+   The design vocabulary in `tokens.css` is written as plain CSS (`.bg-surface { … }`). Tailwind v4
+   only composes a variant (`hover:`, `focus:`, `group-hover:`) onto a class it knows as a utility,
+   so every `hover:bg-surface-hover` (166 uses), `hover:text-primary` (116), `focus:border-accent`
+   (29) and `group-hover:text-primary` in the components compiled to nothing — the hover and focus
+   states were dead in the shipped bundle. These `@utility` declarations give the vocabulary a
+   variant-composable form. They read the same tokens, so a bare use is unchanged; only the variant
+   form starts working. (Consolidating `tokens.css`'s plain copies into this one layer is a DESIGN
+   hand-off — recorded in docs/build/streams/integrator.md — not done here, because `tokens.css` is
+   the designer's file.) */
+@utility bg-canvas { background-color: var(--canvas); }
+@utility bg-accent-subtle { background-color: var(--accent-primary-subtle); }
+@utility bg-verdant { background-color: var(--accent-verdigris); }
+/* Bare use already means "on hover" (tokens.css writes `.bg-surface-hover:hover`), so keep that. */
+@utility bg-surface-hover {
+  &:hover { background-color: var(--surface-hover); }
+}
+
+@utility text-primary { color: var(--text-primary); }
+@utility text-tertiary { color: var(--text-tertiary); }
+@utility text-accent { color: var(--accent-primary); }
+@utility text-cinnabar { color: var(--accent-cinnabar); }
+
+@utility border-accent { border-color: var(--accent-primary); }
+@utility border-hairline { border-color: var(--border-hairline); }
+
+/* ── Second vocabulary batch — names the components use that no stylesheet declared ───────────────
+   The same defect as above, one layer deeper: these classes were used across the screens (161 uses)
+   and declared nowhere, so they rendered with no style at all. `text-apple-14` alone is used 76
+   times. Each maps to an existing token; the two the palette had not named (the primary-button pair)
+   already exist as `--btn-primary-bg` / `--btn-primary-text`. Semantic status keeps the token law:
+   verdigris = calm/positive, cinnabar = exception, brass = money. */
+
+/* The Apple type scale, filling the steps below 11 and between the defined ones. */
+@utility text-apple-10 { font-size: 10px; line-height: 14px; }
+@utility text-apple-14 { font-size: 14px; line-height: 20px; }
+@utility text-apple-16 { font-size: 16px; line-height: 24px; }
+@utility text-apple-18 { font-size: 18px; line-height: 26px; }
+
+/* Semantic status text. */
+@utility text-muted { color: var(--text-tertiary); }
+@utility text-positive { color: var(--accent-verdigris); }
+@utility text-moss { color: var(--accent-verdigris); }
+@utility text-verdant { color: var(--accent-verdigris); }
+@utility text-danger { color: var(--accent-cinnabar); }
+@utility text-critical { color: var(--accent-cinnabar); }
+
+@utility border-danger { border-color: var(--accent-cinnabar); }
+/* The generic 1px border. */
+@utility border-border { border-color: var(--border-hairline); }
+
+/* The primary button's own background and foreground. */
+@utility bg-btn-primary-bg { background-color: var(--btn-primary-bg); }
+@utility text-btn-primary-text { color: var(--btn-primary-text); }
+
+@utility shadow-soft { box-shadow: var(--shadow-soft); }
+
+/* The one entrance animation. Honours reduced motion: the DESIGN contract requires NO animation to
+   run under `prefers-reduced-motion: reduce`. */
+@utility animate-fade-in { animation: fade-in 200ms ease-out; }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in { animation: none; }
+}
+
 @layer base {
   body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;

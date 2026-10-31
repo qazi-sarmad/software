@@ -87,7 +87,8 @@ const USERS = [
   { email: 'ayesha.khan@provio-test.invalid', name: 'Ayesha Khan', org: ORG_A, role: 'org_admin', roleIds: ROLE_IDS_A, universes: [A_U1] },
   // CIA: holds all four assurance rights (F3) plus edit_config, so the Board Pack panel, its section
   // editor is reachable. The Org Admin holds none of the four by F3.
-  { email: 'kamran.sheikh@provio-test.invalid', name: 'Kamran Sheikh', org: ORG_A, role: 'cia', roleIds: ROLE_IDS_A, universes: [] },
+  // Kamran is a Level-1 Head (WP6): §2 sharing is granted by a Level-1 or Level-2 Head.
+  { email: 'kamran.sheikh@provio-test.invalid', name: 'Kamran Sheikh', org: ORG_A, role: 'cia', roleIds: ROLE_IDS_A, universes: [], head: 1 },
   { email: 'bilal.ahmed@provio-test.invalid', name: 'Bilal Ahmed', org: ORG_A, role: 'preparer', roleIds: ROLE_IDS_A, universes: [] },
   // Audit manager: holds manage_engagements, which the Phase 7 import/activity/prior-year flows need.
   { email: 'zara.malik@provio-test.invalid', name: 'Zara Malik', org: ORG_A, role: 'audit_manager', roleIds: ROLE_IDS_A, universes: [] },
@@ -213,6 +214,7 @@ export default async function globalSetup() {
       user_id: authId,
       role_id: u.roleIds[u.role],
       display_name: u.name,
+      head_level: u.head ?? null,
     }, { onConflict: 'org_id,user_id' }));
   }
 
@@ -271,6 +273,15 @@ export default async function globalSetup() {
   must('delete analysis_results', await sb.from('analysis_results').delete().in('org_id', [ORG_A, ORG_B]));
   must('delete planning_sections', await sb.from('planning_sections').delete().in('org_id', [ORG_A, ORG_B]));
   must('delete planning_suggestion_decisions', await sb.from('planning_suggestion_decisions').delete().in('org_id', [ORG_A, ORG_B]));
+  // Phase 1 anti-theatre fixture (G1). A visible audit record for org A with a scope row, so the
+  // production-build spec can assert a database row is really rendered by the shell. Seeded after the
+  // cleanup above so it survives; the scope row is inserted after `delete scopes` above.
+  must('phase1 engagement', await sb.from('engagements').upsert([
+    { id: 'e0000000-0000-4000-8000-0000000000f1', org_id: ORG_A, universe_id: A_U1, entity_id: A_ENTITY, title: 'Phase 1 production-build probe (Test)', stage: 'planning', sealed: false },
+  ], { onConflict: 'id' }));
+  must('phase1 scope', await sb.from('user_scopes').insert({
+    org_id: ORG_A, user_id: authIdFor('bilal.ahmed@provio-test.invalid', ORG_A), universe_id: A_U1, entity_id: null, engagement_id: null,
+  }));
 
   // Phase 5 workspace residue (5G). Findings, observations, issues, the conclusion record and the
   // document extractions written by a run must not change what the next run observes (M5).

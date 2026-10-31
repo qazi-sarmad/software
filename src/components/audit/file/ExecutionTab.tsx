@@ -1,6 +1,7 @@
 import React from 'react';
 import { WorkingPaper } from '../../../types';
 import { ArrowRight, ShieldCheck } from '../../common/Icons';
+import { ExplainPopout } from '../../explain/ExplainPopout';
 
 interface ExecutionTabProps {
   workpapers: WorkingPaper[];
@@ -38,7 +39,9 @@ export const ExecutionTab: React.FC<ExecutionTabProps> = ({ workpapers, highligh
               )}
             </div>
             <div className="text-apple-11 text-secondary truncate capitalize">
-              {wp.status.replace(/_/g, ' ')}
+              <ExplainPopout explainId={`status.workpaper.${wp.status}`} screenId="AF-03" element={`explain-wp-status-${wp.status}`}>
+                <span>{wp.status.replace(/_/g, ' ')}</span>
+              </ExplainPopout>
               {wp.objective ? ` · ${wp.objective}` : ''}
             </div>
           </div>

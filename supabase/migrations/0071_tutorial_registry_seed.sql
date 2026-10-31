@@ -85,5 +85,6 @@ insert into tutorials (key, audience, title, steps, media_path) values
   ('ex.home', 'both', 'Portal home', '["Open EX-02", "Follow the highlighted control", "Confirm the change"]'::jsonb, 'tutorials/ex.home.gif'),
   ('ex.engagement', 'both', 'Engagement view', '["Open EX-03", "Follow the highlighted control", "Confirm the change"]'::jsonb, 'tutorials/ex.engagement.gif'),
   ('ex.verify', 'both', 'Hash verification', '["Open EX-04", "Follow the highlighted control", "Confirm the change"]'::jsonb, 'tutorials/ex.verify.gif'),
-  ('oa.governance', 'org_admin', 'Governance settings', '["Open OA-22", "Follow the highlighted control", "Confirm the change"]'::jsonb, 'tutorials/oa.governance.gif')
+  ('oa.governance', 'org_admin', 'Governance settings', '["Open OA-22", "Follow the highlighted control", "Confirm the change"]'::jsonb, 'tutorials/oa.governance.gif'),
+  ('sa.integrity-anchoring', 'super_admin', 'Integrity anchoring', '["Open SA-18", "Follow the highlighted control", "Confirm the change"]'::jsonb, 'tutorials/sa.integrity-anchoring.gif')
 on conflict (key) do nothing;

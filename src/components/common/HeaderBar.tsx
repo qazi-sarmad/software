@@ -3,9 +3,11 @@ import { useApp } from '../../context/AppContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { useScopedData } from '../../hooks/useScopedData';
-import { hasRight } from '../../lib/rights';
+import { hasRight, roleLabel } from '../../lib/rights';
+import { PRODUCT_NAME } from '../../lib/product';
 import { Select } from './Select';
 import { HeaderCalendarPanel } from '../calendar/HeaderCalendarPanel';
+import { NotificationBell } from './NotificationBell';
 import {
   Calendar as CalendarIcon,
   Search,
@@ -21,6 +23,7 @@ import {
   Upload,
   Activity,
   Zap,
+  Eye,
 } from './Icons';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -86,13 +89,14 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ onOpenCommandPalette }) =>
         <div className="flex items-center gap-5 shrink-0">
           <button
             onClick={() => setActiveTab('executive')}
+            data-testid="header-home"
             className="flex items-center gap-2.5 text-left group transition-opacity hover:opacity-85"
           >
             <div className="w-8 h-8 rounded-xl bg-primary text-canvas flex items-center justify-center font-bold text-apple-15 font-serif-title shadow-xs">
               P
             </div>
             <span className="font-serif-title text-apple-20 font-bold tracking-tight text-primary">
-              Provio
+              {PRODUCT_NAME}
             </span>
           </button>
 
@@ -114,6 +118,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ onOpenCommandPalette }) =>
         <div className="flex-1 max-w-[280px] hidden sm:block">
           <button
             onClick={onOpenCommandPalette}
+            data-testid="header-search"
             className="w-full h-9 px-3 rounded-xl bg-surface-elevated hover:bg-surface-hover border border-hairline transition-colors flex items-center justify-between text-secondary hover:text-primary shadow-xs"
             title="Search or jump to... (Ctrl K)"
           >
@@ -142,11 +147,14 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ onOpenCommandPalette }) =>
 
         {/* Right Zone: Header Calendar Icon Button, Theme Toggle, Profile Menu */}
         <div className="flex items-center gap-2.5 shrink-0 relative">
+          {/* §22 in-app notifications: a live bell, non-blocking popover. */}
+          <NotificationBell />
           {/* Header Calendar Icon Button (§ 3.3) */}
           <div className="relative">
             <button
               ref={calendarButtonRef}
               onClick={() => setIsCalendarOpen(!isCalendarOpen)}
+              data-testid="header-calendar"
               className={`p-2 rounded-xl transition-colors border ${
                 isCalendarOpen
                   ? 'bg-accent-subtle text-accent border-accent'
@@ -172,9 +180,10 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ onOpenCommandPalette }) =>
           </div>
 
           {/* Theme Control: System / Light / Dark */}
-          <div className="flex items-center p-0.5 rounded-xl bg-surface-elevated border border-hairline">
+          <div data-testid="header-theme" className="flex items-center p-0.5 rounded-xl bg-surface-elevated border border-hairline">
             <button
               onClick={() => setTheme('light')}
+              data-testid="header-theme-light"
               className={`p-1.5 rounded-lg transition-colors ${
                 theme === 'light' ? 'bg-surface text-primary shadow-xs' : 'text-secondary hover:text-primary'
               }`}
@@ -185,6 +194,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ onOpenCommandPalette }) =>
             </button>
             <button
               onClick={() => setTheme('dark')}
+              data-testid="header-theme-dark"
               className={`p-1.5 rounded-lg transition-colors ${
                 theme === 'dark' ? 'bg-surface text-primary shadow-xs' : 'text-secondary hover:text-primary'
               }`}
@@ -195,6 +205,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ onOpenCommandPalette }) =>
             </button>
             <button
               onClick={() => setTheme('system')}
+              data-testid="header-theme-system"
               className={`p-1.5 rounded-lg transition-colors ${
                 theme === 'system' ? 'bg-surface text-primary shadow-xs' : 'text-secondary hover:text-primary'
               }`}
@@ -209,21 +220,24 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ onOpenCommandPalette }) =>
           <div className="relative" ref={profileMenuRef}>
             <button
               onClick={() => setIsProfileOpen(!isProfileOpen)}
+              data-testid="header-profile"
               className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-surface-hover transition-colors"
               title="User profile and system administration"
-              aria-label="Open user profile menu"
+              /* WCAG 2.5.3: the name contains every visible token: the avatar initials, the name and
+                 the role. A speech-input user can say any of them. */
+              aria-label={`Open user profile menu, ${currentUser.avatar} ${currentUser.name} ${roleLabel(currentUser.role)}`}
             >
               <div className="w-7 h-7 rounded-full bg-accent-subtle text-accent font-semibold flex items-center justify-center text-apple-12">
                 {currentUser.avatar}
-              </div>
+              </div>{' '}
               <div className="text-left hidden md:block">
                 <div className="text-apple-12 font-semibold text-primary leading-tight">
                   {currentUser.name}
-                </div>
+                </div>{' '}
                 <div className="text-apple-11 text-secondary uppercase font-medium">
-                  {currentUser.role}
+                  {roleLabel(currentUser.role)}
                 </div>
-              </div>
+              </div>{' '}
               <ChevronDown className="w-3 h-3 text-secondary stroke-[1.5] hidden md:block" />
             </button>
 
@@ -243,7 +257,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ onOpenCommandPalette }) =>
                     <div className="text-apple-11 text-secondary truncate">{currentUser.email}</div>
                     <div className="mt-1 flex items-center gap-1.5">
                       <span className="px-1.5 py-0.2 rounded text-apple-11 font-semibold uppercase text-accent bg-accent-subtle">
-                        {currentUser.role}
+                        {roleLabel(currentUser.role)}
                       </span>
                       <span className="text-apple-11 text-tertiary">
                         {currentUser.department || 'Audit'}
@@ -289,6 +303,18 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ onOpenCommandPalette }) =>
                         <span>People &amp; Roles</span>
                       </button>
                     )}
+                    {/* Every signed-in member can see what a Head shared with them (WP2/WP6). */}
+                    <button
+                      onClick={() => {
+                        openInspector('shared_with_me');
+                        setIsProfileOpen(false);
+                      }}
+                      data-testid="menu-shared-with-me"
+                      className="w-full text-left px-3 py-2 rounded-xl text-primary hover:bg-surface-hover transition-colors flex items-center gap-2.5"
+                    >
+                      <Eye className="w-4 h-4 text-secondary stroke-[1.5]" />
+                      <span>Shared with you</span>
+                    </button>
                     {hasRight(currentUser, 'edit_config') && (
                       <button
                         onClick={() => {

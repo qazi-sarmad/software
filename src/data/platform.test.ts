@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
-  grantSupportAccess, listTenants, listTrail, revokeSupportAccess,
-  setFeatureFlag, setInviteCap, setTenantStatus,
+  grantSupportAccess, listResidencyRegions, listTenants, listTrail, revokeSupportAccess,
+  setFeatureFlag, setInviteCap, setResidency, setTenantStatus,
 } from './platform';
 
 /**
@@ -14,6 +14,7 @@ describe('platform data module (not configured)', () => {
   it('reads return empty collections', async () => {
     expect(await listTenants()).toEqual([]);
     expect(await listTrail()).toEqual([]);
+    expect(await listResidencyRegions()).toEqual([]);
   });
 
   it('writes report that the platform module is not configured', async () => {
@@ -22,5 +23,6 @@ describe('platform data module (not configured)', () => {
     expect(await setInviteCap('org', 5)).toEqual(notConfigured);
     expect(await grantSupportAccess('org', {}, 4)).toEqual(notConfigured);
     expect(await revokeSupportAccess('grant', 'a long enough reason')).toEqual(notConfigured);
+    expect(await setResidency('org', 'eu-central-1', 'client is EU-based')).toEqual(notConfigured);
   });
 });

@@ -17,7 +17,7 @@ describe('§ 3.5 Global Review Comments Dock', () => {
     );
 
     // Assert floating launcher button is rendered
-    const launcherBtn = screen.getByLabelText('Open review comments dock');
+    const launcherBtn = screen.getByLabelText(/^Open review comments dock/);
     expect(launcherBtn).toBeDefined();
 
     // Click to open dock

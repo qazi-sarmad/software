@@ -1,0 +1,8 @@
+# Provio is a private, per-tenant audit application. No page should be indexed by any crawler.
+# The platform console also lives on an unlisted path (VITE_PLATFORM_ADMIN_PATH) that is not the
+# default below; a crawler cannot guess it, and this file keeps the default out of any index that
+# ignores the header in public/_headers. robots.txt is a deterrent, never a security control: the
+# control is the platform role plus the MFA gate (see docs/SECURITY-THREAT-MODEL.md).
+
+User-agent: *
+Disallow: /

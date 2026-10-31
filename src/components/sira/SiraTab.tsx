@@ -3,6 +3,7 @@ import { useApp } from '../../context/AppContext';
 import { useScopedData } from '../../hooks/useScopedData';
 import { Shield, ChevronDown } from '../common/Icons';
 import { InlineError } from '../common/InlineError';
+import { StandardsAffordance } from '../explain/StandardsAffordance';
 import { listCycles, listEmergentRisks, siraModelSnapshot, type SiraCycle, type SiraEmergentRisk, type SiraModel } from '../../data/sira';
 import { latestPlanForUniverse, planHistory, type PlanRow, type PlanVersionRow } from '../../data/plan';
 import { isUuid } from '../../lib/ids';
@@ -87,11 +88,12 @@ export const SiraTab: React.FC = () => {
         <p className="text-apple-13 text-secondary">
           {universe ? `${universe.name} (${universe.code})` : 'No universe in scope'} · {rows.length} entities ranked by risk index
         </p>
+        <StandardsAffordance kind="screen" target="SR-01" screenId="SR-01" element="standards" className="mt-2" />
         <div className="flex flex-wrap gap-2 pt-2">
           <button
             type="button"
             data-testid="sira-open-model"
-            onClick={() => openInspector('sira_model', { model: null })}
+            onClick={() => openInspector('sira_model')}
             className="px-3 py-1.5 rounded-lg border border-hairline text-apple-12 text-primary hover:bg-surface-hover"
           >
             SIRA model
@@ -99,7 +101,7 @@ export const SiraTab: React.FC = () => {
           <button
             type="button"
             data-testid="sira-open-cycles"
-            onClick={() => openInspector('sira_cycles', { cycles: [], emergent: [] })}
+            onClick={() => openInspector('sira_cycles', { universeId: isUuid(universe?.id) ? universe!.id : undefined })}
             className="px-3 py-1.5 rounded-lg border border-hairline text-apple-12 text-primary hover:bg-surface-hover"
           >
             Cycles &amp; emergent risks
