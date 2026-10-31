@@ -299,12 +299,12 @@ this register exists to catch.
 | F136 | Policy/procedure/regulation comparison (S15) | `Wired` | `src/lib/systeligon/policydiff.ts` — `compareDocuments` reports its own coverage (parsed / matched / could-not-interpret), because an unparsed clause is not a clean clause. **Wired** by the document-review screen (`DocumentReviewPanel.tsx`, OA-36): the `policy` option calls `compareDocuments` and renders the comparison (`policydiff`) | S15 |
 | F137 | Signed rule-pack storage (S10/S11) | `Wired` | `src/lib/systeligon/ota.ts` (`signPack`, `verifyPack`, `buildAdhocRule`) + `src/data/rulePacks.ts` (`listRulePacks`, `listRulePackRefusals`, `getReleasedRulePack`, `saveSignedRulePackArtifact`, `releaseRulePack`, `registerSigningKey`, `generateSigningKey`) + `0128_rule_pack_release.sql` (`rule_pack_save`/`rule_pack_list`/`rule_pack_release`/`rule_pack_refusals_list`/`rule_pack_released_rules`/`signing_key_register`). The pack-management screen is `RulePackPanel.tsx` (OA-33, mounted in `OrgControlPanel.tsx`): it lists packs, generates and registers a signing key, signs and verifies a draft, releases it and reads the refusal log. `RuleRunTab.tsx` reads the released pack through `getReleasedRulePack`/`resolveReleasedRules` and runs it | S10/S11 |
 | F138 | Single product/engine name (S16) | `Wired` | `src/lib/product.ts` is the one constants module (product name, tagline, title and the engine name); `scripts/sync-product-name.mjs` mirrors it to the Edge functions, `src/guards/productName.test.ts` holds it, and screens read it — `PRODUCT_NAME` in ten (`HeaderBar.tsx`, `SignInScreen.tsx`, `AttestationPanel.tsx`, …) and `ENGINE_NAME` in the rule-run screen (`RuleRunTab.tsx`) | S16 |
-| F139 | Client classification at onboarding, and the ICFR trigger | `Absent` | D10 — owner decision 2026-10-29; source `docs/PAKISTAN-ASSURANCE-REGIMES.md` |
+| F139 | Client classification at onboarding, and the ICFR trigger | `Wired` | D10. `setClassification` (`src/data/risk.ts:72`, RPC `classification_set`) is called from the mounted `ClientClassificationPanel.tsx:95` (inspector `classification`, `RecordContent.tsx:158`); it reads back through `readClassification`. The classification is a switch: C6/C7 turn ICFR to the highest rigour and require the LFR artifact; an unnamed class is refused. Proved by `src/components/universe/ClientClassificationPanel.test.tsx` (8), `src/lib/risk/classification.test.ts` (10) and `supabase/tests/142_classification_risk.sql` §1–4, §9–10 | D10 |
 | F140 | Audit domains (Management / Shari'ah / IT) and their rule packs | `Absent` | D11 — owner decision 2026-10-29; model `docs/AUDIT-DOMAINS-MODEL.md`; IT pack from `docs/ASSURANCE-RULEBOOKS.md` §1; Shari'ah pack from AAOIFI SS 1–54 + SBP Compendium (31 Oct 2024) + SBP SGF (1 Jan 2025) — all verified in-repo |
 | F141 | Actionable traffic-signal readiness panels (Super Admin + Org Admin) | `Absent` | D12 — owner decision 2026-10-29; corrective-action flow + complaint management + self-diagnostic |
 | F142 | Deployment and environment readiness in the Super Admin | `Absent` | D13 — owner decision 2026-10-29 |
-| F143 | Risk library, auto-adjusted factors and manual override | `Absent` | D14 — owner decision 2026-10-29; source `docs/RISK-ASSESSMENT-MODEL.md` |
-| F144 | Dynamic risk assessment (inputs, ERM map, triggers, narrative) | `Absent` | D15 — owner decision 2026-10-29; source `docs/ASSURANCE-RULEBOOKS.md` §6 + `docs/Risk Assessment, reimagined.pdf` |
+| F143 | Risk library, auto-adjusted factors and manual override | `Wired` | D14. `deriveRisks` (`src/data/risk.ts:143`, RPC `risk_library_derive`) is called from `ClientClassificationPanel.tsx:103` and `RiskLibraryPanel.tsx`; `writeRiskFactors` (`:203`, RPC `risk_factor_write`) is called from `RiskLibraryPanel.tsx:143`; the manual override `setRiskOverride` (`:217`) / `revertRiskOverride` (`:227`) are called from `RiskLibraryPanel.tsx:156`/`:165`. The screen derives its proposals with `deriveFactors` (`src/lib/risk/derivation.ts`, called from `RiskLibraryPanel.tsx:142`) and normalises the weights with `normalizeWeights` (`src/lib/risk/normalizeWeights.ts`); the override itself is applied by the RPC, and the pure spec twin of that override maths is proved only by `derivation.test.ts`. Proved by `src/lib/risk/derivation.test.ts` (12), `src/lib/risk/normalizeWeights.test.ts` (7) and `supabase/tests/142_classification_risk.sql` §5–8 | D14 |
+| F144 | Dynamic risk assessment (inputs, ERM map, triggers, narrative) | `Wired` | D15. `RiskLibraryPanel.tsx` (SR-04, mounted `RecordContent.tsx:160`) reads `listErmThemes`/`listKris`/`listPlanChanges` (`src/data/risk.ts`) and calls `setErmTheme`/`setKriValue`/`proposePlanChange` (`:311`/`:317`/`:325`, RPCs `erm_theme_set`/`kri_value_set`/`plan_change_propose`); the pure model is `ermMap`/`kriState`/`planChangeFor` (`src/lib/risk/dynamicAssessment.ts`, called from the panel). Proved by `src/components/sira/RiskLibraryPanel.test.tsx` (9) and `supabase/tests/142_classification_risk.sql` §11 | D15 |
 | F145 | Standards distribution — Super Admin rollout of signed rule-base packs to entitled tenants | `Wired` | `src/data/standards.ts` (`publishStandardsPack`, `rolloutStandardsPack`, `pinStandardsVersion`, `buildSignedStandardsPack`) + `0191_standards_distribution.sql`. **Wired** by the Super Admin standards surface (`SuperAdminStandards.tsx`, SA-21, mounted as the `standards` tab in `SuperAdminPortal.tsx`): it publishes a signed pack, rolls it out to entitled tenants (an unentitled tenant is `skipped-not-entitled` with a log row and no subscription row), and pins a version with a reason. Proved by `SuperAdminStandards.test.tsx` (14) and `supabase/tests/137_standards_distribution.sql` (37) | D16 |
 
 ---
@@ -313,9 +313,9 @@ this register exists to catch.
 
 | Status | Count |
 |---|---|
-| `Wired` | 129 |
+| `Wired` | 132 |
 | `Inert` | 1 |
-| `Absent` | 15 |
+| `Absent` | 12 |
 | **Total** | **145** |
 
 **Read that again, with the correction applied.** This pass corrected a systematic understatement:
@@ -329,6 +329,16 @@ prove it, while the delivery and sync rows are proved by `supabase/tests/114` an
 specs `s14`/`s15`. The four remaining `Inert` rows are the genuine, still-open defects: the connector
 run and ingest RPCs and the adapter runner (F57–F59) and the motion system (F108). Every one is a defect,
 and every one looks like a working feature in the UI.
+
+**A later pass folded the S3 stream (D10/D14/D15).** The merged branch carried the work but the rows
+still read `Absent`, which understated the build by three features: the client-classification switch
+and its ICFR trigger (F139), the seeded risk library with auto-adjusted factors and a reasoned manual
+override (F143), and the dynamic risk assessment — the ERM theme map, the KRIs and the trigger-based
+plan-change proposal (F144). Each now names its mounted call site, its pure layer and its proving tests
+(`supabase/tests/142_classification_risk.sql`, `src/components/universe/ClientClassificationPanel.test.tsx`,
+`src/components/sira/RiskLibraryPanel.test.tsx`, `src/lib/risk/*.test.ts`). The lesson is the mirror of
+the one above: a merged stream can *understate* the build, and a row is corrected only when the call
+site is grepped.
 
 **The order of work is not negotiable, and R1 and R2 are already done.** R1 (the app reads its own
 database) and R2 (the lifecycle is real) closed in Phases 1-2. R3 (the configuration is honest) is
