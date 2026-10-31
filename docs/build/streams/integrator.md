@@ -402,3 +402,33 @@ clean; all 10 gate scripts PASS; `npx vitest run` 339 files / 3806 tests pass.
 `tokens.css` now duplicate the `@utility` layer. The single source should be the `@utility` layer; the
 designer should delete the plain duplicates (except `.bg-surface-hover`, whose bare form means hover).
 Also still missing as a token value: `--on-accent` (the fix falls back to `--canvas`).
+
+## Design-system vocabulary — second batch (15 more undefined classes) — 2026-10-30
+
+An exhaustive scan (every `class`/`className` literal in `src/components`, every token name) found a
+further 15 classes used but declared nowhere — 161 uses. `text-apple-14` alone is used 76 times; the
+Apple type scale in `tokens.css` skipped 10/14/16/18.
+
+| Class | Uses | Mapped to | Token exists? |
+|---|---|---|---|
+| `text-apple-10` / `-14` / `-16` / `-18` | 4 / 76 / 20 / 2 | a font-size/line-height step | n/a (scale value) |
+| `text-muted` | 15 | `var(--text-tertiary)` | yes |
+| `text-positive`, `text-moss`, `text-verdant` | 2 / 4 / 1 | `var(--accent-verdigris)` | yes |
+| `text-danger`, `text-critical` | 3 / 6 | `var(--accent-cinnabar)` | yes |
+| `border-danger` | 2 | `var(--accent-cinnabar)` | yes |
+| `border-border` | 11 | `var(--border-hairline)` | yes |
+| `bg-btn-primary-bg`, `text-btn-primary-text` | 4 / 4 | `var(--btn-primary-bg)` / `var(--btn-primary-text)` | yes |
+| `shadow-soft` | 7 | `var(--shadow-soft)` | yes |
+| `animate-fade-in` | 2 | a `fade-in` keyframe, 200ms | n/a (animation) |
+| `bg-verdant` | 1 | `var(--accent-verdigris)` | yes |
+
+**Method note.** The first scan under-reported (it missed `border-danger`, `bg-verdant`) because it
+matched only a fixed stem list. The fix: the guard's `STEMS` is now the vocabulary contract and the
+guard also fails on any `@utility` outside it, so a stem cannot be forgotten silently. The status
+colour names are the one judgement call — the palette names no token for them, so `moss`/`verdant`/
+`positive` map to verdigris (calm/positive) and `danger`/`critical` to cinnabar (exception), which is
+the documented token law. Recorded here so the designer can overrule.
+
+`animate-fade-in` honours `prefers-reduced-motion: reduce` (the contract requires no animation then).
+Evidence: same guard, now 4 tests / 17 utilities + 4 type steps; every class verified present in
+`dist/assets/index-*.css`; `tsc` clean; 10 gates PASS; vitest 339 files / 3807 tests.

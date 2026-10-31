@@ -30,7 +30,7 @@ const ROOT = resolve(process.cwd());
 const SRC = resolve(ROOT, 'src');
 
 /** The design-system property prefixes the vocabulary is written with. */
-const PROPS = ['bg', 'text', 'border', 'ring', 'fill', 'stroke', 'divide'];
+const PROPS = ['bg', 'text', 'border', 'ring', 'fill', 'stroke', 'divide', 'shadow', 'animate'];
 /** The semantic stems — the design contract, not derived from any one stylesheet. */
 const STEMS = [
   'canvas', 'surface', 'surface-hover', 'surface-elevated', 'surface-sunken', 'surface-active',
@@ -38,7 +38,11 @@ const STEMS = [
   'accent', 'accent-subtle', 'accent-hover', 'accent-foreground',
   'verdigris', 'verdigris-text', 'verdigris-subtle',
   'cinnabar', 'cinnabar-subtle', 'brass', 'brass-subtle', 'brass-text',
-  'glass', 'hairline', 'strong',
+  'glass', 'hairline', 'strong', 'border',
+  'apple-10', 'apple-11', 'apple-12', 'apple-13', 'apple-14', 'apple-15', 'apple-16', 'apple-17',
+  'apple-18', 'apple-20', 'apple-28', 'apple-32', 'apple-40',
+  'muted', 'positive', 'moss', 'verdant', 'danger', 'critical',
+  'btn-primary-bg', 'btn-primary-text', 'soft', 'fade-in',
 ];
 const CLASSES = PROPS.flatMap((p) => STEMS.map((s) => `${p}-${s}`));
 
