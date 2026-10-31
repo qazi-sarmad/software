@@ -323,27 +323,32 @@ Every one of these was cut early and is **hundreds of files behind** the trunk (
 the trunk now has). None may be merged wholesale — a merge would regress the trunk. Each carries only
 a small unique delta; that delta is taken by hand, or the branch is superseded.
 
-Measured 2026-10-30 against the trunk head (`1acba25`): `ahead` = commits the branch has that the
-trunk lacks; `unique_src` = source files it adds under `src/`, `supabase/`, `scripts/`; `lost` = trunk
-files a merge would delete.
+Measured 2026-10-30 against the trunk head (`1debe54`), with a stated definition so the table is
+reproducible: **`ahead`** = commits the branch has that the trunk lacks (`git rev-list --count
+HEAD..origin/<b>`); **`unique_src`** = files under `src/`, `supabase/` or `scripts/` that exist on the
+branch and **not** on the trunk (`comm -13 <(git ls-tree -r --name-only HEAD) <(… origin/<b>)` — a
+*path* test, so a pre-renumber copy of already-ported work still counts); **`lost`** = files the trunk
+has that the branch lacks — what a wholesale merge would **delete**.
 
 | Branch | ahead | unique_src | lost | Disposition |
 |---|---|---|---|---|
-| `feature/systeligon-build-v1` | 6 | 0 | 173 | **Delta taken by hand** — the population-rows writer, the self-diagnostic engine and the org_id scale indexes were ported (migrations `0208`–`0210`, commits `dfc8f52`). The branch itself is superseded; no merge. |
-| `feature/security-harden-v1` | 23 | 2 | 470 | **Not ported** — its MFA/SSO screens and withheld screen are already on the trunk, and its `scripts/load-test.mjs` (a concurrent-org RLS read probe) is redundant with the now-ported `supabase/scale/06_concurrency.sh`, which asserts the same isolation with a stronger leak check (50 clients, a `raise` on any foreign row). Its `src/data/shares.test.ts` was ported (`1acba25`). |
-| `feature/scale-harden-v1` | 0 | 1 | 374 | Superseded — its `org_id` index work (0118) is the ported `0208`. No merge. |
+| `feature/systeligon-build-v1` | 6 | 6 | 179 | **Delta taken by hand** — the population-rows writer, the self-diagnostic engine and the org_id scale indexes were ported (migrations `0208`–`0210`, tests `154`–`156`, commit `dfc8f52`). The branch's six `unique_src` files are the **pre-renumber copies** (`0129`–`0131`, tests `135`–`137`) of that same work; their content is on the trunk. No merge. |
+| `feature/security-harden-v1` | 23 | 15 | 535 | **Not ported** — its MFA/SSO screens and withheld screen are already on the trunk, and its `scripts/load-test.mjs` (a concurrent-org RLS read probe) is redundant with the now-ported `supabase/scale/06_concurrency.sh`, which asserts the same isolation with a stronger leak check (50 clients, a `raise` on any foreign row). Its other `unique_src` files are pre-renumber duplicates of the trunk's `0206`/`0207` and tests. Its `src/data/shares.test.ts` was ported (`1acba25`). |
+| `feature/scale-harden-v1` | 0 | 6 | 379 | Superseded — its `org_id` index work (`0118`) is the ported `0208`; its SQL tests are pre-renumber copies. No merge. |
 | `feature/systeligon-unified-v1` | 0 | 0 | 246 | Superseded — the trunk already carries the unified migration set it introduced. No merge. |
-| `feature/writing-engine` | 1 | 1 | 613 | **Content already equal on the trunk** — the W2.8 compose fix (`registerInvariant` in `compose.ts`) and the 1200-cell matrix test are both present; only `ReviewCommentsDock.tsx` differs, and it duplicates the trunk's dock (see below). |
-| `feature/systeligon-v1` | 0 | 1 | 468 | The old SPEC branch; superseded by the trunk's own docs. No merge. |
-| `feature/audit-file-v1`, `feature/cap-due-date-change`, `feature/cap-*`, `feature/radial-hover-fix`, `feature/batch-a-*`, `phase-*` | 0–2 | 2–12 | 1200–1374 | Superseded — the files they add (`ReportsTab`, `ExecutivePackModal`, `LedgerScrubBar`, `RedThreadModal`, `InspectorPanel`, `PeopleAccessModal`) are the **retired** architecture the trunk's `src/guards/sourceGuards.test.ts` forbids (`no Reports, Red Thread or ledger scrub-bar features`). A merge would break the build. |
-| `coderabbit/*`, `merge/coderabbit-pilot`, `audit/full-codebase-*`, `docs/*`, `fix/tutorial-recorder-fixtures`, `feature/board-ai-control-plane`, `feature/config-control-plane` | 0–8 | 1–33 | 413–1353 | Superseded — audit/pilot branches; their findings were already folded into the trunk. No merge. |
+| `feature/writing-engine` | 1 | 1 | 662 | **Content already equal on the trunk** — the W2.8 compose fix (`registerInvariant` in `compose.ts`) and the 1200-cell matrix test are both present; only `ReviewCommentsDock.tsx` differs, and it duplicates the trunk's dock (see below). |
+| `feature/systeligon-v1` | 0 | 6 | 473 | The old SPEC branch; superseded by the trunk's own docs. Its `unique_src` is the same `ReviewCommentsDock.tsx` plus pre-renumber SQL tests. No merge. |
+| `feature/audit-file-v1` | 0 | 8 | 1371 | Superseded — the files it adds (`ReportsTab`, `ExecutivePackModal`, `LedgerScrubBar`, `RedThreadModal`, `InspectorPanel`, `PeopleAccessModal`, `DevAccessPage`) are the **retired** architecture the trunk's `src/guards/sourceGuards.test.ts` forbids (`no Reports, Red Thread or ledger scrub-bar features`). A merge would break the build. |
+| `feature/cap-due-date-change` | 2 | 13 | 1374 | Superseded — the same retired-architecture set, plus a `src/lib/src/…` duplicate tree. No merge. |
+| `feature/fix/tutorial-recorder-fixtures` | 4 | 21 | 737 | Superseded — tutorial-fixture work already folded into the trunk. No merge. |
+| `coderabbit/*`, `merge/coderabbit-pilot`, `audit/full-codebase-*`, `docs/*`, `phase-*`, `feature/board-ai-control-plane`, `feature/config-control-plane`, `feature/batch-a-*`, `feature/cap-*`, `feature/radial-hover-fix` | 0–8 | 1–33 | 700–1375 | Superseded — audit/pilot/phase branches; their findings were already folded into the trunk. No merge. |
 
-**Why `ReviewCommentsDock.tsx` is not ported, though four branches carry it.** It duplicates the
+**Why `ReviewCommentsDock.tsx` is not ported, though five branches carry it.** It duplicates the
 trunk's `src/components/reviews/ReviewCommentsGlobalDock.tsx`: both read `scopedComments` and open the
 same inspector, so mounting both would be two UIs for one table — the exact defect the
 `check-two-sources` gate exists to prevent. The trunk's dock is the survivor.
 
-**Merge readiness, in one line.** No old branch is merge-ready: each would delete 170–1374 files the
+**Merge readiness, in one line.** No old branch is merge-ready: each would delete 179–1374 files the
 trunk now has, and the only genuine deltas (the diagnostic engine, the population-rows writer, the
 `org_id` indexes, the concurrency probe, the joint-share tests) have been taken by hand and re-proved
 on the trunk. The trunk is the integration point; the older branches are read-only.

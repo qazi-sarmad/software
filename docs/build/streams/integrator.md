@@ -331,3 +331,17 @@ twice / all SQL tests passed twice" (EXIT=0); all nine gates PASS; `tsc --noEmit
   9 Absent**, with the command that proves it.
 - **The integrator baseline block was stale**; replaced with the measured head (`38d9457`:
   152 migrations / 156 SQL tests / 337 vitest files / 3798 tests / 31 Playwright specs / 35 guards).
+
+## BRANCH-MAP divergence table re-measured against the head — 2026-10-30
+
+The long-lived-branch table in `docs/BRANCH-MAP.md` was measured at `1acba25` and had drifted. It is
+re-measured against the head `1debe54` with a **stated, reproducible definition** now in the doc:
+`ahead` = `git rev-list --count HEAD..origin/<b>`; `unique_src` = `comm -13` of `git ls-tree -r
+--name-only` HEAD vs the branch, filtered to `src/|supabase/|scripts/` (a path test); `lost` = files
+the trunk has that the branch lacks. Two branches were promoted to their own rows
+(`feature/cap-due-date-change`, `feature/fix/tutorial-recorder-fixtures`) because they are the two
+`cap-*`/fixture branches with a genuinely distinct delta. The "four branches carry
+`ReviewCommentsDock.tsx`" line is corrected to **five** (`build-v1` has no dock; `security-harden-v1`,
+`scale-harden-v1`, `writing-engine`, `systeligon-v1`, `audit-file-v1` do). The ported-work note now
+names the trunk numbers (`0208`–`0210`, tests `154`–`156`) and says the branch's own files are the
+pre-renumber copies, so the `unique_src` count is explained rather than read as un-ported work.
