@@ -95,7 +95,7 @@ Several agents build this repository at once, each on its own branch. The rule t
 | Branch | Stream | Scope |
 |---|---|---|
 | `feature/systeligon-builder-continuous` | TRUNK / integrator | mount points, ledgers, the merge |
-| `feature/systeligon-design-spec` | DESIGN | the design language (tokens, contract) |
+| `design/language-v1` | DESIGN | the design language (tokens, contract) |
 | `feature/build-core-engine` | S1 | rule engine, scopes, rule packs, standards |
 | `feature/build-assurance-caps` | S2 | D5 / D7 / D8 / D9 |
 | `feature/build-risk-planning` | S3 | D10 / D14 / D15 |

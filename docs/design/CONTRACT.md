@@ -16,16 +16,18 @@ Freeze hash: _(filled by the design branch)_
 
 ## 1. What the design branch is
 
-- **Branch:** `feature/systeligon-design-spec`, cut from the build trunk
-  `feature/systeligon-builder-continuous`.
+- **Branch:** `design/language-v1`, cut from the build trunk
+  `feature/systeligon-builder-continuous`. A design topic may instead be cut as `design/<topic>` from
+  the trunk's current head (see `docs/BRANCH-MAP.md` §Design branches).
 - **Owner:** the design agent, and only the design agent. No build branch commits here.
 - **Why separate:** the design rows (E8, U5, U7, U9–U13, A-U1; register `F105`–`F113`) were DEFERRED
   because the owner had not settled the design language. Building a visual row against an unsettled
   contract means building it twice. The design branch settles the language once; the build branches then
   consume a frozen contract.
-- **It ships a product, not a document.** The design branch produces the **design system in code**
-  (`src/styles/tokens.css`, `src/lib/theme/*`, the motion module, the preset registry) plus this
-  contract. A build branch consumes the code, not a prose description of it.
+- **It ships values and a contract, not React.** The design branch produces the **design language in
+  code** — the token *values* in `src/styles/tokens.css` — plus this contract. The *implementation* that
+  reads those tokens (`src/lib/theme/**`, `src/context/PersonalisationContext.tsx`) is the **integrator's**
+  (OWNERSHIP.md §2). This branch writes no product UI code, so it never conflicts with a build stream.
 
 ## 2. What it includes (the deliverable)
 

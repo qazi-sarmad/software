@@ -1632,7 +1632,7 @@ folds those into this ledger at merge time.
 | CB.6 | Shape B users dimension (§1: 50,000 accounts) + Shape A's own account | DONE (`866b0db`, `ceba781`) |
 | CB.7 | §6 own-org read latency measured (`scale-seed.mjs --probe`: p50 56 ms / p95 60 ms at 200 own universes) | DONE (`ceba781`) |
 | CB.8 | Seven stream branches created from the trunk head | DONE (`50cbb47`) |
-| CB.9 | DESIGN branch `feature/systeligon-design-spec` sits on `bc7fd15`, before the mount points — the designer should re-cut/rebase onto the trunk | **BLOCKED (designer)** |
+| CB.9 | DESIGN branch re-cut from the trunk head as `design/language-v1` (the old `feature/systeligon-design-spec` sat on `bc7fd15`, before the mount points, and had no unique content) | DONE (`_this commit_`) |
 | CB.10 | The build streams' D-capability rows (S1–S7) — owned by the streams, merged here as they land | TODO (streams) |
 
 The mount points are the one serial step; with CB.1–CB.8 done, the seven build streams are unblocked.

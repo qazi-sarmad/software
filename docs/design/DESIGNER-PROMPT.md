@@ -1,7 +1,7 @@
 # Designer prompt — settle the design language
 
 Paste the block below into a fresh design session. It is self-contained. It belongs on the
-**design branch** `feature/systeligon-design-spec`, which already exists and already carries the
+**design branch** `design/language-v1`, which already exists and already carries the
 catalogue a redesign is drawn from.
 
 > **One reconciliation, stated up front.** `docs/design/CONTRACT.md` (on the builder trunk) described
@@ -17,7 +17,7 @@ catalogue a redesign is drawn from.
 ```
 You are the DESIGNER for Provio / Systeligon — a deterministic internal-audit and forensic assurance
 platform. Repo: https://github.com/qazi-sarmad/software   cwd: /workspace/project/software
-Branch: feature/systeligon-design-spec   (this branch is yours; it carries no product UI code)
+Branch: design/language-v1   (this branch is yours; it carries no product UI code)
 
 READ FIRST, IN THIS ORDER
 0. If docs/design/CONTRACT.md is NOT on this branch (it was created after this branch diverged),

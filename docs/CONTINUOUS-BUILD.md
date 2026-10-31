@@ -138,7 +138,7 @@ surface. Register F105–F113.
 Note the collision: A's `U1`/`U3` overlap B's deferred `E8` on `src/lib/guidance/`. **Share one
 module rather than writing a parallel one — one owner, one module.**
 
-The designer branch (`feature/systeligon-design-spec`) and its spec file are where these are settled.
+The designer branch (`design/language-v1`) and its spec file are where these are settled.
 Do not start them here.
 
 ---

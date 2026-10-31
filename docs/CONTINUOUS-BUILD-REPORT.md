@@ -142,7 +142,7 @@ Rows marked `BUILT` are listed only to mark the boundary.
 **E8** `PencilGuide` · **U5** motion signalling state change only · **U7** density toggle · **U9**
 three themes (`prism`, `bloom`, `slate`) · **U10** four audience profiles · **U11** time-of-day
 phases · **U12** motion system · **U13** animated headers · **A-U1** pencil-pointer surface. These
-are catalogued for the designer on `feature/systeligon-design-spec` (`docs/DESIGN-SPEC.md`, generated;
+are catalogued for the designer on `design/language-v1` (`docs/DESIGN-SPEC.md`, generated;
 `docs/DESIGN-BRIEF.md`).
 
 ### 5.4 The larger remainder (from the contract queue, in order)

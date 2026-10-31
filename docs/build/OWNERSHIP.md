@@ -14,7 +14,7 @@ owns; anything it needs from another stream it reads, never edits.
 | Branch | Stream | Scope | Owner |
 |---|---|---|---|
 | `feature/systeligon-builder-continuous` | **TRUNK / integrator** | the mount points, the ledgers, the merge, and the `src/lib/theme/**` implementation | the integrator agent |
-| `feature/systeligon-design-spec` | **DESIGN** | the design language — token **values** (`src/styles/tokens.css`) and the contract (`docs/design/**`); no product UI code | the design agent |
+| `design/language-v1` | **DESIGN** | the design language — token **values** (`src/styles/tokens.css`) and the contract (`docs/design/**`); no product UI code | the design agent |
 | `feature/build-core-engine` | **S1** | the rule engine, scopes, rule packs, standards distribution | stream 1 |
 | `feature/build-assurance-caps` | **S2** | D5 / D7 / D8 / D9 | stream 2 |
 | `feature/build-risk-planning` | **S3** | D10 / D14 / D15 | stream 3 |

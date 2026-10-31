@@ -33,7 +33,7 @@ main (a697190) ──┐
                  ├─ feature/scale-harden-v1
                  │        └─► feature/systeligon-unified-v1 (ceb85fd)
                  │                 ├─► feature/systeligon-builder-continuous   ◄── INTEGRATION TIP
-                 │                 └─► feature/systeligon-design-spec          (docs only)
+                 │                 └─► design/language-v1          (docs only)
                  ├─ feature/security-harden-v1 (35a0129)   ◄── real work, NOT in the tip
                  └─ feature/systeligon-build-v1 (e4b0f8c)  ◄── 5 commits, NOT in the tip
 ```
@@ -135,7 +135,7 @@ trigger list and the workflow-level changes; the tip additionally runs the anti-
 5. `feature/systeligon-builder-continuous` → `main`. Take `main`'s side on the `ci.yml` step-7 block if
    the §5 decision was to keep the runner-local strategy.
 
-**Never:** rebase the tip onto a feature branch; force-push; merge `feature/systeligon-design-spec`
+**Never:** rebase the tip onto a feature branch; force-push; merge `design/language-v1`
 (docs only — it can be merged any time, it conflicts with nothing); re-open the migration collision the
 unified branch already resolved.
 
@@ -199,4 +199,4 @@ and the code disagree; fix the row in the same commit.
    needed for a testing deploy and it is a large reconciliation.)
 4. **Production branch on Vercel** — point at the tip for testing, or at `main`? (Recommendation: the
    tip until the build lands and the merge to `main` is done.)
-5. **`feature/systeligon-design-spec`** — merge now (harmless, docs only) or hold with the design work?
+5. **`design/language-v1`** — merge now (harmless, docs only) or hold with the design work?

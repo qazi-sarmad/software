@@ -94,14 +94,15 @@ Created from the trunk head `ceba781`, so each carries the mount points:
 | `feature/build-config-honesty` (S6) | `ceba781` | |
 | `feature/build-extraction` (S7) | `ceba781` | |
 
-**The DESIGN branch needs the integrator's attention.** `feature/systeligon-design-spec` already exists
-at `bc7fd15` (the designer's auto-updating-spec branch, created 2026-10-29) but is cut from `ceb85fd`,
-**before** the mount points (`ceb85fd` is the trunk's parent, `968e30d` added the mount points). It
-therefore lacks `src/nav/registry.ts`, `src/data/index.ts`, `src/lib/capabilities/registry.ts` and the
-current `docs/build/**`. The DESIGN agent should re-cut or rebase onto `ceba781` (or the current trunk)
-before writing the theme implementation, or its branch will not see the mount points the streams share.
-Flagged, not acted on: the design branch is the designer's tree (OWNERSHIP.md §2), so re-cutting it is
-the designer's call, not the integrator's.
+**The DESIGN branch was re-cut onto the trunk head.** The old `feature/systeligon-design-spec` sat at
+`bc7fd15` (the designer's auto-updating-spec branch, created 2026-10-29), cut from `ceb85fd`, **before**
+the mount points — so it lacked `src/nav/registry.ts`, `src/data/index.ts`,
+`src/lib/capabilities/registry.ts` and the current `docs/build/**`. It carried **no unique content**:
+the trunk already has `scripts/gen-design-spec.mjs`, `docs/DESIGN-SPEC.md`, `docs/design/**` and
+`src/guards/designSpec.test.ts`. The design branch is therefore **`design/language-v1`**, cut from the
+trunk head (`1acba25`); the old branch is recorded as superseded in `docs/BRANCH-MAP.md` §Design
+branches. The design agent owns it (OWNERSHIP.md §2: `docs/design/**` and `src/styles/tokens.css` token
+values); the integrator owns `src/lib/theme/**` and `src/context/PersonalisationContext.tsx`.
 
 ## Status
 
@@ -226,7 +227,7 @@ the file.
 Two commits landed on the trunk ahead of this session. Read and applied:
 
 - **`docs/design/DESIGNER-PROMPT.md` (0f3a095)** renames the design branch to
-  `feature/systeligon-design-spec` and **splits** the design ownership: the designer authors the design
+  `design/language-v1` and **splits** the design ownership: the designer authors the design
   language (`src/styles/tokens.css` **values** + `docs/design/**`) and writes **no product UI code**;
   the **builder owns `src/lib/theme/**`** (the implementation that reads the frozen tokens).
   OWNERSHIP.md §1 and §2 updated to match — the old map had `src/lib/theme/**` under DESIGN and the old
@@ -250,7 +251,7 @@ _Full run after the fix: 282 files / 3240 tests green; `tsc --noEmit` clean; all
 Owner ask: *"which branch has the final and updated UI/UX screens, flows, journeys, connectors, tool
 calls, functions and paths for the designer?"* Answer: the trunk, and now it really does.
 
-- **The designer's spec tooling was stranded on `feature/systeligon-design-spec`** (1 commit, cut at
+- **The designer's spec tooling was stranded on `design/language-v1`** (1 commit, cut at
   the old base `ceb85fd`). Its `docs/DESIGN-SPEC.md` described **105 screens**; the trunk has **122**.
   The trunk had the *sources* (`docs/UI-INVENTORY.md`, `docs/ACP-UI-CONTRACT.md`,
   `src/lib/tutorialKeys.json`, `src/styles/tokens.css`) but not the generator, the brief or the guard.
@@ -273,3 +274,25 @@ calls, functions and paths for the designer?"* Answer: the trunk, and now it rea
   the older branches are superseded.
 
 _Full suite after this batch: 315 files / 3623 tests green; tsc clean; all gates PASS._
+
+## Ports from the old branches + the design-branch re-cut — 2026-10-30
+
+Owner ask: *"scan old branches for genuine fixes the trunk lacks"* and *"prepare the design branch."*
+
+- **Ported the genuine deltas, and only those.** `feature/systeligon-build-v1`'s population-rows writer
+  (`0209_population_rows.sql`), self-diagnostic engine (`0210_self_diagnostic.sql`) and `org_id` scale
+  indexes (`0208_org_id_indexes.sql`), renumbered from build-v1's `0118`/`0209`/`0210` into the trunk's
+  reserved range; `feature/security-harden-v1`'s `supabase/scale/06_concurrency.sh` and
+  `src/data/shares.test.ts`. Commits `dfc8f52`, `1acba25`.
+- **Re-measured every branch and recorded the verdict** in `docs/BRANCH-MAP.md` §Long-lived branches:
+  `ahead` / `unique_src` / `lost` per branch, with the disposition. No old branch is merge-ready (each
+  would delete 170–1374 trunk files); the genuine deltas are ported by hand.
+- **`ReviewCommentsDock.tsx` is not ported.** Four branches carry it; it duplicates the trunk's
+  `ReviewCommentsGlobalDock.tsx` (both read `scopedComments`), so mounting both is two UIs for one table
+  — the `check-two-sources` defect. The trunk's dock is the survivor.
+- **The design branch was re-cut.** The old `feature/systeligon-design-spec` sat before the mount points
+  and carried no unique content. The design branch is now **`design/language-v1`**, cut from the trunk
+  head; `docs/BRANCH-MAP.md` gains a §Design branches section, and `docs/design/CONTRACT.md` +
+  `docs/design/DESIGNER-PROMPT.md` name it. `SCALE-TASKS.md` CB.9 closed (BLOCKED → DONE).
+
+_Guards after this batch: 1126 passed; `tsc --noEmit` clean._
