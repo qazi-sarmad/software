@@ -450,3 +450,40 @@ Evidence: `src/guards/utilityVocabulary.test.ts` now has 5 tests; the new one (D
 `bg-surface-elevated/20`, `/30`, `/40`, `/70`, `/80`, `bg-cinnabar-subtle/20`, `text-secondary/80` and
 their `hover:` forms are all present in `dist/assets/index-*.css`. `tsc` clean; 10 gates PASS; vitest
 339 files / 3808 tests.
+
+## Design-stream report (11 items) — worked 2026-10-30
+
+The design stream ran a report against the product UI. Since `design/language-v1` (`1debe54`) carries
+no product UI (its diff vs trunk is docs + a few components already superseded on trunk), **every item
+it flagged is a trunk defect**. Items worked against trunk; the two that land in another stream's file
+are requested, not edited.
+
+| Item | Was | Now | Call site | Test that proves it | Commit |
+|---|---|---|---|---|---|
+| 1 tab root | tab had no root testid | Wired | `src/App.tsx:219` `data-testid="tab-<activeTab>"` (one wrapper for every tab) | `src/guards/uiContractDrift.test.ts` (static ids documented); `src/guards/mountPoints.test.ts` | 41b8357 |
+| 2 header controls | controls partly unnamed | Wired (earlier commit) | `src/components/common/HeaderBar.tsx` (`aria-label` on profile menu, search, calendar, theme) | `src/components/common/HeaderBar.test.tsx` | cb49590 |
+| 3 tutorial flows | 81 flows admin/platform/external | **correct** | `docs/DESIGN-SPEC.md` flows table — admin/platform/external by design | `docs/designSpec.test.ts` (regenerated, green) | — |
+| 4 Provio literals | literals + storage keys | **correct** | `src/lib/product.ts` is the single source; the guard permits exactly that file | `src/guards/productName.test.ts` | — |
+| 5 org-control tabs | tab testids / tutorials | **correct** | `org-control-tab-<id>`, `org-control-panel`, `org-control-tabs` present | `src/guards/uiContractDrift.test.ts` | — |
+| 6 Gantt labels | a short bar clipped its title | Wired | `src/components/dashboard/EngagementGantt.tsx:527` (label hidden < 120px; bar carries `aria-label`) | `src/components/dashboard/EngagementGantt.test.tsx` "hides the title on a bar too narrow" | 41b8357 |
+| 7 raw UUID/"Test" | raw role slug in one display | **requested from S6** | `src/components/admin/TeamDirectoryPanel.tsx:374` (`a.role`) — S6 owns `src/components/admin/**` | n/a — owner action | — |
+| 8 Plan/SIRA empty states | empty states | **correct** | `AuditPlanTab.tsx` "No plan items yet." / "No versions yet."; `SiraTab.tsx` "No cycles yet." | `src/components/plan/AuditPlanTab.test.tsx`, `src/components/sira/SiraTab.test.tsx` | — |
+| 9 mobile nav labels | labels hidden below `sm` | Wired (earlier commit) | `src/components/common/NavStrip.tsx` (`aria-label` + `title` on each tab) | `src/components/common/NavStrip.test.tsx` | cb49590 |
+| 10 fonts | self-hosted | **correct** | `@fontsource/*` packages; no external font host | `src/guards/*` (no external fetch) | — |
+| 11 package-lock | suspected drift | **correct** | `npm ci` accepts the lock ("up to date") | `npm ci --dry-run` | — |
+
+**Ownership correction.** The tab-root edit initially touched
+`src/components/universe/AuditUniverseTab.tsx`; OWNERSHIP.md §2 gives `src/components/universe/**` to
+**S3**. Reverted in `41b8357`; the tab root is now supplied once from trunk-owned `App.tsx` instead,
+which is the better shape anyway (one place, every tab). Requested of S3: keep the universe tab's own
+root free of `data-testid` so the App-level wrapper is the single source.
+
+**Requested of S6** (`src/components/admin/**`): item 7's remaining raw role-slug display at
+`TeamDirectoryPanel.tsx:374` should read `roleLabel(a.role)` like the other surfaces
+(`ArchivedFileRolePanel.tsx`, `HeaderBar.tsx`, `AccountSettingsModal.tsx`), so no raw slug reaches the
+screen.
+
+**Evidence.** 10 gates PASS (`check-wiring`, `check-dead-code`, `check-rpc-parity`,
+`check-feature-register` 148/138/1/9, `check-ui-contract`, `check-config-effect`, `check-two-sources`,
+`check-shrink`, `check-tokens`, `check-function-deploy-list`); full suite **339 files / 3812 tests**
+green; `tsc --noEmit` clean.
