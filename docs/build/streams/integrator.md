@@ -487,3 +487,45 @@ screen.
 `check-feature-register` 148/138/1/9, `check-ui-contract`, `check-config-effect`, `check-two-sources`,
 `check-shrink`, `check-tokens`, `check-function-deploy-list`); full suite **339 files / 3812 tests**
 green; `tsc --noEmit` clean.
+
+## Item 7 fixed, guard landed, queue closed — 2026-10-30
+
+**Item 7 is now fully worked on the trunk side.** The two raw-id leaks are gone and a regression guard
+prevents the class returning:
+
+| Row | Was | Now | Call site | Test that proves it | Migration | Commit |
+|---|---|---|---|---|---|---|
+| design report item 7 (raw id) | two previews showed a raw id | Wired (id leak fixed) | `EngagementGantt.tsx:487` (dropped `Lead: ${leadAuditorId}`), `AuditPlanTab.tsx:282` (dropped `owner`/`Reviewer` id metrics) | `src/guards/rawIdDisplay.test.ts` (catches the old string, allows a `Name` variant); `src/components/dashboard/EngagementGantt.test.tsx` | — | 9daa985 |
+
+- `src/guards/rawIdDisplay.test.ts` (new, integrator-owned): fails when any component puts a
+  `${…Id}`/`${…_id}` into a display prop (`subtitle`/`title`/`owner`/`label`/`description`/`hint`/
+  `sentence`/`text`). A deliberate `name || id` fallback is allowed. Proven both ways: it catches the
+  exact old defect and allows a name.
+- `TeamDirectoryPanel.tsx:374` still renders a raw role slug; it is **S6's** file
+  (`src/components/admin/**`), so the fix is requested, not edited — restated above.
+
+**Merge verdict.** All eight stream branches (`design/language-v1`, `feature/build-{core-engine,
+assurance-caps,risk-planning,platform-control,monitor-runtime,config-honesty,extraction}`) are
+**ancestors of the trunk head** (`git merge-base --is-ancestor` → YES for each). The merge is complete;
+no stream branch carries work the trunk lacks. The register reflects every merged row
+(148 / 138 Wired / 1 Inert / 9 Absent, gate PASS).
+
+**Register audit (integrator honesty duty).** The 9 `Absent` rows were re-verified against the code —
+each is genuinely absent, so the register does **not** understate them:
+- F56 (anomaly→SIRA emergent risk): the SIRA screen has a **manual** emergent-risk submit
+  (`SiraScoringPanel.tsx:199`), but no *anomaly-proposes* path — correctly `Absent`.
+- F92 (zero-to-first-report wizard): no `zeroToFirst`/`FirstReportWizard` anywhere.
+- F105/F106/F107/F108/F109/F111/F113 (the design rows): no `PRESETS`/`AUDIENCE_PROFILES`/
+  `resolveDayPhase`/`MOTION_LEVELS`/`validatePersonalisation`/density-toggle module exists; F108 stays
+  the one `Inert` row. These are governed by `docs/design/CONTRACT.md`, which is still
+  **DRAFT (no freeze hash)** — its §6.3 keeps the design rows deferred, so they are not integrator work.
+
+**Whole-tree proof this session.** SQL harness green twice against a real PostgreSQL 17
+(`migrations applied twice` / `all SQL tests passed twice`; 152 migrations / 156 SQL test files);
+`npm run build` green; `tsc --noEmit` clean; full vitest **340 files / 3813 tests** green; all 10 gates
+PASS; `check-tutorials` PASS (54 current / 27 stale GIFs).
+
+**Queue status: empty.** Items 1–3 done (baseline, mount points, merge+fold). The design report's 11
+items are all worked (3/4/5/8/10/11 verified correct; 1/2/6/9 wired earlier; 7 fixed here). The only
+remaining product work is the design-row family, which is gated on the design branch freezing its
+contract (an owner/design-branch action, not the integrator's).
