@@ -5,7 +5,7 @@ redesign is drawn from, and the boundary of what may be drawn yet.
 
 It lives on the trunk, `feature/systeligon-builder-continuous`, so it is always generated against the
 current build — the design branch `design/language-v1` carried the first draft, and this
-copy supersedes it (regenerated against the trunk's 122 screens, not the draft's 105).
+copy supersedes it (regenerated against the trunk's 130 screens, not the draft's 105).
 
 Read `docs/DESIGN-SPEC.md` first. It is **auto-generated** and always current; this brief explains how
 to read it and what is out of scope.

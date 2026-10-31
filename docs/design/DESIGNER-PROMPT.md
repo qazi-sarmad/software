@@ -84,7 +84,7 @@ THE LAWS A DESIGN MUST RESPECT (enforced in code; a design that breaks them cann
 - Deterministic only: no AI, no generated imagery, no model. Time is an argument — a phase resolves
   from an instant passed in, never from a clock read inside a pure function.
 - Reduced motion: under prefers-reduced-motion: reduce the motion level is none and no animation runs.
-- Preserve the 105 screens and 81 flows. A redesign changes values and chrome; it does not drop a
+- Preserve the 130 screens and 81 flows. A redesign changes values and chrome; it does not drop a
   testid or a flow.
 
 CONTINUOUS BUILD
