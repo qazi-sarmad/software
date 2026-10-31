@@ -85,7 +85,12 @@ export const ReviewCommentsGlobalDock: React.FC = () => {
               onClick={() => setIsOpen(true)}
               className="w-14 h-14 rounded-full bg-primary text-canvas shadow-apple flex items-center justify-center hover:scale-105 active:scale-95 transition-transform relative focus:outline-none focus:ring-2 focus:ring-accent"
               title="Review comments dock"
-              aria-label="Open review comments dock"
+              /* WCAG 2.5.3: the badge count is visible text, so it must appear in the name. */
+              aria-label={
+                awaitingResponseCount > 0
+                  ? `Open review comments dock, ${awaitingResponseCount} awaiting response`
+                  : 'Open review comments dock'
+              }
             >
               <MessageSquare className="w-6 h-6 stroke-[1.5]" />
               {/* Cinnabar Unread Badge */}

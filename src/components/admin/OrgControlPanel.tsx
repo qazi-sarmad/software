@@ -24,6 +24,9 @@ import { OrgGovernancePanel } from './OrgGovernancePanel';
 import { ReportTemplatePanel } from './ReportTemplatePanel';
 import { MethodologyPanel } from './MethodologyPanel';
 import { SharePanel } from './SharePanel';
+import { SsoPanel } from './SsoPanel';
+import { MfaPanel } from './MfaPanel';
+import { DataLifecyclePanel } from './DataLifecyclePanel';
 import { IntegrityAlarmPanel } from './IntegrityAlarmPanel';
 import { AttestationPanel } from './AttestationPanel';
 import { IncidentWizardPanel } from './IncidentWizardPanel';
@@ -33,7 +36,7 @@ import { OrgReadinessPanel } from '../readiness/OrgReadinessPanel';
 import { InlineError } from '../common/InlineError';
 import { Check, Lock, Zap, Sliders, Users, Shield, ShieldAlert, ShieldCheck, History, Database, FileCheck, Archive } from '../common/Icons';
 
-type Tab = 'features' | 'branding' | 'email' | 'automation' | 'escalation' | 'setup' | 'consultation' | 'auditors' | 'hosting' | 'governance' | 'templates' | 'methodology' | 'history' | 'changes' | 'tutorials' | 'connectors' | 'formats' | 'sharing' | 'integrity' | 'attestation' | 'incidents' | 'packs' | 'archived-role' | 'readiness';
+type Tab = 'features' | 'branding' | 'email' | 'automation' | 'escalation' | 'setup' | 'consultation' | 'auditors' | 'hosting' | 'governance' | 'templates' | 'methodology' | 'history' | 'changes' | 'tutorials' | 'connectors' | 'formats' | 'sharing' | 'sso' | 'mfa' | 'data' | 'integrity' | 'attestation' | 'incidents' | 'packs' | 'archived-role' | 'readiness';
 type LoadState = 'loading' | 'ready' | 'error';
 
 /** F18: every configuration tab carries its own "Show me how" tutorial key (Appendix A). */
@@ -56,6 +59,9 @@ const TAB_TUTORIAL: Record<Tab, { key: string; title: string }> = {
   connectors: { key: 'oa.connectors', title: 'OA-23 connectors and monitoring' },
   formats: { key: 'oa.formats', title: 'OA-24 report format editor' },
   sharing: { key: 'oa.governance', title: 'OA-22 governance settings' },
+  sso: { key: 'oa.governance', title: 'OA-22 governance settings' },
+  mfa: { key: 'oa.governance', title: 'OA-22 governance settings' },
+  data: { key: 'oa.governance', title: 'OA-22 governance settings' },
   integrity: { key: 'oa.governance', title: 'OA-29 integrity alarm' },
   attestation: { key: 'oa.governance', title: 'OA-30 attestation' },
   incidents: { key: 'oa.governance', title: 'OA-31 incident wizard' },
@@ -167,6 +173,9 @@ export const OrgControlPanel: React.FC<{ initialTab?: Tab }> = ({ initialTab }) 
           { id: 'connectors', label: 'Connectors', icon: Database },
           { id: 'formats', label: 'Report formats', icon: Sliders },
           { id: 'sharing', label: 'Sharing', icon: Users },
+          { id: 'sso', label: 'Single sign-on', icon: Shield },
+          { id: 'mfa', label: 'Multi-factor', icon: Shield },
+          { id: 'data', label: 'Data erasure', icon: Database },
           { id: 'integrity', label: 'Integrity', icon: ShieldAlert },
           { id: 'attestation', label: 'Attestation', icon: FileCheck },
           { id: 'incidents', label: 'Incidents', icon: ShieldAlert },
@@ -291,6 +300,9 @@ export const OrgControlPanel: React.FC<{ initialTab?: Tab }> = ({ initialTab }) 
       {tab === 'connectors' && <ConnectorMonitorPanel />}
       {tab === 'formats' && <ReportFormatPanel />}
       {tab === 'sharing' && <SharePanel />}
+      {tab === 'sso' && <SsoPanel />}
+      {tab === 'mfa' && <MfaPanel />}
+      {tab === 'data' && <DataLifecyclePanel />}
       {tab === 'integrity' && <IntegrityAlarmPanel screenId="OA-29" />}
       {tab === 'attestation' && <AttestationPanel screenId="OA-30" />}
       {tab === 'incidents' && <IncidentWizardPanel screenId="OA-31" />}

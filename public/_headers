@@ -1,0 +1,25 @@
+# Provio security headers.
+#
+# This file is read by the static hosts that use the `_headers` convention (Netlify, Cloudflare
+# Pages). The same policy is mirrored for the Vite dev and preview servers in vite.config.ts, and a
+# subset that works in a meta tag is in index.html. `frame-ancestors` is only honoured in a header,
+# which is why it lives here and not in the meta tag.
+#
+# The policy is deliberately strict: everything is same-origin. Fonts are self-hosted (@fontsource
+# woff2 files in the bundle), so there is no font or style origin to allow. The only external
+# connections are the Supabase project (https + wss for Realtime).
+
+/*
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; worker-src 'self' blob:; manifest-src 'self'; upgrade-insecure-requests
+  Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Resource-Policy: same-origin
+  X-Robots-Tag: noindex, nofollow
+
+# The unlisted platform console must never be indexed even if a host ignores robots.txt.
+/superadmin/*
+  X-Robots-Tag: noindex, nofollow, noarchive

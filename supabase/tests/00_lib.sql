@@ -99,6 +99,9 @@ begin
       truncate reopen_grants;
       truncate platform_trail;
       truncate platform_admins;
+      -- SCALE-2 (0207). platform_owners has no FK to orgs either, so it is cleared explicitly and
+      -- re-seeded below; without this a second pass would keep the owner row from the first.
+      truncate platform_owners;
       truncate entity_decision_grants;
       -- ACP platform-level tables that accumulate rows and have no FK to orgs (S1).
       truncate platform_notification_recipients;
@@ -181,6 +184,10 @@ begin
     ('20000000-0000-0000-0000-0000000000b7', 'b0000000-0000-0000-0000-000000000001', 'Auditee', 'auditee', true, '{"manage_users":false,"manage_roles":false,"edit_config":false,"manage_engagements":false,"approve_plan":false,"review_and_approve":false,"perform_work":false,"can_reopen":false,"view_all_scopes":false,"read_only":true,"manage_team":false,"view_board_pack":false,"generate_board_pack":false,"view_insights":false}');
 
   insert into platform_admins (user_id) values ('10000000-0000-0000-0000-0000000000f0');
+  -- SCALE-2 (0207). The seeded platform admin is also the platform OWNER, so every existing platform
+  -- test (which acts as f0) still reaches the control plane. Tests that need a non-owner platform
+  -- admin insert a second platform_admins row without an owners row.
+  insert into platform_owners (user_id, note) values ('10000000-0000-0000-0000-0000000000f0', 'test seed');
 
   insert into org_members (org_id, user_id, role_id, hierarchy_level) values
     ('a0000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-0000000000a1', '20000000-0000-0000-0000-0000000000a1', 1),

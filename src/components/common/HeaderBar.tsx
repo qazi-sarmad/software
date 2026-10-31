@@ -216,19 +216,21 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ onOpenCommandPalette }) =>
               onClick={() => setIsProfileOpen(!isProfileOpen)}
               className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-surface-hover transition-colors"
               title="User profile and system administration"
-              aria-label="Open user profile menu"
+              /* WCAG 2.5.3: the name contains every visible token: the avatar initials, the name and
+                 the role. A speech-input user can say any of them. */
+              aria-label={`Open user profile menu, ${currentUser.avatar} ${currentUser.name} ${currentUser.role}`}
             >
               <div className="w-7 h-7 rounded-full bg-accent-subtle text-accent font-semibold flex items-center justify-center text-apple-12">
                 {currentUser.avatar}
-              </div>
+              </div>{' '}
               <div className="text-left hidden md:block">
                 <div className="text-apple-12 font-semibold text-primary leading-tight">
                   {currentUser.name}
-                </div>
+                </div>{' '}
                 <div className="text-apple-11 text-secondary uppercase font-medium">
                   {currentUser.role}
                 </div>
-              </div>
+              </div>{' '}
               <ChevronDown className="w-3 h-3 text-secondary stroke-[1.5] hidden md:block" />
             </button>
 

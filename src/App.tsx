@@ -3,8 +3,12 @@ import { motion } from 'motion/react';
 import { AppProvider, useApp } from './context/AppContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { SignInScreen } from './components/auth/SignInScreen';
+import { MfaChallenge } from './components/auth/MfaChallenge';
+import { isPlatformAdminPath } from './lib/platformPath';
 import { NoTenantScreen } from './components/auth/NoTenantScreen';
+import { WithheldScreen } from './components/auth/WithheldScreen';
 import { InlineError } from './components/common/InlineError';
+import { LiveAnnouncerProvider } from './components/common/LiveAnnouncer';
 import type { User } from './types';
 import type { TenantSeed } from './types/seed';
 import { EMPTY_SEED } from './data/emptySeed';
@@ -328,6 +332,9 @@ const AuthGate: React.FC<{ viewRecord?: ViewRecordTarget; externalPortal?: boole
     );
   }
   if (status === 'no_tenant') return <NoTenantScreen />;
+  // The organisation's security policy withheld the tenant claims (0204 SSO, 0207 second factor).
+  // RLS already shows this member nothing; the screen offers the challenge or the SSO guidance.
+  if (status === 'withheld') return <WithheldScreen />;
   if (status === 'signed_out' || status === 'platform' || !user) return <SignInScreen />;
   // The external portal is only for that principal: a signed-in tenant member who opens /external is
   // told plainly, never shown the tenant shell.
@@ -437,10 +444,15 @@ const SuperAdminPortal = lazy(() =>
 
 /** Shows the sign-in screen for an unauthenticated visitor, else the portal (which re-checks the role). */
 const PlatformGate: React.FC = () => {
-  const { user, isPlatform } = useAuth();
+  const { user, isPlatform, platformNeedsMfa, refreshPlatformMfa, withheld } = useAuth();
   // An org member (user) is signed in but not platform staff: render the portal, which denies it in
   // the database. Platform staff have no org identity, so `user` is null and `isPlatform` is true.
+  if (withheld) return <WithheldScreen />;
   if (!user && !isPlatform) return <SignInScreen />;
+  // WP9: when the platform requires a second factor and the session has not completed one, show the
+  // MFA challenge instead of the portal. The database refuses every platform RPC until AAL2, so this
+  // is the honest UI for a state the database already enforces.
+  if (platformNeedsMfa) return <MfaChallenge onSatisfied={() => void refreshPlatformMfa()} />;
   return <SuperAdminPortal />;
 };
 
@@ -536,10 +548,12 @@ const AppRoutes: React.FC = () => {
     );
   }
 
-  // Super Admin portal (/superadmin, spec §24). A separate console for QSCorp platform staff. It
-  // renders the portal for an authenticated session and the sign-in screen otherwise; the portal
-  // itself re-checks the platform role in the database and shows a denial screen without it.
-  if (currentPath === '/superadmin') {
+  // Super Admin portal (spec §24). A separate console for QSCorp platform staff, reached only on the
+  // unlisted path in VITE_PLATFORM_ADMIN_PATH (WP9; default /superadmin). It renders the portal for
+  // an authenticated session and the sign-in screen otherwise; the portal itself re-checks the
+  // platform role in the database and shows a denial screen without it. No navigation link points
+  // here, and the path is not a constant in the bundle, so an attacker must know it already.
+  if (isPlatformAdminPath(currentPath)) {
     return (
       <Suspense fallback={<LoadingFallback />}>
         <PlatformGate />
@@ -560,9 +574,11 @@ const AppRoutes: React.FC = () => {
 export default function App() {
   return (
     <ThemeProvider>
-      <AuthProvider>
-        <AppRoutes />
-      </AuthProvider>
+      <LiveAnnouncerProvider>
+        <AuthProvider>
+          <AppRoutes />
+        </AuthProvider>
+      </LiveAnnouncerProvider>
     </ThemeProvider>
   );
 }

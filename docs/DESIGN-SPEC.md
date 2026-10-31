@@ -12,7 +12,7 @@ so.
 
 ## Summary
 
-- **Screens:** 122 (each with purpose, route, rights, its data functions and RPCs, testids and states).
+- **Screens:** 129 (each with purpose, route, rights, its data functions and RPCs, testids and states).
 - **Flows (tutorial keys):** 81; 81 have recorded media in `public/tutorials/`, 0 have none.
 - **Design presets:** `bone`, `ledger`, `porcelain`; **themes:** light, dark — 6 combinations.
 - **Design tokens:** 25 unique variables across 6 preset/theme blocks in `src/styles/tokens.css`.
@@ -119,7 +119,7 @@ moves the chrome, never the call.
 - **Rights required:** platform admin (`is_platform_admin()`); a session never grants audit content.
 - **Data functions (0):** —
 - **Data modules (2):** `src/data/consultation.ts`, `src/data/platform.ts`
-- **RPCs reachable (13):** `consultation_active`, `platform_create_tenant`, `platform_get_invite_caps`, `platform_job_health`, `platform_list_support_grants`, `platform_list_tenants`, `platform_list_trail`, `platform_provisioning_status`, `platform_whoami`, `support_access_log_list`, `support_grant_active`, `support_list_engagements`, `support_read_object`
+- **RPCs reachable (19):** `consultation_active`, `platform_create_tenant`, `platform_get_dr_settings`, `platform_get_invite_caps`, `platform_job_health`, `platform_list_residency_regions`, `platform_list_signing_algorithms`, `platform_list_support_grants`, `platform_list_tenants`, `platform_list_trail`, `platform_owner_claim`, `platform_provisioning_status`, `platform_security_status`, `platform_signing_keys_due`, `platform_whoami`, `support_access_log_list`, `support_grant_active`, `support_list_engagements`, `support_read_object`
 - **Tables reachable (0):** —
 - **Testids (10):** `superadmin-consultation`, `superadmin-consultation-loading`, `superadmin-consultation-error`, `superadmin-consultation-result`, `superadmin-consultation-hours`, `superadmin-consultation-request`, `superadmin-consultation-empty`, `superadmin-consultation-<tenantId>`, `superadmin-consultation-ack-<tenantId>`, `superadmin-consultation-end-<tenantId>`
 - **States:** loading, error (with Retry), empty (no tenants), ready.
@@ -133,7 +133,7 @@ moves the chrome, never the call.
 - **Rights required:** platform admin only. A tenant never writes entitlements.
 - **Data functions (0):** —
 - **Data modules (2):** `src/data/entitlements.ts`, `src/data/platform.ts`
-- **RPCs reachable (15):** `list_feature_catalogue`, `list_plans`, `list_tenant_entitlements`, `platform_create_tenant`, `platform_get_invite_caps`, `platform_job_health`, `platform_list_support_grants`, `platform_list_tenants`, `platform_list_trail`, `platform_provisioning_status`, `platform_whoami`, `support_access_log_list`, `support_grant_active`, `support_list_engagements`, `support_read_object`
+- **RPCs reachable (21):** `list_feature_catalogue`, `list_plans`, `list_tenant_entitlements`, `platform_create_tenant`, `platform_get_dr_settings`, `platform_get_invite_caps`, `platform_job_health`, `platform_list_residency_regions`, `platform_list_signing_algorithms`, `platform_list_support_grants`, `platform_list_tenants`, `platform_list_trail`, `platform_owner_claim`, `platform_provisioning_status`, `platform_security_status`, `platform_signing_keys_due`, `platform_whoami`, `support_access_log_list`, `support_grant_active`, `support_list_engagements`, `support_read_object`
 - **Tables reachable (0):** —
 - **Testids (11):** `superadmin-features`, `superadmin-features-loading`, `superadmin-features-error`, `superadmin-features-result`, `superadmin-features-empty`, `superadmin-feature-catalogue`, `feature-catalogue-<key>`, `superadmin-entitlements`, `entitlement-<key>`, `entitlement-reason-<key>`, `entitlement-toggle-<key>`
 - **States:** loading, error (with Retry), empty (no tenants), ready. A toggle without a reason shows "A reason is required when you change a feature." and sends nothing.
@@ -231,7 +231,7 @@ moves the chrome, never the call.
 - **Rights required:** platform admin only.
 - **Data functions (0):** —
 - **Data modules (2):** `src/data/hostingFit.ts`, `src/data/platform.ts`
-- **RPCs reachable (19):** `hosting_connection_list`, `hosting_connection_save`, `hosting_connection_set_secret`, `hosting_fit_get`, `hosting_fit_rule_save`, `migration_job_create`, `migration_job_list`, `platform_create_tenant`, `platform_get_invite_caps`, `platform_job_health`, `platform_list_support_grants`, `platform_list_tenants`, `platform_list_trail`, `platform_provisioning_status`, `platform_whoami`, `support_access_log_list`, `support_grant_active`, `support_list_engagements`, `support_read_object`
+- **RPCs reachable (25):** `hosting_connection_list`, `hosting_connection_save`, `hosting_connection_set_secret`, `hosting_fit_get`, `hosting_fit_rule_save`, `migration_job_create`, `migration_job_list`, `platform_create_tenant`, `platform_get_dr_settings`, `platform_get_invite_caps`, `platform_job_health`, `platform_list_residency_regions`, `platform_list_signing_algorithms`, `platform_list_support_grants`, `platform_list_tenants`, `platform_list_trail`, `platform_owner_claim`, `platform_provisioning_status`, `platform_security_status`, `platform_signing_keys_due`, `platform_whoami`, `support_access_log_list`, `support_grant_active`, `support_list_engagements`, `support_read_object`
 - **Tables reachable (0):** —
 - **Testids (12):** `sa-migration`, `sa-migration-loading`, `sa-migration-error`, `sa-migration-tenant`, `sa-migration-refresh`, `sa-migration-jobs-loading`, `sa-migration-jobs-error`, `sa-migration-empty`, `sa-migration-job-<id>`, `sa-migration-job-error-<id>`, `sa-migration-steps-<id>`, `sa-deployment-kit`
 - **States:** loading tenants; loading jobs; an empty jobs list; an inline job error; a failed job is flagged in cinnabar, an awaiting-cutover or retired job in verdigris.
@@ -245,7 +245,7 @@ moves the chrome, never the call.
 - **Rights required:** platform admin (`is_platform_admin()`, `require_platform_admin()` in the database). The session additionally requires a live, unrevoked, unexpired `content_read` grant for the tenant.
 - **Data functions (0):** —
 - **Data modules (1):** `src/data/platform.ts`
-- **RPCs reachable (12):** `platform_create_tenant`, `platform_get_invite_caps`, `platform_job_health`, `platform_list_support_grants`, `platform_list_tenants`, `platform_list_trail`, `platform_provisioning_status`, `platform_whoami`, `support_access_log_list`, `support_grant_active`, `support_list_engagements`, `support_read_object`
+- **RPCs reachable (18):** `platform_create_tenant`, `platform_get_dr_settings`, `platform_get_invite_caps`, `platform_job_health`, `platform_list_residency_regions`, `platform_list_signing_algorithms`, `platform_list_support_grants`, `platform_list_tenants`, `platform_list_trail`, `platform_owner_claim`, `platform_provisioning_status`, `platform_security_status`, `platform_signing_keys_due`, `platform_whoami`, `support_access_log_list`, `support_grant_active`, `support_list_engagements`, `support_read_object`
 - **Tables reachable (0):** —
 - **Testids (24):** `superadmin-support`, `superadmin-support-loading`, `superadmin-support-error`, `superadmin-support-result`, `superadmin-support-empty`, `superadmin-support-session`, `superadmin-support-session-org`, `superadmin-support-session-open`, `superadmin-support-session-error`, `superadmin-support-session-open-panel`, `superadmin-support-session-count`, `superadmin-support-session-empty`, `superadmin-support-session-list`, `superadmin-support-session-read-result`, `superadmin-support-session-trail`, `support-engagement-<id>`, `support-read-<id>`, `superadmin-job-health`, `superadmin-job-health-error`, `superadmin-job-health-empty`, `superadmin-job-health-list`, `job-<jobName>`, `job-status-<jobName>`, `grant-<grantId>`
 - **States:** loading grants; loading jobs; an empty jobs list (the scheduler is absent); an inline job error; a session that stays closed when no live grant exists, with the reason inline; an open session with the granted engagements; an inline refusal when the database rejects the call. No blocking modal.
@@ -259,7 +259,7 @@ moves the chrome, never the call.
 - **Rights required:** platform admin (`is_platform_admin()`), re-checked by every `platform_*` RPC.
 - **Data functions (0):** —
 - **Data modules (3):** `src/data/admin.ts`, `src/data/entitlements.ts`, `src/data/platform.ts`
-- **RPCs reachable (17):** `invite_status`, `invite_user_capped`, `list_feature_catalogue`, `list_plans`, `list_tenant_entitlements`, `platform_create_tenant`, `platform_get_invite_caps`, `platform_job_health`, `platform_list_support_grants`, `platform_list_tenants`, `platform_list_trail`, `platform_provisioning_status`, `platform_whoami`, `support_access_log_list`, `support_grant_active`, `support_list_engagements`, `support_read_object`
+- **RPCs reachable (23):** `invite_status`, `invite_user_capped`, `list_feature_catalogue`, `list_plans`, `list_tenant_entitlements`, `platform_create_tenant`, `platform_get_dr_settings`, `platform_get_invite_caps`, `platform_job_health`, `platform_list_residency_regions`, `platform_list_signing_algorithms`, `platform_list_support_grants`, `platform_list_tenants`, `platform_list_trail`, `platform_owner_claim`, `platform_provisioning_status`, `platform_security_status`, `platform_signing_keys_due`, `platform_whoami`, `support_access_log_list`, `support_grant_active`, `support_list_engagements`, `support_read_object`
 - **Tables reachable (3):** `org_members`, `roles`, `user_scopes`
 - **Testids (42):** `sa-provisioning`, `sa-provisioning-activate`, `sa-provisioning-admin-email`, `sa-provisioning-cap`, `sa-provisioning-cap-input`, `sa-provisioning-cap-reason`, `sa-provisioning-cap-submit`, `sa-provisioning-check-engagement`, `sa-provisioning-check-invite`, `sa-provisioning-check-ready`, `sa-provisioning-check-roles`, `sa-provisioning-check-sender`, `sa-provisioning-check-status`, `sa-provisioning-create`, `sa-provisioning-create-error`, `sa-provisioning-create-reason`, `sa-provisioning-create-submit`, `sa-provisioning-created`, `sa-provisioning-done`, `sa-provisioning-entitlement-disable`, `sa-provisioning-entitlement-enable`, `sa-provisioning-entitlement-reason`, `sa-provisioning-entitlements`, `sa-provisioning-error`, `sa-provisioning-feature-select`, `sa-provisioning-finish`, `sa-provisioning-loading`, `sa-provisioning-org-name`, `sa-provisioning-readiness`, `sa-provisioning-recheck`, `sa-provisioning-repair-roles`, `sa-provisioning-result`, `sa-provisioning-retry`, `sa-provisioning-sender`, `sa-provisioning-sender-from`, `sa-provisioning-sender-name`, `sa-provisioning-sender-reason`, `sa-provisioning-sender-reply`, `sa-provisioning-sender-submit`, `sa-provisioning-target`, `sa-provisioning-tenant-select`, `sa-setup`
 - **States:** loading; empty (no tenant selected); readiness checks; created; done; error with retry.
@@ -270,13 +270,13 @@ moves the chrome, never the call.
 
 - **Purpose:** The shell around every /superadmin tab: it proves the caller is a platform admin before it renders any tab, and shows a checking state, a denied state, or the tab strip.
 - **Route / location:** `/superadmin`.
-- **Rights required:** platform admin (`is_platform_admin()`); a caller without it sees the denied state.
+- **Rights required:** platform admin (`is_platform_admin()`); a caller without it sees the denied state. The console is owner-only (0103): a platform admin who is not the owner is denied, and a one-time bootstrap claims ownership when no owner exists yet.
 - **Data functions (0):** —
 - **Data modules (0):** —
 - **RPCs reachable (0):** —
 - **Tables reachable (0):** —
-- **Testids (5):** `superadmin-checking`, `superadmin-denied`, `superadmin-portal`, `superadmin-tabs`, `superadmin-tab-<tab>`
-- **States:** checking; denied; ready.
+- **Testids (8):** `superadmin-checking`, `superadmin-denied`, `superadmin-bootstrap`, `superadmin-bootstrap-reason`, `superadmin-bootstrap-claim`, `superadmin-portal`, `superadmin-tabs`, `superadmin-tab-<tab>`
+- **States:** checking; denied; bootstrap (a platform admin and no owner exists yet); ready.
 - **Flows that touch this screen:** — (no flow)
 - **Connection candidates (same route):** — (route is unique to this screen)
 
@@ -287,7 +287,7 @@ moves the chrome, never the call.
 - **Rights required:** platform admin (`is_platform_admin()`); every write is a platform-only RPC (`admin_save_timestamp_authority`, `admin_save_trust_anchor`, `admin_set_anchoring_min`), re-checked in the database.
 - **Data functions (0):** —
 - **Data modules (2):** `src/data/integrityAnchoring.ts`, `src/data/platform.ts`
-- **RPCs reachable (12):** `platform_create_tenant`, `platform_get_invite_caps`, `platform_job_health`, `platform_list_support_grants`, `platform_list_tenants`, `platform_list_trail`, `platform_provisioning_status`, `platform_whoami`, `support_access_log_list`, `support_grant_active`, `support_list_engagements`, `support_read_object`
+- **RPCs reachable (18):** `platform_create_tenant`, `platform_get_dr_settings`, `platform_get_invite_caps`, `platform_job_health`, `platform_list_residency_regions`, `platform_list_signing_algorithms`, `platform_list_support_grants`, `platform_list_tenants`, `platform_list_trail`, `platform_owner_claim`, `platform_provisioning_status`, `platform_security_status`, `platform_signing_keys_due`, `platform_whoami`, `support_access_log_list`, `support_grant_active`, `support_list_engagements`, `support_read_object`
 - **Tables reachable (0):** —
 - **Testids (25):** `sa-anchoring`, `sa-anchoring-loading`, `sa-anchoring-error`, `sa-anchoring-save-error`, `sa-anchoring-result`, `sa-anchoring-authorities`, `sa-anchoring-authority-list`, `sa-anchoring-authority-empty`, `sa-anchoring-authority-<id>`, `sa-anchoring-authority-name`, `sa-anchoring-authority-url`, `sa-anchoring-authority-order`, `sa-anchoring-authority-add`, `sa-anchoring-anchors`, `sa-anchoring-anchor-list`, `sa-anchoring-anchor-empty`, `sa-anchoring-anchor-<id>`, `sa-anchoring-anchor-name`, `sa-anchoring-anchor-cert`, `sa-anchoring-anchor-add`, `sa-anchoring-min`, `sa-anchoring-min-list`, `sa-anchoring-min-empty`, `sa-anchoring-min-<id>`, `sa-anchoring-min-<id>-<n>`
 - **States:** loading; error (with Retry); ready; empty authority list; empty anchor list; empty tenant list; an inline result or refusal after a write.
@@ -301,7 +301,7 @@ moves the chrome, never the call.
 - **Rights required:** platform admin (`require_platform_admin()`); every write is a platform-only RPC (`seed_default_universes`, `set_universe_domain`), re-checked in the database.
 - **Data functions (0):** —
 - **Data modules (2):** `src/data/platform.ts`, `src/data/platformDomains.ts`
-- **RPCs reachable (13):** `platform_create_tenant`, `platform_get_invite_caps`, `platform_job_health`, `platform_list_support_grants`, `platform_list_tenants`, `platform_list_trail`, `platform_provisioning_status`, `platform_whoami`, `support_access_log_list`, `support_grant_active`, `support_list_engagements`, `support_read_object`, `universe_discipline`
+- **RPCs reachable (19):** `platform_create_tenant`, `platform_get_dr_settings`, `platform_get_invite_caps`, `platform_job_health`, `platform_list_residency_regions`, `platform_list_signing_algorithms`, `platform_list_support_grants`, `platform_list_tenants`, `platform_list_trail`, `platform_owner_claim`, `platform_provisioning_status`, `platform_security_status`, `platform_signing_keys_due`, `platform_whoami`, `support_access_log_list`, `support_grant_active`, `support_list_engagements`, `support_read_object`, `universe_discipline`
 - **Tables reachable (1):** `universes`
 - **Testids (23):** `sa-domains`, `sa-domains-loading`, `sa-domains-retry`, `sa-domains-target`, `sa-domains-org-select`, `sa-domains-seed`, `sa-domains-empty`, `sa-domains-list`, `sa-domains-row-<id>`, `sa-domains-unset-<id>`, `sa-domains-readback-<id>`, `sa-domains-base-<id>`, `sa-domains-edit-<id>`, `sa-domains-editor`, `sa-domains-domain-input`, `sa-domains-reason`, `sa-domains-save`, `sa-domains-cancel`, `sa-domains-notice`, `sa-domains-bases`, `sa-domains-basecard-<discipline>`, `sa-domains-basecount-<discipline>`, `sa-domains-basestandards-<discipline>`
 - **States:** loading; error (with Retry); no organisation chosen; an empty universe list; ready; an inline notice after a seed or a set, and the exact refusal (an empty reason is refused before anything is sent) otherwise.
@@ -315,7 +315,7 @@ moves the chrome, never the call.
 - **Rights required:** platform admin (`require_platform_admin()`); the complaint writes are platform-only RPCs, re-checked in the database. `platform_list_admins` (the assignment picker) is platform-only.
 - **Data functions (0):** —
 - **Data modules (2):** `src/data/platform.ts`, `src/data/readiness.ts`
-- **RPCs reachable (13):** `platform_create_tenant`, `platform_get_invite_caps`, `platform_job_health`, `platform_list_admins`, `platform_list_support_grants`, `platform_list_tenants`, `platform_list_trail`, `platform_provisioning_status`, `platform_whoami`, `support_access_log_list`, `support_grant_active`, `support_list_engagements`, `support_read_object`
+- **RPCs reachable (19):** `platform_create_tenant`, `platform_get_dr_settings`, `platform_get_invite_caps`, `platform_job_health`, `platform_list_admins`, `platform_list_residency_regions`, `platform_list_signing_algorithms`, `platform_list_support_grants`, `platform_list_tenants`, `platform_list_trail`, `platform_owner_claim`, `platform_provisioning_status`, `platform_security_status`, `platform_signing_keys_due`, `platform_whoami`, `support_access_log_list`, `support_grant_active`, `support_list_engagements`, `support_read_object`
 - **Tables reachable (0):** —
 - **Testids (37):** `sa-readiness`, `sa-readiness-loading`, `sa-readiness-error`, `sa-readiness-retry`, `sa-readiness-target`, `sa-readiness-org-select`, `sa-readiness-refresh`, `sa-readiness-empty`, `sa-readiness-signals`, `sa-readiness-summary`, `sa-readiness-signal-<signalId>`, `sa-readiness-verdict-<signalId>`, `sa-readiness-reason-<signalId>`, `sa-readiness-diag-<signalId>`, `sa-readiness-fix-<signalId>`, `sa-readiness-recheck-<signalId>`, `sa-readiness-contact-<signalId>`, `sa-readiness-layers`, `sa-readiness-layer-<layer>`, `sa-readiness-layer-verdict-<layer>`, `sa-readiness-runbook-note`, `sa-readiness-notice`, `sa-readiness-action-error`, `complaints`, `complaints-filter`, `complaints-empty`, `complaints-admin-count`, `complaint-<code>`, `complaint-code-<code>`, `complaint-trail-<code>`, `complaint-events-<code>`, `complaint-assign-<code>`, `complaint-comment-<code>`, `complaint-comment-send-<code>`, `complaint-assign-save-<code>`, `complaint-resolve-reason-<code>`, `complaint-resolve-<code>`
 - **States:** loading; error (with Retry); no organisation chosen; an empty signal set; ready; the three deployment layers (platform / environment / organisation) with a per-layer verdict; an empty complaint filter; an inline notice after a raise or a resolve, and the exact refusal (an empty resolution reason is refused before anything is sent) otherwise.
@@ -329,7 +329,7 @@ moves the chrome, never the call.
 - **Rights required:** platform admin (`is_platform_admin()`); every write is a platform-only RPC (`platform_signing_key_register`, `standards_pack_publish`, `standards_rollout`), re-checked in the database. `standards_pin` is a tenant action gated on `edit_config` or a Head.
 - **Data functions (0):** —
 - **Data modules (2):** `src/data/platform.ts`, `src/data/standards.ts`
-- **RPCs reachable (14):** `platform_create_tenant`, `platform_get_invite_caps`, `platform_job_health`, `platform_list_support_grants`, `platform_list_tenants`, `platform_list_trail`, `platform_provisioning_status`, `platform_whoami`, `standards_catalogue_list`, `standards_subscriptions_get`, `support_access_log_list`, `support_grant_active`, `support_list_engagements`, `support_read_object`
+- **RPCs reachable (20):** `platform_create_tenant`, `platform_get_dr_settings`, `platform_get_invite_caps`, `platform_job_health`, `platform_list_residency_regions`, `platform_list_signing_algorithms`, `platform_list_support_grants`, `platform_list_tenants`, `platform_list_trail`, `platform_owner_claim`, `platform_provisioning_status`, `platform_security_status`, `platform_signing_keys_due`, `platform_whoami`, `standards_catalogue_list`, `standards_subscriptions_get`, `support_access_log_list`, `support_grant_active`, `support_list_engagements`, `support_read_object`
 - **Tables reachable (0):** —
 - **Testids (21):** `superadmin-standards`, `superadmin-standards-loading`, `superadmin-standards-error`, `superadmin-standards-result`, `superadmin-standards-empty`, `superadmin-standards-catalogue`, `standards-catalogue-<packId>`, `standards-publish-pack`, `standards-publish-version`, `standards-publish`, `standards-shipped-rules`, `standards-rollout-tenants`, `standards-rollout-<orgId>`, `standards-rollout`, `standards-pin-pack`, `standards-pin-version`, `standards-pin-reason`, `standards-pin`, `standards-subscriptions`, `standards-subscriptions-empty`, `standards-subscription-<packId>`
 - **States:** loading; error (with Retry); ready; empty tenant list; an inline result listing the per-tenant outcome after a rollout, the pinned version after a pin, or the exact refusal after a publish or a pin (an empty reason and a version below 1 are refused before anything is sent).
@@ -343,7 +343,7 @@ moves the chrome, never the call.
 - **Rights required:** platform admin (`is_platform_admin()`); every write is a platform-only RPC.
 - **Data functions (0):** —
 - **Data modules (2):** `src/data/admin.ts`, `src/data/platform.ts`
-- **RPCs reachable (14):** `invite_status`, `invite_user_capped`, `platform_create_tenant`, `platform_get_invite_caps`, `platform_job_health`, `platform_list_support_grants`, `platform_list_tenants`, `platform_list_trail`, `platform_provisioning_status`, `platform_whoami`, `support_access_log_list`, `support_grant_active`, `support_list_engagements`, `support_read_object`
+- **RPCs reachable (20):** `invite_status`, `invite_user_capped`, `platform_create_tenant`, `platform_get_dr_settings`, `platform_get_invite_caps`, `platform_job_health`, `platform_list_residency_regions`, `platform_list_signing_algorithms`, `platform_list_support_grants`, `platform_list_tenants`, `platform_list_trail`, `platform_owner_claim`, `platform_provisioning_status`, `platform_security_status`, `platform_signing_keys_due`, `platform_whoami`, `support_access_log_list`, `support_grant_active`, `support_list_engagements`, `support_read_object`
 - **Tables reachable (3):** `org_members`, `roles`, `user_scopes`
 - **Testids (8):** `superadmin-tenants`, `superadmin-tenants-loading`, `superadmin-tenants-error`, `superadmin-tenants-result`, `superadmin-tenants-empty`, `tenant-<id>`, `tenant-allow-<id>`, `tenant-deny-<id>`
 - **States:** loading, error (with Retry), empty (no tenants), ready; an inline result when a write is refused.
@@ -371,7 +371,7 @@ moves the chrome, never the call.
 - **Rights required:** platform admin (`is_platform_admin()`); read-only.
 - **Data functions (0):** —
 - **Data modules (1):** `src/data/platform.ts`
-- **RPCs reachable (12):** `platform_create_tenant`, `platform_get_invite_caps`, `platform_job_health`, `platform_list_support_grants`, `platform_list_tenants`, `platform_list_trail`, `platform_provisioning_status`, `platform_whoami`, `support_access_log_list`, `support_grant_active`, `support_list_engagements`, `support_read_object`
+- **RPCs reachable (18):** `platform_create_tenant`, `platform_get_dr_settings`, `platform_get_invite_caps`, `platform_job_health`, `platform_list_residency_regions`, `platform_list_signing_algorithms`, `platform_list_support_grants`, `platform_list_tenants`, `platform_list_trail`, `platform_owner_claim`, `platform_provisioning_status`, `platform_security_status`, `platform_signing_keys_due`, `platform_whoami`, `support_access_log_list`, `support_grant_active`, `support_list_engagements`, `support_read_object`
 - **Tables reachable (0):** —
 - **Testids (4):** `superadmin-trail`, `superadmin-trail-loading`, `superadmin-trail-error`, `superadmin-trail-empty`
 - **States:** loading, error (with Retry), empty, ready.
@@ -1750,6 +1750,104 @@ moves the chrome, never the call.
 - **Flows that touch this screen:** — (no flow)
 - **Connection candidates (same route):** — (route is unique to this screen)
 
+### `SEC-01` — platform MFA challenge (WP9, spec §24)
+
+- **Purpose:** the second-factor screen shown inside the platform gate when the platform requires MFA and the session has not completed one. It enrols a TOTP factor or challenges an existing one, and raises the session to AAL2 so the platform RPCs answer. It renders no tenant data.
+- **Route / location:** the unlisted platform console path (`VITE_PLATFORM_ADMIN_PATH`), rendered by the platform gate in place of the portal. Not a route of its own.
+- **Rights required:** none beyond an authenticated platform session. The database refuses every platform RPC until the session is AAL2 (`require_platform_admin`).
+- **Data functions (0):** —
+- **Data modules (2):** `src/data/mfa.ts`, `src/data/platform.ts`
+- **RPCs reachable (18):** `platform_create_tenant`, `platform_get_dr_settings`, `platform_get_invite_caps`, `platform_job_health`, `platform_list_residency_regions`, `platform_list_signing_algorithms`, `platform_list_support_grants`, `platform_list_tenants`, `platform_list_trail`, `platform_owner_claim`, `platform_provisioning_status`, `platform_security_status`, `platform_signing_keys_due`, `platform_whoami`, `support_access_log_list`, `support_grant_active`, `support_list_engagements`, `support_read_object`
+- **Tables reachable (0):** —
+- **Testids (7):** `mfa-challenge`, `mfa-enroll`, `mfa-enrolment`, `mfa-secret`, `mfa-code`, `mfa-verify`, `mfa-error`
+- **States:** enrol (no verified factor) / challenge (a verified factor exists) / busy / error.
+- **Flows that touch this screen:** — (no flow)
+- **Connection candidates (same route):** — (route is unique to this screen)
+
+### `SEC-02` — Super Admin security console (WP9, WP14, WP16)
+
+- **Purpose:** the platform security posture in one tab: the second-factor switch and the unlisted console path; the backup/PITR/DR record with the next recovery-test due date; and the signing-algorithm registry with the keys due for rotation. Every change is a reason-stamped, ledgered platform RPC that the database gates on the platform role and AAL2.
+- **Route / location:** Super Admin portal, tab `Security` (`superadmin-tab-security`).
+- **Rights required:** platform administrator, and AAL2 when the second factor is armed.
+- **Data functions (0):** —
+- **Data modules (1):** `src/data/platform.ts`
+- **RPCs reachable (18):** `platform_create_tenant`, `platform_get_dr_settings`, `platform_get_invite_caps`, `platform_job_health`, `platform_list_residency_regions`, `platform_list_signing_algorithms`, `platform_list_support_grants`, `platform_list_tenants`, `platform_list_trail`, `platform_owner_claim`, `platform_provisioning_status`, `platform_security_status`, `platform_signing_keys_due`, `platform_whoami`, `support_access_log_list`, `support_grant_active`, `support_list_engagements`, `support_read_object`
+- **Tables reachable (0):** —
+- **Testids (30):** `superadmin-security`, `superadmin-security-loading`, `superadmin-security-error`, `superadmin-security-action-error`, `superadmin-security-action-ok`, `superadmin-security-mfa`, `superadmin-security-mfa-box`, `superadmin-security-mfa-reason`, `superadmin-security-mfa-toggle`, `superadmin-security-path-box`, `superadmin-security-path`, `superadmin-security-path-reason`, `superadmin-security-path-save`, `superadmin-security-dr`, `superadmin-security-dr-pitr`, `superadmin-security-dr-retention`, `superadmin-security-dr-next`, `superadmin-security-dr-pitr-toggle`, `superadmin-security-dr-recovery-test`, `superadmin-security-crypto`, `superadmin-security-algorithms`, `superadmin-security-algorithm-<code>`, `superadmin-security-due`, `superadmin-security-rotate-box`, `superadmin-security-rotate-keyId`, `superadmin-security-rotate-newKeyId`, `superadmin-security-rotate-publicKey`, `superadmin-security-rotate-reason`, `superadmin-security-rotate-algorithm`, `superadmin-security-rotate`
+- **States:** loading / error / ready; each action shows an inline ok or refusal.
+- **Flows that touch this screen:** — (no flow)
+- **Connection candidates (same route):** — (route is unique to this screen)
+
+### `SEC-03` — organisation SSO policy (WP11)
+
+- **Purpose:** connect the organisation to a SAML or OIDC identity provider: choose the provider and the email domain that routes to the org, and enforce SSO so a password session carries no organisation claim and sees no tenant data.
+- **Route / location:** Org Admin control plane, tab `Single sign-on` (`org-control-tab-sso`).
+- **Rights required:** `edit_config` to change; read-only otherwise. The database enforces `edit_config` and a reason.
+- **Data functions (0):** —
+- **Data modules (1):** `src/data/sso.ts`
+- **RPCs reachable (2):** `sso_get_settings`, `sso_org_for_domain`
+- **Tables reachable (1):** `sso_providers`
+- **Testids (13):** `sso-panel`, `sso-loading`, `sso-error`, `sso-current`, `sso-readonly`, `sso-form`, `sso-provider`, `sso-domain`, `sso-enforced`, `sso-reason`, `sso-save-error`, `sso-saved`, `sso-save`
+- **States:** loading / error / ready; read-only when the caller lacks `edit_config`.
+- **Flows that touch this screen:** — (no flow)
+- **Connection candidates (same route):** — (route is unique to this screen)
+
+### `CHR-01` — live region (a11y announcer, WP12)
+
+- **Purpose:** announce state changes to assistive technology without moving focus. A polite region carries routine confirmations; a refusal escalates the same region to `assertive` so a screen reader interrupts with the error. It renders no visible chrome.
+- **Route / location:** global, mounted once in `App.tsx` (`LiveAnnouncerProvider`); present on every screen.
+- **Rights required:** none; it only mirrors messages the app already decided to show.
+- **Data functions (0):** —
+- **Data modules (0):** —
+- **RPCs reachable (0):** —
+- **Tables reachable (0):** —
+- **Testids (1):** `live-announcer`
+- **States:** idle (empty text) / polite / assertive.
+- **Flows that touch this screen:** — (no flow)
+- **Connection candidates (same route):** — (route is unique to this screen)
+
+### `SEC-04` — data erasure register (WP15)
+
+- **Purpose:** raise and action right-to-erasure requests. Execution replaces the subject's identifiers in place and leaves the sealed, hash-chained record intact, so a sealed report stays independently verifiable. A legal hold blocks execution.
+- **Route / location:** Org Admin control plane, tab `Data erasure` (`org-control-tab-data`).
+- **Rights required:** `manage_users` to raise; `edit_config` to hold or execute. The database enforces both and requires a reason.
+- **Data functions (0):** —
+- **Data modules (1):** `src/data/erasure.ts`
+- **RPCs reachable (1):** `erasure_list`
+- **Tables reachable (0):** —
+- **Testids (14):** `erasure-panel`, `erasure-loading`, `erasure-error`, `erasure-form`, `erasure-email`, `erasure-reason`, `erasure-request`, `erasure-action-error`, `erasure-action-ok`, `erasure-empty`, `erasure-list`, `erasure-row-<id>`, `erasure-hold-<id>`, `erasure-execute-<id>`
+- **States:** loading / error / ready / empty; each action shows an inline ok or refusal.
+- **Flows that touch this screen:** — (no flow)
+- **Connection candidates (same route):** — (route is unique to this screen)
+
+### `SEC-05` — organisation multi-factor policy (0103)
+
+- **Purpose:** require a second factor for every member of the organisation. When enforcement is on, the access-token hook withholds the org claims from a session that has not completed a factor, so RLS shows that session no tenant data until it does.
+- **Route / location:** Org Admin control plane, tab `Multi-factor` (`org-control-tab-mfa`).
+- **Rights required:** `edit_config` to change; read-only otherwise. The database enforces `edit_config` and a reason, and writes an append-only version row.
+- **Data functions (0):** —
+- **Data modules (1):** `src/data/orgSecurity.ts`
+- **RPCs reachable (1):** `org_security_status`
+- **Tables reachable (1):** `org_security_versions`
+- **Testids (13):** `mfa-panel`, `mfa-panel-loading`, `mfa-panel-error`, `mfa-current`, `mfa-readonly`, `mfa-form`, `mfa-required`, `mfa-reason`, `mfa-save-error`, `mfa-saved`, `mfa-save`, `mfa-history`, `mfa-history-empty`
+- **States:** loading / error / ready; read-only when the caller lacks `edit_config`; empty history.
+- **Flows that touch this screen:** — (no flow)
+- **Connection candidates (same route):** — (route is unique to this screen)
+
+### `SEC-06` — withheld session (0100 SSO, 0103 second factor)
+
+- **Purpose:** the screen shown when a session exists but the organisation's security policy withheld its tenant claims. It either offers the second-factor challenge or tells the member to sign in through the organisation's identity provider. RLS already shows such a session no tenant data.
+- **Route / location:** rendered by the shell in place of the workspace (and by the platform gate) when the token carries `mfa_required` or `sso_required`.
+- **Rights required:** none; the screen exists precisely because the session has no tenant claims.
+- **Data functions (0):** —
+- **Data modules (1):** `src/data/client.ts`
+- **RPCs reachable (0):** —
+- **Tables reachable (2):** `org_members`, `user_scopes`
+- **Testids (4):** `withheld-screen`, `withheld-retry`, `withheld-signout`, `mfa-challenge`
+- **States:** mfa_required (challenge) / sso_required (guidance) / busy.
+- **Flows that touch this screen:** — (no flow)
+- **Connection candidates (same route):** — (route is unique to this screen)
+
 ## Flows
 
 A flow is a recorded tutorial: an ordered walk over one screen's testids. It is the closest thing
@@ -2934,10 +3032,10 @@ self-hosted constraint: a new typeface ships as a bundle, never a remote link.
 
 ## Coverage cross-check
 
-- Screens documented: 122.
+- Screens documented: 129.
 - Flows documented: 81; with media: 81.
 - Flows whose screen has no inventory entry: 0.
-- Screens with no flow: 75.
+- Screens with no flow: 82.
 - Design tokens: 25 unique, 6 preset/theme blocks.
 
 Regenerate with `npm run gen:design`. The `designSpec` guard holds this file to its sources.

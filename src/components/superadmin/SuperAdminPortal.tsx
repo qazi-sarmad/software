@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { platformWhoami } from '../../data/platform';
+import { platformWhoami, claimPlatformOwnership } from '../../data/platform';
 import { InlineError } from '../common/InlineError';
 import { Building, Shield, ShieldCheck, ShieldAlert, Users, Zap, Eye, History, Send, Database, RefreshCw } from '../common/Icons';
 import { SuperAdminTenants } from './SuperAdminTenants';
@@ -18,6 +18,7 @@ import { SuperAdminMigration, DeploymentKitPanel } from './SuperAdminMigration';
 import { SuperAdminStandards } from './SuperAdminStandards';
 import { SuperAdminDomains } from './SuperAdminDomains';
 import { SuperAdminReadiness } from './SuperAdminReadiness';
+import { SuperAdminSecurity } from './SuperAdminSecurity';
 import { IntegrityAnchoringPanel } from './IntegrityAnchoringPanel';
 import { TutorialButton } from '../common/TutorialButton';
 
@@ -29,8 +30,8 @@ import { TutorialButton } from '../common/TutorialButton';
  * database. This is the sole surface that may know about the platform role (D-PLATFORM-RIGHTS);
  * no org-product code imports it. It renders no blocking modal (spec §27.5).
  */
-type Tab = 'tenants' | 'provisioning' | 'support' | 'consultation' | 'features' | 'recipients' | 'email' | 'automation' | 'tutorials' | 'setup' | 'trail' | 'hosting' | 'migration' | 'integrity' | 'standards' | 'domains' | 'readiness';
-type Gate = 'checking' | 'allowed' | 'denied';
+type Tab = 'tenants' | 'provisioning' | 'support' | 'consultation' | 'features' | 'recipients' | 'email' | 'automation' | 'tutorials' | 'setup' | 'trail' | 'hosting' | 'migration' | 'integrity' | 'standards' | 'domains' | 'readiness' | 'security';
+type Gate = 'checking' | 'allowed' | 'denied' | 'bootstrap';
 
 /** F18: every platform tab carries its own "Show me how" tutorial key (Appendix A). A tab with no
  *  recorded key carries no button rather than a wrong one (the key must be real). */
@@ -49,17 +50,32 @@ const TAB_TUTORIAL: Partial<Record<Tab, { key: string; title: string }>> = {
   migration: { key: 'sa.migration', title: 'SA-12 migration jobs' },
   trail: { key: 'sa.trail', title: 'SA-15 platform trail' },
   integrity: { key: 'sa.integrity-anchoring', title: 'SA-18 integrity anchoring' },
+  security: { key: 'sa.health', title: 'SA-02 platform health' },
 };
 
 export const SuperAdminPortal: React.FC = () => {
   const [gate, setGate] = useState<Gate>('checking');
   const [tab, setTab] = useState<Tab>('tenants');
+  // The console is the owner's alone (0207). A platform admin who is not the owner is refused by the
+  // database and told nothing here; on a fresh install the bootstrap claims ownership once.
+  const [bootstrap, setBootstrap] = useState<{ available: boolean; reason: string }>({ available: false, reason: '' });
+  const [claiming, setClaiming] = useState(false);
+  const [claimError, setClaimError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const resolve = useCallback(() => {
     let live = true;
     platformWhoami()
       .then((who) => {
-        if (live) setGate(who.isPlatformAdmin ? 'allowed' : 'denied');
+        if (!live) return;
+        if (who.isPlatformOwner) {
+          setGate('allowed');
+        } else if (who.isPlatformAdmin && !who.ownerExists) {
+          // The one-time bootstrap: the visitor holds the platform role and no owner exists yet.
+          setBootstrap({ available: true, reason: '' });
+          setGate('bootstrap');
+        } else {
+          setGate('denied');
+        }
       })
       .catch(() => {
         if (live) setGate('denied');
@@ -68,6 +84,24 @@ export const SuperAdminPortal: React.FC = () => {
       live = false;
     };
   }, []);
+
+  useEffect(() => resolve(), [resolve]);
+
+  const claim = async () => {
+    setClaimError(null);
+    if (bootstrap.reason.trim().length < 4) {
+      setClaimError('Give a short reason for claiming ownership.');
+      return;
+    }
+    setClaiming(true);
+    const r = await claimPlatformOwnership(bootstrap.reason.trim());
+    setClaiming(false);
+    if (r.ok) {
+      resolve();
+    } else {
+      setClaimError(r.reason);
+    }
+  };
 
   const goHome = useCallback(() => {
     window.location.href = '/';
@@ -79,6 +113,42 @@ export const SuperAdminPortal: React.FC = () => {
         <div className="flex items-center gap-2 text-secondary text-apple-13">
           <div className="animate-spin w-4 h-4 border-2 border-accent border-t-transparent rounded-full" />
           <span>Checking platform access…</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (gate === 'bootstrap') {
+    return (
+      <div className="min-h-screen bg-canvas text-primary flex items-center justify-center px-6" data-testid="superadmin-bootstrap">
+        <div className="max-w-md w-full space-y-4 p-8 rounded-2xl bg-surface border border-hairline">
+          <div className="flex items-center gap-2 text-accent">
+            <Shield className="w-5 h-5" />
+            <h1 className="text-apple-20 font-bold">Claim platform ownership</h1>
+          </div>
+          <p className="text-apple-13 text-secondary">
+            No owner has been set for this platform yet. Claiming makes this account the sole owner of
+            the control plane; the claim can be made only once and cannot be undone in the app.
+          </p>
+          <label className="block space-y-1">
+            <span className="text-apple-12 font-medium text-primary">Reason</span>
+            <input
+              data-testid="superadmin-bootstrap-reason"
+              value={bootstrap.reason}
+              onChange={(e) => setBootstrap({ ...bootstrap, reason: e.target.value })}
+              className="w-full p-2.5 rounded-xl bg-surface-elevated border border-hairline text-apple-13 text-primary outline-none"
+            />
+          </label>
+          <InlineError message={claimError} testId="superadmin-bootstrap-error" />
+          <button
+            type="button"
+            onClick={() => void claim()}
+            disabled={claiming}
+            data-testid="superadmin-bootstrap-claim"
+            className="px-4 py-2 rounded-xl bg-accent text-white text-apple-13 font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+          >
+            {claiming ? 'Claiming…' : 'Claim ownership'}
+          </button>
         </div>
       </div>
     );
@@ -126,6 +196,7 @@ export const SuperAdminPortal: React.FC = () => {
     { id: 'readiness', label: 'Readiness', icon: ShieldAlert },
     { id: 'standards', label: 'Standards', icon: ShieldCheck },
     { id: 'trail', label: 'Platform trail', icon: History },
+    { id: 'security', label: 'Security', icon: Shield },
   ];
 
   return (
@@ -198,6 +269,7 @@ export const SuperAdminPortal: React.FC = () => {
           </div>
         )}
         {tab === 'trail' && <SuperAdminTrail />}
+        {tab === 'security' && <SuperAdminSecurity />}
         {tab === 'integrity' && <IntegrityAnchoringPanel />}
         {tab === 'domains' && <SuperAdminDomains />}
         {tab === 'readiness' && <SuperAdminReadiness onNavigate={(t) => setTab(t as Tab)} />}
