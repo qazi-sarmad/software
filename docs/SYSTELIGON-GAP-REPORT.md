@@ -405,6 +405,25 @@ clean.
 
 # PART THREE — What remains
 
+> **CORRECTION 2026-10-30 — this Part is stale; the register is the truth.** The merge and the
+> post-merge build moved the register well past what §13 says. Verified against
+> `docs/FEATURE-REGISTER.md` and the code:
+> - **The engine families are MOUNTED, not unmounted.** §13.1's "one surface remains" is wrong now:
+>   flows S3/S4/S5/S12 (F132, `FlowVerifyPanel.tsx`), documents S8 (F133), patterns S9 (F134),
+>   minutes S14 (F135) and policy S15 (F136) are `Wired`, the last four surfaced by
+>   `DocumentReviewPanel.tsx` (OA-36) as review options.
+> - **D5/D7/D8/D9 (F121/F123/F124/F125) and D14/D15 (F143/F144) are `Wired`.** F30 (stage machine) is
+>   `Wired` (`StageMachinePanel.tsx`). F38/F39 are `Wired`. Benford/sampling/prior-year/materiality are
+>   built (`src/lib/assurance/forensicAnalytics.ts`, `priorYearRollforward.ts`).
+> - **Only one row is still `Inert`** — F108 (motion, DESIGN). The 9 `Absent` rows are F56, F92,
+>   F105–F107, F109, F111, F113 and F122 (D6, removed by owner).
+> - The genuinely open items are L3 (the tier-2/3 extraction flow in the audit-file UI), F56/C7
+>   (anomaly→SIRA), F92/L7 (guided first-run to a sealed report), L4/S13 (org-format editor adoption),
+>   L6/A-U2 (the functional-states guard), and the two new features (a unified refusal register and a
+>   regulator-shaped export pack).
+> - The authoritative work list is now `docs/build/CONTINUOUS-BUILDER-PROMPT-2.md`. This Part is kept
+>   for the history of the method, not as a current status.
+
 This section is rewritten. An earlier edition listed the entire S1–S16 engine here; it is built (§10).
 What genuinely remains is smaller, and it is stated with the same rule: nothing below is built unless
 it says so.
