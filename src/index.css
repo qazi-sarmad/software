@@ -27,6 +27,75 @@
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
+/* ── The design-system utility vocabulary the components read ──────────────────────────────────
+   These are the semantic utility classes the product's components use (bg-primary, text-canvas,
+   ring-accent, divide-hairline, …). They are defined as Tailwind v4 `@utility` so that every variant
+   the components write (`hover:bg-accent-hover`, `focus:ring-accent`, `focus-visible:ring-accent`)
+   resolves too — a plain `.ring-accent` rule would leave the focus states unstyled. Every class reads
+   an existing token from `src/styles/tokens.css`; no new colour is introduced and no value is
+   hard-coded (the token law: verdigris = calm, cinnabar = exception, brass = money only).
+
+   They live here, not in `tokens.css`, because `tokens.css` is the designer's (values only); the
+   consuming utility layer is the builder's. `--on-accent` is read with a fallback to the canvas so a
+   filled accent surface stays legible before the designer defines the token. */
+@utility bg-primary { background-color: var(--accent-primary); }
+@utility bg-accent-hover { background-color: var(--accent-primary); }
+@utility bg-tertiary { background-color: var(--text-tertiary); }
+@utility bg-surface-active { background-color: var(--surface-active); }
+@utility bg-hairline { background-color: var(--border-hairline); }
+
+@utility text-canvas { color: var(--on-accent, var(--canvas)); }
+@utility text-accent-foreground { color: var(--on-accent, var(--canvas)); }
+@utility text-verdigris-text { color: var(--accent-verdigris); }
+@utility text-hairline { color: var(--border-hairline); }
+
+@utility border-primary { border-color: var(--accent-primary); }
+@utility border-secondary { border-color: var(--border-strong); }
+@utility border-canvas { border-color: var(--canvas); }
+@utility border-brass { border-color: var(--accent-brass); }
+@utility border-accent-subtle { border-color: var(--accent-primary-subtle); }
+
+@utility ring-accent { --tw-ring-color: var(--accent-primary); }
+@utility ring-accent-subtle { --tw-ring-color: var(--accent-primary-subtle); }
+
+@utility fill-primary { fill: var(--text-primary); }
+@utility fill-secondary { fill: var(--text-secondary); }
+@utility fill-accent { fill: var(--accent-primary); }
+
+@utility divide-hairline {
+  & > :not(:last-child) {
+    border-color: var(--border-hairline);
+  }
+}
+
+/* ── Variant-composable design-system utilities ────────────────────────────────────────────────
+   The design vocabulary in `tokens.css` is written as plain CSS (`.bg-surface { … }`). Tailwind v4
+   only composes a variant (`hover:`, `focus:`, `group-hover:`) onto a class it knows as a utility,
+   so every `hover:bg-surface-hover` (166 uses), `hover:text-primary` (116), `focus:border-accent`
+   (29) and `group-hover:text-primary` in the components compiled to nothing — the hover and focus
+   states were dead in the shipped bundle. These `@utility` declarations give the vocabulary a
+   variant-composable form. They read the same tokens, so a bare use is unchanged; only the variant
+   form starts working. (Consolidating `tokens.css`'s plain copies into this one layer is a DESIGN
+   hand-off — recorded in docs/build/streams/integrator.md — not done here, because `tokens.css` is
+   the designer's file.) */
+@utility bg-surface { background-color: var(--surface); }
+@utility bg-surface-elevated { background-color: var(--surface-elevated); }
+@utility bg-canvas { background-color: var(--canvas); }
+@utility bg-accent-subtle { background-color: var(--accent-primary-subtle); }
+@utility bg-cinnabar-subtle { background-color: var(--accent-cinnabar-subtle); }
+/* Bare use already means "on hover" (tokens.css writes `.bg-surface-hover:hover`), so keep that. */
+@utility bg-surface-hover {
+  &:hover { background-color: var(--surface-hover); }
+}
+
+@utility text-primary { color: var(--text-primary); }
+@utility text-tertiary { color: var(--text-tertiary); }
+@utility text-accent { color: var(--accent-primary); }
+@utility text-cinnabar { color: var(--accent-cinnabar); }
+
+@utility border-accent { border-color: var(--accent-primary); }
+@utility border-hairline { border-color: var(--border-hairline); }
+
 @layer base {
   body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;

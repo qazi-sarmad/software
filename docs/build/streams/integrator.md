@@ -360,3 +360,45 @@ The gap report already read C7 as *"unblocked but unbuilt"*; SCALE-TASKS.md stil
 `src/data/sira.test.ts`, which only covers the not-configured path — corrected to the two real
 RPC names and the SQL test that actually exercises them. Lesson: name a symbol from a grep of
 the file, never from memory.
+
+## Design-system utility vocabulary — two dead-style defects fixed — 2026-10-30
+
+Found while running the gate set, fixed on the trunk. Both were invisible to every gate because no
+gate reads the compiled bundle. Proven against `dist/assets/index-*.css`, the only witness.
+
+**Defect 1 — classes used but declared nowhere.** The components use a semantic class vocabulary;
+20 of those classes were declared in no stylesheet, so the elements rendered unstyled:
+`bg-primary` (12 files), `text-canvas` (18), `divide-hairline` (53), `ring-accent` (9),
+`bg-accent-hover`, `bg-tertiary`, `bg-surface-active`, `bg-hairline`, `text-hairline`,
+`ring-accent-subtle`, `text-accent-foreground`, `border-canvas`, `border-accent-subtle`,
+`text-verdigris-text`, `fill-primary`, `fill-secondary`, `fill-accent`, `border-secondary`,
+`border-primary`, `border-brass`. (The earlier note counted 19; the exact scan found 20.)
+
+**Defect 2 — plain CSS cannot take a Tailwind variant.** The vocabulary in `tokens.css` is written as
+plain CSS (`.bg-surface { … }`). Tailwind v4 only composes `hover:` / `focus:` / `group-hover:` onto
+a class it knows as a `@utility`, so every variant form compiled to nothing: `hover:bg-surface-hover`
+(166 uses), `hover:text-primary` (116), `focus:border-accent` (29), plus `hover:text-cinnabar`,
+`hover:bg-accent-subtle`, `hover:bg-surface`, `hover:bg-canvas`, `hover:bg-surface-elevated`,
+`hover:bg-cinnabar-subtle`, `hover:border-accent`, `hover:border-hairline`, `hover:text-accent`,
+`group-hover:text-primary`, `focus:ring-accent`, `focus-visible:ring-accent`,
+`hover:bg-accent-hover`, `placeholder:text-tertiary`. The hover and focus states were dead in the
+shipped bundle.
+
+**Fix.** `src/index.css` (the integrator's file; `tokens.css` is the designer's, left untouched) gains
+the vocabulary as Tailwind v4 `@utility` declarations — the variant-composable form. Each reads an
+existing token; no new colour, no hard-coded value. `--on-accent` is read with a `var(--canvas)`
+fallback so a filled accent surface stays legible before the designer defines the token.
+
+**Evidence.** `src/guards/utilityVocabulary.test.ts` (4 tests) — asserts (A) every vocabulary class a
+component uses is declared, (B) every variant-used class is a `@utility`, (C) every `@utility` is a
+name from the vocabulary contract. Proven to catch a regression: deleting `@utility bg-primary` fails
+the guard naming `bg-primary (used in src/components/universe/EntityApprovalPanel.tsx)`.
+
+**Verification.** `npm run build` clean; all 22 distinct variant usages and all 20 previously-missing
+classes present in the compiled CSS (checked in Python over `dist/assets/*.css`); `tsc --noEmit`
+clean; all 10 gate scripts PASS; `npx vitest run` 339 files / 3806 tests pass.
+
+**Hand-off to DESIGN (owner of `tokens.css`, not edited).** The plain copies of these classes in
+`tokens.css` now duplicate the `@utility` layer. The single source should be the `@utility` layer; the
+designer should delete the plain duplicates (except `.bg-surface-hover`, whose bare form means hover).
+Also still missing as a token value: `--on-accent` (the fix falls back to `--canvas`).
