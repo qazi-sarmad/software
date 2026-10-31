@@ -48,6 +48,7 @@ export interface ScreenMount {
 export const MOUNTED_SCREENS: ScreenMount[] = [
   { screenId: 'DB-01', title: 'Executive Dashboard', owner: 'trunk', path: 'src/components/dashboard/ExecutiveDashboardTab.tsx', status: 'mounted' },
   { screenId: 'DB-02', title: 'Deterministic capability library', owner: 'trunk', path: 'src/components/dashboard/CapabilityLibraryPanel.tsx', status: 'mounted' },
+  { screenId: 'DB-03', title: 'Self-diagnostic', owner: 'trunk', path: 'src/components/admin/DiagnosticPanel.tsx', status: 'mounted' },
   { screenId: 'WQ-01', title: 'Work Queue', owner: 'trunk', path: 'src/components/pending/PendingTasksTab.tsx', status: 'mounted' },
   { screenId: 'AU-01', title: 'Audit Universe', owner: 's3', path: 'src/components/universe/AuditUniverseTab.tsx', status: 'mounted' },
   { screenId: 'AP-01', title: 'Audit Plan', owner: 'trunk', path: 'src/components/plan/AuditPlanTab.tsx', status: 'mounted' },

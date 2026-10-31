@@ -1445,6 +1445,24 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
   named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
 
+### `DB-03` — Self-diagnostic (spec §11.1)
+
+- **Purpose:** The platform and the organisation check themselves. The pure rule engine `src/lib/diagnostics.ts`
+- **Route / location:** The self-diagnostic block on the Dashboard tab (`executive`), below the capability library; the platform scope renders on the Super Admin `Support access` tab (`SA-02`).
+- **Rights required:** any signed-in member reads the org scope; the platform scope is platform-admin only (`platform_diagnostic_snapshot` refuses any other caller, which renders as the honest not-available state, never an error).
+- **Data functions (`src/data/*.ts`):** `org_diagnostic_snapshot`, `platform_diagnostic_snapshot`
+- **Data modules:** none (pure/UI only)
+- **RPCs reachable via those modules:** none
+- **Tables reachable via those modules:** none
+- **Testids (15):** `diagnostic-panel`, `diagnostic-loading`, `diagnostic-unavailable`, `diagnostic-headline`, `diagnostic-counts`, `diagnostic-refresh`, `diagnostic-clean`, `diagnostic-error`, `diagnostic-findings`, `diagnostic-finding-<ruleId>`, `diagnostic-title-<ruleId>`, `diagnostic-rule-<ruleId>`, `diagnostic-screen-<ruleId>`, `diagnostic-evidence-<ruleId>`, `diagnostic-open-<ruleId>`
+- **Explain ids (0):** — (no explain affordance)
+- **IIA standards addressed (0):** —
+- **Drilldown targets (0):** — (no aggregate)
+- **States:** loading; unavailable (no tenant database, or a non-platform caller on the platform scope — says so, never a wall of zeros); ready with findings; clean (every check passed); error inline.
+- **Tutorial key:** — (no key)
+- **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
+  named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
+
 ### `WQ-01` — Work Queue (S1)
 
 - **Purpose:** The user-specific queue: my workpapers, what awaits my sign-off, what awaits my approval and (for a manager) the team's open work, built by the pure `src/lib/workQueue.ts` module.
@@ -1756,15 +1774,15 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 - **Purpose:** Register a population file, show its SHA-256 hash, and lock the population (hold-to-confirm); a locked population is immutable.
 - **Route / location:** Audit File window, view "Population" (`audit-file-view-population`).
 - **Rights required:** `perform_work`.
-- **Data functions (`src/data/*.ts`):** `PopulationProfile`, `PopulationRecordRead`, `PopulationRow`, `listPopulationRecords`, `lockPopulation`, `populationProfile`, `registerPopulation`, `sha256Hex`
+- **Data functions (`src/data/*.ts`):** `PopulationProfile`, `PopulationRecordRead`, `PopulationRow`, `importPopulationRows`, `listPopulationRecords`, `listPopulationRows`, `lockPopulation`, `parsePopulationPaste`, `populationProfile`, `registerPopulation`, `sha256Hex`, `toSampleItems`
 - **Data modules:** `src/data/population.ts`
-- **RPCs reachable via those modules:** `evidence_files_for`
+- **RPCs reachable via those modules:** `evidence_files_for`, `list_population_rows`
 - **Tables reachable via those modules:** `config_versions`, `population_rows`, `populations`
-- **Testids (21):** `population-browse`, `population-dropzone`, `population-empty`, `population-error`, `population-file-input`, `population-hash`, `population-loading`, `population-panel`, `population-register`, `population-gate`, `population-status`, `population-profile-<id>`, `population-profile-view-<id>`, `population-profile-summary-<id>`, `population-profile-flags-<id>`, `control-total`, `population-errors`, `gate-message`, `finalize-test`, `header-confirm`, `header-confirm-0`
+- **Testids (35):** `population-browse`, `population-dropzone`, `population-empty`, `population-error`, `population-file-input`, `population-hash`, `population-loading`, `population-panel`, `population-register`, `population-gate`, `population-status`, `population-profile-<id>`, `population-profile-view-<id>`, `population-profile-summary-<id>`, `population-profile-flags-<id>`, `population-rows-<id>`, `population-rows-view-<id>`, `population-rows-empty-<id>`, `population-rows-list-<id>`, `population-row-item-<id>-<ref>`, `population-paste`, `population-paste-input`, `population-paste-preview`, `population-paste-columns`, `population-paste-count`, `population-paste-errors`, `population-paste-warnings`, `population-paste-target`, `population-paste-import`, `control-total`, `population-errors`, `gate-message`, `finalize-test`, `header-confirm`, `header-confirm-0`
 - **Explain ids (0):** — (no explain affordance)
 - **IIA standards addressed (1):** `14.1`
 - **Drilldown targets (0):** — (no aggregate)
-- **States:** loading; empty; hashed; locked; profile loading; profile ready (row count, value coverage, duplicate density, period, flags); error inline; header detected and awaiting confirmation (S2 — the engine proposes the header row, the auditor confirms it, rows above it are ignored and the header row is not counted).
+- **States:** loading; empty; hashed; locked; profile loading; profile ready (row count, value coverage, duplicate density, period, flags); error inline; header detected and awaiting confirmation (S2 — the engine proposes the header row, the auditor confirms it, rows above it are ignored and the header row is not counted); paste grid (the header is mapped by position, `population-paste-columns`; parsed count, `population-paste-count`; per-line rejections, `population-paste-errors`; long-line warnings, `population-paste-warnings`; rows are stored against a registered population, `population-paste-target`, `population-paste-import` — never auto-padded to the floor); stored rows inspected row by row (`population-rows-view-<id>`, with `population-rows-empty-<id>` when a verified population carries no rows).
 - **Tutorial key:** — (no key)
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
   named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
@@ -1778,11 +1796,11 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 - **Data modules:** `src/data/sampling.ts`
 - **RPCs reachable via those modules:** `get_sample_size`, `sample_precision`, `sample_tested_rows`, `value_coverage`
 - **Tables reachable via those modules:** `org_sampling_table`, `samples`
-- **Testids (20):** `sampling-calculation`, `sampling-compute`, `sampling-coverage`, `sampling-coverage-status`, `sampling-current`, `sampling-error`, `sampling-floor`, `sampling-loading`, `sampling-lock`, `sampling-locked`, `sampling-method`, `sampling-no-workpaper`, `sampling-panel`, `sampling-paste`, `sampling-paste-count`, `sampling-precision`, `sampling-rules-empty`, `sampling-seed-preview`, `sampling-tested-rows`, `sampling-waive-reason`
+- **Testids (22):** `sampling-calculation`, `sampling-compute`, `sampling-coverage`, `sampling-coverage-status`, `sampling-current`, `sampling-error`, `sampling-floor`, `sampling-loading`, `sampling-lock`, `sampling-locked`, `sampling-method`, `sampling-no-workpaper`, `sampling-panel`, `sampling-paste`, `sampling-paste-count`, `sampling-paste-invalid`, `sampling-paste-floor`, `sampling-precision`, `sampling-rules-empty`, `sampling-seed-preview`, `sampling-tested-rows`, `sampling-waive-reason`
 - **Explain ids (9):** `method.haphazard`, `method.high_value`, `method.low_value`, `method.mus`, `method.random`, `method.stratified`, `method.systematic`, `term.coverage`, `term.exception`
 - **IIA standards addressed (4):** `13.4`, `13.6`, `14.1`, `14.2`
 - **Drilldown targets (0):** — (no aggregate)
-- **States:** loading; no workpaper (`sampling-no-workpaper`); no rules (`sampling-rules-empty`); computed (`sampling-method`, `sampling-calculation`); high-value coverage (`sampling-coverage`, `sampling-coverage-status`; a missing item can be waived with a reason, `sampling-waive-reason`); exact interval (`sampling-precision`); tested rows from the sample (`sampling-tested-rows`); locked (`sampling-locked`); error inline.
+- **States:** loading; no workpaper (`sampling-no-workpaper`); no rules (`sampling-rules-empty`); computed (`sampling-method`, `sampling-calculation`); auditor paste (bare row references parsed into `{row_ref}` items; non-integer lines reported as `sampling-paste-invalid`; the shortfall against the floor reported as `sampling-paste-floor`, never auto-padded); high-value coverage (`sampling-coverage`, `sampling-coverage-status`; a missing item can be waived with a reason, `sampling-waive-reason`); exact interval (`sampling-precision`); tested rows from the sample (`sampling-tested-rows`); locked (`sampling-locked`); error inline.
 - **Tutorial key:** — (no key)
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
   named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
@@ -1920,7 +1938,7 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 - **Rights required:** `perform_work` to run, to record, to build the tested set and to verify; any member of the org reads.
 - **Data functions (`src/data/*.ts`):** `CarriedOverride`, `ConfigSource`, `EvidenceRecord`, `PopulationRecordRead`, `PopulationRow`, `RowVerification`, `RuleFinding`, `RuleInput`, `RuleRunResult`, `TestedRow`, `applyFloor`, `buildAcceptedTestingSet`, `carriedOverrides`, `listConfigSources`, `listEvidenceRecords`, `listPopulationRecords`, `listPopulations`, `parsePastedBlock`, `recordSysteligonFindings`, `runRules`, `systeligonRuleLibrary`, `systeligonScopes`, `verifyRows`
 - **Data modules:** `src/data/population.ts`, `src/data/systeligon.ts`
-- **RPCs reachable via those modules:** `evidence_files_for`
+- **RPCs reachable via those modules:** `evidence_files_for`, `list_population_rows`
 - **Tables reachable via those modules:** `config_versions`, `population_rows`, `populations`
 - **Testids (34):** `rule-run`, `rule-run-empty`, `rule-run-error`, `rule-run-finding-<i>`, `rule-run-findings`, `rule-run-findings-empty`, `rule-run-loading`, `rule-run-pack-note`, `rule-run-population`, `rule-run-record`, `rule-run-recorded`, `rule-run-rights-note`, `rule-run-run`, `rule-run-scope`, `rule-run-scope-note`, `rule-run-skipped`, `rule-run-summary`, `flow-verify`, `flow-verify-rights-note`, `flow-verify-error`, `flow-verify-flow`, `flow-verify-floor`, `flow-verify-mode`, `flow-verify-build`, `flow-verify-note`, `flow-verify-paste`, `flow-verify-paste-apply`, `flow-verify-rows`, `flow-verify-row-<i>`, `flow-verify-verify`, `flow-verify-result`, `flow-verify-failed`, `flow-verify-fail-<ref>`, `flow-verify-overrides`
 - **Explain ids (0):** — (no explain affordance)
@@ -2503,6 +2521,7 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 | `list_changes` | `src/data/changeControl.ts` | `p_engagement_id` | tenant |
 | `list_feature_catalogue` | `src/data/entitlements.ts` | — | tenant |
 | `list_plans` | `src/data/entitlements.ts` | — | tenant |
+| `list_population_rows` | `src/data/population.ts` | `p_population_id`, `p_limit` | tenant |
 | `list_tenant_entitlements` | `src/data/entitlements.ts` | `p_org` | tenant |
 | `list_tutorials` | `src/data/tutorials.ts` | — | tenant |
 | `log_export` | `src/data/exports.ts` | `p_object_type`, `p_object_id`, `p_format`, `p_filters`, `p_content_hash` | tenant |
@@ -2513,6 +2532,7 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 | `notification_template_list` | `src/data/automation.ts` | `p_org` | tenant |
 | `notifications_list` | `src/data/notifications.ts` | — | tenant |
 | `open_report_comment_count` | `src/data/reports.ts` | `p_report_version_id` | tenant |
+| `org_diagnostic_snapshot` | `src/data/diagnostics.ts` | — | tenant |
 | `org_security_status` | `src/data/orgSecurity.ts` | — | tenant |
 | `org_settings_extra_get` | `src/data/boardPack.ts` | `p_org` | tenant |
 | `pattern_findings` | `src/data/patterns.ts` | `p_org` | tenant |
@@ -2524,6 +2544,7 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 | `planning_reconciliation_detail` | `src/data/planning.ts` | `p_engagement_id` | tenant |
 | `planning_signed_off` | `src/data/planning.ts` | `p_engagement_id` | tenant |
 | `platform_create_tenant` | `src/data/platform.ts` | `p_name`, `p_initial_admin_email`, `p_reason` | platform |
+| `platform_diagnostic_snapshot` | `src/data/diagnostics.ts` | — | platform |
 | `platform_get_dr_settings` | `src/data/platform.ts` | — | platform |
 | `platform_get_invite_caps` | `src/data/platform.ts` | — | platform |
 | `platform_job_health` | `src/data/platform.ts` | — | platform |
@@ -2597,10 +2618,10 @@ caller passes. `platform_*` / `admin_*` RPCs are `security definer` and gated by
 
 ## Coverage cross-check
 
-- Screens documented: 129 (contract sections: 48 Appendix A + 44 Appendix B).
+- Screens documented: 130 (contract sections: 48 Appendix A + 44 Appendix B).
 - Tutorial keys: 81.
-- RPCs catalogued: 181.
-- Data modules: 85; exported data functions: 569.
+- RPCs catalogued: 184.
+- Data modules: 86; exported data functions: 575.
 - Contract testids not found verbatim in `src/` (placeholder or dynamic): 247.
   - assurance-tab-d5, assurance-tab-d7, assurance-tab-d8, assurance-tab-d9, audit-file-view-builder, audit-file-view-certificate, audit-file-view-conclusion, audit-file-view-documents, audit-file-view-ethics, audit-file-view-execution, audit-file-view-findings, audit-file-view-planning, audit-file-view-population, audit-file-view-report, audit-file-view-review, audit-file-view-rowtesting, audit-file-view-sampling, data-front-door-kind, hosting-test, invite-user, issues-view-patterns, oa-branding-colour-accent, oa-branding-colour-background, oa-branding-colour-primary, oa-branding-colour-text, oa-branding-margin-0, oa-branding-margin-3, oa-certificate-enabled-verification, oa-escalation-result, oa-escalation-saved, oa-governance-signoff-conclusion, oa-governance-signoff-planning, oa-governance-signoff-testing, org-control-tab-archived-role, org-control-tab-auditors, org-control-tab-automation, org-control-tab-branding, org-control-tab-connectors, org-control-tab-data, org-control-tab-features …
 

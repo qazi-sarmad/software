@@ -1,7 +1,9 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import {
+  importPopulationRows,
   listPopulationRecords,
+  listPopulationRows,
   listPopulations,
   lockPopulation,
   registerPopulation,
@@ -11,9 +13,10 @@ import {
 import { populationProfile, type PopulationProfile } from '../../lib/capabilities';
 import { hasRight } from '../../lib/rights';
 import { rightReason, rightReasonFor } from '../../lib/rightLabels';
+import { parsePopulationPaste, toSampleItems } from '../../lib/populationPaste';
 import { InlineError } from '../common/InlineError';
 import { HoldToConfirm } from '../common/HoldToConfirm';
-import { Upload, Hash, Lock, CheckCircle2, Database, RefreshCw } from '../common/Icons';
+import { Upload, Hash, Lock, CheckCircle2, Database, RefreshCw, FileSpreadsheet } from '../common/Icons';
 
 /**
  * Population upload panel (4I, spec §11.1, L3). Drag/drop a file, hash it in the browser, register the
@@ -29,11 +32,19 @@ export const PopulationPanel: React.FC<{ engagementId: string }> = ({ engagement
   const [filename, setFilename] = useState<string | null>(null);
   const [rowCount, setRowCount] = useState(0);
   const [busy, setBusy] = useState(false);
+  const [pasteText, setPasteText] = useState('');
+  const [pasteTarget, setPasteTarget] = useState<string>('');
   const [profiles, setProfiles] = useState<Record<string, PopulationProfile | null>>({});
   const [profileBusy, setProfileBusy] = useState<string | null>(null);
+  const [viewRows, setViewRows] = useState<Record<string, { rowRef: number; data: Record<string, unknown> }[]>>({});
+  const [viewBusy, setViewBusy] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const canWrite = hasRight(currentUser, 'perform_work');
+
+  // The pasted block, parsed positionally (src/lib/populationPaste.ts). Columns map by index against
+  // the header, so the auditor sees exactly which column lands where before anything is stored.
+  const paste = parsePopulationPaste(pasteText);
 
   // The population's own shape, computed by the pure `populationProfile` over the rows the database
   // returns under RLS. Deterministic: the same rows always yield the same profile. Loaded on demand
@@ -50,6 +61,30 @@ export const PopulationPanel: React.FC<{ engagementId: string }> = ({ engagement
       setProfileBusy(null);
     }
   }, []);
+
+  // The stored rows themselves, a bounded page (migration 0209). The profile summarises the same rows
+  // through `listPopulationRecords`; this is the raw grid the auditor checks the paste against, so a
+  // verified population can be inspected row by row rather than only counted.
+  const loadRows = useCallback(async (populationId: string) => {
+    if (viewRows[populationId]) {
+      setViewRows((prev) => {
+        const next = { ...prev };
+        delete next[populationId];
+        return next;
+      });
+      return;
+    }
+    setViewBusy(populationId);
+    setError(null);
+    try {
+      const page = await listPopulationRows(populationId);
+      setViewRows((prev) => ({ ...prev, [populationId]: page }));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not load the population rows.');
+    } finally {
+      setViewBusy(null);
+    }
+  }, [viewRows]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -92,6 +127,19 @@ export const PopulationPanel: React.FC<{ engagementId: string }> = ({ engagement
       setHash(null);
       setFilename(null);
       setRowCount(0);
+      await load();
+    }
+    setBusy(false);
+  };
+
+  const importRows = async () => {
+    if (!pasteTarget || paste.rows.length === 0) return;
+    setBusy(true);
+    setError(null);
+    const res = await importPopulationRows(pasteTarget, toSampleItems(paste.rows), false);
+    if (!res.ok) setError(res.reason);
+    else {
+      setPasteText('');
       await load();
     }
     setBusy(false);
@@ -172,6 +220,82 @@ export const PopulationPanel: React.FC<{ engagementId: string }> = ({ engagement
         )}
       </div>
 
+      {/* Paste grid (spec §11.1): the auditor pastes a block; columns map BY POSITION and the rows are
+          stored against the chosen population. A paste is never auto-padded to the floor — inventing
+          rows would fabricate evidence. */}
+      <div className="p-5 rounded-2xl bg-surface border border-hairline space-y-3" data-testid="population-paste">
+        <div className="text-apple-13 font-semibold text-primary flex items-center gap-2">
+          <FileSpreadsheet className="w-4 h-4 text-secondary" /> Paste population rows
+        </div>
+        <label className="block text-apple-11 text-secondary" htmlFor="population-paste-input">
+          Paste a table with a header row. The first line is the header; every later line maps to those
+          columns by position. Rows are stored against a registered population.
+        </label>
+        <textarea
+          id="population-paste-input"
+          data-testid="population-paste-input"
+          value={pasteText}
+          onChange={(e) => setPasteText(e.target.value)}
+          rows={4}
+          className="w-full px-3 py-2 rounded-xl bg-surface-sunken border border-hairline text-apple-12 text-primary font-mono"
+        />
+        {pasteText.trim().length > 0 && (
+          <div className="space-y-2" data-testid="population-paste-preview">
+            <div className="text-apple-11 text-secondary" data-testid="population-paste-columns">
+              {paste.header.length} column(s) mapped by position:{' '}
+              <span className="text-primary font-mono">{paste.header.join(' | ')}</span>
+            </div>
+            <div className="text-apple-11 text-secondary tabular-nums" data-testid="population-paste-count">
+              {paste.rows.length} row(s) parsed
+            </div>
+            {paste.errors.length > 0 && (
+              <div className="text-apple-11 text-critical" data-testid="population-paste-errors">
+                {paste.errors.length} line(s) rejected:{' '}
+                {paste.errors.slice(0, 3).map((e) => e.message).join(' ')}
+                {paste.errors.length > 3 ? ' …' : ''}
+              </div>
+            )}
+            {paste.warnings.length > 0 && (
+              <div className="text-apple-11 text-secondary" data-testid="population-paste-warnings">
+                {paste.warnings.length} line(s) had extra columns that were ignored.
+              </div>
+            )}
+          </div>
+        )}
+        <div className="flex items-center gap-2">
+          <label className="text-apple-11 text-secondary" htmlFor="population-paste-target">Store against</label>
+          <select
+            id="population-paste-target"
+            data-testid="population-paste-target"
+            value={pasteTarget}
+            onChange={(e) => setPasteTarget(e.target.value)}
+            className="px-2 py-1 rounded-lg bg-surface-sunken border border-hairline text-apple-12 text-primary"
+          >
+            <option value="">Select a population…</option>
+            {rows.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.filename ?? p.id} ({p.rowCount ?? 0} rows)
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            data-testid="population-paste-import"
+            onClick={importRows}
+            disabled={busy || !canWrite || !pasteTarget || paste.rows.length === 0}
+            title={!canWrite ? rightReason('perform_work') : undefined}
+            className="px-3 py-1.5 rounded-lg bg-surface border border-hairline hover:bg-surface-hover text-apple-12 font-semibold text-primary disabled:opacity-50"
+          >
+            Store {paste.rows.length > 0 ? paste.rows.length : ''} row{paste.rows.length === 1 ? '' : 's'}
+          </button>
+        </div>
+        {rows.length === 0 && (
+          <div className="text-apple-11 text-secondary">
+            Register a population above first; pasted rows attach to a registered population.
+          </div>
+        )}
+      </div>
+
       {/* List */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
@@ -232,6 +356,15 @@ export const PopulationPanel: React.FC<{ engagementId: string }> = ({ engagement
                     >
                       {profileBusy === p.id ? 'Profiling…' : 'Profile'}
                     </button>
+                    <button
+                      type="button"
+                      data-testid={`population-rows-${p.id}`}
+                      onClick={() => void loadRows(p.id)}
+                      disabled={viewBusy === p.id}
+                      className="px-3 py-1.5 rounded-lg bg-surface border border-hairline hover:bg-surface-hover text-apple-12 font-semibold text-primary disabled:opacity-50"
+                    >
+                      {viewBusy === p.id ? 'Loading…' : viewRows[p.id] ? 'Hide rows' : 'View rows'}
+                    </button>
                   </div>
                 </div>
                 {profiles[p.id] && (
@@ -250,6 +383,34 @@ export const PopulationPanel: React.FC<{ engagementId: string }> = ({ engagement
                           <li key={f} className="flex items-center gap-1.5">
                             <span className="w-1 h-1 rounded-full bg-cinnabar shrink-0" />
                             {f.replace(/_/g, ' ')}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
+                {viewRows[p.id] && (
+                  <div className="rounded-xl border border-hairline bg-surface-sunken p-3 space-y-1" data-testid={`population-rows-view-${p.id}`}>
+                    <div className="text-apple-11 font-semibold text-secondary uppercase tracking-wider">
+                      Stored rows ({viewRows[p.id]!.length} shown)
+                    </div>
+                    {viewRows[p.id]!.length === 0 ? (
+                      <div className="text-apple-12 text-secondary" data-testid={`population-rows-empty-${p.id}`}>
+                        No rows are stored for this population yet. Paste rows above to give a sample
+                        something to draw from; without rows every draw is refused.
+                      </div>
+                    ) : (
+                      <ul className="text-apple-11 text-primary space-y-0.5 max-h-48 overflow-auto" data-testid={`population-rows-list-${p.id}`}>
+                        {viewRows[p.id]!.map((r) => (
+                          <li key={r.rowRef} className="flex flex-wrap gap-x-2" data-testid={`population-row-item-${p.id}-${r.rowRef}`}>
+                            <span className="text-tertiary font-mono">{r.rowRef}</span>
+                            {Object.entries(r.data).map(([k, v]) => (
+                              <span key={k} className="font-mono">
+                                <span className="text-tertiary">{k}</span>
+                                <span className="text-secondary">: </span>
+                                <span className="text-primary">{String(v)}</span>
+                              </span>
+                            ))}
                           </li>
                         ))}
                       </ul>

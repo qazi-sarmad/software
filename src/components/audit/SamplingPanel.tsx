@@ -101,16 +101,26 @@ export const SamplingPanel: React.FC<{ workpaperId: string | null }> = ({ workpa
     void load();
   }, [load]);
 
-  const pastedItems = pasteText
+  // The auditor pastes row references, one per line. The database reads `x.item ->> 'row_ref'`, so a
+  // bare number is refused; the payload must be `{row_ref}` objects. Non-integer lines are reported
+  // rather than sent, so a paste of a spreadsheet column that carries a header is not silently wrong.
+  const parsedPaste = pasteText
     .split(/\r?\n/)
-    .map((l) => l.trim())
-    .filter((l) => l.length > 0);
+    .map((l, i) => ({ line: i + 1, text: l.trim() }))
+    .filter((l) => l.text.length > 0);
+  const pasteItems: { row_ref: number }[] = [];
+  const pasteBadLines: number[] = [];
+  for (const l of parsedPaste) {
+    const n = Number(l.text);
+    if (Number.isInteger(n) && n > 0) pasteItems.push({ row_ref: n });
+    else pasteBadLines.push(l.line);
+  }
 
   const run = async () => {
     if (!workpaperId) return;
     setBusy(true);
     setError(null);
-    const items = mode === 'auditor_paste' ? pastedItems : undefined;
+    const items = mode === 'auditor_paste' ? pasteItems : undefined;
     const res = await computeSample(workpaperId, mode, items);
     if (!res.ok) setError(res.reason);
     else await load();
@@ -241,8 +251,24 @@ export const SamplingPanel: React.FC<{ workpaperId: string | null }> = ({ workpa
               className="w-full px-3 py-2 rounded-xl bg-surface-sunken border border-hairline text-apple-12 text-primary font-mono"
             />
             <div className="text-apple-11 text-secondary tabular-nums" data-testid="sampling-paste-count">
-              {pastedItems.length} item{pastedItems.length === 1 ? '' : 's'} parsed
+              {pasteItems.length} item{pasteItems.length === 1 ? '' : 's'} parsed
+              {pasteBadLines.length > 0 && (
+                <span className="text-critical" data-testid="sampling-paste-invalid">
+                  {' '}· {pasteBadLines.length} line{pasteBadLines.length === 1 ? '' : 's'} not a row
+                  number ({pasteBadLines.slice(0, 5).join(', ')}{pasteBadLines.length > 5 ? '…' : ''})
+                </span>
+              )}
             </div>
+            {floor !== null && pasteItems.length > 0 && (
+              <div
+                className={`text-apple-11 ${pasteItems.length >= floor ? 'text-verdigris' : 'text-secondary'}`}
+                data-testid="sampling-paste-floor"
+              >
+                {pasteItems.length >= floor
+                  ? `Meets the floor of ${floor}.`
+                  : `${floor - pasteItems.length} more item(s) needed to reach the floor of ${floor}. A short paste is kept as-is; the floor is enforced when the sample is locked.`}
+              </div>
+            )}
           </div>
         )}
 
@@ -250,7 +276,7 @@ export const SamplingPanel: React.FC<{ workpaperId: string | null }> = ({ workpa
           type="button"
           data-testid="sampling-compute"
           onClick={run}
-          disabled={busy || !canWrite || (mode === 'auditor_paste' && pastedItems.length === 0)}
+          disabled={busy || !canWrite || (mode === 'auditor_paste' && pasteItems.length === 0)}
           title={!canWrite ? rightReason('perform_work') : undefined}
           className="px-3 py-1.5 rounded-lg bg-surface border border-hairline hover:bg-surface-hover text-apple-12 font-semibold text-primary disabled:opacity-50 flex items-center gap-1.5"
         >

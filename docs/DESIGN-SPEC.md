@@ -12,7 +12,7 @@ so.
 
 ## Summary
 
-- **Screens:** 129 (each with purpose, route, rights, its data functions and RPCs, testids and states).
+- **Screens:** 130 (each with purpose, route, rights, its data functions and RPCs, testids and states).
 - **Flows (tutorial keys):** 81; 81 have recorded media in `public/tutorials/`, 0 have none.
 - **Design presets:** `bone`, `ledger`, `porcelain`; **themes:** light, dark — 6 combinations.
 - **Design tokens:** 25 unique variables across 6 preset/theme blocks in `src/styles/tokens.css`.
@@ -1134,6 +1134,20 @@ moves the chrome, never the call.
 - **Flows that touch this screen:** — (no flow)
 - **Connection candidates (same route):** — (route is unique to this screen)
 
+### `DB-03` — Self-diagnostic (spec §11.1)
+
+- **Purpose:** The platform and the organisation check themselves. The pure rule engine `src/lib/diagnostics.ts`
+- **Route / location:** The self-diagnostic block on the Dashboard tab (`executive`), below the capability library; the platform scope renders on the Super Admin `Support access` tab (`SA-02`).
+- **Rights required:** any signed-in member reads the org scope; the platform scope is platform-admin only (`platform_diagnostic_snapshot` refuses any other caller, which renders as the honest not-available state, never an error).
+- **Data functions (0):** —
+- **Data modules (0):** —
+- **RPCs reachable (0):** —
+- **Tables reachable (0):** —
+- **Testids (15):** `diagnostic-panel`, `diagnostic-loading`, `diagnostic-unavailable`, `diagnostic-headline`, `diagnostic-counts`, `diagnostic-refresh`, `diagnostic-clean`, `diagnostic-error`, `diagnostic-findings`, `diagnostic-finding-<ruleId>`, `diagnostic-title-<ruleId>`, `diagnostic-rule-<ruleId>`, `diagnostic-screen-<ruleId>`, `diagnostic-evidence-<ruleId>`, `diagnostic-open-<ruleId>`
+- **States:** loading; unavailable (no tenant database, or a non-platform caller on the platform scope — says so, never a wall of zeros); ready with findings; clean (every check passed); error inline.
+- **Flows that touch this screen:** — (no flow)
+- **Connection candidates (same route):** — (route is unique to this screen)
+
 ### `WQ-01` — Work Queue (S1)
 
 - **Purpose:** The user-specific queue: my workpapers, what awaits my sign-off, what awaits my approval and (for a manager) the team's open work, built by the pure `src/lib/workQueue.ts` module.
@@ -1379,10 +1393,10 @@ moves the chrome, never the call.
 - **Rights required:** `perform_work`.
 - **Data functions (0):** —
 - **Data modules (1):** `src/data/population.ts`
-- **RPCs reachable (1):** `evidence_files_for`
+- **RPCs reachable (2):** `evidence_files_for`, `list_population_rows`
 - **Tables reachable (3):** `config_versions`, `population_rows`, `populations`
-- **Testids (21):** `population-browse`, `population-dropzone`, `population-empty`, `population-error`, `population-file-input`, `population-hash`, `population-loading`, `population-panel`, `population-register`, `population-gate`, `population-status`, `population-profile-<id>`, `population-profile-view-<id>`, `population-profile-summary-<id>`, `population-profile-flags-<id>`, `control-total`, `population-errors`, `gate-message`, `finalize-test`, `header-confirm`, `header-confirm-0`
-- **States:** loading; empty; hashed; locked; profile loading; profile ready (row count, value coverage, duplicate density, period, flags); error inline; header detected and awaiting confirmation (S2 — the engine proposes the header row, the auditor confirms it, rows above it are ignored and the header row is not counted).
+- **Testids (35):** `population-browse`, `population-dropzone`, `population-empty`, `population-error`, `population-file-input`, `population-hash`, `population-loading`, `population-panel`, `population-register`, `population-gate`, `population-status`, `population-profile-<id>`, `population-profile-view-<id>`, `population-profile-summary-<id>`, `population-profile-flags-<id>`, `population-rows-<id>`, `population-rows-view-<id>`, `population-rows-empty-<id>`, `population-rows-list-<id>`, `population-row-item-<id>-<ref>`, `population-paste`, `population-paste-input`, `population-paste-preview`, `population-paste-columns`, `population-paste-count`, `population-paste-errors`, `population-paste-warnings`, `population-paste-target`, `population-paste-import`, `control-total`, `population-errors`, `gate-message`, `finalize-test`, `header-confirm`, `header-confirm-0`
+- **States:** loading; empty; hashed; locked; profile loading; profile ready (row count, value coverage, duplicate density, period, flags); error inline; header detected and awaiting confirmation (S2 — the engine proposes the header row, the auditor confirms it, rows above it are ignored and the header row is not counted); paste grid (the header is mapped by position, `population-paste-columns`; parsed count, `population-paste-count`; per-line rejections, `population-paste-errors`; long-line warnings, `population-paste-warnings`; rows are stored against a registered population, `population-paste-target`, `population-paste-import` — never auto-padded to the floor); stored rows inspected row by row (`population-rows-view-<id>`, with `population-rows-empty-<id>` when a verified population carries no rows).
 - **Flows that touch this screen:** — (no flow)
 - **Connection candidates (same route):** — (route is unique to this screen)
 
@@ -1395,8 +1409,8 @@ moves the chrome, never the call.
 - **Data modules (1):** `src/data/sampling.ts`
 - **RPCs reachable (4):** `get_sample_size`, `sample_precision`, `sample_tested_rows`, `value_coverage`
 - **Tables reachable (2):** `org_sampling_table`, `samples`
-- **Testids (20):** `sampling-calculation`, `sampling-compute`, `sampling-coverage`, `sampling-coverage-status`, `sampling-current`, `sampling-error`, `sampling-floor`, `sampling-loading`, `sampling-lock`, `sampling-locked`, `sampling-method`, `sampling-no-workpaper`, `sampling-panel`, `sampling-paste`, `sampling-paste-count`, `sampling-precision`, `sampling-rules-empty`, `sampling-seed-preview`, `sampling-tested-rows`, `sampling-waive-reason`
-- **States:** loading; no workpaper (`sampling-no-workpaper`); no rules (`sampling-rules-empty`); computed (`sampling-method`, `sampling-calculation`); high-value coverage (`sampling-coverage`, `sampling-coverage-status`; a missing item can be waived with a reason, `sampling-waive-reason`); exact interval (`sampling-precision`); tested rows from the sample (`sampling-tested-rows`); locked (`sampling-locked`); error inline.
+- **Testids (22):** `sampling-calculation`, `sampling-compute`, `sampling-coverage`, `sampling-coverage-status`, `sampling-current`, `sampling-error`, `sampling-floor`, `sampling-loading`, `sampling-lock`, `sampling-locked`, `sampling-method`, `sampling-no-workpaper`, `sampling-panel`, `sampling-paste`, `sampling-paste-count`, `sampling-paste-invalid`, `sampling-paste-floor`, `sampling-precision`, `sampling-rules-empty`, `sampling-seed-preview`, `sampling-tested-rows`, `sampling-waive-reason`
+- **States:** loading; no workpaper (`sampling-no-workpaper`); no rules (`sampling-rules-empty`); computed (`sampling-method`, `sampling-calculation`); auditor paste (bare row references parsed into `{row_ref}` items; non-integer lines reported as `sampling-paste-invalid`; the shortfall against the floor reported as `sampling-paste-floor`, never auto-padded); high-value coverage (`sampling-coverage`, `sampling-coverage-status`; a missing item can be waived with a reason, `sampling-waive-reason`); exact interval (`sampling-precision`); tested rows from the sample (`sampling-tested-rows`); locked (`sampling-locked`); error inline.
 - **Flows that touch this screen:** — (no flow)
 - **Connection candidates (same route):** — (route is unique to this screen)
 
@@ -1505,7 +1519,7 @@ moves the chrome, never the call.
 - **Rights required:** `perform_work` to run, to record, to build the tested set and to verify; any member of the org reads.
 - **Data functions (0):** —
 - **Data modules (2):** `src/data/population.ts`, `src/data/systeligon.ts`
-- **RPCs reachable (1):** `evidence_files_for`
+- **RPCs reachable (2):** `evidence_files_for`, `list_population_rows`
 - **Tables reachable (3):** `config_versions`, `population_rows`, `populations`
 - **Testids (34):** `rule-run`, `rule-run-empty`, `rule-run-error`, `rule-run-finding-<i>`, `rule-run-findings`, `rule-run-findings-empty`, `rule-run-loading`, `rule-run-pack-note`, `rule-run-population`, `rule-run-record`, `rule-run-recorded`, `rule-run-rights-note`, `rule-run-run`, `rule-run-scope`, `rule-run-scope-note`, `rule-run-skipped`, `rule-run-summary`, `flow-verify`, `flow-verify-rights-note`, `flow-verify-error`, `flow-verify-flow`, `flow-verify-floor`, `flow-verify-mode`, `flow-verify-build`, `flow-verify-note`, `flow-verify-paste`, `flow-verify-paste-apply`, `flow-verify-rows`, `flow-verify-row-<i>`, `flow-verify-verify`, `flow-verify-result`, `flow-verify-failed`, `flow-verify-fail-<ref>`, `flow-verify-overrides`
 - **States:** loading; no population (`rule-run-empty`); reading rows; running; findings; none flagged (`rule-run-findings-empty`); recorded; error inline; the flow's empty set, its verified and not-verified counts, and the carried overrides.
@@ -3032,10 +3046,10 @@ self-hosted constraint: a new typeface ships as a bundle, never a remote link.
 
 ## Coverage cross-check
 
-- Screens documented: 129.
+- Screens documented: 130.
 - Flows documented: 81; with media: 81.
 - Flows whose screen has no inventory entry: 0.
-- Screens with no flow: 82.
+- Screens with no flow: 83.
 - Design tokens: 25 unique, 6 preset/theme blocks.
 
 Regenerate with `npm run gen:design`. The `designSpec` guard holds this file to its sources.

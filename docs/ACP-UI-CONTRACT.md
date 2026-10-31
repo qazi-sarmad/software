@@ -788,6 +788,33 @@ The screen surface for the twenty deterministic capabilities across four familie
 - **Determinism (L1):** no model call; every finding names the rule that produced it and the records behind it. A run records the input hash and the derived findings, never the tenant rows (L2).
 - **Tutorial key:** —
 
+## DB-03 — Self-diagnostic (spec §11.1)
+
+The platform and the organisation check themselves. The pure rule engine `src/lib/diagnostics.ts`
+reads a SNAPSHOT OF COUNTS AND FLAGS (never a row of tenant content — Law L2), reports what is wrong,
+how serious it is, the exact numbers behind it and where to go to act. Each finding names its rule id
+so a reader can re-derive it; the same snapshot always yields the same findings.
+
+- **Route:** The self-diagnostic block on the Dashboard tab (`executive`), below the capability
+  library; the platform scope renders on the Super Admin `Support access` tab (`SA-02`).
+- **Rights:** any signed-in member reads the org scope; the platform scope is platform-admin only
+  (`platform_diagnostic_snapshot` refuses any other caller, which renders as the honest
+  not-available state, never an error).
+- **Data:** `org_diagnostic_snapshot`, `platform_diagnostic_snapshot` — through
+  `src/data/diagnostics.ts` (migration `0210`); components never import the database client (rule M8).
+- **Testids:** `diagnostic-panel`, `diagnostic-loading`, `diagnostic-unavailable`, `diagnostic-headline`,
+  `diagnostic-counts`, `diagnostic-refresh`, `diagnostic-clean`, `diagnostic-error`, `diagnostic-findings`,
+  `diagnostic-finding-<ruleId>`, `diagnostic-title-<ruleId>`, `diagnostic-rule-<ruleId>`,
+  `diagnostic-screen-<ruleId>`, `diagnostic-evidence-<ruleId>`, `diagnostic-open-<ruleId>`.
+- **States:** loading; unavailable (no tenant database, or a non-platform caller on the platform
+  scope — says so, never a wall of zeros); ready with findings; clean (every check passed); error inline.
+- **Navigation:** a finding that names a reachable screen carries an Open button resolved by the pure
+  `src/lib/diagnosticNav.ts` map (`OA-29` → integrity, `OA-31` → incidents, `AF-13` → the audit-file
+  tab). A screen with no destination renders its id as plain text, never a button that goes nowhere.
+- **Determinism (L1):** no model call, no clock — the snapshot carries `as_of` as data. A diagnostic
+  is tamper-EVIDENCE and a self-check, never a claim of prevention.
+- **Tutorial key:** —
+
 ## WQ-01 — Work Queue (S1)
 
 The user-specific queue: my workpapers, what awaits my sign-off, what awaits my approval and (for a manager) the team's open work, built by the pure `src/lib/workQueue.ts` module.
@@ -1027,9 +1054,9 @@ Register a population file, show its SHA-256 hash, and lock the population (hold
 
 - **Route:** Audit File window, view "Population" (`audit-file-view-population`).
 - **Rights:** `perform_work`.
-- **Data:** `PopulationProfile`, `PopulationRecordRead`, `PopulationRow`, `listPopulationRecords`, `lockPopulation`, `populationProfile`, `registerPopulation`, `sha256Hex` — through `src/data/*.ts`; components never import the database client (rule M8).
-- **Testids:** `population-browse`, `population-dropzone`, `population-empty`, `population-error`, `population-file-input`, `population-hash`, `population-loading`, `population-panel`, `population-register`, `population-gate`, `population-status`, `population-profile-<id>`, `population-profile-view-<id>`, `population-profile-summary-<id>`, `population-profile-flags-<id>`, `control-total`, `population-errors`, `gate-message`, `finalize-test`, `header-confirm`, `header-confirm-0`
-- **States:** loading; empty; hashed; locked; profile loading; profile ready (row count, value coverage, duplicate density, period, flags); error inline; header detected and awaiting confirmation (S2 — the engine proposes the header row, the auditor confirms it, rows above it are ignored and the header row is not counted).
+- **Data:** `PopulationProfile`, `PopulationRecordRead`, `PopulationRow`, `importPopulationRows`, `listPopulationRecords`, `listPopulationRows`, `lockPopulation`, `parsePopulationPaste`, `populationProfile`, `registerPopulation`, `sha256Hex`, `toSampleItems` — through `src/data/*.ts`; components never import the database client (rule M8).
+- **Testids:** `population-browse`, `population-dropzone`, `population-empty`, `population-error`, `population-file-input`, `population-hash`, `population-loading`, `population-panel`, `population-register`, `population-gate`, `population-status`, `population-profile-<id>`, `population-profile-view-<id>`, `population-profile-summary-<id>`, `population-profile-flags-<id>`, `population-rows-<id>`, `population-rows-view-<id>`, `population-rows-empty-<id>`, `population-rows-list-<id>`, `population-row-item-<id>-<ref>`, `population-paste`, `population-paste-input`, `population-paste-preview`, `population-paste-columns`, `population-paste-count`, `population-paste-errors`, `population-paste-warnings`, `population-paste-target`, `population-paste-import`, `control-total`, `population-errors`, `gate-message`, `finalize-test`, `header-confirm`, `header-confirm-0`
+- **States:** loading; empty; hashed; locked; profile loading; profile ready (row count, value coverage, duplicate density, period, flags); error inline; header detected and awaiting confirmation (S2 — the engine proposes the header row, the auditor confirms it, rows above it are ignored and the header row is not counted); paste grid (the header is mapped by position, `population-paste-columns`; parsed count, `population-paste-count`; per-line rejections, `population-paste-errors`; long-line warnings, `population-paste-warnings`; rows are stored against a registered population, `population-paste-target`, `population-paste-import` — never auto-padded to the floor); stored rows inspected row by row (`population-rows-view-<id>`, with `population-rows-empty-<id>` when a verified population carries no rows).
 - **Tutorial key:** —
 
 ## AF-06 — Sampling panel (S1)
@@ -1039,8 +1066,8 @@ Compute a deterministic sample (seed preview, mode, floor), paste an id list, an
 - **Route:** Audit File window, view "Sampling" (`audit-file-view-sampling`).
 - **Rights:** `perform_work`.
 - **Data:** `SampleMode`, `SampleRow`, `SamplingRuleRow`, `computeSample`, `getSample`, `getSampleSize`, `lockSample` — through `src/data/*.ts`; components never import the database client (rule M8).
-- **Testids:** `sampling-calculation`, `sampling-compute`, `sampling-coverage`, `sampling-coverage-status`, `sampling-current`, `sampling-error`, `sampling-floor`, `sampling-loading`, `sampling-lock`, `sampling-locked`, `sampling-method`, `sampling-no-workpaper`, `sampling-panel`, `sampling-paste`, `sampling-paste-count`, `sampling-precision`, `sampling-rules-empty`, `sampling-seed-preview`, `sampling-tested-rows`, `sampling-waive-reason`
-- **States:** loading; no workpaper (`sampling-no-workpaper`); no rules (`sampling-rules-empty`); computed (`sampling-method`, `sampling-calculation`); high-value coverage (`sampling-coverage`, `sampling-coverage-status`; a missing item can be waived with a reason, `sampling-waive-reason`); exact interval (`sampling-precision`); tested rows from the sample (`sampling-tested-rows`); locked (`sampling-locked`); error inline.
+- **Testids:** `sampling-calculation`, `sampling-compute`, `sampling-coverage`, `sampling-coverage-status`, `sampling-current`, `sampling-error`, `sampling-floor`, `sampling-loading`, `sampling-lock`, `sampling-locked`, `sampling-method`, `sampling-no-workpaper`, `sampling-panel`, `sampling-paste`, `sampling-paste-count`, `sampling-paste-invalid`, `sampling-paste-floor`, `sampling-precision`, `sampling-rules-empty`, `sampling-seed-preview`, `sampling-tested-rows`, `sampling-waive-reason`
+- **States:** loading; no workpaper (`sampling-no-workpaper`); no rules (`sampling-rules-empty`); computed (`sampling-method`, `sampling-calculation`); auditor paste (bare row references parsed into `{row_ref}` items; non-integer lines reported as `sampling-paste-invalid`; the shortfall against the floor reported as `sampling-paste-floor`, never auto-padded); high-value coverage (`sampling-coverage`, `sampling-coverage-status`; a missing item can be waived with a reason, `sampling-waive-reason`); exact interval (`sampling-precision`); tested rows from the sample (`sampling-tested-rows`); locked (`sampling-locked`); error inline.
 - **Tutorial key:** —
 
 ## AF-06b — Working-paper creation (S1)

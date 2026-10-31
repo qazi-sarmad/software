@@ -51,6 +51,34 @@ export function replaceLockedPopulation(populationId: string, rationale: string)
   return callRpc('replace_locked_population', { p_population_id: populationId, p_rationale: rationale });
 }
 
+/**
+ * Store a population's rows (migration 0209). `population_rows` had no production writer, so a
+ * population could be verified yet carry no rows and no draw could ever succeed. The rows are the
+ * positional payload `src/lib/populationPaste.ts` emits: `{row_ref, data}` objects, or bare values
+ * that the database numbers by position. `append` keeps the existing rows; the default replaces them.
+ */
+export function importPopulationRows(
+  populationId: string, rows: unknown[], append = false
+): Promise<DataResult> {
+  return callRpc('import_population_rows', {
+    p_population_id: populationId, p_rows: rows, p_append: append,
+  });
+}
+
+/** A bounded page of a population's rows (migration 0209), ordered by row_ref, org-scoped. */
+export async function listPopulationRows(
+  populationId: string, limit = 500
+): Promise<{ rowRef: number; data: Record<string, unknown> }[]> {
+  const sb = getClient();
+  if (!sb) return [];
+  const { data, error } = await sb.rpc('list_population_rows', {
+    p_population_id: populationId, p_limit: limit,
+  });
+  if (error) throw new Error(error.message);
+  const rows = (data ?? []) as { row_ref: number; data: Record<string, unknown> }[];
+  return rows.map((r) => ({ rowRef: r.row_ref, data: r.data ?? {} }));
+}
+
 /** A population row reduced to the fields the D2 capability family reads. */
 export interface PopulationRecordRead {
   rowRef: number | string;

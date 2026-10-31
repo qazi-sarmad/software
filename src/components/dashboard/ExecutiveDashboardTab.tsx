@@ -7,6 +7,7 @@ import { CapTable } from './CapTable';
 import { EngagementGantt } from './EngagementGantt';
 import { BoardPackPanel } from '../pending/BoardPackPanel';
 import { CapabilityLibraryPanel } from './CapabilityLibraryPanel';
+import { DiagnosticPanel } from '../admin/DiagnosticPanel';
 import { HoverPreview } from '../common/HoverPreview';
 import { DrilldownPanel } from '../explain/DrilldownPanel';
 import { StandardsAffordance } from '../explain/StandardsAffordance';
@@ -330,6 +331,17 @@ export const ExecutiveDashboardTab: React.FC = () => {
 
       {/* Deterministic capability library (D1-D4): the twenty capabilities over the data in scope. */}
       <CapabilityLibraryPanel />
+
+      {/* The self-diagnostic (spec §11.1): the engine reads a snapshot of counts and flags and
+          reports what is wrong, the numbers behind it and where to act. Every finding names its rule. */}
+      <DiagnosticPanel
+        scope="org"
+        screenId="DB-03"
+        onOpen={(dest) => {
+          if (dest.kind === 'tab') setActiveTab(dest.tab);
+          else openInspector(dest.inspector as Parameters<typeof openInspector>[0], dest.data);
+        }}
+      />
 
       {/* The live activity spine (U4): a quiet stream of what is happening, on the existing
           liveSync transport (Realtime when available, a bounded poll otherwise). */}

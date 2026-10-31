@@ -307,6 +307,8 @@ this register exists to catch.
 | F144 | Dynamic risk assessment (inputs, ERM map, triggers, narrative) | `Wired` | D15. `RiskLibraryPanel.tsx` (SR-04, mounted `RecordContent.tsx:160`) reads `listErmThemes`/`listKris`/`listPlanChanges` (`src/data/risk.ts`) and calls `setErmTheme`/`setKriValue`/`proposePlanChange` (`:311`/`:317`/`:325`, RPCs `erm_theme_set`/`kri_value_set`/`plan_change_propose`); the pure model is `ermMap`/`kriState`/`planChangeFor` (`src/lib/risk/dynamicAssessment.ts`, called from the panel). Proved by `src/components/sira/RiskLibraryPanel.test.tsx` (9) and `supabase/tests/142_classification_risk.sql` §11 | D15 |
 | F145 | Standards distribution — Super Admin rollout of signed rule-base packs to entitled tenants | `Wired` | `src/data/standards.ts` (`publishStandardsPack`, `rolloutStandardsPack`, `pinStandardsVersion`, `buildSignedStandardsPack`) + `0191_standards_distribution.sql`. **Wired** by the Super Admin standards surface (`SuperAdminStandards.tsx`, SA-21, mounted as the `standards` tab in `SuperAdminPortal.tsx`): it publishes a signed pack, rolls it out to entitled tenants (an unentitled tenant is `skipped-not-entitled` with a log row and no subscription row), and pins a version with a reason. Proved by `SuperAdminStandards.test.tsx` (14) and `supabase/tests/137_standards_distribution.sql` (37) | D16 |
 | F146 | SIRA model config writes (aggregation, factor, band) | `Wired` | `setSiraAggregation` / `upsertSiraFactor` / `setSiraBand` (`src/data/sira.ts`) drive `admin_set_sira_aggregation` / `admin_upsert_sira_factor` / `admin_set_sira_band`, wired from `SiraModelInspector.tsx` (SR-02, mounted at `RecordContent.tsx:131`); the inspector re-reads `siraModelSnapshot` after each write so the version bump is visible. Proved by `src/components/sira/SiraPanels.test.tsx` (write path) | S18 |
+| F147 | Self-diagnostic (the engine checks itself) | `Wired` | `DiagnosticPanel.tsx` (DB-03) runs the pure `runDiagnostics`/`summariseFindings` (`src/lib/diagnostics.ts`) over the counts-and-flags snapshot from `getOrgDiagnosticSnapshot`/`getPlatformDiagnosticSnapshot` (`src/data/diagnostics.ts`, RPCs `org_diagnostic_snapshot`/`platform_diagnostic_snapshot`, migration `0210`), mounted on `ExecutiveDashboardTab.tsx` (org scope) and `SuperAdminSupport.tsx` (platform scope); `destinationForScreen` (`src/lib/diagnosticNav.ts`) resolves each finding's screen. Proved by `DiagnosticPanel.test.tsx`, `src/lib/diagnostics.test.ts` and `supabase/tests/156_self_diagnostic.sql` | — |
+| F148 | Population rows writer and reader (the missing writer behind the population grid) | `Wired` | `importPopulationRows`/`listPopulationRows` (`src/data/population.ts`) drive `import_population_rows`/`list_population_rows` (migration `0209`), wired from `PopulationPanel.tsx` (AF-05): the paste grid stores rows through `importPopulationRows` (`PopulationPanel.tsx` `importRows`) and the per-population "View rows" action reads them back through `listPopulationRows` (`PopulationPanel.tsx` `loadRows`), with the positional parser `parsePopulationPaste`/`toSampleItems` (`src/lib/populationPaste.ts`). Without the writer a verified population carried no rows and every draw raised `population_gate`. Proved by `src/lib/populationPaste.test.ts` and `supabase/tests/155_population_rows.sql` (happy + refusals) | — |
 
 ---
 
@@ -314,10 +316,10 @@ this register exists to catch.
 
 | Status | Count |
 |---|---|
-| `Wired` | 136 |
+| `Wired` | 138 |
 | `Inert` | 1 |
 | `Absent` | 9 |
-| **Total** | **146** |
+| **Total** | **148** |
 
 **Read that again, with the correction applied.** This pass corrected a systematic understatement:
 the register's own gate passes on a stale claim, so rows that name a thing as dead were re-checked

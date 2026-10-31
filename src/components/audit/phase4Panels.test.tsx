@@ -20,10 +20,14 @@ const signOffWp = vi.fn();
 const listResults = vi.fn();
 const raise = vi.fn();
 const listRecords = vi.fn();
+const importRowsFn = vi.fn();
+const listRowsPage = vi.fn();
 
 vi.mock('../../data/population', () => ({
   listPopulations: () => listPops(),
   listPopulationRecords: (...a: unknown[]) => listRecords(...a),
+  listPopulationRows: (...a: unknown[]) => listRowsPage(...a),
+  importPopulationRows: (...a: unknown[]) => importRowsFn(...a),
   lockPopulation: (...a: unknown[]) => lockPop(...a),
   registerPopulation: () => Promise.resolve({ ok: true }),
   sha256Hex: () => Promise.resolve('deadbeef'),
@@ -88,6 +92,8 @@ describe('Phase 4 UI panels (4I)', () => {
     listResults.mockResolvedValue([]);
     raise.mockResolvedValue({ ok: true });
     listRecords.mockResolvedValue([]);
+    importRowsFn.mockResolvedValue({ ok: true });
+    listRowsPage.mockResolvedValue([]);
     createWp.mockResolvedValue({ ok: true, id: 'w-new' });
   });
 
@@ -132,6 +138,72 @@ describe('Phase 4 UI panels (4I)', () => {
     expect(screen.getByTestId('population-profile-flags-p1').textContent).toContain('duplicates');
   });
 
+  it('population: stores a pasted block positionally through importPopulationRows', async () => {
+    listPops.mockResolvedValue([
+      { id: 'p1', engagementId: 'e1', workpaperId: null, filename: 'gl.csv', rowCount: 0, sha256: 'abc', status: 'verified', verifiedAt: null, verifiedBy: null },
+    ]);
+    render(<PopulationPanel engagementId="e1" />);
+    await waitFor(() => expect(screen.getByTestId('population-row-p1')).toBeTruthy());
+
+    fireEvent.change(screen.getByTestId('population-paste-input'), {
+      target: { value: 'ref,amount\n1,100\n2,250\n' },
+    });
+    expect(screen.getByTestId('population-paste-columns').textContent).toContain('ref | amount');
+    expect(screen.getByTestId('population-paste-count').textContent).toContain('2 row(s) parsed');
+
+    fireEvent.change(screen.getByTestId('population-paste-target'), { target: { value: 'p1' } });
+    fireEvent.click(screen.getByTestId('population-paste-import'));
+
+    await waitFor(() => expect(importRowsFn).toHaveBeenCalledWith(
+      'p1',
+      [
+        { row_ref: 1, data: { ref: '1', amount: '100' } },
+        { row_ref: 2, data: { ref: '2', amount: '250' } },
+      ],
+      false,
+    ));
+  });
+
+  it('population: reports a line below the header width rather than storing it', async () => {
+    listPops.mockResolvedValue([
+      { id: 'p1', engagementId: 'e1', workpaperId: null, filename: 'gl.csv', rowCount: 0, sha256: 'abc', status: 'verified', verifiedAt: null, verifiedBy: null },
+    ]);
+    render(<PopulationPanel engagementId="e1" />);
+    await waitFor(() => expect(screen.getByTestId('population-row-p1')).toBeTruthy());
+    fireEvent.change(screen.getByTestId('population-paste-input'), {
+      target: { value: 'ref,amount\n1,100\n2\n' },
+    });
+    expect(screen.getByTestId('population-paste-count').textContent).toContain('1 row(s) parsed');
+    expect(screen.getByTestId('population-paste-errors').textContent).toContain('Line 3');
+  });
+
+  it('population: reads the stored rows back through listPopulationRows', async () => {
+    listPops.mockResolvedValue([
+      { id: 'p1', engagementId: 'e1', workpaperId: null, filename: 'gl.csv', rowCount: 2, sha256: 'abc', status: 'verified', verifiedAt: null, verifiedBy: null },
+    ]);
+    listRowsPage.mockResolvedValue([
+      { rowRef: 1, data: { ref: '1', amount: '100' } },
+      { rowRef: 2, data: { ref: '2', amount: '250' } },
+    ]);
+    render(<PopulationPanel engagementId="e1" />);
+    await waitFor(() => expect(screen.getByTestId('population-row-p1')).toBeTruthy());
+    fireEvent.click(screen.getByTestId('population-rows-p1'));
+    await waitFor(() => expect(listRowsPage).toHaveBeenCalledWith('p1'));
+    await waitFor(() => expect(screen.getByTestId('population-rows-view-p1')).toBeTruthy());
+    expect(screen.getByTestId('population-row-item-p1-2').textContent).toContain('250');
+  });
+
+  it('population: an empty stored-row set says so rather than showing a wall of zeros', async () => {
+    listPops.mockResolvedValue([
+      { id: 'p1', engagementId: 'e1', workpaperId: null, filename: 'gl.csv', rowCount: 0, sha256: 'abc', status: 'verified', verifiedAt: null, verifiedBy: null },
+    ]);
+    listRowsPage.mockResolvedValue([]);
+    render(<PopulationPanel engagementId="e1" />);
+    await waitFor(() => expect(screen.getByTestId('population-row-p1')).toBeTruthy());
+    fireEvent.click(screen.getByTestId('population-rows-p1'));
+    await waitFor(() => expect(screen.getByTestId('population-rows-empty-p1')).toBeTruthy());
+  });
+
   it('sampling: shows a designed empty rule state and a seed preview', async () => {
     render(<SamplingPanel workpaperId="w1" />);
     await waitFor(() => expect(screen.getByTestId('sampling-rules-empty')).toBeTruthy());
@@ -143,6 +215,19 @@ describe('Phase 4 UI panels (4I)', () => {
     await waitFor(() => expect(screen.getByTestId('sampling-compute')).toBeTruthy());
     fireEvent.click(screen.getByTestId('sampling-compute'));
     await waitFor(() => expect(compute).toHaveBeenCalledWith('w1', 'system', undefined));
+  });
+
+  it('sampling: a pasted id list becomes {row_ref} items and a non-integer line is reported', async () => {
+    render(<SamplingPanel workpaperId="w1" />);
+    await waitFor(() => expect(screen.getByTestId('sampling-compute')).toBeTruthy());
+    fireEvent.click(screen.getByTestId('sampling-mode-auditor_paste'));
+    fireEvent.change(screen.getByTestId('sampling-paste'), { target: { value: '1\n2\nheader\n' } });
+    expect(screen.getByTestId('sampling-paste-count').textContent).toContain('2 items parsed');
+    expect(screen.getByTestId('sampling-paste-invalid').textContent).toContain('3');
+    fireEvent.click(screen.getByTestId('sampling-compute'));
+    await waitFor(() => expect(compute).toHaveBeenCalledWith('w1', 'auditor_paste', [
+      { row_ref: 1 }, { row_ref: 2 },
+    ]));
   });
 
   it('sampling: shows the method, the calculation and the tested rows (2.7/2.8)', async () => {
