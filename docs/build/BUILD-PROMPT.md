@@ -22,8 +22,9 @@ CONTEXT YOU INHERIT (verified — build on it, do not re-litigate)
 - You work in a CONCURRENT BUILD: several agents on separate branches at the same time. Your safety
   comes from docs/build/OWNERSHIP.md: you edit ONLY the files your stream owns. You never edit a file
   another stream owns, and you never edit a shared ledger document.
-- The register is the truth of what exists: 145 features, 94 Wired / 27 Inert / 24 Absent. A row is
-  `Wired` only when a named screen or scheduled job calls it AND a test exercises it through that path.
+- The register is the truth of what exists: 148 features, 138 Wired / 1 Inert / 9 Absent (re-measured
+  2026-10-30 with `node scripts/check-feature-register.mjs`). A row is `Wired` only when a named screen
+  or scheduled job calls it AND a test exercises it through that path.
   The most common defect in this codebase's history was a doc claiming something the code did not do.
   Never repeat it.
 

@@ -5,19 +5,23 @@ ledgers (`FEATURE-REGISTER.md`, `SCALE-TASKS.md`, `SYSTELIGON-GAP-REPORT.md`), `
 `src/context/AppContext.tsx`, the nav/routing registry, the existing guards, `package.json` and the
 merge. It edits no stream's files.
 
-## Baseline (locked at `968e30d`, 2026-10-30)
+## Baseline (locked at `38d9457`, 2026-10-30)
 
 Read from the tree, not from a document:
 
 | Measure | Value |
 |---|---|
-| Migrations | 128 (highest `0128_rule_pack_release.sql`) |
-| SQL tests | 133 |
-| vitest files | 281 |
-| vitest tests | 3216 |
+| Migrations | 152 (highest `0210_self_diagnostic.sql`) |
+| SQL tests | 156 |
+| vitest files | 337 |
+| vitest tests | 3798 |
 | Playwright specs | 31 |
-| Guard files (`src/guards/*.test.ts`) | 28 |
-| Register gate | `PASS: 145 features: 94 Wired, 27 Inert, 24 Absent` |
+| Guard files (`src/guards/*.test.ts`) | 35 |
+| Register gate | `PASS: 148 features: 138 Wired, 1 Inert, 9 Absent` |
+
+The earlier baselines this session recorded (`968e30d`: 128/133/281/3216/31/28; `0203` head:
+145/149/314/3621/30; the ported head: 152/156/337/3798/31/35) are kept below as the trail. The current
+head `38d9457` is the authority; re-measure before claiming a count.
 
 At the head after the concurrent-build work: 129 migrations, 134 SQL tests,
 **283 vitest files / 3242 tests**, **30 guards** (the integrator's `mountPoints.test.ts` and
@@ -312,3 +316,18 @@ authority) and corrected, so the documents match the tree:
 
 _Baseline this session (`1c41ca4`): 337 vitest files / 3798 tests green; SQL harness "migrations applied
 twice / all SQL tests passed twice" (EXIT=0); all nine gates PASS; `tsc --noEmit` clean._
+
+## Builder branches re-cut to the trunk head; builder-facing counts corrected — 2026-10-30
+
+- **Every stream branch was re-cut to the trunk head (`38d9457`).** All eight were ancestors of the head
+  (the streams had already folded their work in), so each re-cut was a **fast-forward**, not a rewrite:
+  `feature/build-core-engine` `ffebe58`→`38d9457`, `feature/build-{assurance-caps,risk-planning,
+  platform-control,monitor-runtime}` `f79859a`→`38d9457`, `feature/build-config-honesty`
+  `37dcae4`→`38d9457`, `feature/build-extraction` `dd44899`→`38d9457`, `design/language-v1`
+  `1acba25`→`38d9457`. A builder now starts from the head that carries the ported diagnostic engine,
+  the population-rows writer and the corrected ledgers.
+- **`BUILD-PROMPT.md` register count was stale** ("145 features, 94 Wired / 27 Inert / 24 Absent"). Every
+  builder reads this line first; corrected to the measured **148 features: 138 Wired / 1 Inert /
+  9 Absent**, with the command that proves it.
+- **The integrator baseline block was stale**; replaced with the measured head (`38d9457`:
+  152 migrations / 156 SQL tests / 337 vitest files / 3798 tests / 31 Playwright specs / 35 guards).
