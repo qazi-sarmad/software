@@ -51,9 +51,9 @@ both and I say so.
 
 1. The previous edition was written before the L1 rule-run screen existed and described the engine's
    surfaces as unbuilt. On this branch **the rule-run screen is mounted** (`RuleRunTab.tsx`, §10), **the
-   rule-pack management surface is mounted** (`RulePackPanel.tsx`, §10) and the register rows
-   **F127–F138 exist** (verified: `check-feature-register` reports **138 features: 94 `Wired`, 27
-   `Inert`, 17 `Absent`**, exit 0).
+   rule-pack management surface is mounted** (`RulePackPanel.tsx`, §10) and the register has grown to
+   **F127–F148** (verified 2026-10-30: `check-feature-register` reports **148 features: 138 `Wired`,
+   1 `Inert`, 9 `Absent`**, exit 0).
 2. The previous edition did not report the *opposite* staleness, which is the more dangerous kind:
    several `FEATURE-REGISTER.md` rows still said `Absent` or `Inert` for features that are **built and
    wired on this branch** — **F28/F29** (procedure and test-step templates), **F39** (findings-to-report
@@ -179,7 +179,7 @@ Three mechanisms produced this:
 1. **A status vocabulary that permitted ambiguity.** `Partial` absorbed every state between "does
    not exist" and "works", so a document could claim progress indefinitely without ever being wrong.
    `Partial` is not a status; it is a place to hide. The current `FEATURE-REGISTER.md` uses exactly
-   three values — `Wired`, `Inert`, `Absent` — and **verified this session** contains **135 `Wired`,
+   three values — `Wired`, `Inert`, `Absent` — and **verified 2026-10-30** contains **138 `Wired`,
    1 `Inert`, 9 `Absent`** and **no `Partial`**.
 2. **Tests cited as proof of function.** The suite was green and "structurally incapable of catching
    the integration gaps, because the integration is exactly what it stubs out." Green tests were used
@@ -664,9 +664,10 @@ this report failed to catch. Each is recorded here against its real call site:
 D12/D13 rows (F141/F142) were `Absent` while the work existed only as a spec, now `Wired`.
 **The six rows were corrected** (earlier session, `docs/FEATURE-REGISTER.md`): F28/F29/F39/F53/F54/F55
 are `Wired`. **D12/D13 (F141/F142) are corrected this session**: `Wired`, against the mounted SA-20 /
-OA-42 screens and migrations `0160`/`0161`. The count block now reads **135 Wired / 1 Inert / 9 Absent**.
-`check-feature-register` passes with no understating rows left. The correction is a build task that is
-now done, not a task still to do — which is the only honest way to record it.
+OA-42 screens and migrations `0160`/`0161`. The register has since grown to **148 features (F147 the
+self-diagnostic, F148 the population-rows writer, both `Wired`), and the count block reads 138 Wired /
+1 Inert / 9 Absent**. `check-feature-register` passes with no understating rows left. The correction is
+a build task that is now done, not a task still to do — which is the only honest way to record it.
 
 ---
 

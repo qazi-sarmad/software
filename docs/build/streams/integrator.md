@@ -296,3 +296,19 @@ Owner ask: *"scan old branches for genuine fixes the trunk lacks"* and *"prepare
   `docs/design/DESIGNER-PROMPT.md` name it. `SCALE-TASKS.md` CB.9 closed (BLOCKED → DONE).
 
 _Guards after this batch: 1126 passed; `tsc --noEmit` clean._
+
+## Ledger counts corrected to the code — 2026-10-30
+
+The ledgers carried stale count blocks. Re-measured against the code (`check-feature-register` is the
+authority) and corrected, so the documents match the tree:
+
+- **`FEATURE-REGISTER.md` §14** said "the four remaining `Inert` rows are … the connector run and ingest
+  RPCs and the adapter runner (F57–F59) and the motion system (F108)". F57–F59 are `Wired` through
+  `runConnector` (`src/data/connectors.ts`). Corrected to **one** `Inert` row: F108 (the motion system).
+- **`SYSTELIGON-GAP-REPORT.md`** count blocks were at "138 features: 94/27/17" and "135 Wired / 1 Inert /
+  9 Absent". Corrected to the measured **148 features: 138 `Wired` / 1 `Inert` / 9 `Absent`**, and the
+  register growth (F143–F148) named.
+- Verified: `check-feature-register` → `148 features: 138 Wired, 1 Inert, 9 Absent`, exit 0.
+
+_Baseline this session (`1c41ca4`): 337 vitest files / 3798 tests green; SQL harness "migrations applied
+twice / all SQL tests passed twice" (EXIT=0); all nine gates PASS; `tsc --noEmit` clean._

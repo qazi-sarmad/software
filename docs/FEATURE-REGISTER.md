@@ -329,9 +329,12 @@ notification delivery and the pop-out sync (F96, F98), the contrast coverage (F1
 "stored but inert" configuration list (F35, F72–F79) are all **built, wired and tested** — the
 Phase 2/3 migrations (`0101`, `0107`, `0109`) landed the enforcement and `supabase/tests/102`–`110`
 prove it, while the delivery and sync rows are proved by `supabase/tests/114` and the Playwright
-specs `s14`/`s15`. The four remaining `Inert` rows are the genuine, still-open defects: the connector
-run and ingest RPCs and the adapter runner (F57–F59) and the motion system (F108). Every one is a defect,
-and every one looks like a working feature in the UI.
+specs `s14`/`s15`. The connector run, the staged-record ingest and the adapter runner (F57–F59) are
+now `Wired` through `runConnector` (`src/data/connectors.ts`), so the **one** remaining `Inert` row is
+the motion system (F108): two keyframes exist and one component honours reduced-motion, but no
+`MOTION_LEVELS` module, no `resolveDayPhase`, and no audience/density/personalisation surface exists —
+grep for any of them returns nothing. That row is a genuine, still-open defect, and it looks like a
+working feature in the UI.
 
 **A later pass folded the S3 stream (D10/D14/D15).** The merged branch carried the work but the rows
 still read `Absent`, which understated the build by three features: the client-classification switch
