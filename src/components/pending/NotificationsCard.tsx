@@ -1,6 +1,7 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext';
 import { useLiveNotifications } from '../../hooks/useLiveNotifications';
+import { transportLabel } from '../../lib/liveSync';
 import { markNotificationRead } from '../../data/notifications';
 import { AlertCircle } from '../common/Icons';
 
@@ -25,7 +26,7 @@ export const NotificationsCard: React.FC = () => {
         <AlertCircle className="w-4 h-4 text-accent" />
         <h2 className="text-apple-15 font-semibold text-primary">Notifications</h2>
         <span className="text-apple-11 text-tertiary" data-testid="wk-notifications-transport">
-          {transport === 'realtime' ? 'Live' : 'Polling'}
+          {transportLabel(transport)}
         </span>
         {unread > 0 && (
           <span

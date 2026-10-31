@@ -3,6 +3,7 @@ import { AuditCapItem, CapStatus, Severity } from '../../types';
 import { useApp } from '../../context/AppContext';
 import { useScopedData } from '../../hooks/useScopedData';
 import { isCapOverdue } from '../../lib/orgDate';
+import { roleLabel } from '../../lib/rights';
 import { ACTION_CAPABILITY } from '../../lib/cap';
 import { canPerformCapability } from '../../lib/orgCapabilities';
 import {
@@ -375,7 +376,7 @@ export const CapInspector: React.FC<CapInspectorProps> = ({ data, onClose }) => 
               </div>
             )}
             <p className="text-apple-11 text-tertiary">
-              Actions shown are those your designation may perform ({currentUser.role}). Org designations can reassign powers without code changes.
+              Actions shown are those your designation may perform ({roleLabel(currentUser.role)}). Org designations can reassign powers without code changes.
             </p>
           </div>
         </div>

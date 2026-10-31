@@ -36,6 +36,16 @@ export function chooseTransport(opts: LiveSyncOptions): LiveTransport {
   return opts.realtimeAvailable ? 'realtime' : 'poll';
 }
 
+/**
+ * A person-facing label for the transport the surface is on. `poll` is the internal name for the
+ * bounded-poll fallback; showing it to a person leaks implementation vocabulary. "Live" and
+ * "Near-live" describe what the reader gets — an immediate stream, or a short bounded interval —
+ * without naming the mechanism.
+ */
+export function transportLabel(transport: LiveTransport): string {
+  return transport === 'realtime' ? 'Live' : 'Near-live';
+}
+
 /** The effective poll interval: the caller's value, or the default, and never below one second. */
 export function pollInterval(opts: LiveSyncOptions): number {
   const raw = opts.pollIntervalMs ?? DEFAULT_POLL_INTERVAL_MS;

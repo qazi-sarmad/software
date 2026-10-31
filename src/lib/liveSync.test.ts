@@ -9,6 +9,7 @@ import {
   pollInterval,
   readRecordRevision,
   recordRevisionKey,
+  transportLabel,
 } from './liveSync';
 
 describe('live-sync transport policy (§17.1, §22)', () => {
@@ -57,5 +58,12 @@ describe('live-sync transport policy (§17.1, §22)', () => {
     expect(nextRecordRevision(0, 1)).toBe(1);
     expect(nextRecordRevision(4, 2)).toBe(5);
     expect(nextRecordRevision(Number.NaN, 2)).toBe(1);
+  });
+
+  it('labels the transport in person-facing words, never the internal name', () => {
+    expect(transportLabel('realtime')).toBe('Live');
+    expect(transportLabel('poll')).toBe('Near-live');
+    // The internal name for the fallback must not leak into the label.
+    expect(transportLabel('poll')).not.toBe('poll');
   });
 });

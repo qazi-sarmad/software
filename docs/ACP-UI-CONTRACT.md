@@ -63,7 +63,7 @@ Two always-available chrome surfaces that close §22 (Realtime in-app notificati
   `wk-notifications-unread`, `wk-notifications-empty`, `wk-notifications-list`,
   `wk-notification-<id>`, `wk-notification-mark-read-<id>`, `record-page-revision`,
   `record-page-refresh`.
-- **States:** bell badge hidden at zero unread; the panel shows `Live` or `Polling` from the chosen
+- **States:** bell badge hidden at zero unread; the panel shows `Live` or `Near-live` from the chosen
   transport; an empty list renders "Nothing new."; the pop-out shows its current revision and a
   refresh control that publishes a new revision to the parent window.
 - **Tutorial key:** none (chrome, not a numbered screen).
@@ -769,7 +769,7 @@ The landing tab: portfolio tiles (engagements, CAPs, findings, seals), a CAP rad
 - **Route:** Tab `executive` (nav strip "Dashboard"). Not a route.
 - **Rights:** any signed-in member; each tile degrades to its empty state when the scope holds no records.
 - **Data:** `AlertCircle`, `CheckCircle2`, `ChevronRight`, `Clock`, `ExternalLink`, `ShieldCheck`, `X`, `motion`, `updatePlanItemDates` — through `src/data/*.ts`; components never import the database client (rule M8).
-- **Testids:** `gantt-approve-shift`, `gantt-shift-error`, `DB-01-cap-hub-drilldown`, `DB-01-tile-entities`, `DB-01-tile-engagements`, `DB-01-tile-issues`, `DB-01-tile-workpapers`, `DB-01-activity-spine`, `DB-01-activity-spine-transport`, `DB-01-activity-spine-empty`, `DB-01-activity-spine-list`
+- **Testids:** `gantt-approve-shift`, `gantt-shift-error`, `DB-01-cap-hub-drilldown`, `DB-01-tile-entities`, `DB-01-tile-engagements`, `DB-01-tile-issues`, `DB-01-tile-workpapers`, `DB-01-activity-spine`, `DB-01-activity-spine-transport`, `DB-01-activity-spine-empty`, `DB-01-activity-spine-list`, `tab-executive`
 - **States:** loading (skeleton tiles); empty (no engagements in scope); ready; the Board Pack block carries its own loading/empty/error states. The activity spine carries its own quiet empty state ("Nothing has happened yet").
 - **Drilldown (E5/U1):** every tile number opens the exact scoped/filtered records it was counted from, in the non-blocking `DrilldownPanel` (`role="complementary"`, testid prefix `DB-01-drilldown`). The CAP hub number (`DB-01-cap-hub-drilldown`) drills to its CAPs. The open family is mirrored to the URL hash (`#drill=<kind>`) so a state is deep-linkable; the hash carries only the family name, never a tenant id.
 - **Live activity spine (U4):** a quiet stream of the organisation's recent activity (actor, verb, subject, age) on the existing `liveSync` transport — Realtime when a socket is available, a bounded poll otherwise. The sentence and the kind are the pure `src/lib/activitySpine.ts` layer; the read is the rights-gated `activity_spine_list` RPC (migration 0116), which reduces `detail` to the fields a sentence needs and drops the rest (Law L2). A scoped member gets the empty state, never an error.
@@ -834,7 +834,7 @@ The universe and entity heatmap (spec §6): every entity card shows its approval
 - **Route:** Tab `universe` (nav strip "Audit Universe").
 - **Rights:** any member reads; `edit_config` to add an entity.
 - **Data:** `Activity`, `AlertTriangle`, `ArrowRight`, `EntityRow`, `Layers` — through `src/data/*.ts`; components never import the database client (rule M8).
-- **Testids:** `add-entity-form`, `add-entity-open`, `db-entities`
+- **Testids:** `add-entity-form`, `add-entity-open`, `db-entities`, `tab-universe`
 - **States:** loading; empty (no universes/entities); ready; denied on the add form without `edit_config`.
 - **Tutorial key:** —
 
@@ -856,7 +856,7 @@ The plan register for a universe: items, versions, gate outcomes, and the entry 
 - **Route:** Tab `plan` (nav strip "Audit Plan").
 - **Rights:** any member reads; the open buttons appear only with the matching right.
 - **Data:** `DeploymentRequestRow`, `GateOutcomeRow`, `PlanItemRow`, `PlanVersionRow`, `latestPlanForUniverse`, `listGateOutcomes`, `listPlanItems`, `planHistory` — through `src/data/*.ts`; components never import the database client (rule M8).
-- **Testids:** `engagement-signoff`, `plan-action-error`, `plan-open-combined`, `plan-open-ethics`, `plan-open-gate`, `plan-open-items`, `plan-records`, `plan-records-error`, `plan-records-gates`, `plan-records-items`, `plan-records-versions`
+- **Testids:** `engagement-signoff`, `plan-action-error`, `plan-open-combined`, `plan-open-ethics`, `plan-open-gate`, `plan-open-items`, `plan-records`, `plan-records-error`, `plan-records-gates`, `plan-records-items`, `plan-records-versions`, `tab-plan`
 - **States:** loading; empty; ready.
 - **Tutorial key:** —
 
@@ -1226,7 +1226,7 @@ The issue register: the heat matrix (severity by age, by department), the CAP re
 - **Route:** Tab `issues` (nav strip "Issues & CAP Register"); views via `issues-view-<view>`.
 - **Rights:** any member reads; patterns configuration needs `edit_config`.
 - **Data:** none (pure/UI only) — through `src/data/*.ts`; components never import the database client (rule M8).
-- **Testids:** `cap-engagement-picker`, `cap-no-engagement`, `issues-cap-register-section`
+- **Testids:** `cap-engagement-picker`, `cap-no-engagement`, `issues-cap-register-section`, `tab-issues`
 - **States:** loading; empty; ready; per-view states.
 - **Tutorial key:** oa.patterns-config (the Patterns view)
 
@@ -1303,7 +1303,7 @@ The primary tab bar: Dashboard, Work Queue, Audit Universe, Audit Plan, SIRA, Au
 - **Route:** Rendered on every authenticated screen below the header.
 - **Rights:** each tab is shown only when the session has the right for it.
 - **Data:** none (pure/UI only) — through `src/data/*.ts`; components never import the database client (rule M8).
-- **Testids:** `nav-draggable-pill`, `nav-strip-track`
+- **Testids:** `nav-draggable-pill`, `nav-strip-track`, `nav-tab-<id>`
 - **States:** ready; tabs filtered by rights.
 - **Tutorial key:** —
 
@@ -1314,7 +1314,7 @@ The header: the compact search that opens the command palette, the profile menu 
 - **Route:** Rendered on every authenticated screen.
 - **Rights:** menu entries appear only with the matching right.
 - **Data:** none (pure/UI only) — through `src/data/*.ts`; components never import the database client (rule M8).
-- **Testids:** `header-search-compact`, `menu-activity-log`, `menu-import`, `menu-org-control`, `menu-people-admin`, `menu-shared-with-me`, `mobile-universe-switcher`
+- **Testids:** `header-calendar`, `header-home`, `header-profile`, `header-search`, `header-search-compact`, `header-theme`, `header-theme-dark`, `header-theme-light`, `header-theme-system`, `menu-activity-log`, `menu-import`, `menu-org-control`, `menu-people-admin`, `menu-shared-with-me`, `mobile-universe-switcher`
 - **States:** ready; menu closed/open; badge hidden at zero unread.
 - **Tutorial key:** —
 

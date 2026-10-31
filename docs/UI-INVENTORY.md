@@ -62,7 +62,7 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 - **Explain ids (0):** — (no explain affordance)
 - **IIA standards addressed (0):** —
 - **Drilldown targets (0):** — (no aggregate)
-- **States:** bell badge hidden at zero unread; the panel shows `Live` or `Polling` from the chosen transport; an empty list renders "Nothing new."; the pop-out shows its current revision and a refresh control that publishes a new revision to the parent window.
+- **States:** bell badge hidden at zero unread; the panel shows `Live` or `Near-live` from the chosen transport; an empty list renders "Nothing new."; the pop-out shows its current revision and a refresh control that publishes a new revision to the parent window.
 - **Tutorial key:** — (no key)
 - **Connections:** inbound via the nav strip / header profile menu; outbound via the screens
   named in the purpose. The chrome that carries every hop is listed under *Common chrome*.
@@ -1418,7 +1418,7 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 - **Data modules:** `src/data/plan.ts`
 - **RPCs reachable via those modules:** `plan_approval_config`, `plan_history`
 - **Tables reachable via those modules:** `plan_items`, `plans`
-- **Testids (11):** `gantt-approve-shift`, `gantt-shift-error`, `DB-01-cap-hub-drilldown`, `DB-01-tile-entities`, `DB-01-tile-engagements`, `DB-01-tile-issues`, `DB-01-tile-workpapers`, `DB-01-activity-spine`, `DB-01-activity-spine-transport`, `DB-01-activity-spine-empty`, `DB-01-activity-spine-list`
+- **Testids (12):** `gantt-approve-shift`, `gantt-shift-error`, `DB-01-cap-hub-drilldown`, `DB-01-tile-entities`, `DB-01-tile-engagements`, `DB-01-tile-issues`, `DB-01-tile-workpapers`, `DB-01-activity-spine`, `DB-01-activity-spine-transport`, `DB-01-activity-spine-empty`, `DB-01-activity-spine-list`, `tab-executive`
 - **Explain ids (1):** `standard.12.2`
 - **IIA standards addressed (1):** `12.2`
 - **Drilldown targets (5):** `DB-01-tile-entities` → entities, `DB-01-tile-engagements` → engagements, `DB-01-tile-issues` → issues, `DB-01-tile-workpapers` → workpapers, `DB-01-cap-hub-drilldown` → caps
@@ -1490,7 +1490,7 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 - **Data modules:** none (pure/UI only)
 - **RPCs reachable via those modules:** none
 - **Tables reachable via those modules:** none
-- **Testids (3):** `add-entity-form`, `add-entity-open`, `db-entities`
+- **Testids (4):** `add-entity-form`, `add-entity-open`, `db-entities`, `tab-universe`
 - **Explain ids (1):** `standard.9.1`
 - **IIA standards addressed (1):** `9.1`
 - **Drilldown targets (0):** — (no aggregate)
@@ -1526,7 +1526,7 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 - **Data modules:** `src/data/deployment.ts`, `src/data/plan.ts`
 - **RPCs reachable via those modules:** `deploy_engagement`, `ethics_status`, `plan_approval_config`, `plan_history`
 - **Tables reachable via those modules:** `activity_log`, `deployment_requests`, `plan_items`, `plans`
-- **Testids (11):** `engagement-signoff`, `plan-action-error`, `plan-open-combined`, `plan-open-ethics`, `plan-open-gate`, `plan-open-items`, `plan-records`, `plan-records-error`, `plan-records-gates`, `plan-records-items`, `plan-records-versions`
+- **Testids (12):** `engagement-signoff`, `plan-action-error`, `plan-open-combined`, `plan-open-ethics`, `plan-open-gate`, `plan-open-items`, `plan-records`, `plan-records-error`, `plan-records-gates`, `plan-records-items`, `plan-records-versions`, `tab-plan`
 - **Explain ids (3):** `standard.13.3`, `standard.9.2`, `standard.9.4`
 - **IIA standards addressed (3):** `13.3`, `9.2`, `9.4`
 - **Drilldown targets (0):** — (no aggregate)
@@ -2012,7 +2012,7 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 - **Data modules:** none (pure/UI only)
 - **RPCs reachable via those modules:** none
 - **Tables reachable via those modules:** none
-- **Testids (3):** `cap-engagement-picker`, `cap-no-engagement`, `issues-cap-register-section`
+- **Testids (4):** `cap-engagement-picker`, `cap-no-engagement`, `issues-cap-register-section`, `tab-issues`
 - **Explain ids (5):** `standard.1.1`, `standard.13.1`, `standard.14.3`, `standard.14.4`, `standard.15.2`
 - **IIA standards addressed (5):** `1.1`, `13.1`, `14.3`, `14.4`, `15.2`
 - **Drilldown targets (0):** — (no aggregate)
@@ -2122,7 +2122,7 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 - **Data modules:** none (pure/UI only)
 - **RPCs reachable via those modules:** none
 - **Tables reachable via those modules:** none
-- **Testids (2):** `nav-draggable-pill`, `nav-strip-track`
+- **Testids (3):** `nav-draggable-pill`, `nav-strip-track`, `nav-tab-<id>`
 - **Explain ids (0):** — (no explain affordance)
 - **IIA standards addressed (0):** —
 - **Drilldown targets (0):** — (no aggregate)
@@ -2140,7 +2140,7 @@ tenant-facing RPC with parameters. Run `npx tsx scripts/gen-ui-inventory.mjs` to
 - **Data modules:** none (pure/UI only)
 - **RPCs reachable via those modules:** none
 - **Tables reachable via those modules:** none
-- **Testids (7):** `header-search-compact`, `menu-activity-log`, `menu-import`, `menu-org-control`, `menu-people-admin`, `menu-shared-with-me`, `mobile-universe-switcher`
+- **Testids (15):** `header-calendar`, `header-home`, `header-profile`, `header-search`, `header-search-compact`, `header-theme`, `header-theme-dark`, `header-theme-light`, `header-theme-system`, `menu-activity-log`, `menu-import`, `menu-org-control`, `menu-people-admin`, `menu-shared-with-me`, `mobile-universe-switcher`
 - **Explain ids (0):** — (no explain affordance)
 - **IIA standards addressed (0):** —
 - **Drilldown targets (0):** — (no aggregate)

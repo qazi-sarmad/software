@@ -98,7 +98,7 @@ export const ExecutiveDashboardTab: React.FC = () => {
   // pure rule over the org's data state (migration 0117 counts), not a guess from scoped rows.
   if (orgIsNew) {
     return (
-      <div className="max-w-7xl mx-auto px-6 py-8 space-y-8 animate-fade-in">
+      <div data-testid="tab-executive" className="max-w-7xl mx-auto px-6 py-8 space-y-8 animate-fade-in">
         <div className="border-b border-hairline pb-6">
           <span className="text-apple-12 font-medium tracking-wide uppercase text-accent">
             Audit Platform
@@ -117,7 +117,7 @@ export const ExecutiveDashboardTab: React.FC = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-8 space-y-8 animate-fade-in">
+    <div data-testid="tab-executive" className="max-w-7xl mx-auto px-6 py-8 space-y-8 animate-fade-in">
       {/* Editorial Header Section */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-hairline pb-6">
         <div>

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useLiveNotifications } from '../../hooks/useLiveNotifications';
+import { transportLabel } from '../../lib/liveSync';
 import { markNotificationRead } from '../../data/notifications';
 import { AlertCircle, CheckCircle2 } from '../common/Icons';
 
@@ -70,7 +71,7 @@ export const NotificationBell: React.FC = () => {
           <div className="px-4 py-3 border-b border-hairline flex items-center justify-between">
             <span className="text-apple-13 font-semibold text-primary">Notifications</span>
             <span className="text-apple-11 text-tertiary" data-testid="notification-transport">
-              {transport === 'realtime' ? 'Live' : 'Polling'}
+              {transportLabel(transport)}
             </span>
           </div>
           {notifications.length === 0 ? (

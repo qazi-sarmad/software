@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTheme, ThemePreset } from '../../context/ThemeContext';
 import { useApp } from '../../context/AppContext';
+import { roleLabel } from '../../lib/rights';
 import { CheckCircle2, Palette, Sun, Moon, Laptop, Shield } from './Icons';
 
 interface AccountSettingsProps {
@@ -52,7 +53,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsProps> = ({ onClose }
           <div className="text-apple-13 font-semibold text-primary">{currentUser.name}</div>
           <div className="text-apple-12 text-secondary">{currentUser.email}</div>
           <div className="text-apple-11 text-tertiary mt-1">
-            Role: <span className="uppercase font-semibold text-primary">{currentUser.role}</span> • Department: {currentUser.department}
+            Role: <span className="uppercase font-semibold text-primary">{roleLabel(currentUser.role)}</span> • Department: {currentUser.department}
           </div>
         </div>
         <div className="w-10 h-10 rounded-full bg-accent-subtle text-accent font-bold flex items-center justify-center text-apple-13">

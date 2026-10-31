@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { listActivitySpine, subscribeActivity, type ActivitySpineRow } from '../../data/activity';
-import { chooseTransport, pollDue } from '../../lib/liveSync';
+import { chooseTransport, pollDue, transportLabel } from '../../lib/liveSync';
 import { activityAgeLabel, activityKind, activitySentence, mergeSpineRow } from '../../lib/activitySpine';
 import { Activity } from '../common/Icons';
 
@@ -88,7 +88,7 @@ export const ActivitySpine: React.FC = () => {
         <Activity className="w-4 h-4 text-accent" />
         <h2 className="text-apple-15 font-semibold text-primary">Live activity</h2>
         <span className="text-apple-11 text-tertiary" data-testid="DB-01-activity-spine-transport">
-          {transport === 'realtime' ? 'Live' : 'Polling'}
+          {transportLabel(transport)}
         </span>
       </div>
       {items.length === 0 ? (

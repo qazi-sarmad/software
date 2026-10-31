@@ -66,7 +66,7 @@ moves the chrome, never the call.
 - **RPCs reachable (1):** `notifications_list`
 - **Tables reachable (0):** —
 - **Testids (17):** `notification-bell`, `notification-bell-count`, `notification-panel`, `notification-transport`, `notification-empty`, `notification-list`, `notification-<id>`, `notification-mark-read-<id>`, `wk-notifications`, `wk-notifications-transport`, `wk-notifications-unread`, `wk-notifications-empty`, `wk-notifications-list`, `wk-notification-<id>`, `wk-notification-mark-read-<id>`, `record-page-revision`, `record-page-refresh`
-- **States:** bell badge hidden at zero unread; the panel shows `Live` or `Polling` from the chosen transport; an empty list renders "Nothing new."; the pop-out shows its current revision and a refresh control that publishes a new revision to the parent window.
+- **States:** bell badge hidden at zero unread; the panel shows `Live` or `Near-live` from the chosen transport; an empty list renders "Nothing new."; the pop-out shows its current revision and a refresh control that publishes a new revision to the parent window.
 - **Flows that touch this screen:** — (no flow)
 - **Connection candidates (same route):** — (route is unique to this screen)
 
@@ -1115,7 +1115,7 @@ moves the chrome, never the call.
 - **Data modules (1):** `src/data/plan.ts`
 - **RPCs reachable (2):** `plan_approval_config`, `plan_history`
 - **Tables reachable (2):** `plan_items`, `plans`
-- **Testids (11):** `gantt-approve-shift`, `gantt-shift-error`, `DB-01-cap-hub-drilldown`, `DB-01-tile-entities`, `DB-01-tile-engagements`, `DB-01-tile-issues`, `DB-01-tile-workpapers`, `DB-01-activity-spine`, `DB-01-activity-spine-transport`, `DB-01-activity-spine-empty`, `DB-01-activity-spine-list`
+- **Testids (12):** `gantt-approve-shift`, `gantt-shift-error`, `DB-01-cap-hub-drilldown`, `DB-01-tile-entities`, `DB-01-tile-engagements`, `DB-01-tile-issues`, `DB-01-tile-workpapers`, `DB-01-activity-spine`, `DB-01-activity-spine-transport`, `DB-01-activity-spine-empty`, `DB-01-activity-spine-list`, `tab-executive`
 - **States:** loading (skeleton tiles); empty (no engagements in scope); ready; the Board Pack block carries its own loading/empty/error states. The activity spine carries its own quiet empty state ("Nothing has happened yet").
 - **Flows that touch this screen:** — (no flow)
 - **Connection candidates (same route):** — (route is unique to this screen)
@@ -1171,7 +1171,7 @@ moves the chrome, never the call.
 - **Data modules (0):** —
 - **RPCs reachable (0):** —
 - **Tables reachable (0):** —
-- **Testids (3):** `add-entity-form`, `add-entity-open`, `db-entities`
+- **Testids (4):** `add-entity-form`, `add-entity-open`, `db-entities`, `tab-universe`
 - **States:** loading; empty (no universes/entities); ready; denied on the add form without `edit_config`.
 - **Flows that touch this screen:** — (no flow)
 - **Connection candidates (same route):** — (route is unique to this screen)
@@ -1199,7 +1199,7 @@ moves the chrome, never the call.
 - **Data modules (2):** `src/data/deployment.ts`, `src/data/plan.ts`
 - **RPCs reachable (4):** `deploy_engagement`, `ethics_status`, `plan_approval_config`, `plan_history`
 - **Tables reachable (4):** `activity_log`, `deployment_requests`, `plan_items`, `plans`
-- **Testids (11):** `engagement-signoff`, `plan-action-error`, `plan-open-combined`, `plan-open-ethics`, `plan-open-gate`, `plan-open-items`, `plan-records`, `plan-records-error`, `plan-records-gates`, `plan-records-items`, `plan-records-versions`
+- **Testids (12):** `engagement-signoff`, `plan-action-error`, `plan-open-combined`, `plan-open-ethics`, `plan-open-gate`, `plan-open-items`, `plan-records`, `plan-records-error`, `plan-records-gates`, `plan-records-items`, `plan-records-versions`, `tab-plan`
 - **States:** loading; empty; ready.
 - **Flows that touch this screen:** — (no flow)
 - **Connection candidates (same route):** — (route is unique to this screen)
@@ -1577,7 +1577,7 @@ moves the chrome, never the call.
 - **Data modules (0):** —
 - **RPCs reachable (0):** —
 - **Tables reachable (0):** —
-- **Testids (3):** `cap-engagement-picker`, `cap-no-engagement`, `issues-cap-register-section`
+- **Testids (4):** `cap-engagement-picker`, `cap-no-engagement`, `issues-cap-register-section`, `tab-issues`
 - **States:** loading; empty; ready; per-view states.
 - **Flows that touch this screen:** — (no flow)
 - **Connection candidates (same route):** — (route is unique to this screen)
@@ -1661,7 +1661,7 @@ moves the chrome, never the call.
 - **Data modules (0):** —
 - **RPCs reachable (0):** —
 - **Tables reachable (0):** —
-- **Testids (2):** `nav-draggable-pill`, `nav-strip-track`
+- **Testids (3):** `nav-draggable-pill`, `nav-strip-track`, `nav-tab-<id>`
 - **States:** ready; tabs filtered by rights.
 - **Flows that touch this screen:** — (no flow)
 - **Connection candidates (same route):** — (route is unique to this screen)
@@ -1675,7 +1675,7 @@ moves the chrome, never the call.
 - **Data modules (0):** —
 - **RPCs reachable (0):** —
 - **Tables reachable (0):** —
-- **Testids (7):** `header-search-compact`, `menu-activity-log`, `menu-import`, `menu-org-control`, `menu-people-admin`, `menu-shared-with-me`, `mobile-universe-switcher`
+- **Testids (15):** `header-calendar`, `header-home`, `header-profile`, `header-search`, `header-search-compact`, `header-theme`, `header-theme-dark`, `header-theme-light`, `header-theme-system`, `menu-activity-log`, `menu-import`, `menu-org-control`, `menu-people-admin`, `menu-shared-with-me`, `mobile-universe-switcher`
 - **States:** ready; menu closed/open; badge hidden at zero unread.
 - **Flows that touch this screen:** — (no flow)
 - **Connection candidates (same route):** — (route is unique to this screen)
