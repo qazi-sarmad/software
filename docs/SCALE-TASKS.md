@@ -677,7 +677,7 @@ counts; a trigger would double-fire).
 | C4 | Adhoc audit suggestion from an alert, pre-filled with entity/department/control | DONE |
 | C5 | Remediation wizard from an alert (finding, CAP, request evidence, escalate, dismiss with reason) | DONE |
 | C6 | Alert triage surface with rights gating | DONE |
-| C7 | Anomaly to SIRA: a resolved alert proposes an emergent risk carrying the alert id, rule version and affected rows | BLOCKED (S18) |
+| C7 | Anomaly to SIRA: a resolved alert proposes an emergent risk carrying the alert id, rule version and affected rows | TODO (unblocked) |
 
 **C1 evidence (DONE).** Migration `supabase/migrations/0111_phase5_monitor_runner.sql` adds
 `monitor_runner_sweep(limit)` (the `pg_cron` `monitor-runner` job, `*/5 * * * *`), which evaluates
@@ -768,11 +768,16 @@ sections are pre-filled and `check_readability` passes, the CAP names the findin
 department, the evidence request is open and names the alert, escalation records the disposition and
 links the observation, a caller without `perform_work` is refused, org B cannot act on org A's alert,
 and the grants/RLS are right; `src/data/writing.test.ts` adds 6 unit tests for the mapping, the
-argument shapes and the refusal path. **`C7` stays `BLOCKED (S18)`**: an alert-to-emergent-risk
-proposal needs SIRA continuity, which is Builder B's and not built.
+argument shapes and the refusal path. **`C7` is now `TODO (unblocked)`**: an alert-to-emergent-risk
+proposal needs SIRA continuity, which is now built — migration `0119_sira_continuity_acceptance.sql`
+adds `sira_carry_forward_pack(p_cycle)` (the read-only carry-forward pack) and
+`propose_emergent_risks(p_cycle)` (the idempotent emergent-risk proposer), both exercised by
+`supabase/tests/126_sira_continuity.sql`; `src/data/sira.ts` exposes `proposeEmergentRisks`, called by
+`src/components/sira/SiraCyclesInspector.tsx`. The blocker is therefore gone; C7 is available work for
+this branch, not blocked work.
 
-**`C7` depends on `S18`** (SIRA continuity), which is Builder B's and not yet built, so `C7` is
-recorded `BLOCKED (S18)` rather than left `TODO` — it is not available work for this branch alone.
+**`C7` depended on `S18`** (SIRA continuity), which is now **BUILT** (S18/S19, migration `0119`), so
+C7 is recorded `TODO (unblocked)` rather than `BLOCKED (S18)` — it is available work for this branch.
 
 **The joins already exist — this is a build, not an invention.** Reuse them; do not write a second
 engine: `src/lib/findingTarget.ts` (`departmentsOf` / `auditsForDepartment`), the SIRA risk fields in
@@ -924,7 +929,7 @@ portal, public certificate), and config-that-does-something.
 
 Every testid cited in the script was checked against the source and the specs (`grep`), and the
 Board Pack ids were corrected from the placeholder `board-pack-*` to the real `wk-boardpack-*` during
-that check. The script also carries a **Do not demo** list: C7 (blocked on S18), evidence file
+that check. The script also carries a **Do not demo** list: C7 (unblocked but unbuilt), evidence file
 storage (bytes not stored yet, SYSTELIGON §6.0), the 12 stale tutorial GIFs, and everything under
 `docs/archive/`. Honesty about what is not ready is part of the deliverable.
 

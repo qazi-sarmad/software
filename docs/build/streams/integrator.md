@@ -345,3 +345,18 @@ the trunk has that the branch lacks. Two branches were promoted to their own row
 `scale-harden-v1`, `writing-engine`, `systeligon-v1`, `audit-file-v1` do). The ported-work note now
 names the trunk numbers (`0208`–`0210`, tests `154`–`156`) and says the branch's own files are the
 pre-renumber copies, so the `unique_src` count is explained rather than read as un-ported work.
+
+## C7 reconciled in SCALE-TASKS.md — 2026-10-30
+
+The gap report already read C7 as *"unblocked but unbuilt"*; SCALE-TASKS.md still read
+`BLOCKED (S18)`. Verified S18 is genuinely built before changing the ledger: migration
+`0119_sira_continuity_acceptance.sql` defines `sira_carry_forward_pack(p_cycle)` and
+`propose_emergent_risks(p_cycle)`, both exercised by `supabase/tests/126_sira_continuity.sql`;
+`src/data/sira.ts` exposes `proposeEmergentRisks`, called from
+`src/components/sira/SiraCyclesInspector.tsx`. Changed the two C7 rows and the demo script's
+"do not demo" line from `BLOCKED (S18)` / "blocked on S18" to `TODO (unblocked)` /
+"unblocked but unbuilt". The first draft of this edit named three RPCs by memory
+(`sira_carry_forward`, `sira_seed_next_cycle`, `sira_propose_emergent_risks`) and cited
+`src/data/sira.test.ts`, which only covers the not-configured path — corrected to the two real
+RPC names and the SQL test that actually exercises them. Lesson: name a symbol from a grep of
+the file, never from memory.
